@@ -639,9 +639,9 @@ public class DefaultConfigService implements ConfigService {
 
 			@Override
 			public void entryRemoved(EntryEvent<Object, Object> entryEvent) {
-				logger.debug("Received entryRemoved for pvTypeInfo");
-				PVTypeInfo typeInfo =(PVTypeInfo) entryEvent.getValue();
+				PVTypeInfo typeInfo =(PVTypeInfo) entryEvent.getOldValue();
 				String pvName = typeInfo.getPvName();
+				logger.info("Received entryRemoved for pvTypeInfo " + pvName);
 				eventBus.post(new PVTypeInfoEvent(pvName, typeInfo, ChangeType.TYPEINFO_DELETED));
 				if(persistanceLayer != null) { 
 					try { 
@@ -1139,8 +1139,7 @@ public class DefaultConfigService implements ConfigService {
 				
 				@Override
 				public void run() {
-					// Make sure that the other components have shutdown before shutting the mgmt webapp
-					configlogger.info("Checking to see if the other webapps have completed their shutdown");
+					// TODO Make sure that the other components have shutdown before shutting the mgmt webapp
 					DefaultConfigService.this.runShutDownHooksAndCleanup();
 				}
 			}, 15, 60, TimeUnit.SECONDS);

@@ -85,6 +85,11 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  * To specify multiple post processors, use standard URL syntax like so <code>pp=rms&pp=mean_3600</code>
  * </dd>
  * <dt>consolidateOnShutdown</dt><dd>This lets you control if ETL should push data to the subsequent store on appserver shutdown. This is useful if you are using a RAMDisk for the short term store.</dd>
+ * <dt>reducedata</dt><dd>Support for this is still experimental. An optional parameter; use this parameter to reduce the data as you move it into this store. You can use any of the <a href="http://epicsarchiverap.sourceforge.net/userguide.html#post_processing">post processors</a> that can be used with the <code>pp</code> argument.
+ * For example, if you define the LTS as <code>pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR&reducedata=firstSample_3600</code>, then when moving data into this store, ETL will apply the <code>firstSample_3600</code> operator on the raw data to reduce the data and store only the reduced data.
+ * The difference between this parameter and the <code>pp</code> parameter is that in the <code>reducedata</code> case, only the reduced data is stored. The raw data is thrown away.
+ * If you specify both the <code>pp</code> and the <code>reducedata</code>, you may get unpredictable results because the raw data is necessary to precompute the caches. 
+ * </dd>
  * </dl>
  * @author mshankar
  *
@@ -121,6 +126,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	private CompressionMode compressionMode = CompressionMode.NONE;
 	
 	private List<String> postProcessorUserArgs = null;
+	private String reducedataPostProcessor = null;
 	
 	private ConcurrentHashMap<String, AppendDataStateData> appendDataStates = new ConcurrentHashMap<String, AppendDataStateData>();
 	
@@ -253,6 +259,19 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	@Override
 	public boolean appendToETLAppendData(String pvName, EventStream stream, ETLContext context) throws IOException {
 		AppendDataStateData state = getAppendDataState(context, pvName);
+		
+		if(this.reducedataPostProcessor != null) {
+			try { 
+				PostProcessor postProcessor = PostProcessors.findPostProcessor(this.reducedataPostProcessor);
+				postProcessor.initialize(reducedataPostProcessor, pvName);
+				stream = CallableEventStream.makeOneStreamCallable(stream, postProcessor, true).call();
+				logger.debug("Wrapped stream with post processor " + this.reducedataPostProcessor);
+			} catch (Exception ex) { 
+				logger.error("Exception moving reduced data for pv " + pvName + " to store " + this.getName() + " using operator " + this.reducedataPostProcessor, ex);
+				return false;
+			}
+		}
+		
 		boolean bulkInserted = false;
 		if(stream instanceof ETLBulkStream) {
 			ETLBulkStream bulkStream = (ETLBulkStream) stream;
@@ -330,6 +349,10 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			
 			this.postProcessorUserArgs = URIUtils.getMultiValuedParamFromQueryString(srcURI, "pp");
 			
+			if(queryNVPairs.containsKey("reducedata")) { 
+				reducedataPostProcessor = queryNVPairs.get("reducedata");
+			}
+			
 			if(queryNVPairs.containsKey("consolidateOnShutdown")) {
 				this.consolidateOnShutdown = Boolean.parseBoolean(queryNVPairs.get("consolidateOnShutdown"));
 			}
@@ -380,6 +403,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					buf.append("&pp=");
 					buf.append(postProcessorUserArg);
 				}
+			}
+			
+			if(this.reducedataPostProcessor != null) { 
+				buf.append("&reducedata=");
+				buf.append(reducedataPostProcessor);
 			}
 			
 			String ret =  buf.toString();

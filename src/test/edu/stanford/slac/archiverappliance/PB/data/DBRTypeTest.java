@@ -84,6 +84,7 @@ public class DBRTypeTest {
 			}
 		}
 		configService.shutdownNow();
+		try { Thread.sleep(60*1000); } catch(Exception ex) {}
 	}
 
 
@@ -135,6 +136,7 @@ public class DBRTypeTest {
 				long end = System.currentTimeMillis();
 				logger.info("Checked " + expectedsecondsintoyear + " samples of DBR type " + dbrType.name() + " in " + (end-start) + "(ms)");
 				configService.shutdownNow();
+				try { Thread.sleep(60*1000); } catch(Exception ex) {}
 			} catch(Exception ex) {
 				logger.error(ex.getMessage(), ex);
 				fail(ex.getMessage());
@@ -238,6 +240,7 @@ public class DBRTypeTest {
 			}
 		}
 		configService.shutdownNow();
+		try { Thread.sleep(60*1000); } catch(Exception ex) {}
 	}
 	
 	
