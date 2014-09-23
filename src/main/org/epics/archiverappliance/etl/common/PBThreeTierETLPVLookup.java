@@ -132,8 +132,9 @@ public final class PBThreeTierETLPVLookup {
 	 * @param typeInfo
 	 */
 	public void addETLJobs(String pvName, PVTypeInfo typeInfo) {
-		if(!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
-			logger.debug("Adding etl jobs for pv " + pvName);
+		if(!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) {
+			String chunkKey = configService.getPVNameToKeyConverter().convertPVNameToKey(pvName);
+			logger.debug("Adding etl jobs for pv " + pvName + " for chunkkey " + chunkKey);
 			String[] dataSources = typeInfo.getDataStores();
 			if(dataSources == null ||  dataSources.length < 2) { 
 				logger.warn("Skipping adding PV to ETL as it has less than 2 datasources" + pvName);
