@@ -133,6 +133,7 @@ public final class PBThreeTierETLPVLookup {
 	 */
 	public void addETLJobs(String pvName, PVTypeInfo typeInfo) {
 		if(!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) {
+			// Precompute the chunkKey when we have access to the typeInfo. The keyConverter should store it in its cache.
 			String chunkKey = configService.getPVNameToKeyConverter().convertPVNameToKey(pvName);
 			logger.debug("Adding etl jobs for pv " + pvName + " for chunkkey " + chunkKey);
 			String[] dataSources = typeInfo.getDataStores();

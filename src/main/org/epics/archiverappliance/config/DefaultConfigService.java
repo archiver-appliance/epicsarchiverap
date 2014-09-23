@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletContext;
 
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.ProcessMetrics;
@@ -361,11 +362,25 @@ public class DefaultConfigService implements ConfigService {
 					logging.setLoggerLevel("com.hazelcast", java.util.logging.Level.SEVERE.toString());
 				}
 			}
+			
+			Logger hzMain = Logger.getLogger("com.hazelcast");
+			if(clusterLogger.isDebugEnabled()) { 
+				hzMain.setLevel(Level.DEBUG);
+			} else if(clusterLogger.isInfoEnabled()) { 
+				hzMain.setLevel(Level.INFO);
+			} else { 
+				logger.info("Setting clustering logging based on log levels for cluster." + getClass().getName());
+				hzMain.setLevel(Level.FATAL);
+			}			
 		} catch(Exception ex) { 
 			logger.error("Exception setting logging JVM levels ", ex);
 		}
+		
+		// Add this to the system props before doing anything with Hz
+		System.getProperties().put("hazelcast.logging.type", "log4j");
 
 		HazelcastInstance hzinstance = null;
+		
 		
 		if(this.warFile == WAR_FILE.MGMT) {
 			// The management webapps are the head honchos in the cluster. We set them up differently
@@ -399,7 +414,7 @@ public class DefaultConfigService implements ConfigService {
 					// Backup count is 1 by default; we set it explicitly however...
 					config.getMapConfig("default").setBackupCount(1);
 					
-					config.setProperty("hazelcast.logging.type", "none");
+					config.setProperty("hazelcast.logging.type", "log4j");
 				} else {
 					logger.debug("There is a hazelcast.xml in the classpath; skipping default configuration in the code.");
 				}
@@ -464,6 +479,13 @@ public class DefaultConfigService implements ConfigService {
 	
 				configlogger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress() + ":" + myClusterPort);
 				clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
+				clientConfig.setProperty("hazelcast.logging.type", "log4j");
+				if(!clusterLogger.isDebugEnabled()) {
+					// The client code logs some SEVERE exceptions on shutdown when deploying on the same Tomcat container.
+					// These exceptions are confusing; ideally, we would not have to set the log levels like so.
+					Logger.getLogger("com.hazelcast.client.spi.impl.ClusterListenerThread").setLevel(Level.OFF);
+					Logger.getLogger("com.hazelcast.client.spi.ClientPartitionService").setLevel(Level.OFF);
+				}
 				hzinstance = HazelcastClient.newHazelcastClient(clientConfig);
 			} catch(Exception ex) {
 				throw new ConfigException("Exception adding client to cluster", ex);
@@ -485,7 +507,7 @@ public class DefaultConfigService implements ConfigService {
 		shutdownHooks.add(0, new Runnable() {
 			@Override
 			public void run() {
-				configlogger.info("Shutting down clustering instance in webapp " + warFile.toString());
+				logger.debug("Shutting down clustering instance in webapp " + warFile.toString());
 				shutdownHzInstance.shutdown();
 			}
 		});
@@ -1123,6 +1145,7 @@ public class DefaultConfigService implements ConfigService {
 	private void runShutDownHooksAndCleanup() { 
 		LinkedList<Runnable> shutDnHooks = new LinkedList<Runnable>(this.shutdownHooks);
 		Collections.reverse(shutDnHooks);
+		logger.debug("Running shutdown hooks in webapp " + this.warFile);
 		for(Runnable shutdownHook : shutDnHooks) {
 			try {
 				shutdownHook.run();
@@ -1130,22 +1153,12 @@ public class DefaultConfigService implements ConfigService {
 				logger.warn("Exception shutting down service using shutdown hook " + shutdownHook.toString(), t);
 			}
 		}
+		logger.debug("Done running shutdown hooks in webapp " + this.warFile);
 	}
 
 	@Override
 	public void shutdownNow() {
-		if(this.warFile == WAR_FILE.MGMT) {
-			this.startupExecutor.scheduleAtFixedRate(new Runnable() {
-				
-				@Override
-				public void run() {
-					// TODO Make sure that the other components have shutdown before shutting the mgmt webapp
-					DefaultConfigService.this.runShutDownHooksAndCleanup();
-				}
-			}, 15, 60, TimeUnit.SECONDS);
-		} else { 
-			this.runShutDownHooksAndCleanup();
-		}
+		this.runShutDownHooksAndCleanup();
 	}
 
 	
