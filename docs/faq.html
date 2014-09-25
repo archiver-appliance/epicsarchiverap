@@ -65,11 +65,33 @@ The connection pool for the database is typically configured in Tomcat's <code>c
 
 <li>
 <div>Where are the logs?</div>
-<div>Most deployment have four tomcat containers - one each for the engine, ETL, retrieval and mgmt components. All the logs typically are sent to <code>arch.log</code> or similar files in the <code>CATALINA_HOME/logs</code> of these containers.
+<div>Most deployment have four tomcat containers per appliance - one each for the engine, ETL, retrieval and mgmt components. All the logs typically are sent to <code>arch.log</code> or similar files in the <code>CATALINA_HOME/logs</code> of these containers.
 Log levels are typically controlled using a <code>log4j.properties</code> file in the <code>TOMCAT_HOME/lib</code> folder of these containers.
 </div>
 </li>
 
+
+<li>
+<div>What's the difference between SCAN and MONITOR?</div>
+<div>These are minor variations of the similar concepts in the ChannelArchiver and other archivers. Both SCAN and MONITOR use camonitors.
+<ul>
+<li>
+For MONITOR, we estimate the amount of storage needed using the sampling period and fill it up.
+The capacity is computed using something like so (see <code>ArchiveEngine.java:addChannel</code>)
+<pre>
+<code>int buffer_capacity = ((int) Math.round(Math.max((write_period/pvSamplingPeriod)*sampleBufferCapacityAdjustment, 1.0))) + 1;</code>
+</pre> 
+For example, if the <code>write_period</code> is 10 seconds, and the <code>pvSamplingPeriod</code> is 1 second, we would allocate <code>10/10 + 1 = 11</code> samples for the default <code>sampleBufferCapacityAdjustment</code>.
+Thus, in the case where the PV is changing at a rate greater than 1Hz, you should expect 11 samples, a gap where we run out of space and throw away samples, then 11 samples when we switch buffers and so on. 
+</li>
+<li>
+For SCAN, the engine updates one slot/variable at whatever rate is sent from the IOC. 
+And then a separate thread picks the value of the one slot/variable every sampling period and writes it out.
+</li>
+</ul>
+
+</div>
+</li>
 
 
 </ol>
