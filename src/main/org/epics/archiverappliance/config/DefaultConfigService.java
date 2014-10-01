@@ -1105,7 +1105,7 @@ public class DefaultConfigService implements ConfigService {
 
 
 
-	private final String[] extraFields = new String[] {"MDEL","ADEL", "SCAN","RTYP", "NAME"};
+	private final String[] extraFields = new String[] {"MDEL","ADEL", "SCAN","RTYP"};
 	@Override
 	public String[] getExtraFields() {
 		return extraFields;

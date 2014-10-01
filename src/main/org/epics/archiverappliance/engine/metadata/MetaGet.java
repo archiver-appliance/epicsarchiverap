@@ -8,6 +8,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.metadata;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,9 +86,12 @@ public class MetaGet implements Runnable {
 			pv.start();
 
 			EPICS_V3_PV pv2 = new EPICS_V3_PV(pvName + ".NAME", configservice, jcaCommandThreadId);
-			pvList.put("pvname", pv2);
+			pvList.put("NAME", pv2);
 			pv2.start();
 			
+			EPICS_V3_PV pv3 = new EPICS_V3_PV(pvName + ".NAME$", configservice, jcaCommandThreadId);
+			pvList.put("NAME$", pv3);
+			pv3.start();
 			
 			if (metadatafields != null) {
 				for (int i = 0; i < metadatafields.length; i++) {
@@ -109,21 +113,30 @@ public class MetaGet implements Runnable {
 		try {
 			EPICS_V3_PV pvMain = pvList.get("main");
 			MetaInfo mainMeta = pvMain.getToalMetaInfo();
-			EPICS_V3_PV pv_Name = pvList.get("pvname");
-			DBRTimeEvent value2 = pv_Name.getValue();
-			if (value2 != null) {
-				SampleValue sampleValue = value2.getSampleValue();
-				if (sampleValue != null) { 
-					parseAliasInfo(sampleValue, mainMeta);
-				}
+			// Per Dirk Zimoch, we first check the NAME$.
+			// If that exists, we use it. If not, we use the NAME
+			EPICS_V3_PV pv_NameDollar = pvList.get("NAME$");
+			DBRTimeEvent nameDollarValue = pv_NameDollar.getValue();
+			if (nameDollarValue != null && nameDollarValue.getSampleValue() != null) {
+				logger.debug("Using the NAME$ value as the NAME for pv " + pvName);
+				SampleValue sampleValue = nameDollarValue.getSampleValue();
+				parseAliasInfo(sampleValue, mainMeta);
 			} else { 
-				logger.warn("Either we probably did not have time to determine .NAME for " + MetaGet.this.pvName + " or the field does not exist");
+				logger.debug("Using the NAME value as the NAME for pv " + pvName);
+				EPICS_V3_PV pv_Name = pvList.get("NAME");
+				DBRTimeEvent nameValue = pv_Name.getValue();
+				if (nameValue != null && nameValue.getSampleValue() != null) {
+					SampleValue sampleValue = nameValue.getSampleValue();
+					parseAliasInfo(sampleValue, mainMeta);
+				} else { 
+					logger.warn("Either we probably did not have time to determine .NAME for " + MetaGet.this.pvName + " or the field does not exist");
+				}
 			}
 			
 			Enumeration<String> fieldNameList = pvList.keys();
 			while (fieldNameList.hasMoreElements()) {
 				String fieldName = fieldNameList.nextElement();
-				if (fieldName.equals("main") || fieldName.equals("pvname")) {
+				if (fieldName.equals("main") || fieldName.equals("NAME") || fieldName.equals("NAME$")) {
 					// These have already been processed; so do nothing.
 				} else { 
 					if (fieldName.endsWith("RTYP")) {
@@ -158,16 +171,37 @@ public class MetaGet implements Runnable {
  */
 	private void parseAliasInfo(SampleValue tempvalue, MetaInfo mainMeta) {
 		if (tempvalue instanceof ScalarValue<?>) {
-			mainMeta.setAliasName(""
-					+ ((ScalarValue<?>) tempvalue).getValue().doubleValue());
+			// We have a number for a NAME????
+			mainMeta.setAliasName("" + ((ScalarValue<?>) tempvalue).getValue().doubleValue());
 		} else if (tempvalue instanceof ScalarStringSampleValue) {
 			String tempName = ((ScalarStringSampleValue) tempvalue).toString();
-			if (!pvName.equals(tempName))
-				mainMeta.setAliasName(tempName);
+			mainMeta.setAliasName(tempName);
+			mainMeta.addOtherMetaInfo("NAME", tempName);
 		} else if (tempvalue instanceof VectorValue<?>) {
-			mainMeta.setAliasName(""
-					+ ((VectorValue<?>) tempvalue).getValue().doubleValue());
+			VectorValue<?> vectorValue = (VectorValue<?>) tempvalue;
+			int elementCount = vectorValue.getElementCount();
+			byte[] namebuf = new byte[elementCount];
+			String nameDollar = null;
+			for(int i = 0; i < elementCount; i++) { 
+				byte byteValue = (byte) vectorValue.getValue(i).byteValue();
+				if(byteValue == 0) { 
+					try {
+						nameDollar = new String(namebuf, 0, i, "UTF-8");
+					} catch (UnsupportedEncodingException e) {
+						logger.fatal(e.getMessage(), e);
+					}
+					break;
+				}
+				namebuf[i] = byteValue;
+			}
+			if(nameDollar != null) { 
+				mainMeta.setAliasName(nameDollar);
+				mainMeta.addOtherMetaInfo("NAME", nameDollar);
+			} else { 
+				logger.error("We got a NAME$ value but could not use it for some reason for PV " + pvName);
+			}
 		} else if (tempvalue instanceof VectorStringSampleValue) {
+			// We have an array of strings? for a NAME????
 			String tempName = ((VectorStringSampleValue) tempvalue).toString();
 			if (!pvName.equals(tempName))
 				mainMeta.setAliasName(tempName);

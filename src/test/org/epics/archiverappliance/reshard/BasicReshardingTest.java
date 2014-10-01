@@ -107,7 +107,7 @@ public class BasicReshardingTest {
 		logger.debug("About to submit");
 		archiveButton.click();
 		// We have to wait for some time here as it does take a while for the workflow to complete.
-		Thread.sleep(5*60*1000);
+		Thread.sleep(7*60*1000);
 		WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		checkStatusButton.click();
 		Thread.sleep(2*1000);
@@ -179,7 +179,7 @@ public class BasicReshardingTest {
 		String pausePVURL = "http://localhost:17665/mgmt/bpl/pauseArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
 		JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
 		assertTrue("Cannot pause PV", pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"));
-		Thread.sleep(5000);
+		Thread.sleep(1000);
 		logger.info("Successfully paused the PV; other appliance is " + otherAppliance);
 		
 		driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvName);
