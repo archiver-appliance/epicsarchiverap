@@ -112,7 +112,12 @@ public final class PBThreeTierETLPVLookup {
 					if(pVsForThisAppliance != null) { 
 						for(String pvName : pVsForThisAppliance) { 
 							if(!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
-								addETLJobs(pvName, configService.getTypeInfoForPV(pvName));
+								PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+								if(!typeInfo.isPaused()) { 
+									addETLJobs(pvName, typeInfo);
+								} else { 
+									logger.info("Skipping adding ETL jobs for paused PV " + pvName);
+								}
 							}
 						}
 					} else { 
@@ -192,6 +197,12 @@ public final class PBThreeTierETLPVLookup {
 				if(lookupItem != null) { 
 					lookupItem.getCancellingFuture().cancel(false);
 					lifetimeId2PVName2LookupItem.get(etllifetimeid).remove(pvName);
+					
+					if(lookupItem.getETLSource().consolidateOnShutdown()) { 
+						logger.debug("Need to consolidate data from etl source " + ((StoragePlugin) lookupItem.getETLSource()).getName() + " for pv " + pvName + " for storage " + ((StorageMetrics) lookupItem.getETLDest()).getName());
+						Timestamp oneYearLaterTimeStamp=TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds()+365*24*60*60, 0);
+						new ETLJob(lookupItem, oneYearLaterTimeStamp).run();
+					}
 				} else { 
 					logger.debug("Did not find lookup item for " + pvName + " for lifetime id " + etllifetimeid);
 				}
