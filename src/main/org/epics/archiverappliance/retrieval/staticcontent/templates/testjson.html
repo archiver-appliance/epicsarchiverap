@@ -9,18 +9,12 @@
 <script src="../ui/comm/js/dateformat.js"></script>
 <link rel="stylesheet" type="text/css" href="../ui/css/testjson.css" />
 <script type="text/javascript">
-var params = {};
-params.pv = '${pv}';
-params.from = '${start}';
-params.to = '${end}';
-#foreach ($mapEntry in $otherparams.entrySet())
-params.$mapEntry.key = '$mapEntry.value[0]';
-#end
+var params = {params};
 
 </script>
 </head>
 <body>
-  <div id="summary">Data for <span id="pvname">${pv}</span> requested from <span id="starttime">${humanreadablestart}</span> to <span id="endtime">${humanreadableend}</span></div>
+  <div id="summary">Data for <span id="pvname">{pv}</span> requested from <span id="starttime">{humanreadablestart}</span> to <span id="endtime">{humanreadableend}</span></div>
   <div id="chartplaceholder" style="width:1280px;height:800px;"></div>
   <div id="message"></div>  
   <script src="../ui/js/archclient.js"></script>

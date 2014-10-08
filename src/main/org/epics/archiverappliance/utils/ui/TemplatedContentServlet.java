@@ -16,8 +16,12 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -26,23 +30,25 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.json.simple.JSONObject;
 
 /**
- * A servlet that uses velocity as a template engine.
+ * A servlet that support an extremely simple templating language.
+ * This was previously written using Velocity but this was the only page that had any server side templating at all.
+ * And velocity seemed overkill for this.
+ * So, this uses home-grown templating logic which is extremely simple.
+ * Context is a HashMap<String, String> and can be used to replace variable in the template.
+ * For example, {pv} will be replaced with the String context.get("pv")
+ * For complex structures, use in place JSON - see the params variable that is added to the context as a JSON string.
  * @author mshankar
  *
  */
 @SuppressWarnings("serial")
 public class TemplatedContentServlet extends HttpServlet {
 	private static Logger logger = Logger.getLogger(TemplatedContentServlet.class.getName());
-	private VelocityEngine ve = null;
 	private ConfigService configService = null;
 
 	@Override
@@ -128,33 +134,69 @@ public class TemplatedContentServlet extends HttpServlet {
 		long duration = endMillis - startMillis;
 		long prevStartMillis = startMillis - duration;
 		long nextEndMillis = endMillis + duration;
+		// var params = {};
+		// params.pv = '${pv}';
+		// params.from = '${start}';
+		// params.to = '${end}';
+		// #foreach ($mapEntry in $otherparams.entrySet())
+		// params.$mapEntry.key = '$mapEntry.value[0]';
+		// #end
+
+		HashMap<String, Object> params = new HashMap<String, Object>();
+		params.put("pv", pvName);
+		params.put("start", TimeUtils.convertToISO8601String(new Timestamp(startMillis)));
+		params.put("end", TimeUtils.convertToISO8601String(new Timestamp(endMillis)));
+		params.putAll(otherParams);
 		
-		VelocityContext context = new VelocityContext();
+		HashMap<String, String> context = new HashMap<String, String>();
 		context.put("pv", pvName);
 		context.put("start", TimeUtils.convertToISO8601String(new Timestamp(startMillis)));
 		context.put("end", TimeUtils.convertToISO8601String(new Timestamp(endMillis)));
 		context.put("prevStart", TimeUtils.convertToISO8601String(new Timestamp(prevStartMillis)));
 		context.put("nextEnd", TimeUtils.convertToISO8601String(new Timestamp(nextEndMillis)));
-		context.put("otherparams", otherParams);
 		context.put("humanreadablestart", TimeUtils.convertToHumanReadableString(new Timestamp(startMillis)));
 		context.put("humanreadableend", TimeUtils.convertToHumanReadableString(new Timestamp(endMillis)));
+		context.put("params", JSONObject.toJSONString(params));
 
 		logger.info("Processing request for templated content");
 		resp.setContentType("text/html");
-		Writer out = resp.getWriter();
-		Template template = ve.getTemplate("templates/testjson.html");
-		template.merge( context, out);
-		out.close();
+		try(Writer out = resp.getWriter()) { 
+			String testJsonPath = this.getServletContext().getRealPath("/WEB-INF/classes/templates/testjson.html");
+			List<String> lines = Files.readAllLines(Paths.get(testJsonPath), Charset.forName("UTF-8"));
+			for(String line : lines) { 
+				if(line.contains("{")) { 
+					String[] lparts = line.split("[\\{]");
+					for(String lpart: lparts) { 
+						logger.debug("Processing lpart " + lpart);
+						if(lpart.contains("}")) { 
+							String[] rparts = lpart.split("[\\}]");
+							assert(rparts.length == 2);
+							String name = rparts[0];
+							String remainingString = rparts[1];
+							if(context.containsKey(name)) { 
+								out.write(context.get(name));
+							} else { 
+								out.write("{" + name + "}");
+							}
+							out.write(remainingString);
+						} else { 
+							out.write(lpart);
+						}
+					}
+				} else { 
+					out.write(line);
+				}
+				out.write("\n");
+			}
+			out.flush();
+		} catch(Exception ex) { 
+			logger.error("Exception in quick chart", ex);
+		}
 	}
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		ve = new VelocityEngine();
-		ve.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, "org.apache.velocity.runtime.log.SimpleLog4JLogSystem" );
-		ve.setProperty("runtime.log.logsystem.log4j.category", "velocity");
-		ve.setProperty("file.resource.loader.path", this.getServletContext().getRealPath("/WEB-INF/classes"));
-		ve.init();
 		this.configService = (ConfigService) this.getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
 	}
 	
