@@ -16,6 +16,9 @@ import java.lang.management.PlatformLoggingMXBean;
 import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -165,6 +168,18 @@ public class DefaultConfigService implements ConfigService {
 		this.servletContext = sce;
 		String contextPath = sce.getContextPath();
 		logger.info("DefaultConfigService was created with a servlet context " + contextPath);
+		
+		try { 
+			String pathToVersionTxt = sce.getRealPath("ui/comm/version.txt");
+			logger.debug("The full path to the version.txt is " + pathToVersionTxt);
+			List<String> lines = Files.readAllLines(Paths.get(pathToVersionTxt), Charset.forName("UTF-8"));
+			for(String line : lines) { 
+				configlogger.info(line);
+			}
+		} catch(Throwable t) {
+			logger.fatal("Unable to determine appliance version", t);
+		}
+		
 		try {
 			// We first try Java system properties for this appliance's identity
 			// If a property is not defined, then we check the environment.
