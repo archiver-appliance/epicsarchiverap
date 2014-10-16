@@ -20,7 +20,10 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 
 /**
@@ -47,27 +50,45 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
 		
 		void readEvents(LineByteStream lbs) throws Exception {
 			if(event1 == null) {
-				lbs.readLine(line1);
-				if(!line1.isEmpty()) {
-					event1 = (Event) unmarshallingConstructor.newInstance(year, line1);
-					long event1EpochSeconds = event1.getEpochSeconds();
-					if(event1EpochSeconds > endTimeEpochSeconds) { 
-						event1 = null;
-						line1.reset();
-						return;
+				boolean done = false;
+				while(!done) {
+					try { 
+						lbs.readLine(line1);
+						if(!line1.isEmpty()) {
+							event1 = (Event) unmarshallingConstructor.newInstance(year, line1);
+							long event1EpochSeconds = event1.getEpochSeconds();
+							done = true;
+							if(event1EpochSeconds > endTimeEpochSeconds) { 
+								event1 = null;
+								line1.reset();
+								return;
+							}
+						}
+						done = true;
+					} catch(InvalidProtocolBufferException|PBParseException ex) { 
+						logger.error("InvalidProtocolBufferException|PBParseException processing PB event near " + lbs.getCurrentPosition() + "//0");
 					}
 				}
 			}
 			
 			if(event2 == null) {
-				lbs.readLine(line2);
-				if(!line2.isEmpty()) {
-					event2 = (Event) unmarshallingConstructor.newInstance(year, line2);
-					long event2EpochSeconds = event2.getEpochSeconds();
-					if(event2EpochSeconds >= endTimeEpochSeconds) { 
-						event2 = null;
-						line2.reset();
-						return;
+				boolean done = false;
+				while(!done) {
+					try { 
+						lbs.readLine(line2);
+						if(!line2.isEmpty()) {
+							event2 = (Event) unmarshallingConstructor.newInstance(year, line2);
+							long event2EpochSeconds = event2.getEpochSeconds();
+							done = true;
+							if(event2EpochSeconds >= endTimeEpochSeconds) { 
+								event2 = null;
+								line2.reset();
+								return;
+							}
+						}
+						done = true;
+					} catch(InvalidProtocolBufferException|PBParseException ex) { 
+						logger.error("InvalidProtocolBufferException|PBParseException processing PB event near " + lbs.getCurrentPosition() + "//1");
 					}
 				}
 			}

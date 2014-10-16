@@ -17,6 +17,8 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+
 /**
  * Similar to the firstSample operator with the exception that we use the last sample in the bin.\
  * @author mshankar
@@ -65,24 +67,28 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 					if(srcDesc == null) srcDesc = (RemotableEventStreamDesc) strm.getDescription();
 					ArrayListEventStream buf = new ArrayListEventStream(0, (RemotableEventStreamDesc) strm.getDescription());
 					for(Event e : strm) {
-						long epochSeconds = e.getEpochSeconds();
-						long binNumber = epochSeconds/intervalSecs;
-						if(binNumber >= firstBin && binNumber <= lastBin) { 
-							if(binNumber != currentBin) {
-								currentBin = binNumber;
-								bin2Event.put(currentBin, e.makeClone());		
-							} else { 
-								if(!bin2Event.containsKey(currentBin)) {
+						try { 
+							long epochSeconds = e.getEpochSeconds();
+							long binNumber = epochSeconds/intervalSecs;
+							if(binNumber >= firstBin && binNumber <= lastBin) { 
+								if(binNumber != currentBin) {
+									currentBin = binNumber;
 									bin2Event.put(currentBin, e.makeClone());		
 								} else { 
-									Event currentBinEvent = bin2Event.get(currentBin);
-									if(e.getEventTimeStamp().after(currentBinEvent.getEventTimeStamp())) { 
+									if(!bin2Event.containsKey(currentBin)) {
 										bin2Event.put(currentBin, e.makeClone());		
+									} else { 
+										Event currentBinEvent = bin2Event.get(currentBin);
+										if(e.getEventTimeStamp().after(currentBinEvent.getEventTimeStamp())) { 
+											bin2Event.put(currentBin, e.makeClone());		
+										}
 									}
 								}
+							} else if(binNumber < firstBin) {
+								bin2Event.put(firstBin, e.makeClone());	
 							}
-						} else if(binNumber < firstBin) {
-							bin2Event.put(firstBin, e.makeClone());	
+						} catch(PBParseException ex) { 
+							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
 					return buf;

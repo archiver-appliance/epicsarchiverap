@@ -17,6 +17,8 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+
 /**
  * Abstract class for various operators that operate on a SummaryStatistics
  * Child classes implement the getIdentity and the getStats method.
@@ -100,37 +102,41 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 					// If we cache the mean/sigma etc, then we should add something to the desc telling us that this is cached data and then we can replace the stat value for that bin?
 					if(srcDesc == null) srcDesc = (RemotableEventStreamDesc) strm.getDescription();
 					for(Event e : strm) {
-						DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
-						long epochSeconds = dbrTimeEvent.getEpochSeconds();
-						if(dbrTimeEvent.getEventTimeStamp().after(previousEventTimestamp)) { 
-							previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
-						} else {
-							// Note that this is expected. ETL is not transactional; so we can get the same event twice from different stores.
-							if(logger.isDebugEnabled()) { 
-								logger.debug("Skipping older event " + TimeUtils.convertToHumanReadableString(dbrTimeEvent.getEventTimeStamp()) + " previous " + TimeUtils.convertToHumanReadableString(previousEventTimestamp));
-							}
-							continue;
-						}
-						long binNumber = epochSeconds/intervalSecs;
-						if(binNumber >= firstBin && binNumber <= lastBin) {
-							// We only add bins for the specified time frame. 
-							// The ArchiveViewer depends on the number of values being the same and because of different rates for PVs, the bin number for the starting bin could be different...
-							// We could add a firstbin-1 and put all values before the starting timestamp in that bin but that would give incorrect summaries.
-							if(binNumber != currentBin) {
-								if(currentBin != -1) { 
-									consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
+						try { 
+							DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
+							long epochSeconds = dbrTimeEvent.getEpochSeconds();
+							if(dbrTimeEvent.getEventTimeStamp().after(previousEventTimestamp)) { 
+								previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
+							} else {
+								// Note that this is expected. ETL is not transactional; so we can get the same event twice from different stores.
+								if(logger.isDebugEnabled()) { 
+									logger.debug("Skipping older event " + TimeUtils.convertToHumanReadableString(dbrTimeEvent.getEventTimeStamp()) + " previous " + TimeUtils.convertToHumanReadableString(previousEventTimestamp));
 								}
-								switchToNewBin(binNumber);
+								continue;
 							}
-							currentBinCollector.addEvent(e);
-							if(dbrTimeEvent.getSeverity() > currentMaxSeverity) { 
-								currentMaxSeverity = dbrTimeEvent.getSeverity();
+							long binNumber = epochSeconds/intervalSecs;
+							if(binNumber >= firstBin && binNumber <= lastBin) {
+								// We only add bins for the specified time frame. 
+								// The ArchiveViewer depends on the number of values being the same and because of different rates for PVs, the bin number for the starting bin could be different...
+								// We could add a firstbin-1 and put all values before the starting timestamp in that bin but that would give incorrect summaries.
+								if(binNumber != currentBin) {
+									if(currentBin != -1) { 
+										consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
+									}
+									switchToNewBin(binNumber);
+								}
+								currentBinCollector.addEvent(e);
+								if(dbrTimeEvent.getSeverity() > currentMaxSeverity) { 
+									currentMaxSeverity = dbrTimeEvent.getSeverity();
+								}
+								if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) { 
+									currentConnectionChangedEvents = true;
+								}
+							} else { 
+								logger.debug("Skipping event in bin outside range " + binNumber);
 							}
-							if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) { 
-								currentConnectionChangedEvents = true;
-							}
-						} else { 
-							logger.debug("Skipping event in bin outside range " + binNumber);
+						} catch(PBParseException ex) { 
+							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
 					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);

@@ -14,6 +14,8 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+
 /**
  * This takes "interval" argument and returns only the first sample in that interval...
  * @author mshankar
@@ -53,11 +55,15 @@ public class FirstSamplePP implements PostProcessor {
 					long previousBinNum = -1;
 					ArrayListEventStream buf = new ArrayListEventStream(0, (RemotableEventStreamDesc) strm.getDescription());
 					for(Event e : strm) {
-						long epochSeconds = e.getEpochSeconds();
-						long binNumber = epochSeconds/intervalSecs;
-						if(binNumber != previousBinNum) {
-							buf.add(e.makeClone());
-							previousBinNum = binNumber;
+						try { 
+							long epochSeconds = e.getEpochSeconds();
+							long binNumber = epochSeconds/intervalSecs;
+							if(binNumber != previousBinNum) {
+								buf.add(e.makeClone());
+								previousBinNum = binNumber;
+							}
+						} catch(PBParseException ex) { 
+							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
 					return buf;
