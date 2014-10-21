@@ -48,14 +48,22 @@ public class PVDetails implements BPLAction {
 	// fancy stuff like so.
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		String pvName = PVNames.stripFieldNameFromPVName(req.getParameter("pv"));
-		String pvNameFromRequest = pvName;
+		String pvNameFromRequest = req.getParameter("pv");
+		String pvName = PVNames.stripFieldNameFromPVName(pvNameFromRequest);
 		String realName = configService.getRealNameForAlias(pvName);
 		if(realName != null) pvName = realName;
 		logger.info("Getting the detailed status for PV " + pvName);
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		String pvDetailsURLSnippet = "/getPVDetails?pv=" + URLEncoder.encode(pvName, "UTF-8");
 		ApplianceInfo info = configService.getApplianceForPV(pvName);
+		if(info == null) { 
+			pvName = pvNameFromRequest;
+			info = configService.getApplianceForPV(pvName);
+			if(info == null) { 
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Cannot find the appliance archiving " + pvNameFromRequest);
+				return;
+			}
+		}
+		String pvDetailsURLSnippet = "/getPVDetails?pv=" + URLEncoder.encode(pvName, "UTF-8");
 		try (PrintWriter out = resp.getWriter()) {
 			LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
 			addDetailedStatus(result, "PV Name", pvNameFromRequest);
