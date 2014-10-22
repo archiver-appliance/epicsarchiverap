@@ -168,7 +168,7 @@ public class AppendDataStateData {
 				createNewFileAndWriteAHeader(pvName, pvPath, stream);
 			}
 		} else {
-			logger.debug(desc + ": Appending to existing PB file " + pvPath.toAbsolutePath().toString() + " for PV " + pvName + " for year " + this.currentEventsYear);
+			if(logger.isDebugEnabled()) { logger.debug(desc + ": Appending to existing PB file " + pvPath.toAbsolutePath().toString() + " for PV " + pvName + " for year " + this.currentEventsYear); }
 			updateStateBasedOnExistingFile(pvName, pvPath);
 		}
 		return pvPath;
