@@ -96,6 +96,7 @@ public class PVDetails implements BPLAction {
 						addDetailedStatus(statuses, "Channels for the extra fields", "" + metaFieldCount);
 						addDetailedStatus(statuses, "Connected channels for the extra fields", "" + connectedMetaFieldCount);
 						addDetailedStatus(statuses, "Sample buffer capacity", "" + channel.getSampleBuffer().getCapacity());
+						addDetailedStatus(statuses, "Time elapsed since search request (s)", "" + channel.getSecondsElapsedSinceSearchRequest());
 					}
 				}
 				
