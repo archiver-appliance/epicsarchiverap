@@ -98,6 +98,7 @@ public class EngineMetrics implements JSONAware {
 		addDetailedStatus(details, "Connected PV count", Integer.toString(connectedPVCount));
 		addDetailedStatus(details, "Paused PV count", Integer.toString(pausedPVCount));
 		addDetailedStatus(details, "Total channels", Integer.toString(totalEPICSChannels));
+		addDetailedStatus(details, "Approx pending jobs in engine queue", Long.toString((context.getScheduler().getQueue().size())));
 		addDetailedStatus(details, "Event Rate (in events/sec)", twoSignificantDigits.format(eventRate));
 		addDetailedStatus(details, "Data Rate (in bytes/sec)", twoSignificantDigits.format(dataRate));
 		addDetailedStatus(details, "Data Rate in (GB/day)", twoSignificantDigits.format((dataRate*60*60*24)/(1024*1024*1024)));
