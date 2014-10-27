@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -86,8 +87,8 @@ public class EngineContext {
 	private ConfigService configService;
 	private String myIdentity;
 	
-	/** A scheduled thread pool executor only for handling disconnects */
-	private ScheduledThreadPoolExecutor disconnectScheduler;
+	/** A scheduled thread pool executor misc tasks - these tasks can take an unspecified amount of time. */
+	private ScheduledThreadPoolExecutor miscTasksScheduler;
 
 	/**
 	 * On disconnects, we add tasks that wait for this timeout to convert reconnects into ca searches into pause resumes.
@@ -216,7 +217,7 @@ public class EngineContext {
 			}
 		}
 		
-		startupDisconnectPauseResumeMonitor(configService);
+		startMiscTasksScheduler(configService);
 		
 		boolean allContextsHaveBeenInitialized = false;
 		for(int loopcount = 0; loopcount < 60 && !allContextsHaveBeenInitialized; loopcount++) {
@@ -253,15 +254,14 @@ public class EngineContext {
 	}
 
 	/**
-	 * We start at task that runs periodically and checks for CA connectivity. 
-	 * If something has not connected in a while, we pause/resume in an attempt to clean any stale state in CAJ/JCA.
+	 * Start up the scheduler for misc tasks. 
 	 * @param configService
 	 */
-	private void startupDisconnectPauseResumeMonitor(final ConfigService configService) {
-		disconnectScheduler = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+	private void startMiscTasksScheduler(final ConfigService configService) {
+		miscTasksScheduler = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {
-				Thread ret = new Thread(r, "Scheduler for handling PV disconnects.");
+				Thread ret = new Thread(r, "Engine scheduler for misc tasks.");
 				return ret;
 			}
 		});
@@ -269,14 +269,23 @@ public class EngineContext {
 		configService.addShutdownHook(new Runnable() {
 			@Override
 			public void run() {
-				logger.info("Shutting down the disconnect scheduler.");
-				disconnectScheduler.shutdownNow();
+				logger.info("Shutting down the engine scheduler for misc tasks.");
+				miscTasksScheduler.shutdownNow();
 			}
 		});
 
 		// Add an assertion in case we accidentally set this to 0 from the props file.
 		assert(disconnectCheckerPeriodInMinutes > 0);
-		disconnectFuture = disconnectScheduler.scheduleAtFixedRate(new DisconnectChecker(configService), disconnectCheckerPeriodInMinutes, disconnectCheckerPeriodInMinutes, TimeUnit.MINUTES);
+		disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(new DisconnectChecker(configService), disconnectCheckerPeriodInMinutes, disconnectCheckerPeriodInMinutes, TimeUnit.MINUTES);
+		
+		// Add a task to update the metadata fields for each PV
+		// We start this at a well known time; this code was previously suspected of a small memory leak.
+		// Need to make sure this leak is no more.
+		long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
+		// Start the metadata updates tomorrow afternoon; doesn't really matter what time; minimze impact with ETL etc
+		long tomorrowAfternoon = ((currentEpochSeconds/(24*60*60)) + 1)*24*60*60 + 22*60*60;
+		logger.info("Starting the metadata updater from " + TimeUtils.convertToHumanReadableString(tomorrowAfternoon));
+		miscTasksScheduler.scheduleAtFixedRate(new MetadataUpdater(), tomorrowAfternoon-currentEpochSeconds, 24*60*60, TimeUnit.SECONDS);
 	}
 	
 	public JCACommandThread getJCACommandThread(int jcaCommandThreadId) {
@@ -427,8 +436,8 @@ public class EngineContext {
 	}
 	
 	/**
-	 * A class that loops thru the archive channels and converts those that have not connected for some time into a pause/resume
-	 * Unclear if this is really necessary any more. 
+	 * A class that loops thru the archive channels and checks for connectivity.
+	 * We start connecting up the metachannels only after a certain percentage of channels have connected up.
 	 * @author mshankar
 	 *
 	 */
@@ -474,31 +483,6 @@ public class EngineContext {
 				}
 
 				int disconnectedChannels = disconnectedPVNames.size();
-				
-				logger.debug("Checking for disconnected channels yields " + disconnectedChannels + " channels and " + needToStartMetaChannelPVNames.size() + " meta");
-				
-				if(disconnectedChannels > 0) { 
-					for(String disconnectedPV : disconnectedPVNames) { 
-						PVTypeInfo typeInfo = EngineContext.this.configService.getTypeInfoForPV(disconnectedPV);
-						if(typeInfo != null && !typeInfo.isPaused()) {
-							logger.warn("Pausing and resuming  the PV " + disconnectedPV);
-							try { 
-								ArchiveEngine.pauseArchivingPV(disconnectedPV, configService);
-								Thread.sleep(1000);
-								List<CommandThreadChannel> channels = EngineContext.this.getAllChannelsForPV(disconnectedPV);
-								if(!channels.isEmpty()) {
-									logger.warn("Even after pausing, we still seem to have some CAJ channels hanging around for " + disconnectedPV);
-								}
-								ArchiveEngine.resumeArchivingPV(disconnectedPV, configService);
-								logger.debug("Successfully paused and resumed the PV " + disconnectedPV);
-							} catch(Throwable t) { 
-								logger.error("Exception pausing and resuming PV on disconnect " + disconnectedPV, t);
-							}
-						} else { 
-							logger.debug("Not pausing and resuming already paused/deleted PV " + disconnectedPV);
-						}
-					}
-				}
 
 				// Need to start up the metachannels here after we determine that the cluster has started up..
 				// To do this we update the connected/disconnected count for this appliance.
@@ -619,7 +603,7 @@ public class EngineContext {
 		disconnectFuture.cancel(false);
 		this.disconnectCheckTimeoutInMinutes = newDisconnectCheckTimeoutMins;
 		this.disconnectCheckerPeriodInMinutes = newDisconnectCheckTimeoutMins;
-		this.startupDisconnectPauseResumeMonitor(configService);
+		this.startMiscTasksScheduler(configService);
 	}
 	
 	
@@ -668,5 +652,30 @@ public class EngineContext {
 	 */
 	public double getSampleBufferCapacityAdjustment() {
 		return sampleBufferCapacityAdjustment;
+	}
+	
+	
+	/**
+	 * Use EPICS_V3_PV's updateTotalMetaInfo to update the metadata once every 24 hours.  
+	 * @author mshankar
+	 *
+	 */
+	private class MetadataUpdater implements Runnable { 
+		public void run() {
+			logger.info("Starting the daily update of metadata information");
+			int pvCount = 0;
+			for(ArchiveChannel channel : EngineContext.this.channelList.values()) {
+				if(channel.isConnected()) {
+					logger.debug("Updating metadata for " + channel.getName());
+					channel.updateMetadataOnceADay(EngineContext.this);
+					pvCount++;
+					// 100,000 PVs should complete in 100,000/(100*(1000/250)) seconds approx 5 minutes
+					if(pvCount %100 == 0) { 
+						try {Thread.sleep(250); } catch(Throwable t) {}
+					}
+				}
+			}
+			logger.info("Completed scheduling the daily update of metadata information");
+		}
 	}
 }

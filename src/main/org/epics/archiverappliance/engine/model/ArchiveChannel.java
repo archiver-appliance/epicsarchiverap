@@ -16,10 +16,8 @@ package org.epics.archiverappliance.engine.model;
 import java.sql.Timestamp;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Writer;
@@ -31,6 +29,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
+import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVListener;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
@@ -60,11 +59,6 @@ abstract public class ArchiveChannel {
 	 * The name of the PV that control archiving of this PV.
 	 */
 	final private String controlPVname;
-
-	/**
-	 * Pointer to the config service.
-	 */
-	final private ConfigService configService;
 
 	/**
 	 * Is this channel currently running?
@@ -274,7 +268,6 @@ abstract public class ArchiveChannel {
 		this.last_archived_timestamp = last_archived_timestamp;
 		this.pvMetrics = new PVMetrics(name, controlPVname, System.currentTimeMillis() / 1000, archdbrtype);
 		this.isMetaField = isMetaField;
-		this.configService = configservice;
 		if (!isMetaField) {
 			this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype,this.pvMetrics);
 		}
@@ -585,14 +578,6 @@ abstract public class ArchiveChannel {
 		if (SampleBuffer.isInErrorState())
 			need_write_error_sample = true;
 		
-		if(timeevent.hasFieldValues() && !timeevent.isActualChange()) { 
-			// We have some field values and this is not an actual change.
-			// This typically gets written by saveMetaDataOnceEveryDay in EPICS_V3_PV once a day.
-			// Trying to schedule an update of the metadata and runtime fields here...
-			logger.debug("Scheduling an update of the runtime fields and metadata in about 23 hours.");
-			scheduleUpdateOfMetadataAndRuntimeFields();
-		}
-
 		return true;
 	}
 
@@ -703,34 +688,6 @@ abstract public class ArchiveChannel {
 		return this.pv.getLowLevelChannelInfo();
 	}
 	
-	private void scheduleUpdateOfMetadataAndRuntimeFields() { 
-		Random rand = new Random();
-		int randDelayInMinutes = 12*60 + rand.nextInt(12*60);
-		logger.debug("Scheduling the update of metadata and runtime fields in " + randDelayInMinutes + "(mins) at " + TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000 + randDelayInMinutes*60));
-		this.configService.getEngineContext().getScheduler().schedule(new Runnable() {
-			@Override
-			public void run() {
-				try { 
-					if(ArchiveChannel.this.pv != null) { 
-						ArchiveChannel.this.configService.getEngineContext().getJCACommandThread(ArchiveChannel.this.JCACommandThreadID).addCommand(new Runnable() {
-							@Override
-							public void run() {
-								try { 
-									ArchiveChannel.this.pv.updateTotalMetaInfo();
-								} catch(Throwable t) { 
-									logger.error("Exception issuing request to update total meta Info for pv " + ArchiveChannel.this.name, t);
-								}
-							}
-						});
-					}
-				} catch(Throwable t) { 
-					logger.error("Exception issuing request to update total meta Info for pv " + ArchiveChannel.this.name, t);
-				}
-			}
-		}, randDelayInMinutes, TimeUnit.MINUTES);
-
-	}
-	
 	/**
 	 * Get the archive channels for the meta channels - this should include both runtime and otherwise
 	 * @return
@@ -831,6 +788,26 @@ abstract public class ArchiveChannel {
 	 */
 	public void setJCACommandThreadID(int jCACommandThreadID) {
 		JCACommandThreadID = jCACommandThreadID;
+	}
+	
+	
+	/**
+	 * Use this method to do a caget on the metadata..
+	 * @param context
+	 */
+	public void updateMetadataOnceADay(EngineContext context) { 
+		if(this.pv != null) { 
+			context.getJCACommandThread(ArchiveChannel.this.JCACommandThreadID).addCommand(new Runnable() {
+				@Override
+				public void run() {
+					try { 
+						ArchiveChannel.this.pv.updateTotalMetaInfo();
+					} catch(Throwable t) { 
+						logger.error("Exception issuing request to update total meta Info for pv " + ArchiveChannel.this.name, t);
+					}
+				}
+			});
+		}
 	}
 	
 	
