@@ -2,6 +2,10 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -12,6 +16,7 @@ import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONObject;
 
 /**
  * 
@@ -24,6 +29,7 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
  */
 public class GetApplianceInfo implements BPLAction {
 	private static Logger logger = Logger.getLogger(GetApplianceInfo.class.getName());
+	@SuppressWarnings("unchecked")
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		String id = req.getParameter("id");
@@ -45,7 +51,11 @@ public class GetApplianceInfo implements BPLAction {
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
 			JSONEncoder<ApplianceInfo> jsonEncoder = JSONEncoder.getEncoder(ApplianceInfo.class);
-			out.println(jsonEncoder.encode(applianceInfo));
+			JSONObject output = jsonEncoder.encode(applianceInfo);
+			Path versionPath = Paths.get(req.getServletContext().getRealPath("ui/comm/version.txt"));
+			String versionString = Files.readAllLines(versionPath, Charset.defaultCharset()).get(0);
+			output.put("version", versionString);
+			out.println(output);
 		} catch(Exception ex) {
 			logger.error("Exception marshalling typeinfo for appliance " + id, ex);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
