@@ -24,6 +24,10 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 public class FirstSamplePP implements PostProcessor {
 	private static Logger logger = Logger.getLogger(FirstSamplePP.class.getName());
 	private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
+	private long firstBin = 0;
+	private long lastBin = 0;
+	private long previousBinNum = -1;
+
 	
 	@Override
 	public void initialize(String userarg, String pvName) throws IOException {
@@ -39,6 +43,8 @@ public class FirstSamplePP implements PostProcessor {
 
 	@Override
 	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
+		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
 		float storageRate = typeInfo.getComputedStorageRate();
 		long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
 		// Add a fudge factor of 2 for java 
@@ -52,15 +58,17 @@ public class FirstSamplePP implements PostProcessor {
 			@Override
 			public EventStream call() throws Exception {
 				try(EventStream strm = callable.call()) {
-					long previousBinNum = -1;
 					ArrayListEventStream buf = new ArrayListEventStream(0, (RemotableEventStreamDesc) strm.getDescription());
 					for(Event e : strm) {
 						try { 
 							long epochSeconds = e.getEpochSeconds();
 							long binNumber = epochSeconds/intervalSecs;
-							if(binNumber != previousBinNum) {
-								buf.add(e.makeClone());
-								previousBinNum = binNumber;
+							if(binNumber >= firstBin && binNumber <= lastBin) {
+								if(binNumber != previousBinNum) {
+									buf.add(e.makeClone());
+									previousBinNum = binNumber;
+									logger.error("Bin Number " + binNumber + " First: " + firstBin + " Last: " + lastBin);
+								}
 							}
 						} catch(PBParseException ex) { 
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());

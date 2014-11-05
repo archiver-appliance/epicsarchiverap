@@ -176,7 +176,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			// Regardless of what we find, we add the last event from the partition before the start time
 			// This takes care of several multi-year bugs and hopefully does not introduce more.
 			// The mergededup consumer will digest this using its buffers and serve data appropriately.
-			Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(context, pvName, startTime);
+			Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(context, pvName, startTime, postProcessor, askingForProcessedDataButAbsentInCache);
 			if(lastEventOfPreviousStream != null) ret.add(lastEventOfPreviousStream);
 
 			if(paths != null && paths.length == 1) {
@@ -210,7 +210,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 		}
 	}
 
-	private Callable<EventStream> getLastEventOfPreviousPartitionBeforeTimeAsStream(BasicContext context, String pvName, Timestamp startTime) throws Exception, IOException {
+	private Callable<EventStream> getLastEventOfPreviousPartitionBeforeTimeAsStream(BasicContext context, String pvName, Timestamp startTime, PostProcessor postProcessor, boolean askingForProcessedDataButAbsentInCache) throws Exception, IOException {
 		Path mostRecentPath = PlainPBPathNameUtility.getPreviousPartitionBeforeTime(context.getPaths(), rootFolder, pvName, startTime, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
 		if(mostRecentPath != null) {
 			// Should we use these two here?
@@ -221,7 +221,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			ArchDBRTypes dbrtype = fileInfo.getType();
 			RemotableEventStreamDesc lastKnownEventDesc = new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear());
 			lastKnownEventDesc.setSource("Last known event from " + this.getName() + " from " + mostRecentPath.getFileName());
-			return CallableEventStream.makeOneEventCallable(fileInfo.getLastEvent(), lastKnownEventDesc);
+			return CallableEventStream.makeOneEventCallable(fileInfo.getLastEvent(), lastKnownEventDesc, postProcessor, askingForProcessedDataButAbsentInCache);
 		}
 		
 		logger.debug(desc + ": did not even find the most recent file with data for " + pvName + " returning null.");

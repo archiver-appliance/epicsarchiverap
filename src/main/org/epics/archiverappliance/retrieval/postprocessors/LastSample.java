@@ -84,8 +84,6 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 										}
 									}
 								}
-							} else if(binNumber < firstBin) {
-								bin2Event.put(firstBin, e.makeClone());	
 							}
 						} catch(PBParseException ex) { 
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
