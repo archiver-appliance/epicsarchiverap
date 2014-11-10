@@ -52,7 +52,7 @@ public class DataReductionDailyETLTest extends TestCase {
 	String longTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/longTerm";
 	private  ConfigServiceForTests configService;
 	private String rawPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionDailyETLTest.class.getSimpleName();
-	private String reducedPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionDailyETLTest.class.getSimpleName() + ":reduced";
+	private String reducedPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionDailyETLTest.class.getSimpleName() + "reduced";
 	private String reduceDataUsing = "firstSample_3600";
 
 	@Before
@@ -170,8 +170,8 @@ public class DataReductionDailyETLTest extends TestCase {
 				assertTrue("For day " + day + " we have " + rawWithPPCount + " rawWithPP events and " + reducedCount + " reduced events", rawWithPPCount == reducedCount);
 			}
 			if(day > 2) { 
-				assertTrue("Seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount, (rawWithPPCount != 0));
-				assertTrue("Seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount, (reducedCount != 0));
+				assertTrue("For day " + day + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount, (rawWithPPCount != 0));
+				assertTrue("For day " + day + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount, (reducedCount != 0));
 			}
 
 		}        	

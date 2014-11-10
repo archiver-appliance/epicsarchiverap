@@ -26,7 +26,7 @@ public class LastFill implements PostProcessor, PostProcessorWithConsolidatedEve
 	private static Logger logger = Logger.getLogger(LastFill.class.getName());
 	private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private long firstBin = 0;
-	private long lastBin = 0;
+	private long lastBin = Long.MAX_VALUE;
 	private long currentBin = -1;
 	private LinkedHashMap<Long, Event> bin2Event = new LinkedHashMap<Long, Event>(); 
 	RemotableEventStreamDesc srcDesc = null;

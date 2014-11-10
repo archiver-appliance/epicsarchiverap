@@ -59,7 +59,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 
 	protected LinkedHashMap<Long, SummaryValue> consolidatedData = new LinkedHashMap<Long, SummaryValue>();
 	long firstBin = 0;
-	long lastBin = 0;
+	long lastBin = Long.MAX_VALUE;
 	long currentBin = -1;
 	int currentMaxSeverity = 0;
 	boolean currentConnectionChangedEvents = false;

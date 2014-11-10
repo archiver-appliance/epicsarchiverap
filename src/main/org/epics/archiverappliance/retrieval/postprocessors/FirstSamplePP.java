@@ -25,7 +25,7 @@ public class FirstSamplePP implements PostProcessor {
 	private static Logger logger = Logger.getLogger(FirstSamplePP.class.getName());
 	private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private long firstBin = 0;
-	private long lastBin = 0;
+	private long lastBin = Long.MAX_VALUE;
 	private long previousBinNum = -1;
 
 	
@@ -67,7 +67,7 @@ public class FirstSamplePP implements PostProcessor {
 								if(binNumber != previousBinNum) {
 									buf.add(e.makeClone());
 									previousBinNum = binNumber;
-									logger.error("Bin Number " + binNumber + " First: " + firstBin + " Last: " + lastBin);
+									logger.debug("Bin Number " + binNumber + " First: " + firstBin + " Last: " + lastBin);
 								}
 							}
 						} catch(PBParseException ex) { 
