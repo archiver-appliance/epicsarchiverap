@@ -214,7 +214,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 			this.endFilePos = endPosition;
 			this.positionBoundaries = true;
 		} else {
-			logger.info("Did not find the start and end positions for pv " + pvName + " in file " + path.toAbsolutePath().toString() + ". Switching to using a time based iterator");
+			logger.debug("Did not find the start and end positions for pv " + pvName + " in file " + path.toAbsolutePath().toString() + ". Switching to using a time based iterator");
 			// We filter events as we are processing the stream...
 			this.positionBoundaries = false;
 			this.startTime = startTime;
