@@ -87,6 +87,7 @@ public class InactiveClusterMemberArchivePVTest {
 		String pvNameToArchive = pvName;
 		pvstextarea.clear();
 		pvstextarea.sendKeys(pvNameToArchive);
+		Thread.sleep(1*1000);
 		WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		checkStatusButton.click();
 		Thread.sleep(2*1000);
@@ -105,6 +106,7 @@ public class InactiveClusterMemberArchivePVTest {
 		 String pvNameToArchive = pvName;
 		 pvstextarea.clear();
 		 pvstextarea.sendKeys(pvNameToArchive);
+		 Thread.sleep(1*1000);
 		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
 		 logger.debug("About to submit");
 		 archiveButton.click();

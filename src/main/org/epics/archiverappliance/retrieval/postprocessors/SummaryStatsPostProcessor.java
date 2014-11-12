@@ -140,7 +140,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
-					return new SummaryStatsCollectorEventStream(intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
+					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
 				}
 			}
 
@@ -175,7 +175,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 		if(consolidatedData.isEmpty()) { 
 			return new ArrayListEventStream(0, null);			
 		} else { 
-			return new SummaryStatsCollectorEventStream(intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
+			return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
 		}
 
 	}

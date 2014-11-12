@@ -30,10 +30,14 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 	private static Logger logger = Logger.getLogger(SummaryStatsCollectorEventStream.class.getName());
 	private final RemotableEventStreamDesc desc;
 	private LinkedHashMap<Long, SummaryValue> consolidatedData;
+	private long firstBin;
+	private long lastBin;
 	private int intervalSecs;
 	private boolean inheritValuesFromPreviousBins;
 	private Iterator<Event> theOneAndOnlyIterator;
-	public SummaryStatsCollectorEventStream(int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins) {
+	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins) {
+		this.firstBin = firstBin;
+		this.lastBin = lastBin;
 		this.intervalSecs = intervalSecs;
 		this.desc = new RemotableEventStreamDesc(desc);
 		// Summaries of scalars are always double. That's what commons.math returns.
@@ -79,8 +83,13 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 			}
 			
 			Set<Long> bins = consolidatedData.keySet();
-			long firstBin = Collections.min(bins);
-			long lastBin = Collections.max(bins);
+			if(firstBin == 0) { 
+				firstBin = Collections.min(bins); 
+			}
+			if(lastBin == Long.MAX_VALUE) { 
+				lastBin = Collections.max(bins);
+			}
+			
 			for(long binNum = firstBin; binNum <= lastBin; binNum++) {
 				if(consolidatedData.containsKey(binNum)) {
 					summaryValue = consolidatedData.get(binNum);

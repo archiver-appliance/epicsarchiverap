@@ -28,17 +28,21 @@ public class FillsCollectorEventStream implements EventStream, RemotableOverRaw 
 	private static Logger logger = Logger.getLogger(FillsCollectorEventStream.class.getName());
 	private final RemotableEventStreamDesc desc;
 	private LinkedHashMap<Long, Event> consolidatedData;
+	private long firstBin;
+	private long lastBin;
 	private int intervalSecs;
 	private Iterator<Event> theOneAndOnlyIterator;
 	private boolean fillOperator = true;
-	public FillsCollectorEventStream(int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, Event> consolidatedData) {
+	public FillsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, Event> consolidatedData) {
+		this.firstBin = firstBin;
+		this.lastBin = lastBin;
 		this.intervalSecs = intervalSecs;
-		this.desc = new RemotableEventStreamDesc(desc); 
+		this.desc = new RemotableEventStreamDesc(desc);
 		this.consolidatedData = consolidatedData;
 	}
 
-	public FillsCollectorEventStream(int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, Event> consolidatedData, boolean fillOperator) {
-		this(intervalSecs,desc,consolidatedData);
+	public FillsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, Event> consolidatedData, boolean fillOperator) {
+		this(firstBin,lastBin,intervalSecs,desc,consolidatedData);
 		this.fillOperator = fillOperator;
 	}
 
@@ -75,8 +79,12 @@ public class FillsCollectorEventStream implements EventStream, RemotableOverRaw 
 				return;
 			}
 			Set<Long> bins = consolidatedData.keySet();
-			long firstBin = Collections.min(bins);
-			long lastBin = Collections.max(bins);
+			if(firstBin == 0) { 
+				firstBin = Collections.min(bins); 
+			}
+			if(lastBin == Long.MAX_VALUE) { 
+				lastBin = Collections.max(bins);
+			}
 			for(long binNum = firstBin; binNum <= lastBin; binNum++) {
 				if(consolidatedData.containsKey(binNum)) {
 					currentEvent = consolidatedData.get(binNum);
