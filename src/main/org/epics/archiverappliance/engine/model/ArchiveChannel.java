@@ -810,5 +810,15 @@ abstract public class ArchiveChannel {
 		}
 	}
 	
-	
+	/**
+	 * Combine the metadata from various sources and return the latest copy.
+	 * @return
+	 */
+	public HashMap<String, String> getLatestMetadata() { 
+		HashMap<String, String> retVal = new HashMap<String, String>();
+		if(this.pv != null) {
+			return this.pv.getLatestMetadata();
+		}
+		return retVal;
+	}
 }

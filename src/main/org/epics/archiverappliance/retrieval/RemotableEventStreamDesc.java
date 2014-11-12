@@ -62,7 +62,7 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
 		this.headers = new HashMap<String, String>(other.headers);
 	}
 	
-	public void mergeFrom(PVTypeInfo info) throws IOException {
+	public void mergeFrom(PVTypeInfo info, HashMap<String, String> engineMetadata) throws IOException {
 		if(!PVNames.stripFieldNameFromPVName(this.pvName).equals(PVNames.stripFieldNameFromPVName(info.getPvName()))) throw new IOException("Mismatch in pv info's. Src is for " + this.pvName + ". Info from config db is for " + info.getPvName());
 		this.elementCount = info.getElementCount();
 		if(!this.headers.containsKey("EGU")) { 
@@ -79,6 +79,10 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
 		
 		if(!this.archDBRType.equals(info.getDBRType()))  { 
 			logger.warn("For pv " + this.pvName + " dbr types do not match for stream " + this.source);
+		}
+		
+		if(engineMetadata != null) { 
+			this.headers.putAll(engineMetadata);
 		}
 	}
 	

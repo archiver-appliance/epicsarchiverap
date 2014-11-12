@@ -27,6 +27,7 @@ import org.epics.archiverappliance.engine.bpl.CleanUpAnyImmortalChannels;
 import org.epics.archiverappliance.engine.bpl.ComputeMetaInfo;
 import org.epics.archiverappliance.engine.bpl.DeletePV;
 import org.epics.archiverappliance.engine.bpl.GetEngineDataAction;
+import org.epics.archiverappliance.engine.bpl.GetLatestMetaDataAction;
 import org.epics.archiverappliance.engine.bpl.MonitorPVAction;
 import org.epics.archiverappliance.engine.bpl.PVStatusAction;
 import org.epics.archiverappliance.engine.bpl.PauseArchivingPV;
@@ -60,6 +61,7 @@ public class BPLServlet extends HttpServlet {
 	static {
 		getActions.put("/monitor", MonitorPVAction.class);
 		getActions.put("/getData.raw", GetEngineDataAction.class);
+		getActions.put("/getMetadata", GetLatestMetaDataAction.class);
 		getActions.put("/status", PVStatusAction.class);
 		getActions.put("/getNeverConnectedPVsForThisAppliance", NeverConnectedPVsAction.class);
 		getActions.put("/getCurrentlyDisconnectedPVsForThisAppliance", CurrentlyDisconnectedPVsAction.class);

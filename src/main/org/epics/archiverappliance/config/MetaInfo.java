@@ -15,25 +15,15 @@
 package org.epics.archiverappliance.config;
 
 import gov.aps.jca.dbr.DBR;
-
 import gov.aps.jca.dbr.DBR_CTRL_Double;
-
 import gov.aps.jca.dbr.DBR_CTRL_Int;
-
 import gov.aps.jca.dbr.DBR_LABELS_Enum;
-
 import gov.aps.jca.dbr.GR;
-
 import gov.aps.jca.dbr.PRECISION;
-
-
 
 import java.util.HashMap;
 
-
-
 import org.apache.log4j.Logger;
-
 import org.epics.archiverappliance.data.DBRTimeEvent;
 /** this class is used for getting the meta data
  *  <p>
@@ -696,6 +686,29 @@ public class MetaInfo {
 				logger.debug("Saving typeinfo in persistence for pv " + pvName);
 				configService.updateTypeInfoForPV(pvName, typeInfo);
 			}
+		}
+		
+	}
+	
+	
+	/**
+	 * Add the latest metadata values to the dict
+	 * @param retVal
+	 */
+	public void addToDict(HashMap<String, String> retVal) {
+		retVal.put("LOPR", Double.toString(lowerDisplayLimit));
+		retVal.put("HOPR", Double.toString(upperDisplayLimit));
+		retVal.put("LOW", Double.toString(lowerWarningLimit));
+		retVal.put("HIGH", Double.toString(upperWarningLimit));
+		retVal.put("LOLO", Double.toString(lowerAlarmLimit));
+		retVal.put("HIHI", Double.toString(upperAlarmLimit));
+		retVal.put("DRVL", Double.toString(loweCtrlLimit));
+		retVal.put("DRVH", Double.toString(upperCtrlLimit));
+		retVal.put("PREC", Double.toString(precision));
+		if(unit != null) { retVal.put("EGU", unit); } 
+		retVal.put("NELM", Integer.toString(count));
+		for(String fieldName : otherMetaInfo.keySet()) {
+			retVal.put(fieldName, otherMetaInfo.get(fieldName));
 		}
 		
 	}

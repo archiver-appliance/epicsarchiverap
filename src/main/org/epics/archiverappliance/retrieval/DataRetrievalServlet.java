@@ -17,6 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -69,6 +70,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithCon
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadExecutorService;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
@@ -147,6 +150,14 @@ public class DataRetrievalServlet  extends HttpServlet {
 			logger.info("Turning off HTTP chunked encoding");
 			useChunkedEncoding = false;
 		}
+		
+		boolean fetchLatestMetadata = false;
+		String fetchLatestMetadataStr = req.getParameter("fetchLatestMetadata");
+		if(fetchLatestMetadataStr != null && fetchLatestMetadataStr.equals("true")) { 
+			logger.info("Adding a call to the engine to fetch the latest metadata");
+			fetchLatestMetadata = true;
+		}
+
 		
 		
 		if(pvName == null) {
@@ -295,7 +306,13 @@ public class DataRetrievalServlet  extends HttpServlet {
 				OutputStream os = resp.getOutputStream();
 				MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension, os, useChunkedEncoding);
 				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, start, end, req, postProcessor)
-				) { 
+				) {
+			HashMap<String, String> engineMetadata = null;
+			if(fetchLatestMetadata) { 
+				// Make a call to the engine to fetch the latest metadata.
+				engineMetadata = fetchLatestMedataFromEngine(pvName, applianceForPV);
+			}
+			
 
 			LinkedList<Future<RetrievalResult>> retrievalResultFutures = resolveAllDataSources(pvName, typeInfo, postProcessor, applianceForPV, retrievalContext, executorResult, req, resp);
 			pmansProfiler.mark("After data source resolution");
@@ -323,7 +340,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 
 
 					try {
-						mergeTypeInfo(typeInfo, sourceDesc);
+						mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
 					} catch(MismatchedDBRTypeException mex) {
 						logger.error(mex.getMessage(), mex);
 						continue;
@@ -545,15 +562,15 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 * Merges info from pvTypeTnfo that comes from the config database into the remote description that gets sent over the wire.
 	 * @param typeInfo
 	 * @param eventDesc
-	 * @param mergePVTypeInfoCompleted
+	 * @param engineMetaData - Latest from the engine - could be null
 	 * @return
 	 * @throws IOException
 	 */
-	private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc) throws IOException {
+	private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData) throws IOException {
 		if(typeInfo != null && eventDesc != null && eventDesc instanceof RemotableEventStreamDesc) {
 			logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source " + eventDesc.getSource());
 			RemotableEventStreamDesc remoteDesc = (RemotableEventStreamDesc) eventDesc;
-			remoteDesc.mergeFrom(typeInfo);
+			remoteDesc.mergeFrom(typeInfo, engineMetaData);
 		}
 	}
 	
@@ -643,6 +660,25 @@ public class DataRetrievalServlet  extends HttpServlet {
 		// We also still have the issue where we can add a sample twice because of the non-transactional nature of ETL.
 		// However, there is a lot of work done by the PostProcessors in estimateMemoryConsumption so leave this call in place.
 		return new RetrievalExecutorResult(new CurrentThreadExecutorService(), start, end);
+	}
+	
+	
+	/**
+	 * Make a call to the engine to fetch the latest metadata and then add it to the mergeConsumer
+	 * @param pvName
+	 * @param applianceForPV
+	 */
+	@SuppressWarnings("unchecked")
+	private HashMap<String, String> fetchLatestMedataFromEngine(String pvName, ApplianceInfo applianceForPV) {
+		try { 
+			String metadataURL = applianceForPV.getEngineURL() + "/getMetadata?pv=" + URLEncoder.encode(pvName, "UTF-8");
+			logger.debug("Getting metadata from the engine using " + metadataURL);
+			JSONObject metadata = GetUrlContent.getURLContentAsJSONObject(metadataURL);
+			return (HashMap<String, String>) metadata;
+		} catch(Exception ex) { 
+			logger.warn("Exception fetching latest metadata for pv " + pvName, ex);
+		}
+		return null;
 	}
 
 

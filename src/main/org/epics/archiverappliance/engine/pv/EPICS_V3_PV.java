@@ -1117,4 +1117,27 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 			}
 		}
 	}
+	
+	
+	/**
+	 * Combine the metadata from various sources and return the latest copy.
+	 * @return
+	 */
+	public HashMap<String, String> getLatestMetadata() { 
+		HashMap<String, String> retVal = new HashMap<String, String>();
+		// The totalMetaInfo is updated once every 24hours...
+		MetaInfo metaInfo = this.getToalMetaInfo();
+		if(metaInfo != null) {
+			metaInfo.addToDict(retVal);
+		}
+		// Add the latest value of the fields we are monitoring.
+		if(allarchiveFieldsData != null) { 
+			retVal.putAll(allarchiveFieldsData);
+		}
+		if(runTimeFieldsData != null) { 
+			retVal.putAll(runTimeFieldsData);
+		}
+		
+		return retVal;
+	}
 }
