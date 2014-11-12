@@ -51,6 +51,7 @@ import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
+import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithConsolidatedEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.ui.URIUtils;
@@ -265,7 +266,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 				PostProcessor postProcessor = PostProcessors.findPostProcessor(this.reducedataPostProcessor);
 				postProcessor.initialize(reducedataPostProcessor, pvName);
 				stream = CallableEventStream.makeOneStreamCallable(stream, postProcessor, true).call();
-				logger.debug("Wrapped stream with post processor " + this.reducedataPostProcessor);
+				logger.debug("Wrapped stream with post processor " + this.reducedataPostProcessor + " for pv " + pvName);
+				if(postProcessor instanceof PostProcessorWithConsolidatedEventStream) {
+					stream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream();
+					logger.debug("Using consolidated event stream for pv " + pvName);
+				}
 			} catch (Exception ex) { 
 				logger.error("Exception moving reduced data for pv " + pvName + " to store " + this.getName() + " using operator " + this.reducedataPostProcessor, ex);
 				return false;

@@ -1,8 +1,10 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -28,14 +30,10 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 	private static Logger logger = Logger.getLogger(SummaryStatsCollectorEventStream.class.getName());
 	private final RemotableEventStreamDesc desc;
 	private LinkedHashMap<Long, SummaryValue> consolidatedData;
-	private long firstBin;
-	private long lastBin;
 	private int intervalSecs;
 	private boolean inheritValuesFromPreviousBins;
 	private Iterator<Event> theOneAndOnlyIterator;
-	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins) {
-		this.firstBin = firstBin;
-		this.lastBin = lastBin;
+	public SummaryStatsCollectorEventStream(int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins) {
 		this.intervalSecs = intervalSecs;
 		this.desc = new RemotableEventStreamDesc(desc);
 		// Summaries of scalars are always double. That's what commons.math returns.
@@ -73,6 +71,16 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 			SummaryValue summaryValue = null;
 			boolean foundValue = false;
 			int nanos = ((intervalSecs % 2) == 0) ? 0 : 500000000;
+			
+			if(consolidatedData.isEmpty()) { 
+				logger.info("We not seem to have any events");
+				totalEvents = 0;
+				return;
+			}
+			
+			Set<Long> bins = consolidatedData.keySet();
+			long firstBin = Collections.min(bins);
+			long lastBin = Collections.max(bins);
 			for(long binNum = firstBin; binNum <= lastBin; binNum++) {
 				if(consolidatedData.containsKey(binNum)) {
 					summaryValue = consolidatedData.get(binNum);

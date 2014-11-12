@@ -15,6 +15,7 @@ import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
@@ -139,7 +140,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
-					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
+					return new SummaryStatsCollectorEventStream(intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
 				}
 			}
 
@@ -171,8 +172,12 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 			consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
 			currentBinCollector = null;
 		}
+		if(consolidatedData.isEmpty()) { 
+			return new ArrayListEventStream(0, null);			
+		} else { 
+			return new SummaryStatsCollectorEventStream(intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
+		}
 
-		return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
 	}
 	/* (non-Javadoc)
 	 * @see org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithConsolidatedEventStream#getStartBinEpochSeconds()

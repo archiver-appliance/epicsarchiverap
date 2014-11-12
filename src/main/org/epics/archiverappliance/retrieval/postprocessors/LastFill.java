@@ -106,7 +106,11 @@ public class LastFill implements PostProcessor, PostProcessorWithConsolidatedEve
 
 	@Override
 	public EventStream getConsolidatedEventStream() {
-		return new FillsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, bin2Event);
+		if(bin2Event.isEmpty()) { 
+			return new ArrayListEventStream(0, null);
+		} else { 
+			return new FillsCollectorEventStream(intervalSecs, srcDesc, bin2Event);
+		}
 	}
 
 	@Override
