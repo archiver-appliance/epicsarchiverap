@@ -88,7 +88,6 @@ public class DataReductionPostProcessorsTest extends TestCase {
 				"mean_1800", 
 				"min_3600", 
 				"max_3600",
-				"max_3600",
 				"median_3600",
 				"firstFill_3600",
 				"lastFill_3600"
@@ -135,7 +134,7 @@ public class DataReductionPostProcessorsTest extends TestCase {
 
 		logger.info("Testing data reduction for postprocessor " + reduceDataUsing);
 
-		for(int day = 0; day < 365; day++) { 
+		for(int day = 0; day < 40; day++) { 
 			// Generate data into the STS on a daily basis
 			ArrayListEventStream genDataRaw = new ArrayListEventStream(86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
 			ArrayListEventStream genDataReduced = new ArrayListEventStream(86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
