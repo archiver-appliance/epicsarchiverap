@@ -67,6 +67,8 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	SummaryStatsCollector currentBinCollector = null;
 	RemotableEventStreamDesc srcDesc = null;
 	private boolean inheritValuesFromPreviousBins = true;
+	Event lastSampleBeforeStart = null;
+	boolean lastSampleBeforeStartAdded = false;
 	
 	@Override
 	public void initialize(String userarg, String pvName) throws IOException {
@@ -120,6 +122,11 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 								// We only add bins for the specified time frame. 
 								// The ArchiveViewer depends on the number of values being the same and because of different rates for PVs, the bin number for the starting bin could be different...
 								// We could add a firstbin-1 and put all values before the starting timestamp in that bin but that would give incorrect summaries.
+								if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+									switchToNewBin(firstBin-1);
+									currentBinCollector.addEvent(lastSampleBeforeStart);
+									lastSampleBeforeStartAdded = true; 
+								}
 								if(binNumber != currentBin) {
 									if(currentBin != -1) { 
 										consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
@@ -133,8 +140,17 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 								if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) { 
 									currentConnectionChangedEvents = true;
 								}
-							} else { 
-								logger.debug("Skipping event in bin outside range " + binNumber);
+							} else if(binNumber < firstBin) { 
+								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
+								if(!lastSampleBeforeStartAdded) { 
+									if(lastSampleBeforeStart != null) { 
+										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
+											lastSampleBeforeStart = e.makeClone();
+										}
+									} else { 
+										lastSampleBeforeStart = e.makeClone();
+									}
+								}
 							}
 						} catch(PBParseException ex) { 
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
@@ -175,7 +191,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 		if(consolidatedData.isEmpty()) { 
 			return new ArrayListEventStream(0, null);			
 		} else { 
-			return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
+			return new SummaryStatsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, this.lastBin, this.intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins);
 		}
 
 	}

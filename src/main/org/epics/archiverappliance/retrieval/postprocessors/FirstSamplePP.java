@@ -27,6 +27,8 @@ public class FirstSamplePP implements PostProcessor {
 	private long firstBin = 0;
 	private long lastBin = Long.MAX_VALUE;
 	private long previousBinNum = -1;
+	Event lastSampleBeforeStart = null;
+	boolean lastSampleBeforeStartAdded = false;
 
 	
 	@Override
@@ -65,9 +67,24 @@ public class FirstSamplePP implements PostProcessor {
 							long binNumber = epochSeconds/intervalSecs;
 							if(binNumber >= firstBin && binNumber <= lastBin) {
 								if(binNumber != previousBinNum) {
+									if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+										buf.add(lastSampleBeforeStart);
+										lastSampleBeforeStartAdded = true; 
+									}
 									buf.add(e.makeClone());
 									previousBinNum = binNumber;
 									logger.debug("Bin Number " + binNumber + " First: " + firstBin + " Last: " + lastBin);
+								}
+							} else if(binNumber < firstBin) { 
+								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
+								if(!lastSampleBeforeStartAdded) { 
+									if(lastSampleBeforeStart != null) { 
+										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
+											lastSampleBeforeStart = e.makeClone();
+										}
+									} else { 
+										lastSampleBeforeStart = e.makeClone();
+									}
 								}
 							}
 						} catch(PBParseException ex) { 

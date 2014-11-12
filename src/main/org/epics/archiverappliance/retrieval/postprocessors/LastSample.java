@@ -34,6 +34,8 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 	private long currentBin = -1;
 	private LinkedHashMap<Long, Event> bin2Event = new LinkedHashMap<Long, Event>(); 
 	RemotableEventStreamDesc srcDesc = null;
+	Event lastSampleBeforeStart = null;
+	boolean lastSampleBeforeStartAdded = false;
 	
 	@Override
 	public void initialize(String userarg, String pvName) throws IOException {
@@ -71,6 +73,11 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 							long epochSeconds = e.getEpochSeconds();
 							long binNumber = epochSeconds/intervalSecs;
 							if(binNumber >= firstBin && binNumber <= lastBin) { 
+								if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+									logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+									bin2Event.put(firstBin-1, lastSampleBeforeStart);
+									lastSampleBeforeStartAdded = true; 
+								}
 								if(binNumber != currentBin) {
 									currentBin = binNumber;
 									bin2Event.put(currentBin, e.makeClone());		
@@ -82,6 +89,18 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 										if(e.getEventTimeStamp().after(currentBinEvent.getEventTimeStamp())) { 
 											bin2Event.put(currentBin, e.makeClone());		
 										}
+									}
+								}
+							} else if(binNumber < firstBin) { 
+								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
+								if(!lastSampleBeforeStartAdded) { 
+									logger.debug("Adding lastSampleBeforeStart");
+									if(lastSampleBeforeStart != null) { 
+										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
+											lastSampleBeforeStart = e.makeClone();
+										}
+									} else { 
+										lastSampleBeforeStart = e.makeClone();
 									}
 								}
 							}
@@ -115,7 +134,7 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 		if(bin2Event.isEmpty()) { 
 			return new ArrayListEventStream(0, null);
 		} else { 
-			return new FillsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, bin2Event, false);
+			return new FillsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, lastBin, intervalSecs, srcDesc, bin2Event, false);
 		}
 	}
 
