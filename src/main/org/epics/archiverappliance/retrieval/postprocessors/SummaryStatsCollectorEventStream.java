@@ -34,8 +34,9 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 	private long lastBin;
 	private int intervalSecs;
 	private boolean inheritValuesFromPreviousBins;
+	private boolean zeroOutEmptyBins;
 	private Iterator<Event> theOneAndOnlyIterator;
-	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins) {
+	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins, boolean zeroOutEmptyBins) {
 		this.firstBin = firstBin;
 		this.lastBin = lastBin;
 		this.intervalSecs = intervalSecs;
@@ -44,6 +45,7 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 		this.desc.setArchDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE);
 		this.consolidatedData = consolidatedData;
 		this.inheritValuesFromPreviousBins = inheritValuesFromPreviousBins;
+		this.zeroOutEmptyBins = zeroOutEmptyBins;
 	}
 
 	@Override
@@ -98,6 +100,9 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 					if(inheritValuesFromPreviousBins) { 
 						if(foundValue)  { 
 							logger.debug("Inheriting previous value for bin " + binNum);
+							if(SummaryStatsCollectorEventStream.this.zeroOutEmptyBins) { 
+								summaryValue = new SummaryValue(0.0, 0, false);
+							}
 						}
 					} else { 
 						foundValue = false;

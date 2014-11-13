@@ -47,4 +47,9 @@ public class Count extends SummaryStatsPostProcessor implements PostProcessor {
 			}
 		};
 	}
+
+	@Override
+	public boolean zeroOutEmptyBins() {
+		return true;
+	}
 }

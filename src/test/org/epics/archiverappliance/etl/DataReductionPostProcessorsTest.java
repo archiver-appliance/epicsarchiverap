@@ -79,10 +79,18 @@ public class DataReductionPostProcessorsTest extends TestCase {
 	@Test
 	public void testReducedETL() throws Exception {
 		String[] postProcessors = new String[] {
+				// No fill versions
 				"lastSample_3600", 
 				"firstSample_3600", 
 				"firstSample_600", 
 				"lastSample_600", 
+				"meanSample_3600", 
+				"meanSample_600", 
+				"meanSample_1800", 
+				"minSample_3600", 
+				"maxSample_3600",
+				"medianSample_3600",
+				// Fill versions
 				"mean_3600", 
 				"mean_600", 
 				"mean_1800", 
@@ -107,7 +115,7 @@ public class DataReductionPostProcessorsTest extends TestCase {
 	private void testPostProcessor(String reduceDataUsing) throws Exception {
 		cleanDataFolders();
 
-		ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+		ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"), 1);
 		// Set up the raw and reduced PV's
 		PlainPBStoragePlugin etlSTS = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR", configService);;
 		PlainPBStoragePlugin etlMTS = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_DAY", configService);
@@ -117,6 +125,7 @@ public class DataReductionPostProcessorsTest extends TestCase {
 			PVTypeInfo typeInfo = new PVTypeInfo(rawPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
 			String[] dataStores = new String[] { etlSTS.getURLRepresentation(), etlMTS.getURLRepresentation(), etlLTSRaw.getURLRepresentation() }; 
 			typeInfo.setDataStores(dataStores);
+			typeInfo.setPaused(true);
 			configService.updateTypeInfoForPV(rawPVName, typeInfo);
 			configService.registerPVToAppliance(rawPVName, configService.getMyApplianceInfo());
 		}
@@ -124,6 +133,7 @@ public class DataReductionPostProcessorsTest extends TestCase {
 			PVTypeInfo typeInfo = new PVTypeInfo(reducedPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
 			String[] dataStores = new String[] { etlSTS.getURLRepresentation(), etlMTS.getURLRepresentation(), etlLTSReduced.getURLRepresentation() }; 
 			typeInfo.setDataStores(dataStores);
+			typeInfo.setPaused(true);
 			configService.updateTypeInfoForPV(reducedPVName, typeInfo);
 			configService.registerPVToAppliance(reducedPVName, configService.getMyApplianceInfo());
 		}
@@ -205,7 +215,8 @@ public class DataReductionPostProcessorsTest extends TestCase {
 				assertTrue("For postprocessor " + reduceDataUsing +  " for day " + day + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount, (rawWithPPCount != 0));
 				assertTrue("For postprocessor " + reduceDataUsing +  " for day " + day + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount, (reducedCount != 0));
 			}
-
 		}        	
+
+		configService.shutdownNow();
 	}
 }
