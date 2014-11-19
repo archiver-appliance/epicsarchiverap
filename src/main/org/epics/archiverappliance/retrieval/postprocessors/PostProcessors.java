@@ -73,6 +73,7 @@ public class PostProcessors {
 		registerPostProcessor(new Count().getIdentity(), Count.class);
 		registerPostProcessor(new NCount().getIdentity(), NCount.class);
 		registerPostProcessor(new Nth().getIdentity(), Nth.class);
+		registerPostProcessor(new CAPlotBinning().getIdentity(), CAPlotBinning.class);
 	}
 
 	public static PostProcessor findPostProcessor(String postProcessorUserArg) {
