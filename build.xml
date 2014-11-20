@@ -52,6 +52,8 @@
     		</tarfileset>
     		<tarfileset dir=".">
     			<include name="LICENSE"/>
+    			<include name="NOTICE"/>
+    			<include name="*License.txt"/>
     			<include name="RELEASE_NOTES"/>
     		</tarfileset>
     		<tarfileset dir="${docs}/samples" filemode="755" prefix="install_scripts">
