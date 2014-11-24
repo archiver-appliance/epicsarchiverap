@@ -37,6 +37,8 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 
+import com.cosylab.epics.caj.CAJChannel;
+
 /**
  * EPICS ChannelAccess implementation of the PV interface.
  * 
@@ -631,7 +633,16 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 	/** {@inheritDoc} */
 	@Override
 	public String getStateInfo() {
-		return state.toString();
+		StringBuilder buf = new StringBuilder();
+		buf.append(state.toString().charAt(0));
+		if(this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
+			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
+			int currSearchTimerIndex = cajChannel.getOwnerIndex();
+			buf.append(" Timer: " + currSearchTimerIndex);
+			int searchTries = cajChannel.getSearchTries();
+			buf.append(" Searches: " + searchTries);
+		}
+		return buf.toString();
 	}
 	
 	/** {@inheritDoc} */
