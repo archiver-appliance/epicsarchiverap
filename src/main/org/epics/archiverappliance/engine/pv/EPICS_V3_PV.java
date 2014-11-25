@@ -1151,4 +1151,18 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 		
 		return retVal;
 	}
+	
+	
+	/**
+	 * Returns the current CAJ search timer; use only for debugging. This will be removed later.
+	 * @return
+	 */
+	public int getCurrentSearchTimer() { 
+		if(this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
+			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
+			int currSearchTimerIndex = cajChannel.getOwnerIndex();
+			return currSearchTimerIndex;
+		}
+		return -1;
+	}
 }

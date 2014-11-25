@@ -22,6 +22,7 @@ import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.bpl.AbortArchiveRequestForAppliance;
+import org.epics.archiverappliance.engine.bpl.CAJSearchManagerDetails;
 import org.epics.archiverappliance.engine.bpl.ChangeArchivalParamsAction;
 import org.epics.archiverappliance.engine.bpl.CleanUpAnyImmortalChannels;
 import org.epics.archiverappliance.engine.bpl.ComputeMetaInfo;
@@ -87,6 +88,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/pausePVsonShutdown", PausePVsOnShutdown.class);
 		getActions.put("/abortArchivingPVForThisAppliance", AbortArchiveRequestForAppliance.class);
 		getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
+		getActions.put("/CAJSearchManagerDetails", CAJSearchManagerDetails.class);
 	}
 
 	@Override

@@ -821,4 +821,13 @@ abstract public class ArchiveChannel {
 		}
 		return retVal;
 	}
+	
+	
+	/**
+	 * Returns the current CAJ search timer; use only for debugging. This will be removed later.
+	 * @return
+	 */
+	public int getCurrentSearchTimer() {
+		return this.pv.getCurrentSearchTimer();
+	}
 }

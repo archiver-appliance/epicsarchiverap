@@ -15,12 +15,19 @@ import gov.aps.jca.event.ContextExceptionListener;
 import gov.aps.jca.event.ContextMessageListener;
 
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
 import org.epics.archiverappliance.engine.model.ContextErrorHandler;
+
+import com.cosylab.epics.caj.CAJContext;
+import com.cosylab.epics.caj.impl.ChannelSearchManager;
+import com.cosylab.epics.caj.util.ArrayFIFO;
 
 /**
  * JCA command pump, added for two reasons:
@@ -249,5 +256,38 @@ public class JCACommandThread extends Thread {
 			}
 		});
 
+	}
+
+	/**
+	 * Use reflection to get details about the CAJ search manager being used for this PV.
+	 * @param pvName
+	 * @param infoValues
+	 * @param currentSearchTimer
+	 * @throws SecurityException 
+	 * @throws NoSuchFieldException 
+	 * @throws IllegalAccessException 
+	 */
+	public void getCAJSearchManagerDetails(String pvName, HashMap<String, Object> infoValues, int currentSearchTimer) throws IllegalAccessException, NoSuchFieldException, SecurityException {
+		if(!(jca_context instanceof CAJContext)) return;
+		CAJContext cajContext = (CAJContext) jca_context;
+		ChannelSearchManager channelSearchManager = cajContext.getChannelSearchManager();
+		infoValues.put("channelSearchManager.registeredChannelCount", channelSearchManager.registeredChannelCount());
+		Object[] timersObj = (Object[]) FieldUtils.readDeclaredField(channelSearchManager, "timers", true);
+		if(currentSearchTimer < 0 || currentSearchTimer >= timersObj.length) return;
+		Object timerObj = timersObj[currentSearchTimer];
+		String timerName = "channelSearchManager.timer[" + currentSearchTimer + "].";
+		infoValues.put(timerName + "searchAttempts", FieldUtils.readDeclaredField(timerObj, "searchAttempts", true));
+		infoValues.put(timerName + "searchRespones", FieldUtils.readDeclaredField(timerObj, "searchRespones", true));
+		infoValues.put(timerName + "framesPerTry", FieldUtils.readDeclaredField(timerObj, "framesPerTry", true));
+		infoValues.put(timerName + "framesPerTryCongestThresh", FieldUtils.readDeclaredField(timerObj, "framesPerTryCongestThresh", true));
+		infoValues.put(timerName + "startSequenceNumber", FieldUtils.readDeclaredField(timerObj, "startSequenceNumber", true));
+		infoValues.put(timerName + "endSequenceNumber", FieldUtils.readDeclaredField(timerObj, "endSequenceNumber", true));
+		infoValues.put(timerName + "timerIndex", FieldUtils.readDeclaredField(timerObj, "timerIndex", true));
+		infoValues.put(timerName + "allowBoost", FieldUtils.readDeclaredField(timerObj, "allowBoost", true));
+		infoValues.put(timerName + "allowSlowdown", FieldUtils.readDeclaredField(timerObj, "allowSlowdown", true));
+		infoValues.put(timerName + "canceled", FieldUtils.readDeclaredField(timerObj, "canceled", true));
+		infoValues.put(timerName + "timeAtResponseCheck", TimeUtils.convertToHumanReadableString(((Long)FieldUtils.readDeclaredField(timerObj, "timeAtResponseCheck", true)).longValue()/1000));
+		infoValues.put(timerName + "requestPendingChannels", ((ArrayFIFO) FieldUtils.readDeclaredField(timerObj, "requestPendingChannels", true)).size());
+		infoValues.put(timerName + "responsePendingChannels", ((ArrayFIFO) FieldUtils.readDeclaredField(timerObj, "responsePendingChannels", true)).size());
 	}
 }
