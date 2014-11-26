@@ -147,7 +147,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 			}
 			
 			if(eventsInCurrentStream == 0) {
-				logger.info("The stream from " + strm.getDescription().getSource() + " was an empty stream.");
+				logger.info("The stream from " + ((strm.getDescription() != null ) ? strm.getDescription().getSource() : "Unknown") + " was an empty stream.");
 			}
 
 			// We start deduping at the boundaries of event streams. 
