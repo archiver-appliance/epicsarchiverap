@@ -72,7 +72,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 				}
 				return CallableEventStream.makeOneStreamCallableList(isStream, postProcessor, true);
 			} else {
-				logger.error("Invalid status code " + urlConnection.getResponseCode() + " when connecting to URL " + getURL);
+				logger.warn("Invalid status code " + urlConnection.getResponseCode() + " when connecting to URL " + getURL);
 				InputStream errorStream = urlConnection.getErrorStream();
 				if(errorStream != null) {
 					ByteArrayOutputStream sbuf = new ByteArrayOutputStream();
@@ -82,7 +82,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 						sbuf.write(buf, 0, bytesRead);
 						bytesRead = errorStream.read(buf);
 					}
-					logger.error(sbuf.toString("UTF-8"));
+					logger.warn(sbuf.toString("UTF-8"));
 					errorStream.close();
 				}
 			}
@@ -90,7 +90,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 			logger.debug("No data from remote site " + getURL);
 			return null;
 		} catch(Throwable t) {
-			logger.error("Exception fetching data from URL " + getURL, t);
+			logger.warn("Exception fetching data from URL " + getURL, t);
 		}
 		return null;
 
