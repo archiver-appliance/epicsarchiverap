@@ -381,8 +381,13 @@ public class DataRetrievalServlet  extends HttpServlet {
 			
 			if(postProcessor instanceof PostProcessorWithConsolidatedEventStream) { 
 				try(EventStream eventStream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream()) {
-					mergeDedupCountingConsumer.consumeEventStream(eventStream);
-					resp.flushBuffer();
+					EventStreamDesc sourceDesc = eventStream.getDescription();
+					if(sourceDesc == null) {
+						logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor " + postProcessor.getExtension());
+					} else { 
+						mergeDedupCountingConsumer.consumeEventStream(eventStream);
+						resp.flushBuffer();
+					}
 				}
 			}
 
