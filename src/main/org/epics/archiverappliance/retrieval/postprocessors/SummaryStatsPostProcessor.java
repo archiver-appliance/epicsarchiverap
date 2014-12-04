@@ -187,7 +187,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 			currentBinCollector = null;
 		}
 		if(consolidatedData.isEmpty()) { 
-			return new ArrayListEventStream(0, null);			
+			return new ArrayListEventStream(0, srcDesc);			
 		} else { 
 			return new SummaryStatsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, this.lastBin, this.intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins());
 		}

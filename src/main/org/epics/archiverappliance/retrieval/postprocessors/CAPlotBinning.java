@@ -291,7 +291,7 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 	@Override
 	public EventStream getConsolidatedEventStream() {
 		if(consolidatedData.isEmpty()) { 
-			return new ArrayListEventStream(0, null);			
+			return new ArrayListEventStream(0, this.srcDesc);			
 		} else { 
 			if(lastBin == Long.MAX_VALUE) { 
 				this.firstBin = Collections.min(consolidatedData.keySet());
