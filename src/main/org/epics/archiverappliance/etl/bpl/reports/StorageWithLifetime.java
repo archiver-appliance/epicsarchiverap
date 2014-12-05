@@ -24,7 +24,7 @@ public class StorageWithLifetime {
 	int lifetimeid;
 	double totalETLTimeIntoThisDestInMillis;
 	int maxTotalETLRunsIntoThisDest;
-	int minPartitionSourceGranularityInSecs;
+	int minPartitionSourceGranularityInSecs = 366*24*60*60; // Init to a large value; below we use Math.min to pick the correct value.
 	public StorageWithLifetime(StorageMetrics storageMetricsAPI, int lifetimeid) {
 		this.storageMetricsAPI = storageMetricsAPI;
 		this.lifetimeid = lifetimeid;
@@ -47,6 +47,7 @@ public class StorageWithLifetime {
 				double avgTimeIntoThisDestInMillis = storage.totalETLTimeIntoThisDestInMillis/storage.maxTotalETLRunsIntoThisDest;
 				storageMetrics.put("avgTimeConsumedMs", Double.toString(avgTimeIntoThisDestInMillis));
 				storageMetrics.put("avgTimeConsumedPercent", Double.toString((avgTimeIntoThisDestInMillis/1000)/storage.minPartitionSourceGranularityInSecs));
+				storageMetrics.put("minPartitionSourceGranularityInSecs", Integer.toString(storage.minPartitionSourceGranularityInSecs));
 			} catch(IOException ex) {
 				logger.warn("Exception retrieving details from " + storage.storageMetricsAPI.getName(), ex);
 			}
