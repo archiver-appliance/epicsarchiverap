@@ -185,6 +185,8 @@ public class BPLServlet extends HttpServlet {
 		addPostAction("/importConfigForAppliance", ImportConfigForAppliance.class);
 		addPostAction("/archivePV", ArchivePVAction.class);
 		addPostAction("/getPVStatus", GetPVStatusAction.class);
+		addPostAction("/pauseArchivingPV", PauseArchivingPV.class);
+		addPostAction("/resumeArchivingPV", ResumeArchivingPV.class);
 		addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
 	}
 	
