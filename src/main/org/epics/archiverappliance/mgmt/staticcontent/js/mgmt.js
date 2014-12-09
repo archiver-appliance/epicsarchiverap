@@ -13,7 +13,7 @@ function getPVQueryParam() {
 	var pvText = $('#archstatpVNames').val();
 	// Check for value, non-zero length and non-blanks
 	if(!pvText || (0 === pvText.length) || (/^\s*$/.test(pvText))) {
-		alert("No PVs have been specified for archiving.");
+		alert("No PVs have been specified.");
 		return;
 	}
 	var pvS = pvText.split("\n");
@@ -972,6 +972,110 @@ function reshardPV() {
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
 			alert("An error resharding the data pv " + pvname + " -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}
+
+
+
+// Looks up the PVs in #archstatpVNames text area and then replace the text area with the PV names.
+function lookupPVs() {	
+
+	var pvQuery = getPVQueryParam();
+	if(!pvQuery) return;
+	
+	var jsonurl = '../bpl/getPVStatus?' + pvQuery + "&reporttype=short";
+	var components = jsonurl.split('?');
+	var urlalone = components[0];
+	var querystring = '';
+	if(components.length > 1) {
+		querystring = components[1];
+	}
+	var HTTPMethod = 'GET';
+	if(jsonurl.length > 2048) {
+		HTTPMethod = 'POST';
+	}
+	
+	$.ajax({
+		url: urlalone,
+		data: querystring,
+		type: HTTPMethod,
+		dataType: 'json',
+		success: function(data, textStatus, jqXHR) {
+			$('#archstatpVNames').val('');
+			for(var pvInfo in data) {
+				var newval = $('#archstatpVNames').val() + data[pvInfo]['pvName'] + "\n";
+				$('#archstatpVNames').val(newval);
+				var pvNames = $('#archstatpVNames').val();
+				if(sessionStorage && pvNames != null) {
+					sessionStorage['archstatpVNames'] = $('#archstatpVNames').val();
+				}
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error occured on the server while looking up PVs -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}
+
+function pauseMultiplePVs() {
+	
+	var pvQuery = getPVQueryParam();
+	if(!pvQuery) return;
+	
+	var jsonurl = '../bpl/pauseArchivingPV?' + pvQuery;
+	var components = jsonurl.split('?');
+	var urlalone = components[0];
+	var querystring = '';
+	if(components.length > 1) {
+		querystring = components[1];
+	}
+	var HTTPMethod = 'GET';
+	if(jsonurl.length > 2048) {
+		HTTPMethod = 'POST';
+	}
+	
+	$.ajax({
+		url: urlalone,
+		data: querystring,
+		type: HTTPMethod,
+		dataType: 'json',
+		success: function(data, textStatus, jqXHR) {
+			checkPVStatus();
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error occured on the server while pausing PVs -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}
+
+function resumeMultiplePVs() {
+	
+	var pvQuery = getPVQueryParam();
+	if(!pvQuery) return;
+	
+	var jsonurl = '../bpl/resumeArchivingPV?' + pvQuery;
+	var components = jsonurl.split('?');
+	var urlalone = components[0];
+	var querystring = '';
+	if(components.length > 1) {
+		querystring = components[1];
+	}
+	var HTTPMethod = 'GET';
+	if(jsonurl.length > 2048) {
+		HTTPMethod = 'POST';
+	}
+	
+	$.ajax({
+		url: urlalone,
+		data: querystring,
+		type: HTTPMethod,
+		dataType: 'json',
+		success: function(data, textStatus, jqXHR) {
+			checkPVStatus();
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error occured on the server while pausing PVs -- " + textStatus + " -- " + errorThrown);
 		}
 	});
 }
