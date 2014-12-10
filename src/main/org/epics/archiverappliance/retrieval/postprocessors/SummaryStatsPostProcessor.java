@@ -157,17 +157,16 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins());
 				}
 			}
-
-			private void switchToNewBin(long binNumber) {
-				currentBin = binNumber;
-				currentMaxSeverity = 0;
-				currentConnectionChangedEvents = false;
-				currentBinCollector = getCollector();
-				currentBinCollector.setBinParams(intervalSecs, currentBin);
-			}
 		};
 	}
 
+	private void switchToNewBin(long binNumber) {
+		currentBin = binNumber;
+		currentMaxSeverity = 0;
+		currentConnectionChangedEvents = false;
+		currentBinCollector = getCollector();
+		currentBinCollector.setBinParams(intervalSecs, currentBin);
+	}
 
 	@Override
 	public String getExtension() {
@@ -183,6 +182,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	@Override
 	public EventStream getConsolidatedEventStream() {
 		if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+			switchToNewBin(firstBin-1);
 			logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
 			currentBinCollector.addEvent(lastSampleBeforeStart);
 			lastSampleBeforeStartAdded = true; 

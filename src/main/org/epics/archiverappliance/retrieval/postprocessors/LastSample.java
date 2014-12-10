@@ -95,13 +95,13 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
 								if(!lastSampleBeforeStartAdded) { 
 									if(lastSampleBeforeStart != null) { 
-										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
 											lastSampleBeforeStart = e.makeClone();
 										}
-									} else { 
 										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
+									} else { 
 										lastSampleBeforeStart = e.makeClone();
+										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 									}
 								}
 							}
@@ -132,14 +132,14 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 
 	@Override
 	public EventStream getConsolidatedEventStream() {
+		if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+			bin2Event.put(firstBin-1, lastSampleBeforeStart);
+			lastSampleBeforeStartAdded = true; 
+			logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+		}
 		if(bin2Event.isEmpty()) { 
 			return new ArrayListEventStream(0, srcDesc);
 		} else { 
-			if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
-				logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
-				bin2Event.put(firstBin-1, lastSampleBeforeStart);
-				lastSampleBeforeStartAdded = true; 
-			}
 			return new FillsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, lastBin, intervalSecs, srcDesc, bin2Event, false);
 		}
 	}

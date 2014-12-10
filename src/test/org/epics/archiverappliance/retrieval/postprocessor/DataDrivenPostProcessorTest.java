@@ -126,9 +126,8 @@ public class DataDrivenPostProcessorTest {
 		
 		checkRetrieval(URLEncoder.encode(newPVName, "UTF-8"), start, end, 1, true);
 		checkRetrieval(URLEncoder.encode("firstSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
-		checkRetrieval(URLEncoder.encode("meanSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
-		checkRetrieval(URLEncoder.encode("mean_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
 		checkRetrieval(URLEncoder.encode("lastSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
+		checkRetrieval(URLEncoder.encode("meanSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
 	}
 	
 	private int checkRetrieval(String retrievalPVName, Timestamp start, Timestamp end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
