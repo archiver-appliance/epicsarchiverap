@@ -350,7 +350,7 @@ function getCurrentlyDisconnectedPVsReport() {
 			 {'srcAttr' : 'hostName', 'label' : 'Hostname'},
 			 {'srcAttr' : 'commandThreadID', 'label' : 'Context ID'},
 			 {'srcAttr' : 'internalState', 'label' : 'Internal State'},
-			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Pause', 'srcFunction' : function(dataobject) { return '<a onclick="pauseDisconnectedPV(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }}			 
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Pause', 'srcFunction' : function(dataobject) { return '<a onclick="pauseDisconnectedPV(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/pause.png"></a>'; }}			 
 			 ], 
 			 {'initialSort' : 1});
 }

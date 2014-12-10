@@ -94,12 +94,13 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 							} else if(binNumber < firstBin) { 
 								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
 								if(!lastSampleBeforeStartAdded) { 
-									logger.debug("Adding lastSampleBeforeStart");
 									if(lastSampleBeforeStart != null) { 
+										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
 											lastSampleBeforeStart = e.makeClone();
 										}
 									} else { 
+										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 										lastSampleBeforeStart = e.makeClone();
 									}
 								}
