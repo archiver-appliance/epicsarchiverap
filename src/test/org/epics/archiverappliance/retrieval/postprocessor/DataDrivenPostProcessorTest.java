@@ -94,7 +94,7 @@ public class DataDrivenPostProcessorTest {
 		siocSetup.stopSIOC();
 
 		if(ltsFolder.exists()) { 
-			FileUtils.deleteDirectory(ltsFolder);
+			// FileUtils.deleteDirectory(ltsFolder);
 		}
 	}
 
@@ -124,7 +124,11 @@ public class DataDrivenPostProcessorTest {
 		Timestamp start = TimeUtils.convertFromISO8601String("2014-12-08T07:03:55.000Z");
 		Timestamp end   = TimeUtils.convertFromISO8601String("2014-12-08T08:04:00.000Z");
 		
-		checkRetrieval(URLEncoder.encode(pvName, "UTF-8"), start, end, 1, true);
+		checkRetrieval(URLEncoder.encode(newPVName, "UTF-8"), start, end, 1, true);
+		checkRetrieval(URLEncoder.encode("firstSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
+		checkRetrieval(URLEncoder.encode("lastSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
+		checkRetrieval(URLEncoder.encode("meanSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
+		checkRetrieval(URLEncoder.encode("mean_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
 	}
 	
 	private int checkRetrieval(String retrievalPVName, Timestamp start, Timestamp end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
@@ -136,7 +140,7 @@ public class DataDrivenPostProcessorTest {
 		// Make sure we get the EGU as part of a regular VAL call.
 		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
 			PayloadInfo info = null;
-			assertTrue("We should get some data, we are getting a null stream back", strm != null); 
+			assertTrue("We should get some data for " + retrievalPVName + " , we are getting a null stream back", strm != null); 
 			info =  strm.getPayLoadInfo();
 			assertTrue("Stream has no payload info", info != null);
 			mergeHeaders(info, metaFields);
@@ -158,9 +162,9 @@ public class DataDrivenPostProcessorTest {
 		}
 
 		logger.info("For " + retrievalPVName + "we were expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
-		assertTrue("Expecting " + expectedAtLeastEvents + "events. We got " + eventCount, eventCount >= expectedAtLeastEvents);
+		assertTrue("Expecting " + expectedAtLeastEvents + "events for " + retrievalPVName + ". We got " + eventCount, eventCount >= expectedAtLeastEvents);
 		if(exactMatch) { 
-			assertTrue("Expecting " + expectedAtLeastEvents + "events. We got " + eventCount, eventCount == expectedAtLeastEvents);
+			assertTrue("Expecting " + expectedAtLeastEvents + "events for " + retrievalPVName + ". We got " + eventCount, eventCount == expectedAtLeastEvents);
 		}
 		return eventCount;
 	}

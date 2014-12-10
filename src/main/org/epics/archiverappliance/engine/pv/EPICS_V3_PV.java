@@ -143,7 +143,7 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 		VALUE(1 | 4),
 
 		/** Listen to changes in value beyond 'ADEL' archive limit */
-		ARCHIVE(2),
+		ARCHIVE(2 | 4),
 
 		/** Listen to changes in alarm state */
 		ALARM(4);

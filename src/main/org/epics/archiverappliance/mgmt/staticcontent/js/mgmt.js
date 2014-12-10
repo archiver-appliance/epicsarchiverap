@@ -317,6 +317,27 @@ function abortArchiveRequest(pvName) {
 	});
 }
 
+//Pause disconnected PV
+function pauseDisconnectedPV(pvname) {
+	$.ajax({
+		url: '../bpl/pauseArchivingPV',
+		dataType: 'json',
+		data: 'pv='+encodeURIComponent(pvname),
+		success: function(data, textStatus, jqXHR) {
+			if(data.status != null && data.status != undefined && data.status == "ok") {
+				getCurrentlyDisconnectedPVsReport();	
+			} else if(data.validation != null && data.validation != undefined){
+				alert(data.validation);
+			} else {
+				alert("pauseArchivingPV returned something valid but did not have a status field.");
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error pausing the archiving for pv " + pvname + " -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}
+
 
 //Get a report on the PV's that are currently disconnected
 function getCurrentlyDisconnectedPVsReport() {
@@ -328,7 +349,8 @@ function getCurrentlyDisconnectedPVsReport() {
 			 {'srcAttr' : 'connectionLostAt', 'label' : 'Connection lost at'},
 			 {'srcAttr' : 'hostName', 'label' : 'Hostname'},
 			 {'srcAttr' : 'commandThreadID', 'label' : 'Context ID'},
-			 {'srcAttr' : 'internalState', 'label' : 'Internal State'}
+			 {'srcAttr' : 'internalState', 'label' : 'Internal State'},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Pause', 'srcFunction' : function(dataobject) { return '<a onclick="pauseDisconnectedPV(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }}			 
 			 ], 
 			 {'initialSort' : 1});
 }
@@ -567,7 +589,8 @@ function showExternalCAListView() {
 	var tabledivname = 'externalCAlistview';
 	createReportTable(jsonurl, tabledivname, 
 			[{'srcAttr' : 'CAUrl', 'label' : 'URL'}, 
-			 {'srcAttr' : 'indexes', 'label' : 'Indexes'}
+			 {'srcAttr' : 'indexes', 'label' : 'Indexes'},
+			 {'srcAttr' : 'CAUrl', 'sortType' : 'none', 'label' : 'Delete', 'srcFunction' : function(dataobject) { return '<a onclick="removeCAServer(' + "'" + dataobject.CAUrl + "','" + dataobject.indexes + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }}			 
 			]);
 }
 

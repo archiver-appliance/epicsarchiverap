@@ -134,6 +134,11 @@ public class LastSample implements PostProcessor, PostProcessorWithConsolidatedE
 		if(bin2Event.isEmpty()) { 
 			return new ArrayListEventStream(0, srcDesc);
 		} else { 
+			if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+				logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+				bin2Event.put(firstBin-1, lastSampleBeforeStart);
+				lastSampleBeforeStartAdded = true; 
+			}
 			return new FillsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, lastBin, intervalSecs, srcDesc, bin2Event, false);
 		}
 	}

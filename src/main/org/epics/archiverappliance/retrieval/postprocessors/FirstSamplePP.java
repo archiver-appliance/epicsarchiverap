@@ -68,6 +68,7 @@ public class FirstSamplePP implements PostProcessor {
 							if(binNumber >= firstBin && binNumber <= lastBin) {
 								if(binNumber != previousBinNum) {
 									if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+										logger.info("Adding the lastSampleBeforeStart at " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()) + " into the result stream");
 										buf.add(lastSampleBeforeStart);
 										lastSampleBeforeStartAdded = true; 
 									}
@@ -81,15 +82,23 @@ public class FirstSamplePP implements PostProcessor {
 									if(lastSampleBeforeStart != null) { 
 										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
 											lastSampleBeforeStart = e.makeClone();
+											logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 										}
 									} else { 
 										lastSampleBeforeStart = e.makeClone();
+										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 									}
 								}
 							}
 						} catch(PBParseException ex) { 
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
+					}
+
+					if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) {
+						logger.info("Adding the lastSampleBeforeStart at " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()) + " into the result stream");
+						buf.add(lastSampleBeforeStart);
+						lastSampleBeforeStartAdded = true; 
 					}
 					return buf;
 				}

@@ -182,6 +182,11 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	
 	@Override
 	public EventStream getConsolidatedEventStream() {
+		if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+			logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+			currentBinCollector.addEvent(lastSampleBeforeStart);
+			lastSampleBeforeStartAdded = true; 
+		}
 		if(currentBin != -1) { 
 			consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
 			currentBinCollector = null;
