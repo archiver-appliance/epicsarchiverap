@@ -99,6 +99,7 @@ To check the status of or to archive some PV's, please type in some PV names her
 <!-- @end(site_footer) -->
 </div>
 
+<div id="archapplversions"></div>
 
 <script type="text/javascript">
 $(document).ready(function() {
@@ -115,6 +116,8 @@ $(document).ready(function() {
   if(pvText != null && pvText.length > 0) {
 	  checkPVStatus();
   }
+  
+  showVersions();
   
   // Set up help
   $("#help").click(function() { window.open('help/userguide.html#ArchivePV'); } );

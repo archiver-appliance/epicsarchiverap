@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.BasicDispatcher;
+import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.retrieval.bpl.SearchForPVsRegex;
@@ -39,6 +40,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
 		getActions.put("/searchForPVsRegex", SearchForPVsRegex.class);
 		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
+		getActions.put("/getVersion", GetVersion.class);
 	}
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)

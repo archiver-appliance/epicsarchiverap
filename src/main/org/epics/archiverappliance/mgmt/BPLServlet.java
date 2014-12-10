@@ -42,6 +42,7 @@ import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfo;
 import org.epics.archiverappliance.mgmt.bpl.GetPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPausedPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetStoresForPV;
+import org.epics.archiverappliance.mgmt.bpl.GetVersions;
 import org.epics.archiverappliance.mgmt.bpl.ImportChannelArchiverConfigAction;
 import org.epics.archiverappliance.mgmt.bpl.ImportConfig;
 import org.epics.archiverappliance.mgmt.bpl.ImportConfigForAppliance;
@@ -115,6 +116,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/removeAlias", RemoveAliasAction.class);
 		addAction("/skipAliasCheck", SkipAliasCheckAction.class);
 		addAction("/changeTypeForPV", ChangeTypeForPV.class);
+		addAction("/getVersions", GetVersions.class);
 		
 
 		// BPL related to reports

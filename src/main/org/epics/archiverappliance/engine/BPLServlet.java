@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.BasicDispatcher;
+import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.bpl.AbortArchiveRequestForAppliance;
@@ -89,6 +90,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/abortArchivingPVForThisAppliance", AbortArchiveRequestForAppliance.class);
 		getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
 		getActions.put("/CAJSearchManagerDetails", CAJSearchManagerDetails.class);
+		getActions.put("/getVersion", GetVersion.class);
 	}
 
 	@Override

@@ -1102,3 +1102,20 @@ function resumeMultiplePVs() {
 		}
 	});
 }
+
+// Meant for showing the versions in the index page.
+function showVersions() { 
+	$.ajax({
+		url: "../bpl/getVersions",
+		dataType: 'json',
+		success: function(data, textStatus, jqXHR) {
+			$('#archapplversions').text('EPICS ' + data['mgmt_version']);
+			if("components_with_different_versions" in data) { 
+				$('#archapplversions').css("color","red");
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error occured on the server while getting the versions -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}

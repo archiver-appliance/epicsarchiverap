@@ -535,3 +535,11 @@ s}
 	float: right;
 	margin-right: 1.0em;
 }
+
+#archapplversions { 
+	font-style: italic;
+	text-align: right;
+	font-size: smaller;
+	padding-right: 0.5em;
+	padding-bottom: 0.5em; 
+}
