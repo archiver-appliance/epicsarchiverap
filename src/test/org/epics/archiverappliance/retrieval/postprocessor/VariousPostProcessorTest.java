@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.retrieval;
+package org.epics.archiverappliance.retrieval.postprocessor;
 
 import static org.junit.Assert.assertTrue;
 

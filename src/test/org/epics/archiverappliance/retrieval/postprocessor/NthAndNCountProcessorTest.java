@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.retrieval;
+package org.epics.archiverappliance.retrieval.postprocessor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -14,6 +14,8 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
+import org.epics.archiverappliance.retrieval.CallableEventStream;
+import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.NCount;
 import org.epics.archiverappliance.retrieval.postprocessors.Nth;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;

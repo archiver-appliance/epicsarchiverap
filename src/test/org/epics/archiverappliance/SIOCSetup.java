@@ -65,7 +65,7 @@ public class SIOCSetup {
 		executor.execute(cmdLine, resultHandler);
 
 		// Show all the records in the sioc.
-		writerforstdin.println("dbl");
+		// writerforstdin.println("dbl");
 		
 	
 	}
