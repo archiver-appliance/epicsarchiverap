@@ -76,6 +76,12 @@ public class InMemoryPersistence implements ConfigPersistence {
 	public void putExternalDataServer(String serverId, String serverInfo) throws IOException {
 		externalDataServersKeys.put(serverId, serverInfo);
 	}
+	
+	@Override
+	public void removeExternalDataServer(String serverId, String serverInfo) throws IOException {
+		externalDataServersKeys.remove(serverId);
+	}
+
 
 	@Override
 	public List<String> getAliasNamesToRealNamesKeys() throws IOException {

@@ -469,7 +469,15 @@ public interface ConfigService {
 	 * @param archivesCSV - A comma separated list of indexes
 	 */
 	public void addChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException;
-	
+
+	/**
+	 * Removes an entry for an external Channel Archiver Data Server from the system
+	 * Note; we may need to restart the entire cluster for this change to take effect.
+	 * @param serverURL - URL to the XML-RPC server
+	 * @param archivesCSV - A comma separated list of indexes
+	 */
+	public void removeChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException;
+
 	/**
 	 * Return a list of ChannelArchiverDataServerPVInfos for a PV if one exists; otherwise return null.
 	 * The servers are sorted in order of the start seconds. 

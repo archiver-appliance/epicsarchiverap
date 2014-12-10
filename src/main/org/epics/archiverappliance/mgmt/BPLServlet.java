@@ -51,6 +51,7 @@ import org.epics.archiverappliance.mgmt.bpl.PauseArchivingPV;
 import org.epics.archiverappliance.mgmt.bpl.PutPVTypeInfo;
 import org.epics.archiverappliance.mgmt.bpl.RefreshPVDataFromChannelArchivers;
 import org.epics.archiverappliance.mgmt.bpl.RemoveAliasAction;
+import org.epics.archiverappliance.mgmt.bpl.RemoveChannelArchiverServer;
 import org.epics.archiverappliance.mgmt.bpl.RenamePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ReshardPV;
 import org.epics.archiverappliance.mgmt.bpl.ResumeArchivingPV;
@@ -152,6 +153,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getChannelArchiverServers", ChannelArchiverListView.class);
 		addAction("/addChannelArchiverServer", AddChannelArchiverServer.class);
 		addAction("/addChannelArchiverServerArchives", AddChannelArchiverServerArchives.class);
+		addAction("/removeChannelArchiverServer", RemoveChannelArchiverServer.class);
 		addAction("/test/compareWithChannelArchiver", CompareWithChannelArchiver.class);
 		addAction("/getAggregatedApplianceInfo", AggregatedApplianceInfo.class);
 		addAction("/importDataFromPlugin", ImportDataFromPlugin.class);

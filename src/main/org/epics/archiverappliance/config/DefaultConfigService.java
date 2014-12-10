@@ -1215,6 +1215,19 @@ public class DefaultConfigService implements ConfigService {
 			throw new IOException(ex);
 		}
 	}
+	
+	
+	@Override
+	public void removeChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
+		this.getChannelArchiverDataServers().remove(serverURL);
+		// We always add to persistence; whether this is from the UI or from the other appliances in the cluster.
+		if(this.persistanceLayer != null) { 
+			logger.info("Removing the channel archiver server " + serverURL + " from the persistent store.");
+			persistanceLayer.removeExternalDataServer(serverURL, archivesCSV);
+		}
+
+	}
+
 
 	/**
 	 * Given a Channel Archiver data server URL and an archive; this adds the PVs in the Channel Archiver so that they can be proxied.
@@ -1652,6 +1665,13 @@ public class DefaultConfigService implements ConfigService {
 			
 			@Override
 			public void entryRemoved(EntryEvent<Object, Object> arg0) {
+				String url = (String) arg0.getKey();
+				String archivesCSV = (String) arg0.getValue();
+				try { 
+					removeChannelArchiverDataServer(url, archivesCSV);
+				} catch(Exception ex) { 
+					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
+				}
 			}
 			
 			@Override

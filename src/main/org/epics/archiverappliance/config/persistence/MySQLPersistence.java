@@ -98,9 +98,15 @@ public class MySQLPersistence implements ConfigPersistence {
 
 	@Override
 	public void putExternalDataServer(String serverId, String serverInfo) throws IOException {
-		putStringValueForKey("INSERT INTO ExternalDataServers (serverid, serverinfo) VALUES (?, ?) ON DUPLICATE KEY UPDATE serverinfo = ?;", serverId, serverInfo, "putExternalDataServer");
-		
+		putStringValueForKey("INSERT INTO ExternalDataServers (serverid, serverinfo) VALUES (?, ?) ON DUPLICATE KEY UPDATE serverinfo = ?;", serverId, serverInfo, "putExternalDataServer");	
 	}
+	
+	@Override
+	public void removeExternalDataServer(String serverId, String serverInfo) throws IOException {
+		removeKey("DELETE FROM ExternalDataServers WHERE serverid = ?;", serverId, "removeExternalDataServer");
+	}
+
+
 
 	@Override
 	public List<String> getAliasNamesToRealNamesKeys() throws IOException {
@@ -251,6 +257,4 @@ public class MySQLPersistence implements ConfigPersistence {
 			throw new IOException(ex);
 		}
 	}
-
-
 }

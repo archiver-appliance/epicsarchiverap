@@ -114,9 +114,15 @@ public class JDBM2Persistence implements ConfigPersistence {
 
 	@Override
 	public void putExternalDataServer(String serverId, String serverInfo) throws IOException {
-		putStringValueForKey("ExternalDataServers", serverId, serverInfo);
-		
+		putStringValueForKey("ExternalDataServers", serverId, serverInfo);	
 	}
+	
+	@Override
+	public void removeExternalDataServer(String serverId, String serverInfo) throws IOException {
+		removeKey("ExternalDataServers", serverId);
+	}
+
+
 
 	@Override
 	public List<String> getAliasNamesToRealNamesKeys() throws IOException {
@@ -270,5 +276,4 @@ public class JDBM2Persistence implements ConfigPersistence {
 
 		return null;
 	}
-
 }

@@ -34,6 +34,7 @@ public interface ConfigPersistence {
 	public List<String> getExternalDataServersKeys() throws IOException;
 	public String getExternalDataServer(String serverId) throws IOException;
 	public void putExternalDataServer(String serverId, String serverInfo) throws IOException;
+	public void removeExternalDataServer(String serverId, String serverInfo) throws IOException;
 	
 
 	public List<String> getAliasNamesToRealNamesKeys() throws IOException;

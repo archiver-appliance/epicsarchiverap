@@ -1119,3 +1119,21 @@ function showVersions() {
 		}
 	});
 }
+
+function removeCAServer(serverURL, indexes) { 
+	$.ajax({
+		url: "../bpl/removeChannelArchiverServer?channelarchiverserverurl=" + encodeURIComponent(serverURL) + "&archives=" + encodeURIComponent(indexes),
+		dataType: 'json',
+		success: function(data, textStatus, jqXHR) {
+			if(data.status == "ok") { 
+				alert("The external archiver server was removed successfully. You may have to restart the entire cluster for this to take effect.");
+			} else { 
+				alert("There was some issue removing the external server. Please check the logs for more details..");
+			}
+			showExternalCAListView();
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("There was some issue removing the external server. Please check the logs for more details.." + textStatus + " -- " + errorThrown);
+		}
+	});
+}
