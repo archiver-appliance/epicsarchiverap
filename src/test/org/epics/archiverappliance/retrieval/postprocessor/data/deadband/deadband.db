@@ -1,0 +1,26 @@
+record(mbbo, "TST-CT{}Alrm-SP") {
+  field(PINI, "YES")
+  field(ZRST, "Zero")
+  field(ONST, "One")
+  field(TWST, "Two")
+  field(THST, "Three")
+  field(ZRSV, "NO_ALARM")
+  field(ONSV, "MINOR")
+  field(TWSV, "MAJOR")
+  field(THSV, "INVALID")
+  field(UDF , "0")
+  field(FLNK, "TST-CT{}Sig:1-I")
+}
+
+record(ao, "TST-CT{}Sig:1-I") {
+  field(SDIS, "TST-CT{}Alrm-SP NPP MSS")
+  field(DISV, "42")
+  field(FLNK, "TST-CT{}Sig:2-I")
+}
+
+record(ai, "TST-CT{}Sig:2-I") {
+  field(INP , "TST-CT{}Sig:1-I NPP MSS")
+  field(MDEL, "2")
+  field(ADEL, "2")
+  field(TSEL, "TST-CT{}Sig:1-I.TIME")
+}
