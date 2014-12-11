@@ -47,9 +47,9 @@ public class ApplianceMetricsDetails implements BPLAction {
 			for(ETLMetricsForLifetime metricForLifetime : metricsForLifetime) {
 				String lifetimeIdentifier = metricForLifetime.getLifeTimeId() + "&raquo;" + (metricForLifetime.getLifeTimeId()+1);
 				long totalRunsNum = metricForLifetime.getTotalETLRuns();
-				long timeForOverallETLInMillis=metricForLifetime.getTimeForOverallETLInMilliSeconds();
-				addDetailedStatus(details, "Total number of ETL("+lifetimeIdentifier+") runs so far", Long.toString(totalRunsNum));
 				if(totalRunsNum != 0){
+					long timeForOverallETLInMillis=metricForLifetime.getTimeForOverallETLInMilliSeconds();
+					addDetailedStatus(details, "Total number of ETL("+lifetimeIdentifier+") runs so far", Long.toString(totalRunsNum));
 					double avgETLTimeInSeconds = ((double)timeForOverallETLInMillis)/(totalRunsNum*1000.0);
 					addDetailedStatus(details, "Average time spent in ETL("+lifetimeIdentifier+") (s/run)", twoSignificantDigits.format(avgETLTimeInSeconds));
 					double timeSpentInETLPercent = (avgETLTimeInSeconds*100)/(TimeUtils.getCurrentEpochSeconds() - metricForLifetime.getStartOfMetricsMeasurementInEpochSeconds());

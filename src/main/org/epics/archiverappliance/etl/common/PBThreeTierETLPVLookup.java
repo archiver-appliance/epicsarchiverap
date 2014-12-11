@@ -40,6 +40,7 @@ import org.epics.archiverappliance.etl.StorageMetrics;
  */
 
 public final class PBThreeTierETLPVLookup {
+	private static final String MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION = "org.epics.archiverappliance.config.PVTypeInfo.maximumNumberOfLifetimesInInstallation";
 	private static Logger logger = Logger.getLogger(PBThreeTierETLPVLookup.class.getName());
 	private static Logger configlogger = Logger.getLogger("config." + PBThreeTierETLPVLookup.class.getName());
 	private static int DEFAULT_ETL_PERIOD = 60*5; // Seconds; needs to be the smallest time interval in the PartitionGranularity.
@@ -84,7 +85,7 @@ public final class PBThreeTierETLPVLookup {
 			}
 		});
 		
-		maxLifetimes = Integer.parseInt(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.config.PVTypeInfo.maximumNumberOfLifetimesInInstallation", "3"));
+		maxLifetimes = Integer.parseInt(configService.getInstallationProperties().getProperty(MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION, "3"));
 		if(maxLifetimes-1 > 0) { 
 			logger.info("Creating a thread pool for each lifetimeid transition => " + (maxLifetimes-1));
 			etlLifeTimeThreadPoolExecutors = new ScheduledThreadPoolExecutor[maxLifetimes-1];
@@ -146,9 +147,16 @@ public final class PBThreeTierETLPVLookup {
 				logger.warn("Skipping adding PV to ETL as it has less than 2 datasources" + pvName);
 				return;
 			}
+
+			if(dataSources.length >= applianceMetrics.length) { 
+				configlogger.fatal("The pv " + pvName + " has " + dataSources.length + " datasources. This installation is configured for a max of " + applianceMetrics.length + " datasources. To change this, please edit the archappl.properties for your installation and change the " + MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION + " to " + dataSources.length);
+				return;
+			}
+
 			
 			for(int etllifetimeid = 0; etllifetimeid < dataSources.length-1; etllifetimeid++) {
 				try {
+					
 					String sourceStr=dataSources[etllifetimeid];
 					ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
 					String destStr=dataSources[etllifetimeid+1];
