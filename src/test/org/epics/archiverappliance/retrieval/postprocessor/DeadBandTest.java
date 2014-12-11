@@ -80,7 +80,7 @@ public class DeadBandTest {
 		FileUtils.copyFile(new File(srcFile), destFile);
 		assertTrue(destFile.getAbsolutePath() + "does not exist", destFile.exists());
 		 
-		// Use UnitTestNoNamingConvention:inactive1 as a prototype to clone the PV Typeinfo for the PV LN-AM{RadMon:2}DoseRate-I
+		// Load a sample PVTypeInfo from a prototype file.
 		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
 		PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
 		JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);

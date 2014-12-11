@@ -3,20 +3,19 @@ package org.epics.archiverappliance.retrieval.postprocessor;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
-import org.epics.archiverappliance.SIOCSetup;
-import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
-import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.InfoChangeHandler;
@@ -25,13 +24,10 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 
@@ -44,54 +40,23 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 public class DataDrivenPostProcessorTest {
 	private static Logger logger = Logger.getLogger(DataDrivenPostProcessorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
 	private String pvName = "UnitTestNoNamingConvention:inactive1";
 	private String ltsFolderName = System.getenv("ARCHAPPL_LONG_TERM_FOLDER"); 
 	private File ltsFolder = new File(ltsFolderName);
-	StoragePlugin storageplugin;
-	private ConfigServiceForTests configService;
 	
 	@Before
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
-		storageplugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR", configService);
-		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 		
 		if(ltsFolder.exists()) { 
 			FileUtils.deleteDirectory(ltsFolder);
 		}
 
-		// Unlike the other tests, we archive a PV in the setup so that we can clone the PVTypeInfo later
-		driver.get("http://localhost:17665/mgmt/ui/index.html");
-		WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		pvstextarea.sendKeys(pvName);
-		WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		logger.debug("About to submit");
-		archiveButton.click();
-		// We have to wait for a few minutes here here as it does take a while for the workflow to complete.
-		Thread.sleep(5*60*1000);
-		WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		checkStatusButton.click();
-		Thread.sleep(2*1000);
-		WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		String pvNameObtainedFromTable = statusPVName.getText();
-		assertTrue("PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable, pvName.equals(pvNameObtainedFromTable));
-		WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		String expectedPVStatus = "Being archived";
-		assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
-		Thread.sleep(1*60*1000);
-
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
-		siocSetup.stopSIOC();
 
 		if(ltsFolder.exists()) { 
 			FileUtils.deleteDirectory(ltsFolder);
@@ -106,8 +71,8 @@ public class DataDrivenPostProcessorTest {
 		FileUtils.copyFile(new File(srcFile), destFile);
 		assertTrue(destFile.getAbsolutePath() + "does not exist", destFile.exists());
 		 
-		// Use UnitTestNoNamingConvention:inactive1 as a prototype to clone the PV Typeinfo for the PV LN-AM{RadMon:2}DoseRate-I
-		JSONObject srcPVTypeInfoJSON = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=" + pvName);
+		// Load a sample PVTypeInfo from a prototype file.
+		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
 		PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
 		JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
 		decoder.decode(srcPVTypeInfoJSON, srcPVTypeInfo);
