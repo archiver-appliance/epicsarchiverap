@@ -209,6 +209,28 @@ function quickChartButton(dataobject) {
 	return '<a href="' + dataRetrievalURL + '/content/testjson.html?pv=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/chart.png"/></a>';
 }
 
+
+function abortArchiveRequestFromDetails(pvName) { 
+	$.ajax({
+		url: '../bpl/abortArchivingPV',
+		dataType: 'json',
+		data: 'pv='+encodeURIComponent(pvName),
+		success: function(data, textStatus, jqXHR) {
+			if(data.status != null && data.status != undefined && data.status == "ok") {
+				checkPVStatus();	
+			} else if(data.validation != null && data.validation != undefined){
+				alert(data.validation);
+			} else {
+				alert("abortArchivingPV returned something valid but did not have a status field.");
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error occured on the server aborting the pv archival request -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}
+
+
 var refreshPVStatus = false;
 
 // Displays the status of the PVs as typed in the #archstatpVNames textarea in the archstats table.
@@ -247,11 +269,20 @@ function checkPVStatus() {
 				 if(curdata.pvNameOnly !== undefined) {
 					 return '<a href="pvdetails.html?pv=' + encodeURIComponent(curdata.pvNameOnly) + '" ><img class="imgintable" src="comm/img/details.png"/></a>';			 
 				 } else {
-					 return '<img class="imgintable" src="comm/img/details.png"/>';
+					 if(curdata.status == 'Initial sampling') { 
+						 return '<a onclick="abortArchiveRequestFromDetails(' + "'" + curdata.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>';			 
+						 
+					 } else {
+						 return 'N/A';
+					 }
 				 }
 			 }},
 			 {'label' : 'Quick chart', 'sortType': 'none', 'srcFunction' : function(curdata) {
-				 return quickChartButton(curdata);
+				 if(curdata.pvNameOnly !== undefined) {
+					 return quickChartButton(curdata);
+				 } else { 
+					 return 'N/A';
+				 }
 			 } }
 			]);
 	$('#archstatsdiv').show();

@@ -108,6 +108,7 @@ public class GetPVStatusAction implements BPLAction {
 						JSONValue.writeJSONString(tempStatus, out);
 					} 
 					else {
+						// Here we have a PVTypeInfo but no status from the engine. It could be that we are in that transient period between persisting the PVTypeInfo and opening the CA channel. 
 						out.println("{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Appliance assigned\" }");
 					}
 				}
