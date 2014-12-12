@@ -1,0 +1,7 @@
+~$
+^stage/
+^docs/api/
+^RELEASE_NOTES$
+^docs/EPICSEvent.proto$
+^docs/LICENSE$
+^bin/
