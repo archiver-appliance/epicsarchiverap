@@ -162,6 +162,10 @@ div.url_formula #part4 {
 	color: Navy;
 }
 
+div.para { 
+	padding-top: 1.0em;
+}
+
 
 .reportitle { 
 	color: Navy;
@@ -171,8 +175,9 @@ span.diff {
 	font-weight: bold;
 	background: #FFB873;
 }
-
-
+span.term { 
+	font-weight: bold;	
+}
 
 
 #postprocessorops {
