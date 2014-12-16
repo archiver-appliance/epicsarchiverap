@@ -214,8 +214,22 @@ public class MetaGet implements Runnable {
  * @param mainMeta  the MetaInfo object for this pv
  * @param fieldName the info name to be parsed
  */
-	private void parseOtherInfo(SampleValue tempvalue, MetaInfo mainMeta,
-			String fieldName) {
+	private void parseOtherInfo(SampleValue tempvalue, MetaInfo mainMeta, String fieldName) {
+		logger.debug("In MetaGet, processing field " + fieldName);
+		if(fieldName.equals("SCAN")) {
+			int enumIndex = ((ScalarValue<?>) tempvalue).getValue().intValue();
+			String[] labels = pvList.get(fieldName).getToalMetaInfo().getLabel();
+			if(labels != null && enumIndex < labels.length) { 
+				String scanValue = labels[enumIndex];
+				logger.debug("Looked up scan value enum name and it is " + scanValue);
+				mainMeta.addOtherMetaInfo("SCAN", scanValue);
+				return;
+			} else { 
+				logger.warn("SCAN does not seem to be a valid label");
+				mainMeta.addOtherMetaInfo("SCAN", Integer.toString(enumIndex));
+			}
+		}
+		
 		if (tempvalue instanceof ScalarValue<?>) {
 			mainMeta.addOtherMetaInfo(fieldName, new Double(
 					((ScalarValue<?>) tempvalue).getValue().doubleValue()));
