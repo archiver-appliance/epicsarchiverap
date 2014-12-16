@@ -34,7 +34,24 @@ public class PolicyExecutionTest {
 			pvInfo.put("RTYP", "ai");
 			PolicyConfig policyConfig = ExecutePolicy.computePolicyForPV(is, "test", pvInfo);
 			assertTrue("policyConfig is null", policyConfig != null);
-			assertTrue("dataStores is null", policyConfig.getClass() != null);
+			assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
 		}
 	}
+	
+	@Test
+	public void testForLeaks() throws Exception {
+		DefaultConfigService configService = new ConfigServiceForTests(new File("./src/sitespecific/tests/classpathfiles"));
+		for(int i = 0; i < 10000; i++) { 
+			try(InputStream is = configService.getPolicyText()) {
+				HashMap<String, Object> pvInfo = new HashMap<String, Object>();
+				pvInfo.put("eventRate", new Float(1.0));
+				pvInfo.put("storageRate", new Float(1.0));
+				pvInfo.put("RTYP", "ai");
+				PolicyConfig policyConfig = ExecutePolicy.computePolicyForPV(is, "test" + i, pvInfo);
+				assertTrue("policyConfig is null", policyConfig != null);
+				assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+			}
+		}
+	}
+
 }
