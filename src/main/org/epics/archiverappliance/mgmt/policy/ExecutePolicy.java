@@ -82,6 +82,8 @@ public class ExecutePolicy {
 		
 		if(logger.isDebugEnabled()) logger.debug("For pv" + pvName + "using policy " + policyConfig.generateStringRepresentation());
 		
+		interp.cleanup();
+		
 		return policyConfig;
 	}
 	
