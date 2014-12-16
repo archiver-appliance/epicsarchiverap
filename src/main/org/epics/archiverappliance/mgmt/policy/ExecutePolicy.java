@@ -12,6 +12,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.python.core.PyDictionary;
 import org.python.core.PyList;
+import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 
 /**
@@ -47,7 +48,7 @@ public class ExecutePolicy {
 	 */
 	public static PolicyConfig computePolicyForPV(InputStream is, String pvName, HashMap<String, Object> pvInfo) throws IOException {
 		
-		PythonInterpreter interp = new PythonInterpreter();
+		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
 		PyDictionary pvInfoDict = new PyDictionary();
 		pvInfoDict.put("pvName", pvName);
 		pvInfoDict.putAll(pvInfo);
@@ -89,25 +90,27 @@ public class ExecutePolicy {
 	
 	public static HashMap<String, String> getPolicyList(InputStream is) {
 		logger.debug("Getting the list of policies.");
-		PythonInterpreter interp = new PythonInterpreter();
+		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
 		// Load the policies.py into the interpreter.
 		interp.execfile(is);
 		interp.exec("pvPolicies = getPolicyList()");
 		PyDictionary policies = (PyDictionary) interp.get("pvPolicies");
 		@SuppressWarnings("unchecked")
 		HashMap<String, String> ret = new HashMap<String, String>(policies);
+		interp.cleanup();
 		return ret;
 	}
 
 	public static List<String> getFieldsArchivedAsPartOfStream(InputStream is) {
 		logger.debug("Getting the list of standard fields.");
-		PythonInterpreter interp = new PythonInterpreter();
+		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
 		// Load the policies.py into the interpreter.
 		interp.execfile(is);
 		interp.exec("pvStandardFields = getFieldsArchivedAsPartOfStream()");
 		PyList stdFields = (PyList) interp.get("pvStandardFields");
 		@SuppressWarnings("unchecked")
 		LinkedList<String> ret = new LinkedList<String>(stdFields);
+		interp.cleanup();
 		return ret;
 	}
 }
