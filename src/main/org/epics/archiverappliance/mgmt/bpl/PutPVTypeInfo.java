@@ -62,7 +62,7 @@ public class PutPVTypeInfo implements BPLAction {
 		}
 		
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-		TypeInfoAndJsonObject updatedTypeInfo = this.readInNewTypeInfo(req, resp);
+		TypeInfoAndJsonObject updatedTypeInfo = this.readInNewTypeInfo(req, resp, (typeInfo == null ? true : false)); // If we are creating a new typeInfo, we should automatically pause it.
 		String applianceIdentity = null;
 		boolean newPVTypeInfo = false;
 		if(typeInfo == null) {
@@ -121,14 +121,14 @@ public class PutPVTypeInfo implements BPLAction {
 		}
 	}
 	
-	private TypeInfoAndJsonObject readInNewTypeInfo(HttpServletRequest req, HttpServletResponse resp) throws IOException { 
+	private TypeInfoAndJsonObject readInNewTypeInfo(HttpServletRequest req, HttpServletResponse resp, boolean pauseGeneratedTypeInfo) throws IOException { 
 		try (LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
 			JSONParser parser=new JSONParser();
 			PVTypeInfo updatedInfo = new PVTypeInfo();
 			JSONObject updatedTypeInfoJSON = (JSONObject) parser.parse(lineReader);
 			JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
 			decoder.decode(updatedTypeInfoJSON, updatedInfo);
-			updatedInfo.setPaused(true);
+			if(pauseGeneratedTypeInfo) updatedInfo.setPaused(true);
 			return new TypeInfoAndJsonObject(updatedInfo, updatedTypeInfoJSON);
 		} catch(Exception ex) { 
 			if(ex instanceof IOException) { 

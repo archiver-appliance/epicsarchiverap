@@ -23,6 +23,7 @@ Last published on {publish_date}.
 <li><a href="userguide.html">User Guide</a></li>
 <li><a href="customization.html">Customize</a></li>
 <li><a href="developersguide.html">Developers</a></li>
+<li><a href="admin.html">Admin</a></li>
 <li><a href="api/index.html">Javadoc</a></li>
 <li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
 <li><a href="faq.html">FAQ</a></li>
@@ -36,7 +37,7 @@ Last published on {publish_date}.
 <section>
 <h3>Scripting</h3>
 For bulk operations, most administrators will almost find the scripting interface useful as well.
-Every action in the UI (in addition to a few that are not exposed in the UI), is accessible from within scripts - please see the <a href="details.html#scripting">details</a> page for more info.
+All actions in the UI (in addition to a few that are not exposed in the UI) are accessible from within scripts - please see the <a href="details.html#scripting">details</a> page for more info.
 Click <a href="api/mgmt_scriptables.html" target="_blank">here</a> for a list of business logic accesible thru scripting.
 There are also many scripting samples in the <code><i>tomcat_mgmt</i>/webapps/mgmt/ui/help/samples/</code> folder.  
 
@@ -50,14 +51,25 @@ Here are some aspects of the EPICS archiver appliance that should be monitored
 You can then send an email notification to the system administrators if this is greater than a certain percentage or absolute number.
 </li>
 <li><span class="term">Type changes</span> - You can use the <code>/getPVsByDroppedEventsTypeChange</code> BPL (see <code>samples/checkTypeChangedPVs.py</code>) to watch for any PV's that have changed type.
-If a PV changes type, the EPICS archiver appliance will pause archiving this PV until the situation is manually resolved. 
+If a PV changes type, the EPICS archiver appliance will suspend archiving this PV until the situation is manually resolved. 
 <ol>
-<li>You can rename the PV to a new name using the <code>/renamePV</code> BPL or the UI; delete and re-archive under the current name. 
+<li>You can rename the PV to a new name.
+<ol>
+<li>Pause the PV under the current name.</li>
+<li>Rename the PV to a new name using the <code>/renamePV</code> BPL or the UI</li>
+<li>Delete the PV under the current name.</li>
+<li>Re-archive under the current name.</li>
+</ol>
 This should now archive the PV using the new type; however, requests for the older data (which is of the older type) will have to made using the older name.
-This is the safest option.
 </li>
 <li>The EPICS archiver appliance has some support for converting data from one type to the other.
-This is not available in all cases; but is several cases, you can pause the PV, convert to the new type using the <code>/changeTypeForPV</code> BPL and resume if the conversion process succeeded. 
+This is not available in all cases but you should be able to convert most scalars. 
+<ol>
+<li>Pause the PV</li>
+<li>If needed, consolidate and make a backup of the data for this PV.</li>
+<li>Convert to the new type using the <code>/changeTypeForPV</code> BPL</li>
+<li>Resume the PV (if the conversion process succeeds)</li>
+</ol>
 The <code>/changeTypeForPV</code> alters the data that has already been archived; so you may want to make a backup first. 
 </li>
 </ol>
@@ -83,7 +95,7 @@ The <code>/getCurrentlyDisconnectedPVs</code> returns a list of currently discon
 Each appliance has a config database; typically a MySQL database. 
 This config database contains the archiving configuration; that is, how each PV is being archived and where the data is stored. 
 So, it's good policy to back this database up periodically. 
-For example, over here, we back this up daily using mysqldump; this is more than adequate.
+For example, one can do a daily backup using <code>mysqldump</code>; this should be more than adequate.
 <pre>
 <code>
 mysqldump -u <i>userid</i> -p <i>password</i>  archappl &gt; <i>/path/to/backupfile</i> 
@@ -91,7 +103,7 @@ mysqldump -u <i>userid</i> -p <i>password</i>  archappl &gt; <i>/path/to/backupf
 </pre>
  
 It is also good practice to validate the backups every so often. 
-Most labs have some scripts that perform some basic validation of these backups. Just ask if you need more info here.
+Most labs have some scripts that perform some basic validation of these backups. Please ask if you need more info.
 </div>
 
 <div class="para">
@@ -106,7 +118,7 @@ However, it is good practice to store the backup file elsewhere; perhaps in a lo
 <section>
 <h3>Recovering from a lost appliance</h3>
 <div class="para">
-In case you lose an appliances, you can use the backup of the config database to restore the appliance configuration onto a new machine. 
+In case you lose an appliance, you can use the backup of the config database to restore the appliance configuration onto a new machine. 
 Simply go thru the install procedure and create an appliance with the same identity as the machine that was lost. 
 This should yield an appliance with an empty config database; you can import the configuration into this empty database using
 <pre>
@@ -114,8 +126,8 @@ This should yield an appliance with an empty config database; you can import the
 mysql -u <i>userid</i> -p <i>password</i>  archappl &lt; <i>/path/to/backupfile</i> 
 </code>
 </pre>
-Restarting the appliance after this and should pick up the imported configuration.
-
+Restarting the appliance after this should pick up the imported configuration.
+As the JVM can cache DNS lookups, giving your replacement appliance the same IP address as the one that was lost should also help if you have a cluster of machines.
 </div>
 </section>
 
