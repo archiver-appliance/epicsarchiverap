@@ -1327,7 +1327,17 @@ public class DefaultConfigService implements ConfigService {
 			
 			HashMap<String,String> otherMetaInfo = metaInfo.getOtherMetaInfo();
 			for(String otherMetaInfoKey : this.getExtraFields()) {
-				if(otherMetaInfo.containsKey(otherMetaInfoKey)) pvInfo.put(otherMetaInfoKey,otherMetaInfo.get(otherMetaInfoKey));
+				if(otherMetaInfo.containsKey(otherMetaInfoKey)) {
+					if(otherMetaInfoKey.equals("ADEL") || otherMetaInfoKey.equals("MDEL")) {
+						try { 
+							pvInfo.put(otherMetaInfoKey, Double.parseDouble(otherMetaInfo.get(otherMetaInfoKey)));
+						} catch(Exception ex) { 
+							logger.error("Exception adding MDEL and ADEL to the info", ex);
+						}
+					} else { 
+						pvInfo.put(otherMetaInfoKey,otherMetaInfo.get(otherMetaInfoKey));
+					}
+				}
 			}
 
 			if(logger.isDebugEnabled()) {
