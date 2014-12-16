@@ -123,14 +123,14 @@ function archivePVsWithDetails() {
 		var controllingPV  = $("#pvDetailsControllingPV").val();
 		var policySelected = $("#pvDetailsPolicies").val();
 		
-		var patternForFloat = /^[0-9]+(.[0-9]{1})?$/;
+		var patternForFloat = /^[0-9]+(.[0-9]+)?$/;
 		if(!patternForFloat.test(samplingPeriod)) {
-			alert("The sampling period should be between 0.1 and 1000");
+			alert("The sampling period should be between 0.1 and 86400");
 			return;
 		}
 		var samplingPeriodFl = parseFloat(samplingPeriod);
-		if(samplingPeriodFl < 0.1 || samplingPeriodFl > 1000) {
-			alert("The sampling period should be between 0.1 and 1000");
+		if(samplingPeriodFl < 0.1 || samplingPeriodFl > 86400 || samplingPeriodFl == 0) {
+			alert("The sampling period should be a non-zero number between 0.1 and 86400");
 			return;
 		}
 		
