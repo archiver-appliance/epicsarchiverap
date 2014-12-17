@@ -228,7 +228,7 @@ fi
 export JAVA_OPTS="-XX:MaxPermSize=128M -Xmx1G -ea"
 
 ARCH=`uname -m`
-if [ "$ARCH" = 'x86_64' || "$ARCH" = 'amd64' ]
+if [[ "$ARCH" = 'x86_64' || "$ARCH" = 'amd64' ]]
 then
   echo "Using 64 bit versions of libraries"
   export LD_LIBRARY_PATH=${TOMCAT_VERSION_FOLDER}/webapps/engine/WEB-INF/lib/native/linux-x86_64:${LD_LIBRARY_PATH}
