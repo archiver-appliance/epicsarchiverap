@@ -87,11 +87,14 @@ public class PVDetails implements BPLAction {
 					String extraValue = typeInfo.getExtraFields().get(extraFieldName);
 					if(extraValue != null) {
 						if(extraFieldName.equals("SCAN")){
-							addDetailedStatus(result, "Extra info - " + extraFieldName + ":", changeSCANValueFromEnumToString(extraValue));
+							try { 
+								addDetailedStatus(result, "Extra info - " + extraFieldName + ":", changeSCANValueFromEnumToString(extraValue));
+							} catch(Exception ex) { 
+								addDetailedStatus(result, "Extra info - " + extraFieldName + ":", extraValue);
+							}
 						}else{
 							addDetailedStatus(result, "Extra info - " + extraFieldName + ":", extraValue);
 						}
-						
 					}
 				}
 				String[] archiveFields = typeInfo.getArchiveFields();
