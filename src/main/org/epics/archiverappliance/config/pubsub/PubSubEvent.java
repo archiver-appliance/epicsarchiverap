@@ -36,13 +36,7 @@ public class PubSubEvent implements Serializable {
 	 */
 	private String eventData;
 	
-	private transient boolean isLocalOrigin = true;
-	
-	public PubSubEvent(String type, String destination) {
-		super();
-		this.type = type;
-		this.destination = destination;
-	}
+	private transient boolean isSourceCluster = false;
 	
 	public PubSubEvent(String type, String destination, String pvName) {
 		super();
@@ -88,12 +82,12 @@ public class PubSubEvent implements Serializable {
 		return buf.toString();
 	}
 
-	public boolean isLocalOrigin() {
-		return isLocalOrigin;
+	public boolean isSourceCluster() {
+		return isSourceCluster;
 	}
 
-	public void setLocalOrigin(boolean isLocalOrigin) {
-		this.isLocalOrigin = isLocalOrigin;
+	public void markSourceAsCluster() {
+		this.isSourceCluster = true;
 	}
 	
 	public String getPvName() {

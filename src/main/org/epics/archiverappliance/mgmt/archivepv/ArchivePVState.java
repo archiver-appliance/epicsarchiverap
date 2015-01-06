@@ -61,7 +61,7 @@ public class ArchivePVState implements Runnable {
 						pvName = pvName.substring(10);
 						currentState = ArchivePVStateMachine.METAINFO_OBTAINED;
 					} else {
-						PubSubEvent pubSubEvent = new PubSubEvent("ComputeMetaInfo", myIdentity, pvName);
+						PubSubEvent pubSubEvent = new PubSubEvent("ComputeMetaInfo", myIdentity + "_" + ConfigService.WAR_FILE.ENGINE, pvName);
 						configService.getEventBus().post(pubSubEvent);
 					}
 					return;	
@@ -260,7 +260,7 @@ public class ArchivePVState implements Runnable {
 		}
 		
 		logger.debug("Setting up archiving of pv " + pvName);
-		PubSubEvent pubSubEvent = new PubSubEvent("StartArchivingPV", applianceInfoForPV.getIdentity(), pvName);
+		PubSubEvent pubSubEvent = new PubSubEvent("StartArchivingPV", applianceInfoForPV.getIdentity()  + "_" + ConfigService.WAR_FILE.ENGINE, pvName);
 		configService.getEventBus().post(pubSubEvent);
 	}
 

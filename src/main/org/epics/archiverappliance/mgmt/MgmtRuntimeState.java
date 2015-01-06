@@ -145,7 +145,8 @@ public class MgmtRuntimeState {
 	
 	
 	@Subscribe public void computeMetaInfo(PubSubEvent pubSubEvent) {
-		if(pubSubEvent.getDestination().equals("ALL") || pubSubEvent.getDestination().equals(myIdentity)) {
+		if(pubSubEvent.getDestination().equals("ALL") 
+				|| (pubSubEvent.getDestination().startsWith(myIdentity) && pubSubEvent.getDestination().endsWith(ConfigService.WAR_FILE.MGMT.toString()))) {
 			if(pubSubEvent.getType().equals("MetaInfoRequested")) {
 				String pvName = pubSubEvent.getPvName();
 				logger.debug("MetaInfoRequested for " + pvName);

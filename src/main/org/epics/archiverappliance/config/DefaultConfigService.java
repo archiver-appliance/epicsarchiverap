@@ -728,12 +728,16 @@ public class DefaultConfigService implements ConfigService {
 			public void onMessage(Message<PubSubEvent> pubSubEventMsg) {
 				PubSubEvent pubSubEvent = pubSubEventMsg.getMessageObject();
 				if(pubSubEvent.getDestination() != null) {
-					if(pubSubEvent.getDestination().equals("ALL") || pubSubEvent.getDestination().equals(myIdentity)) {
-						logger.debug("Publishing event from other appliances into this JVM " + pubSubEvent.generateEventDescription());
-						pubSubEvent.setLocalOrigin(false);
+					if(pubSubEvent.getDestination().equals("ALL") 
+							|| (pubSubEvent.getDestination().startsWith(myIdentity) && pubSubEvent.getDestination().endsWith(DefaultConfigService.this.warFile.toString()))
+							) {
+						// We publish messages from hazelcast into this VM only if the intened WAR file is us.
+						logger.debug("Publishing event into this JVM " + pubSubEvent.generateEventDescription());
+						// In this case, we set the source as being the cluster to prevent republishing back into the cluster.
+						pubSubEvent.markSourceAsCluster();
 						eventBus.post(pubSubEvent);
 					} else { 
-						logger.debug("Skipping publishing event from other appliances into this JVM " + pubSubEvent.generateEventDescription() + " as destination is not me " + pubSubEvent.getDestination());
+						logger.debug("Skipping publishing event into this JVM " + pubSubEvent.generateEventDescription() + " as destination is not me " + DefaultConfigService.this.warFile.toString());
 					}
 				} else {
 					logger.debug("Skipping publishing event with null destination");
@@ -790,13 +794,17 @@ public class DefaultConfigService implements ConfigService {
 	}
 	
 	@Subscribe public void publishEventIntoCluster(PubSubEvent pubSubEvent) {
-		String src = myIdentity;
-		if(pubSubEvent.isLocalOrigin()) {
-			pubSubEvent.setSource(src);
+		if(pubSubEvent.isSourceCluster()) { 
+			logger.debug("Skipping publishing events from the cluster back into the cluster " + pubSubEvent.generateEventDescription());
+			return;
+		}
+		
+		if(pubSubEvent.getDestination().startsWith(myIdentity) && pubSubEvent.getDestination().endsWith(this.warFile.toString())) {
+			logger.debug(this.warFile + " - Skipping publishing event " + pubSubEvent.generateEventDescription() + " meant for myself " + this.warFile.toString());
+		} else {
+			pubSubEvent.setSource(myIdentity);
 			logger.debug(this.warFile + " - Publishing event from local event bus onto cluster " + pubSubEvent.generateEventDescription());
 			pubSub.publish(pubSubEvent);
-		} else {
-			logger.debug(this.warFile + " - Skipping non local event from event bus onto cluster " + pubSubEvent.generateEventDescription());
 		}
 	}
 

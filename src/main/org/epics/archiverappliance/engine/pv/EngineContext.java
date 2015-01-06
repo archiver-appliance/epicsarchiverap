@@ -402,7 +402,8 @@ public class EngineContext {
 	}
 	
 	@Subscribe public void computeMetaInfo(PubSubEvent pubSubEvent) {
-		if(pubSubEvent.getDestination().equals("ALL") || pubSubEvent.getDestination().equals(myIdentity)) {
+		if(pubSubEvent.getDestination().equals("ALL") 
+				|| (pubSubEvent.getDestination().startsWith(myIdentity) && pubSubEvent.getDestination().endsWith(ConfigService.WAR_FILE.ENGINE.toString()))) {
 			if(pubSubEvent.getType().equals("ComputeMetaInfo")) {
 				String pvName = pubSubEvent.getPvName();
 				try { 
@@ -414,7 +415,7 @@ public class EngineContext {
 						extraFields = new String[0];
 					}
 					ArchiveEngine.getArchiveInfo(pvName, configService, extraFields, new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
-					PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoRequested", pubSubEvent.getSource(), pvName);
+					PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoRequested", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
 					configService.getEventBus().post(confirmationEvent);
 				} catch(Exception ex) {
 					logger.error("Exception requesting metainfo for pv " + pvName, ex);
@@ -423,7 +424,7 @@ public class EngineContext {
 				String pvName = pubSubEvent.getPvName();
 				try { 
 					this.startArchivingPV(pvName);
-					PubSubEvent confirmationEvent = new PubSubEvent("StartedArchivingPV", pubSubEvent.getSource(), pvName);
+					PubSubEvent confirmationEvent = new PubSubEvent("StartedArchivingPV", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
 					configService.getEventBus().post(confirmationEvent);
 				} catch(Exception ex) {
 					logger.error("Exception beginnning archiving pv " + pvName, ex);
@@ -551,7 +552,7 @@ public class EngineContext {
 		public void completed(MetaInfo metaInfo) {
 			try { 
 				logger.debug("Completed computing archive info for pv " + pvName);
-				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity, pvName);
+				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
 				JSONEncoder<MetaInfo> encoder = JSONEncoder.getEncoder(MetaInfo.class);
 				JSONObject metaInfoObj = encoder.encode(metaInfo);
 				confirmationEvent.setEventData(JSONValue.toJSONString(metaInfoObj));
