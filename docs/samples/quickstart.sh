@@ -225,7 +225,10 @@ fi
 
 
 # Start up the JVM with 1Gb of heap...
-export JAVA_OPTS="-XX:MaxPermSize=128M -Xmx1G -ea"
+if [ -z ${JAVA_OPTS} ] 
+then
+   export JAVA_OPTS="-XX:MaxPermSize=128M -Xmx1G -ea"
+fi
 
 ARCH=`uname -m`
 if [[ "$ARCH" = 'x86_64' || "$ARCH" = 'amd64' ]]

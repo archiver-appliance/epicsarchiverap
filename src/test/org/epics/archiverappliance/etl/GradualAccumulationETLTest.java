@@ -125,8 +125,8 @@ public class GradualAccumulationETLTest {
 	}
 	
 	private void checkDataValidity(String pvName, PlainPBStoragePlugin etlSrc, PlainPBStoragePlugin etlDest, long startOfYearInEpochSeconds, int incrementSeconds, int eventsgenerated, String testDesc) throws IOException {
-		Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
-		Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
+		Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 2*366);
+		Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 2*366);
 
 		logger.debug(testDesc + "Asking for data between" 
 				+ TimeUtils.convertToHumanReadableString(startOfRequest) 
