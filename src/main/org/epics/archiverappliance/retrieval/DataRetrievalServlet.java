@@ -215,6 +215,29 @@ public class DataRetrievalServlet  extends HttpServlet {
 			return;
 		}
 		
+		LinkedList<TimeSpan> requestTimes = new LinkedList<TimeSpan>();
+		
+		// We can specify a list of time stamp pairs using the optional timeranges parameter
+		String timeRangesStr = req.getParameter("timeranges");
+		if(timeRangesStr != null) { 
+			boolean continueWithRequest = parseTimeRanges(resp, pvName, requestTimes, timeRangesStr);
+			if(!continueWithRequest) {
+				// Cannot parse the time ranges properly; we so abort the request.
+				return;
+			}
+			
+			// Override the start and the end so that the mergededup consumer works correctly.
+			start = requestTimes.getFirst().getStartTime();
+			end = requestTimes.getLast().getEndTime();
+			
+		} else { 
+			requestTimes.add(new TimeSpan(start, end));			
+		}
+
+		assert(requestTimes.size() > 0);
+		
+
+		
 		String postProcessorUserArg = req.getParameter("pp");
 		if(pvName.contains("(")) {
 			if(!pvName.contains(")")) {
@@ -305,7 +328,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		try(BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest); 
 				OutputStream os = resp.getOutputStream();
 				MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension, os, useChunkedEncoding);
-				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, start, end, req, postProcessor)
+				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, req, postProcessor)
 				) {
 			HashMap<String, String> engineMetadata = null;
 			if(fetchLatestMetadata) { 
@@ -622,16 +645,9 @@ public class DataRetrievalServlet  extends HttpServlet {
 	private static class RetrievalExecutorResult implements AutoCloseable { 
 		ExecutorService executorService;
 		LinkedList<TimeSpan> requestTimespans;
-		@SuppressWarnings("unused")
-		// We'll be using this later...
 		RetrievalExecutorResult(ExecutorService executorService, LinkedList<TimeSpan> requestTimepans) {
 			this.executorService = executorService;
 			this.requestTimespans = requestTimepans;
-		}
-		RetrievalExecutorResult(ExecutorService executorService, Timestamp start, Timestamp end) {
-			this.executorService = executorService;
-			this.requestTimespans = new LinkedList<TimeSpan>();
-			this.requestTimespans.add(new TimeSpan(start, end));
 		}
 
 		@Override
@@ -653,8 +669,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 * @param postProcessor
 	 * @return
 	 */
-	private static RetrievalExecutorResult determineExecutorForPostProcessing(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req, PostProcessor postProcessor) {
-		long memoryConsumption = postProcessor.estimateMemoryConsumption(pvName, typeInfo, start, end, req);
+	private static RetrievalExecutorResult determineExecutorForPostProcessing(String pvName, PVTypeInfo typeInfo, LinkedList<TimeSpan> requestTimes, HttpServletRequest req, PostProcessor postProcessor) {
+		long memoryConsumption = postProcessor.estimateMemoryConsumption(pvName, typeInfo, requestTimes.getFirst().getStartTime(), requestTimes.getLast().getEndTime(), req);
 		double memoryConsumptionInMB = (double)memoryConsumption/(1024*1024);
 		DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
 		logger.debug("Memory consumption estimate from postprocessor for pv " + pvName + " is " + memoryConsumption + "(bytes) ~= " + twoSignificantDigits.format(memoryConsumptionInMB) + "(MB)");
@@ -664,7 +680,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		// There are some complexities in using the ForkJoinPool - in this case, we need to convert to using synchronized versions of the SummaryStatistics and DescriptiveStatistics
 		// We also still have the issue where we can add a sample twice because of the non-transactional nature of ETL.
 		// However, there is a lot of work done by the PostProcessors in estimateMemoryConsumption so leave this call in place.
-		return new RetrievalExecutorResult(new CurrentThreadExecutorService(), start, end);
+		return new RetrievalExecutorResult(new CurrentThreadExecutorService(), requestTimes);
 	}
 	
 	
@@ -753,5 +769,69 @@ public class DataRetrievalServlet  extends HttpServlet {
 		} catch(URISyntaxException ex) {
 			throw new IOException(ex);
 		}
+	}
+	
+	
+	/**
+	 * Parse the timeranges parameter and generate a list of TimeSpans.
+	 * @param resp
+	 * @param pvName
+	 * @param requestTimes - list of timespans that we add the valid times to.
+	 * @param timeRangesStr
+	 * @return
+	 * @throws IOException
+	 */
+	private boolean parseTimeRanges(HttpServletResponse resp, String pvName, LinkedList<TimeSpan> requestTimes, String timeRangesStr) throws IOException {
+		String[] timeRangesStrList =  timeRangesStr.split(",");
+		if(timeRangesStrList.length%2 != 0) { 
+			String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have " + timeRangesStrList.length + " times";
+			logger.error(msg);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+			return false;
+		}
+		
+		LinkedList<Timestamp> timeRangesList = new LinkedList<Timestamp>();
+		for(String timeRangesStrItem : timeRangesStrList) { 
+			try { 
+				Timestamp ts = TimeUtils.convertFromISO8601String(timeRangesStrItem);
+				timeRangesList.add(ts);
+			} catch(IllegalArgumentException ex) {
+				try { 
+					Timestamp ts = TimeUtils.convertFromDateTimeStringWithOffset(timeRangesStrItem);
+					timeRangesList.add(ts);
+				} catch(IllegalArgumentException ex2) { 
+					String msg = "Cannot parse time " + timeRangesStrItem;
+					logger.warn(msg, ex2);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+					return false;
+				}
+			}
+		}
+		
+		assert(timeRangesList.size()%2 == 0);
+		Timestamp prevEnd = null;
+		while(!timeRangesList.isEmpty()) { 
+			Timestamp t0 = timeRangesList.pop();
+			Timestamp t1 = timeRangesList.pop();
+
+			if(t1.before(t0)) {
+				String msg = "For request, end " + t1.toString() + " is before start " + t0.toString() + " for pv " + pvName;
+				logger.error(msg);
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+				return false;
+			}
+			
+			if(prevEnd != null) { 
+				if(t0.before(prevEnd)) { 
+					String msg = "For request, start time " + t0.toString() + " is before previous end time " + prevEnd.toString() + " for pv " + pvName;
+					logger.error(msg);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+					return false ;
+				}
+			}
+			prevEnd = t1;
+			requestTimes.add(new TimeSpan(t0, t1));	
+		}
+		return true;
 	}
 }
