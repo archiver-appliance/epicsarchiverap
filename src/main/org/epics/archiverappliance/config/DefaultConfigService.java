@@ -70,6 +70,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.xml.sax.SAXException;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.hazelcast.client.HazelcastClient;
@@ -145,7 +146,7 @@ public class DefaultConfigService implements ConfigService {
 	protected ConcurrentSkipListSet<String> pvsForThisAppliance = null;
 	protected ConcurrentSkipListSet<String> pausedPVsForThisAppliance = null;
 	protected ApplianceAggregateInfo applianceAggregateInfo = new ApplianceAggregateInfo();
-	protected EventBus eventBus = new EventBus();
+	protected EventBus eventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(new ThreadFactory() { @Override public Thread newThread(Runnable r) { return new Thread(r, "Event bus");}}));
 	protected Properties archapplproperties = new Properties();
 	protected PVNameToKeyMapping pvName2KeyConverter = null;
 	protected ConfigPersistence persistanceLayer;
