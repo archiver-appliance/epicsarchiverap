@@ -1378,8 +1378,8 @@ public class DefaultConfigService implements ConfigService {
 				logger.debug(buf.toString());
 			}
 			
-			
-			PolicyConfig policyConfig = ExecutePolicy.computePolicyForPV(is, pvName, pvInfo);
+			ExecutePolicy executePolicy = new ExecutePolicy(this);
+			PolicyConfig policyConfig = executePolicy.computePolicyForPV(pvName, pvInfo);
 			return policyConfig;
 		}
 	}
@@ -1388,17 +1388,15 @@ public class DefaultConfigService implements ConfigService {
 	
 	@Override
 	public HashMap<String, String> getPoliciesInInstallation() throws IOException {
-		try(InputStream is = this.getPolicyText()) {
-			return ExecutePolicy.getPolicyList(is);
-		}
+		ExecutePolicy executePolicy = new ExecutePolicy(this);
+		return executePolicy.getPolicyList();
 	}
 	
 	
 	@Override
 	public List<String> getFieldsArchivedAsPartOfStream() throws IOException {
-		try(InputStream is = this.getPolicyText()) {
-			return ExecutePolicy.getFieldsArchivedAsPartOfStream(is);
-		}
+		ExecutePolicy executePolicy = new ExecutePolicy(this);
+		return executePolicy.getFieldsArchivedAsPartOfStream();
 	}
 
 	@Override

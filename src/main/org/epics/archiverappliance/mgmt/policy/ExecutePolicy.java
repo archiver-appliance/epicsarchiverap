@@ -39,22 +39,34 @@ import org.python.util.PythonInterpreter;
  */
 public class ExecutePolicy {
 	private static Logger logger = Logger.getLogger(ExecutePolicy.class.getName());
+	private ConfigService configService;
+	
+	public ExecutePolicy(ConfigService configService) throws IOException { 
+		this.configService = configService;
+	}
+	
+	private PythonInterpreter getInterpreter() throws IOException { 
+		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
+		// Load the policies.py into the interpreter.
+		try(InputStream is = configService.getPolicyText()) { 
+			interp.execfile(is);
+		}
+		return interp;
+	}
+	
+	
 	/**
-	 * @param is
 	 * @param pvName
 	 * @param pvInfo
 	 * @return
 	 * @throws IOException
 	 */
-	public static PolicyConfig computePolicyForPV(InputStream is, String pvName, HashMap<String, Object> pvInfo) throws IOException {
-		
-		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
+	public PolicyConfig computePolicyForPV(String pvName, HashMap<String, Object> pvInfo) throws IOException {
+		PythonInterpreter interp = this.getInterpreter();
 		PyDictionary pvInfoDict = new PyDictionary();
 		pvInfoDict.put("pvName", pvName);
 		pvInfoDict.putAll(pvInfo);
 		interp.set("pvInfo", pvInfoDict);
-		// Load the policies.py into the interpreter.
-		interp.execfile(is);
 		interp.exec("pvPolicy = determinePolicy(pvInfo)");
 		PyDictionary policy = (PyDictionary) interp.get("pvPolicy");
 		PolicyConfig policyConfig = new PolicyConfig();
@@ -88,11 +100,9 @@ public class ExecutePolicy {
 		return policyConfig;
 	}
 	
-	public static HashMap<String, String> getPolicyList(InputStream is) {
+	public HashMap<String, String> getPolicyList()  throws IOException {
 		logger.debug("Getting the list of policies.");
-		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
-		// Load the policies.py into the interpreter.
-		interp.execfile(is);
+		PythonInterpreter interp = this.getInterpreter();
 		interp.exec("pvPolicies = getPolicyList()");
 		PyDictionary policies = (PyDictionary) interp.get("pvPolicies");
 		@SuppressWarnings("unchecked")
@@ -101,11 +111,9 @@ public class ExecutePolicy {
 		return ret;
 	}
 
-	public static List<String> getFieldsArchivedAsPartOfStream(InputStream is) {
+	public List<String> getFieldsArchivedAsPartOfStream()  throws IOException {
 		logger.debug("Getting the list of standard fields.");
-		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
-		// Load the policies.py into the interpreter.
-		interp.execfile(is);
+		PythonInterpreter interp = this.getInterpreter();
 		interp.exec("pvStandardFields = getFieldsArchivedAsPartOfStream()");
 		PyList stdFields = (PyList) interp.get("pvStandardFields");
 		@SuppressWarnings("unchecked")
