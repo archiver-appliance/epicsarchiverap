@@ -82,6 +82,7 @@ public class ArchivePVAction implements BPLAction {
 		if(policyName != null && !policyName.equals("")) {
 			logger.info("We have a user override for policy " + policyName);
 		}
+		List<String> fieldsAsPartOfStream = ArchivePVAction.getFieldsAsPartOfStream(configService);
 		
 		if(pvs.length < 1) { return; }
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
@@ -91,7 +92,7 @@ public class ArchivePVAction implements BPLAction {
 			for(String pv : pvs) {
 				if(isFirst) { isFirst = false; } else { out.println(","); }
 				logger.debug("Calling archivePV for pv " + pv);
-				archivePV(out, pv, samplingPeriodSpecified, samplingMethod, samplingPeriod, controllingPV, policyName, null, configService, ArchivePVAction.getFieldsAsPartOfStream(configService));
+				archivePV(out, pv, samplingPeriodSpecified, samplingMethod, samplingPeriod, controllingPV, policyName, null, configService, fieldsAsPartOfStream);
 			}
 			out.println("]");
 		}
