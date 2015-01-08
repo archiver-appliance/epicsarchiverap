@@ -6,7 +6,6 @@ import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.LinkedList;
-import java.util.concurrent.ScheduledFuture;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -29,15 +28,14 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
  * @author mshankar
  *
  */
-public class ArchivePVState implements Runnable {
+public class ArchivePVState {
 	private static Logger logger = Logger.getLogger(ArchivePVState.class.getName());
-	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED};
+	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED, FINISHED};
 
 	private ArchivePVStateMachine currentState = ArchivePVStateMachine.START;
 	private String pvName;
 	private String abortReason = "";
 	private ConfigService configService;
-	private ScheduledFuture<?> futureForCancelling;
 	private String applianceIdentityAfterCapacityPlanning;
 	private Timestamp startOfWorkflow = TimeUtils.now();
 	private String myIdentity;
@@ -49,8 +47,7 @@ public class ArchivePVState implements Runnable {
 		this.myIdentity = this.configService.getMyApplianceInfo().getIdentity();
 	}
 
-	@Override
-	public void run() {
+	public void nextStep() {
 		try { 
 			logger.debug("Archive workflow for pv " + pvName + " in state " + currentState);
 				switch(currentState) {
@@ -213,15 +210,18 @@ public class ArchivePVState implements Runnable {
 					logger.debug("We are in the Archiving state. So, cancelling the periodic ping of the workflow object for pv " + pvName);
 					configService.archiveRequestWorkflowCompleted(pvName);
 					configService.getMgmtRuntimeState().finishedPVWorkflow(pvName);
-					futureForCancelling.cancel(false);
+					currentState = ArchivePVStateMachine.FINISHED;
 					return;
 				}
 				case ABORTED: {
-					futureForCancelling.cancel(false);
 					configService.archiveRequestWorkflowCompleted(pvName);
 					configService.getMgmtRuntimeState().finishedPVWorkflow(pvName);
 					logger.error("Aborting archive request for pv " + pvName + " Reason: " + abortReason);
+					currentState = ArchivePVStateMachine.FINISHED;
 					return;
+				}
+				case FINISHED: {
+					logger.error("Archive state for PV " + this.pvName + " is finished.");
 				}
 				default: {
 					logger.error("Invalid state when going thru the archive pv workflow");
@@ -233,10 +233,6 @@ public class ArchivePVState implements Runnable {
 		}
 	}
 
-	public void setCancellingFuture(ScheduledFuture<?> future) {
-		this.futureForCancelling = future;
-	}
-	
 	public boolean hasNotConnectedSoFar() {
 		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.START)
 				|| this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED)
@@ -287,11 +283,6 @@ public class ArchivePVState implements Runnable {
 		this.currentState = ArchivePVStateMachine.ARCHIVING;
 	}
 
-	public ScheduledFuture<?> getFutureForCancelling() {
-		return futureForCancelling;
-	}
-	
-	
 	/**
 	 * If the user specified params has any aliases specified, we register the alias now.
 	 * @param typeInfo
@@ -378,5 +369,9 @@ public class ArchivePVState implements Runnable {
 	 */
 	public ArchivePVStateMachine getCurrentState() {
 		return currentState;
+	}
+
+	public String getPvName() {
+		return pvName;
 	}	
 }

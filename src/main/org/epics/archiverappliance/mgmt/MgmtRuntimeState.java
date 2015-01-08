@@ -2,13 +2,14 @@ package org.epics.archiverappliance.mgmt;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -38,25 +39,24 @@ public class MgmtRuntimeState {
 	private static Logger configlogger = Logger.getLogger("config." + MgmtRuntimeState.class.getName());
 	private String myIdentity;
 	private ConcurrentSkipListSet<WAR_FILE> componentsThatHaveCompletedStartup = new ConcurrentSkipListSet<WAR_FILE>();
+	/**
+	 * Throttle the archive PV workflow to this many PV's at a time. 
+	 * This seems to control the resource consumption during archive requests well; please let us know if you want this to be configurable.
+	 * Since we are throttling the workflow; we can have this many invalid archive PV requests in the system.
+	 * Use the abortArchivingPV BPL to clean up requests for PVs that will never connect.
+	 */
+	private static final int ARCHIVE_PV_WORKFLOW_BATCH_SIZE = 1000;
 
-	public void startPVWorkflow(String pvName) throws IOException {
-		this.startPVWorkflow(pvName, 10);
-	}
-	
 	/**
 	 * Initiate archive PV workflow for PV.
 	 * @param pvName
-	 * @param initialDelay - Initial delay to start the workflow in seconds
 	 * @throws IOException
 	 */
-	public void startPVWorkflow(String pvName, long initialDelay) throws IOException {
+	public void startPVWorkflow(String pvName) throws IOException {
 		if(!currentPVRequests.containsKey(pvName)) {
 			logger.debug("Starting pv archiving workflow for " + pvName);
 			ArchivePVState pvState = new ArchivePVState(pvName, configService);
 			currentPVRequests.put(pvName, pvState);
-			ScheduledFuture<?> future = archivePVWorkflow.scheduleAtFixedRate(pvState, initialDelay, 20, TimeUnit.SECONDS);
-			// Pass the future to the workflow object so that the scheduled task can be cancelled.
-			pvState.setCancellingFuture(future);
 		} else { 
 			logger.error("We already have a request for pv " + pvName + " in the workflow.");
 		}
@@ -69,8 +69,6 @@ public class MgmtRuntimeState {
 			return false;
 		} else { 
 			logger.debug("Aborting pv archiving workflow for " + pvName);
-			ArchivePVState pvState = currentPVRequests.get(pvName);
-			pvState.getFutureForCancelling().cancel(true);
 			currentPVRequests.remove(pvName);
 			logger.debug("Removing " + pvName + " from config service archive pv requests");
 			configService.archiveRequestWorkflowCompleted(pvName);
@@ -199,22 +197,51 @@ public class MgmtRuntimeState {
 		for(@SuppressWarnings("unused") ApplianceInfo info : configService.getAppliancesInCluster()) { 
 			appliancesInCluster++;
 		}
-		int pvsInWorkflow = 0;
+		
+		long initialDelayInSeconds = 10;
+		if(appliancesInCluster > 1) { 
+			// We use a longer initial delay here to get all the appliances in the cluster a chance to restart
+			initialDelayInSeconds = 30*60;
+		}
+		
 		for(String pvNameFromPersistence : configService.getArchiveRequestsCurrentlyInWorkflow()) {
 			try { 
-				long initialDelayInSeconds = 10;
-				if(appliancesInCluster > 1) { 
-					// We use a longer initial delay here to get all the appliances in the cluster a chance to restart
-					initialDelayInSeconds = 30*60;
-				}
-				logger.debug("Starting archive PV request for " + pvNameFromPersistence);
-				this.startPVWorkflow(pvNameFromPersistence, initialDelayInSeconds);
-				pvsInWorkflow++;
+				this.startPVWorkflow(pvNameFromPersistence);
 			} catch(IOException ex) { 
-				logger.error("Exception starting archive workflow for PV " + pvNameFromPersistence, ex);
+				logger.error("Exception adding request for PV " + pvNameFromPersistence, ex);
 			}
 		}
-		logger.info("Done starting archive requests for " + pvsInWorkflow + " pvs.");
+
+		
+		archivePVWorkflow.scheduleAtFixedRate(new Runnable() {
+			
+			@Override
+			public void run() {
+				logger.info("Running the archive PV workflow");
+				LinkedList<ArchivePVState> archivePVStates = new LinkedList<ArchivePVState>(currentPVRequests.values());
+				Collections.sort(archivePVStates, new Comparator<ArchivePVState>() {
+					@Override
+					public int compare(ArchivePVState state0, ArchivePVState state1) {
+						if(state0.getStartOfWorkflow().equals(state1.getStartOfWorkflow())) { 
+							return state0.getPvName().compareTo(state1.getPvName());
+						} else { 
+							return state0.getStartOfWorkflow().compareTo(state1.getStartOfWorkflow());
+						}
+					}
+				});
+				int totRequests = archivePVStates.size();
+				int maxRequestsToProcess = Math.min(ARCHIVE_PV_WORKFLOW_BATCH_SIZE, totRequests);
+				int pvCount = 0;
+				while(pvCount < maxRequestsToProcess) { 
+					ArchivePVState runWorkFlowForPV = archivePVStates.pop();
+					logger.debug("Running the next step in the workflow for PV " + runWorkFlowForPV.getPvName());
+					runWorkFlowForPV.nextStep();
+					pvCount++;
+				}
+			}
+		}, initialDelayInSeconds, 20, TimeUnit.SECONDS);
+
+		logger.info("Done starting archive requests");
 	}
 	
 	public boolean haveChildComponentsStartedUp() { 
