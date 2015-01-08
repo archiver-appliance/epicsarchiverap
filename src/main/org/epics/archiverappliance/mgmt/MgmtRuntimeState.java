@@ -14,7 +14,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
-import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.WAR_FILE;
 import org.epics.archiverappliance.config.MetaInfo;
@@ -193,16 +192,8 @@ public class MgmtRuntimeState {
 	
 	private void startArchivePVRequests() { 
 		logger.info("Starting archive requests ");
-		int appliancesInCluster = 0;
-		for(@SuppressWarnings("unused") ApplianceInfo info : configService.getAppliancesInCluster()) { 
-			appliancesInCluster++;
-		}
-		
-		long initialDelayInSeconds = 10;
-		if(appliancesInCluster > 1) { 
-			// We use a longer initial delay here to get all the appliances in the cluster a chance to restart
-			initialDelayInSeconds = 30*60;
-		}
+
+		int initialDelayInSeconds = configService.getInitialDelayBeforeStartingArchiveRequestWorkflow();
 		
 		for(String pvNameFromPersistence : configService.getArchiveRequestsCurrentlyInWorkflow()) {
 			try { 

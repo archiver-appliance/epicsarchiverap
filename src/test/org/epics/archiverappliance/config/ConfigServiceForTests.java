@@ -261,4 +261,11 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		
 		return super.getWebInfFolder();
 	}	
+	
+	
+	@Override
+	public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
+		// Of course, for testing, we kick off the archive PV workflow right away.
+		return 10;
+	}
 }

@@ -1092,6 +1092,21 @@ public class DefaultConfigService implements ConfigService {
 		}
 	}
 
+	@Override
+	public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
+		int appliancesInCluster = 0;
+		for(@SuppressWarnings("unused") ApplianceInfo info : this.getAppliancesInCluster()) { 
+			appliancesInCluster++;
+		}
+		
+		int initialDelayInSeconds = 10;
+		if(appliancesInCluster > 1) { 
+			// We use a longer initial delay here to get all the appliances in the cluster a chance to restart
+			initialDelayInSeconds = 30*60;
+		}
+		
+		return initialDelayInSeconds;
+	}
 	
 	
 	@Override

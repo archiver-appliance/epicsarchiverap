@@ -288,6 +288,15 @@ public interface ConfigService {
 	 */
 	public boolean doesPVHaveArchiveRequestInWorkflow(String pvname);
 	
+	
+	/**
+	 * In clustered environments, to give capacity planning a chance to work correctly, we want to kick off the archive PV workflow only after all the machines have started.
+	 * This is an approximation for that metric; though not a very satisfactory approximation.
+	 * TODO -- Think thru implications of making the appliances.xml strict... 
+	 * @return - Initial delay in seconds.
+	 */
+	public int getInitialDelayBeforeStartingArchiveRequestWorkflow();
+	
 	/**
 	 * Returns any user specified parameters for the archive request. 
 	 * @param pvName
