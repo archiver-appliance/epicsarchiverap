@@ -230,7 +230,7 @@ public class MgmtRuntimeState {
 					pvCount++;
 				}
 			}
-		}, initialDelayInSeconds, 20, TimeUnit.SECONDS);
+		}, initialDelayInSeconds, 10, TimeUnit.SECONDS);
 
 		logger.info("Done starting archive requests");
 	}

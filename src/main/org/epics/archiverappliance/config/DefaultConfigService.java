@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -70,6 +71,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.xml.sax.SAXException;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -157,6 +161,18 @@ public class DefaultConfigService implements ConfigService {
 	protected ScheduledExecutorService startupExecutor = null;
 	protected ProcessMetrics processMetrics = new ProcessMetrics();
 	private HashSet<String> runTimeFields = new HashSet<String>();
+	// Use a Guava cache to store one and only one ExecutePolicy object that expires after some inactivity.
+	// The side effect is that it may take this many minutes to update the policy that is cached.
+	private LoadingCache<String, ExecutePolicy> theExecutionPolicy = CacheBuilder.newBuilder()
+			.expireAfterWrite(1, TimeUnit.MINUTES)
+			.build(new CacheLoader<String, ExecutePolicy>() {
+				public ExecutePolicy load(String key) throws IOException {
+					logger.info("Updating the cached execute policy");
+					return new ExecutePolicy(DefaultConfigService.this);
+				}
+			});
+
+
 
 	private ServletContext servletContext;
 
@@ -1378,9 +1394,20 @@ public class DefaultConfigService implements ConfigService {
 				logger.debug(buf.toString());
 			}
 			
-			ExecutePolicy executePolicy = new ExecutePolicy(this);
-			PolicyConfig policyConfig = executePolicy.computePolicyForPV(pvName, pvInfo);
-			return policyConfig;
+			try {
+				// We only have one policy in the cache...
+				ExecutePolicy executePolicy = theExecutionPolicy.get("ThePolicy");
+				PolicyConfig policyConfig = executePolicy.computePolicyForPV(pvName, pvInfo);
+				return policyConfig;
+			} catch (ExecutionException e) {
+				Throwable cause = e.getCause();
+				logger.error("Exception executing policy for pv " + pvName, cause);
+				if(cause instanceof IOException) { 
+					throw (IOException) cause;
+				} else { 
+					throw new IOException(cause);
+				}
+			}
 		}
 	}
 	

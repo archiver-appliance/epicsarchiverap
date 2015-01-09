@@ -39,21 +39,14 @@ import org.python.util.PythonInterpreter;
  */
 public class ExecutePolicy {
 	private static Logger logger = Logger.getLogger(ExecutePolicy.class.getName());
-	private ConfigService configService;
-	
+	private PythonInterpreter interp;
 	public ExecutePolicy(ConfigService configService) throws IOException { 
-		this.configService = configService;
-	}
-	
-	private PythonInterpreter getInterpreter() throws IOException { 
-		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
+		interp = new PythonInterpreter(null, new PySystemState());
 		// Load the policies.py into the interpreter.
 		try(InputStream is = configService.getPolicyText()) { 
 			interp.execfile(is);
 		}
-		return interp;
 	}
-	
 	
 	/**
 	 * @param pvName
@@ -62,7 +55,6 @@ public class ExecutePolicy {
 	 * @throws IOException
 	 */
 	public PolicyConfig computePolicyForPV(String pvName, HashMap<String, Object> pvInfo) throws IOException {
-		PythonInterpreter interp = this.getInterpreter();
 		PyDictionary pvInfoDict = new PyDictionary();
 		pvInfoDict.put("pvName", pvName);
 		pvInfoDict.putAll(pvInfo);
@@ -102,7 +94,6 @@ public class ExecutePolicy {
 	
 	public HashMap<String, String> getPolicyList()  throws IOException {
 		logger.debug("Getting the list of policies.");
-		PythonInterpreter interp = this.getInterpreter();
 		interp.exec("pvPolicies = getPolicyList()");
 		PyDictionary policies = (PyDictionary) interp.get("pvPolicies");
 		@SuppressWarnings("unchecked")
@@ -113,7 +104,6 @@ public class ExecutePolicy {
 
 	public List<String> getFieldsArchivedAsPartOfStream()  throws IOException {
 		logger.debug("Getting the list of standard fields.");
-		PythonInterpreter interp = this.getInterpreter();
 		interp.exec("pvStandardFields = getFieldsArchivedAsPartOfStream()");
 		PyList stdFields = (PyList) interp.get("pvStandardFields");
 		@SuppressWarnings("unchecked")
