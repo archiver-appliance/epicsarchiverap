@@ -105,18 +105,18 @@ public class MgmtRuntimeState {
 	
 	public class NeverConnectedRequestState { 
 		String pvName;
-		Timestamp startOfWorkflow;
+		Timestamp metInfoRequestSubmitted;
 		ArchivePVState.ArchivePVStateMachine currentState;
-		public NeverConnectedRequestState(String pvName, Timestamp startOfWorkflow, ArchivePVStateMachine currentState) {
+		public NeverConnectedRequestState(String pvName, Timestamp metInfoRequestSubmitted, ArchivePVStateMachine currentState) {
 			this.pvName = pvName;
-			this.startOfWorkflow = startOfWorkflow;
+			this.metInfoRequestSubmitted = metInfoRequestSubmitted;
 			this.currentState = currentState;
 		}
 		public String getPvName() {
 			return pvName;
 		}
-		public Timestamp getStartOfWorkflow() {
-			return startOfWorkflow;
+		public Timestamp getMetInfoRequestSubmitted() {
+			return metInfoRequestSubmitted;
 		}
 		public ArchivePVState.ArchivePVStateMachine getCurrentState() {
 			return currentState;
@@ -130,7 +130,7 @@ public class MgmtRuntimeState {
 		for(String pvName : currentPVRequests.keySet()) {
 			ArchivePVState pvState = currentPVRequests.get(pvName);
 			if(pvState != null && pvState.hasNotConnectedSoFar()) {
-				neverConnectedRequests.add(new NeverConnectedRequestState(pvName, pvState.getStartOfWorkflow(), pvState.getCurrentState()));
+				neverConnectedRequests.add(new NeverConnectedRequestState(pvName, pvState.getMetaInfoRequestedSubmitted(), pvState.getCurrentState()));
 			}
 		}
 		return neverConnectedRequests;

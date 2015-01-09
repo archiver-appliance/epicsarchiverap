@@ -325,6 +325,16 @@ function getNeverConnectedPVsReport() {
 			 {'srcAttr' : 'appliance', 'label' : 'Appliance'},
 			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Abort request', 'srcFunction' : function(dataobject) { return '<a onclick="abortArchiveRequest(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }}
 			 ]);
+	$("#reporttablediv").on("dataloaded", function( event) {
+		if($("#reporttablediv_table").data("data").length > 990) { 
+			$("#report_warnings").text("There seem to be many unfulfilled archive PV request's in this facility. " 
+					+ "Note that we have recently introduced throttling of archivePV requests and if we have more than 1000 PV's that are invalid, " 
+					+ "the archive PV's requests  that were issued later will never be fulfilled. " 
+					+ "You should consider aborting some of these requests for PV's that are not connecting and are stuck in the METAINFO_REQUESTED state.");
+		} else { 
+			$("#report_warnings").text("");
+		}
+	});
 }
 
 

@@ -134,6 +134,11 @@
 	padding-right: 0.25em;
 }
 
+#report_warnings { 
+	color: red;
+	padding: 0.5em;
+}
+
 .archtabl_asc {
 	background: #99cedb url('../comm/img/sort_asc.png') no-repeat center right;
 }

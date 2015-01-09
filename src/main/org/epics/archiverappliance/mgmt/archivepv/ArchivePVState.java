@@ -38,6 +38,7 @@ public class ArchivePVState {
 	private ConfigService configService;
 	private String applianceIdentityAfterCapacityPlanning;
 	private Timestamp startOfWorkflow = TimeUtils.now();
+	private Timestamp metaInfoRequestedSubmitted = null;
 	private String myIdentity;
 	private MetaInfo metaInfo = null;
 
@@ -234,9 +235,7 @@ public class ArchivePVState {
 	}
 
 	public boolean hasNotConnectedSoFar() {
-		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.START)
-				|| this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED)
-				|| this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
+		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
 	}
 
 	/**
@@ -266,6 +265,7 @@ public class ArchivePVState {
 	
 	
 	public void metaInfoRequestAcknowledged() { 
+		metaInfoRequestedSubmitted = TimeUtils.now();
 		this.currentState = ArchivePVStateMachine.METAINFO_REQUESTED;
 	}
 	
@@ -373,5 +373,9 @@ public class ArchivePVState {
 
 	public String getPvName() {
 		return pvName;
-	}	
+	}
+
+	public Timestamp getMetaInfoRequestedSubmitted() {
+		return metaInfoRequestedSubmitted;
+	}
 }

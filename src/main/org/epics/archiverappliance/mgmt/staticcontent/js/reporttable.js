@@ -263,6 +263,8 @@ function getJSONDataAndRefreshTable(reportTable) {
 			updateToolbarPageNum(reportTable);
 			
 			reportTable.change();
+			
+			reportTable.parent().trigger("dataloaded");
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
 			alert("An error occured on the server while disconnected PVs -- " + textStatus + " -- " + errorThrown);
