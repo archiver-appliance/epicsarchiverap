@@ -32,10 +32,11 @@ public class PolicyExecutionTest {
 			pvInfo.put("eventRate", new Float(1.0));
 			pvInfo.put("storageRate", new Float(1.0));
 			pvInfo.put("RTYP", "ai");
-			ExecutePolicy executePolicy = new ExecutePolicy(configService);
-			PolicyConfig policyConfig = executePolicy.computePolicyForPV("test", pvInfo);
-			assertTrue("policyConfig is null", policyConfig != null);
-			assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+			try(ExecutePolicy executePolicy = new ExecutePolicy(configService)) { 
+				PolicyConfig policyConfig = executePolicy.computePolicyForPV("test", pvInfo);
+				assertTrue("policyConfig is null", policyConfig != null);
+				assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+			}
 		}
 	}
 	
@@ -48,10 +49,11 @@ public class PolicyExecutionTest {
 				pvInfo.put("eventRate", new Float(1.0));
 				pvInfo.put("storageRate", new Float(1.0));
 				pvInfo.put("RTYP", "ai");
-				ExecutePolicy executePolicy = new ExecutePolicy(configService);
-				PolicyConfig policyConfig = executePolicy.computePolicyForPV("test" + i, pvInfo);
-				assertTrue("policyConfig is null", policyConfig != null);
-				assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+				try(ExecutePolicy executePolicy = new ExecutePolicy(configService)) { 
+					PolicyConfig policyConfig = executePolicy.computePolicyForPV("test" + i, pvInfo);
+					assertTrue("policyConfig is null", policyConfig != null);
+					assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+				}
 			}
 		}
 	}

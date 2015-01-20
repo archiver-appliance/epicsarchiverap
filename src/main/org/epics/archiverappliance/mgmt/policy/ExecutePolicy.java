@@ -37,7 +37,7 @@ import org.python.util.PythonInterpreter;
  * @author mshankar
  *
  */
-public class ExecutePolicy {
+public class ExecutePolicy implements AutoCloseable {
 	private static Logger logger = Logger.getLogger(ExecutePolicy.class.getName());
 	private PythonInterpreter interp;
 	public ExecutePolicy(ConfigService configService) throws IOException { 
@@ -47,7 +47,12 @@ public class ExecutePolicy {
 			interp.execfile(is);
 		}
 	}
-	
+
+	@Override
+	public void close() {
+		this.interp.cleanup();
+	}
+
 	/**
 	 * @param pvName
 	 * @param pvInfo
@@ -87,8 +92,6 @@ public class ExecutePolicy {
 		
 		if(logger.isDebugEnabled()) logger.debug("For pv" + pvName + "using policy " + policyConfig.generateStringRepresentation());
 		
-		interp.cleanup();
-		
 		return policyConfig;
 	}
 	
@@ -98,7 +101,6 @@ public class ExecutePolicy {
 		PyDictionary policies = (PyDictionary) interp.get("pvPolicies");
 		@SuppressWarnings("unchecked")
 		HashMap<String, String> ret = new HashMap<String, String>(policies);
-		interp.cleanup();
 		return ret;
 	}
 
@@ -108,7 +110,6 @@ public class ExecutePolicy {
 		PyList stdFields = (PyList) interp.get("pvStandardFields");
 		@SuppressWarnings("unchecked")
 		LinkedList<String> ret = new LinkedList<String>(stdFields);
-		interp.cleanup();
 		return ret;
 	}
 }

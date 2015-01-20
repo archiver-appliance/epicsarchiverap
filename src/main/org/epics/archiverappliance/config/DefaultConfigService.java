@@ -74,6 +74,8 @@ import org.xml.sax.SAXException;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -165,6 +167,12 @@ public class DefaultConfigService implements ConfigService {
 	// The side effect is that it may take this many minutes to update the policy that is cached.
 	private LoadingCache<String, ExecutePolicy> theExecutionPolicy = CacheBuilder.newBuilder()
 			.expireAfterWrite(1, TimeUnit.MINUTES)
+			.removalListener(new RemovalListener<String, ExecutePolicy>() {
+				@Override
+				public void onRemoval(RemovalNotification<String, ExecutePolicy> arg) {
+					arg.getValue().close();
+				}
+			})
 			.build(new CacheLoader<String, ExecutePolicy>() {
 				public ExecutePolicy load(String key) throws IOException {
 					logger.info("Updating the cached execute policy");
@@ -1415,15 +1423,17 @@ public class DefaultConfigService implements ConfigService {
 	
 	@Override
 	public HashMap<String, String> getPoliciesInInstallation() throws IOException {
-		ExecutePolicy executePolicy = new ExecutePolicy(this);
-		return executePolicy.getPolicyList();
+		try(ExecutePolicy executePolicy = new ExecutePolicy(this)) { 
+			return executePolicy.getPolicyList();
+		}
 	}
 	
 	
 	@Override
 	public List<String> getFieldsArchivedAsPartOfStream() throws IOException {
-		ExecutePolicy executePolicy = new ExecutePolicy(this);
-		return executePolicy.getFieldsArchivedAsPartOfStream();
+		try(ExecutePolicy executePolicy = new ExecutePolicy(this)) { 
+			return executePolicy.getFieldsArchivedAsPartOfStream();
+		}
 	}
 
 	@Override
