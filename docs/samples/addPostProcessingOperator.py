@@ -15,7 +15,7 @@ import csv
 import urlparse
 
 # Set up argparse and parse command line options
-parser = argparse.ArgumentParser(description='Process EPICS IOC .db files for info/archiver tags, parse these and convert them to calls to an EPICS archiver appliance.')
+parser = argparse.ArgumentParser()
 parser.add_argument('serverURL', help="URL to the EPICS archiver appliance mgmt webapp", nargs=1)
 parser.add_argument('pvNames', help="One or more pvnames; these can be GLOB wildcards", nargs='+')
 
