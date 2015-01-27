@@ -130,6 +130,11 @@ public class FirstFill implements PostProcessor, PostProcessorWithConsolidatedEv
 
 	@Override
 	public EventStream getConsolidatedEventStream() {
+		if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+			logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+			bin2Event.put(firstBin-1, lastSampleBeforeStart);
+			lastSampleBeforeStartAdded = true; 
+		}
 		if(bin2Event.isEmpty()) { 
 			return new ArrayListEventStream(0, srcDesc);
 		} else { 

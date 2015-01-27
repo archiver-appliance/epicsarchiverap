@@ -88,13 +88,16 @@ public class LastFill implements PostProcessor, PostProcessorWithConsolidatedEve
 							}
 						} else if(binNumber < firstBin) {
 							if(!lastSampleBeforeStartAdded) { 
-								logger.debug("Adding lastSampleBeforeStart");
 								if(lastSampleBeforeStart != null) { 
 									if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
 										lastSampleBeforeStart = e.makeClone();
+										logger.debug("Overriding lastSampleBeforeStart " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+									} else { 
+										logger.debug("Skipping as current event is before lastSampleBeforeStart " + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
 									}
 								} else { 
 									lastSampleBeforeStart = e.makeClone();
+									logger.debug("Adding lastSampleBeforeStart" + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
 								}
 							}
 						}
@@ -122,6 +125,11 @@ public class LastFill implements PostProcessor, PostProcessorWithConsolidatedEve
 
 	@Override
 	public EventStream getConsolidatedEventStream() {
+		if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+			logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+			bin2Event.put(firstBin-1, lastSampleBeforeStart);
+			lastSampleBeforeStartAdded = true; 
+		}
 		if(bin2Event.isEmpty()) { 
 			return new ArrayListEventStream(0, srcDesc);
 		} else { 
