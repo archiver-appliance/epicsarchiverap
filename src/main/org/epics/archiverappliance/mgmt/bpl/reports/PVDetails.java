@@ -50,11 +50,22 @@ public class PVDetails implements BPLAction {
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		String pvNameFromRequest = req.getParameter("pv");
 		String pvName = PVNames.stripFieldNameFromPVName(pvNameFromRequest);
-		String realName = configService.getRealNameForAlias(pvName);
-		if(realName != null) pvName = realName;
+
+		ApplianceInfo info = null;
+		PVTypeInfo typeInfoForNameFromRequest = configService.getTypeInfoForPV(pvNameFromRequest);
+		if(typeInfoForNameFromRequest != null) {
+			logger.debug("Was able to find a PVTypeInfo for the name as specified in the request " + pvNameFromRequest);
+			pvName = pvNameFromRequest;
+			info = configService.getApplianceForPV(pvName);
+		} else { 
+			String realName = configService.getRealNameForAlias(pvName);
+			if(realName != null) pvName = realName;
+			logger.debug("Found an alias; using that instead " + pvName);
+			info = configService.getApplianceForPV(pvName);
+		}
+		
 		logger.info("Getting the detailed status for PV " + pvName);
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		ApplianceInfo info = configService.getApplianceForPV(pvName);
 		if(info == null) { 
 			pvName = pvNameFromRequest;
 			info = configService.getApplianceForPV(pvName);
@@ -63,6 +74,7 @@ public class PVDetails implements BPLAction {
 				return;
 			}
 		}
+
 		String pvDetailsURLSnippet = "/getPVDetails?pv=" + URLEncoder.encode(pvName, "UTF-8");
 		try (PrintWriter out = resp.getWriter()) {
 			LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
