@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<database>
-
-<structure structureName = "supportState" extends = "enumerated">
-  <array name = "choices" immutable = "true" >
-    readyForInitialize,readyForStart,ready,zombie</array>
-</structure>
-
-</database>

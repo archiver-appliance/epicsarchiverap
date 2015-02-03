@@ -1,9 +1,0 @@
-<?xml version="1.0" ?>
-<database>
-
-<structure structureName = "int32ArrayDriver">
-    <scalar name = "delay" scalarType = "double" />
-    <scalar name = "maxSegmentSize" scalarType = "int" />
-</structure>
-
-</database>
