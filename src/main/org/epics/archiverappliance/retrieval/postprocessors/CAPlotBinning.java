@@ -210,7 +210,8 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 			public EventStream call() throws Exception {
 				try(EventStream strm = callable.call()) {
 					// If we cache the mean/sigma etc, then we should add something to the desc telling us that this is cached data and then we can replace the stat value for that bin?
-					if(srcDesc == null) srcDesc = (RemotableEventStreamDesc) strm.getDescription();
+					RemotableEventStreamDesc strmDesc = (RemotableEventStreamDesc) strm.getDescription();
+					if(srcDesc == null) srcDesc = new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, strmDesc.getPvName(), strmDesc.getYear());
 					for(Event e : strm) {
 						try { 
 							DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
@@ -261,7 +262,7 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 								}
 							}
 						} catch(PBParseException ex) { 
-							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
+							logger.error("Skipping possible corrupted event for pv " + strmDesc);
 						}
 					}
 					return getConsolidatedEventStream();
