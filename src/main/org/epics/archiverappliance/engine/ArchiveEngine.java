@@ -515,6 +515,7 @@ public class ArchiveEngine {
 				// stop channel and remove id from ChannelList and buffer
 				channel.stop();
 				engineContext.getWriteThead().removeChannel(pvName);
+				engineContext.getChannelList().remove(pvName);
 				// add new channel in scan mode
 				ArchiveEngine.archivePV(pvName, samplingPeriod,
 						SamplingMethod.SCAN,
@@ -535,6 +536,7 @@ public class ArchiveEngine {
 
 					channel.stop();
 					engineContext.getWriteThead().removeChannel(pvName);
+					engineContext.getChannelList().remove(pvName);
 					// add new channel in scan mode
 					ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.SCAN, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null);
 				}
@@ -545,6 +547,7 @@ public class ArchiveEngine {
 				// remove the channel in monitor mode
 				channel.stop();
 				engineContext.getWriteThead().removeChannel(pvName);
+				engineContext.getChannelList().remove(pvName);
 				// add new channel in monitor mode
 				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null);
 			} else {
@@ -553,6 +556,7 @@ public class ArchiveEngine {
 				engineContext.getScheduler().purge();
 				channel.stop();
 				engineContext.getWriteThead().removeChannel(pvName);
+				engineContext.getChannelList().remove(pvName);
 
 				// add new channel in monitor mode
 				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null);
@@ -583,6 +587,7 @@ public class ArchiveEngine {
 			// remove the channel in monitor mode
 			channel.stop();
 			engineContext.getWriteThead().removeChannel(pvName);
+			engineContext.getChannelList().remove(pvName);
 		} else {
 			// pv is in scan mode
 			// remove the channel in scan mode
@@ -590,6 +595,7 @@ public class ArchiveEngine {
 			engineContext.getScheduler().purge();
 			channel.stop();
 			engineContext.getWriteThead().removeChannel(pvName);
+			engineContext.getChannelList().remove(pvName);
 		}
 	}
 }

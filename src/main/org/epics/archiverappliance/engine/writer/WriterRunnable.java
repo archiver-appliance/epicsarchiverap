@@ -10,7 +10,6 @@
 package org.epics.archiverappliance.engine.writer;
 
 import java.io.IOException;
-
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,11 +54,10 @@ public class WriterRunnable implements Runnable {
 /**
  * remove one sample buffer from the buffer hash map.
  * At the same time. it also removes the channel from the channel hash map in the engine context
- * @param ChannelName the name of the channel who and whose sample buffer are removed
+ * @param channelName the name of the channel who and whose sample buffer are removed
  */
-	public void removeChannel(final String ChannelName) {
-		buffers.remove(ChannelName);
-		configservice.getEngineContext().getChannelList().remove(ChannelName);
+	public void removeChannel(final String channelName) {
+		buffers.remove(channelName);
 	}
 
 	/**
