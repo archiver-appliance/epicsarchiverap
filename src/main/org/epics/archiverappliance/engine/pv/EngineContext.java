@@ -168,10 +168,6 @@ public class EngineContext {
 						scheduler.shutdown();
 					}
 					
-					if(miscTasksScheduler != null) { 
-						miscTasksScheduler.shutdownNow();
-					}
-					
 					Iterator<Entry<String, ArchiveChannel>> itChannel = channelList.entrySet().iterator();
 					while (itChannel.hasNext()) {
 						Entry<String, ArchiveChannel> channelentry = (Entry<String, ArchiveChannel>) itChannel.next();
@@ -274,7 +270,7 @@ public class EngineContext {
 			@Override
 			public void run() {
 				logger.info("Shutting down the engine scheduler for misc tasks.");
-				miscTasksScheduler.shutdownNow();
+				miscTasksScheduler.shutdown();
 			}
 		});
 
@@ -608,6 +604,11 @@ public class EngineContext {
 		disconnectFuture.cancel(false);
 		this.disconnectCheckTimeoutInMinutes = newDisconnectCheckTimeoutMins;
 		this.disconnectCheckerPeriodInMinutes = newDisconnectCheckTimeoutMins;
+		if(this.miscTasksScheduler != null) { 
+			logger.info("Shutting down the engine scheduler for misc tasks.");
+			miscTasksScheduler.shutdown();
+			this.miscTasksScheduler = null;
+		}
 		this.startMiscTasksScheduler(configService);
 	}
 	
