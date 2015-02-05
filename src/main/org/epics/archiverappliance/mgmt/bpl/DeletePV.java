@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -47,7 +48,10 @@ public class DeletePV implements BPLAction {
 		
 		// String pvNameFromRequest = pvName;
 		String realName = configService.getRealNameForAlias(pvName);
-		if(realName != null) pvName = realName;
+		if(realName != null)  {
+			logger.info("The name " + pvName + " is an alias for " + realName + ". Deleting this instead.");
+			pvName = realName;
+		}
 
 		ApplianceInfo info = configService.getApplianceForPV(pvName);
 		if(info == null) {
@@ -99,6 +103,18 @@ public class DeletePV implements BPLAction {
 		if(pvStatus != null && !pvStatus.equals("")) {
 			logger.debug("Removing pv " + pvName + " from the cluster");
 			configService.removePVFromCluster(pvName);
+			
+			logger.debug("Removing aliases for pv " + pvName + " from the cluster");
+			List<String> aliases = configService.getAllAliases();
+			for(String alias : aliases) { 
+				String realNameForAlias = configService.getRealNameForAlias(alias);
+				if(pvName.equals(realNameForAlias)) { 
+					logger.debug("Removing alias " + alias + " for pv " + pvName);
+					configService.removeAlias(alias, realNameForAlias);
+				}
+			}
+
+			
 			try(PrintWriter out = resp.getWriter()) {
 				out.println(JSONValue.toJSONString(pvStatus));
 			}
