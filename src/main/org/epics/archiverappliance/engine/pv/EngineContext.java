@@ -168,6 +168,10 @@ public class EngineContext {
 						scheduler.shutdown();
 					}
 					
+					if(miscTasksScheduler != null) { 
+						miscTasksScheduler.shutdownNow();
+					}
+					
 					Iterator<Entry<String, ArchiveChannel>> itChannel = channelList.entrySet().iterator();
 					while (itChannel.hasNext()) {
 						Entry<String, ArchiveChannel> channelentry = (Entry<String, ArchiveChannel>) itChannel.next();
