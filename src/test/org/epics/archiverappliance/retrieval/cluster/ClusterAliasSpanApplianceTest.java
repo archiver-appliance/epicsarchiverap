@@ -114,7 +114,7 @@ public class ClusterAliasSpanApplianceTest {
 		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFileForMember);
 		JDBM2Persistence persistenceLayer = new JDBM2Persistence();
 		PVTypeInfo typeInfo = persistenceLayer.getTypeInfo(pvName);
-		assertTrue("Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex + typeInfo != null);
+		assertTrue("Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex, typeInfo != null);
 		return typeInfo.getApplianceIdentity();
 	}
 	
