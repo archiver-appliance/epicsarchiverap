@@ -9,7 +9,6 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -24,6 +23,7 @@ import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -48,69 +48,100 @@ public class GetPVStatusAction implements BPLAction {
 		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, true);
 		
 		
+		HashMap<String, String> pvStatuses = new HashMap<String, String>();
+		HashMap<String, LinkedList<String>> pvNamesToAskEngineForStatus = new HashMap<String, LinkedList<String>>();
+		HashMap<String, PVTypeInfo> typeInfosForEngineRequests = new HashMap<String, PVTypeInfo>();
+
+		for(String pvName : pvNames) {
+			pvName = PVNames.normalizePVName(pvName);
+			String pvNameFromRequest = pvName;
+			String realName = configService.getRealNameForAlias(pvName);
+			if(realName != null) pvName = realName;
+			logger.debug("Checking for status for " + pvName);
+
+			ApplianceInfo info = configService.getApplianceForPV(pvName);
+			PVTypeInfo typeInfoForPV = null;
+			if(info == null) {
+				String fieldName = PVNames.getFieldName(pvName);
+				if(fieldName != null && !fieldName.equals("")) {
+					String pvNameOnly = PVNames.stripFieldNameFromPVName(pvName);
+					logger.debug("Looking for appliance for " + pvNameOnly + " to determine field " + fieldName);
+					info = configService.getApplianceForPV(pvNameOnly);
+					if(info != null) {
+						typeInfoForPV = configService.getTypeInfoForPV(pvNameOnly);
+						if(typeInfoForPV != null) {
+							if(typeInfoForPV.checkIfFieldAlreadySepcified(fieldName)) {
+								logger.debug("Standard field, returning status of pv instead " + pvName);
+								pvName = pvNameOnly;
+							} else { 
+								logger.debug("Field " + fieldName + " is not a standard field");
+								info = null;
+							}
+						}
+					}
+				}
+			} else { 
+				typeInfoForPV = configService.getTypeInfoForPV(pvName);
+			}
+
+			if(info == null) {
+				if(configService.doesPVHaveArchiveRequestInWorkflow(pvName)) {
+					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Initial sampling\" }");
+				} else {
+					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Not being archived\" }");
+				}
+			} else {
+				if(!pvNamesToAskEngineForStatus.containsKey(info.getEngineURL())) { 
+					pvNamesToAskEngineForStatus.put(info.getEngineURL(), new LinkedList<String>());
+				}
+				pvNamesToAskEngineForStatus.get(info.getEngineURL()).add(pvName);
+				typeInfosForEngineRequests.put(pvName, typeInfoForPV);
+			}
+		}
+		
+		for(String engineURL : pvNamesToAskEngineForStatus.keySet()) { 
+			LinkedList<String> pvNamesToAskEngine = pvNamesToAskEngineForStatus.get(engineURL);
+			JSONArray engineStatuses = GetUrlContent.postStringListAndGetContentAsJSONArray(engineURL + "/status", "pv", pvNamesToAskEngine);
+			HashMap<String, JSONObject> computedEngineStatueses = new HashMap<String, JSONObject>();
+			for(Object engineStatusObj : engineStatuses) { 
+				JSONObject engineStatus = (JSONObject) engineStatusObj;
+				computedEngineStatueses.put((String) engineStatus.get("pvName"), engineStatus);
+			}
+			for(String pvNameToAskEngine : pvNamesToAskEngine) {
+				PVTypeInfo typeInfo = typeInfosForEngineRequests.get(pvNameToAskEngine);
+				assert(typeInfo != null);
+				JSONObject pvStatus = computedEngineStatueses.get(pvNameToAskEngine);
+				if(pvStatus != null && !pvStatus.isEmpty()) {
+					pvStatus.put("appliance", typeInfo.getApplianceIdentity());
+					pvStatus.put("pvName", pvNameToAskEngine);
+					pvStatus.put("pvNameOnly", pvNameToAskEngine);
+					pvStatuses.put(pvNameToAskEngine, pvStatus.toJSONString());
+				} else { 
+					if(typeInfo != null && typeInfo.isPaused()) { 
+						HashMap<String, String> tempStatus = new HashMap<String, String>();
+						tempStatus.put("appliance", typeInfo.getApplianceIdentity());
+						tempStatus.put("pvName", pvNameToAskEngine);
+						tempStatus.put("pvNameOnly", pvNameToAskEngine);
+						tempStatus.put("status", "Paused");
+						pvStatuses.put(pvNameToAskEngine, JSONValue.toJSONString(tempStatus));
+					} 
+					else {
+						// Here we have a PVTypeInfo but no status from the engine. It could be that we are in that transient period between persisting the PVTypeInfo and opening the CA channel. 
+						pvStatuses.put(pvNameToAskEngine, "{ \"pvName\": \"" + pvNameToAskEngine + "\", \"status\": \"Appliance assigned\" }");
+					}
+				}
+			}
+		}
+		
+	
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
 			out.println("[");
 			boolean isFirst = true;
-			for(String pvName : pvNames) {
-				if(isFirst) { isFirst = false; } else { out.println(","); }
-				pvName = PVNames.normalizePVName(pvName);
-				String pvNameFromRequest = pvName;
-				String realName = configService.getRealNameForAlias(pvName);
-				if(realName != null) pvName = realName;
-				logger.debug("Checking for status for " + pvName);
-				
-				ApplianceInfo info = configService.getApplianceForPV(pvName);
-				PVTypeInfo typeInfoForPV = null;
-				if(info == null) {
-					String fieldName = PVNames.getFieldName(pvName);
-					if(fieldName != null && !fieldName.equals("")) {
-						String pvNameOnly = PVNames.stripFieldNameFromPVName(pvName);
-						logger.debug("Looking for appliance for " + pvNameOnly + " to determine field " + fieldName);
-						info = configService.getApplianceForPV(pvNameOnly);
-						if(info != null) {
-							typeInfoForPV = configService.getTypeInfoForPV(pvNameOnly);
-							if(typeInfoForPV != null) {
-								if(typeInfoForPV.checkIfFieldAlreadySepcified(fieldName)) {
-									logger.debug("Standard field, returning status of pv instead " + pvName);
-									pvName = pvNameOnly;
-								} else { 
-									logger.debug("Field " + fieldName + " is not a standard field");
-									info = null;
-								}
-							}
-						}
-					}
-				} else { 
-					typeInfoForPV = configService.getTypeInfoForPV(pvName);
-				}
-				
-				if(info == null) {
-					if(configService.doesPVHaveArchiveRequestInWorkflow(pvName)) {
-						out.println("{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Initial sampling\" }");
-					} else {
-						out.println("{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Not being archived\" }");
-					}
-				} else {
-					String pvStatusURLStr = info.getEngineURL() + "/status?pv=" + URLEncoder.encode(pvName, "UTF-8");
-					JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(pvStatusURLStr, false);
-					if(pvStatus != null && !pvStatus.isEmpty()) {
-						pvStatus.put("appliance", info.getIdentity());
-						pvStatus.put("pvName", pvNameFromRequest);
-						pvStatus.put("pvNameOnly", pvNameFromRequest);
-						out.println(pvStatus);
-					} else if(typeInfoForPV != null) { 
-						HashMap<String, String> tempStatus = new HashMap<String, String>();
-						tempStatus.put("appliance", info.getIdentity());
-						tempStatus.put("pvName", pvNameFromRequest);
-						tempStatus.put("pvNameOnly", pvName);
-						tempStatus.put("status", "Paused");
-						JSONValue.writeJSONString(tempStatus, out);
-					} 
-					else {
-						// Here we have a PVTypeInfo but no status from the engine. It could be that we are in that transient period between persisting the PVTypeInfo and opening the CA channel. 
-						out.println("{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Appliance assigned\" }");
-					}
+			for(String pvName : pvNames) {  
+				if(pvStatuses.containsKey(pvName)) { 
+					if(isFirst) { isFirst = false; } else { out.println(","); }
+					out.print(pvStatuses.get(pvName));
 				}
 			}
 			out.println("]");

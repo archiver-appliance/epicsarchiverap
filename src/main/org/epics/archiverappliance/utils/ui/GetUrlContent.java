@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
@@ -248,7 +249,6 @@ public class GetUrlContent {
 		}
 	}
 	
-	
 	/**
 	 * Post a JSONObject to a remote server and get the response as a JSON object.
 	 * @param url
@@ -279,6 +279,47 @@ public class GetUrlContent {
 			throw new IOException("HTTP response did not have an entity associated with it");
 		}
 	}
+	
+	
+	/**
+	 * Post a list of strings to the remove server as a CSV and return the results as a array of JSONObjects
+	 * @param url
+	 * @param array
+	 * @return
+	 * @throws IOException
+	 */
+	public static JSONArray postStringListAndGetContentAsJSONArray(String url, String paramName, LinkedList<String> params) throws IOException {
+		StringWriter buf = new StringWriter();
+		buf.append(paramName);
+		buf.append("=");
+		boolean isFirst = true;
+		for(String param : params) { 
+			if(isFirst) { isFirst = false; } else { buf.append(","); }
+			buf.append(param);
+		}
+		
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpPost postMethod = new HttpPost(url);
+		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_FORM_URLENCODED);
+		StringEntity archiverValues = new StringEntity(buf.toString(), ContentType.APPLICATION_FORM_URLENCODED);
+		postMethod.setEntity(archiverValues);
+		if(logger.isDebugEnabled()) {
+			logger.debug("About to make a POST with " + url);
+		}
+		HttpResponse response = httpclient.execute(postMethod);
+		HttpEntity entity = response.getEntity();
+		if (entity != null) {
+			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+			// ArchiverValuesHandler takes over the burden of closing the input stream.
+			try(InputStream is = entity.getContent()) {
+				JSONArray retval = (JSONArray) JSONValue.parse(new InputStreamReader(is));
+				return retval;
+			}
+		} else {
+			throw new IOException("HTTP response did not have an entity associated with it");
+		}
+	}
+
 
 	
 	/**

@@ -9,6 +9,7 @@ package org.epics.archiverappliance.engine.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.LinkedList;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,47 +35,58 @@ public class PVStatusAction implements BPLAction {
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		String pvName = req.getParameter("pv");
-		if(pvName == null || pvName.equals("")) {
+		String pvNamesStr = req.getParameter("pv");
+		if(pvNamesStr == null || pvNamesStr.equals("")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-
-		try {
-			PVTypeInfo typeInfoForPV = configService.getTypeInfoForPV(pvName);
-			if(typeInfoForPV == null) {
-				logger.error("Could not find pv type info for PV " + pvName);
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-				return;
-			}
-			ArchDBRTypes dbrType = typeInfoForPV.getDBRType();
-			if(!dbrType.isV3Type()) {
-				PVMetrics metricsforPV = ArchiveEngine_EPICSV4.getMetricsforPV(pvName,configService);
-				if(metricsforPV != null) {
-					String statusStr = new EngineChannelStatus(metricsforPV).toJSONString();
-					resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-					try (PrintWriter out = resp.getWriter()) { 
-						out.print(statusStr);
+		
+		String[] pvNames = pvNamesStr.split(",");
+		LinkedList<EngineChannelStatus> statuses = new LinkedList<EngineChannelStatus>();
+		
+		for(String pvName : pvNames) { 
+			try {
+				PVTypeInfo typeInfoForPV = configService.getTypeInfoForPV(pvName);
+				if(typeInfoForPV == null) {
+					logger.error("Could not find pv type info for PV " + pvName);
+					continue;
+				}
+				ArchDBRTypes dbrType = typeInfoForPV.getDBRType();
+				if(!dbrType.isV3Type()) {
+					PVMetrics metricsforPV = ArchiveEngine_EPICSV4.getMetricsforPV(pvName,configService);
+					if(metricsforPV != null) {
+						statuses.add(new EngineChannelStatus(metricsforPV));
+					} else {
+						logger.warn("Could not determine metrics for PV " + pvName);
 					}
 				} else {
-					logger.warn("Could not determine metrics for PV " + pvName);
-					resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-				}
-			} else {
-				PVMetrics metricsforPV = ArchiveEngine.getMetricsforPV(pvName,configService);
-				if(metricsforPV != null) {
-					String statusStr = new EngineChannelStatus(metricsforPV).toJSONString();
-					resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-					try (PrintWriter out = resp.getWriter()) { 
-						out.print(statusStr);
+					PVMetrics metricsforPV = ArchiveEngine.getMetricsforPV(pvName,configService);
+					if(metricsforPV != null) {
+						statuses.add(new EngineChannelStatus(metricsforPV));
+					} else {
+						logger.warn("Could not determine metrics for PV " + pvName);
+						continue;
 					}
-				} else {
-					logger.warn("Could not determine metrics for PV " + pvName);
-					resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 				}
+			} catch(Exception ex) {
+				throw new IOException(ex);
 			}
-		} catch(Exception ex) {
-			throw new IOException(ex);
+		}
+			
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		boolean first = true;
+		try (PrintWriter out = resp.getWriter()) {
+			out.println("[");
+			for(EngineChannelStatus status : statuses) { 
+				if(first) { 
+					first = false;
+				} else { 
+					out.println(",");
+				}
+				out.print(status.toJSONString());
+			}
+			out.println();
+			out.println("]");
 		}
 	}
 }
