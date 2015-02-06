@@ -1,14 +1,23 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 /**
  * Small utility class for listing PVs that match a parameter
@@ -16,6 +25,7 @@ import org.epics.archiverappliance.config.ConfigService;
  *
  */
 public class PVsMatchingParameter {
+	private static Logger logger = Logger.getLogger(PVsMatchingParameter.class.getName());
 	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService) {
 		return getMatchingPVs(req, configService, false);
 	}
@@ -64,6 +74,46 @@ public class PVsMatchingParameter {
 				}
 			}
 		}
+		return pvNames;
+	}
+	
+	
+	public static LinkedList<String> getPVNamesFromPostBody(HttpServletRequest req, ConfigService configService) throws IOException {
+		LinkedList<String> pvNames = new LinkedList<String>();
+		String contentType = req.getContentType();
+		if(contentType != null) { 
+			switch(contentType) { 
+			case MimeTypeConstants.APPLICATION_JSON: 
+				try (LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
+					JSONParser parser=new JSONParser();
+					for(Object pvName : (JSONArray) parser.parse(lineReader)) {
+						pvNames.add((String) pvName);
+					}
+				} catch(ParseException ex) { 
+					throw new IOException(ex);
+				}
+				return pvNames;
+			case MimeTypeConstants.APPLICATION_FORM_URLENCODED: 
+				String[] pvs = req.getParameter("pv").split(",");
+				for(String pv : pvs) {
+					pvNames.add(pv);
+				}
+				return pvNames;
+			case MimeTypeConstants.TEXT_PLAIN:				
+			default:
+				// For the default we assume text/plain which is a list of PV's separated by unix newlines
+				try (LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
+					String pv = lineReader.readLine();
+					logger.debug("Parsed pv " + pv);
+					while(pv != null) { 
+						pvNames.add(pv);
+						pv = lineReader.readLine();
+					}
+				}
+				return pvNames;
+			}
+		}
+
 		return pvNames;
 	}
 }

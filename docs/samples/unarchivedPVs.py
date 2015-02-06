@@ -11,9 +11,9 @@ import json
 import datetime
 import time
 
-def getPVStatus(bplURL, pvNames):
-    '''Get's the status for a bunch of PV's'''
-    url = bplURL + '/getPVStatus'
+def getUnarchivedPVs(bplURL, pvNames):
+    '''Of the PVs in the list, determine those that are unarchived. '''
+    url = bplURL + '/unarchivedPVs'
     data = "pv=" + ",".join(pvNames)
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
@@ -39,12 +39,7 @@ if __name__ == "__main__":
         pvName = parts[0]
         pvName2Conf[pvName] = line
         pvNames.append(urllib.quote_plus(pvName))
-    statuses = getPVStatus(args.url, pvNames)
-    unarchivedPVs = []
-    for status in statuses:
-        if status['status'] == 'Not being archived':
-            unarchivedPVs.append(status['pvName'])
-    
+    unarchivedPVs = getUnarchivedPVs(args.url, pvNames)
     for unarchivedPV in sorted(unarchivedPVs):
         print pvName2Conf[unarchivedPV]
         

@@ -56,6 +56,7 @@ import org.epics.archiverappliance.mgmt.bpl.RenamePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ReshardPV;
 import org.epics.archiverappliance.mgmt.bpl.ResumeArchivingPV;
 import org.epics.archiverappliance.mgmt.bpl.SkipAliasCheckAction;
+import org.epics.archiverappliance.mgmt.bpl.UnarchivedPVsAction;
 import org.epics.archiverappliance.mgmt.bpl.UploadChannelArchiverConfigAction;
 import org.epics.archiverappliance.mgmt.bpl.cahdlers.CompareWithChannelArchiver;
 import org.epics.archiverappliance.mgmt.bpl.reports.ApplianceMetrics;
@@ -192,6 +193,7 @@ public class BPLServlet extends HttpServlet {
 		addPostAction("/pauseArchivingPV", PauseArchivingPV.class);
 		addPostAction("/resumeArchivingPV", ResumeArchivingPV.class);
 		addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
+		addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
 	}
 	
 	@Override
