@@ -74,8 +74,8 @@ public class VALNoVALTest {
 		 String pvNameToArchive1 = "UnitTestNoNamingConvention:sine";
 		 pvstextarea.sendKeys(pvNameToArchive1);
 		 pvstextarea.sendKeys(Keys.RETURN);
-		 String pvNameToArchive2 = "UnitTestNoNamingConvention:cosine";
-		 pvstextarea.sendKeys(pvNameToArchive2 + ".VAL");
+		 String pvNameToArchive2 = "UnitTestNoNamingConvention:cosine.VAL";
+		 pvstextarea.sendKeys(pvNameToArchive2);
 		 pvstextarea.sendKeys(Keys.RETURN);
 		 
 		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));

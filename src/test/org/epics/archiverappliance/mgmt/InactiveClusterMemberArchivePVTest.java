@@ -75,9 +75,9 @@ public class InactiveClusterMemberArchivePVTest {
 	@Test
 	public void testRequestForArchivingThatAlreadyExistsOnInactiveMember() throws Exception  {
 		 checkPVStatus(pvNameToArchive1, "Paused");
-		 checkPVStatus(pvNameToArchive2, "Appliance assigned");
+		 checkPVStatus(pvNameToArchive2, "Appliance Down");
 		 archivePV(pvNameToArchive1, "Paused");
-		 archivePV(pvNameToArchive2, "Appliance assigned");
+		 archivePV(pvNameToArchive2, "Appliance Down");
 	}
 
 	private void checkPVStatus(String pvName, String expectedPVStatus) throws Exception {

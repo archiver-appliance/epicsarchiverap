@@ -52,11 +52,20 @@ public class GetPVStatusAction implements BPLAction {
 		HashMap<String, LinkedList<String>> pvNamesToAskEngineForStatus = new HashMap<String, LinkedList<String>>();
 		HashMap<String, PVTypeInfo> typeInfosForEngineRequests = new HashMap<String, PVTypeInfo>();
 
+		HashMap<String, LinkedList<String>> realName2NameFromRequest = new HashMap<String, LinkedList<String>>();
+		
 		for(String pvName : pvNames) {
-			pvName = PVNames.normalizePVName(pvName);
 			String pvNameFromRequest = pvName;
+
+			// Get rid of .VAL
+			pvName = PVNames.normalizePVName(pvName);
+			addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
+			
 			String realName = configService.getRealNameForAlias(pvName);
-			if(realName != null) pvName = realName;
+			if(realName != null) { 
+				pvName = realName;
+				addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
+			}
 			logger.debug("Checking for status for " + pvName);
 
 			ApplianceInfo info = configService.getApplianceForPV(pvName);
@@ -73,6 +82,7 @@ public class GetPVStatusAction implements BPLAction {
 							if(typeInfoForPV.checkIfFieldAlreadySepcified(fieldName)) {
 								logger.debug("Standard field, returning status of pv instead " + pvName);
 								pvName = pvNameOnly;
+								addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
 							} else { 
 								logger.debug("Field " + fieldName + " is not a standard field");
 								info = null;
@@ -101,33 +111,59 @@ public class GetPVStatusAction implements BPLAction {
 		
 		for(String engineURL : pvNamesToAskEngineForStatus.keySet()) { 
 			LinkedList<String> pvNamesToAskEngine = pvNamesToAskEngineForStatus.get(engineURL);
-			JSONArray engineStatuses = GetUrlContent.postStringListAndGetContentAsJSONArray(engineURL + "/status", "pv", pvNamesToAskEngine);
+			JSONArray engineStatuses = null;
+			boolean instanceDown = false;
+			try { 
+				engineStatuses = GetUrlContent.postStringListAndGetContentAsJSONArray(engineURL + "/status", "pv", pvNamesToAskEngine);
+			} catch(IOException ex) { 
+				instanceDown = true;
+				logger.warn("Exception getting status from engine " + engineURL, ex);
+			}
+			// Convert list of statuses from engine to hashmap
 			HashMap<String, JSONObject> computedEngineStatueses = new HashMap<String, JSONObject>();
-			for(Object engineStatusObj : engineStatuses) { 
-				JSONObject engineStatus = (JSONObject) engineStatusObj;
-				computedEngineStatueses.put((String) engineStatus.get("pvName"), engineStatus);
+			if(engineStatuses != null) { 
+				for(Object engineStatusObj : engineStatuses) { 
+					JSONObject engineStatus = (JSONObject) engineStatusObj;
+					computedEngineStatueses.put((String) engineStatus.get("pvName"), engineStatus);
+				}
 			}
 			for(String pvNameToAskEngine : pvNamesToAskEngine) {
 				PVTypeInfo typeInfo = typeInfosForEngineRequests.get(pvNameToAskEngine);
-				assert(typeInfo != null);
 				JSONObject pvStatus = computedEngineStatueses.get(pvNameToAskEngine);
-				if(pvStatus != null && !pvStatus.isEmpty()) {
-					pvStatus.put("appliance", typeInfo.getApplianceIdentity());
-					pvStatus.put("pvName", pvNameToAskEngine);
-					pvStatus.put("pvNameOnly", pvNameToAskEngine);
-					pvStatuses.put(pvNameToAskEngine, pvStatus.toJSONString());
-				} else { 
-					if(typeInfo != null && typeInfo.isPaused()) { 
-						HashMap<String, String> tempStatus = new HashMap<String, String>();
-						tempStatus.put("appliance", typeInfo.getApplianceIdentity());
-						tempStatus.put("pvName", pvNameToAskEngine);
-						tempStatus.put("pvNameOnly", pvNameToAskEngine);
-						tempStatus.put("status", "Paused");
-						pvStatuses.put(pvNameToAskEngine, JSONValue.toJSONString(tempStatus));
-					} 
-					else {
-						// Here we have a PVTypeInfo but no status from the engine. It could be that we are in that transient period between persisting the PVTypeInfo and opening the CA channel. 
-						pvStatuses.put(pvNameToAskEngine, "{ \"pvName\": \"" + pvNameToAskEngine + "\", \"status\": \"Appliance assigned\" }");
+				LinkedList<String> pvNamesForResult = new LinkedList<String>();
+				if(pvNames.contains(pvNameToAskEngine)) { 
+					// User made a status request using the same name we sent to the engine.
+					pvNamesForResult.add(pvNameToAskEngine);
+				}
+				if(realName2NameFromRequest.containsKey(pvNameToAskEngine)) {
+					// Add all the aliases/field names etc.
+					pvNamesForResult.addAll(realName2NameFromRequest.get(pvNameToAskEngine));
+				}
+				for(String pvNameForResult : pvNamesForResult) { 
+					if(pvStatus != null && !pvStatus.isEmpty()) {
+						pvStatus.put("appliance", typeInfo.getApplianceIdentity());
+						pvStatus.put("pvName", pvNameForResult);
+						pvStatus.put("pvNameOnly", pvNameToAskEngine);
+						pvStatuses.put(pvNameForResult, pvStatus.toJSONString());
+					} else { 
+						if(typeInfo != null && typeInfo.isPaused()) { 
+							HashMap<String, String> tempStatus = new HashMap<String, String>();
+							tempStatus.put("appliance", typeInfo.getApplianceIdentity());
+							tempStatus.put("pvName", pvNameForResult);
+							tempStatus.put("pvNameOnly", pvNameToAskEngine);
+							tempStatus.put("status", "Paused");
+							pvStatuses.put(pvNameForResult, JSONValue.toJSONString(tempStatus));
+						} 
+						else {
+							// Here we have a PVTypeInfo but no status from the engine.
+							if(instanceDown) { 
+								// It could mean that the engine component archiving this PV is down.
+								pvStatuses.put(pvNameToAskEngine, "{ \"pvName\": \"" + pvNameForResult + "\", \"status\": \"Appliance Down\" }");
+							} else { 
+								// It could be that we are in that transient period between persisting the PVTypeInfo and opening the CA channel.
+								pvStatuses.put(pvNameToAskEngine, "{ \"pvName\": \"" + pvNameForResult + "\", \"status\": \"Appliance assigned\" }");
+							}
+						}
 					}
 				}
 			}
@@ -145,6 +181,25 @@ public class GetPVStatusAction implements BPLAction {
 				}
 			}
 			out.println("]");
+		}
+	}
+	
+	
+	
+	/**
+	 * There is a 1-many mapping between the name the user asks for and the internals.
+	 * When sending the data back, we need to take the "real" information and create an entry for each user request.
+	 * This method maintains this list.  
+	 * @param pvNameFromRequest
+	 * @param pvName
+	 * @param realName2NameFromRequest
+	 */
+	private static void addInverseNameMapping(String pvNameFromRequest, String pvName, HashMap<String, LinkedList<String>> realName2NameFromRequest) { 
+		if(!pvName.equals(pvNameFromRequest)) { 
+			if(!realName2NameFromRequest.containsKey(pvName)) { 
+				realName2NameFromRequest.put(pvName, new LinkedList<String>());
+			}
+			realName2NameFromRequest.get(pvName).add(pvNameFromRequest);
 		}
 	}
 }
