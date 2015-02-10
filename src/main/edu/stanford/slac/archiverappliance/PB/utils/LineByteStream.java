@@ -90,10 +90,16 @@ public class LineByteStream implements Closeable {
 		totalBytesReadSoFar += bytesRead;
 		if(totalBytesReadSoFar >= totalBytesToRead) {
 			// The downcasting to int should be safe as the most we'll read over the limit is MAX_LINE_SIZE
-			int resetBytesRead = (int) (totalBytesToRead - lastTotalBytes + 1);
+			int resetBytesRead = (int) (totalBytesToRead - lastTotalBytes);
 			// We find the first new line and stop there.
 			while(resetBytesRead < bytesRead && buf[resetBytesRead] != LineEscaper.NEWLINE_CHAR) resetBytesRead++;
-			bytesRead = resetBytesRead;
+			if(resetBytesRead <= bytesRead) { 
+				bytesRead = resetBytesRead;
+			} else {
+				if(logger.isDebugEnabled()) { 
+					logger.debug("Cannot find newline at tail end of file. resetBytesRead = " + resetBytesRead + " bytesRead=" + bytesRead + " totalBytesReadSoFar=" + totalBytesReadSoFar + "totalBytesToRead=" + totalBytesToRead);
+				}
+			}
 		}
 		// We leave totalBytesReadSoFar so far at the higher value so the next readNextBatch will terminate at the first if statement.
 	}
@@ -120,12 +126,9 @@ public class LineByteStream implements Closeable {
 				readNextBatch();
 				start = currentReadPosition;
 				if(bytesRead <= 0) {
-					// End of file reached.
-					if(out.size() > 0) {
-						return out.toByteArray();
-					} else {
-						return null;
-					}
+					// End of file reached and we have not found a newline.
+					// we cannot return what we have as we'll get PBParseExceptions upstream.
+					return null;
 				}				
 			} else {
 				int linelength = (currentReadPosition - start) - 1;
@@ -156,6 +159,7 @@ public class LineByteStream implements Closeable {
 		while(loopcount++ < MAX_ITERATIONS_TO_DETERMINE_LINE) {
 			try {
 				while(currentReadPosition < bytesRead) {
+					assert(currentReadPosition < buf.length);
 					byte b = buf[currentReadPosition];
 					if(b == LineEscaper.NEWLINE_CHAR) {  
 						if(currentReadPosition >= bytesRead - 1) {
@@ -169,7 +173,9 @@ public class LineByteStream implements Closeable {
 					}
 					if(currentReadPosition >= bytesRead - 1) {
 						readNextBatch();
-						if(bytesRead <= 0 || currentReadPosition >= bytesRead) { 
+						if(bytesRead <= 0 || currentReadPosition >= bytesRead) {
+							// We have not found a new line; we cannot return what we have as we'll get PBParseExceptions upstream.
+							bar.reset();
 							return bar;
 						}
 					} else { 

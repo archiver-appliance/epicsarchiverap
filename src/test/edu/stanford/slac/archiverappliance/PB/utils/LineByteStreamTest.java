@@ -15,8 +15,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.text.DecimalFormat;
 
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.After;
 import org.junit.Before;
@@ -30,6 +32,7 @@ import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerat
  *
  */
 public class LineByteStreamTest {
+	private static Logger logger = Logger.getLogger(LineByteStreamTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {
@@ -199,7 +202,7 @@ public class LineByteStreamTest {
 				expectedNum++;
 				line = lis.readLine();
 			}
-			assertTrue("Expected until " + expectedEnd + " obtained until " + expectedNum, expectedNum > expectedEnd);
+			assertTrue("Expected until " + expectedEnd + " obtained until " + expectedNum, expectedNum >= expectedEnd);
 		}
 	}
 	
@@ -351,6 +354,74 @@ public class LineByteStreamTest {
 				throw t;
 			}
 		}
-	}		
+	}
+	
+	/**
+	 * Test reading lines with start and end position and make sure we get whole streams.
+	 * We keep either the start or end fixed and vary the other point. 
+	 * Check to see that we get complete lines - to test this each line is of a fixed format - 11 fixed chars and the last 6 are the line number. 
+	 * Incomplete lines cause PBParseExceptions.
+	 * @throws Exception
+	 */
+	@Test
+	public void testLastAndFirstLinesWithBoundedStream() throws Exception {
+		logger.info("testLastAndFirstLinesWithBoundedStream");
+		// Generate the sample file.
+		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LastAndFirstLinesWithBoundedStream.txt";
+		File f = new File(fileName);
+		if(f.exists()) {
+			f.delete();
+		}
+		try(PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(f, false)))) {
+			DecimalFormat formatter = new DecimalFormat("LinePattern000000");
+			for(int line = 0; line < 5000; line++) {
+				out.println(formatter.format(line));
+			}
+		}
+		
+		long fileSize = f.length();
+		
+		// Keep the start fixed and vary the end
+		{
+			logger.info("Testing keeping the start fixed and varying the end");
+			long start = 0;
+			for(long end = fileSize; end > 10; end-=1) { 
+				try(LineByteStream lis = new LineByteStream(f.toPath(), start, end)) {
+					int linenumber = 1;
+					lis.seekToFirstNewLine();
+					byte[] line = lis.readLine();
+					while(line != null) { 
+						assertTrue("Length should be 17; instead it is " + line.length + " for start=" + start + " and end=" + end, line.length  == 17);
+						try {
+							line = lis.readLine();
+							linenumber++;
+						} catch(Exception ex) { 
+							logger.error("Exception for start=" + start + " and end=" + end + " and line number " + linenumber, ex);
+						}
+					}
+				}				
+			}
+		}
+		
+		// Keep the end fixed and vary the start
+		{
+			logger.info("Testing keeping the end fixed and varying the start");
+			long end = fileSize;
+			for(long start = 0; start < fileSize - 10; start+=1) { 
+				try(LineByteStream lis = new LineByteStream(f.toPath(), start, end)) {
+					lis.seekToFirstNewLine();
+					byte[] line = lis.readLine();
+					while(line != null) { 
+						assertTrue("Length should be 17; instead it is " + line.length + " for start=" + start + " and end=" + end, line.length == 17);
+						line = lis.readLine();
+					}
+				}				
+			}
+		}
+
+		
+		
+		f.delete();
+	}
 }
 
