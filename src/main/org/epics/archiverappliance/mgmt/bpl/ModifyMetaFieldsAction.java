@@ -93,15 +93,18 @@ public class ModifyMetaFieldsAction implements BPLAction {
 			switch(verb) { 
 			case "add":
 				for(int i = 1; i < parts.length; i++) { 
+					logger.debug("Adding meta field " + parts[i]);
 					archiveFields.add(parts[i]);
 				}
 				continue;
 			case "remove":
 				for(int i = 1; i < parts.length; i++) { 
+					logger.debug("Removing meta field " + parts[i]);
 					archiveFields.remove(parts[i]);
 				}
 				continue;
 			case "clear":
+				logger.debug("Clearing meta fields");
 				archiveFields.clear();
 				continue;
 			default:
@@ -112,6 +115,7 @@ public class ModifyMetaFieldsAction implements BPLAction {
 		
 		typeInfo.setArchiveFields(archiveFields.toArray(new String[0]));
 		configService.updateTypeInfoForPV(pvName, typeInfo);
+		logger.info("Final set of archive fields " + typeInfo.obtainArchiveFieldsAsString());
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try(PrintWriter out = resp.getWriter()) {

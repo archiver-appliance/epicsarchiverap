@@ -105,6 +105,8 @@ public class ModifyMetaFieldsTest {
 		 JSONObject status = GetUrlContent.getURLContentAsJSONObject(modifyMetaFieldsURL);
 		 logger.info(status.toJSONString());
 
+		 Thread.sleep(5000);
+
 		 String[] expectedFields = new String[] {"HIGH", "LOW", "DESC"};
 		 String[] fields0 = getFieldsFromPersistence(pvName, 0);
 		 String[] fields1 = getFieldsFromPersistence(pvName, 1);
