@@ -757,7 +757,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 							int bytesRead = is.read(buf);
 							while(bytesRead > 0) {
 								os.write(buf, 0, bytesRead);
-								resp.flushBuffer();
 								bytesRead = is.read(buf);
 							}
 						}
