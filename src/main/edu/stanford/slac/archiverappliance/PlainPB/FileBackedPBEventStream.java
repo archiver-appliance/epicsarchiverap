@@ -188,9 +188,12 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 				if(endfound) {
 					endPosition = bsend.getFoundPosition();
 					try(LineByteStream lis = new LineByteStream(path, endPosition)) {
-						int skipLines = 0;
-						while(lis.readLine() != null && skipLines++ < 0) {
-						}
+						// The seekToTime call will have positioned the pointer to the last known event before the endSecondsIntoYear
+						// We'll skip two lines to get past the last known event before the endSecondsIntoYear and the event itself.
+						// We do have the ArchDBRType; so we can parse the pb messages and use time based iteration just for this part.
+						// We can consider this once we have a test case that can be used to test this.
+						lis.readLine();
+						lis.readLine();
 						endPosition = lis.getCurrentPosition();
 					}
 				}

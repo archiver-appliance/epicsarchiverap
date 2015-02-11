@@ -61,6 +61,7 @@ public class FileBackedPBEventStreamTest {
 		testCompleteStream();
 		testLocationBasedIterator();
 		testTimeBasedIterator();
+		makeSureWeGetTheLastEventInTheFile();
 	}
 
 	private void testCompleteStream() throws Exception {
@@ -124,7 +125,9 @@ public class FileBackedPBEventStreamTest {
 					for(Event e : stream) {
 						eventEpochSeconds = e.getEpochSeconds();
 						if(eventCount < 2) {
-							logger.info("Starting event timestamp " + TimeUtils.convertToHumanReadableString(eventEpochSeconds));
+							logger.info("Starting event timestamp " + TimeUtils.convertToISO8601String(eventEpochSeconds));
+						} else if (eventCount > (secondsToExtract-10)) { 
+							logger.info("Ending event timestamp " + TimeUtils.convertToISO8601String(eventEpochSeconds));
 						}
 						eventCount++;
 					}
@@ -214,4 +217,42 @@ public class FileBackedPBEventStreamTest {
 			}
 		}
 	}
+	
+	
+	private void makeSureWeGetTheLastEventInTheFile() throws IOException { 
+		try(BasicContext context = new BasicContext()) {
+			Path path = PlainPBPathNameUtility.getPathNameForTime(storagePlugin, pvName, TimeUtils.getStartOfCurrentYearInSeconds() + 24*60*60*7, context.getPaths(), configService.getPVNameToKeyConverter());
+			// Start near the end of the year
+			long startEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds() + 360*24*60*60;
+			Timestamp startTime = TimeUtils.convertFromEpochSeconds(startEpochSeconds, 0);
+			Timestamp endTime = TimeUtils.convertFromEpochSeconds(startEpochSeconds + 20*24*60*60, 0);
+			Event finalEvent = null;
+			try(FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType, startTime, endTime, false)) {
+				boolean firstEvent = true;
+				for(Event e : stream) {
+					if(firstEvent) {
+						assertTrue(
+								"The first event should be before timestamp " 
+										+ TimeUtils.convertToHumanReadableString(startTime) 
+										+ " got " 
+										+ TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()), e.getEventTimeStamp().before(startTime));
+						firstEvent = false;
+					} else {
+						finalEvent = e.makeClone();
+					}
+				}
+			}
+			
+			assertTrue("Final event is null", finalEvent != null);
+			Timestamp finalSecondOfYear = TimeUtils.getEndOfYear(TimeUtils.getCurrentYear());
+			finalSecondOfYear.setNanos(0);
+			assertTrue("Final event should be the last event in the stream " 
+					+ TimeUtils.convertToISO8601String(finalSecondOfYear) 
+					+ " Instead it is " 
+					+ TimeUtils.convertToISO8601String(finalEvent.getEventTimeStamp()), 
+					finalEvent.getEventTimeStamp().equals(finalSecondOfYear));
+			
+		}
+	}
+
 }
