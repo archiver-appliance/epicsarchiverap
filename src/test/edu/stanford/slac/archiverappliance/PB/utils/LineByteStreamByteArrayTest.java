@@ -345,9 +345,10 @@ public class LineByteStreamByteArrayTest {
 		if(f.exists()) {
 			f.delete();
 		}
+		int lineCount = 5000;
+		DecimalFormat formatter = new DecimalFormat("LinePattern000000");
 		try(PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(f, false)))) {
-			DecimalFormat formatter = new DecimalFormat("LinePattern000000");
-			for(int line = 0; line < 5000; line++) {
+			for(int line = 0; line < lineCount; line++) {
 				out.println(formatter.format(line));
 			}
 		}
@@ -364,12 +365,15 @@ public class LineByteStreamByteArrayTest {
 					int linenumber = 1;
 					lis.seekToFirstNewLine();
 					lis.readLine(bar);
+					int expectedLineNumber = (int) (start/17);
 					while(!bar.isEmpty()) { 
 						String val = new String(bar.toBytes());
 						assertTrue("Length should be 17; instead it is " + val.length() + " for start=" + start + " and end=" + end, val.length() == 17);
+						assertTrue("Expecting " + formatter.format(expectedLineNumber) + " instead got " + val, val.equals(formatter.format(expectedLineNumber)));
 						try {
 							lis.readLine(bar);
 							linenumber++;
+							expectedLineNumber++;
 						} catch(Exception ex) { 
 							logger.error("Exception for start=" + start + " and end=" + end + " and line number " + linenumber, ex);
 						}
@@ -382,22 +386,27 @@ public class LineByteStreamByteArrayTest {
 		{
 			logger.info("Testing keeping the end fixed and varying the start");
 			long end = fileSize;
-			for(long start = 0; start < fileSize - 10; start+=1) { 
+			for(long start = 1; start < fileSize - 10; start+=1) { 
 				ByteArray bar = new ByteArray(LineByteStream.MAX_LINE_SIZE);
 				try(LineByteStream lis = new LineByteStream(f.toPath(), start, end)) {
+					int linenumber = 1;
 					lis.seekToFirstNewLine();
 					lis.readLine(bar);
+					// The 18 in this case is to deal with the extra newline character.
+					int expectedLineNumber = (int) (start/18) + 1;
 					while(!bar.isEmpty()) { 
 						String val = new String(bar.toBytes());
 						assertTrue("Length should be 17; instead it is " + val.length() + " for start=" + start + " and end=" + end, val.length() == 17);
+						assertTrue("Expecting " + formatter.format(expectedLineNumber) + " instead got " + val  + " for start " + start + " and line number " + linenumber, val.equals(formatter.format(expectedLineNumber)));
 						lis.readLine(bar);
+						linenumber++;
+						expectedLineNumber++;
 					}
+					assertTrue("Expected to read last line " + lineCount + " instead could only read " + (expectedLineNumber - 1), expectedLineNumber == lineCount);
 				}				
 			}
 		}
 
-		
-		
 		f.delete();
 	}
 }
