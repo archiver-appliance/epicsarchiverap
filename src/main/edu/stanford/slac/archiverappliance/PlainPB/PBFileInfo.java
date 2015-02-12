@@ -125,19 +125,38 @@ public class PBFileInfo {
 	private void lookupLastEvent(Path path, LineByteStream lis, Constructor<? extends DBRTimeEvent> unmarshallingConstructor) throws Exception { 
 		// If we do not have a first line, we probably do not have a last line
 		lis.seekToBeforeLastLine();
-		byte[] lastLine = lis.readLine();
 		long posn = lis.getCurrentPosition();
-		while(lastLine != null) {
+		int lineTries = 0;
+		byte[] lastLine = lis.readLine();
+		while(lastLine == null && posn > 0 && lineTries < 1000) { 
+			lis.seekToBeforePreviousLine(posn-2);
+			posn = lis.getCurrentPosition();
+			lastLine = lis.readLine();
+			lineTries++;
+		}
+
+		int tries = 0;
+		// Potential infinite loop here; we'll try about 1000 times
+		while(lastEvent == null && tries < 1000) {
 			try { 
 				lastEvent = (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(lastLine));
 				lastEvent.getEventTimeStamp();
 				return;
 			} catch(PBParseException ex) {
 				logger.warn(path.toString() + " seems to have some data corruption at the end of the file; moving onto the previous line");
-				lis.seekToBeforePreviousLine(posn);
+				lastEvent = null;
+				lis.seekToBeforePreviousLine(posn-2);
 				posn = lis.getCurrentPosition();
+				lineTries = 0;
 				lastLine = lis.readLine();
+				while(lastLine == null && posn > 0 && lineTries < 1000) { 
+					lis.seekToBeforePreviousLine(posn-2);
+					posn = lis.getCurrentPosition();
+					lastLine = lis.readLine();
+					lineTries++;
+				}
 			}
+			tries++;
 		}
 		
 		logger.debug("File " + path.toAbsolutePath().toString() + " does not seem to have any last line?");
