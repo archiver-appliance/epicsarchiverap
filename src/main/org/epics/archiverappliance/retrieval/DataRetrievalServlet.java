@@ -326,8 +326,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		}
 		
 		try(BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest); 
-				OutputStream os = resp.getOutputStream();
-				MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension, os, useChunkedEncoding);
+				MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension, useChunkedEncoding);
 				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, req, postProcessor)
 				) {
 			HashMap<String, String> engineMetadata = null;
@@ -505,12 +504,11 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 * This basically makes sure that we are serving up events in monotonically increasing timestamp order.
 	 * @param resp
 	 * @param extension
-	 * @param os
 	 * @param useChunkedEncoding
 	 * @return
 	 * @throws ServletException
 	 */
-	private MergeDedupConsumer createMergeDedupConsumer(HttpServletResponse resp, String extension, OutputStream os, boolean useChunkedEncoding) throws ServletException {
+	private MergeDedupConsumer createMergeDedupConsumer(HttpServletResponse resp, String extension, boolean useChunkedEncoding) throws ServletException {
 		MergeDedupConsumer mergeDedupCountingConsumer = null;
 		MimeMappingInfo mimemappinginfo = mimeresponses.get(extension);
 		if(mimemappinginfo == null) {
@@ -532,6 +530,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 						resp.addHeader(kv.getKey(), kv.getValue());
 					}
 				}
+				OutputStream os = resp.getOutputStream();
 				mergeDedupCountingConsumer = new MergeDedupConsumer(mimeresponse, os);
 			} catch(Exception ex) {
 				throw new ServletException(ex);

@@ -88,6 +88,12 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 		} catch(Throwable t) { 
 			logger.debug("Exception flushing response", t);
 		}
+		
+		try { 
+			os.close();
+		} catch(Throwable t) { 
+			logger.debug("Exception closing response", t);
+		}
 	}
 	
 	public void processingPV(String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
