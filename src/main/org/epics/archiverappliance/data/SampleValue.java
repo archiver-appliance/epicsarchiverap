@@ -21,6 +21,7 @@ public interface SampleValue {
 	public Number getValue();
 	public Number getValue(int index);
 	public String getStringValue(int index);
+	public String toJSONString();
 	@SuppressWarnings("rawtypes")
 	public List getValues();
 }

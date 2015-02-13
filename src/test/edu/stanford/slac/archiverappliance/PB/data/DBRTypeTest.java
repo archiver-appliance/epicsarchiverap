@@ -124,6 +124,7 @@ public class DBRTypeTest {
 
 					SampleValue val = ev.getSampleValue();
 					SampleValue eexpectedval = valuegenerator.getSampleValue(dbrType, secondsintoyear);
+					System.out.println("val is of type " + val.getClass().getName() + " and eexpectedval is of type " + eexpectedval.getClass().getName());
 					if(!eexpectedval.equals(val)) {
 						fail("Value mismatch found at " + secondsintoyear + " when testing " + dbrType.toString() 
 								+ ". Expecting " + eexpectedval.toString()  

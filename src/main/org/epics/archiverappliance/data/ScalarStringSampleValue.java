@@ -29,7 +29,7 @@ public class ScalarStringSampleValue implements SampleValue {
 	 * @see java.lang.Object#toString()
 	 */
 	public String toString() {
-		return "\"" + JSONValue.escape(value) + "\"";
+		return value;
 	}
 
 	@Override
@@ -67,6 +67,11 @@ public class ScalarStringSampleValue implements SampleValue {
 	public boolean equals(Object obj) {
 		ScalarStringSampleValue other = (ScalarStringSampleValue) obj; 
 		return value.equals(other.toString());
+	}
+
+	@Override
+	public String toJSONString() {
+		return "\"" + JSONValue.escape(value) + "\"";
 	}
 
 }

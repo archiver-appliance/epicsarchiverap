@@ -19,6 +19,7 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+import org.json.simple.JSONValue;
 
 /**
  * @author mshankar
@@ -41,7 +42,7 @@ public class JSONResponse implements MimeResponse {
 			out.println(",");
 		}
 		out.print("{ \"secs\": " + evnt.getEpochSeconds() 
-				+ ", \"val\": " + evnt.getSampleValue().toString() 
+				+ ", \"val\": " + evnt.getSampleValue().toJSONString()
 				+ ", \"nanos\": " + Integer.toString(evnt.getEventTimeStamp().getNanos())
 				+ ", \"severity\":" + Integer.toString(evnt.getSeverity())
 				+ ", \"status\":" + Integer.toString(evnt.getStatus())
@@ -59,7 +60,7 @@ public class JSONResponse implements MimeResponse {
 				buf.append("\"");
 				buf.append(keyValue.getKey());
 				buf.append("\": \"");
-				buf.append(keyValue.getValue());
+				buf.append(JSONValue.escape(keyValue.getValue()));
 				buf.append("\"");
 			}
 			buf.append("}");

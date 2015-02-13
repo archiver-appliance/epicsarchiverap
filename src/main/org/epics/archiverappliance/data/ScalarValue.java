@@ -68,4 +68,9 @@ public class ScalarValue<T extends Number> implements SampleValue {
 		ScalarValue<T> other = (ScalarValue<T>) obj; 
 		return value.equals(other.getValue());
 	}
+
+	@Override
+	public String toJSONString() {
+		return value.toString();
+	}
 }

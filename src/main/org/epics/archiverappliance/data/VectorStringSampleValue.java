@@ -33,12 +33,8 @@ public class VectorStringSampleValue implements SampleValue {
 		StringWriter buf = new StringWriter();
 		buf.append('[');
 		for(String value : values) {
-			if(!value.isEmpty()) { 
-				if(first) { first = false; } else { buf.append(","); }
-				buf.append("\"");
-				buf.append(JSONValue.escape(value));
-				buf.append("\"");
-			}
+			if(first) { first = false; } else { buf.append(","); }
+			buf.append(value);
 		}
 		buf.append(']');
 		return buf.toString();		
@@ -79,5 +75,22 @@ public class VectorStringSampleValue implements SampleValue {
 	public boolean equals(Object obj) {
 		VectorStringSampleValue other = (VectorStringSampleValue) obj; 
 		return values.equals(other.getValues());
+	}
+
+	@Override
+	public String toJSONString() {
+		boolean first = true;
+		StringWriter buf = new StringWriter();
+		buf.append('[');
+		for(String value : values) {
+			if(!value.isEmpty()) { 
+				if(first) { first = false; } else { buf.append(","); }
+				buf.append("\"");
+				buf.append(JSONValue.escape(value));
+				buf.append("\"");
+			}
+		}
+		buf.append(']');
+		return buf.toString();
 	}
 }

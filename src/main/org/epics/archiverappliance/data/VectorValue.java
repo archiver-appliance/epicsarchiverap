@@ -81,5 +81,17 @@ public class VectorValue <T extends Number> implements SampleValue {
 		VectorValue<T> other = (VectorValue<T>) obj; 
 		return values.equals(other.getValues());
 	}
-	
+
+	@Override
+	public String toJSONString() {
+		boolean first = true;
+		StringWriter buf = new StringWriter();
+		buf.append('[');
+		for(T value : values) {
+			if(first) { first = false; } else { buf.append(","); }
+			buf.append(value.toString());
+		}
+		buf.append(']');
+		return buf.toString();
+	}
 }
