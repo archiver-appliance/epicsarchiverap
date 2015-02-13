@@ -9,6 +9,8 @@ package org.epics.archiverappliance.data;
 
 import java.util.List;
 
+import org.json.simple.JSONValue;
+
 
 /**
  * An implementation of SampleValue for scalar strings.
@@ -22,8 +24,12 @@ public class ScalarStringSampleValue implements SampleValue {
 		this.value = val;
 	}
 	
+	/* (non-Javadoc)
+	 * The toString generates something that can be consumed by the JSON response.
+	 * @see java.lang.Object#toString()
+	 */
 	public String toString() {
-		return value;
+		return "\"" + JSONValue.escape(value) + "\"";
 	}
 
 	@Override

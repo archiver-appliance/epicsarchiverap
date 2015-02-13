@@ -10,6 +10,8 @@ package org.epics.archiverappliance.data;
 import java.io.StringWriter;
 import java.util.List;
 
+import org.json.simple.JSONValue;
+
 /**
  * An implementation of SampleValue for vector strings.
  * @author mshankar
@@ -31,8 +33,12 @@ public class VectorStringSampleValue implements SampleValue {
 		StringWriter buf = new StringWriter();
 		buf.append('[');
 		for(String value : values) {
-			if(first) { first = false; } else { buf.append(","); }
-			buf.append(value);
+			if(!value.isEmpty()) { 
+				if(first) { first = false; } else { buf.append(","); }
+				buf.append("\"");
+				buf.append(JSONValue.escape(value));
+				buf.append("\"");
+			}
 		}
 		buf.append(']');
 		return buf.toString();		
