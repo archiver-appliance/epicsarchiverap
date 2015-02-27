@@ -304,7 +304,8 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 					consolidatedData.get(curBin).outputEvents(ret);
 				}
 			}
-			return ret;
+			
+			return new ArrayListCollectorEventStream(ret);
 		}
 
 	}
