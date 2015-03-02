@@ -146,6 +146,7 @@ public class PVNames {
 		// First check for the pvName as is
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
 		if(typeInfo != null) {
+			logger.debug("Found typeinfo for pvName " + pvName);
 			return typeInfo;
 		}
 		String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
@@ -158,6 +159,7 @@ public class PVNames {
 
 			typeInfo = configService.getTypeInfoForPV(pvName);
 			if(typeInfo != null) {
+				logger.debug("Found typeinfo for " + pvName + " as alias " + realName);
 				return typeInfo;
 			}
 		}
@@ -166,12 +168,58 @@ public class PVNames {
 		if(fieldName != null && !fieldName.equals("")) {
 			typeInfo = configService.getTypeInfoForPV(pvNameAlone);
 			if(typeInfo != null && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
+				logger.debug("Found typeinfo for " + pvName + " for field " + fieldName);
 				return typeInfo;
 			}
 		}
 		
+		logger.debug("Did not find typeinfo for pvName " + pvName);
 		return null;
 	}
+	
+	
+	/**
+	 * A standard process for dealing with aliases, standard fields and the like; should be similar to determineAppropriatePVTypeInfo
+	 * @param pvName
+	 * @param configService
+	 * @return
+	 */
+	public static ApplianceInfo determineAppropriateApplianceInfo(String pvName, ConfigService configService) {
+		// First check for the pvName as is
+		ApplianceInfo info = configService.getApplianceForPV(pvName);
+		if(info != null) {
+			logger.debug("Found appliance info for pvName " + pvName);
+			return info;
+		}
+		String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
+		String fieldName= PVNames.getFieldName(pvName);
+		// Check for aliases.
+		String realName = configService.getRealNameForAlias(pvNameAlone);
+		if(realName != null) {
+			pvName = realName + (fieldName == null || fieldName.equals("") ? "" : ("." + fieldName));
+			pvNameAlone = realName;
+
+			info = configService.getApplianceForPV(pvName);
+			if(info != null) {
+				logger.debug("Found appliance info for " + pvName + " as alias " + realName);
+				return info;
+			}
+		}
+
+		// Check for fields archived as part of PV.
+		if(fieldName != null && !fieldName.equals("")) {
+			info = configService.getApplianceForPV(pvNameAlone);
+			if(info != null) {
+				logger.debug("Found appliance info for " + pvName + " for field " + fieldName);
+				return info;
+			}
+		}
+		
+		logger.debug("Did not find appliance info for pvName " + pvName);
+		return null;
+	}
+
+	
 	
 	
 	private static Pattern validPVName = Pattern.compile("[a-zA-Z0-9\\_\\-\\+\\:\\[\\]\\<\\>\\;\\.\\/\\,\\#\\{\\}]+");

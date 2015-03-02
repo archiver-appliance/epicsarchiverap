@@ -33,6 +33,8 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVNames;
+import org.epics.archiverappliance.config.PVTypeInfo;
 import org.json.simple.JSONObject;
 
 /**
@@ -91,14 +93,17 @@ public class TemplatedContentServlet extends HttpServlet {
 			return;
 		}
 		
-		
-		ApplianceInfo applianceForPV = configService.getApplianceForPV(pvName);
-		if(applianceForPV == null) { 
-			String realName = configService.getRealNameForAlias(pvName);
-			if(realName != null) { 
-				applianceForPV = configService.getApplianceForPV(realName);
-			}
+		PVTypeInfo typeInfoForPV = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
+		ApplianceInfo applianceForPV = null;
+		if(typeInfoForPV != null) { 
+			applianceForPV = configService.getAppliance(typeInfoForPV.getApplianceIdentity());
 		}
+		
+		if(applianceForPV == null) {
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
 		if(!applianceForPV.equals(configService.getMyApplianceInfo())) {
 			try {
 				logger.debug("Data for appliance is elsewhere. Redirecting to appliance " + applianceForPV.getIdentity());

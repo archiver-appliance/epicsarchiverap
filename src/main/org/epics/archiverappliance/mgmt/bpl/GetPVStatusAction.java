@@ -61,39 +61,7 @@ public class GetPVStatusAction implements BPLAction {
 			pvName = PVNames.normalizePVName(pvName);
 			addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
 			
-			String realName = configService.getRealNameForAlias(pvName);
-			if(realName != null) { 
-				pvName = realName;
-				addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
-			}
-			logger.debug("Checking for status for " + pvName);
-
-			ApplianceInfo info = configService.getApplianceForPV(pvName);
-			PVTypeInfo typeInfoForPV = null;
-			if(info == null) {
-				String fieldName = PVNames.getFieldName(pvName);
-				if(fieldName != null && !fieldName.equals("")) {
-					String pvNameOnly = PVNames.stripFieldNameFromPVName(pvName);
-					logger.debug("Looking for appliance for " + pvNameOnly + " to determine field " + fieldName);
-					info = configService.getApplianceForPV(pvNameOnly);
-					if(info != null) {
-						typeInfoForPV = configService.getTypeInfoForPV(pvNameOnly);
-						if(typeInfoForPV != null) {
-							if(typeInfoForPV.checkIfFieldAlreadySepcified(fieldName)) {
-								logger.debug("Standard field, returning status of pv instead " + pvName);
-								pvName = pvNameOnly;
-								addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
-							} else { 
-								logger.debug("Field " + fieldName + " is not a standard field");
-								info = null;
-							}
-						}
-					}
-				}
-			} else { 
-				typeInfoForPV = configService.getTypeInfoForPV(pvName);
-			}
-
+			ApplianceInfo info = PVNames.determineAppropriateApplianceInfo(pvName, configService);
 			if(info == null) {
 				if(configService.doesPVHaveArchiveRequestInWorkflow(pvName)) {
 					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Initial sampling\" }");
@@ -101,6 +69,12 @@ public class GetPVStatusAction implements BPLAction {
 					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Not being archived\" }");
 				}
 			} else {
+				PVTypeInfo typeInfoForPV = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
+				if(typeInfoForPV != null) { 
+					pvName = typeInfoForPV.getPvName();
+					addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
+				}
+
 				if(!pvNamesToAskEngineForStatus.containsKey(info.getEngineURL())) { 
 					pvNamesToAskEngineForStatus.put(info.getEngineURL(), new LinkedList<String>());
 				}

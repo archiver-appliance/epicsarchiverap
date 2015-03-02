@@ -267,7 +267,7 @@ function checkPVStatus() {
 			 {'srcAttr' : 'lastEvent', 'label' : 'Last event'},
 			 {'label' : 'Details', 'sortType': 'none', 'srcFunction' : function(curdata) {
 				 if(curdata.pvNameOnly !== undefined) {
-					 return '<a href="pvdetails.html?pv=' + encodeURIComponent(curdata.pvNameOnly) + '" ><img class="imgintable" src="comm/img/details.png"/></a>';			 
+					 return '<a href="pvdetails.html?pv=' + encodeURIComponent(curdata.pvName) + '" ><img class="imgintable" src="comm/img/details.png"/></a>';			 
 				 } else {
 					 if(curdata.status == 'Initial sampling') { 
 						 return '<a onclick="abortArchiveRequestFromDetails(' + "'" + curdata.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>';			 
