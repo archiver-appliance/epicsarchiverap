@@ -76,6 +76,7 @@ function startTomcatAtLocation() {
         ${JAVA_OPTS} \
         -Dcatalina.base=${CATALINA_BASE} \
         -Dcatalina.home=${CATALINA_HOME} \
+        -cwd ${CATALINA_BASE}/logs \
         -outfile ${CATALINA_BASE}/logs/catalina.out \
         -errfile ${CATALINA_BASE}/logs/catalina.err \
         -pidfile ${CATALINA_BASE}/pid \
@@ -94,6 +95,7 @@ function stopTomcatAtLocation() {
         ${JAVA_OPTS} \
         -Dcatalina.base=${CATALINA_BASE} \
         -Dcatalina.home=${CATALINA_HOME} \
+        -cwd ${CATALINA_BASE}/logs \
         -outfile ${CATALINA_BASE}/logs/catalina.out \
         -errfile ${CATALINA_BASE}/logs/catalina.err \
         -pidfile ${CATALINA_BASE}/pid \
