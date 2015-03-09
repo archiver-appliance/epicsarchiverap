@@ -20,9 +20,12 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -739,6 +742,18 @@ public class DataRetrievalServlet  extends HttpServlet {
 				URL url = new URL(redirectURIStr);
 				HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
 				if(urlConnection.getResponseCode() == 200) {
+					HashSet<String> proxiedHeaders = new HashSet<String>();
+					proxiedHeaders.addAll(Arrays.asList(MimeResponse.PROXIED_HEADERS));
+					Map<String,List<String>> headers = urlConnection.getHeaderFields();
+					for(String headerName : headers.keySet()) {
+						if(proxiedHeaders.contains(headerName)) {
+							for(String headerValue : headers.get(headerName)) {
+								logger.debug("Adding headerName " + headerName + " and value " + headerValue + " when proxying request");
+								resp.addHeader(headerName, headerValue);
+							}
+						}
+					}
+					
 					try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(urlConnection.getInputStream())) {
 						byte buf[] = new byte[10*1024];
 						int bytesRead = is.read(buf);

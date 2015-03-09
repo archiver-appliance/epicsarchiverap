@@ -29,7 +29,8 @@ import org.epics.archiverappliance.retrieval.EventConsumer;
 public interface MimeResponse extends EventConsumer {
 	public void setOutputStream(OutputStream os);
 	/**
-	 * Get extra headers that are to be added to the response. 
+	 * Get extra headers that are to be added to the response.
+	 * For this to work correctly in a clustered environment, you'll need to add the header to the set of proxiedHeaders below 
 	 * @return
 	 */
 	public HashMap<String, String> getExtraHeaders();
@@ -43,4 +44,12 @@ public interface MimeResponse extends EventConsumer {
 	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc);
 	public void swicthingToStream(EventStream strm);
 	public void close();
+	
+	
+	public static final String ACCESS_CONTROL_ALLOW_ORIGIN = "Access-Control-Allow-Origin";
+	public static final String CONTENT_TYPE = "Content-Type";
+	/**
+	 * Headers that should be proxied across in a clustered environment should be added to this list.
+	 */
+	public static final String[] PROXIED_HEADERS = {ACCESS_CONTROL_ALLOW_ORIGIN, CONTENT_TYPE};
 }
