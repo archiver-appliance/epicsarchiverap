@@ -125,6 +125,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		if(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE) { 
 			String msg = "Cannot process data retrieval requests for PV " + pvName + " until the appliance has completely started up.";
 			logger.error(msg);
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
 			return;
 		}
@@ -164,6 +165,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		
 		if(pvName == null) {
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
@@ -190,6 +192,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 					end = TimeUtils.convertFromDateTimeStringWithOffset(endTimeStr);
 				} catch(IllegalArgumentException ex2) { 
 					logger.warn("Cannot parse time " + endTimeStr, ex2);
+					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 					return;
 				}
@@ -206,6 +209,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 					start = TimeUtils.convertFromDateTimeStringWithOffset(startTimeStr);
 				} catch(IllegalArgumentException ex2) { 
 					logger.warn("Cannot parse time " + startTimeStr, ex2);
+					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 					return;
 				}
@@ -214,6 +218,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		if(end.before(start)) {
 			logger.error("For request, end " + end.toString() + " is before start " + start.toString() + " for pv " + pvName);
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
@@ -245,6 +250,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		if(pvName.contains("(")) {
 			if(!pvName.contains(")")) {
 				logger.error("Unbalanced paran " + pvName);
+				resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 				return;
 			}
@@ -272,6 +278,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		if(typeInfo == null) {
 			logger.error("Unable to find typeinfo for pv " + pvName);
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -324,6 +331,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 			postProcessor.initialize(postProcessorUserArg, pvName);
 		} catch (Exception ex) {
 			logger.error("Postprocessor threw an exception during initialization for " + pvName, ex);
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
@@ -774,6 +782,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 								bytesRead = is.read(buf);
 							}
 						}
+						resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 						resp.sendError(urlConnection.getResponseCode(), new String(os.toByteArray()));
 					}
 				}
@@ -799,6 +808,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		if(timeRangesStrList.length%2 != 0) { 
 			String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have " + timeRangesStrList.length + " times";
 			logger.error(msg);
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 			return false;
 		}
@@ -815,6 +825,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 				} catch(IllegalArgumentException ex2) { 
 					String msg = "Cannot parse time " + timeRangesStrItem;
 					logger.warn(msg, ex2);
+					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return false;
 				}
@@ -830,6 +841,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 			if(t1.before(t0)) {
 				String msg = "For request, end " + t1.toString() + " is before start " + t0.toString() + " for pv " + pvName;
 				logger.error(msg);
+				resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 				return false;
 			}
@@ -838,6 +850,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 				if(t0.before(prevEnd)) { 
 					String msg = "For request, start time " + t0.toString() + " is before previous end time " + prevEnd.toString() + " for pv " + pvName;
 					logger.error(msg);
+					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return false ;
 				}
