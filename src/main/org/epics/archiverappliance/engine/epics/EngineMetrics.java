@@ -20,6 +20,7 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
+import org.epics.archiverappliance.engine.pv.PVContext;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONValue;
@@ -111,6 +112,8 @@ public class EngineMetrics implements JSONAware {
 			addDetailedStatus(details, "Benchmark - writing at (MB/sec)", twoSignificantDigits.format(writeBytesPerSec));
 		}
 		addDetailedStatus(details, "PVs pending computation of meta info", Integer.toString(MetaGet.getPendingMetaGetsSize()));
+		addDetailedStatus(details, "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount()));
+		addDetailedStatus(details, "Total number of CAJ channels", Integer.toString(context.getCAJChannelCount()));
 		
 		return JSONValue.toJSONString(details);
 	}

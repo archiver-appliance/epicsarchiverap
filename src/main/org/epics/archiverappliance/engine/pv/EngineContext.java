@@ -684,4 +684,18 @@ public class EngineContext {
 			logger.info("Completed scheduling the daily update of metadata information");
 		}
 	}
+	
+	
+	/**
+	 * Get the total channel count as CAJ sees it.
+	 * @return
+	 */
+	public int getCAJChannelCount() { 
+		int totalCAJChannelCount = 0;
+		for(int threadNum = 0; threadNum < command_threads.length; threadNum++) {
+			Context context = this.command_threads[threadNum].getContext();
+			totalCAJChannelCount += context.getChannels().length;
+		}
+		return totalCAJChannelCount;
+	}
 }

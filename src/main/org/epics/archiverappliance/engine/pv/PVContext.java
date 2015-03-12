@@ -213,6 +213,15 @@ public class PVContext {
 	static boolean allReleased() {
 		return jca_refs == 0;
 	}
+	
+	
+	/**
+	 * Return the channel count as this class sees it.
+	 * @return
+	 */
+	public static int getChannelCount() { 
+		return channels.size();
+	}
 
 	
 }
