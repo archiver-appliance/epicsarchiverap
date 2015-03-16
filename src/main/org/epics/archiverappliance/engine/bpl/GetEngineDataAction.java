@@ -80,6 +80,13 @@ public class GetEngineDataAction implements BPLAction {
 					OutputStream os = resp.getOutputStream();
 					try {
 						RemotableEventStreamDesc desc = new RemotableEventStreamDesc(archiveChannel.getPVMetrics().getArchDBRTypes(), pvName, TimeUtils.getCurrentYear());
+						if(!archiveChannel.isConnected() && archiveChannel.getPVMetrics() != null) { 
+							long connectionLastLostEpochSeconds = archiveChannel.getPVMetrics().getConnectionLastLostEpochSeconds();
+							if(connectionLastLostEpochSeconds != 0) {
+								logger.debug("Adding a cnxlostepsecs header");
+								metaFields.put("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
+							}
+						}
 						desc.addHeaders(metaFields);
 						StreamPBIntoOutput.writeHeaderOnly(os, desc);
 					} finally {

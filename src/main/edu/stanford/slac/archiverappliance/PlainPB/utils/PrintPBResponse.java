@@ -11,12 +11,15 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+import javax.swing.plaf.basic.BasicBorders.FieldBorder;
+
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
@@ -48,6 +51,9 @@ public class PrintPBResponse {
 						ArchDBRTypes dbrType = ArchDBRTypes.valueOf(info.getType());
 						year = (short) info.getYear();
 						System.out.println("Parsing payload info type is " + dbrType + " and data is for year " + year + " for the PV " + info.getPvname());
+						for(FieldValue fieldValue : info.getHeadersList()) { 
+							System.out.println("\tHeader " + fieldValue.getName() + " ==> " + fieldValue.getVal());
+						}
 						unmarshallingConstructor = DBR2PBTypeMapping.getPBClassFor(dbrType).getUnmarshallingFromByteArrayConstructor();
 					} else { 
 						if(nextLine.length <= 0) {
