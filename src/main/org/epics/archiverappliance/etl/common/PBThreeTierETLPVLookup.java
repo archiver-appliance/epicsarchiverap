@@ -148,7 +148,7 @@ public final class PBThreeTierETLPVLookup {
 				return;
 			}
 
-			if((dataSources.length-1) >= applianceMetrics.length) { 
+			if((dataSources.length-1) > applianceMetrics.length) { 
 				configlogger.fatal("The pv " + pvName + " has " + dataSources.length + " datasources. This installation is configured for a max of " + (applianceMetrics.length+1) + " datasources. To change this, please edit the archappl.properties for your installation and change the " + MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION + " to at least " + dataSources.length);
 				return;
 			}
