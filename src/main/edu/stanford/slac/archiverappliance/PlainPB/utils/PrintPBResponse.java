@@ -11,8 +11,6 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javax.swing.plaf.basic.BasicBorders.FieldBorder;
-
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.common.TimeUtils;

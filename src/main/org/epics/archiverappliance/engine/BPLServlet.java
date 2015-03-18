@@ -50,6 +50,7 @@ import org.epics.archiverappliance.engine.bpl.reports.NeverConnectedPVsAction;
 import org.epics.archiverappliance.engine.bpl.reports.PVDetails;
 import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
+import org.epics.archiverappliance.engine.bpl.reports.WaveformPVsAction;
 
 /**
  * The main business logic servlet for the engine. All BPLActions are registered here.
@@ -91,6 +92,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
 		getActions.put("/CAJSearchManagerDetails", CAJSearchManagerDetails.class);
 		getActions.put("/getVersion", GetVersion.class);
+		getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
 	}
 
 	@Override
