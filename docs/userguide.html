@@ -333,7 +333,14 @@ Some reports that are currently available are
   <li><span class="reportitle">Recently modified PVs</span> - These reports contain the PVs sorted by the modification timestamp of their PVTypeInfos (descending). PVs that were recently modified show up first.</li>
   <li><span class="reportitle">PVs by lost/regained connections</span> - These reports contain the PVs sorted by the number of times we've lost/re-established the CA connection. This can be used to determine if an IOC is being overwhelmed (perhaps by all the archiving targeted at it).</li>
   <li><span class="reportitle">PVs by last known timestamp</span> - These reports contain the PVs sorted by the timestamp of the last event received.</li>
-  <li><span class="reportitle">PVs by dropped events from incorrect timestamps</span> - The EPICS archiver appliance discards events that are too far into the future or too far in the past. These reports contain the PVs sorted by the number of events dropped because they had invalid timestamps.</li>
+  <li><span class="reportitle">PVs by dropped events from incorrect timestamps</span> - The EPICS archiver appliance discards events that have invalid timestamps. These reports contain the PVs sorted by the number of events dropped because they had invalid timestamps. Events are dropped in these conditions.
+  <ol>
+  <li>If the record processing timestamp from the IOC is before the PAST_CUTOFF_TIMESTAMP. PAST_CUTOFF_TIMESTAMP defaults to <code>1991-01-01T00:00:00.000Z</code></li>
+  <li>If the record processing timestamp from the IOC is after (Appliance Current Time + FUTURE_CUTOFF_SECONDS)  in the future. FUTURE_CUTOFF_SECONDS defaults to 30*60.</li>
+  <li>If the record processing timestamp from the IOC is before the timestamp of the previous sample.</li>
+  <li>If the record processing timestamp from the IOC is identical to the timestamp of the previous sample.</li>
+  </ol>
+  </li>
   <li><span class="reportitle">PVs by dropped events from buffer overflows</span> - The EPICS archiver appliance discards events when the sampling buffers (as estimated from the sampling period) become full. These reports contain the PVs sorted by the number of events dropped because the sampling buffers were full.</li>
 </ul>
  
