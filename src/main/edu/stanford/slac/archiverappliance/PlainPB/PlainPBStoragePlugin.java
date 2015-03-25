@@ -47,6 +47,7 @@ import org.epics.archiverappliance.etl.ETLInfo;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
+import org.epics.archiverappliance.etl.common.ETLGatingState;
 import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
@@ -152,7 +153,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	 */
 	private String etlIntoStoreIf;
 	private String etlOutofStoreIf;
-
+	private String gatingScope = null;
 	
 	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime) throws IOException {
 		DefaultRawPostProcessor postProcessor = new DefaultRawPostProcessor();
@@ -393,6 +394,10 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(queryNVPairs.containsKey("consolidateOnShutdown")) {
 				this.consolidateOnShutdown = Boolean.parseBoolean(queryNVPairs.get("consolidateOnShutdown"));
 			}
+			
+			if(queryNVPairs.containsKey("etlGatingScope")) {
+				this.gatingScope = queryNVPairs.get("etlGatingScope");
+			}
 
 			if(queryNVPairs.containsKey("etlIntoStoreIf")) { 
 				this.etlIntoStoreIf = queryNVPairs.get("etlIntoStoreIf");
@@ -572,6 +577,8 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 		long gatherInEpochSeconds = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(currentTime) - partitionGranularity.getApproxSecondsPerChunk()*(holdETLForPartions - (gatherETLinPartitions - 1)), partitionGranularity);
 		boolean skipHoldAndGather = (holdETLForPartions == 0) && (gatherETLinPartitions == 0);
 		
+		ETLGatingState gatingState = configService.getETLLookup().getGatingState();
+		
 		ArrayList<ETLInfo> etlreadystreams = new ArrayList<ETLInfo>();
 		boolean holdOk = false;
 		for(Path path : paths) {
@@ -584,15 +591,14 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 				ETLInfo etlInfo = new ETLInfo(pvName, fileinfo.getType(), path.toAbsolutePath().toString(), partitionGranularity, new FileStreamCreator(pvName, path, fileinfo), fileinfo.getFirstEvent(), Files.size(path));
 				if(skipHoldAndGather) {
 					logger.debug("Skipping computation of hold and gather");
-					etlreadystreams.add(etlInfo);					
 				} else {
 					if(fileinfo.getFirstEvent() == null) {
 						//TODO Should we mark this for deletion?
 						//logger.error("We seem to have an empty file " + path.toAbsolutePath().toString() + ". Should we mark this for deletion?");
 						logger.debug("We seem to have an empty file " + path.toAbsolutePath().toString() + ". Should we mark this for deletion?");
-
 						continue; 
 					}
+					
 					if(!holdOk) {
 						if(fileinfo.getFirstEventEpochSeconds() <= holdInEpochSeconds) {
 							holdOk = true;
@@ -602,12 +608,26 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 						}
 					}
 					
-					if(fileinfo.getFirstEventEpochSeconds() <= gatherInEpochSeconds) {
-						etlreadystreams.add(etlInfo);
-					} else {
+					if(fileinfo.getFirstEventEpochSeconds() > gatherInEpochSeconds) {
 						logger.debug("Gather not satisfied for first event " + TimeUtils.convertToISO8601String(fileinfo.getFirstEventEpochSeconds()) + " and gather = " + TimeUtils.convertToISO8601String(gatherInEpochSeconds));
+						continue;
 					}
 					
+				}
+				
+				// ETL gating - delete partitions which do not pass the gate.
+				boolean passGate = true;
+				if (gatingScope != null) {
+					PlainPBPathNameUtility.StartEndTimeFromName chunkTimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
+					long startMillis = chunkTimes.chunkStartEpochSeconds * 1000;
+					long endMillis = (chunkTimes.chunkEndEpochSeconds + 1) * 1000;
+					passGate = gatingState.shouldIntervalBeKept(gatingScope, startMillis, endMillis);
+				}
+				
+				if (passGate) {
+					etlreadystreams.add(etlInfo);
+				} else {
+					markForDeletion(etlInfo, context);
 				}
 			} catch(IOException ex) {
 				logger.error("Skipping ading " + path.toAbsolutePath().toString() + " to ETL list due to exception. Should we go ahead and mark this file for deletion in this case? ", ex);
