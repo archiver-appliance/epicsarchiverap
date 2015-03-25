@@ -48,9 +48,7 @@ public class ETLJob implements Runnable {
 		try { 
 			exceptionFromLastRun = null;
 			if(this.runAsIfAtTime == null) { 
-				// We run ETL as if it were 10% of src partition seconds ago to give the previous lifetime time to finish.  
-				long padding = Math.round(this.lookupItem.getETLSource().getPartitionGranularity().getApproxSecondsPerChunk()*0.1);
-				Timestamp processingTime = TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() - padding, 0);
+				Timestamp processingTime = TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds(), 0);
 				this.processETL(processingTime);
 			} else { 
 				this.processETL(runAsIfAtTime);

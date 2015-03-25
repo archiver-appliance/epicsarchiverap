@@ -168,7 +168,11 @@ public final class PBThreeTierETLPVLookup {
 					// We then compute the start of the next partition.
 					long nextPartitionFirstSec = TimeUtils.getNextPartitionFirstSecond(epochSeconds, etlSource.getPartitionGranularity());
 					// Add a small buffer to this
-					long nextExpectedETLRunInSecs = nextPartitionFirstSec + 5*60*(etllifetimeid+1);
+					long bufferSecs = 5*60*(etllifetimeid+1);
+					if(etllifetimeid == 0) {
+						bufferSecs = Math.min(bufferSecs, delaybetweenETLJobs/20);
+					}
+					long nextExpectedETLRunInSecs = nextPartitionFirstSec + bufferSecs;
 					// We compute the initial delay so that the ETL jobs run at a predictable time. 
 					long initialDelay = nextExpectedETLRunInSecs - epochSeconds;
 					// We schedule a ETLPVLookupItems with the appropriate thread using an ETLJob

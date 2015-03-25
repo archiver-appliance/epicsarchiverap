@@ -551,7 +551,6 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 
 	@Override
 	public List<ETLInfo> getETLStreams(String pvName, Timestamp currentTime, ETLContext context) throws IOException {
-
 		if(etlOutofStoreIf != null) { 
 			boolean namedFlagValue = this.configService.getNamedFlag(etlOutofStoreIf);
 			if(!namedFlagValue) { 
@@ -559,8 +558,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 				return new LinkedList<ETLInfo>();
 			}
 		}
-
-		Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(context.getPaths(), rootFolder, pvName, currentTime, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
+		
+		// For the purpose of determining non-current paths, assume the time is a fraction of the partition duration earlier, to give partitions time to finish.
+		Timestamp currentTimeForPaths = new Timestamp(currentTime.getTime() - (long)Math.round(0.1 * partitionGranularity.getApproxSecondsPerChunk()));
+		
+		Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(context.getPaths(), rootFolder, pvName, currentTimeForPaths, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
 		if(paths == null || paths.length == 0) { 
 			if(logger.isInfoEnabled()) { 
 				logger.debug("No files for ETL for pv " + pvName + " for time " + TimeUtils.convertToISO8601String(currentTime));
@@ -568,70 +570,68 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			return null;
 		}
 		
-		if((holdETLForPartions - gatherETLinPartitions) < 0) {
+		// We will not delete any data that is not at least (hold-gather) parition times old.
+		int keepParitions = holdETLForPartions - gatherETLinPartitions;
+		if(keepParitions < 0) {
 			logger.error("holdETLForPartions - gatherETLinPartitions is invalid for hold=" + holdETLForPartions + " and gather=" + gatherETLinPartitions);
+			keepParitions = 0;
 		}
+		long keepInEpochSeconds = TimeUtils.convertToEpochSeconds(currentTime) - partitionGranularity.getApproxSecondsPerChunk()*keepParitions;
 		
-		
-		long holdInEpochSeconds = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(currentTime) - partitionGranularity.getApproxSecondsPerChunk()*holdETLForPartions, partitionGranularity);
-		long gatherInEpochSeconds = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(currentTime) - partitionGranularity.getApproxSecondsPerChunk()*(holdETLForPartions - (gatherETLinPartitions - 1)), partitionGranularity);
-		boolean skipHoldAndGather = (holdETLForPartions == 0) && (gatherETLinPartitions == 0);
+		logger.debug(String.format("ETL %s: getETLStreams keepInEpochSeconds=%d", pvName, keepInEpochSeconds));
 		
 		ETLGatingState gatingState = configService.getETLLookup().getGatingState();
 		
 		ArrayList<ETLInfo> etlreadystreams = new ArrayList<ETLInfo>();
-		boolean holdOk = false;
 		for(Path path : paths) {
 			try {
 				if(!Files.exists(path)) { 
 					logger.warn("Path " + path + " does not seem to exist for ETL at time " + TimeUtils.convertToISO8601String(currentTime));
 					continue;
 				}
+				
+				PlainPBPathNameUtility.StartEndTimeFromName chunkTimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
+				long chunkStartSec = chunkTimes.chunkStartEpochSeconds;
+				long chunkEndSec = chunkTimes.chunkEndEpochSeconds + 1;
+				
+				logger.debug(String.format("ETL %s: path=%s startSec=%d endSec=%d", pvName, path, chunkStartSec, chunkEndSec));
+				
 				PBFileInfo fileinfo = new PBFileInfo(path);
 				ETLInfo etlInfo = new ETLInfo(pvName, fileinfo.getType(), path.toAbsolutePath().toString(), partitionGranularity, new FileStreamCreator(pvName, path, fileinfo), fileinfo.getFirstEvent(), Files.size(path));
-				if(skipHoldAndGather) {
-					logger.debug("Skipping computation of hold and gather");
+				if(keepParitions == 0) {
+					logger.debug("Skipping computation of hold");
 				} else {
-					if(fileinfo.getFirstEvent() == null) {
-						//TODO Should we mark this for deletion?
-						//logger.error("We seem to have an empty file " + path.toAbsolutePath().toString() + ". Should we mark this for deletion?");
-						logger.debug("We seem to have an empty file " + path.toAbsolutePath().toString() + ". Should we mark this for deletion?");
-						continue; 
+					// A chunk that that ends after keepInEpochSeconds chunk may contain events that are not old enough
+					// to be deleted, and subsequent chunks are surely too old.
+					if(chunkEndSec > keepInEpochSeconds) {
+						logger.debug(String.format("ETL %s: stopping at path %s due to hold", pvName, path));
+						break;
 					}
-					
-					if(!holdOk) {
-						if(fileinfo.getFirstEventEpochSeconds() <= holdInEpochSeconds) {
-							holdOk = true;
-						} else {
-							logger.debug("Hold not satisfied for first event " + TimeUtils.convertToISO8601String(fileinfo.getFirstEventEpochSeconds()) + " and hold = " + TimeUtils.convertToISO8601String(holdInEpochSeconds));
-							return etlreadystreams;
-						}
-					}
-					
-					if(fileinfo.getFirstEventEpochSeconds() > gatherInEpochSeconds) {
-						logger.debug("Gather not satisfied for first event " + TimeUtils.convertToISO8601String(fileinfo.getFirstEventEpochSeconds()) + " and gather = " + TimeUtils.convertToISO8601String(gatherInEpochSeconds));
-						continue;
-					}
-					
 				}
 				
 				// ETL gating - delete partitions which do not pass the gate.
+				// Note: we don't respect "gather" for deleting partitions that don't pass.
 				boolean passGate = true;
 				if (gatingScope != null) {
-					PlainPBPathNameUtility.StartEndTimeFromName chunkTimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
-					long startMillis = chunkTimes.chunkStartEpochSeconds * 1000;
-					long endMillis = (chunkTimes.chunkEndEpochSeconds + 1) * 1000;
-					passGate = gatingState.shouldIntervalBeKept(gatingScope, startMillis, endMillis);
+					passGate = gatingState.shouldIntervalBeKept(gatingScope, chunkStartSec * 1000, chunkEndSec * 1000);
 				}
 				
 				if (passGate) {
 					etlreadystreams.add(etlInfo);
 				} else {
+					logger.debug(String.format("ETL %s: deleting path %s due to failed gate test", pvName, path));
 					markForDeletion(etlInfo, context);
 				}
 			} catch(IOException ex) {
 				logger.error("Skipping ading " + path.toAbsolutePath().toString() + " to ETL list due to exception. Should we go ahead and mark this file for deletion in this case? ", ex);
 			}
+		}
+		
+		// Inhibit transfer to next level storage until we have at least gather+1 parititions.
+		int wantPartitions = gatherETLinPartitions + 1;
+		if (etlreadystreams.size() > 0 && etlreadystreams.size() < wantPartitions) {
+			logger.debug(String.format("ETL %s: inhibiting transfer due to gather (have %d/%d partitions)", pvName, etlreadystreams.size(), wantPartitions));
+			return new ArrayList<ETLInfo>();
 		}
 		
 		return etlreadystreams;
