@@ -26,6 +26,7 @@ import org.epics.archiverappliance.mgmt.bpl.AbortArchiveRequestForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.AddAliasAction;
 import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServer;
 import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServerArchives;
+import org.epics.archiverappliance.mgmt.bpl.AddETLGatingInterval;
 import org.epics.archiverappliance.mgmt.bpl.AggregatedApplianceInfo;
 import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsNotInListAction;
@@ -130,8 +131,8 @@ public class BPLServlet extends HttpServlet {
 		addAction("/modifyMetaFields", ModifyMetaFieldsAction.class);
 		addAction("/getNamedFlag", NamedFlagsGet.class);
 		addAction("/setNamedFlag", NamedFlagsSet.class);
+		addAction("/addETLGatingInterval", AddETLGatingInterval.class);
 		
-
 		// BPL related to reports
 		addAction("/getNeverConnectedPVs", NeverConnectedPVsAction.class);
 		addAction("/getNeverConnectedPVsForThisAppliance", NeverConnectedPVsForThisAppliance.class);

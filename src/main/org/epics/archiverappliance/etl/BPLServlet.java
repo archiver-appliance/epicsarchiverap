@@ -25,6 +25,7 @@ import org.epics.archiverappliance.etl.bpl.ConsolidatePBFilesForOnePV;
 import org.epics.archiverappliance.etl.bpl.DeletePV;
 import org.epics.archiverappliance.etl.bpl.GetLastKnownEventTimeStamp;
 import org.epics.archiverappliance.etl.bpl.PauseArchivingPV;
+import org.epics.archiverappliance.etl.bpl.AddGatingInterval;
 import org.epics.archiverappliance.etl.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.etl.bpl.reports.ApplianceMetricsDetails;
 import org.epics.archiverappliance.etl.bpl.reports.InstanceReportDetails;
@@ -57,6 +58,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/deletePV", DeletePV.class);
 		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
 		getActions.put("/getVersion", GetVersion.class);
+		getActions.put("/addGatingInterval", AddGatingInterval.class);
 	}
 
 

@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
+import org.epics.archiverappliance.etl.common.ETLGatingState;
 
 /**
  * A POJO for PV name, ETLSource, and ETLDest items,
@@ -47,8 +48,9 @@ public class ETLPVLookupItems {
 	private OutOfSpaceHandling outOfSpaceHandling;
 	private long outOfSpaceChunksDeleted = 0;
 	
+	private final ETLGatingState gatingState;
 	
-	public ETLPVLookupItems(String pvName, ArchDBRTypes dbrType, ETLSource source, ETLDest dest, int lifetimeorder, ETLMetricsForLifetime metricsForLifetime, OutOfSpaceHandling outOfSpaceHandling) {
+	public ETLPVLookupItems(String pvName, ArchDBRTypes dbrType, ETLSource source, ETLDest dest, int lifetimeorder, ETLMetricsForLifetime metricsForLifetime, OutOfSpaceHandling outOfSpaceHandling, ETLGatingState gatingState) {
 		this.pvName = pvName;
 		this.dbrType = dbrType;
 		this.source = source;
@@ -56,6 +58,7 @@ public class ETLPVLookupItems {
 		this.lifetimeorder = lifetimeorder;
 		this.metricsForLifetime = metricsForLifetime;
 		this.outOfSpaceHandling = outOfSpaceHandling;
+		this.gatingState = gatingState;
 	}
 
 	public int getLifetimeorder() {
@@ -215,5 +218,9 @@ public class ETLPVLookupItems {
 	 */
 	public ETLMetricsForLifetime getMetricsForLifetime() {
 		return metricsForLifetime;
+	}
+	
+	public ETLGatingState getGatingState() {
+		return gatingState;
 	}
 }

@@ -30,6 +30,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
+import org.epics.archiverappliance.etl.common.ETLGatingState;
 
 /**
  * Holds runtime state for ETL.
@@ -72,6 +73,11 @@ public final class PBThreeTierETLPVLookup {
 	
 	private List<ETLMetricsForLifetime> applianceMetrics = new LinkedList<ETLMetricsForLifetime>();
 	
+	/**
+	 * State for ETL gating.
+	 */
+	private final ETLGatingState gatingState;
+	
 	public PBThreeTierETLPVLookup(ConfigService configService) {
 		this.configService = configService;
 		configServiceSyncThread = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
@@ -81,6 +87,8 @@ public final class PBThreeTierETLPVLookup {
 				return ret;
 			}
 		});
+		
+		gatingState = new ETLGatingState(configService);
 		
 		configService.addShutdownHook(new ETLShutdownThread(this));
 	}
@@ -147,7 +155,7 @@ public final class PBThreeTierETLPVLookup {
 					ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
 					String destStr=dataSources[etllifetimeid+1];
 					ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
-					ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(pvName, typeInfo.getDBRType(), etlSource, etlDest, etllifetimeid, applianceMetrics.get(etllifetimeid), determineOutOfSpaceHandling(configService));
+					ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(pvName, typeInfo.getDBRType(), etlSource, etlDest, etllifetimeid, applianceMetrics.get(etllifetimeid), determineOutOfSpaceHandling(configService), gatingState);
 					if(etlDest instanceof StorageMetrics) { 
 						// At least on some of the test machines, checking free space seems to take the longest time. In this, getting the fileStore seems to take the longest time. 
 						// The plainPB plugin caches the fileStore; so we make a call once when adding to initialize this upfront.
@@ -328,5 +336,8 @@ public final class PBThreeTierETLPVLookup {
 		addETLJobs(pvName, typeInfo);
 	}
 
+	public ETLGatingState getGatingState() {
+		return gatingState;
+	}
 }
 
