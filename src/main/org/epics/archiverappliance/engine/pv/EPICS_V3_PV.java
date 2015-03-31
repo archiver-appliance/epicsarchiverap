@@ -829,16 +829,17 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 		if (!connected)
 			connected = true;
 		try {
-			final DBR dbr = ev.getDBR();
-			if (dbr == null) {
-				return;
-			}
-			if (this.name.endsWith(".RTYP")) {
-				this.reacordTypeName = (((DBR_String) dbr).getStringValue())[0];
-				return;
-			}
-			// dbr.printInfo();
 			try {
+				DBR dbr = ev.getDBR();
+				if (dbr == null) {
+					return;
+				}
+				if (this.name.endsWith(".RTYP")) {
+					this.reacordTypeName = (((DBR_String) dbr).getStringValue())[0];
+					return;
+				}
+				// dbr.printInfo();
+
 				ArchDBRTypes generatedDBRType = JCA2ArchDBRType.valueOf(dbr);
 				if (archDBRType == null) {
 					archDBRType = generatedDBRType;
@@ -854,12 +855,14 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 					}
 				}
 				dbrtimeevent = con.newInstance(dbr);
+				totalMetaInfo.computeRate(dbr, System.currentTimeMillis(), dbrtimeevent);
+				dbr = null;
 			} catch (Exception e) {
 				logger.error(
 						"exception in monitor changed function when converting DBR to dbrtimeevent for pv " + this.name,
 						e);
 			}
-			totalMetaInfo.computeRate(dbr, System.currentTimeMillis(), dbrtimeevent);
+			
 			updataMetaDataInParentPV(dbrtimeevent);
 			// if this pv has meta data , handle here
 			if (hasMetaField) {
