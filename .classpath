@@ -18,7 +18,6 @@
 	<classpathentry kind="lib" path="lib/json-simple-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.4.jar"/>
 	<classpathentry kind="lib" path="lib/commons-validator-1.4.0.jar"/>
-	<classpathentry kind="lib" path="lib/caj-1.1.14.jar"/>
 	<classpathentry kind="lib" path="lib/commons-codec-1.9.jar"/>
 	<classpathentry kind="lib" path="lib/commons-fileupload-1.3.1.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.3.2.jar"/>
@@ -33,5 +32,6 @@
 	<classpathentry kind="lib" path="lib/test/junit-4.11.jar"/>
 	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/caj-1.1.15.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
