@@ -404,7 +404,9 @@ public class PVTypeInfo implements Serializable {
 		this.elementCount = metaInfo.getCount();
 		this.computedEventRate = (float) metaInfo.getEventRate();
 		this.computedStorageRate = (float) metaInfo.getStorageRate();
-		this.computedBytesPerEvent = (int) (metaInfo.getStorageSize()/metaInfo.getEventCount());
+		if(metaInfo.getEventCount() != 0) { 
+			this.computedBytesPerEvent = (int) (metaInfo.getStorageSize()/metaInfo.getEventCount());
+		}
 		HashMap<String, String> otherMetaInfo = metaInfo.getOtherMetaInfo();
 		for(String extraName : otherMetaInfo.keySet()) {
 			extraFields.put(extraName, otherMetaInfo.get(extraName).toString());
