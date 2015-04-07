@@ -16,13 +16,11 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
-import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.epics.EngineChannelStatus;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
-import org.epics.archiverappliance.engine.pv.EPICSV4.ArchiveEngine_EPICSV4;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 
 /**
@@ -51,22 +49,12 @@ public class PVStatusAction implements BPLAction {
 					logger.error("Could not find pv type info for PV " + pvName);
 					continue;
 				}
-				ArchDBRTypes dbrType = typeInfoForPV.getDBRType();
-				if(!dbrType.isV3Type()) {
-					PVMetrics metricsforPV = ArchiveEngine_EPICSV4.getMetricsforPV(pvName,configService);
-					if(metricsforPV != null) {
-						statuses.add(new EngineChannelStatus(metricsforPV));
-					} else {
-						logger.warn("Could not determine metrics for PV " + pvName);
-					}
+				PVMetrics metricsforPV = ArchiveEngine.getMetricsforPV(pvName,configService);
+				if(metricsforPV != null) {
+					statuses.add(new EngineChannelStatus(metricsforPV));
 				} else {
-					PVMetrics metricsforPV = ArchiveEngine.getMetricsforPV(pvName,configService);
-					if(metricsforPV != null) {
-						statuses.add(new EngineChannelStatus(metricsforPV));
-					} else {
-						logger.warn("Could not determine metrics for PV " + pvName);
-						continue;
-					}
+					logger.warn("Could not determine metrics for PV " + pvName);
+					continue;
 				}
 			} catch(Exception ex) {
 				throw new IOException(ex);

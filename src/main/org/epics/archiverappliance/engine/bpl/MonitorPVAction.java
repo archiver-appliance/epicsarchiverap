@@ -23,7 +23,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.engine.ArchiveEngine;
-import org.epics.archiverappliance.engine.pv.EPICSV4.ArchiveEngine_EPICSV4;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
@@ -105,18 +104,10 @@ public class MonitorPVAction implements BPLAction {
 		
 		logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "+ samplingPeriod + "(s)");
 		try {
-			if(!dbrType.isV3Type()) {
-				ArchiveEngine_EPICSV4.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType);
-				resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-				try(PrintWriter out = resp.getWriter()) {
-					out.println("{ \"pvName\": \"" + pvName + "\", \"status\": \"Archive request has been submitted\" }");
-				}
-			} else {
-				ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType,lastKnownTimestamp, controllingPV, archiveFields, null); 
-				resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-				try(PrintWriter out = resp.getWriter()) {
-					out.println("{ \"pvName\": \"" + pvName + "\", \"status\": \"Archive request has been submitted\" }");
-				}
+			ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType,lastKnownTimestamp, controllingPV, archiveFields, null); 
+			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+			try(PrintWriter out = resp.getWriter()) {
+				out.println("{ \"pvName\": \"" + pvName + "\", \"status\": \"Archive request has been submitted\" }");
 			}
 		} catch (Exception e) {
 			logger.error("Exception establishing monitor ", e);

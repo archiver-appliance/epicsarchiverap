@@ -1,5 +1,6 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import java.nio.ByteBuffer;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -13,7 +14,9 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarStringSampleValue;
-import org.epics.archiverappliance.engine.pv.EPICSV4.Data_EPICSV4;
+import org.epics.pvdata.pv.Field;
+import org.epics.pvdata.pv.PVStructure;
+import org.epics.pvdata.pv.SerializableControl;
 
 import com.google.protobuf.ByteString;
 
@@ -57,19 +60,31 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		dbevent = builder.build();
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
-	
-	public PBV4GenericBytes(Data_EPICSV4 dbr) {
-		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(dbr.getTimeStamp());
-		year = yst.getYear();
-		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
-				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
-				.setVal(ByteString.copyFrom(dbr.getValue()));
-		if(dbr.getSeverity() != 0) builder.setSeverity(dbr.getSeverity());
-		if(dbr.getStatus() != 0) builder.setStatus(dbr.getStatus());
-		dbevent = builder.build();
-		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));;
-	}
+
+    public PBV4GenericBytes(PVStructure v4Data) {
+        PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
+        long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
+        int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
+        Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
+        YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+
+        PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
+        int severity = alarmPVStructure.getIntField("severity").get();
+        int status = alarmPVStructure.getIntField("status").get();
+        
+        ByteBuffer buf = ByteBuffer.allocate(10*1024);
+        v4Data.serialize(buf, new DummySerializationControl(buf));
+
+        year = yst.getYear();
+        Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
+                        .setSecondsintoyear(yst.getSecondsintoyear())
+                        .setNano(yst.getNanos())
+                        .setVal(ByteString.copyFrom(buf.array()));
+        if(severity != 0) builder.setSeverity(severity);
+        if(status != 0) builder.setStatus(status);
+        dbevent = builder.build();
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+}
 
 	@Override
 	public Event makeClone() {
@@ -242,4 +257,34 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	public ArchDBRTypes getDBRType() {
 		return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 	}
+	
+    /**
+     * Sample from Matej to allow us to reuse the serialization that comes as part of PVAccess.
+     * @author mshankar
+     *
+     */
+    class DummySerializationControl implements SerializableControl {
+        
+        public DummySerializationControl(ByteBuffer buf) { 
+                
+        }
+
+        @Override
+        public void alignBuffer(int arg0) {
+        }
+
+        @Override
+        public void cachedSerialize(Field arg0, ByteBuffer arg1) {
+        }
+
+        @Override
+        public void ensureBuffer(int arg0) {
+        }
+
+        @Override
+        public void flushSerializeBuffer() {
+        } 
+        
+}
+
 }

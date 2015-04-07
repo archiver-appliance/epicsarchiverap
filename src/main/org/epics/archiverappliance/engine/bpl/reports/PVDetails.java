@@ -26,7 +26,6 @@ import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext.CommandThreadChannel;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
-import org.epics.archiverappliance.engine.pv.EPICSV4.ArchiveEngine_EPICSV4;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
 
@@ -74,13 +73,7 @@ public class PVDetails implements BPLAction {
 
 			
 			ArchDBRTypes dbrType = typeInfoForPV.getDBRType();
-			PVMetrics metrics = null;
-			
-			if(!dbrType.isV3Type()) {
-				metrics =  ArchiveEngine_EPICSV4.getMetricsforPV(pvName, configService);
-			} else {
-				metrics =  ArchiveEngine.getMetricsforPV(pvName, configService);
-			}
+			PVMetrics metrics = ArchiveEngine.getMetricsforPV(pvName, configService);
 			if(metrics != null){
 				LinkedList<Map<String, String>> statuses = metrics.getDetailedStatus();
 				String lowLevelStateInfo = ArchiveEngine.getLowLevelStateInfo(pvName, configService);

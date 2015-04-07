@@ -54,7 +54,6 @@ import org.epics.archiverappliance.config.persistence.MySQLPersistence;
 import org.epics.archiverappliance.config.pubsub.PubSubEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.pv.EngineContext;
-import org.epics.archiverappliance.engine.pv.EPICSV4.ArchiveEngine_EPICSV4;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtPostStartup;
 import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
@@ -865,11 +864,7 @@ public class DefaultConfigService implements ConfigService {
 				Timestamp lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(this);
 				if(logger.isDebugEnabled()) logger.debug("Last known timestamp from ETL stores is for pv " + pvName + " is "+ TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
 
-				if(!dbrType.isV3Type()) {
-					ArchiveEngine_EPICSV4.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, this, dbrType);
-				} else {
-					ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, this, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName()); 
-				}
+				ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, this, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName()); 
 				currentPVCount++;
 				if(currentPVCount % pausePerGroupPVCount == 0) {
 					logger.debug("Sleeping for " + pausePerGroupPauseTimeInSeconds + " to prevent CA search storms");

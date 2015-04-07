@@ -418,7 +418,7 @@ public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
 	 *            time etc. Some PVs only work in plain mode, example:
 	 *            "record.RTYP".
 	 */
-	public EPICS_V3_PV(final String name, final boolean plain, ConfigService configservice, int jcaCommandThreadId) {
+	private EPICS_V3_PV(final String name, final boolean plain, ConfigService configservice, int jcaCommandThreadId) {
 		this.name = name;
 		this.plain = plain;
 		this.configservice = configservice;

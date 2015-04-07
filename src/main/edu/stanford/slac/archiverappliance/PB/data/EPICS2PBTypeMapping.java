@@ -8,7 +8,7 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.engine.pv.EPICSV4.Data_EPICSV4;
+import org.epics.pvdata.pv.PVStructure;
 
 /**
  * Separate out the JCA/EPICS v4 => PB mapping into a separate class so that clients (read ArchiveViewer) do not have to include the entire JCA/EPICS v4 jars.
@@ -40,12 +40,11 @@ public class EPICS2PBTypeMapping {
 		}
 
 		try {
-			EPICSV4DBRConstructor = pbClass.getConstructor(Data_EPICSV4.class);
+			EPICSV4DBRConstructor = pbClass.getConstructor(PVStructure.class);
 		} catch (Exception ex) {
 		}
 		
-		assert(JCADBRConstructor != null || EPICSV4DBRConstructor != null);
-		
+
 		if(JCADBRConstructor == null && EPICSV4DBRConstructor == null) {
 			String msg = "Cannot get a DBR constructor for PB event for class " + pbClass.getName() + ". We should either have something that comes from JCA or from Epics V4";
 			logger.error(msg);
