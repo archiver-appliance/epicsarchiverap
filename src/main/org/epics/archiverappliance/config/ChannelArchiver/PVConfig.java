@@ -17,12 +17,14 @@ public class PVConfig {
 	private String PVName;
 	private float samplingPeriod;
 	private boolean monitor;
+	private String policy;
 	
-	public PVConfig(String pVName, float period, boolean monitor) {
+	public PVConfig(String pVName, float period, boolean monitor, String policy) {
 		super();
 		PVName = pVName;
 		this.samplingPeriod = period;
 		this.monitor = monitor;
+		this.policy = policy;
 	}
 
 	public String getPVName() {
@@ -37,8 +39,16 @@ public class PVConfig {
 		return monitor;
 	}
 
+	public String getPolicy() {
+		return policy;
+	}
+
 	@Override
 	public String toString() {
-		return "PV: " + PVName + " is being " + (monitor ? "monitored" : "scanned") + " with period " + samplingPeriod + "(s)";
+		String result = "PV: " + PVName + " is being " + (monitor ? "monitored" : "scanned") + " with period " + samplingPeriod + "(s)";
+		if (policy != null) {
+			result = result + " and policy " + policy;
+		}
+		return result;
 	}
 }

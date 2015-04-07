@@ -54,9 +54,11 @@ public class EngineConfigParser extends DefaultHandler {
 	StringWriter getThresholdBuf = null;
 	StringWriter nameBuf = null;
 	StringWriter periodBuf = null;
+	StringWriter policyBuf = null;
 	String name = null;
 	String period = null;
 	boolean monitor = true;
+	String policy = null;
 	// According to the channel archiver manual, this defaults to 20 seconds.
 	int getThreshold = 20;
 	
@@ -72,6 +74,8 @@ public class EngineConfigParser extends DefaultHandler {
 			monitor = true;
 		} else if (inChannel && qName.equals("scan")) {
 			monitor = false;
+		} else if (inChannel && qName.equals("policy")) {
+			policyBuf = new StringWriter();
 		} else if(qName.equals("get_threshold")) {
 			getThresholdBuf = new StringWriter();
 		}
@@ -82,16 +86,20 @@ public class EngineConfigParser extends DefaultHandler {
 		if(qName.equals("channel")) {
 			inChannel = false;
 			float samplingperiod = Float.parseFloat(period);
-			pvConfigs.add(new PVConfig(name, samplingperiod, monitor));
+			pvConfigs.add(new PVConfig(name, samplingperiod, monitor, policy));
 			name = null;
 			period = null;
 			monitor = false;
+			policy = null;
 		} else if (inChannel && qName.equals("name") && nameBuf != null) {
 			name = nameBuf.toString();
 			nameBuf = null;
 		} else if (inChannel && qName.equals("period") && periodBuf != null) {
 			period = periodBuf.toString();
 			periodBuf = null;
+		} else if (inChannel && qName.equals("policy") && policyBuf != null) {
+			policy = policyBuf.toString();
+			policyBuf = null;
 		} else if(qName.equals("get_threshold") && getThresholdBuf != null) {
 			getThreshold = Integer.parseInt(getThresholdBuf.toString());
 			getThresholdBuf = null;
@@ -104,6 +112,8 @@ public class EngineConfigParser extends DefaultHandler {
 			nameBuf.append(new String(ch, start, length));
 		} else if(inChannel && periodBuf != null) {
 			periodBuf.append(new String(ch, start, length));
+		} else if(inChannel && policyBuf != null) {
+			policyBuf.append(new String(ch, start, length));
 		} else if(getThresholdBuf != null) {
 			getThresholdBuf.append(new String(ch, start, length));
 		}
@@ -130,7 +140,7 @@ public class EngineConfigParser extends DefaultHandler {
 	"                         max_repeat_count|disconnect)*,\n" + 
 	"                         group+)>\n" + 
 	"<!ELEMENT group (name,channel+)>\n" + 
-	"<!ELEMENT channel (name,period,(scan|monitor),disable?)>\n" + 
+	"<!ELEMENT channel (name,period,(scan|monitor),policy?,disable?)>\n" + 
 	"<!ELEMENT write_period (#PCDATA)><!-- int seconds -->\n" + 
 	"<!ELEMENT get_threshold (#PCDATA)><!-- int seconds -->\n" + 
 	"<!ELEMENT file_size (#PCDATA)><!-- MB -->\n" + 
@@ -142,6 +152,7 @@ public class EngineConfigParser extends DefaultHandler {
 	"<!ELEMENT period (#PCDATA)><!-- double seconds -->\n" + 
 	"<!ELEMENT scan EMPTY>\n" + 
 	"<!ELEMENT monitor EMPTY>\n" + 
+	"<!ELEMENT policy (#PCDATA)>\n" + 
 	"<!ELEMENT disable EMPTY>\n";
 
 	

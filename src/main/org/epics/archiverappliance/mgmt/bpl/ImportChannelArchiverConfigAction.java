@@ -51,10 +51,7 @@ public class ImportChannelArchiverConfigAction implements BPLAction {
 			LinkedList<PVConfig> pvConfigs = EngineConfigParser.importEngineConfig(is);
 			for(PVConfig pvConfig : pvConfigs) {
 				if(isFirst) { isFirst = false; } else { out.println(","); }
-				boolean scan = !pvConfig.isMonitor();
-				float samplingPeriod = pvConfig.getPeriod();
-				if(logger.isDebugEnabled()) logger.debug("Adding " + pvConfig.getPVName() + " using " + (scan ? SamplingMethod.SCAN : SamplingMethod.MONITOR) + " and a period of " + samplingPeriod);
-				ArchivePVAction.archivePV(out, pvConfig.getPVName(), true, scan ? SamplingMethod.SCAN : SamplingMethod.MONITOR, samplingPeriod, null, null, null, false, configService, fieldsAsPartOfStream);
+				ChannelArchiverImport.importPV(pvConfig, out, fieldsAsPartOfStream, false, configService);
 			}
 			out.println("]");
 		} catch(Exception ex) {
