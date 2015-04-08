@@ -443,12 +443,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	
 	/** {@inheritDoc} */
 	@Override
-	public DBRTimeEvent getValue() {
-		return dbrtimeevent;
-	}
-	
-	/** {@inheritDoc} */
-	@Override
 	public void addListener(final PVListener listener) {
 		listeners.add(listener);
 		if (running && isConnected())
@@ -606,29 +600,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		return connected;
 	}
 	
-	/**
-	 * Has a CA search been issued on the wire. 
-	 * Could be used to throttle connection requests.
-	 * @return
-	 */
-	@Override
-	public boolean hasSearchBeenIssued() {
-		if(connected) {
-			return true;
-		} else { 
-			if(this.state == State.Connecting) { 
-				return true;
-			} else { 
-				return false;
-			}
-		}
-	}
-	
-	/** {@inheritDoc} */
-	@Override
-	public boolean isWriteAllowed() {
-		return connected && channel_ref.getChannel().getWriteAccess();
-	}
 	
 	/** {@inheritDoc} */
 	@Override
@@ -655,43 +626,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				disconnect();
 			}
 		});
-	}
-	
-	/** {@inheritDoc} */
-	@Override
-	public void setValue(final Object new_value) throws Exception {
-		if (!isConnected()) {
-			throw new Exception(name + " is not connected");
-		}
-		// Send strings as strings..
-		if (new_value instanceof String) {
-			channel_ref.getChannel().put((String) new_value);
-		} else { // other types as double.
-			if (new_value instanceof Double) {
-				final double val = ((Double) new_value).doubleValue();
-				channel_ref.getChannel().put(val);
-			} else if (new_value instanceof Double[]) {
-				final Double dbl[] = (Double[]) new_value;
-				final double val[] = new double[dbl.length];
-				for (int i = 0; i < val.length; ++i) {
-					val[i] = dbl[i].doubleValue();
-				}
-				channel_ref.getChannel().put(val);
-			} else if (new_value instanceof Integer) {
-				final int val = ((Integer) new_value).intValue();
-				channel_ref.getChannel().put(val);
-			} else if (new_value instanceof Integer[]) {
-				final Integer ival[] = (Integer[]) new_value;
-				final int val[] = new int[ival.length];
-				for (int i = 0; i < val.length; ++i) {
-					val[i] = ival[i].intValue();
-				}
-				channel_ref.getChannel().put(val);
-			} else {
-				throw new Exception("Cannot handle type "
-						+ new_value.getClass().getName());
-			}
-		}
 	}
 	
 	/** ConnectionListener interface. */

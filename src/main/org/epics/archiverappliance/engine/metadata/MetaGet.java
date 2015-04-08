@@ -116,7 +116,7 @@ public class MetaGet implements Runnable {
 			// Per Dirk Zimoch, we first check the NAME$.
 			// If that exists, we use it. If not, we use the NAME
 			EPICS_V3_PV pv_NameDollar = pvList.get("NAME$");
-			DBRTimeEvent nameDollarValue = pv_NameDollar.getValue();
+			DBRTimeEvent nameDollarValue = pv_NameDollar.getDBRTimeEvent();
 			if (nameDollarValue != null && nameDollarValue.getSampleValue() != null) {
 				logger.debug("Using the NAME$ value as the NAME for pv " + pvName);
 				SampleValue sampleValue = nameDollarValue.getSampleValue();
@@ -124,7 +124,7 @@ public class MetaGet implements Runnable {
 			} else { 
 				logger.debug("Using the NAME value as the NAME for pv " + pvName);
 				EPICS_V3_PV pv_Name = pvList.get("NAME");
-				DBRTimeEvent nameValue = pv_Name.getValue();
+				DBRTimeEvent nameValue = pv_Name.getDBRTimeEvent();
 				if (nameValue != null && nameValue.getSampleValue() != null) {
 					SampleValue sampleValue = nameValue.getSampleValue();
 					parseAliasInfo(sampleValue, mainMeta);
@@ -142,7 +142,7 @@ public class MetaGet implements Runnable {
 					if (fieldName.endsWith("RTYP")) {
 						mainMeta.addOtherMetaInfo(fieldName, pvList.get(fieldName).getReacordTypeName());
 					} else {
-						DBRTimeEvent valueTemp = pvList.get(fieldName).getValue();
+						DBRTimeEvent valueTemp = pvList.get(fieldName).getDBRTimeEvent();
 						if (valueTemp != null) {
 							SampleValue tempvalue = valueTemp.getSampleValue();
 							parseOtherInfo(tempvalue, mainMeta, fieldName);

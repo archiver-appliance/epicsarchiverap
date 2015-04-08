@@ -58,6 +58,12 @@ public interface PV
      */
     public void start() throws Exception;
 
+    /** Stop the PV: disconnect, ...
+     *  When the PV is no longer needed, one should 'stop' it
+     *  to release resources.
+     */
+    public void stop();
+
     /** @return Returns <code>true</code> between <code>start()</code> and <code>stop()</code>. */
     public boolean isRunning();
 
@@ -67,16 +73,6 @@ public interface PV
      */
     public boolean isConnected();
     
-	/**
-	 * Has a CA search been issued on the wire. 
-	 * Could be used to throttle connection requests.
-	 */
-	public boolean hasSearchBeenIssued();
-
-
-    /** @return <code>true</code> if we have write access to the PV */
-    public boolean isWriteAllowed();
-
     /** Internal state information on the PV.
      *  <p>
      *  Especially when <code>isConnected()</code> is <code>false</code>,
@@ -86,33 +82,6 @@ public interface PV
      *  @return Some human readable state info */
     public String getStateInfo();
 
-    /** Stop the PV: disconnect, ...
-     *  When the PV is no longer needed, one should 'stop' it
-     *  to release resources.
-     */
-    public void stop();
-
-    /** Get the value.
-     *  <p>
-     *  This is the most recent value.
-     *  Check isConnected() to see if this is valid,
-     *  or use inside a PV listener's value update.
-     *
-     *  @see PVListener
-     *  @see #isConnected()
-     *  @return Returns the most recent value,
-     *          or <code>null</code> if there is none.
-     */
-    public DBRTimeEvent getValue();
-
-    /** Set PV to given value.
-     *  Should accept <code>Double</code>, <code>Double[]</code>,
-     *  <code>Integer</code>,
-     *  <code>String</code>, maybe more.
-     *  @param new_value Value to write to PV
-     *  @throws Exception on error
-     */
-    public void setValue(Object new_value) throws Exception;
     /**
      * get the current DBRTimeEvent
      * @return DBRTimeEvent
