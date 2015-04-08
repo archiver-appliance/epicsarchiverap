@@ -53,7 +53,7 @@ abstract public class ArchiveChannel {
 	final private String name;
 
 	/** This is the actual control system PV. */
-	final private EPICS_V3_PV pv;
+	final private PV pv;
 
 	/**
 	 * The name of the PV that control archiving of this PV.

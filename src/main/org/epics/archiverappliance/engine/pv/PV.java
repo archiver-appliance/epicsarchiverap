@@ -7,6 +7,8 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
+import gov.aps.jca.CAException;
+
 import java.util.HashMap;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -44,8 +46,6 @@ public interface PV
     /** Add a new listener.
      *  @see PVListener
      */
-    
-  
     public void addListener(PVListener listener);
 
     /** Remove a listener. */
@@ -154,6 +154,20 @@ public interface PV
 	    * @return the the number of seconds since 1970/01/01
 	    */
 	long getConnectionRequestMadeEpochSeconds();
+	
+	
+	/**
+	 * Reset when we last lost the connection
+	 */
+	public void resetConnectionLastLostEpochSeconds();
+	
+	
+	/**
+	 * Add the cnxlostepsecs and cnxregainedepsecs to the specified DBRTimeEvent and then reset local state. 
+	 * @param event
+	 */
+	public void addConnectionLostRegainedFields(DBRTimeEvent event);
+
 
 	/***
 	 *set the parent pv channel for this meta field  pv 
@@ -174,6 +188,20 @@ public interface PV
 	 * @param fieldValue this meta field pv's value
 	 */
 	public void updataMetaField(String pvName,String fieldValue);
+	
+	/**
+	 * Combine the metadata from various sources and return the latest copy.
+	 * @return
+	 */
+	public HashMap<String, String> getLatestMetadata();
+	
+	/**
+	 * Do a caget and update the metadata that is cached in the PV.
+	 * @throws IllegalStateException
+	 * @throws CAException
+	 */
+	public void updateTotalMetaInfo() throws IllegalStateException, CAException;
+
 
     /***
      * set this pv has meta field archived or not
@@ -190,5 +218,12 @@ public interface PV
 	
 	
 	public  String getHostName();
+	
+	
+	/**
+	 * Get any low level info as a display string; this is typically meant for debugging purposes..
+	 * @return
+	 */
+	public String getLowLevelChannelInfo();
     
 }
