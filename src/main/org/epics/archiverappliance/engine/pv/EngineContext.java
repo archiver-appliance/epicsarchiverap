@@ -81,7 +81,7 @@ public class EngineContext {
 	/**the total times of writer executed*/
 	private long countOfWrittingByWritter = 0;
 	/**the list of pvs controlling other pvs*/
-	private ConcurrentHashMap<String, PV> controlingPVList = new ConcurrentHashMap<String, PV>();
+	private ConcurrentHashMap<String, ControllingPV> controlingPVList = new ConcurrentHashMap<String, ControllingPV>();
 	
 	private ConfigService configService;
 	private String myIdentity;
@@ -111,7 +111,7 @@ public class EngineContext {
 	 * 
 	 * @return the list of pvs controlling other pvs
 	 */
-	public ConcurrentHashMap<String, PV> getControlingPVList() {
+	public ConcurrentHashMap<String, ControllingPV> getControlingPVList() {
 		return controlingPVList;
 	}
    /**

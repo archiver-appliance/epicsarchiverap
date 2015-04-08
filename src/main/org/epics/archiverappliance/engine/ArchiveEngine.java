@@ -38,9 +38,9 @@ import org.epics.archiverappliance.engine.model.Enablement;
 import org.epics.archiverappliance.engine.model.MonitoredArchiveChannel;
 import org.epics.archiverappliance.engine.model.SampleMode;
 import org.epics.archiverappliance.engine.model.ScannedArchiveChannel;
+import org.epics.archiverappliance.engine.pv.ControllingPV;
 import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
 import org.epics.archiverappliance.engine.pv.EngineContext;
-import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
@@ -340,8 +340,8 @@ public class ArchiveEngine {
 
 		boolean start = true;
 		if (controllingPVName != null) {
-			ConcurrentHashMap<String, PV> controlingPVList = configservice .getEngineContext().getControlingPVList();
-			PV controllingPV = controlingPVList.get(controllingPVName);
+			ConcurrentHashMap<String, ControllingPV> controlingPVList = configservice .getEngineContext().getControlingPVList();
+			ControllingPV controllingPV = controlingPVList.get(controllingPVName);
 
 			if (controllingPV == null) {
 				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName);
@@ -351,7 +351,7 @@ public class ArchiveEngine {
 				controllingPV.start();
 			} else {
 				controllingPV.addControledPV(pvName);
-				if (((EPICS_V3_PV) controllingPV).isEnableAllPV()) {
+				if (controllingPV.isEnableAllPV()) {
 					start = true;
 				} else {
 					start = false;

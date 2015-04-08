@@ -155,11 +155,6 @@ public interface PV
 	    */
 	long getConnectionRequestMadeEpochSeconds();
 
-   /**
-    * add pv controlled by this pv
-    * @param pvName  the name of pv controlled by this pv
-    */
-	void addControledPV(String pvName);
 	/***
 	 *set the parent pv channel for this meta field  pv 
 	 * @param channel

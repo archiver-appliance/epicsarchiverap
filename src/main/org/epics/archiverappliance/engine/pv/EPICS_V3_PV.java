@@ -48,7 +48,7 @@ import com.cosylab.epics.caj.CAJChannel;
  * @version 4-Jun-2012, Luofeng Li:added codes to support for the new archiver
  */
 @SuppressWarnings("nls")
-public class EPICS_V3_PV implements PV, ConnectionListener, MonitorListener {
+public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, MonitorListener {
 	private static final Logger logger = Logger.getLogger(EPICS_V3_PV.class.getName());
 	
 	/**
