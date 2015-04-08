@@ -47,7 +47,6 @@ import com.cosylab.epics.caj.CAJChannel;
  * @version Initial version:CSS
  * @version 4-Jun-2012, Luofeng Li:added codes to support for the new archiver
  */
-@SuppressWarnings("nls")
 public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, MonitorListener {
 	private static final Logger logger = Logger.getLogger(EPICS_V3_PV.class.getName());
 	
@@ -278,6 +277,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * 
 	 * @return the status of all pvs controlled by this pv
 	 */
+	@Override
 	public boolean isEnableAllPV() {
 		return enableAllPV;
 	}
@@ -903,6 +903,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * Add the cnxlostepsecs and cnxregainedepsecs to the specified DBRTimeEvent and then reset local state. 
 	 * @param event
 	 */
+	@Override
 	public void addConnectionLostRegainedFields(DBRTimeEvent event) {
 		if(firstDataAfterStartUp) {
 			long cnxregainedsecs = System.currentTimeMillis()/1000;
@@ -1059,6 +1060,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * Get the current value of all the meta fields. 
 	 * @return
 	 */
+	@Override
 	public HashMap<String, String> getCurrentCopyOfMetaFields() { 
 		HashMap<String, String> retval = new HashMap<String, String>();
 		if(totalMetaInfo != null && totalMetaInfo.getUnit() != null) { 
@@ -1079,10 +1081,12 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		return connectionLastLostEpochSeconds;
 	}
 	
+	@Override
 	public void resetConnectionLastLostEpochSeconds() {
 		connectionLastLostEpochSeconds = 0;
 	}
 	
+	@Override
 	public String getLowLevelChannelInfo() {
 		// Commented out when using JCA. This seems to work in CAJ but not in JCA.
 /*		if(channel_ref != null) { 
@@ -1096,6 +1100,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	}
 	
 	
+	@Override
 	public void updateTotalMetaInfo() throws IllegalStateException, CAException { 
 		GetListener getListener = new GetListener() {
 			@Override
@@ -1135,6 +1140,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * Combine the metadata from various sources and return the latest copy.
 	 * @return
 	 */
+	@Override
 	public HashMap<String, String> getLatestMetadata() { 
 		HashMap<String, String> retVal = new HashMap<String, String>();
 		// The totalMetaInfo is updated once every 24hours...
