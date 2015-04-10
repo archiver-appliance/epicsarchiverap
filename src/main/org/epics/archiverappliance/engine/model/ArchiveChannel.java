@@ -13,8 +13,8 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.model;
 
+import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,7 +34,14 @@ import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVListener;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 /**
- * Base for archived channels.
+ * Base for archived channels. An ArchiveChannel has
+ * <ol>
+ * <li>A main PV; in the typical case, this would be the PV for the .VAL. The record processing timestamp from this PV constitutes identity.</li>
+ * <li>A optional collection of metadata/field PVs. Data from these PV's is stored as part of the mainPV.</li>
+ * <li>A SampleBuffer where the data from the main PV is stored.</li>
+ * <li>A Writer, typically the STS, where the data in the SampleBuffer is periodically flushed.</li>
+ * </ol>
+ * 
  * @author Kay Kasemir
  * @version Initial version:CSS
  * @version 4-Jun-2012, Luofeng Li:added codes to support for the new archiver
@@ -54,6 +61,12 @@ abstract public class ArchiveChannel {
 
 	/** This is the actual control system PV. */
 	final private PV pv;
+	
+	/**
+	 * The control system PVs for the metafields
+	 */
+	private ConcurrentHashMap<String, PV> metaPVs = new ConcurrentHashMap<String, PV>();
+	
 
 	/**
 	 * The name of the PV that control archiving of this PV.
@@ -126,22 +139,6 @@ abstract public class ArchiveChannel {
 	 * the last time stamp when this pv was archived
 	 */
 	private Timestamp last_archived_timestamp = null;
-
-	/**
-	 * is this channel created for one meta field ,such as HIHI,LOLO?
-	 */
-	private boolean isMetaField = false;
-	
-	/**
-	 * ArchiveChannels for the meta information monitors.
-	 */
-	private ConcurrentHashMap<String, ArchiveChannel> metaChannels = new ConcurrentHashMap<String, ArchiveChannel>();
-
-	/**
-	 * Does this channnel have metafields.
-	 */
-	private boolean hasMetaField=false;
-
 	
 	/**
 	 * The engine can use multiple contexts and can assign PV's to contexts based on some algorithm.
@@ -149,28 +146,6 @@ abstract public class ArchiveChannel {
 	 */
 	private int JCACommandThreadID = -1;
 	
-
-	/**
-	 * 
-	 * @return true when this channel was created for a meta field .Otherwise, false 
-	 */
-	public boolean isMetaField() {
-		return isMetaField;
-	}
-
-	public boolean hasMetaField(){
-		return this.hasMetaField;
-	}
-
-
-	/**
-	 * this channel has meta field or not 
-	 * @param hasMetaField  true or false
-	 */
-	public void setHasMetaField(boolean hasMetaField) {
-		this.hasMetaField=hasMetaField;
-		this.pv.setHasMetaField(hasMetaField);
-	}
 
 	/**
 	 * if this channel is started or stopped archiving by a another pv, return the pv's name
@@ -190,27 +165,12 @@ abstract public class ArchiveChannel {
 	}
 
 	/**
-	 * if this channel (PV.HIHI)  is  created for the meta field(such as HIHI), set the channel created for this meta field'pv (PV)
-	 * and this method is used for meta field archiving
-	 * @param channel  for PV
-	 */
-	public void setPVChannelWhereThisMetaFieldIn(ArchiveChannel channel) {
-		this.pv.setParentChannel(channel);
-		channel.addMetaChannel(PVNames.getFieldName(this.name), this);
-	}
-
-	public void setPVChannelWhereThisMetaFieldIn(ArchiveChannel channel, boolean isRuntimeOnly) {
-		this.pv.setParentChannel(channel, isRuntimeOnly);
-		channel.addMetaChannel(PVNames.getFieldName(this.name), this);
-	}
-
-	/**
 	 * update the meta field value and this is used for meta filed archiving
 	 * @param pvname
 	 * @param fieldValue
 	 */
 	public void updataMetaField(final String pvname, final String fieldValue) {
-		this.pv.updataMetaField(pvname, fieldValue);
+		this.pv.updataMetaFieldValue(pvname, fieldValue);
 	}
 
 	/**
@@ -241,7 +201,6 @@ abstract public class ArchiveChannel {
 	 * @param configservice the configservice of new archiver
 	 * @param archdbrtype the archiving dbr type
 	 * @param controlPVname the pv's name who control this pv to start archiving or stop archiving
-	 * @param isMetaField this pv is a meta field or not (pv.HIHI or just pv)
 	 * @param commandThreadID - this is the index into the array of JCA command threads that processes this context.
 	 * @throws Exception error when creating archive channel for this pv
 	 */
@@ -254,7 +213,6 @@ abstract public class ArchiveChannel {
 			final ConfigService configservice,
 			final ArchDBRTypes archdbrtype,
 			final String controlPVname, 
-			final boolean isMetaField, 
 			final int commandThreadID)
 					throws Exception {
 		this.name = name;
@@ -263,10 +221,7 @@ abstract public class ArchiveChannel {
 		this.enablement = enablement;
 		this.last_archived_timestamp = last_archived_timestamp;
 		this.pvMetrics = new PVMetrics(name, controlPVname, System.currentTimeMillis() / 1000, archdbrtype);
-		this.isMetaField = isMetaField;
-		if (!isMetaField) {
-			this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype,this.pvMetrics);
-		}
+		this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype,this.pvMetrics);
 		this.JCACommandThreadID =  commandThreadID;
 
 		this.pv = new EPICS_V3_PV(name, configservice, false, archdbrtype, commandThreadID);
@@ -278,8 +233,6 @@ abstract public class ArchiveChannel {
 				if (is_running) {
 					try {
 						final DBRTimeEvent temptimeevent = pv.getDBRTimeEvent();
-						if (isMetaField)
-							return;
 
 						if (enablement != Enablement.Passive)
 							handleEnablement(temptimeevent);
@@ -326,6 +279,25 @@ abstract public class ArchiveChannel {
 				}
 			}
 		});
+	}
+
+	
+	/**
+	 * Add a pv for this PV for the given metafield.
+	 * @param fieldName
+	 * @param configservice
+	 * @param isRuntimeOnly
+	 * @throws IOException
+	 */
+	public void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly) throws IOException {
+		if(this.pv == null) throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
+		// This tells the main PV to create the hashmaps for the metafield storage
+		this.pv.markPVHasMetafields(true);
+		final String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
+		logger.debug("Initializing the metafield for field " + pvNameForField);
+		EPICS_V3_PV metaPV = new EPICS_V3_PV(pvNameForField, configservice, false, this.pv.getArchDBRTypes(), this.JCACommandThreadID);
+		metaPV.setMetaFieldParentPV(this.pv, isRuntimeOnly);
+		this.metaPVs.put(fieldName, metaPV);
 	}
 
 	/**
@@ -503,17 +475,17 @@ abstract public class ArchiveChannel {
 	 */
 	public void startUpMetaChannels() throws Exception {
 		logger.debug("Starting up monitors on the fields for pv " + name);
-		for(ArchiveChannel metaChannel : metaChannels.values()) { 
-			metaChannel.stop();
-			metaChannel.start();
+		for(PV metaPV : metaPVs.values()) { 
+			metaPV.stop();
+			metaPV.start();
 		}
 		logger.debug("Done starting down monitors on the fields for pv " + this.name);
 	}
 
 	public void shutdownMetaChannels() throws Exception {
 		logger.debug("Shutting down monitors on the fields for pv " + this.name);
-		for(ArchiveChannel metaChannel : this.metaChannels.values()) { 
-			metaChannel.stop();
+		for(PV metaPV : metaPVs.values()) { 
+			metaPV.stop();
 		}
 		logger.debug("Done shutting down monitors on the fields for pv " + this.name);
 	}
@@ -535,10 +507,7 @@ abstract public class ArchiveChannel {
 		}
 		need_first_sample = true;
 
-		if(!this.isMetaField) {
-			// We also shut off all the meta fields and runtime fields in an attempt to make reconnect times for the main PVs faster...
-			shutdownMetaChannels();
-		}
+		shutdownMetaChannels();
 	}
 
 
@@ -696,17 +665,8 @@ abstract public class ArchiveChannel {
 	}
 
 
-
 	public String getLowLevelChannelStateInfo() { 
 		return this.pv.getLowLevelChannelInfo();
-	}
-	
-	/**
-	 * Get the archive channels for the meta channels - this should include both runtime and otherwise
-	 * @return
-	 */
-	public Collection<ArchiveChannel> getMetaChannels() { 
-		return metaChannels.values();
 	}
 	
 	/**
@@ -714,16 +674,16 @@ abstract public class ArchiveChannel {
 	 * @param metaFieldName
 	 * @return
 	 */
-	public ArchiveChannel getMetaChannel(String metaFieldName) {
-		return metaChannels.get(metaFieldName);
+	public PV getMetaPV(String metaFieldName) {
+		return metaPVs.get(metaFieldName);
 	}
 	
 	/**
 	 * Get the field names for which we have established channels.
 	 * @return
 	 */
-	public Set<String> getMetaChannelNames() {
-		return metaChannels.keySet();
+	public Set<String> getMetaPVNames() {
+		return metaPVs.keySet();
 	}
 	
 	/**
@@ -731,7 +691,7 @@ abstract public class ArchiveChannel {
 	 * @return
 	 */
 	public int getMetaChannelCount() { 
-		return metaChannels.size();
+		return metaPVs.size();
 	}
 	
 	/**
@@ -740,8 +700,8 @@ abstract public class ArchiveChannel {
 	 */
 	public int getConnectedMetaChannelCount() { 
 		int connectedMetaFieldCount = 0;
-		for(ArchiveChannel metaChannel : getMetaChannels()) { 
-			if(metaChannel.isConnected()) { 
+		for(PV metaPV : metaPVs.values()) { 
+			if(metaPV.isConnected()) { 
 				connectedMetaFieldCount++;
 			}
 		}
@@ -754,9 +714,9 @@ abstract public class ArchiveChannel {
 	 * @return
 	 */
 	public boolean metaChannelsNeedStartingUp() {
-		for(ArchiveChannel metaChannel : getMetaChannels()) {
-			logger.debug(metaChannel.getName() + " connected is " + metaChannel.isConnected());
-			if(!metaChannel.isConnected()) { 
+		for(PV metaPV : metaPVs.values()) {
+			logger.debug(metaPV.getName() + " connected is " + metaPV.isConnected());
+			if(!metaPV.isConnected()) { 
 				return true;
 			}
 		}
@@ -769,11 +729,11 @@ abstract public class ArchiveChannel {
 	 * @param metaFieldName
 	 * @param metaChannel
 	 */
-	public void addMetaChannel(String metaFieldName, ArchiveChannel metaChannel) { 
-		if(metaChannels.containsKey(metaFieldName)) { 
+	public void addMetaChannel(String metaFieldName, PV metaPV) { 
+		if(metaPVs.containsKey(metaFieldName)) { 
 			logger.error("Channel for field " + metaFieldName + " for pv " + this.name + " already exists. Replacing it but this is not optimal");
 		}
-		metaChannels.put(metaFieldName, metaChannel);
+		metaPVs.put(metaFieldName, metaPV);
 	}
 	
 	

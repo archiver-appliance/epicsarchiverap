@@ -13,7 +13,6 @@ import java.util.HashMap;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.engine.model.ArchiveChannel;
 
 
 
@@ -94,25 +93,27 @@ public interface PV
     */
 	ArchDBRTypes getArchDBRTypes();
 
-	/***
-	 *set the parent pv channel for this meta field  pv 
-	 * @param channel
-	 */
-	public void setParentChannel(ArchiveChannel channel);
+    /***
+     * Making this PV as having metafields or not
+     * If the PV has metafields, then internal state is created to maintain the latest values of these metafields.
+     * @param hasMetaField
+     */
+	void markPVHasMetafields(boolean hasMetaField);
+	
 	
 	/***
-	 *set the parent pv channel for this meta field  pv 
-	 * @param channel
-	 * @param isRuntimeOnly - Only store values in the runtime.
+	 * Set the "parent" PV for this meta field pv. The data from this PV is stored as a metafield in the parentPV. 
+	 * @param parentPV - Store data from this PV as a metafield in the parentPV.
+	 * @param isRuntimeOnly - Only store values in the runtime hashMaps.
 	 */
-	public void setParentChannel(ArchiveChannel channel, boolean isRuntimeOnly);
-
+	public void setMetaFieldParentPV(PV parentPV, boolean isRuntimeOnly);
+	
 	/***
-	 * update the value in the parent pv channel
-	 * @param pvName  this meta field pv 's name
-	 * @param fieldValue this meta field pv's value
+	 * Update the value in the parent pv hashmaps for this field
+	 * @param pvName  this meta field pv 's name - this is the full PV names - for example, a:b:c.HIHI
+	 * @param fieldValue - this meta field pv's value as a string.
 	 */
-	public void updataMetaField(String pvName,String fieldValue);
+	public void updataMetaFieldValue(String pvName,String fieldValue);
 	
 	/**
 	 * Combine the metadata from various sources and return the latest copy.
@@ -128,13 +129,6 @@ public interface PV
 	public void updateTotalMetaInfo() throws IllegalStateException, CAException;
 
 
-    /***
-     * set this pv has meta field archived or not
-     * @param hasMetaField
-     */
-	void setHasMetaField(boolean hasMetaField);
-	
-	
 	/**
 	 * Get the current value of all the meta fields. 
 	 * @return - Can return null if this PV has no meta fields.

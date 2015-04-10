@@ -35,7 +35,6 @@ import org.epics.archiverappliance.config.JCA2ArchDBRType;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
-import org.epics.archiverappliance.engine.model.ArchiveChannel;
 
 import com.cosylab.epics.caj.CAJChannel;
 
@@ -63,10 +62,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	private MetaInfo totalMetaInfo = new MetaInfo();
 	
 	/**
-	 * If this pv is a meta field and parentChannel is the channel of this pv without the meta field.
-	 * For example if this pv is "pv1.HIHI" ,Thus this parentChannel is the channel of"pv1".
+	 * If this pv is a meta field, then the metafield parent PV is where the data for this metafield is stored.
 	 **/
-	private ArchiveChannel parentChannel = null;
+	private PV parentPVForMetaField = null;
 	
 	/**
 	 * If this pv has many meta fields archived, allarchiveFieldsData includes the meta field names and their values.
@@ -786,18 +784,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		}
 	}
 
-	/***
-	 * @see PV#setParentChannel(ArchiveChannel)
-	 */
 	@Override
-	public void setParentChannel(ArchiveChannel channel) {
-		this.parentChannel = channel;
+	public void setMetaFieldParentPV(PV parentPV, boolean isRuntimeOnly) {
+		this.parentPVForMetaField = parentPV;
 		isarchiveFieldsField = true;
-	}
-
-	@Override
-	public void setParentChannel(ArchiveChannel channel, boolean isRuntimeOnly) {
-		setParentChannel(channel);
 		this.isruntimeFieldField = isRuntimeOnly;
 	}
 
@@ -806,16 +796,16 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * @param dbrtimeevent 
 	 */
 	private void updataMetaDataInParentPV(final DBRTimeEvent dbrtimeevent) {
-		if (isarchiveFieldsField)
-			parentChannel.updataMetaField(this.name, ""
-					+ dbrtimeevent.getSampleValue().toString());
+		if (isarchiveFieldsField) { 
+			parentPVForMetaField.updataMetaFieldValue(this.name, "" + dbrtimeevent.getSampleValue().toString());
+		}
 	}
 
 	/**
-	 * @see PV#updataMetaField(String,String)
+	 * @see PV#updataMetaFieldValue(String,String)
 	 */
 	@Override
-	public void updataMetaField(String PVname, String fieldValue) {
+	public void updataMetaFieldValue(String PVname, String fieldValue) {
 		String[] strs = PVname.split("\\.");
 		String fieldName = strs[strs.length - 1];
 		if(isruntimeFieldField) { 
@@ -832,7 +822,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * @See PV#setHasMetaField(boolean)
 	 */
 	@Override
-	public void setHasMetaField(boolean hasMetaField) {
+	public void markPVHasMetafields(boolean hasMetaField) {
 		if (hasMetaField) {
 			allarchiveFieldsData = new ConcurrentHashMap<String, String>();
 			changedarchiveFieldsData = new ConcurrentHashMap<String, String>();

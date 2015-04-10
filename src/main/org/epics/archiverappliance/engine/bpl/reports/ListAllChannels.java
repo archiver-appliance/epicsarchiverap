@@ -32,7 +32,7 @@ public class ListAllChannels implements BPLAction {
 				out.print("\"");
 				out.print(entry.getKey());
 				out.print("\"");
-				for(String metaChannelName : entry.getValue().getMetaChannelNames()) { 
+				for(String metaChannelName : entry.getValue().getMetaPVNames()) { 
 					out.print("\"");
 					out.print(metaChannelName);
 					out.print("\"");

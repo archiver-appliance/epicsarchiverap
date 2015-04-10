@@ -27,7 +27,6 @@ import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.engine.metadata.MetaCompletedListener;
@@ -73,8 +72,6 @@ public class ArchiveEngine {
 	 * @param configservice
 	 * @param archdbrtype
 	 * @param controlPVname
-	 * @param isMetaField
-	 * @param parentChannel - Should not be null if this is a metafield.
 	 * @param iocHostName - Can be null.
 	 * @return
 	 * @throws Exception
@@ -83,26 +80,14 @@ public class ArchiveEngine {
 			final Enablement enablement, final SampleMode sample_mode, 
 			final Timestamp last_sampleTimestamp, 
 			final ConfigService configservice, final ArchDBRTypes archdbrtype, 
-			final String controlPVname, final boolean isMetaField, final ArchiveChannel parentChannel, final String iocHostName) throws Exception {
+			final String controlPVname, final String iocHostName) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = null;
-		if(!isMetaField){
-			// Is this an existing channel?
-			channel= engineContext.getChannelList().get(name);
-			if (channel != null) {
-					logger.debug(String.format(" Channel '%s' already exist'", name));
-					return channel;
-			}
-		} else {
-			String pvName = PVNames.normalizePVName(name);
-			channel= engineContext.getChannelList().get(pvName);
-			if(channel != null) { 
-				ArchiveChannel metaChannel = channel.getMetaChannel(PVNames.getFieldName(name));
-				if(metaChannel != null) { 
-					logger.debug(String.format(" Channel '%s' already exist'", name));
-					return channel;
-				}
-			}
+		// Is this an existing channel?
+		channel= engineContext.getChannelList().get(name);
+		if (channel != null) {
+				logger.debug(String.format(" Channel '%s' already exist'", name));
+				return channel;
 		}
 
 		// Determine buffer capacity
@@ -118,38 +103,23 @@ public class ArchiveEngine {
 			logger.debug("Enforcing a minimum capacity for sample buffer size.");
 			buffer_capacity = 2;
 		}
-		if(isMetaField) { 
-			// logger.debug("We store meta fields as part of the main PV; don't need much capacity here.");
-			buffer_capacity = 2;
-		}
 		logger.debug("Final buffer capacity for pv " + name + " is " + buffer_capacity);
 		
 		int JCACommandThreadID = engineContext.assignJCACommandThread(name, iocHostName);
-		if(isMetaField) { 
-			if(parentChannel == null) { 
-				throw new Exception("Trying to create a meta field without specifying the parent channel");
-			}
-			JCACommandThreadID = parentChannel.getJCACommandThreadID();
-		}
 
 		// Create new channel
 		if (sample_mode.isMonitor()) {
 			if (sample_mode.getDelta() > 0) {
-				channel = new DeltaArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(),configservice, archdbrtype, controlPVname, isMetaField, JCACommandThreadID);
+				channel = new DeltaArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(),configservice, archdbrtype, controlPVname, JCACommandThreadID);
 			} else { 
-				channel = new MonitoredArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, isMetaField,JCACommandThreadID);
+				channel = new MonitoredArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID);
 			}
 		} else {
-			channel = new ScannedArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, isMetaField,JCACommandThreadID);
+			channel = new ScannedArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID);
 		}
 
-		if(!isMetaField) { 
-			configservice.getEngineContext().getChannelList().put(channel.getName(), channel);
-			engineContext.getWriteThead().addChannel(channel);
-		} else { 
-			// Do nothing..
-		}
-
+		configservice.getEngineContext().getChannelList().put(channel.getName(), channel);
+		engineContext.getWriteThead().addChannel(channel);
 		return channel;
 	}
 
@@ -167,15 +137,11 @@ public class ArchiveEngine {
 			engineContext.startWriteThread(configservice);
 		}
 		
-		HashSet<String> runtTimeFieldsCopy = new HashSet<String>(configservice.getRuntimeFields());
 		if (mode == SamplingMethod.SCAN) {
 			SampleMode scan_mode2 = new SampleMode(false, 0, samplingPeriod);
 			ArchiveChannel channel = ArchiveEngine.addChannel(pvName, writer,
 					Enablement.Enabling, scan_mode2, lastKnownEventTimeStamp,
-					configservice, archdbrtype, controlPVname, false, null, iocHostName);
-			if (metaFields != null) { 
-				channel.setHasMetaField(true);
-			}
+					configservice, archdbrtype, controlPVname, iocHostName);
 
 			if (start) {
 				channel.start();
@@ -186,72 +152,41 @@ public class ArchiveEngine {
 
 
 
-			// handle the meta field
-			if(metaFields != null && metaFields.length > 0) { 
-				for (String fieldName : metaFields) {
-					logger.debug("Adding monitor for meta field " + fieldName);
-					SampleMode monitor_mode3 = new SampleMode(true, 0, samplingPeriod);
-					ArchiveChannel channel3 = ArchiveEngine.addChannel(pvName + "."
-							+ fieldName, writer, Enablement.Enabling, monitor_mode3,
-							null, configservice, null,
-							controlPVname, true, channel, iocHostName);
-
-					channel3.setPVChannelWhereThisMetaFieldIn(channel);
-					// We do not start the meta field unless the main PV is connected in order to speedup reconnect times
-					runtTimeFieldsCopy.remove(fieldName);
-				}
-
-				for(String runtimeField : runtTimeFieldsCopy) { 
-					logger.debug("Adding monitor for runtime field " + runtimeField);
-					SampleMode monitor_mode3 = new SampleMode(true, 0, samplingPeriod);
-					ArchiveChannel channel3 = ArchiveEngine.addChannel(pvName + "." + runtimeField, writer, Enablement.Enabling, monitor_mode3,
-							null, configservice, null,
-							controlPVname, true, channel, iocHostName);
-					channel3.setPVChannelWhereThisMetaFieldIn(channel, true);
-					// We do not start the meta field unless the main PV is connected in order to speedup reconnect times
-				}
-			}
+			initializeMetaFieldPVS(channel, metaFields, configservice);
 		} else if (mode == SamplingMethod.MONITOR) {
 			SampleMode scan_mode2 = new SampleMode(true, 0, samplingPeriod);
 			ArchiveChannel channel = ArchiveEngine.addChannel(pvName, writer,
 					Enablement.Enabling, scan_mode2, lastKnownEventTimeStamp,
-					configservice, archdbrtype, controlPVname, false, null, iocHostName);
-
-			if (metaFields != null) { 
-				channel.setHasMetaField(true);
-			}
+					configservice, archdbrtype, controlPVname, iocHostName);
 
 			if (start) { 
 				channel.start();
 			}
 
 			// handle the meta field
-			if(metaFields != null && metaFields.length > 0) { 
-				for (String fieldName : metaFields) {
-					logger.debug("Adding monitor for meta field " + fieldName);
-					SampleMode monitor_mode3 = new SampleMode(true, 0, samplingPeriod);
-					ArchiveChannel channel3 = ArchiveEngine.addChannel(pvName + "."
-							+ fieldName, writer, Enablement.Enabling, monitor_mode3,
-							null, configservice, null,
-							controlPVname, true, channel, iocHostName);
-
-					channel3.setPVChannelWhereThisMetaFieldIn(channel);
-					// We do not start the meta field unless the main PV is connected in order to speedup reconnect times
-					runtTimeFieldsCopy.remove(fieldName);
-				}
-
-				for(String runtimeField : runtTimeFieldsCopy) { 
-					logger.debug("Adding monitor for runtime field " + runtimeField);
-					SampleMode monitor_mode3 = new SampleMode(true, 0, samplingPeriod);
-					ArchiveChannel channel3 = ArchiveEngine.addChannel(pvName + "." + runtimeField, writer, Enablement.Enabling, monitor_mode3,
-							null, configservice, null,
-							controlPVname, true, channel, iocHostName);
-					channel3.setPVChannelWhereThisMetaFieldIn(channel, true);
-					// We do not start the meta field unless the main PV is connected in order to speedup reconnect times
-				}
-			}
+			initializeMetaFieldPVS(channel, metaFields, configservice);
 		} else if (mode == SamplingMethod.DONT_ARCHIVE) {
 			// Do nothing..
+		}
+	}
+
+
+
+	private static void initializeMetaFieldPVS(ArchiveChannel channel,
+			final String[] metaFields, final ConfigService configservice)
+			throws IOException {
+		if(metaFields != null && metaFields.length > 0) { 
+			HashSet<String> runtTimeFieldsCopy = new HashSet<String>(configservice.getRuntimeFields());
+			for (String fieldName : metaFields) {
+				logger.debug("Adding monitor for meta field " + fieldName);
+				channel.addMetaField(fieldName, configservice, false);
+				runtTimeFieldsCopy.remove(fieldName);
+			}
+
+			for(String runtimeField : runtTimeFieldsCopy) { 
+				logger.debug("Adding monitor for runtime field " + runtimeField);
+				channel.addMetaField(runtimeField, configservice, true);
+			}
 		}
 	}
 

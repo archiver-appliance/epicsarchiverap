@@ -39,10 +39,10 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 			Enablement enablement, final int buffer_capacity,
 			final Timestamp last_timeestamp, final double scan_period,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final String controlPVname, final boolean isMetaField, final int commandThreadID)
+			final String controlPVname, final int commandThreadID)
 			throws Exception {
 		super(name, writer, enablement, buffer_capacity, last_timeestamp,
-				configservice, archdbrtype, controlPVname, isMetaField, commandThreadID);
+				configservice, archdbrtype, controlPVname, commandThreadID);
 		this.scan_period = scan_period;
 		this.pvMetrics.setSamplingPeriod(scan_period);
 		// this.max_repeats = max_repeats;

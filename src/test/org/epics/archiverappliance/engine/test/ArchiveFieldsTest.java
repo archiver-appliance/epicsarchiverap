@@ -22,6 +22,7 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
+import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.junit.After;
 import org.junit.Before;
@@ -162,9 +163,9 @@ public class ArchiveFieldsTest extends TestCase {
 
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				ArchiveChannel tempArchiveChannel = archiveChannel.getMetaChannel(metaFieldTemp);
-				assertTrue("the channel for " + pvNameTemp + " should be created but it is not", tempArchiveChannel != null);
-				assertTrue("the channel for " + pvNameTemp + " should be connected but it is not", tempArchiveChannel.isConnected());
+				PV tempArchivePV = archiveChannel.getMetaPV(metaFieldTemp);
+				assertTrue("the channel for " + pvNameTemp + " should be created but it is not", tempArchivePV != null);
+				assertTrue("the channel for " + pvNameTemp + " should be connected but it is not", tempArchivePV.isConnected());
 
 			}
 			Thread.sleep(10000);
@@ -178,13 +179,13 @@ public class ArchiveFieldsTest extends TestCase {
 			if(archiveChannel != null) { 
 				for (String metaFieldTemp : metaFields) {
 					String pvNameTemp = pvName + "." + metaFieldTemp;
-					ArchiveChannel tempArchiveChannel = archiveChannel.getMetaChannel(metaFieldTemp);
+					PV tempArchivePV = archiveChannel.getMetaPV(metaFieldTemp);
 					assertTrue("the channel for " + pvNameTemp
 							+ " should be created but it is not",
-							tempArchiveChannel != null);
+							tempArchivePV != null);
 					assertTrue("the channel for " + pvNameTemp
 							+ " should be not connected but it is ",
-							!tempArchiveChannel.isConnected());
+							!tempArchivePV.isConnected());
 				}
 			}
 
@@ -207,13 +208,13 @@ public class ArchiveFieldsTest extends TestCase {
 			// check meta field is not connected
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				ArchiveChannel tempArchiveChannel = archiveChannel.getMetaChannel(metaFieldTemp);
+				PV tempArchivePV = archiveChannel.getMetaPV(metaFieldTemp);
 				assertTrue("the channel for " + pvNameTemp
 						+ " should be created but it is not",
-						tempArchiveChannel != null);
+						tempArchivePV != null);
 				assertTrue("the channel for " + pvNameTemp
 						+ " should be reconnected but it is  not",
-						tempArchiveChannel.isConnected());
+						tempArchivePV.isConnected());
 
 			}
 
