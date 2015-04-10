@@ -194,12 +194,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	private ArchDBRTypes archDBRType = null;
 	
 	/**
-	 * The pvMetrics for the channel for this PV.
-	 * This could be null so make sure we always check for null when updating metrics.
-	 */
-	private PVMetrics pvMetrics;
-	
-	/**
 	 * The JCA command thread that processes actions for this PV.
 	 * This should be inherited from the ArchiveChannel.
 	 */
@@ -300,7 +294,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 *  @param configservice  The config service used by this pv
 	 *  @param isControlPV true if this is a pv controlling other pvs      
 	 */
-	public EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, PVMetrics pvMetrics, int jcaCommandThreadId) {
+	public EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
 		this(name, false, configservice, jcaCommandThreadId);
 		this.archDBRType = archDBRTypes;
 		if(archDBRTypes != null) { 
@@ -309,7 +303,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if (isControlPV) {
 			this.controlledPVList = new ArrayList<String>();
 		}
-		this.pvMetrics = pvMetrics;
 	}
 	
 	/**
@@ -685,9 +678,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 					assert(con != null);
 					if(generatedDBRType != archDBRType) { 
 						logger.warn("The type of PV " + this.name + " has changed from " + archDBRType + " to " + generatedDBRType);
-						if(this.pvMetrics != null) { 
-							this.pvMetrics.incrementInvalidTypeLostEventCount();
-						}
+						fireDroppedSample(PVListener.DroppedReason.TYPE_CHANGE);
 						return;
 					}
 				}
@@ -757,6 +748,13 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			listener.pvConnectionRequestMade(this);
 		}
 	}
+	
+	private void fireDroppedSample(PVListener.DroppedReason reason) { 
+		for (final PVListener listener : listeners) {
+			listener.pvDroppedSample(this,  reason);
+		}
+	}
+
 
 	
 	@Override

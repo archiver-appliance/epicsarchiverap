@@ -345,7 +345,7 @@ public class ArchiveEngine {
 
 			if (controllingPV == null) {
 				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName);
-				controllingPV = new EPICS_V3_PV(controllingPVName, configservice, true, archdbrtype, null, configservice.getEngineContext().assignJCACommandThread(controllingPVName, null));
+				controllingPV = new EPICS_V3_PV(controllingPVName, configservice, true, archdbrtype, configservice.getEngineContext().assignJCACommandThread(controllingPVName, null));
 				controlingPVList.put(controllingPVName, controllingPV);
 				controllingPV.addControledPV(pvName);
 				controllingPV.start();

@@ -269,7 +269,7 @@ abstract public class ArchiveChannel {
 		}
 		this.JCACommandThreadID =  commandThreadID;
 
-		this.pv = new EPICS_V3_PV(name, configservice, false, archdbrtype, this.pvMetrics, commandThreadID);
+		this.pv = new EPICS_V3_PV(name, configservice, false, archdbrtype, commandThreadID);
 
 		pv.addListener(new PVListener() {
 			@Override
@@ -313,6 +313,17 @@ abstract public class ArchiveChannel {
 			@Override
 			public void pvConnectionRequestMade(PV pv) {
 				pvMetrics.setConnectionRequestMadeEpochSeconds(System.currentTimeMillis()/1000);
+			}
+
+			@Override
+			public void pvDroppedSample(PV pv, DroppedReason reason) {
+				switch(reason) { 
+				case TYPE_CHANGE:
+					pvMetrics.incrementInvalidTypeLostEventCount();
+					break;
+				default:
+					logger.warn("Dropping sample for an unaccounted reason for pv" + name + " " + reason);	
+				}
 			}
 		});
 	}
