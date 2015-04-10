@@ -228,10 +228,6 @@ abstract public class ArchiveChannel {
 	public PVMetrics getPVMetrics() {
 		this.pvMetrics.setConnected(this.pv.isConnected());
 		this.pvMetrics.setArchving(this.pv.isRunning());
-		this.pvMetrics.setConnectionFirstEstablishedEpochSeconds(this.pv.getConnectionFirstEstablishedEpochSeconds());
-		this.pvMetrics.setConnectionLastRestablishedEpochSeconds(this.pv.getConnectionLastRestablishedEpochSeconds());
-		this.pvMetrics.setConnectionLossRegainCount(this.pv.getConnectionLossRegainCount());
-		this.pvMetrics.setConnectionRequestMadeEpochSeconds(this.pv.getConnectionRequestMadeEpochSeconds());
 		return pvMetrics;
 	}
 
@@ -300,6 +296,7 @@ abstract public class ArchiveChannel {
 				try {
 					if (is_running)
 						pvMetrics.setConnectionLastLostEpochSeconds(System.currentTimeMillis()/1000);
+					
 					handleDisconnected();
 				} catch (Exception e) {
 					logger.error("exception in pvDisconnected of PVListener", e);
@@ -311,6 +308,11 @@ abstract public class ArchiveChannel {
 				logger.debug("Connected to PV " + name);
 				pvMetrics.setHostName(pv.getHostName());
 				pvMetrics.setConnectionEstablishedEpochSeconds(System.currentTimeMillis() / 1000);
+			}
+
+			@Override
+			public void pvConnectionRequestMade(PV pv) {
+				pvMetrics.setConnectionRequestMadeEpochSeconds(System.currentTimeMillis()/1000);
 			}
 		});
 	}
@@ -551,7 +553,7 @@ abstract public class ArchiveChannel {
 					// This happens because of our SCAN implementation which picks off the latest value every sampling period.
 					// In cases where the PV does not change, we get the same event over and over again and this incorrectly shows up in the report as missing data.
 					// We also reset any info on connection loss because as far as we can determine, the PV has not processed since the last event we picked up.
-					this.pv.resetConnectionLastLostEpochSeconds();
+					this.pvMetrics.resetConnectionLastLostEpochSeconds();
 				}
 
 				return false;
@@ -567,7 +569,7 @@ abstract public class ArchiveChannel {
 			this.lastDBRTimeEvent = timeevent;
 			this.last_archived_timestamp = lastDBRTimeEvent.getEventTimeStamp();
 		}
-		this.pv.addConnectionLostRegainedFields(timeevent);
+		this.pvMetrics.addConnectionLostRegainedFields(timeevent);
 
 		boolean incrementEventCounts = buffer.add(timeevent);
 		if(incrementEventCounts) {
@@ -770,7 +772,7 @@ abstract public class ArchiveChannel {
 	 */
 	public long getSecondsElapsedSinceSearchRequest() {
 		if(this.is_running && need_first_sample) { 
-			return TimeUtils.getCurrentEpochSeconds() - this.pv.getConnectionRequestMadeEpochSeconds();
+			return TimeUtils.getCurrentEpochSeconds() - this.pvMetrics.getConnectionRequestMadeEpochSeconds();
 		} else { 
 			return -1;
 		}

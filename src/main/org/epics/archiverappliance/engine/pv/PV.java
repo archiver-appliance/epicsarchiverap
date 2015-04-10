@@ -94,50 +94,6 @@ public interface PV
     */
 	ArchDBRTypes getArchDBRTypes();
 
-   /***
-    * get the time of the first connection established
-    * @return the the number of seconds since 1970/01/01
-    */
-	long getConnectionFirstEstablishedEpochSeconds();
-
-	 /***
-	    * get the time of the  connection reestablished
-	    * @return the the number of seconds since 1970/01/01
-	    */
-	long getConnectionLastRestablishedEpochSeconds();
-
-	 /***
-	    *
-	    * @return count of the connection lost and regained
-	    */
-	long getConnectionLossRegainCount();
-
-	 /***
-	    * get the time of the current connection established
-	    * @return the the number of seconds since 1970/01/01
-	    */
-	long getConnectionEstablishedEpochSeconds();
-
-	 /***
-	    * get the time when the connection request was sent
-	    * @return the the number of seconds since 1970/01/01
-	    */
-	long getConnectionRequestMadeEpochSeconds();
-	
-	
-	/**
-	 * Reset when we last lost the connection
-	 */
-	public void resetConnectionLastLostEpochSeconds();
-	
-	
-	/**
-	 * Add the cnxlostepsecs and cnxregainedepsecs to the specified DBRTimeEvent and then reset local state. 
-	 * @param event
-	 */
-	public void addConnectionLostRegainedFields(DBRTimeEvent event);
-
-
 	/***
 	 *set the parent pv channel for this meta field  pv 
 	 * @param channel

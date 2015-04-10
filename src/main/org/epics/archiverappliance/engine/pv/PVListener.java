@@ -26,4 +26,10 @@ public interface PVListener
     public void pvDisconnected(PV pv);
     
     public void pvConnected(PV pv);
+    
+    /**
+     * We issues a connection request to the underlying PV. 
+     * @param pv
+     */
+    public void pvConnectionRequestMade(PV pv);
 }

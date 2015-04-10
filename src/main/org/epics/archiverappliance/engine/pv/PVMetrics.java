@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -30,6 +31,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
  */
 
 public class PVMetrics {
+	private static Logger logger = Logger.getLogger(PVMetrics.class.getName());
 	private static final long ROTATEEVENTS_OR_STORAGE_LIMIT = Long.MAX_VALUE - 100000;
 
 	/**pv name*/
@@ -56,6 +58,12 @@ public class PVMetrics {
 	private long secondsOfLastEvent;
 	/**the time of last event stored in short term storage and it is the the number of seconds since 1970/01/01*/
 	private long lastRotateLogsEpochSeconds;
+	/**is this the fist connection?*/
+	private boolean firstTimeConnection = true;
+	/**is this the fist data after startup?*/
+	private boolean firstDataAfterStartUp = true;
+	/** Indicates some actions after pv is connected */
+	private boolean isFirstDataAfterConnection=false;
 	/**the time when connection established for the first time and it is the the number of seconds since 1970/01/01*/
 	private long connectionFirstEstablishedEpochSeconds;
 	/**the time when last connection reestablished and it is the the number of seconds since 1970/01/01*/
@@ -117,6 +125,7 @@ public class PVMetrics {
 
 	public void setConnectionLastLostEpochSeconds(long connectionLastLostEpochSeconds) {
 		this.connectionLastLostEpochSeconds = connectionLastLostEpochSeconds;
+		isFirstDataAfterConnection=false;
 	}
 
     /**
@@ -193,6 +202,14 @@ public class PVMetrics {
 		eventCounts = 0;
 		storageSize = 0;
 		this.lastStartEpochSeconds = connectionEstablishedEpochSeconds;
+		isFirstDataAfterConnection=true;
+		if (firstTimeConnection) {
+			this.connectionFirstEstablishedEpochSeconds = System.currentTimeMillis() / 1000;
+			firstTimeConnection = false;
+		} else {
+			this.connectionLastRestablishedEpochSeconds = System.currentTimeMillis() / 1000;
+			this.connectionLossRegainCount = this.connectionLossRegainCount + 1;
+		}
 	}
 
 	/**
@@ -531,8 +548,6 @@ public class PVMetrics {
 		this.lastEventFromIOCTimeStamp = lastEventFromIOCTimeStamp;
 	}
 
-
-
 	public boolean isLastConnectionEventState() {
 		return lastConnectionEventState;
 	}
@@ -541,5 +556,44 @@ public class PVMetrics {
 		this.lastConnectionEventState = lastConnectionEventState;
 	}
 
-
+	public void resetConnectionLastLostEpochSeconds() {
+		connectionLastLostEpochSeconds = 0;
+	}
+	
+	/**
+	 * Add the cnxlostepsecs and cnxregainedepsecs to the specified DBRTimeEvent and then reset local state. 
+	 * @param event
+	 */
+	public void addConnectionLostRegainedFields(DBRTimeEvent event) {
+		if(firstDataAfterStartUp) {
+			long cnxregainedsecs = System.currentTimeMillis()/1000;
+			if(connectionLastLostEpochSeconds != 0 && connectionLastLostEpochSeconds != cnxregainedsecs) {
+				if(logger.isDebugEnabled()) { 
+					logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + pvName + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
+				}
+				event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
+				event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
+				event.addFieldValue("startup", Boolean.TRUE.toString());
+				connectionLastLostEpochSeconds = 0;
+			} else { 
+				logger.debug("Skipping adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + pvName);
+			}
+			firstDataAfterStartUp=false;
+		} else {
+			long cnxregainedsecs = System.currentTimeMillis()/1000;
+			if(isFirstDataAfterConnection) {
+				if(connectionLastLostEpochSeconds != 0 && connectionLastLostEpochSeconds != cnxregainedsecs) { 
+					if(logger.isDebugEnabled()) { 
+						logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after regaining connection for pv " + pvName + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
+					}
+					event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
+					event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
+					connectionLastLostEpochSeconds = 0;
+				} else { 
+					logger.debug("Skipping adding cnxlostepsecs and cnxregainedepsecs after regaining connection for pv " + pvName);
+				}
+				isFirstDataAfterConnection=false;
+			}
+		}
+	}
 }

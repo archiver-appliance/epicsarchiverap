@@ -81,6 +81,9 @@ public class MetaGet implements Runnable {
 					}
 				}
 
+				@Override
+				public void pvConnectionRequestMade(PV pv) {
+				}
 			});
 			pvList.put("main", pv);
 			pv.start();

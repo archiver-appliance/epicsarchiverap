@@ -56,11 +56,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 */
 	final private boolean plain;
 
-	/**
-	 * indicates some actions after pv is connected
-	 */
-	private boolean isFirstDataAfterConnection=false;
-	
 	/** Channel name. */
 	final private String name;
 	
@@ -209,45 +204,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * This should be inherited from the ArchiveChannel.
 	 */
 	private int jcaCommandThreadId;
-	
-	/**
-	 * The time when the first connections was established
-	 * it is the the number of seconds since 1970/01/01
-	 **/
-	private long connectionFirstEstablishedEpochSeconds;
-	
-	/**
-	 * The time when the last connections was reestablished
-	 * it is the the number of seconds since 1970/01/01
-	 **/
-	private long connectionLastRestablishedEpochSeconds;
 
-	/**
-	 * When did we last lose the connection? This is initialized to when this PV object was created.
-	 */
-	private long connectionLastLostEpochSeconds = System.currentTimeMillis()/1000;
-	
-	/**the count of the connection lost and regained*/
-	private long connectionLossRegainCount;
-	
-	/**is this the fist connection?*/
-	private boolean firstTimeConnection = true;
-	
-	/**is this the fist data after startup?*/
-	private boolean firstDataAfterStartUp = true;
-	
-	/**
-	 * When the last connection was established
-	 * it is the the number of seconds since 1970/01/01
-	 **/
-	private long connectionEstablishedEpochSeconds;
-
-	/**
-	 * When sending the connection request
-	 * it is the the number of seconds since 1970/01/01
-	 **/
-	private long connectionRequestMadeEpochSeconds;
-	
 	/**
 	 * The pvs' list who are controlled by this pv to stop or start archiving
 	 **/
@@ -281,47 +238,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	public boolean isEnableAllPV() {
 		return enableAllPV;
 	}
-    
-	/**
-     * @see PV#getConnectionRequestMadeEpochSeconds()
-     */
-	@Override
-	public long getConnectionRequestMadeEpochSeconds() {
-		return connectionRequestMadeEpochSeconds;
-	}
-
-	/**
-	 * @see PV#getConnectionEstablishedEpochSeconds()
-	 */
-	@Override
-	public long getConnectionEstablishedEpochSeconds() {
-		return connectionEstablishedEpochSeconds;
-	}
-    
-	/**
-     * @see PV#getConnectionFirstEstablishedEpochSeconds()
-     */
-	@Override
-	public long getConnectionFirstEstablishedEpochSeconds() {
-		return connectionFirstEstablishedEpochSeconds;
-	}
-   
-	/**
-    * @see PV#getConnectionLastRestablishedEpochSeconds()
-    * */
-	@Override
-	public long getConnectionLastRestablishedEpochSeconds() {
-		return connectionLastRestablishedEpochSeconds;
-	}
-   
-	/**
-    * @see PV#getConnectionLossRegainCount()
-    */
-	@Override
-	public long getConnectionLossRegainCount() {
-		return connectionLossRegainCount;
-	}
-    
+        
 	/**
      * @see PV#getArchDBRTypes()
      */
@@ -471,8 +388,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 						if (channel_ref == null) {
 							channel_ref = PVContext.getChannel(name,EPICS_V3_PV.this.jcaCommandThreadId, EPICS_V3_PV.this);
 						}
-						connectionRequestMadeEpochSeconds = System
-								.currentTimeMillis() / 1000;
+						fireConnectionRequestMade();
 						if (channel_ref.getChannel().getConnectionState() == ConnectionState.CONNECTED) {
 							handleConnected(channel_ref.getChannel());
 						} else {
@@ -559,7 +475,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	
 	/** Unsubscribe from value updates. */
 	private void unsubscribe() {
-		isFirstDataAfterConnection=false;
 		Monitor sub_copy;
 		// Atomic access
 		synchronized (this) {
@@ -653,7 +568,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		} else {
 			state = State.Disconnected;
 			connected = false;
-			this.connectionLastLostEpochSeconds = System.currentTimeMillis()/1000;
 			PVContext.scheduleCommand(this.name, this.jcaCommandThreadId, this.channel_ref, "Connection changed disconnected", new Runnable() {
 				@Override
 				public void run() {
@@ -668,7 +582,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * PV is connected. Get meta info, or subscribe right away.
 	 */
 	private void handleConnected(final Channel channel) {
-		isFirstDataAfterConnection=true;
 		try { 
 			if(channel.getConnectionState()!=Channel.CONNECTED){
 				return;
@@ -680,18 +593,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if (state == State.Connected)
 			return;
 		state = State.Connected;
-		connectionEstablishedEpochSeconds = System.currentTimeMillis() / 1000;
 		hostName=channel_ref.getChannel().getHostName();
 		totalMetaInfo.setHostName(hostName);
-		if (firstTimeConnection) {
-			this.connectionFirstEstablishedEpochSeconds = System
-					.currentTimeMillis() / 1000;
-			firstTimeConnection = false;
-		} else {
-			this.connectionLastRestablishedEpochSeconds = System
-					.currentTimeMillis() / 1000;
-			this.connectionLossRegainCount = this.connectionLossRegainCount + 1;
-		}
 		for (final PVListener listener : listeners) {
 			listener.pvConnected(this);
 		}
@@ -833,43 +736,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		}
 	}
 
-	/**
-	 * Add the cnxlostepsecs and cnxregainedepsecs to the specified DBRTimeEvent and then reset local state. 
-	 * @param event
-	 */
-	@Override
-	public void addConnectionLostRegainedFields(DBRTimeEvent event) {
-		if(firstDataAfterStartUp) {
-			long cnxregainedsecs = System.currentTimeMillis()/1000;
-			if(connectionLastLostEpochSeconds != 0 && connectionLastLostEpochSeconds != cnxregainedsecs) {
-				if(logger.isDebugEnabled()) { 
-					logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + name + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
-				}
-				event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
-				event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
-				event.addFieldValue("startup", Boolean.TRUE.toString());
-				connectionLastLostEpochSeconds = 0;
-			} else { 
-				logger.debug("Skipping adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + name);
-			}
-			firstDataAfterStartUp=false;
-		} else {
-			long cnxregainedsecs = System.currentTimeMillis()/1000;
-			if(isFirstDataAfterConnection) {
-				if(connectionLastLostEpochSeconds != 0 && connectionLastLostEpochSeconds != cnxregainedsecs) { 
-					if(logger.isDebugEnabled()) { 
-						logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after regaining connection for pv " + name + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
-					}
-					event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
-					event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
-					connectionLastLostEpochSeconds = 0;
-				} else { 
-					logger.debug("Skipping adding cnxlostepsecs and cnxregainedepsecs after regaining connection for pv " + name);
-				}
-				isFirstDataAfterConnection=false;
-			}
-		}
-	}
 	
 	/** Notify all listeners. */
 	private void fireValueUpdate() {
@@ -884,6 +750,15 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			listener.pvDisconnected(this);
 		}
 	}
+	
+	/** Notify all listeners. */
+	private void fireConnectionRequestMade() {
+		for (final PVListener listener : listeners) {
+			listener.pvConnectionRequestMade(this);
+		}
+	}
+
+	
 	@Override
 	public String toString() {
 		return "EPICS_V3_PV '" + name + "'";
@@ -1009,15 +884,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			retval.putAll(runTimeFieldsData);
 		}
 		return retval;
-	}
-	
-	public long getConnectionLastLostEpochSeconds() {
-		return connectionLastLostEpochSeconds;
-	}
-	
-	@Override
-	public void resetConnectionLastLostEpochSeconds() {
-		connectionLastLostEpochSeconds = 0;
 	}
 	
 	@Override
