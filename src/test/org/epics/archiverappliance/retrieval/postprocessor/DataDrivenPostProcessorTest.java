@@ -89,10 +89,10 @@ public class DataDrivenPostProcessorTest {
 		Timestamp start = TimeUtils.convertFromISO8601String("2014-12-08T07:03:55.000Z");
 		Timestamp end   = TimeUtils.convertFromISO8601String("2014-12-08T08:04:00.000Z");
 		
-		checkRetrieval(URLEncoder.encode(newPVName, "UTF-8"), start, end, 1, true);
-		checkRetrieval(URLEncoder.encode("firstSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
-		checkRetrieval(URLEncoder.encode("lastSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
-		checkRetrieval(URLEncoder.encode("meanSample_7(" + newPVName + ")", "UTF-8"), start, end, 1, true);
+		checkRetrieval(newPVName, start, end, 1, true);
+		checkRetrieval("firstSample_7(" + newPVName + ")", start, end, 1, true);
+		checkRetrieval("lastSample_7(" + newPVName + ")", start, end, 1, true);
+		checkRetrieval("meanSample_7(" + newPVName + ")", start, end, 1, true);
 	}
 	
 	private int checkRetrieval(String retrievalPVName, Timestamp start, Timestamp end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {

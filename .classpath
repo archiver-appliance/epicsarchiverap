@@ -27,10 +27,10 @@
 	<classpathentry kind="lib" path="lib/test/commons-exec-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/test/selenium-java-2.43.1.jar"/>
 	<classpathentry kind="lib" path="lib/test/junit-4.11.jar"/>
-	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/caj-1.1.15.jar"/>
 	<classpathentry kind="lib" path="lib/pvAccessJava-4.0.0.jar"/>
 	<classpathentry kind="lib" path="lib/pvDataJava-4.0.0.jar"/>
+	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

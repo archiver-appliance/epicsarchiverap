@@ -98,9 +98,9 @@ public class DeadBandTest {
 		Timestamp start = TimeUtils.convertFromISO8601String("2014-12-10T19:10:00.000Z");
 		Timestamp end   = TimeUtils.convertFromISO8601String("2014-12-10T19:15:55.000Z");
 		
-		checkRetrieval(URLEncoder.encode(newPVName, "UTF-8"), start, end, 37, true);
+		checkRetrieval(newPVName, start, end, 37, true);
 		try(FileBackedPBEventStream compareStream = new FileBackedPBEventStream("TST-CT{}Sig:2-I", Paths.get("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/deadband/sig2-w-adel.pb"), ArchDBRTypes.DBR_SCALAR_DOUBLE)) { 
-			compareStreams(URLEncoder.encode("deadBand_2.0(" + newPVName + ")", "UTF-8"), start, end, compareStream);
+			compareStreams("deadBand_2.0(" + newPVName + ")", start, end, compareStream);
 		}
 	}
 	
