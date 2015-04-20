@@ -99,30 +99,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		return reacordTypeName;
 	}
 	
-	private enum State {
-		/** Nothing happened, yet */
-		Idle,
-		/** Trying to connect */
-		Connecting,
-		/** Got basic connection */
-		Connected,
-		/** Requested MetaData */
-		GettingMetadata,
-		/** Received MetaData */
-		GotMetaData,
-		/** Subscribing to receive value updates */
-		Subscribing,
-		/**
-		 * Received Value Updates
-		 * <p>
-		 * This is the ultimate state!
-		 */
-		GotMonitor,
-		/** Got disconnected */
-		Disconnected
-	}
-    
-	private State state = State.Idle;
+	private PVConnectionState state = PVConnectionState.Idle;
 	
 	/**
 	 *  Sourced from org/csstudio/platform/libs/epics/EpicsPlugin.java 
@@ -261,7 +238,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		public void getCompleted(final GetEvent event) { // This runs in a CA
 															// thread
 			if (event.getStatus().isSuccessful()) {
-				state = State.GotMetaData;
+				state = PVConnectionState.GotMetaData;
 				final DBR dbr = event.getDBR();
 				totalMetaInfo.applyBasicInfo(EPICS_V3_PV.this.name, dbr, EPICS_V3_PV.this.configservice);
 			} else {
@@ -373,7 +350,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			public void run() {
 				//
 				try {
-					state = State.Connecting;
+					state = PVConnectionState.Connecting;
 					// Already attempted a connection?
 					synchronized (this) {
 						if (channel_ref == null) {
@@ -449,7 +426,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				// N subscriptions.
 				final DBRType type = DBR_Helper.getTimeType(plain,
 						channel.getFieldType());
-				state = State.Subscribing;
+				state = PVConnectionState.Subscribing;
 				totalMetaInfo.setStartTime(System.currentTimeMillis());
 				// isnotTimestampDBR
 				if (this.name.endsWith(".RTYP")) {
@@ -557,7 +534,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				}
 			});
 		} else {
-			state = State.Disconnected;
+			state = PVConnectionState.Disconnected;
 			connected = false;
 			PVContext.scheduleCommand(this.name, this.jcaCommandThreadId, this.channel_ref, "Connection changed disconnected", new Runnable() {
 				@Override
@@ -581,9 +558,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			logger.warn("Exception handling connection state change for " + this.name, ex);
 			return;
 		}
-		if (state == State.Connected)
+		if (state == PVConnectionState.Connected)
 			return;
-		state = State.Connected;
+		state = PVConnectionState.Connected;
 		hostName=channel_ref.getChannel().getHostName();
 		totalMetaInfo.setHostName(hostName);
 		for (final PVListener listener : listeners) {
@@ -604,7 +581,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		try {
 			DBRType type = channel.getFieldType();
 			if (!(plain || type.isSTRING())) {
-				state = State.GettingMetadata;
+				state = PVConnectionState.GettingMetadata;
 				if (type.isDOUBLE() || type.isFLOAT())
 					type = DBRType.CTRL_DOUBLE;
 				else if (type.isENUM())
@@ -653,7 +630,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			}
 			return;
 		}
-		state = State.GotMonitor;
+		state = PVConnectionState.GotMonitor;
 		if (!connected)
 			connected = true;
 		try {
@@ -895,7 +872,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			public void getCompleted(final GetEvent event) {
 				// This runs in a CA thread
 				if (event.getStatus().isSuccessful()) {
-					state = State.GotMetaData;
+					state = PVConnectionState.GotMetaData;
 					final DBR dbr = event.getDBR();
 					logger.debug("Updating metadata (EGU/PREC etc) for pv " + EPICS_V3_PV.this.name);
 					totalMetaInfo.applyBasicInfo(EPICS_V3_PV.this.name, dbr, EPICS_V3_PV.this.configservice);
@@ -908,7 +885,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			if(channel_ref.getChannel().getConnectionState() == ConnectionState.CONNECTED) { 
 				DBRType type = channel_ref.getChannel().getFieldType();
 				if (!(plain || type.isSTRING())) {
-					state = State.GettingMetadata;
+					state = PVConnectionState.GettingMetadata;
 					if (type.isDOUBLE() || type.isFLOAT())
 						type = DBRType.CTRL_DOUBLE;
 					else if (type.isENUM())
