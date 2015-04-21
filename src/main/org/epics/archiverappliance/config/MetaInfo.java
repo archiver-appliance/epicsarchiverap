@@ -25,6 +25,7 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.pvdata.pv.PVStructure;
 /** this class is used for getting the meta data
  *  <p>
  *  @author luofeng li
@@ -437,13 +438,13 @@ public class MetaInfo {
 
 	/**
 	 * compute the storage rate and the event rate
-	 * @param dbr 
+	 * @param archDBRType 
 	 * @param now  the current time and it is  the number of milliseconds since 1970/01/01
 	 * @param dbrtimeevent 
 	 */
 
-	public void computeRate(final DBR dbr,long now,DBRTimeEvent dbrtimeevent) {
-		count=dbr.getCount();
+	public void computeRate(final ArchDBRTypes archDBRType, long now, DBRTimeEvent dbrtimeevent, int elementCount) {
+		this.count=elementCount;
 		if(count>1)  { 
 			isVector=true;
 		} else { 
@@ -461,7 +462,7 @@ public class MetaInfo {
 			this.second=(now-this.startTime)/1000;
 		}
 		eventCount++;
-		archDBRTypes=JCA2ArchDBRType.valueOf(dbr);
+		this.archDBRTypes=archDBRType;
 		storageSize=storageSize+dbrtimeevent.getRawForm().len;
 	}
 
@@ -710,6 +711,9 @@ public class MetaInfo {
 		for(String fieldName : otherMetaInfo.keySet()) {
 			retVal.put(fieldName, otherMetaInfo.get(fieldName));
 		}
-		
 	}
+
+    public void applyV4BasicInfo(String pvName, PVStructure pvStructure, ConfigService configService) {
+        // TODO Copy over meta info from the pvStructure...
+    }
 }
