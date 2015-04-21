@@ -438,13 +438,12 @@ public class MetaInfo {
 
 	/**
 	 * compute the storage rate and the event rate
-	 * @param archDBRType 
-	 * @param now  the current time and it is  the number of milliseconds since 1970/01/01
 	 * @param dbrtimeevent 
 	 */
 
-	public void computeRate(final ArchDBRTypes archDBRType, long now, DBRTimeEvent dbrtimeevent, int elementCount) {
-		this.count=elementCount;
+	public void computeRate(DBRTimeEvent dbrtimeevent) {
+		long now = System.currentTimeMillis();
+		this.count=dbrtimeevent.getSampleValue().getElementCount();
 		if(count>1)  { 
 			isVector=true;
 		} else { 
@@ -462,7 +461,7 @@ public class MetaInfo {
 			this.second=(now-this.startTime)/1000;
 		}
 		eventCount++;
-		this.archDBRTypes=archDBRType;
+		this.archDBRTypes=dbrtimeevent.getDBRType();
 		storageSize=storageSize+dbrtimeevent.getRawForm().len;
 	}
 

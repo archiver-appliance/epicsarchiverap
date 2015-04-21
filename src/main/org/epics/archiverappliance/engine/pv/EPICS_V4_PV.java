@@ -352,7 +352,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 			try { 
 				dbrtimeevent = con.newInstance(totalPVStructure);
-				totalMetaInfo.computeRate(dbrtimeevent.getDBRType(), System.currentTimeMillis(), dbrtimeevent, dbrtimeevent.getSampleValue().getElementCount());
+				totalMetaInfo.computeRate(dbrtimeevent);
 			} catch (Exception e) {
 				logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);
 			}

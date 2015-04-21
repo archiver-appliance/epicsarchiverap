@@ -658,7 +658,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 					}
 				}
 				dbrtimeevent = con.newInstance(dbr);
-				totalMetaInfo.computeRate(generatedDBRType, System.currentTimeMillis(), dbrtimeevent, dbr.getCount());
+				totalMetaInfo.computeRate(dbrtimeevent);
 				dbr = null;
 			} catch (Exception e) {
 				logger.error(
