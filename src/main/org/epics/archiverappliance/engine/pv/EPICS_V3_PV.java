@@ -95,7 +95,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
     * get the RTYP of this pv
     * @return record type name
     */
-	public String getReacordTypeName() {
+	@Override
+	public String getRecordTypeName() {
 		return reacordTypeName;
 	}
 	
@@ -228,7 +229,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
     *get  the meta info for this pv 
     * @return MetaInfo 
     */
-	public MetaInfo getToalMetaInfo() {
+	@Override
+	public MetaInfo getTotalMetaInfo() {
 		return totalMetaInfo;
 	}
 	
@@ -909,7 +911,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	public HashMap<String, String> getLatestMetadata() { 
 		HashMap<String, String> retVal = new HashMap<String, String>();
 		// The totalMetaInfo is updated once every 24hours...
-		MetaInfo metaInfo = this.getToalMetaInfo();
+		MetaInfo metaInfo = this.getTotalMetaInfo();
 		if(metaInfo != null) {
 			metaInfo.addToDict(retVal);
 		}

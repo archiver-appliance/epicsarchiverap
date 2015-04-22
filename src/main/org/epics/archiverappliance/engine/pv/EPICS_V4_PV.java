@@ -16,7 +16,6 @@ import org.epics.pvaccess.client.Channel.ConnectionState;
 import org.epics.pvaccess.client.ChannelGet;
 import org.epics.pvaccess.client.ChannelGetRequester;
 import org.epics.pvaccess.client.ChannelProvider;
-import org.epics.pvaccess.client.ChannelProviderRegistryFactory;
 import org.epics.pvaccess.client.ChannelRequester;
 import org.epics.pvdata.copy.CreateRequest;
 import org.epics.pvdata.misc.BitSet;
@@ -31,10 +30,11 @@ import org.epics.pvdata.pv.Structure;
 
 public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, MonitorRequester {
 	private static final Logger logger = Logger.getLogger(EPICS_V4_PV.class.getName());
-	private static ChannelProvider channelProvider;
 
 	/** Channel name. */
 	final private String name = null;
+	
+	private ChannelProvider channelProvider;
 	
 	/**the meta info for this pv*/
 	private MetaInfo totalMetaInfo = new MetaInfo();
@@ -339,29 +339,62 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 			monitorElement = monitor.poll();
 
-			if (monitorElement == null)
-				return; // no monitors are present
-			
-			if(archDBRTypes == null || con == null) { 
-				logger.error("Have not determined the DBRTYpes yet for " + this.name);
-				return;
+			while (monitorElement != null)  { 
+				if(archDBRTypes == null || con == null) { 
+					logger.error("Have not determined the DBRTYpes yet for " + this.name);
+					return;
+				}
+
+				PVStructure totalPVStructure = monitorElement.getPVStructure();
+				
+
+				try { 
+					dbrtimeevent = con.newInstance(totalPVStructure);
+					totalMetaInfo.computeRate(dbrtimeevent);
+
+					if (isarchiveFieldsField) { 
+						parentPVForMetaField.updataMetaFieldValue(this.name, "" + dbrtimeevent.getSampleValue().toString());
+					}
+					
+					if (hasMetaField) {
+						// //////////handle the field value when it
+						// changes//////////////
+						if (changedarchiveFieldsData.size() > 0) {
+							logger.debug("Adding changed field for pv " + name + " with " + changedarchiveFieldsData.size());
+							HashMap<String, String> tempHashMap = new HashMap<String, String>();
+							tempHashMap.putAll(changedarchiveFieldsData);
+							// dbrtimeevent.s
+							dbrtimeevent.setFieldValues(tempHashMap, true);
+							changedarchiveFieldsData.clear();
+						}
+						// //////////////////////////
+						// ////////////save all the fields once every day//////////////
+						if (this.lastTimeStampWhenSavingarchiveFields == null) {
+							if (allarchiveFieldsData.size() != 0) {
+								saveMetaDataOnceEveryDay();
+							}
+						} else {
+							Calendar currentCalendar = Calendar.getInstance();
+							currentCalendar.add(Calendar.DAY_OF_MONTH, -1);
+							if (currentCalendar
+									.after(lastTimeStampWhenSavingarchiveFields)) {
+								// Calendar currentCalendar2=Calendar.getInstance();
+								saveMetaDataOnceEveryDay();
+							}
+						}
+						// //////////////////////////////
+					}
+					fireValueUpdate();
+
+				} catch (Exception e) {
+					logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);
+				}
+
+				if (!connected)
+					connected = true;
+
+				monitorElement = monitor.poll();
 			}
-
-			PVStructure totalPVStructure = monitorElement.getPVStructure();
-
-
-			try { 
-				dbrtimeevent = con.newInstance(totalPVStructure);
-				totalMetaInfo.computeRate(dbrtimeevent);
-			} catch (Exception e) {
-				logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);
-			}
-
-
-			if (!connected)
-				connected = true;
-
-			fireValueUpdate();
 
 		} catch (final Exception ex) {
 			logger.error("exception in monitor changed ", ex);
@@ -553,6 +586,27 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 		}
 	}
 	
+	private void saveMetaDataOnceEveryDay() {
+		HashMap<String, String> tempHashMap = new HashMap<String, String>();
+		tempHashMap.putAll(allarchiveFieldsData);
+		if(runTimeFieldsData != null && !runTimeFieldsData.isEmpty()) {
+			// This should store fields like the description at least once every day.
+			tempHashMap.putAll(runTimeFieldsData);
+		}
+		if(this.totalMetaInfo != null) {
+			if(this.totalMetaInfo.getUnit() != null) { 
+				tempHashMap.put("EGU", this.totalMetaInfo.getUnit());
+			}
+			if(this.totalMetaInfo.getPrecision() != 0) { 
+				tempHashMap.put("PREC", Integer.toString(this.totalMetaInfo.getPrecision()));
+			}
+		}
+		// dbrtimeevent.s
+		dbrtimeevent.setFieldValues(tempHashMap, false);
+		lastTimeStampWhenSavingarchiveFields = Calendar.getInstance();
+	}
+
+	
 	
 	private ArchDBRTypes determineDBRType(String structureID, String valueTypeId) { 
 		if(structureID == null || valueTypeId == null) { 
@@ -579,39 +633,40 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 				logger.warn("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
 				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
-			} else {
-				switch(valueTypeId) { 
-				case "string":
-					return ArchDBRTypes.DBR_SCALAR_STRING;
-				case "double":
-					return ArchDBRTypes.DBR_SCALAR_DOUBLE;
-				case "int":
-					return ArchDBRTypes.DBR_SCALAR_INT;
-				case "byte":
-					return ArchDBRTypes.DBR_SCALAR_BYTE;
-				case "float":
-					return ArchDBRTypes.DBR_SCALAR_FLOAT;
-				case "short":
-					return ArchDBRTypes.DBR_SCALAR_SHORT;
-				case "enum_t":
-					return ArchDBRTypes.DBR_SCALAR_ENUM;
-				default:
-					logger.warn("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
-					return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
-				}
+		} else {
+			switch(valueTypeId) { 
+			case "string":
+				return ArchDBRTypes.DBR_SCALAR_STRING;
+			case "double":
+				return ArchDBRTypes.DBR_SCALAR_DOUBLE;
+			case "int":
+				return ArchDBRTypes.DBR_SCALAR_INT;
+			case "byte":
+				return ArchDBRTypes.DBR_SCALAR_BYTE;
+			case "float":
+				return ArchDBRTypes.DBR_SCALAR_FLOAT;
+			case "short":
+				return ArchDBRTypes.DBR_SCALAR_SHORT;
+			case "enum_t":
+				return ArchDBRTypes.DBR_SCALAR_ENUM;
+			default:
+				logger.warn("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
+				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
+		}
 	}
 	
+	/***
+	 *get  the meta info for this pv 
+	 * @return MetaInfo 
+	 */
+	@Override
+	public MetaInfo getTotalMetaInfo() {
+		return totalMetaInfo;
+	}
 	
-    private static void init() {
-        if (channelProvider == null) {
-                org.epics.pvaccess.ClientFactory.start();
-                logger.info("Registered the pvAccess client factory.");
-                channelProvider = ChannelProviderRegistryFactory.getChannelProviderRegistry().getProvider(org.epics.pvaccess.ClientFactory.PROVIDER_NAME);
-
-                for(String providerName : ChannelProviderRegistryFactory.getChannelProviderRegistry().getProviderNames()) {
-                        logger.debug("PVAccess Channel provider " + providerName);
-                }
-        }
-    }
+	@Override
+	public String getRecordTypeName() { 
+		return this.dbrtimeevent.getSampleValue().getStringValue(0);
+	}
 }

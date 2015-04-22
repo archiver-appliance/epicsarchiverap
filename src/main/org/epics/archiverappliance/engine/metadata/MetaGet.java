@@ -25,8 +25,8 @@ import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorStringSampleValue;
 import org.epics.archiverappliance.data.VectorValue;
-import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
 import org.epics.archiverappliance.engine.pv.PV;
+import org.epics.archiverappliance.engine.pv.PVFactory;
 import org.epics.archiverappliance.engine.pv.PVListener;
 /**
  * this class is used to create channel for pv and compute the meta info for one pv.
@@ -39,7 +39,7 @@ public class MetaGet implements Runnable {
 	private String pvName;
 	private String metadatafields[];
 	private MetaCompletedListener metaListener;
-	private Hashtable<String, EPICS_V3_PV> pvList = new Hashtable<String, EPICS_V3_PV>();
+	private Hashtable<String, PV> pvList = new Hashtable<String, PV>();
 
 	final private ConfigService configservice;
 	private static final Logger logger = Logger.getLogger(MetaGet.class.getName());
@@ -61,7 +61,7 @@ public class MetaGet implements Runnable {
 		try {
 
 			int jcaCommandThreadId = configservice.getEngineContext().assignJCACommandThread(pvName, null);
-			EPICS_V3_PV pv = new EPICS_V3_PV(pvName, configservice, jcaCommandThreadId);
+			PV pv = PVFactory.createPV(pvName, configservice, jcaCommandThreadId);
 			pv.addListener(new PVListener() {
 				@Override
 				public void pvValueUpdate(PV pv) {
@@ -92,11 +92,11 @@ public class MetaGet implements Runnable {
 			pvList.put("main", pv);
 			pv.start();
 
-			EPICS_V3_PV pv2 = new EPICS_V3_PV(pvName + ".NAME", configservice, jcaCommandThreadId);
+			PV pv2 = PVFactory.createPV(pvName + ".NAME", configservice, jcaCommandThreadId);
 			pvList.put("NAME", pv2);
 			pv2.start();
 			
-			EPICS_V3_PV pv3 = new EPICS_V3_PV(pvName + ".NAME$", configservice, jcaCommandThreadId);
+			PV pv3 = PVFactory.createPV(pvName + ".NAME$", configservice, jcaCommandThreadId);
 			pvList.put("NAME$", pv3);
 			pv3.start();
 			
@@ -104,7 +104,7 @@ public class MetaGet implements Runnable {
 				for (int i = 0; i < metadatafields.length; i++) {
 					String metaField = metadatafields[i];
 					// We return the fields of the src PV even if we are archiving a field...
-					EPICS_V3_PV pvTemp = new EPICS_V3_PV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId);
+					PV pvTemp = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId);
 					pvTemp.start();
 					pvList.put(metaField, pvTemp);
 				}
@@ -118,11 +118,11 @@ public class MetaGet implements Runnable {
 	public void run() {
 		logger.debug("Finished the timer to measure event and storage rates for about 60 seconds for pv " + MetaGet.this.pvName);
 		try {
-			EPICS_V3_PV pvMain = pvList.get("main");
-			MetaInfo mainMeta = pvMain.getToalMetaInfo();
+			PV pvMain = pvList.get("main");
+			MetaInfo mainMeta = pvMain.getTotalMetaInfo();
 			// Per Dirk Zimoch, we first check the NAME$.
 			// If that exists, we use it. If not, we use the NAME
-			EPICS_V3_PV pv_NameDollar = pvList.get("NAME$");
+			PV pv_NameDollar = pvList.get("NAME$");
 			DBRTimeEvent nameDollarValue = pv_NameDollar.getDBRTimeEvent();
 			if (nameDollarValue != null && nameDollarValue.getSampleValue() != null) {
 				logger.debug("Using the NAME$ value as the NAME for pv " + pvName);
@@ -130,7 +130,7 @@ public class MetaGet implements Runnable {
 				parseAliasInfo(sampleValue, mainMeta);
 			} else { 
 				logger.debug("Using the NAME value as the NAME for pv " + pvName);
-				EPICS_V3_PV pv_Name = pvList.get("NAME");
+				PV pv_Name = pvList.get("NAME");
 				DBRTimeEvent nameValue = pv_Name.getDBRTimeEvent();
 				if (nameValue != null && nameValue.getSampleValue() != null) {
 					SampleValue sampleValue = nameValue.getSampleValue();
@@ -147,7 +147,9 @@ public class MetaGet implements Runnable {
 					// These have already been processed; so do nothing.
 				} else { 
 					if (fieldName.endsWith("RTYP")) {
-						mainMeta.addOtherMetaInfo(fieldName, pvList.get(fieldName).getReacordTypeName());
+						String rtyp = pvList.get(fieldName).getRecordTypeName();
+						mainMeta.addOtherMetaInfo(fieldName, rtyp);
+						logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
 					} else {
 						DBRTimeEvent valueTemp = pvList.get(fieldName).getDBRTimeEvent();
 						if (valueTemp != null) {
@@ -225,7 +227,7 @@ public class MetaGet implements Runnable {
 		logger.debug("In MetaGet, processing field " + fieldName);
 		if(fieldName.equals("SCAN")) {
 			int enumIndex = ((ScalarValue<?>) tempvalue).getValue().intValue();
-			String[] labels = pvList.get(fieldName).getToalMetaInfo().getLabel();
+			String[] labels = pvList.get(fieldName).getTotalMetaInfo().getLabel();
 			if(labels != null && enumIndex < labels.length) { 
 				String scanValue = labels[enumIndex];
 				logger.debug("Looked up scan value enum name and it is " + scanValue);
@@ -258,7 +260,7 @@ public class MetaGet implements Runnable {
 		MetaGet metaGet = metaGets.get(pvName);
 		if(metaGet != null) { 
 			metaGets.remove(pvName);
-			for(EPICS_V3_PV pv : metaGet.pvList.values()) { 
+			for(PV pv : metaGet.pvList.values()) { 
 				pv.stop();
 			}
 			return true;

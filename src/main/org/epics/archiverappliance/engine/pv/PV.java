@@ -12,6 +12,7 @@ import gov.aps.jca.CAException;
 import java.util.HashMap;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
 
@@ -135,10 +136,21 @@ public interface PV
 	 */
 	public HashMap<String, String> getCurrentCopyOfMetaFields();
 	
+	/**
+	 * Get the MetaInfo for this PV; used during initial MetaGet phase
+	 * @return
+	 */
+	public MetaInfo getTotalMetaInfo();
+	
+	/**
+	 * Get the RTYP for this PV; in EPICS V3, there is a lot of complexity around the RTYP. So, we have a special method for this.
+	 * @return
+	 */
+	public String getRecordTypeName();
+	
 	
 	public  String getHostName();
-	
-	
+
 	/**
 	 * Get any low level info as a display string; this is typically meant for debugging purposes..
 	 * @return

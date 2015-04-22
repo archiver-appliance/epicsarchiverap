@@ -45,6 +45,8 @@ import org.epics.archiverappliance.engine.writer.WriterRunnable;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
+import org.epics.pvaccess.client.ChannelProvider;
+import org.epics.pvaccess.client.ChannelProviderRegistryFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -75,6 +77,8 @@ public class EngineContext {
     /**the command thread for all  pvs*/
 	private JCACommandThread[] command_threads = null;
 	private Context[] context2CommandThreadId = null;
+	private ChannelProvider channelProvider;
+
 	
 	/**the total time consumed by the writer*/
 	private double totalTimeConsumedByWritter;
@@ -247,6 +251,7 @@ public class EngineContext {
 			}
 		}
 		
+		this.iniV4ChannelProvidert();
 		
 		this.sampleBufferCapacityAdjustment = Double.parseDouble(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.config.PVTypeInfo.sampleBufferCapacityAdjustment", "1.0"));
 		logger.debug("Buffer capacity adjustment is " + this.sampleBufferCapacityAdjustment);
@@ -693,4 +698,18 @@ public class EngineContext {
 		}
 		return totalCAJChannelCount;
 	}
+	
+	
+    private void iniV4ChannelProvidert() {
+        if (channelProvider == null) {
+                org.epics.pvaccess.ClientFactory.start();
+                logger.info("Registered the pvAccess client factory.");
+                channelProvider = ChannelProviderRegistryFactory.getChannelProviderRegistry().getProvider(org.epics.pvaccess.ClientFactory.PROVIDER_NAME);
+
+                for(String providerName : ChannelProviderRegistryFactory.getChannelProviderRegistry().getProviderNames()) {
+                        logger.debug("PVAccess Channel provider " + providerName);
+                }
+        }
+    }
+
 }
