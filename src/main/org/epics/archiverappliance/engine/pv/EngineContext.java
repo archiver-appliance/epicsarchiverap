@@ -711,5 +711,8 @@ public class EngineContext {
                 }
         }
     }
+	public ChannelProvider getChannelProvider() {
+		return channelProvider;
+	}
 
 }

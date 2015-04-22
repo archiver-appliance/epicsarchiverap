@@ -20,6 +20,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.pvdata.pv.PVStructure;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
@@ -77,6 +78,30 @@ public class PBScalarEnum implements DBRTimeEvent, PartionedTime {
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
 		dbevent = builder.build();
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));;
+	}
+
+	public PBScalarEnum(PVStructure v4Data) {
+        PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
+        long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
+        int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
+        Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
+        YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+
+        PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
+        int severity = alarmPVStructure.getIntField("severity").get();
+        int status = alarmPVStructure.getIntField("status").get();
+        
+        int value = v4Data.getStructureField("value").getIntField("index").get();
+        
+        year = yst.getYear();
+        Builder builder = EPICSEvent.ScalarEnum.newBuilder()
+                        .setSecondsintoyear(yst.getSecondsintoyear())
+                        .setNano(yst.getNanos())
+                        .setVal(value);
+        if(severity != 0) builder.setSeverity(severity);
+        if(status != 0) builder.setStatus(status);
+        dbevent = builder.build();
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
 	@Override

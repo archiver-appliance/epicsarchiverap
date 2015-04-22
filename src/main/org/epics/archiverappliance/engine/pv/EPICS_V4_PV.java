@@ -32,7 +32,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	private static final Logger logger = Logger.getLogger(EPICS_V4_PV.class.getName());
 
 	/** Channel name. */
-	final private String name = null;
+	private String name = null;
 	
 	private ChannelProvider channelProvider;
 	
@@ -44,7 +44,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	private Channel channel;
 	
 	/**configservice used by this pv*/
-	final private ConfigService configservice = null;
+	private ConfigService configservice = null;
 	
 	/** PVListeners of this PV */
 	final private CopyOnWriteArrayList<PVListener> listeners = new CopyOnWriteArrayList<PVListener>();
@@ -72,7 +72,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	private DBRTimeEvent dbrtimeevent;
 	
 	/**the ArchDBRTypes of this pv*/
-	private ArchDBRTypes archDBRTypes = null;
+	private ArchDBRTypes archDBRType = null;
 	
 	/**
 	 * The JCA command thread that processes actions for this PV.
@@ -116,6 +116,20 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 	private Monitor subscription = null;
 
+	public EPICS_V4_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
+		this(name, configservice, jcaCommandThreadId);
+		this.archDBRType = archDBRTypes;
+		if(archDBRTypes != null) { 
+			this.con = configservice.getArchiverTypeSystem().getJCADBRConstructor(this.archDBRType);
+		}
+	}
+	
+	public EPICS_V4_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
+		this.name = name;
+		this.configservice = configservice;
+		this.channelProvider = configservice.getEngineContext().getChannelProvider();
+		this.jcaCommandThreadId = jcaCommandThreadId;
+	}
 	
 
 	@Override
@@ -199,7 +213,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 	@Override
 	public ArchDBRTypes getArchDBRTypes() {
-		return archDBRTypes;
+		return archDBRType;
 	}
 
 	@Override
@@ -308,9 +322,9 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 				Field valueField = structure.getField("value");
 				logger.debug("Value field in monitorConnect is of type " + valueField.getID());
 				
-				archDBRTypes = this.determineDBRType(structureID, valueField.getID());
-				con = configservice.getArchiverTypeSystem().getV4Constructor(archDBRTypes);
-				logger.debug("Determined ArchDBRTypes for " + this.name + " as " + archDBRTypes);
+				archDBRType = this.determineDBRType(structureID, valueField.getID());
+				con = configservice.getArchiverTypeSystem().getV4Constructor(archDBRType);
+				logger.debug("Determined ArchDBRTypes for " + this.name + " as " + archDBRType);
 
 				channelMonitor.start();
 				this.notify();
@@ -340,7 +354,11 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 			monitorElement = monitor.poll();
 
 			while (monitorElement != null)  { 
-				if(archDBRTypes == null || con == null) { 
+				if(logger.isDebugEnabled()) { 
+					logger.debug("Obtained monitor event for pv " + this.name);
+				}
+				
+				if(archDBRType == null || con == null) { 
 					logger.error("Have not determined the DBRTYpes yet for " + this.name);
 					return;
 				}
@@ -388,6 +406,8 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 				} catch (Exception e) {
 					logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);
+				} finally {
+					monitor.release(monitorElement);
 				}
 
 				if (!connected)
@@ -398,8 +418,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 		} catch (final Exception ex) {
 			logger.error("exception in monitor changed ", ex);
-		} finally {
-			monitor.release(monitorElement);
 		}
 	}
 
@@ -465,7 +483,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	}
 	
 	private void connect() {
-		logger.info("pv connectting");
+		logger.info("Connecting to PV " + this.name);
 		this.scheduleCommand(new Runnable() {
 			@Override
 			public void run() {
@@ -570,7 +588,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 		synchronized (this) {
 			sub_copy = subscription;
 			subscription = null;
-			archDBRTypes = null;
+			archDBRType = null;
 			con = null;
 		}
 
@@ -667,6 +685,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	
 	@Override
 	public String getRecordTypeName() { 
-		return this.dbrtimeevent.getSampleValue().getStringValue(0);
+		return this.dbrtimeevent.getSampleValue().toString();
 	}
 }
