@@ -116,7 +116,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 	private Monitor subscription = null;
 
-	public EPICS_V4_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
+	EPICS_V4_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
 		this(name, configservice, jcaCommandThreadId);
 		this.archDBRType = archDBRTypes;
 		if(archDBRTypes != null) { 
@@ -124,7 +124,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 		}
 	}
 	
-	public EPICS_V4_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
+	EPICS_V4_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
 		this.name = name;
 		this.configservice = configservice;
 		this.channelProvider = configservice.getEngineContext().getChannelProvider();

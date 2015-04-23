@@ -271,7 +271,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 *  @param configservice  The config service used by this pv
 	 *  @param isControlPV true if this is a pv controlling other pvs      
 	 */
-	public EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
+	EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
 		this(name, false, configservice, jcaCommandThreadId);
 		this.archDBRType = archDBRTypes;
 		if(archDBRTypes != null) { 
@@ -290,7 +290,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * @param  configservice The config service used by this pv
 	 */
 	// isControlPV
-	public EPICS_V3_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
+	EPICS_V3_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
 		this(name, false, configservice, jcaCommandThreadId);
 	}
 	

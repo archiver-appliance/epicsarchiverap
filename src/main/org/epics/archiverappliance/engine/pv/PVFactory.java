@@ -38,4 +38,12 @@ public class PVFactory {
 		}
 	}
 
+	public static ControllingPV createControllingPV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean usePVAccess) {
+//		if(usePVAccess) {
+//			// TODO Make EPICS_V4_PV implement controlling PV.
+//			// return new EPICS_V4_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId);
+//		} else { 
+		return new EPICS_V3_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId);
+//		}
+	}
 }

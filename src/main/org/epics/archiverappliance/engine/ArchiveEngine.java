@@ -38,8 +38,8 @@ import org.epics.archiverappliance.engine.model.MonitoredArchiveChannel;
 import org.epics.archiverappliance.engine.model.SampleMode;
 import org.epics.archiverappliance.engine.model.ScannedArchiveChannel;
 import org.epics.archiverappliance.engine.pv.ControllingPV;
-import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
 import org.epics.archiverappliance.engine.pv.EngineContext;
+import org.epics.archiverappliance.engine.pv.PVFactory;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
@@ -282,7 +282,7 @@ public class ArchiveEngine {
 
 			if (controllingPV == null) {
 				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName, usePVAccess);
-				controllingPV = new EPICS_V3_PV(controllingPVName, configservice, true, archdbrtype, configservice.getEngineContext().assignJCACommandThread(controllingPVName, null));
+				controllingPV = PVFactory.createControllingPV(controllingPVName, configservice, true, archdbrtype, configservice.getEngineContext().assignJCACommandThread(controllingPVName, null), false);
 				controlingPVList.put(controllingPVName, controllingPV);
 				controllingPV.addControledPV(pvName);
 				controllingPV.start();
