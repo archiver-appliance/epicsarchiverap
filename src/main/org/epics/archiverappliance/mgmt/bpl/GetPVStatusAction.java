@@ -57,8 +57,9 @@ public class GetPVStatusAction implements BPLAction {
 		for(String pvName : pvNames) {
 			String pvNameFromRequest = pvName;
 
-			// Get rid of .VAL
+			// Get rid of .VAL and the V4 prefix
 			pvName = PVNames.normalizePVName(pvName);
+			pvName = PVNames.stripPrefixFromName(pvName);
 			addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
 			
 			ApplianceInfo info = PVNames.determineAppropriateApplianceInfo(pvName, configService);

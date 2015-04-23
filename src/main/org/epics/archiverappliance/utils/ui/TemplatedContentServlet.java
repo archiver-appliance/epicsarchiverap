@@ -80,6 +80,7 @@ public class TemplatedContentServlet extends HttpServlet {
 		}
 		
 		String pvName = req.getParameter("pv");
+		pvName = PVNames.stripPrefixFromName(pvName);
 		String startTimeStr = req.getParameter("from"); 
 		String endTimeStr = req.getParameter("to");
 		

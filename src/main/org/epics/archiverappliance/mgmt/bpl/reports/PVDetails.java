@@ -50,6 +50,8 @@ public class PVDetails implements BPLAction {
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		String pvNameFromRequest = req.getParameter("pv");
 		String pvName = PVNames.stripFieldNameFromPVName(pvNameFromRequest);
+		// Get rid of the V4 prefix
+		pvName = PVNames.stripPrefixFromName(pvName);
 
 		ApplianceInfo info = null;
 		PVTypeInfo typeInfoForNameFromRequest = configService.getTypeInfoForPV(pvNameFromRequest);
@@ -95,6 +97,7 @@ public class PVDetails implements BPLAction {
 				addDetailedStatus(result, "Is this PV paused:", typeInfo.isPaused() ? "Yes" : "No");
 				addDetailedStatus(result, "Sampling method:", typeInfo.getSamplingMethod().toString());
 				addDetailedStatus(result, "Sampling period:", Float.toString(typeInfo.getSamplingPeriod()));
+				addDetailedStatus(result, "Are we using PVAccess?", typeInfo.isUsePVAccess() ? "Yes" : "No");
 				for(String extraFieldName : configService.getExtraFields()) {
 					String extraValue = typeInfo.getExtraFields().get(extraFieldName);
 					if(extraValue != null) {
