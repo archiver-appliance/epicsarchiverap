@@ -82,7 +82,7 @@ public class ArchiveFieldsTest extends TestCase {
 			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
 			testConfigService.registerPVToAppliance(pvName, testConfigService.getMyApplianceInfo());
 
-			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.MONITOR, 60, myWriter, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, typeInfo.getArchiveFields());
+			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.MONITOR, 60, myWriter, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, typeInfo.getArchiveFields(), false);
 			Thread.sleep(15*1000);
 			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
 			Thread.sleep(15*1000);			
@@ -148,7 +148,7 @@ public class ArchiveFieldsTest extends TestCase {
 			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 60, writer,
 					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null,
-					controlPVName, metaFields, null);
+					controlPVName, metaFields, null, false);
 			Thread.sleep(15*1000);
 			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
 			Thread.sleep(15*1000);			

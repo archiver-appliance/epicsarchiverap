@@ -80,7 +80,7 @@ public class ArchiveEngine {
 			final Enablement enablement, final SampleMode sample_mode, 
 			final Timestamp last_sampleTimestamp, 
 			final ConfigService configservice, final ArchDBRTypes archdbrtype, 
-			final String controlPVname, final String iocHostName) throws Exception {
+			final String controlPVname, final String iocHostName, final boolean usePVAccess) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = null;
 		// Is this an existing channel?
@@ -110,12 +110,12 @@ public class ArchiveEngine {
 		// Create new channel
 		if (sample_mode.isMonitor()) {
 			if (sample_mode.getDelta() > 0) {
-				channel = new DeltaArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(),configservice, archdbrtype, controlPVname, JCACommandThreadID);
+				channel = new DeltaArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(),configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 			} else { 
-				channel = new MonitoredArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID);
+				channel = new MonitoredArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 			}
 		} else {
-			channel = new ScannedArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID);
+			channel = new ScannedArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 		}
 
 		configservice.getEngineContext().getChannelList().put(channel.getName(), channel);
@@ -129,7 +129,7 @@ public class ArchiveEngine {
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final Timestamp lastKnownEventTimeStamp, final boolean start, final String controlPVname, final String[] metaFields, final String iocHostName) throws Exception {
+			final Timestamp lastKnownEventTimeStamp, final boolean start, final String controlPVname, final String[] metaFields, final String iocHostName, final boolean usePVAccess) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
 		ScheduledThreadPoolExecutor scheduler = engineContext.getScheduler();
 
@@ -141,7 +141,7 @@ public class ArchiveEngine {
 			SampleMode scan_mode2 = new SampleMode(false, 0, samplingPeriod);
 			ArchiveChannel channel = ArchiveEngine.addChannel(pvName, writer,
 					Enablement.Enabling, scan_mode2, lastKnownEventTimeStamp,
-					configservice, archdbrtype, controlPVname, iocHostName);
+					configservice, archdbrtype, controlPVname, iocHostName, usePVAccess);
 
 			if (start) {
 				channel.start();
@@ -152,19 +152,19 @@ public class ArchiveEngine {
 
 
 
-			initializeMetaFieldPVS(channel, metaFields, configservice);
+			initializeMetaFieldPVS(channel, metaFields, configservice, usePVAccess);
 		} else if (mode == SamplingMethod.MONITOR) {
 			SampleMode scan_mode2 = new SampleMode(true, 0, samplingPeriod);
 			ArchiveChannel channel = ArchiveEngine.addChannel(pvName, writer,
 					Enablement.Enabling, scan_mode2, lastKnownEventTimeStamp,
-					configservice, archdbrtype, controlPVname, iocHostName);
+					configservice, archdbrtype, controlPVname, iocHostName, usePVAccess);
 
 			if (start) { 
 				channel.start();
 			}
 
 			// handle the meta field
-			initializeMetaFieldPVS(channel, metaFields, configservice);
+			initializeMetaFieldPVS(channel, metaFields, configservice, usePVAccess);
 		} else if (mode == SamplingMethod.DONT_ARCHIVE) {
 			// Do nothing..
 		}
@@ -173,19 +173,19 @@ public class ArchiveEngine {
 
 
 	private static void initializeMetaFieldPVS(ArchiveChannel channel,
-			final String[] metaFields, final ConfigService configservice)
+			final String[] metaFields, final ConfigService configservice, final boolean usePVAccess)
 			throws IOException {
 		if(metaFields != null && metaFields.length > 0) { 
 			HashSet<String> runtTimeFieldsCopy = new HashSet<String>(configservice.getRuntimeFields());
 			for (String fieldName : metaFields) {
 				logger.debug("Adding monitor for meta field " + fieldName);
-				channel.addMetaField(fieldName, configservice, false);
+				channel.addMetaField(fieldName, configservice, false, usePVAccess);
 				runtTimeFieldsCopy.remove(fieldName);
 			}
 
 			for(String runtimeField : runtTimeFieldsCopy) { 
 				logger.debug("Adding monitor for runtime field " + runtimeField);
-				channel.addMetaField(runtimeField, configservice, true);
+				channel.addMetaField(runtimeField, configservice, true, usePVAccess);
 			}
 		}
 	}
@@ -198,15 +198,16 @@ public class ArchiveEngine {
 	 * @param pvName Name of the channel (PV)
 	 * @param configservice
 	 * @param metadatafields other field such as MDEL,ADEL, except basical info in DBR_CTRL
+	 * @param usePVAccess - Should we use PV access to connect to this PV.
 	 * @param metaListener the callback interface where you handle the info.
 	 * @return the info of pv
 	 * @throws Exception
 	 *             On error in getting pv's info
 	 */
 	public static void getArchiveInfo(final String pvName,
-			final ConfigService configservice, final String metadatafields[],
+			final ConfigService configservice, final String metadatafields[], boolean usePVAccess,
 			final MetaCompletedListener metaListener) throws Exception {
-		MetaGet metaget = new MetaGet(pvName, configservice, metadatafields, metaListener);
+		MetaGet metaget = new MetaGet(pvName, configservice, metadatafields, usePVAccess, metaListener);
 		metaget.initpv();
 	}
 
@@ -219,8 +220,8 @@ public class ArchiveEngine {
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final Timestamp lastKnownEventTimeStamp, final String controllingPVName) throws Exception {
-		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, controllingPVName, null, null);
+			final Timestamp lastKnownEventTimeStamp, final String controllingPVName, final boolean usePVAccess) throws Exception {
+		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, controllingPVName, null, null, usePVAccess);
 	}
 
 
@@ -231,8 +232,8 @@ public class ArchiveEngine {
 	public static void archivePV(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
-			final ConfigService configservice, final ArchDBRTypes archdbrtype, final Timestamp lastKnownEventTimeStamp) throws Exception {
-		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, null, null);
+			final ConfigService configservice, final ArchDBRTypes archdbrtype, final Timestamp lastKnownEventTimeStamp, final boolean usePVAccess) throws Exception {
+		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, null, null, usePVAccess);
 	}
 
 
@@ -245,8 +246,8 @@ public class ArchiveEngine {
 			final int secondstoBuffer, final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
 			final Timestamp lastKnownEventTimeStamp,
-			final String[] metaFieldNames) throws Exception {
-		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, metaFieldNames, null);
+			final String[] metaFieldNames, final boolean usePVAccess) throws Exception {
+		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, metaFieldNames, null, usePVAccess);
 	}
 
 
@@ -264,6 +265,7 @@ public class ArchiveEngine {
 	 * @param controllingPVName - The PV that controls archiving for this PV
 	 * @param metaFieldNames - An array of EPICS fields that gets stored along with the stream. Needs rethinking once we have EPICS V4
 	 * @param iocHostName - IOC hosting this PV; this is used for some optimization. This will often be null.
+	 * @param usePVAccess - Should we use PVAccess to connect to this PV.
 	 * @throws Exception
 	 */
 	public static void archivePV(final String pvName, 
@@ -271,7 +273,7 @@ public class ArchiveEngine {
 			final int secondstoBuffer, final Writer writer, 
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
 			final Timestamp lastKnownEventTimeStamp,
-			final String controllingPVName, final String[] metaFieldNames, final String iocHostName) throws Exception {
+			final String controllingPVName, final String[] metaFieldNames, final String iocHostName, final boolean usePVAccess) throws Exception {
 
 		boolean start = true;
 		if (controllingPVName != null) {
@@ -279,7 +281,7 @@ public class ArchiveEngine {
 			ControllingPV controllingPV = controlingPVList.get(controllingPVName);
 
 			if (controllingPV == null) {
-				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName);
+				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName, usePVAccess);
 				controllingPV = new EPICS_V3_PV(controllingPVName, configservice, true, archdbrtype, configservice.getEngineContext().assignJCACommandThread(controllingPVName, null));
 				controlingPVList.put(controllingPVName, controllingPV);
 				controllingPV.addControledPV(pvName);
@@ -295,13 +297,13 @@ public class ArchiveEngine {
 				ArchiveEngine.createChannels4PVWithMetaField(pvName,
 						samplingPeriod, mode, secondstoBuffer, writer,
 						configservice, archdbrtype, lastKnownEventTimeStamp,
-						start, controllingPVName, metaFieldNames, iocHostName);
+						start, controllingPVName, metaFieldNames, iocHostName, usePVAccess);
 			}
 		} else {
 			ArchiveEngine.createChannels4PVWithMetaField(pvName,
 					samplingPeriod, mode, secondstoBuffer, writer,
 					configservice, archdbrtype, lastKnownEventTimeStamp, start,
-					null, metaFieldNames, iocHostName);
+					null, metaFieldNames, iocHostName, usePVAccess);
 		}
 	}
 
@@ -375,7 +377,7 @@ public class ArchiveEngine {
 		Timestamp lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(configservice);
 		if(logger.isDebugEnabled()) logger.debug("Last known timestamp from ETL stores is for pv " + pvName + " is "+ TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
 
-		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configservice, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName()); 
+		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configservice, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName(), typeInfo.isUsePVAccess()); 
 	}
 
 
@@ -424,12 +426,13 @@ public class ArchiveEngine {
 	 * @param configservice
 	 * @param writer
 	 *            the writer to protocol buffer
+	 * @param usePVAccess           
 	 * @throws Exception
 	 *             On error in getting the pv info and status .
 	 */
 	public static void changeArchivalParameters(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
-			final ConfigService configservice, final Writer writer) throws Exception {
+			final ConfigService configservice, final Writer writer, final boolean usePVAccess) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
 		if (channel == null) {
@@ -450,7 +453,7 @@ public class ArchiveEngine {
 				ArchiveEngine.archivePV(pvName, samplingPeriod,
 						SamplingMethod.SCAN,
 						(int) engineContext.getWritePeriod(), writer,
-						configservice, pvMetrics.getArchDBRTypes(), null);
+						configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess);
 			} else {
 				// mode is not changed the mode is still scan
 				// the new sample period is the same with the old sample period
@@ -468,7 +471,7 @@ public class ArchiveEngine {
 					engineContext.getWriteThead().removeChannel(pvName);
 					engineContext.getChannelList().remove(pvName);
 					// add new channel in scan mode
-					ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.SCAN, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null);
+					ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.SCAN, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess);
 				}
 			}
 		} else if (mode == SamplingMethod.MONITOR) {
@@ -479,7 +482,7 @@ public class ArchiveEngine {
 				engineContext.getWriteThead().removeChannel(pvName);
 				engineContext.getChannelList().remove(pvName);
 				// add new channel in monitor mode
-				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null);
+				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess);
 			} else {
 				// mode is changed from scan to monitor ,new mode is monitor
 				engineContext.getScheduler().remove((ScannedArchiveChannel) channel);
@@ -489,7 +492,7 @@ public class ArchiveEngine {
 				engineContext.getChannelList().remove(pvName);
 
 				// add new channel in monitor mode
-				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null);
+				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess);
 			}
 		}
 	}

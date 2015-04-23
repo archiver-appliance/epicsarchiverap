@@ -34,10 +34,10 @@ public class MonitoredArchiveChannel extends ArchiveChannel {
 			final Timestamp last_archived_timestamp,
 			final double period_estimate, final ConfigService configservice,
 			final ArchDBRTypes archdbrtype, final String controlPVname,
-			final int commandThreadID) throws Exception {
+			final int commandThreadID, final boolean usePVAccess) throws Exception {
 		super(name, writer, enablement, buffer_capacity,
 				last_archived_timestamp, configservice, archdbrtype,
-				controlPVname, commandThreadID);
+				controlPVname, commandThreadID, usePVAccess);
 		this.period_estimate = period_estimate;
 		this.pvMetrics.setSamplingPeriod(period_estimate);
 		this.pvMetrics.setMonitor(true);

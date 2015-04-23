@@ -21,7 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -150,6 +149,13 @@ public class ArchivePVAction implements BPLAction {
 			throw new IOException(msg);
 		}
 		
+		// Check for V4 syntax; here's where we lose the prefix
+		boolean usePVAccess = PVNames.isEPICSV4PVName(pvName);
+		if(usePVAccess) { 
+			pvName = PVNames.stripPrefixFromName(pvName);
+			logger.debug("Removing the V4 prefix from the pvName for " + pvName);
+		}
+		
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
 		if(typeInfo != null) {
 			logger.debug("We are already archiving this pv " + pvName + " and have a typeInfo");
@@ -202,9 +208,6 @@ public class ArchivePVAction implements BPLAction {
 		
 		try {
 			String actualPVName = pvName;
-			if(pvName.startsWith(ArchDBRTypes.V4PREFIX)) {
-				actualPVName = pvName.substring(10);
-			}
 
 			if(overridePolicyParams) {
 				String minumumSamplingPeriodStr = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.mgmt.bpl.ArchivePVAction.minimumSamplingPeriod", "0.1");
@@ -218,6 +221,9 @@ public class ArchivePVAction implements BPLAction {
 				if(fieldName != null && !fieldName.equals("") && isStandardFieldName) {
 					userSpecifiedSamplingParams.addArchiveField(fieldName);
 				}
+				if(usePVAccess) { 
+					userSpecifiedSamplingParams.setUsePVAccess(usePVAccess);
+				}
 				
 				if(alias != null) { 
 					logger.debug("Adding alias " + alias + " to user params of " + actualPVName + "(2)");
@@ -229,6 +235,9 @@ public class ArchivePVAction implements BPLAction {
 				UserSpecifiedSamplingParams userSpecifiedSamplingParams = new UserSpecifiedSamplingParams();
 				if(fieldName != null && !fieldName.equals("") && isStandardFieldName) {
 					userSpecifiedSamplingParams.addArchiveField(fieldName);
+				}
+				if(usePVAccess) { 
+					userSpecifiedSamplingParams.setUsePVAccess(usePVAccess);
 				}
 
 				if(alias != null) { 

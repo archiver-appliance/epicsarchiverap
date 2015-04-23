@@ -68,7 +68,7 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
 			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.SCAN, 60, writer,
 					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null,
-					metaFields);
+					metaFields, false);
 			// We wait for many minutes as the engine creates meta field channels after a delay
 			logger.info("After call to archiving PV");
 			Thread.sleep((8)*60*1000);

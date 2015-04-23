@@ -38,6 +38,7 @@ public class MetaGet implements Runnable {
 
 	private String pvName;
 	private String metadatafields[];
+	private boolean usePVAccess = false;
 	private MetaCompletedListener metaListener;
 	private Hashtable<String, PV> pvList = new Hashtable<String, PV>();
 
@@ -46,8 +47,9 @@ public class MetaGet implements Runnable {
 	private boolean isScheduled = false;
 
 	public MetaGet(String pvName, ConfigService configservice,
-			String metadatafields[], MetaCompletedListener metaListener) {
+			String metadatafields[], boolean usePVAccess, MetaCompletedListener metaListener) {
 		this.pvName = pvName;
+		this.usePVAccess = usePVAccess;
 		this.metadatafields = metadatafields;
 		this.metaListener = metaListener;
 		this.configservice = configservice;
@@ -61,7 +63,7 @@ public class MetaGet implements Runnable {
 		try {
 
 			int jcaCommandThreadId = configservice.getEngineContext().assignJCACommandThread(pvName, null);
-			PV pv = PVFactory.createPV(pvName, configservice, jcaCommandThreadId);
+			PV pv = PVFactory.createPV(pvName, configservice, jcaCommandThreadId, usePVAccess);
 			pv.addListener(new PVListener() {
 				@Override
 				public void pvValueUpdate(PV pv) {
@@ -92,11 +94,11 @@ public class MetaGet implements Runnable {
 			pvList.put("main", pv);
 			pv.start();
 
-			PV pv2 = PVFactory.createPV(pvName + ".NAME", configservice, jcaCommandThreadId);
+			PV pv2 = PVFactory.createPV(pvName + ".NAME", configservice, jcaCommandThreadId, usePVAccess);
 			pvList.put("NAME", pv2);
 			pv2.start();
 			
-			PV pv3 = PVFactory.createPV(pvName + ".NAME$", configservice, jcaCommandThreadId);
+			PV pv3 = PVFactory.createPV(pvName + ".NAME$", configservice, jcaCommandThreadId, usePVAccess);
 			pvList.put("NAME$", pv3);
 			pv3.start();
 			
@@ -104,7 +106,7 @@ public class MetaGet implements Runnable {
 				for (int i = 0; i < metadatafields.length; i++) {
 					String metaField = metadatafields[i];
 					// We return the fields of the src PV even if we are archiving a field...
-					PV pvTemp = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId);
+					PV pvTemp = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId, usePVAccess);
 					pvTemp.start();
 					pvList.put(metaField, pvTemp);
 				}
@@ -271,5 +273,8 @@ public class MetaGet implements Runnable {
 	
 	public static int getPendingMetaGetsSize() { 
 		return metaGets.size();
+	}
+	public boolean isUsePVAccess() {
+		return usePVAccess;
 	}
 }

@@ -21,6 +21,7 @@ public class UserSpecifiedSamplingParams implements Comparable<UserSpecifiedSamp
 	private String[] archiveFields = new String[0];
 	private String[] aliases = new String[0];
 	private boolean skipAliasCheck = false;
+	private boolean usePVAccess = false;
 	
 	
 	public String getPolicyName() {
@@ -179,5 +180,13 @@ public class UserSpecifiedSamplingParams implements Comparable<UserSpecifiedSamp
 	 */
 	public void setSkipAliasCheck(boolean skipAliasCheck) {
 		this.skipAliasCheck = skipAliasCheck;
+	}
+
+	public boolean isUsePVAccess() {
+		return usePVAccess;
+	}
+
+	public void setUsePVAccess(boolean usePVAccess) {
+		this.usePVAccess = usePVAccess;
 	}
 }

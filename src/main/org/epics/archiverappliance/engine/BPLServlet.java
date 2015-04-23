@@ -25,11 +25,9 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.bpl.AbortArchiveRequestForAppliance;
 import org.epics.archiverappliance.engine.bpl.ChangeArchivalParamsAction;
 import org.epics.archiverappliance.engine.bpl.CleanUpAnyImmortalChannels;
-import org.epics.archiverappliance.engine.bpl.ComputeMetaInfo;
 import org.epics.archiverappliance.engine.bpl.DeletePV;
 import org.epics.archiverappliance.engine.bpl.GetEngineDataAction;
 import org.epics.archiverappliance.engine.bpl.GetLatestMetaDataAction;
-import org.epics.archiverappliance.engine.bpl.MonitorPVAction;
 import org.epics.archiverappliance.engine.bpl.PVStatusAction;
 import org.epics.archiverappliance.engine.bpl.PauseArchivingPV;
 import org.epics.archiverappliance.engine.bpl.PausePVsOnShutdown;
@@ -61,7 +59,6 @@ public class BPLServlet extends HttpServlet {
 	private static final Logger logger = Logger.getLogger(BPLServlet.class);
 	private static HashMap<String, Class<? extends BPLAction>> getActions = new HashMap<String, Class<? extends BPLAction>>();
 	static {
-		getActions.put("/monitor", MonitorPVAction.class);
 		getActions.put("/getData.raw", GetEngineDataAction.class);
 		getActions.put("/getMetadata", GetLatestMetaDataAction.class);
 		getActions.put("/status", PVStatusAction.class);
@@ -77,7 +74,6 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
 		getActions.put("/getLostConnectionsReport", LostConnectionsReport.class);
 		getActions.put("/getSilentPVsReport", SilentPVReport.class);
-		getActions.put("/computeMetaInfo", ComputeMetaInfo.class);
 		getActions.put("/getPVsByDroppedEventsTimestamp",DroppedEventsTimestampReport.class);
 		getActions.put("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
 		getActions.put("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);

@@ -126,6 +126,7 @@ public class PVTypeInfo implements Serializable {
 	private HashMap<String, String> extraFields = new HashMap<String, String>();
 	private String controllingPV;
 	private String[] archiveFields = new String[0];
+	private boolean usePVAccess = false;
 	
 	public PVTypeInfo() {
 		
@@ -588,5 +589,13 @@ public class PVTypeInfo implements Serializable {
 	 */
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
+	}
+
+	public boolean isUsePVAccess() {
+		return usePVAccess;
+	}
+
+	public void setUsePVAccess(boolean usePVAccess) {
+		this.usePVAccess = usePVAccess;
 	}
 }

@@ -62,7 +62,7 @@ public class SampleBufferOverFlowTest extends TestCase {
 		try {
 			ArchiveEngine.archivePV(pvName, 5F, SamplingMethod.MONITOR, 10,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					null);
+					null, false);
 
 			Thread.sleep(30000);
 

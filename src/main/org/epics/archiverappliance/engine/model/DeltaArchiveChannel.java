@@ -52,9 +52,9 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 			final Timestamp last_timeestamp, final double period_estimate,
 			final double delta, final ConfigService configservice,
 			final ArchDBRTypes archdbrtype, final String controlPVname,
-			final int commandThreadID) throws Exception {
+			final int commandThreadID, final boolean usePVAccess) throws Exception {
 		super(name, writer, enablement, buffer_capacity, last_timeestamp,
-				configservice, archdbrtype, controlPVname, commandThreadID);
+				configservice, archdbrtype, controlPVname, commandThreadID, usePVAccess);
 		this.delta = delta;
 		this.period_estimate = period_estimate;
 	}

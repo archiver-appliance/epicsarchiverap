@@ -89,7 +89,7 @@ public class ControlledPVTest  extends TestCase{
                                              60,  writer,
                                              testConfigService,
                                              ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                                             null,pvnameenable);
+                                             null,pvnameenable, false);
 							testConfigService.updateTypeInfoForPV(pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1));
                          
                     }

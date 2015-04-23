@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
-import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.config.PVNames;
@@ -22,6 +21,7 @@ import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.epics.archiverappliance.utils.ui.JSONEncoder;
 
 /**
  * State for the archive PV workflow
@@ -53,15 +53,11 @@ public class ArchivePVState {
 			logger.debug("Archive workflow for pv " + pvName + " in state " + currentState);
 				switch(currentState) {
 				case START: {
-					if(pvName.startsWith(ArchDBRTypes.V4PREFIX)) {
-						metaInfo = new MetaInfo();
-						metaInfo.setArchDBRTypes(ArchDBRTypes.DBR_V4_GENERIC_BYTES);
-						pvName = pvName.substring(10);
-						currentState = ArchivePVStateMachine.METAINFO_OBTAINED;
-					} else {
-						PubSubEvent pubSubEvent = new PubSubEvent("ComputeMetaInfo", myIdentity + "_" + ConfigService.WAR_FILE.ENGINE, pvName);
-						configService.getEventBus().post(pubSubEvent);
-					}
+					PubSubEvent pubSubEvent = new PubSubEvent("ComputeMetaInfo", myIdentity + "_" + ConfigService.WAR_FILE.ENGINE, pvName);
+					UserSpecifiedSamplingParams userSpec = configService.getUserSpecifiedSamplingParams(pvName);
+					JSONEncoder<UserSpecifiedSamplingParams> encoder = JSONEncoder.getEncoder(UserSpecifiedSamplingParams.class);
+					pubSubEvent.setEventData(encoder.encode(userSpec).toJSONString());
+					configService.getEventBus().post(pubSubEvent);
 					return;	
 				}
 				case METAINFO_REQUESTED: {
@@ -117,6 +113,7 @@ public class ArchivePVState {
 					typeInfo.setDataStores(thePolicy.getDataStores());
 					typeInfo.setCreationTime(TimeUtils.now());
 					typeInfo.setControllingPV(userSpec.getControllingPV());
+					typeInfo.setUsePVAccess(userSpec.isUsePVAccess());
 					
 					String aliasFieldName = "NAME";
 					if(typeInfo.hasExtraField(aliasFieldName)) {

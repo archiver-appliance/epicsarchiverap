@@ -62,11 +62,13 @@ public class ChangeArchivalParamsAction implements BPLAction {
 		}
 
 		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(firstDestURL, configService);
+		
+		boolean usePVAccess = Boolean.parseBoolean(req.getParameter("usePVAccess"));
 
 
 		try {
 			logger.debug("Changing the archival parameters for pv " + pvName + " to a sampling period of " + samplingPeriod + " and a sampling method of " + samplingMethod.toString() + " with a first dest of " + firstDest.getDescription());
-			ArchiveEngine.changeArchivalParameters(pvName, samplingPeriod, samplingMethod, configService, firstDest);
+			ArchiveEngine.changeArchivalParameters(pvName, samplingPeriod, samplingMethod, configService, firstDest, usePVAccess);
 			HashMap<String, Object> infoValues = new HashMap<String, Object>();
 			try(PrintWriter out = resp.getWriter()) {
 				infoValues.put("status", "ok");

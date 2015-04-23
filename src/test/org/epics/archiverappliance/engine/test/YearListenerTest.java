@@ -69,7 +69,7 @@ public class YearListenerTest  extends TestCase{
 						 10,  writer,
 						 testConfigService,
 						 ArchDBRTypes.DBR_SCALAR_DOUBLE,
-						 null);
+						 null, false);
 		}catch (Exception e) {
 			// 
 			logger.error("Exception", e);

@@ -76,7 +76,7 @@ public class ChannelTest extends TestCase {
 		String pvName = "test_0";
 		try {
 			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.SCAN, 60, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
 
 			Thread.sleep(62000);
 			ArchiveChannel archiveChannel = testConfigService
@@ -104,7 +104,7 @@ public class ChannelTest extends TestCase {
 		try {
 			ArchiveEngine.archivePV(pvName, 0.1F, SamplingMethod.MONITOR, 60,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					null);
+					null, false);
 			Thread.sleep(5000);
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
@@ -137,7 +137,7 @@ public class ChannelTest extends TestCase {
 			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
 
 			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.SCAN, 60, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
 			Thread.sleep(2000);
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
@@ -190,7 +190,7 @@ public class ChannelTest extends TestCase {
 				String pvName = "test_" + m;
 				ArchiveEngine.archivePV(pvName, 0.1F, SamplingMethod.SCAN, 60,
 						writer, testConfigService,
-						ArchDBRTypes.DBR_SCALAR_DOUBLE, null);
+						ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
 				Thread.sleep(10);
 			}
 			Thread.sleep(2000);
@@ -228,7 +228,7 @@ public class ChannelTest extends TestCase {
 				String pvName = "test_" + m;
 				ArchiveEngine.archivePV(pvName, 0.1F, SamplingMethod.MONITOR,
 						60, writer, testConfigService,
-						ArchDBRTypes.DBR_SCALAR_DOUBLE, null);
+						ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
 				Thread.sleep(10);
 			}
 
@@ -265,7 +265,7 @@ public class ChannelTest extends TestCase {
 		try {
 
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 60, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
 			Thread.sleep(2000);
 			ArrayListEventStream samples = testConfigService.getEngineContext().getChannelList().get(pvName).getPVData();
 

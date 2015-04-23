@@ -202,6 +202,7 @@ abstract public class ArchiveChannel {
 	 * @param archdbrtype the archiving dbr type
 	 * @param controlPVname the pv's name who control this pv to start archiving or stop archiving
 	 * @param commandThreadID - this is the index into the array of JCA command threads that processes this context.
+	 * @param usePVAccess - Should we use PVAccess to connect to this PV.
 	 * @throws Exception error when creating archive channel for this pv
 	 */
 	public ArchiveChannel(
@@ -213,7 +214,8 @@ abstract public class ArchiveChannel {
 			final ConfigService configservice,
 			final ArchDBRTypes archdbrtype,
 			final String controlPVname, 
-			final int commandThreadID)
+			final int commandThreadID,
+			final boolean usePVAccess)
 					throws Exception {
 		this.name = name;
 		this.controlPVname = controlPVname;
@@ -224,7 +226,7 @@ abstract public class ArchiveChannel {
 		this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype,this.pvMetrics);
 		this.JCACommandThreadID =  commandThreadID;
 
-		this.pv = PVFactory.createPV(name, configservice, false, archdbrtype, commandThreadID);
+		this.pv = PVFactory.createPV(name, configservice, false, archdbrtype, commandThreadID, usePVAccess);
 
 		pv.addListener(new PVListener() {
 			@Override
@@ -287,15 +289,16 @@ abstract public class ArchiveChannel {
 	 * @param fieldName
 	 * @param configservice
 	 * @param isRuntimeOnly
+	 * @param usePVAccess
 	 * @throws IOException
 	 */
-	public void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly) throws IOException {
+	public void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess) throws IOException {
 		if(this.pv == null) throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
 		// This tells the main PV to create the hashmaps for the metafield storage
 		this.pv.markPVHasMetafields(true);
 		final String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
 		logger.debug("Initializing the metafield for field " + pvNameForField);
-		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, this.pv.getArchDBRTypes(), this.JCACommandThreadID);
+		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, this.pv.getArchDBRTypes(), this.JCACommandThreadID, usePVAccess);
 		metaPV.setMetaFieldParentPV(this.pv, isRuntimeOnly);
 		this.metaPVs.put(fieldName, metaPV);
 	}

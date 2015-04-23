@@ -63,7 +63,7 @@ public class MetaTest extends TestCase {
 		try {
 
 			String metaFied[] = { "MDEL", "ADEL", "RTYP" };
-			ArchiveEngine.getArchiveInfo("test_0", testConfigService, metaFied,
+			ArchiveEngine.getArchiveInfo("test_0", testConfigService, metaFied, false,
 					new MetaCompletedListener() {
 						@Override
 						public void completed(MetaInfo metaInfo) {

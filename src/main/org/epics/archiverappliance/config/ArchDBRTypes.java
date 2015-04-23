@@ -49,8 +49,6 @@ public enum ArchDBRTypes {
 	DBR_WAVEFORM_DOUBLE(13, true, "double", PayloadType.WAVEFORM_DOUBLE, true),
 	DBR_V4_GENERIC_BYTES(14, true, "v4generic", PayloadType.V4_GENERIC_BYTES, false);
 	
-	public static final String V4PREFIX = "EPICSV4://";
-
 	private static HashMap<PayloadType, ArchDBRTypes> PBTypeReverseMapping = new HashMap<PayloadType, ArchDBRTypes>();
 
 	static {

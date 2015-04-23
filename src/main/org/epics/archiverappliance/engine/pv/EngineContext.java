@@ -36,6 +36,7 @@ import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
+import org.epics.archiverappliance.config.UserSpecifiedSamplingParams;
 import org.epics.archiverappliance.config.pubsub.PubSubEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.metadata.MetaCompletedListener;
@@ -44,6 +45,7 @@ import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.writer.WriterRunnable;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.epics.pvaccess.client.ChannelProvider;
 import org.epics.pvaccess.client.ChannelProviderRegistryFactory;
@@ -418,7 +420,12 @@ public class EngineContext {
 						logger.debug("We are not asking for extra fields for a field value " + fieldName + " for pv " + pvName);
 						extraFields = new String[0];
 					}
-					ArchiveEngine.getArchiveInfo(pvName, configService, extraFields, new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
+					UserSpecifiedSamplingParams userSpec = new UserSpecifiedSamplingParams();
+					JSONObject jsonObj = (JSONObject) JSONValue.parse(pubSubEvent.getEventData());
+					JSONDecoder<UserSpecifiedSamplingParams> decoder = JSONDecoder.getDecoder(UserSpecifiedSamplingParams.class);
+					decoder.decode(jsonObj, userSpec);
+
+					ArchiveEngine.getArchiveInfo(pvName, configService, extraFields, userSpec.isUsePVAccess(), new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
 					PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoRequested", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
 					configService.getEventBus().post(confirmationEvent);
 				} catch(Exception ex) {
@@ -586,7 +593,7 @@ public class EngineContext {
 		String[] archiveFields = typeInfo.getArchiveFields();
 		
 		logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "+ samplingPeriod + "(s)");
-		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType, lastKnownTimeStamp, controllingPV, archiveFields, typeInfo.getHostName()); 
+		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType, lastKnownTimeStamp, controllingPV, archiveFields, typeInfo.getHostName(), typeInfo.isUsePVAccess()); 
 	}
 	
 	

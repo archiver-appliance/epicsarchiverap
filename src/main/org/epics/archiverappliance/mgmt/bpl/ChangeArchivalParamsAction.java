@@ -88,6 +88,7 @@ public class ChangeArchivalParamsAction implements BPLAction {
 					+ "&samplingperiod=" + URLEncoder.encode(samplingperiodStr, "UTF-8")
 					+ "&samplingmethod=" + URLEncoder.encode(typeInfo.getSamplingMethod().toString(), "UTF-8")
 					+ "&dest=" + URLEncoder.encode(typeInfo.getDataStores()[0], "UTF-8")
+					+ "&usePVAccess=" + Boolean.toString(typeInfo.isUsePVAccess());
 					;
 			JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(pvStatusURLStr);
 			if(pvStatus != null && !pvStatus.equals("")) {
