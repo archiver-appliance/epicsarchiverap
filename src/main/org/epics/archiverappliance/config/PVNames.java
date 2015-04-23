@@ -11,6 +11,13 @@ import org.apache.log4j.Logger;
  */
 public class PVNames {
 	private static Logger logger = Logger.getLogger(PVNames.class.getName());
+
+	/**
+	 * When you intend to connect to the PV's using PVAccess, use this string as a prefix in the UI/archivePV BPL. For example, pva://double01
+	 * This syntax should be consistent with CSS. 
+	 */
+	public static final String V4_PREFIX = "pva://";
+	
 	/**
 	 * Remove the .VAL, .HIHI etc portion of a pvName and return the plain pvName
 	 * @param pvName
@@ -240,5 +247,32 @@ public class PVNames {
 		if(pvName == null || pvName.isEmpty()) return false;
 		return validPVName.matcher(pvName).matches();
 	}
+
+
+	/**
+	 * Does this pvName imply a connection using PVAccess?
+	 * @param pvName
+	 * @return
+	 */
+	public static boolean isEPICSV4PVName(String pvName) { 
+		if(pvName == null || pvName.isEmpty()) return false;
+		return pvName.startsWith(V4_PREFIX);
+	}
 	
+	
+	/**
+	 * Remove the pva:// prefix from the PV name if present.
+	 * @param pvName
+	 * @return
+	 */
+	public static String stripPrefixFromName(String pvName) { 
+		if(pvName == null || pvName.isEmpty()) return pvName;
+		if(pvName.startsWith(V4_PREFIX)) { 
+			return pvName.replace(V4_PREFIX, "");
+		}
+		
+		return pvName;
+	}
+
+
 }

@@ -115,6 +115,7 @@ public class ArchivePVAction implements BPLAction {
 	
 
 	/**
+	 * This is the main method for adding PVs into the archiver. All other entry points should eventually call this method.
 	 * @param out
 	 * @param pvName
 	 * @param overridePolicyParams
