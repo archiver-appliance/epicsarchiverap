@@ -21,6 +21,9 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.VectorValue;
+import org.epics.pvdata.pv.PVStructure;
+import org.epics.pvdata.pv.PVStructureArray;
+import org.epics.pvdata.pv.StructureArrayData;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
@@ -85,6 +88,38 @@ public class PBVectorEnum implements DBRTimeEvent, PartionedTime {
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));;
 	}
 
+	public PBVectorEnum(PVStructure v4Data) {
+		PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
+		long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
+		int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
+		Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
+		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+
+		PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
+		int severity = alarmPVStructure.getIntField("severity").get();
+		int status = alarmPVStructure.getIntField("status").get();
+
+		PVStructureArray pvArray = v4Data.getStructureArrayField("value");
+		StructureArrayData arrayData = new StructureArrayData();
+		pvArray.get(0, pvArray.getLength(), arrayData);
+		ArrayList<Integer> vals = new ArrayList<Integer>();
+		PVStructure[] data = arrayData.data;
+		for(PVStructure dataitem : data) { 
+			vals.add(dataitem.getIntField("index").get());
+		}
+
+		year = yst.getYear();
+		Builder builder = EPICSEvent.VectorEnum.newBuilder()
+				.setSecondsintoyear(yst.getSecondsintoyear())
+				.setNano(yst.getNanos())
+				.addAllVal(vals);
+		if(severity != 0) builder.setSeverity(severity);
+		if(status != 0) builder.setStatus(status);
+		dbevent = builder.build();
+		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+	}
+	
+	
 	@Override
 	public Event makeClone() {
 		return new PBVectorEnum(this);
