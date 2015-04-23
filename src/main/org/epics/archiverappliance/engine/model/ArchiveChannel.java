@@ -28,9 +28,9 @@ import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
-import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PV;
+import org.epics.archiverappliance.engine.pv.PVFactory;
 import org.epics.archiverappliance.engine.pv.PVListener;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 /**
@@ -224,7 +224,7 @@ abstract public class ArchiveChannel {
 		this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype,this.pvMetrics);
 		this.JCACommandThreadID =  commandThreadID;
 
-		this.pv = new EPICS_V3_PV(name, configservice, false, archdbrtype, commandThreadID);
+		this.pv = PVFactory.createPV(name, configservice, false, archdbrtype, commandThreadID);
 
 		pv.addListener(new PVListener() {
 			@Override
@@ -295,7 +295,7 @@ abstract public class ArchiveChannel {
 		this.pv.markPVHasMetafields(true);
 		final String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
 		logger.debug("Initializing the metafield for field " + pvNameForField);
-		EPICS_V3_PV metaPV = new EPICS_V3_PV(pvNameForField, configservice, false, this.pv.getArchDBRTypes(), this.JCACommandThreadID);
+		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, this.pv.getArchDBRTypes(), this.JCACommandThreadID);
 		metaPV.setMetaFieldParentPV(this.pv, isRuntimeOnly);
 		this.metaPVs.put(fieldName, metaPV);
 	}
