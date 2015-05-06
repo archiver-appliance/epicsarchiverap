@@ -150,12 +150,10 @@
 	</target>
 
 	<target name="generate_release_notes">
-		<exec executable="hg" output="RELEASE_NOTES">
+		<exec executable="git" output="RELEASE_NOTES">
 			<arg value="log"/>
-			<arg value="--style"/>
-			<arg value="hg.template.release_notes"/>
-			<arg value="-r"/>
-			<arg value="reverse(::.)"/>
+			<arg value="--oneline"/>
+			<arg value="master"/>
 		</exec>
 	</target>
 
