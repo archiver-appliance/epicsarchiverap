@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<database>
+<import name = "org.epics.ioc.*" />
+<include addPath = "src/test/org/epics/archiverappliance/engine/epicsv4/example/record" />
+<package name = "org.epics.ioc" />
+<include href = "rpc.xml" />
+<include removePath = "src/test/org/epics/archiverappliance/engine/epicsv4/example/record" />
+</database>
+

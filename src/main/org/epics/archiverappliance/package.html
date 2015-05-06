@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>org.epics.archiverappliance package summary</title>
+</head>
+<body>
+The interfaces in <code>org.epics.archiverappliance</code> are the main interfaces in the archiver appliance. 
+Events map to Channel Access events while EventStreams are sequences of events available in a streaming fashion.
+Readers generate EventStreams; Writers consume EventStreams.
+A StoragePlugin is a Reader+Writer with some initialization and other interfaces.
+
+<div style="margin-top: 2.0em;">
+The typical usage of an EventStream is as follows:
+<code>
+<pre>
+<span style="color:blue;">try</span>(EventStream stream = reader.getDataForPV(...)) {
+	<span style="color:blue;">for</span>(Event event : stream) {
+		// Do stuff.
+	}
+}
+</pre>
+</code>
+
+</div>
+</body>
+</html>

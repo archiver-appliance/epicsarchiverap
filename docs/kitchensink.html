@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Kitchen sink</title>
+<style type="text/css">
+table {
+	border-collapse: collapse;
+}
+
+table tr th, table tr td {
+	border: thin black solid;
+}
+
+table tr:nth-child(2n+1) {
+	background: #99cedb;
+}
+</style>
+</head>
+<body>
+<div>
+This document contains misc, stream of consciousness, unrelated, uncategorized comments notes on this project. 
+It will eventually be used to feed into user documentation and during project closure to make sure all the TODO's are covered.
+Feel free to add anything that you think will be useful for user documentation, explain design decisions etc.
+Avoid deleting content, this is not a user facing document.  
+</div>
+
+<div>
+Murali - I am still thinking about the secondsintoyear in PB.
+Using this shaves off 4 bytes per event; so there is a powerful argument for this. 
+However, this means we need to address the conversion from secondsintoyear to epochseconds everywhere. 
+This is not much of a problem in the file backed event streams. 
+It is an issue (with an unsolved TODO) in the network backed event streams.
+One thought is to add a byte for the year only in the network backed event streams (as the file backed ones have this in the file name).
+Will discuss with Bob and Ernest and figure out what to do here.
+</div>
+
+
+<div>
+<h4>Sample policy</h4>
+The intention is to use policies as objects that fill out archiving configuration for a PV.
+So, when a end user request us to archive a PV, he/she specifies "Archive PV pv1" and we fill out the detailed configuration from an applicable policy.
+Policies have a if expression and a then clause.
+<table>
+<tr><th>Order of execution</th><th>If</th><th>Then</th></tr>
+<tr><td>4</td><td>storagerate > 10GB/year</td><td>noarchive<br/></tr>
+<tr><td>3</td><td>eventrate < 1.0Hz and elementcount > 10</td><td>scan<br/>scanrate=0.001Hz<br/>sts=pb://localhost?rootFolder=/dev/shm?&partitionGranularity=PARTITION_HOUR<br/>mts=pb://localhost?rootFolder=/arch/ssd&partitionGranularity=PARTITION_DAY<br/>lts=blackhole://localhost</td></tr>
+<tr><td>2</td><td>elementcount < 1</td><td>monitor<br/>threshold=1.0Hz<br/>sts=pb://localhost?rootFolder=/dev/shm?&partitionGranularity=PARTITION_HOUR<br/>mts=pb://localhost?rootFolder=/arch/ssd&partitionGranularity=PARTITION_DAY<br/>lts=blackhole://localhost</td></tr>
+<tr><td>1</td><td>pvname matches BDES*</td><td>monitor<br/>sts=pb://localhost?rootFolder=/dev/shm?&partitionGranularity=PARTITION_HOUR<br/>mts=pb://localhost?rootFolder=/arch/ssd&partitionGranularity=PARTITION_DAY<br/>lts=blackhole://localhost</td></tr>
+<tr><td>0</td><td>true</td><td>monitor<br/>threshold=0.01Hz<br/>sts=pb://localhost?rootFolder=/dev/shm?&partitionGranularity=PARTITION_HOUR<br/>mts=pb://localhost?rootFolder=/arch/ssd&partitionGranularity=PARTITION_DAY<br/>lts=blackhole://localhost</td></tr>
+</table>
+
+</div>
+
+
+<div>
+<h4>MySQL for config</h4>
+<ol>
+<li>Installed MySQL using <code>yum install mysql-server mysql</code></li>
+<li>Added <code>innodb_flush_log_at_trx_commit=0</code> to /etc/my.cnf</li>
+<li>Started MySQL using <code>/etc/init.d/mysqld start</code></li>
+<li>Created a root password for MySQL using <code>/usr/bin/mysqladmin -u root password &lt;Password&gt;</code></li>
+<li>Created a schema and user for the appliance using
+<code>
+<pre>
+mysql -u root -p 
+CREATE DATABASE archappl
+GRANT ALL ON archappl.* TO 'archappl'@localhost IDENTIFIED BY '&lt;password&gt;';
+</pre>
+</code>
+</li>
+<li>
+Login using the user/password created above into the schema created above and create the tables
+<code>
+mysql --user=archappl --database=archappl --password=&lt;password&gt; < ./epicsarchiverap/src/main/org/epics/archiverappliance/config/persistence/archappl_mysql.sql
+</code>
+</li>
+<li>Validate that the tables exist using <code>SHOW TABLES</code></li>
+<li>In <code>${TOMCAT_HOME}/conf/context.xml</code>, add a connection pool named <code></code>
+<code>
+<pre>
+    <Resource   name="jdbc/archappl"
+                auth="Container"
+                type="javax.sql.DataSource"
+                factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+                username="root"
+                password="&lt;password&gt" 
+                testWhileIdle="true"
+                testOnBorrow="true"
+                testOnReturn="false"
+                validationQuery="SELECT 1"
+                validationInterval="30000"
+                timeBetweenEvictionRunsMillis="30000"
+                maxActive="10" 
+                minIdle="2" 
+                maxWait="10000" 
+                initialSize="2"
+                removeAbandonedTimeout="60"
+                removeAbandoned="true"
+                logAbandoned="true"
+                minEvictableIdleTimeMillis="30000" 
+                jmxEnabled="true"
+                driverClassName="com.mysql.jdbc.Driver"
+                url="jdbc:mysql://localhost:3306/archappl"
+                />
+</pre>
+</code>
+</li>
+<li>Copy the <code>mysql-connector-java-5.1.21-bin.jar</code> to <code>${TOMCAT_HOME}/lib</code>
+<code>cp ~/temp/mysql-connector-java-5.1.21-bin.jar ${TOMCAT_HOME}/lib/</code>
+</li>
+<li>
+Set up mysql to autostart using 
+<code>
+<pre>
+/sbin/chkconfig /etc/init.d/mysqld 
+/sbin/chkconfig --level 345 mysqld on
+</pre>
+</code>
+</li>
+</ol>
+</div>
+
+</body>
+</html>

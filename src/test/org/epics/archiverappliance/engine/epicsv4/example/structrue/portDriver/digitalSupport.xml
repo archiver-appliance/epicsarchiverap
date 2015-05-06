@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<database>
+
+<structure structureName = "pdrvUInt32DigitalInputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.digital.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvUInt32DigitalInput">
+   <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvUInt32DigitalInputFactory</auxInfo>
+   <scalar name = "mask" scalarType = "int" />
+</structure>
+
+<structure structureName = "pdrvUInt32DigitalInterruptInputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.digital.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvUInt32DigitalInterrupt" scalarType = "portDriverInterruptLink">
+   <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvUInt32DigitalInterruptFactory</auxInfo>
+   <scalar name = "mask" scalarType = "int" />
+   <scalar name = "process" scalarType = "boolean">false</scalar>
+</structure>
+
+<structure structureName = "pdrvUInt32DigitalOutputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.digital.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvUInt32DigitalOutput">
+   <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvUInt32DigitalOutputFactory</auxInfo>
+   <scalar name = "mask" scalarType = "int" />
+</structure>
+
+</database>

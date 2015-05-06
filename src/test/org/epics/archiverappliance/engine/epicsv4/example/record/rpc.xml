@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<database>
+<import name = "org.epics.ioc.*" />
+<import name = "org.epics.pvData.*" />
+<record recordName = "testrecordListRPC" extends = "recordList" />
+<record recordName = "teststructureListRPC" extends = "structureList" />
+<record recordName = "testiocShowRPC" extends = "iocShow" />
+<record recordName = "testrecordShowRPC" extends = "recordShow" />
+<record recordName = "testrecordRemoveRPC" extends = "recordRemove" />
+<record recordName = "testsupportStateSetRPC" extends = "supportStateSet" />
+</database>

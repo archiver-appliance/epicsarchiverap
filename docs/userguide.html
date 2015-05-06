@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>EPICS Archiver Appliance - User guide</title>
+<link type="text/css" href="docs.css" rel="Stylesheet" />	
+</head>
+<body>
+<!-- Header starts here -->
+<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
+<div id="wrap">
+<div id="topbar">
+Last published on {publish_date}.
+</div>
+<aside id="leftnav">
+<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
+<ol>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/news/">News</a></li>
+<li><a href="details.html">Details</a></li>
+<li><a href="https://sourceforge.net/projects/epicsarchiverap/files/">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="installguide.html">Installation</a></li>
+<li><a href="userguide.html">User Guide</a></li>
+<li><a href="customization.html">Customize</a></li>
+<li><a href="developersguide.html">Developers</a></li>
+<li><a href="api/index.html">Javadoc</a></li>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="license.html">License</a></li>
+</ol>
+</aside>
+<!-- Header ends here -->
+
+<article id="rightcontent">
+The EPICS archiver appliance offers a web UI for typical configuration tasks. This UI works best with a recent version of Firefox or Chrome.
+
+<section id="ArchivePV">
+<h3>Adding a PV to be archived.</h3>
+To add a PV to the archiver, 
+<ol>
+<li>Go to the home page of the archiver appliance.
+<figure>
+<img src="images/archive_pv.png"/>
+</figure>
+</li> 
+<li>Enter any number of PV's in the text area (one per line) and click on the <code>Archive</code> button.</li>
+<li>If you wish to specify the sampling period, then click on the <code>Archive (specify sampling period)</code> button instead.</li>
+<li>When adding a new PV to the cluster, the archiver appliance measures various parameters about the PV. This takes about 4-5 minutes during which the PV is in an <code>Initial sampling</code> state.</li> 
+<li>Once the PV's characteristics have been measured, the archiver appliance assigns the PV to an appliance in the cluster and the PV is in a <code>Being archived</code> state.</li> 
+<li>If the archiver appliance is not able to connect to a PV, the PV stays in the <code>Initial sampling</code> state until it is able to connect.</li> 
+<li>You an request a PV to be archived before it is available on the network. The request to archive the PV is stored in the persistent configuration until the archiver appliance can connect.
+Once the archiver appliance is able to connect to the PV, it continues on the normal workflow (where various parameters about the PV are measured etc).</li> 
+<li>Using <code>Archive (specify sampling period)</code>, you can additionally specify
+<ol>
+<li>Archival method: Whether the archiver will use CA monitors/scan threads to sample at the specified sampling period.</li>
+<li>Conditional archiving PV: The archiving for this PV is performed only when the conditional archiving PV's <code>.VAL</code> field is non-zero.</li>
+<li>Policy: The archiver appliance uses policies set up the administrator to configure how the PV is to be archived. 
+You can override this by choosing a policy yourself. 
+This lets your system administrator set up a set of policies and lets the user choose manually from among those policies.
+</li>
+</ol>
+</li>
+</ol>
+
+<div>
+To check the status of a PV.
+<ol>
+<li>Enter any number of PV's in the text area (one per line) and click on the <code>Check Status</code> button</li>
+<li>You can also enter <a href="http://en.wikipedia.org/wiki/Glob_%28programming%29">GLOB</a> expressions like <code>XCOR*</code> and the archiver appliance will then display the status of all PV's that match the GLOB expression.
+<figure>
+<img src="images/check_status_glob.png"/>
+</figure>
+Note that the number of matched PV's can be quite large; for now, no attempt is made to restrict the number of entries in this particular request. This may change in the future based on user feedback.
+</li>
+</ol> 
+</div>
+
+</section>
+
+<section id="retrieval">
+<h3>Retrieving data using Archive Viewer and Matlab</h3>
+<ol>
+<li>To retrieve data using the Archive Viewer, see the <a href="archiveviewer.html">Archive Viewer</a> section.</li>
+<li>To retrieve data using Matlab, see the <a href="matlab.html">Matlab</a> section.</li>
+</ol>
+</section>
+
+<section>
+<h3 id="retrieval_url_formula">Retrieving data using other tools</h3>
+The EPICS Archiver Appliance supports data retrieval in multiple formats/MIME types. These are some of the few formats supported today; more can easily be added as needed.
+<ol>
+<li><a href="http://www.json.org/">JSON</a> - A generic JSON format that can be easily loaded into most browsers using Javascript.</li>
+<li>CSV - Can be used for importing into Excel and other spreadsheets.</li>
+<li>MAT - This is the file format used for interoperating with Matlab.</li>
+<li>RAW - This is a binary format used by the Archive Viewer and is based on the <a href="pb_pbraw.html"><code>PB/HTTP</code></a> protocol.</li>
+<li>TXT - A simple text format that is often helpful for debugging.</li>
+<li><a href="http://www.w3.org/Graphics/SVG/">SVG</a> - A XML format that can also be used as a SVG element in tools that support this format.</li>
+</ol>
+
+<div>
+In general, getting data into a tool necessitates construction of a data retrieval URL as the first step. 
+A data retrieval URL looks something like so
+<div class="url_formula">
+<span id="part1">http://archiver.slac.stanford.edu/retrieval</span><span id="part2">/data/getData</span><span id="part3">.json</span>?<span id="part4">pv=VPIO%3AIN20%3A111%3AVRAW&amp;from=2012-09-27T08%3A00%3A00.000Z&amp;to=2012-09-28T08%3A00%3A00.000Z</span>
+</div>
+where
+<ol>
+<li><code>http://archiver.slac.stanford.edu/retrieval</code> is the <code>data_retrieval_url</code> element from your <code>appliances.xml</code></li>
+<li><code>/data/getData</code> is the path into the data retrieval servlet and is fixed.</li>
+<li><code>.json</code> identifies the MIME-type of the returned data.</li>
+<li>The remainder consists of parameters (all of which need to be <a href="http://en.wikipedia.org/wiki/Percent-encoding">URL encoded</a> for correctness)
+<ol>
+<li><code>pv</code> - This identifies the name of the PV for which data is requested.</li>
+<li><code>from</code> - This is the start time of the data in <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> format; specifically <a href="http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()">this</a> format.</li>
+<li><code>to</code> - This is the end time of the data in the same format.</li>
+</ol>
+</li>
+</ol>
+The response typically contains
+<ol>
+<li><code>seconds</code> - This is the Java epoch seconds of the EPICS record processing timestamp. The times are in UTC; so any conversion to local time needs to happen at the client. </li>
+<li><code>nanos</code> - This is the nano second value of the EPICS record processing timestamp.</li>
+<li>Other elements - This set includes the value, status, severity and many other optional fields stored by the appliance.</li>
+</ol>
+</div>
+
+Here's an example of loading data into Python using JSON and then using Chaco to render a plot.
+<pre>
+<code>
+import numpy as np
+from chaco.shell import *
+import urllib2
+import json
+
+req = urllib2.urlopen("http://archiver.slac.stanford.edu/retrieval/data/getData.json?pv=test%3Apv%3A123&amp;donotchunk")
+data = json.load(req)
+secs = [x['secs'] for x in data[0]['data']]
+vals = [x['val'] for x in data[0]['data']]
+plot(secs, vals, "r-")
+xscale('time')
+show()
+</code>
+</pre>
+
+<figure>
+<img src="images/chaco_plot.png"/>
+</figure>
+
+</section>
+
+<section>
+<h3 id="post_processing">Processing of data</h3>
+<p>
+The EPICS archiver appliance has limited support for performing some processing on the data during data retrieval. 
+For most scientific data processing purposes, a tool such as Matlab is a much better fit. 
+To retrieve data within Matlab, please see the <a href="matlab.html">Matlab</a> section.
+</p>
+<p>
+To process the data during data retrieval, specify the operator during the call to <code>getData</code>.
+For example, to get the <code>mean</code> of the PV, <code>test:pv:123</code>, ask for <code>http://archiver.slac.stanford.edu/retrieval/data/getData.json?pv=mean(test%3Apv%3A123)</code>.
+This mechanism should work within the ArchiveViewer as well.
+That is, if you plot <code>mean(test:pv:123)</code> in the ArchiveViewer, the EPICS archiver appliance applies the <code>mean</code> operator to the data for PV <code>test:pv:123</code> before returning it to the client.
+To plot <code>test:pv:123</code> with the <code>mean_3600</code> operator in the ArchiveViewer, plot <code>mean_3600(test:pv:123)</code>.
+</p>
+
+The EPICS archiver appliance uses <a href="http://commons.apache.org/proper/commons-math/">Apache Commons Math</a> for its data processing.
+Many operators bin the data into bins whose sizes are specified as part of the operator itself.
+For example, the <code>mean_3600</code> operator bins the data into bins that are 3600 seconds wide.
+The default binning interval is 900 seconds (15 minutes). 
+The binning is done using the <a href="http://en.wikipedia.org/wiki/Euclidean_division">integer division</a> operator.
+Two samples belong to the same bin if the quotient of the sample's epoch seconds after integer division by the binning interval is the same.
+For example, in the case of <code>mean_3600</code>, two samples <code>S1</code> and <code>S2</code> belong to the same bin if
+<code>S1.epochSeconds/3600 = S2.epochSeconds/3600</code> where <code>/</code> represents the quotient after integer division.
+Samples belonging to the same bin are gathered together and sent thru various statistics operators.
+<table id="postprocessorops">
+<thead><tr><th>Operator</th><th>Desc</th></tr></thead>
+<tbody>
+<tr>
+<td>firstSample</td>
+<td>Returns the first sample in a bin. This is the default sparsification operator.</td>
+</tr>
+
+<tr>
+<td>lastSample</td>
+<td>Returns the last sample in a bin.</td>
+</tr>
+
+<tr>
+<td>firstFill</td>
+<td>Similar to the firstSample operator with the exception that we alter the timestamp to the middle of the bin and copy over the previous bin's value if a bin does not have any samples.</td>
+</tr>
+<tr>
+<td>lastFill</td>
+<td>Similar to the firstFill operator with the exception that we use the last sample in the bin.</td>
+</tr>
+
+
+<tr>
+<td>mean</td>
+<td>Returns the average value of a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getMean()</code>
+</td>
+</tr>
+
+<tr>
+<td>min</td>
+<td>Returns the minimum value in a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getMin()</code>
+</td>
+</tr>
+
+<tr>
+<td>max</td>
+<td>Returns the maximum value in a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getMax()</code>
+</td>
+</tr>
+
+<tr>
+<td>count</td>
+<td>Returns the number of samples in a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getN()</code>
+</td>
+</tr>
+
+<tr>
+<td>ncount</td>
+<td>Returns the total number of samples in a selected time span.
+</td>
+</tr>
+
+<tr>
+<td>nth</td>
+<td>Returns every n-th value..
+</td>
+</tr>
+
+<tr>
+<td>median</td>
+<td>Returns the median value of a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
+and is <code>DescriptiveStatistics.getPercentile(50)</code>
+</td>
+</tr>
+
+<tr>
+<td>std</td>
+<td>Returns the standard deviation of a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getStandardDeviation()</code>
+</td>
+</tr>
+
+<tr>
+<td>jitter</td>
+<td>Returns the jitter (the standard deviation divided by the mean) of a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getStandardDeviation()/SummaryStatistics.getMean()</code>
+</td>
+</tr>
+
+<tr>
+<td>ignoreflyers</td>
+<td>Ignores data that is more than the specified amount of std deviation from the mean in the bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>.
+It takes two arguments, the binning interval and the number of standard deviations (by default, 3.0).
+It filters the data and returns only those values which satisfy
+<code>Math.abs(val - SummaryStatistics.getMean()) &lt;= numDeviations*SummaryStatistics.getStandardDeviation()</code>
+</td>
+</tr>
+
+<tr>
+<td>flyers</td>
+<td>Opposite of ignoreflyers - only returns data that is more than the specified amount of std deviation from the mean in the bin. 
+</td>
+</tr>
+
+<tr>
+<td>variance</td>
+<td>Returns the variance of a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getVariance()</code>
+</td>
+</tr>
+<tr>
+<td>popvariance</td>
+<td>Returns the population variance of a bin. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
+and is <code>SummaryStatistics.getPopulationVariance()</code>
+</td>
+</tr>
+
+
+<tr>
+<td>kurtosis</td>
+<td>Returns the kurtosis of a bin - Kurtosis is a measure of the peakedness. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
+and is <code>DescriptiveStatistics.getKurtosis()</code>
+</td>
+</tr>
+<tr>
+<td>skewness</td>
+<td>Returns the skewness of a bin - Skewness is a measure of the asymmetry. 
+This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
+and is <code>DescriptiveStatistics.getSkewness()</code>
+</td>
+</tr>
+
+
+
+</tbody>
+</table>
+  
+</section>
+
+
+<section id="Reports">
+<h3>Reports</h3>
+The EPICS Archiver Appliance supports a wide variety of reports based on static and dynamic information.
+These reports can also be accessed from within scripting languages like python and can be used to facilitate automation and integration.
+Some reports that are currently available are
+<ul>
+  <li><span class="reportitle">PV's that may not exist</span> - This report lists all the PVs in the cluster that have never connected. PVs whose names have typos in them would be included in this report.</li>
+  <li><span class="reportitle">Currently disconnected PVs</span>  - This report lists all the PVs in the cluster that have connected in the past but are currently disconnected; perhaps because their IOCs have been turned off.</li>
+  <li><span class="reportitle">Top PVs by event rate</span> - These reports contain the PVs sorted by their actual event rate (descending).</li>
+  <li><span class="reportitle">Top PVs by storage rate</span> - These reports contain the PVs sorted by their actual storage rate (descending).</li>
+  <li><span class="reportitle">Recently added PVs</span> - These reports contain the PVs sorted by the creation timestamp of their PVTypeInfos (descending). PVs that were recently added show up first.</li>
+  <li><span class="reportitle">Recently modified PVs</span> - These reports contain the PVs sorted by the modification timestamp of their PVTypeInfos (descending). PVs that were recently modified show up first.</li>
+  <li><span class="reportitle">PVs by lost/regained connections</span> - These reports contain the PVs sorted by the number of times we've lost/re-established the CA connection. This can be used to determine if an IOC is being overwhelmed (perhaps by all the archiving targeted at it).</li>
+  <li><span class="reportitle">PVs by last known timestamp</span> - These reports contain the PVs sorted by the timestamp of the last event received.</li>
+  <li><span class="reportitle">PVs by dropped events from incorrect timestamps</span> - The EPICS archiver appliance discards events that are too far into the future or too far in the past. These reports contain the PVs sorted by the number of events dropped because they had invalid timestamps.</li>
+  <li><span class="reportitle">PVs by dropped events from buffer overflows</span> - The EPICS archiver appliance discards events when the sampling buffers (as estimated from the sampling period) become full. These reports contain the PVs sorted by the number of events dropped because the sampling buffers were full.</li>
+</ul>
+ 
+</section>
+
+<section id="Metrics">
+<h3>Metrics</h3>
+The EPICS Archiver Appliance maintains a wide variety of metrics to facilitate in capacity planning and load balancing.
+These metrics can be viewed in the Metrics page; a small subset of these metrics can be viewed across the cluster. 
+To view more details about the metrics on a particular appliance, click on that appliance in the list view.
+</section>
+
+<section id="Storage">
+<h3>Storage</h3>
+The EPICS Archiver Appliance supports multiple stages for storing data and allows for configuration of data stores on a per PV basis.
+The storage consumed across all PVs can be viewed in the Storage page.
+</section>
+
+<section id="Appliances">
+<h3>Appliances</h3>
+The EPICS Archiver Appliance maintains a days worth of CPU/heap usage statistics on a per appliance basis.
+These statistics can be viewed on the Appliances page.
+</section>
+
+<section id="Integrations">
+<h3>Integrations</h3>
+The EPICS Archiver Appliance supports limited integration with existing Channel Archiver installations.
+<ul>
+<li>To import ChannelArchiver <code>XML</code> configuration files, click on the <code>Choose Files</code> button, select any number of ChannelArchiver <code>XML</code> configuration files and press <code>Upload</code>.
+<figure>
+<img src="images/importCAConfig.png"/>
+</figure>
+The <code>DTD</code> for the ChannelArchiver <code>XML</code> file can be found in the ChannelArchiver documentation or in the ChannelArchiver source distribution. 
+</li>
+<li>To proxy data from existing ChannelArchiver <code>XML-RPC</code> data servers, add the URL to the <code>XML-RPC</code> data server using the <code>Add</code> button.
+The EPICS Archiver Appliance uses the <code>archiver.names</code> method to determine the PVs that are hosted by the ChannelArchiver <code>XML-RPC</code> data server and adds this server as a data source for these PVs.
+</li>
+</ul>
+</section>
+
+</article>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>EPICS Archiver Appliance - Matlab Integration</title>
+<link type="text/css" href="docs.css" rel="Stylesheet" />	
+</head>
+<body>
+<!-- Header starts here -->
+<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
+<div id="wrap">
+<div id="topbar">
+Last published on {publish_date}.
+</div>
+<aside id="leftnav">
+<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
+<ol>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/news/">News</a></li>
+<li><a href="details.html">Details</a></li>
+<li><a href="https://sourceforge.net/projects/epicsarchiverap/files/">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="installguide.html">Installation</a></li>
+<li><a href="userguide.html">User Guide</a></li>
+<li><a href="customization.html">Customize</a></li>
+<li><a href="developersguide.html">Developers</a></li>
+<li><a href="api/index.html">Javadoc</a></li>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="license.html">License</a></li>
+</ol>
+</aside>
+<!-- Header ends here -->
+
+<article id="rightcontent">
+
+<section>
+<h3>Retrieving data using Matlab</h3>
+The EPICS Archiver Appliance support multiple MIME-types when retrieving data and one of the supported MIME-types is the Matlab file format.
+The process of getting archive data into Matlab consists of
+<ol>
+<li>Constructing a URL to the server. See <a href="userguide.html#retrieval_url_formula">this</a> section on for the URL format for data retrieval.</li>
+<li>Using <code>urlwrite</code> to download data from this URL into a file.</li>
+<li>Loading this file into Matlab.</li>
+</ol>
+
+Here's some sample code that is used to get the data for PV <code>VPIO:IN20:111:VRAW</code>
+
+<pre>
+<code>
+urlwrite('http://test-arch.slac.stanford.edu:17668/retrieval/data/getData.mat', ...
+	'temp.mat', 'get', ...
+	{'pv', 'VPIO:IN20:111:VRAW', 'from', '2012-09-27T08:00:00.000Z', 'to', '2012-09-28T08:00:00.000Z'})
+
+dat = load('temp.mat')
+delete('temp.mat')
+
+try
+    header = dat.header;
+    data = dat.data;
+catch
+    fprintf('Could not get data from file\n');
+    return
+end
+
+header
+data
+</code>
+</pre>
+
+Here's a screenshot of this sample code being executed in a Matlab environment.
+<figure>
+<img src="images/matlab1.png"/>
+</figure> 
+</section>
+<div>
+The <code>.mat</code> response contains two objects, a header and a data object.
+<ul>
+ <li>The header object is indexed by the string <code>header</code> and is a MLStructure with fields containing some provenance information.</li>
+ <li>The data object is indexed by the string <code>data</code> and is a MLStructure with these fields.</li>
+ <ol>
+ <li><code>epochSeconds</code> - contains Java epoch seconds as a 1x1 uint64 array. The times are in UTC; so any conversion to local time needs to happen at the client.</li>
+ <li><code>values</code> - contains the values for the samples. All scalars come as a 1x1 double array. Waveforms come as a 1x<i>elementcount</i> double array where <i>elementcount</i> is the EPICS element count of the waveform.</li>
+ <li><code>nanos</code> - contains the nano second value of the EPICS record processing timestamp as a 1x1 uint64 array. Some installations embed the beam code/pulse id into this field.</li>
+ <li><code>isDST</code> - contains booleans that indicate if the time indicated by <code>epochSeconds</code> was in daylight savings time in the timezone of the server.</li>
+ </ol>
+ </ul>
+</div>
+
+</article>
+
+</div>
+</body>
+</html>

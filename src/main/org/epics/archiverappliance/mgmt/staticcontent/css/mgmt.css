@@ -1,0 +1,537 @@
+#archivePVDiv {
+	margin-top: 0.5em;	
+	padding-left: 10px;
+}
+
+#archstatpVNamesdiv {
+	padding-left: 5px;
+	padding-top: 10px;
+	padding-bottom: 10px;
+}
+
+#archstatpVNames {
+    width: 600px;
+	height: 100px;
+}
+
+#archivehelpdesk {
+	padding-left: 10px;
+}
+
+#archstatsdiv {
+	padding-top: 10px;
+	display: none;
+}
+
+#archstats {
+	border-collapse: collapse;
+}
+
+#archstats th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#archstats th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#archstats tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#reportchooselabel {
+	padding-left: 0.5em;
+}
+
+#reporttablediv {
+	padding-left: 1.0em;
+	padding: none;
+	margin-top: 1.0em;
+}
+
+.reporttable {
+	border-collapse: collapse;
+}
+
+.reporttable th, td {
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+.reporttable tr.colnames th {
+	text-align: left;
+	font-weight: bold;
+	padding-right: 1.5em;
+}
+
+
+
+.reporttable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+.reporttable tbody tr.rtbleven { 
+	background: #99cedb;
+}
+
+.reporttable tbody tr td a img {
+    border: none;
+}
+
+.reporttable tr.toolbar th {
+	border: none;
+	text-align: left;
+	padding: 0px;
+}
+
+.reporttable tr.toolbar span.toolbartopspan {
+	display: inline-block;
+	border-top: thin inset lightgray;
+	border-left: thin inset lightgray;
+	border-right: thin inset lightgray;
+	padding-top: 0.25em;
+	padding-bottom: 0.25em;
+	font-size: smaller;
+}
+
+.reporttable tr.toolbar img {
+	width: 1.25em;
+	height: 1.25em;
+	padding-left: 0.25em;
+	padding-right: 0.25em;
+	padding-top: 0.25em;
+}
+
+.reporttable tr.toolbar select {
+	font-size: small;
+	padding: 0px;
+	margin: 0px;
+}
+
+
+.reporttable tr.toolbar span.toolbarsep {
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+	border-right: thin inset lightgray;
+}
+
+.reporttable tr.toolbar span.toolbarright {
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+}
+
+.reporttable tr.toolbar span.toolbarpagenum {
+	font-size: small;
+	padding-left: 0.25em;
+	padding-right: 0.25em;
+}
+
+.archtabl_asc {
+	background: #99cedb url('../comm/img/sort_asc.png') no-repeat center right;
+}
+
+.archtabl_desc {
+	background: #99cedb url('../comm/img/sort_desc.png') no-repeat center right;
+}
+
+.archtabl_unsorted { 
+	background: #99cedb url('../comm/img/sort_both.png') no-repeat center right;
+}
+
+.archtabl_nosort { 
+	background: #99cedb;
+}
+
+.detailsviewheader {
+	margin-top: 0.5em;
+	margin-left: 1.0em;
+}
+
+img.imgintable {
+	height: 25px;
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+img.imginlist {
+	height: 20px;
+	display: inline;
+	padding-left: 0.10em;
+	margin-left: auto;
+	margin-right: auto;
+}
+
+img.disabled {
+	opacity: 0.4;
+}
+
+#pvDetailsDiv {
+	padding-left: 1.0em;
+	padding: none;
+	margin-top: 1.0em;
+}
+
+#pvDetailsTable {
+	border-collapse: collapse;
+}
+
+#pvDetailsTable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#pvDetailsTable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#pvDetailsTable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#pvDetailsName {
+	font-weight: bold;
+	padding-bottom: 0.5em;
+}
+
+#pvDetailsHeaderText {
+	padding-bottom: 0.5em;
+}
+
+#pvDetailsMenu {
+	list-style-position: inside;
+	float: right;
+	padding-right: 2.0em;
+}
+
+#pvDetailsMenu li {
+	padding: 0.5em;
+	list-style-type: none;
+	text-decoration: none;
+	background: transparent url(../comm/img/nav-bar-bg.gif) repeat-x top left;
+	font-weight: bold;
+	color: white;
+}
+
+#pvDetailsMenu li a, #pvDetailsMenu li a.visited {
+	display: inline;
+	list-style-type: none;
+	text-decoration: none;
+	color: white;
+}
+
+
+.internalheading {
+	font-size: larger;
+	color: #444;
+}
+
+#uploaddiv {
+	margin-top: 0.5em;	
+	margin-bottom: 0.5em;	
+	padding-left: 1.0em;
+	border-bottom: solid thin gray;
+}
+
+#configupload {
+	margin-top: 0.5em;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+}
+
+#uploadbtn {
+	margin-top: 0.5em;	
+	margin-bottom: 0.5em;	
+}
+
+#uploaddiv div.confirmationmessage {
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	font-style: italic;
+	color: DarkOliveGreen;
+}
+
+#metricsappliancesdiv {
+	padding-top: 10px;
+	margin-left: 2.0em;
+	margin-right: 2.0em;
+}
+
+#metricsappliancestable {
+	border-collapse: collapse;
+}
+
+#metricsappliancestable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#metricsappliancestable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#metricsappliancestable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#metricsappliancedetailsdiv {
+	padding-left: 1.0em;
+	padding: none;
+	margin-top: 1.0em;
+	border-top: medium groove #dddddd;
+}
+
+#metricsappliancedetailstable {
+	border-collapse: collapse;
+	margin-left: 1.0em;
+}
+
+#metricsappliancedetailstable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#metricsappliancedetailstable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#metricsappliancedetailstable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#metricsapplianceName {
+	font-weight: bold;
+	padding-bottom: 0.5em;
+}
+
+
+#externalCAdiv {
+	margin-top: 0.5em;	
+	margin-bottom: 0.5em;	
+	padding-left: 1.0em;
+	border-bottom: solid thin gray;
+}
+
+#externalCAlistview {
+	margin-bottom: 0.5em;	
+}
+
+#addchannelarchiverform {
+	margin-top: 1.0em;	
+	margin-bottom: 0.5em;	
+}
+
+#addchannelarchiversubmitbtn {
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+	margin-top: 0.5em;	
+	margin-bottom: 0.5em;
+s}
+
+#addchannelarchiverurlokdiv {
+	margin-top: 100px;	
+}
+
+#addchannelarchiverurl {
+	width: 80%;
+}
+
+#addchannelarchiversuccess {
+	display: none;
+}
+
+#addchannelarchiverGetUrl {
+	display: none;
+}
+
+#addchannelarchiverarchivesdiv {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+
+#cacomparefields {
+	padding-left: 1.0em;
+}
+
+#cacomparefields span {
+	padding-left: 1.0em;
+}
+
+#cacomparepvname {
+	width: 25%;
+}
+
+#cacompareserverURL {
+	width: 40%;
+}
+
+#cacomparearchiveIndex {
+	width: 5.0em;
+}
+
+
+
+#storageappliancesdiv {
+	padding-top: 10px;
+	margin-left: 2.0em;
+}
+
+#storageappliancestable {
+	border-collapse: collapse;
+}
+
+#storageappliancestable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#storageappliancestable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#storageappliancestable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#storageappliancedetailsdiv {
+	padding-left: 1.0em;
+	padding: none;
+	margin-top: 1.0em;
+	border-top: medium groove #dddddd;
+}
+
+#storageappliancedetailstable {
+	border-collapse: collapse;
+	margin-top: 1.0em;
+	margin-left: 1.0em;
+}
+
+#storageappliancedetailstable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#storageappliancedetailstable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#storageappliancedetailstable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#storageapplianceName {
+	font-weight: bold;
+	padding-bottom: 0.5em;
+}
+
+#instanceappliancesdiv {
+	padding-top: 10px;
+	margin-left: 2.0em;
+}
+
+#instanceappliancestable {
+	border-collapse: collapse;
+}
+
+#instanceappliancestable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#instanceappliancestable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#instanceappliancestable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#instanceappliancedetailsdiv {
+	padding-left: 1.0em;
+	padding: none;
+	margin-top: 1.0em;
+	border-top: medium groove #dddddd;
+}
+
+#instanceappliancedetailstable {
+	border-collapse: collapse;
+	margin-top: 1.0em;
+	margin-left: 1.0em;
+}
+
+#instanceappliancedetailstable th, td{
+	border: thin solid black;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#instanceappliancedetailstable th {
+	text-align: left;
+	background: #99cedb;
+	font-weight: bold;
+}
+
+
+#instanceappliancedetailstable tbody tr:nth-child(2n) {
+	background: #99cedb;
+}
+
+#instanceapplianceName {
+	font-weight: bold;
+	padding-bottom: 0.5em;
+}
+
+#policyeditor {
+	width: 1000px;
+	height: 600px;
+}
+
+#instancechartplaceholder { 
+	margin-top: 2.0em;
+}
+
+
+#help { 
+	float: right;
+	margin-right: 1.0em;
+}

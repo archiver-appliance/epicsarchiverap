@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<database>
+
+<include addPath = "src/test/org/epics/archiverappliance/engine/epicsv4/example/structrue/portDriver" />
+<include href = "drivers.xml" />
+<include href = "support.xml" />
+<include href = "scalarSupport.xml" />
+<include href = "arraySupport.xml" />
+<include href = "digitalSupport.xml" />
+<include href = "serialSupport.xml" />
+<include removePath = "src/test/org/epics/archiverappliance/engine/epicsv4/example/structrue/portDriver" />
+
+</database>

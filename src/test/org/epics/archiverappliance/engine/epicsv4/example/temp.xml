@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+<database>
+<import name = "org.epics.ioc.*" />
+<import name = "org.epics.pvData.*" />
+
+<record recordName = "simple" >
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "double" />
+</record>
+
+<record recordName = "enumerated" >
+    <structure name = "value">
+        <scalar name = "index" scalarType = "int"/>
+        <array name = "choices" scalarType = "string"/>
+    </structure>
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+</record>
+
+<record recordName = "counter" >
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "int" />
+    <structure name = "input" extends = "calculation" >
+      <structure name = "calculator">
+        <scalar name ="expression">(value+1)&lt;=10 ? value+1 : 0</scalar>
+      </structure>
+    </structure>
+    <structure name = "valueAlarm" extends = "intAlarm">
+      <scalar name = "active">true</scalar>
+      <scalar name = "lowAlarmLimit">2</scalar>
+      <scalar name = "lowAlarmSeverity">2</scalar>
+      <scalar name = "lowWarningLimit">4</scalar>
+      <scalar name = "lowWarningSeverity">1</scalar>
+      <scalar name = "highWarningLimit">8</scalar>
+      <scalar name = "highWarningSeverity">1</scalar>
+      <scalar name = "highAlarmLimit">10</scalar>
+      <scalar name = "highAlarmSeverity">2</scalar>
+    </structure> 
+</record>
+</database>

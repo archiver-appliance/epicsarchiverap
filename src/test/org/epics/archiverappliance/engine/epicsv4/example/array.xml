@@ -1,0 +1,291 @@
+<?xml version="1.0" ?>
+<database>
+
+<record recordName = "arrayIncrementer">
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <array name = "value" scalarType = "double">0.0,1.0,2.0</array>
+    <structure name = "scan" extends = "scan">
+        <structure name = "type"><scalar name = "choice">periodic</scalar></structure>
+        <scalar name = "rate">1.0</scalar>
+    </structure>
+    <structure name = "input" extends = "calculation" >
+      <structure name = "calculator" extends = "generic">
+          <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.arrayIncrementCalculatorFactory</auxInfo>
+      </structure>
+    </structure>
+    <structure name = "link" extends = "generic" >
+        <structure name = "0" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">arrayAdd</scalar>
+        </structure>
+        <structure name = "1" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">byteArray1FromCounter</scalar>
+        </structure>
+        <structure name = "2" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">byteArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+        <structure name = "3" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">shortArray1FromCounter</scalar>
+        </structure>
+        <structure name = "4" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">shortArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+        <structure name = "5" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">intArray1FromCounter</scalar>
+        </structure>
+        <structure name = "6" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">intArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+        <structure name = "7" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">longArray1FromCounter</scalar>
+        </structure>
+        <structure name = "8" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">longArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+        <structure name = "9" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">floatArray1FromCounter</scalar>
+        </structure>
+        <structure name = "10" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">floatArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+        <structure name = "11" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">doubleArray1FromCounter</scalar>
+        </structure>
+        <structure name = "12" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">doubleArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+        <structure name = "13" extends = "caProcessLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">stringArray1FromCounter</scalar>
+        </structure>
+        <structure name = "14" extends = "caOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >false</scalar>
+            <scalar name = "pvname">stringArray2FromCounter</scalar>
+            <scalar name = "request">record[process=true]</scalar>
+        </structure>
+    </structure>
+    <structure name = "display" extends = "display" >
+        <scalar name = "description">Sample Description</scalar>
+        <scalar name = "format">%f</scalar>
+        <scalar name = "units">volts</scalar>
+    </structure>
+</record>
+<record recordName = "arrayAdd">
+    <array name = "value" scalarType = "double"/>
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "calculation" >
+       <structure name = "calcArgs">
+          <structure name = "a" extends = "generic">
+             <array name = "value" scalarType = "double" />
+             <structure name = "alarm" extends = "alarm" />
+             <structure name = "input" extends = "caInputLink">
+                 <scalar name = "pvname">arrayIncrementer</scalar>
+             </structure>
+          </structure>
+          <structure name = "b" extends = "generic">
+             <array name = "value" scalarType = "double" />
+             <structure name = "alarm" extends = "alarm" />
+             <structure name = "input" extends = "caInputLink">
+                 <scalar name = "pvname">arrayIncrementer</scalar>
+             </structure>
+           </structure>
+       </structure>
+       <structure name = "calculator" extends = "generic">
+          <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.arrayAddCalculatorFactory</auxInfo>
+      </structure>
+    </structure>
+</record>
+
+<record recordName = "byteArray1FromCounter">
+    <array name = "value" scalarType = "byte" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "byteArray2FromCounter" >
+    <array name = "value" scalarType = "byte" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "byteArray3FromCounter">
+    <array name = "value" scalarType = "byte" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+<record recordName = "shortArray1FromCounter">
+    <array name = "value" scalarType = "short" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "shortArray2FromCounter" >
+    <array name = "value" scalarType = "short" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "shortArray3FromCounter">
+    <array name = "value" scalarType = "short" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+<record recordName = "intArray1FromCounter">
+    <array name = "value" scalarType = "int" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "intArray2FromCounter" >
+    <array name = "value" scalarType = "int" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "intArray3FromCounter">
+    <array name = "value" scalarType = "int" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+<record recordName = "longArray1FromCounter">
+    <array name = "value" scalarType = "long" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "longArray2FromCounter" >
+    <array name = "value" scalarType = "long" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "longArray3FromCounter">
+    <array name = "value" scalarType = "long" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+<record recordName = "floatArray1FromCounter">
+    <array name = "value" scalarType = "float" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "floatArray2FromCounter" >
+    <array name = "value" scalarType = "float" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "floatArray3FromCounter">
+    <array name = "value" scalarType = "float" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+
+<record recordName = "doubleArray1FromCounter">
+    <array name = "value" scalarType = "double" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "doubleArray2FromCounter" >
+    <array name = "value" scalarType = "double" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "doubleArray3FromCounter">
+    <array name = "value" scalarType = "double" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+
+<record recordName = "stringArray1FromCounter">
+    <array name = "value" scalarType = "string" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+    </structure>
+</record>
+
+<record recordName = "stringArray2FromCounter" >
+    <array name = "value" scalarType = "string" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+</record>
+<record recordName = "stringArray3FromCounter">
+    <array name = "value" scalarType = "string" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">arrayIncrementer</scalar>
+        <scalar name = "process">true</scalar>
+    </structure>
+</record>
+
+<!--
+-->
+</database>

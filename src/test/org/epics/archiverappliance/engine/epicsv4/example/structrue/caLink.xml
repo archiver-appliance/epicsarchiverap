@@ -1,0 +1,72 @@
+<?xml version="1.0" ?>
+<database>
+
+<structure structureName = "caProcessLinkFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+    org.epics.ioc.support.caLink.LinkFactory</scalar>
+</structure>
+<structure structureName = "caMonitorLinkFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+    org.epics.ioc.support.caLink.LinkFactory</scalar>
+</structure>
+<structure structureName = "caMonitorNotifyLinkFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+    org.epics.ioc.support.caLink.LinkFactory</scalar>
+</structure>
+<structure structureName = "caInputLinkFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+    org.epics.ioc.support.caLink.LinkFactory</scalar>
+</structure>
+<structure structureName = "caOutputLinkFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+    org.epics.ioc.support.caLink.LinkFactory</scalar>
+</structure>
+
+
+<structure structureName = "caProcessLink" extends = "generic" >
+   <scalar name = "pvname" scalarType = "string">
+      <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.caProcessLinkFactory</auxInfo>
+  </scalar>
+  <structure name = "alarm" extends = "alarm" />
+  <scalar name = "providerName" scalarType = "string">local</scalar>
+</structure>
+
+<structure structureName = "caMonitorLink" extends = "generic" >
+  <scalar name = "pvname" scalarType = "string">
+      <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.caMonitorLinkFactory</auxInfo>
+  </scalar>
+  <scalar name = "reportOverrun" scalarType = "boolean">false</scalar>
+  <scalar name = "process" scalarType = "boolean" />
+  <scalar name = "request" scalarType = "string"/>
+  <structure name = "alarm" extends = "alarm" />
+  <scalar name = "providerName" scalarType = "string">local</scalar>
+</structure>
+
+<structure structureName = "caMonitorNotifyLink" extends = "generic" >
+  <scalar name = "pvname" scalarType = "string">
+    <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.caMonitorNotifyLinkFactory</auxInfo>
+  </scalar>
+  <scalar name = "request" scalarType = "string">timeStamp[algorithm=onPut]</scalar>
+  <structure name = "alarm" extends = "alarm" />
+  <scalar name = "providerName" scalarType = "string">local</scalar>
+</structure>
+
+<structure structureName = "caInputLink" extends = "generic" >
+  <scalar name = "pvname" scalarType = "string">
+    <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.caInputLinkFactory</auxInfo>
+  </scalar>
+  <scalar name = "request" scalarType = "string"/>
+  <structure name = "alarm" extends = "alarm" />
+  <scalar name = "providerName" scalarType = "string" >local</scalar>
+</structure>
+
+<structure structureName = "caOutputLink" extends = "generic">
+  <scalar name = "pvname" scalarType = "string">
+    <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.caOutputLinkFactory</auxInfo>
+  </scalar>
+  <scalar name = "request" scalarType = "string"/>
+  <structure name = "alarm" extends = "alarm" />
+  <scalar name = "providerName" scalarType = "string" >local</scalar>
+</structure>
+
+</database>

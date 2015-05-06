@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>EPICS Archiver Appliance -- Quickstart</title>
+<link type="text/css" href="docs.css" rel="Stylesheet" />	
+</head>
+<body>
+<!-- Header starts here -->
+<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
+<div id="wrap">
+<div id="topbar">
+Last published on {publish_date}.
+</div>
+<aside id="leftnav">
+<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
+<ol>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/news/">News</a></li>
+<li><a href="details.html">Details</a></li>
+<li><a href="https://sourceforge.net/projects/epicsarchiverap/files/">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="installguide.html">Installation</a></li>
+<li><a href="userguide.html">User Guide</a></li>
+<li><a href="customization.html">Customize</a></li>
+<li><a href="developersguide.html">Developers</a></li>
+<li><a href="api/index.html">Javadoc</a></li>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="license.html">License</a></li>
+</ol>
+</aside>
+<!-- Header ends here -->
+
+<article id="rightcontent">
+<h3>Quickstart Guide</h3>
+<div id="intro">
+The steps outlined here should get you started quickly with evaluating and testing a new archiver appliance. 
+Note, <b>these steps are not meant for production deployments</b>, but are meant for evaluating and getting to know the system.
+For more details on how to deploy in a cluster or in a production environment, please see the <a href="installguide.html">Installation</a> guide.
+</div> 
+
+<section>
+For folks familiar with deployment of WAR files, the archiver appliance consists of 4 WAR files.
+These steps deploy these WAR files on a single Tomcat JVM, set the log levels to ERROR and start the VM.
+To simplify matters, we are not persisting configuration and therefore there are no steps to define a connection pool for the configuration database.  
+</section>
+
+
+<section>
+Here are the steps to get started quickly.
+<ol>
+<li>Make sure you have a recent version of Sun Java 1.7 from Oracle by running <code>java -version</code>. You should see something like so
+<img class="imageshowingstep" src="images/javaversion.png"/>
+</li>
+<li>Download the installation package to a Linux machine into a brand new folder. This should give you a tar.gz file like <code>archappl_vx.x.x.tar.gz</code>.</li>
+<li>Download a recent version of Tomcat 7.x. into the same folder. You should now have two files in this folder like so
+<img class="imageshowingstep" src="images/targzs.png"/>
+</li>
+<li>Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar into 4 WAR files and a bash script like so
+<img class="imageshowingstep" src="images/expandedtargz.png"/>
+</li>
+<li>Run the script like so
+<img class="imageshowingstep" src="images/runqascript.png"/>
+</li>
+<li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <code>All components in this appliance have started up. We should be ready to start accepting UI requests</code> like so
+<img class="imageshowingstep" src="images/readyforUIrequests.png"/>
+</li>
+<li>Open a browser to <code>http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code> and you should see the home screen for your archiver appliance.</li>
+<li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away. 
+Note it takes about 5 minutes for the archiver appliance to measure the event rate, storage rate etc and to transition PVs from the <code>Initial sampling</code> state to the <code>Being archived</code> state.
+</li>
+<li>To stop the appliance, use a <code>CTRL-C</code> in the console.</li>
+</ol>
+</section>
+
+<section>
+Notes
+<ul>
+<li>We set the Log4j root logging level to <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#ERROR">ERROR</a> by default. You should not see any exceptions or ERROR messages in the console on startup.</li>
+<li>We do not persist configuration in this setup. That is, if you kill the Tomcat process, you'll need to resubmit your PV's to the archiver on restart.</li>
+<li>You can increase the verbosity of console messages by passing in a <code>-v</code> <i>(for verbose)</i> argument to startup script. The sets the Log4j root logging level to <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#DEBUG">DEBUG</a>.</li>
+</ul>
+</section>
+
+<section>
+<h4>Quickstart using predefined VMs</h4>
+An alternate way to quickly get started and test the system is to use the predefined VM's provided by Martin. 
+These consists of three repos needed to set up an EPICS Archiver Appliance test environment:
+<ol>
+<li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/vagrant_archiver_appliance">vagrant_archiver_appliance</a></li>
+<li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/puppet_module_archiver_appliance">puppet_module_archiver_appliance</a></li>
+<li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/puppet_module_epics_softioc">puppet_module_epics_softioc</a></li>
+</ol>
+Simply follow the rules in the README of the first repo and the other two repos will be pulled in automatically.
+</section>
+
+
+
+</article>
+</div>
+</body>
+</html>

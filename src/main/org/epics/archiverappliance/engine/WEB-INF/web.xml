@@ -1,0 +1,14 @@
+<web-app>
+    <servlet>
+        <servlet-name>EngineBPLServlet</servlet-name>
+        <servlet-class>org.epics.archiverappliance.engine.BPLServlet</servlet-class>
+   		<load-on-startup>1</load-on-startup>
+    </servlet>  
+    <servlet-mapping>
+        <servlet-name>EngineBPLServlet</servlet-name>
+        <url-pattern>/bpl/*</url-pattern>
+    </servlet-mapping>
+	<listener>
+		<listener-class>org.epics.archiverappliance.config.ArchServletContextListener</listener-class>
+	</listener> 
+</web-app>

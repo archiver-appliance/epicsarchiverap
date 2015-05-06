@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+<database>
+<record recordName = "eventCounter">
+    <scalar name = "value" scalarType = "int"/>
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+     <structure name = "scan" extends = "scan">
+        <structure name = "type"><scalar name = "choice">event</scalar></structure>
+        <scalar name = "eventName">eventTest</scalar>
+    </structure>
+    <structure name = "input" extends = "calculation" >
+      <structure name = "calculator">
+        <scalar name ="expression">value+1</scalar>
+      </structure>
+    </structure>
+</record>
+
+<record recordName = "event">
+    <scalar name = "value" scalarType = "string" >
+        <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.eventFactory</auxInfo>
+        eventTest
+    </scalar>
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "scan" extends = "scan">
+        <structure name = "type"><scalar name = "choice">periodic</scalar></structure>
+        <scalar name = "rate">1.0</scalar>
+    </structure>
+</record>
+
+</database>

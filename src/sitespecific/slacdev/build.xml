@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+Site specific builds for slacdev
+Proof of concept
+====================================================================== -->
+<project name="slacedv" default="echo">
+	<target name="echo">
+		<echo message="From within the site specific build for ${archapplsite}. Staging folder is ${stage}"></echo>
+	</target>
+</project>

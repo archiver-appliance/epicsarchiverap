@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<database>
+
+<structure structureName = "delayFactory">
+ <scalar name = "supportFactory" scalarType = "string">
+   org.epics.ioc.support.basic.DelayFactory</scalar>
+</structure>
+
+<structure structureName = "delay">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.delayFactory</auxInfo>
+  <!-- min, max, inc are delay in seconds -->
+  <scalar name = "min" scalarType = "double" />
+  <scalar name = "max" scalarType = "double" />
+  <scalar name = "inc" scalarType = "double" />
+</structure>
+
+
+
+</database>

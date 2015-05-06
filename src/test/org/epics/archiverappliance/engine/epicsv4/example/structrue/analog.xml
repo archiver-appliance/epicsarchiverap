@@ -1,0 +1,58 @@
+<?xml version="1.0" ?>
+<database>
+
+<structure structureName = "linearConvertInputFactory">
+ <scalar name = "supportFactory" scalarType = "string">
+   org.epics.ioc.support.basic.LinearConvertFactory</scalar>
+</structure>
+
+<structure structureName = "linearConvertOutputFactory">
+ <scalar name = "supportFactory" scalarType = "string">
+   org.epics.ioc.support.basic.LinearConvertFactory</scalar>
+</structure>
+
+<structure structureName = "incrementalFactory">
+ <scalar name = "supportFactory" scalarType = "string">
+   org.epics.ioc.support.basic.IncrementalFactory</scalar>
+</structure>
+
+<structure structureName = "linearConvert" >
+  <scalar name = "engUnitsLow" scalarType = "double" />
+  <scalar name = "engUnitsHigh" scalarType = "double" />
+  <scalar name = "deviceHigh" scalarType = "int" />
+  <scalar name = "deviceLow" scalarType = "int" />
+  <scalar name = "slope" scalarType = "double" />
+  <scalar name = "intercept" scalarType = "double" />
+</structure>
+
+<structure structureName = "linearConvertInput">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.genericFactory</auxInfo>
+  <scalar name = "value" scalarType = "int" />
+  <structure name = "alarm" extends = "alarm"/>
+  <structure name = "input" extends = "generic" />
+  <structure name = "linearConvert" extends = "linearConvert">
+    <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.linearConvertInputFactory</auxInfo>
+  </structure>
+</structure>
+
+<structure structureName = "linearConvertOutput">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.genericFactory</auxInfo>
+  <scalar name = "value" scalarType = "int" />
+  <structure name = "alarm" extends = "alarm"/>
+  <structure name = "input" extends = "generic" />
+  <structure name = "linearConvert" extends = "linearConvert">
+    <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.linearConvertOutputFactory</auxInfo>
+  </structure>
+</structure>
+
+<structure structureName = "incrementalDouble" >
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.genericFactory</auxInfo>
+  <scalar name = "value" scalarType = "double" />
+  <structure name = "alarm" extends = "alarm"/>
+  <structure name = "input" extends = "generic" />
+  <scalar name = "incremental" scalarType = "boolean">
+   <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.incrementalFactory</auxInfo>
+  </scalar>
+  <scalar name = "rateOfChange" scalarType = "double" />
+</structure>
+</database>

@@ -1,0 +1,126 @@
+package org.epics.archiverappliance.retrieval.postprocessors;
+
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.concurrent.Callable;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.log4j.Logger;
+import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
+import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+
+/**
+ * This is a copy of ignore fliers with the comparision sign reversed.
+ * @author mshankar
+ *
+ */
+public class Fliers implements PostProcessor {
+	private static final float DEFAULT_DEVIATIONS = 3.0f;
+	private static Logger logger = Logger.getLogger(Fliers.class.getName());
+	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
+	float numDeviations = DEFAULT_DEVIATIONS;
+	
+	@Override
+	public void initialize(String userarg, String pvName) throws IOException {
+		try { 
+			if(userarg != null && userarg.contains("_")) {
+				String[] userparams = userarg.split("_");
+				String intervalStr = userparams[1];
+				intervalSecs = Integer.parseInt(intervalStr);
+				if(userparams.length > 2) { 
+					String numDeviationsStr = userparams[2];
+					numDeviations = Float.parseFloat(numDeviationsStr);
+				}
+				logger.debug("Using user supplied interval of " + intervalSecs + " and " + numDeviations);
+			} else {
+				logger.debug("Using the default interval of  " + intervalSecs + " and " + numDeviations + " deviations as the user has not specified the interval argument.");
+			}
+		} catch(Exception ex) {
+			throw new IOException(ex);
+		}
+	}
+
+	@Override
+	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+		float storageRate = typeInfo.getComputedStorageRate();
+		long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
+		// Add a fudge factor of 3; we generate one event for each event
+		long estimatedMemoryConsumption = (long) (storageRate*numSeconds*2);
+		return estimatedMemoryConsumption;
+	}
+	
+	@Override
+	public Callable<EventStream> wrap(final Callable<EventStream> callable) {
+		return new Callable<EventStream>() {
+			@Override
+			public EventStream call() throws Exception {
+				try(EventStream strm = callable.call()) {
+					long previousBinNum = -1;
+					SummaryStatistics stats = new SummaryStatistics();
+					ArrayListEventStream ret = new ArrayListEventStream(0, (RemotableEventStreamDesc) strm.getDescription());
+					ArrayListEventStream buf = new ArrayListEventStream(0, (RemotableEventStreamDesc) strm.getDescription());
+					for(Event e : strm) {
+						long epochSeconds = e.getEpochSeconds();
+						long binNumber = epochSeconds/intervalSecs;
+						if(binNumber != previousBinNum) {
+							addStat(stats, buf, binNumber, ret);
+							buf = new ArrayListEventStream(0, (RemotableEventStreamDesc) strm.getDescription());
+							previousBinNum = binNumber;
+						}
+						buf.add(e.makeClone());
+						double val = e.getSampleValue().getValue().doubleValue();
+						if(!Double.isNaN(val)) { 
+							stats.addValue(val);
+						}
+					}
+					// Catch the last bin
+					addStat(stats, buf, previousBinNum, ret);
+					return ret;
+				}
+			}
+	
+			private void addStat(SummaryStatistics stats, ArrayListEventStream buf, long binNumber, ArrayListEventStream ret) {
+				if(binNumber == -1)  return;
+				if(stats.getN() <= 0) { 
+					logger.debug("No values were added into the sumary stats");
+					stats.clear();
+					return;
+				}
+				
+				double mean = stats.getMean();
+				double cutoff = numDeviations*stats.getStandardDeviation();
+				for(Event e : buf) {
+					double val = e.getSampleValue().getValue().doubleValue();
+					// This should be the only difference between ignore fliers and fliers
+					if(Math.abs(val - mean) > cutoff) {
+						ret.add(e);
+					} else {
+						// if(logger.isDebugEnabled()) logger.debug("Skipping value " + val + " based on mean=" + mean + " and stdz = " + stdz + " for timestamp " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+					}
+				}
+				stats.clear();
+			}
+	
+		};
+	}
+
+	@Override
+	public String getIdentity() {
+		return "flyers";
+	}
+
+	@Override
+	public String getExtension() {
+		if(intervalSecs == PostProcessors.DEFAULT_SUMMARIZING_INTERVAL && numDeviations == DEFAULT_DEVIATIONS) {
+			return getIdentity();
+		} else {
+			return getIdentity() + "_" + Integer.toString(intervalSecs) + "_" + Float.toString(numDeviations);
+		}
+	}
+}

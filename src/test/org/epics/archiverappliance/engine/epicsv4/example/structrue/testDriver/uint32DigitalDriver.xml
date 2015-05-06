@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<database>
+
+<structure structureName = "uint32DigitalDriver">
+     <scalar name = "delay" scalarType = "double" />
+    <scalar name = "numberRegisters" scalarType = "int" default = "1" >1</scalar>
+</structure>
+
+</database>

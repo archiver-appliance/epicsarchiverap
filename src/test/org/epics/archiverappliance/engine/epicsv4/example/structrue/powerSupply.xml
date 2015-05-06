@@ -1,0 +1,9 @@
+<?xml version="1.0" ?>
+<database>
+
+<structure structureName = "powerSupplyFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+    org.epics.ioc.support.device.PowerSupplyFactory</scalar>
+</structure>
+
+</database>

@@ -1,0 +1,57 @@
+<?xml version="1.0" ?>
+<database>
+
+
+<structure structureName = "pdrvInt32ArrayInputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.array.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvInt32ArrayInput">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvInt32ArrayInputFactory</auxInfo>
+</structure>
+
+<structure structureName = "pdrvInt32ArrayInterruptFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.array.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvInt32ArrayInterrupt" extends = "portDriverInterruptLink">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvInt32ArrayInterruptFactory</auxInfo>
+  <scalar name = "process" scalarType = "boolean">false</scalar>
+</structure>
+
+<structure structureName = "pdrvInt32ArrayOutputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.array.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvInt32ArrayOutput">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvInt32ArrayOutputFactory</auxInfo>
+</structure>
+
+
+<structure structureName = "pdrvFloat64ArrayInputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.array.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvFloat64ArrayInput">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvFloat64ArrayInputFactory</auxInfo>
+</structure>
+
+<structure structureName = "pdrvFloat64ArrayInterruptFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.array.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvFloat64ArrayInterrupt" extends = "portDriverInterruptLink">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvFloat64ArrayInterruptFactory</auxInfo>
+  <scalar name = "process" scalarType = "boolean">false</scalar>
+</structure>
+
+<structure structureName = "pdrvFloat64ArrayOutputFactory">
+  <scalar name = "supportFactory" scalarType = "string">
+     org.epics.ioc.support.pdrv.array.SupportFactory</scalar>
+</structure>
+<structure structureName = "pdrvFloat64ArrayOutput">
+  <auxInfo name = "supportFactory" scalarType = "string">org.epics.ioc.pdrvFloat64ArrayOutputFactory</auxInfo>
+</structure>
+
+
+</database>

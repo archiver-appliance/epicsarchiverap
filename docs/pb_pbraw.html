@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>EPICS Archiver Appliance - The .pb file format and the .pbraw binary protocol</title>
+<link type="text/css" href="docs.css" rel="Stylesheet" />	
+</head>
+<body>
+<!-- Header starts here -->
+<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
+<div id="wrap">
+<div id="topbar">
+Last published on {publish_date}.
+</div>
+<aside id="leftnav">
+<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
+<ol>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/news/">News</a></li>
+<li><a href="details.html">Details</a></li>
+<li><a href="https://sourceforge.net/projects/epicsarchiverap/files/">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="installguide.html">Installation</a></li>
+<li><a href="userguide.html">User Guide</a></li>
+<li><a href="customization.html">Customize</a></li>
+<li><a href="developersguide.html">Developers</a></li>
+<li><a href="api/index.html">Javadoc</a></li>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="license.html">License</a></li>
+</ol>
+</aside>
+<!-- Header ends here -->
+
+<article id="rightcontent">
+
+<section>
+<h3>The <code>.pb</code> file format</h3>
+<div>
+The <a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a> in the EPICS archiver appliance uses Google's <a href="https://developers.google.com/protocol-buffers">ProtocolBuffers</a> as the serialization mechanism. 
+The PB definitions mapping EPICS DBR types to PB messages can be found in <a href="EPICSEvent.proto"><code>EPICSEvent.proto</code></a>.
+PB files contain serialized PB messages; one per sample; a sample per line. 
+The first line in a PB file is a header (<code>PayloadInfo</code> PB message) that contains some basic information like the PV name, its DBR type and so on.
+<figure>
+<img src="images/pbfile.png"/>
+</figure> 
+As serialized PB messages are binary data; after serialization, newline characters are escaped to maintain a "sample per line" constraint.
+<ol>
+<li>The ASCII escape character <code>0x1B</code> is escaped to the following two characters <code>0x1B 0x01</code></li>
+<li>The ASCII newline character <code>\n</code> or <code>0x0A</code> is escaped to the following two characters <code>0x1B 0x02</code></li>
+<li>The ASCII carriage return character <code>0x0D</code> is escaped to the following two characters <code>0x1B 0x03</code></li>
+</ol>
+Because of the sample per line constraint, one can use <code>wc -l </code> to determine the number of events in a PB file.
+The "sample per line" constraint also lets us determine where a sample begins and ends at any arbitrary location in the file.
+</div>
+<div>
+PB files try to optimize on storage consumption. 
+On an average, an <code>EPICS DBR_DOUBLE/PB ScalarDouble</code> consumes about 21 bytes per sample.
+To save space, the record processing timestamps in the samples are split into three parts
+<ol>
+<li><b>year</b> - This is stored once in the PB file in the header.</li>
+<li><b>secondsintoyear</b> - This is stored with each sample.</li>
+<li><b>nano</b> - This is stored with each sample.</li>
+</ol>
+This leads to the side-effect that each PB file "belongs" to a year.
+In addition, the record processing timestamps are guaranteed to be and expected to be monotonically increasing. 
+The "monotonically increasing timestamps" constraint lets us use various search algorithms on PB files without the need for an index.
+The <a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a> handles the translation back and forth between DBR types and raw PB messages and also enforces a strict partitioning.
+</div>
+<div style="margin-top: 1.0em">
+The installation bundle also includes some utilities that manipulate PB files. 
+These can be found in the <code>install/pbutils</code> folder of the <code>mgmt</code> webapp.
+These include 
+<ol>
+<li><b>printTimes.sh</b> - This utility prints the record processing timestamps of all the samples in the set of specified PB files.</li>
+<li><b>pb2json.sh</b> - This utility prints all the data in all the samples in the set of specified PB files as JSON that can potentially be loaded into Python or other languages.</li>
+<li><b>validate.sh</b> - This utility performs some simple validation of the set of specified PB files or PB files in the specified folders.</li>
+<li><b>repair.sh</b> - This utility performs some simple validation of the set of specified PB files or PB files in the specified folders.
+If errors are found in a PB file, the PB file is repaired by copying the valid samples into a new file and then renaming it to the old file name.
+It also support an option to make a backup of the original file before attepmting to fix it.
+</li>
+</ol>
+</div>  
+</section>
+
+<section>
+<h3>The PB/HTTP protocol</h3>
+The <code>PB/HTTP</code> is a binary protocol over HTTP that is an extension of the <code>.pb</code> file format.
+The main difference is that PB files contain only one chunk (header+samples) while the PB/HTTP can contain many chunks. 
+Chunks are separated by empty lines (<code>\n</code> characters) similar to how HTTP separates its headers from the body.
+While streaming data over the PB/HTTP protocol, the server also uses <a href="http://en.wikipedia.org/wiki/Chunked_transfer_encoding">HTTP chunks</a> to transfer the data across.
+There is no strict formula on how many chunks there will per data retrieval request; the server chunks data based on data source/partition/other parameters.
+The client library for the <a href="http://sourceforge.net/p/epicsarchiverap/pbrawclient/"><code>PB/HTTP</code></a> protocol handles the multiple chunks in a seamless fashion and presents the data to the caller as a single event stream.   
+<figure>
+<img src="images/pbhttp.png"/>
+</figure> 
+</section>
+
+
+
+</article>
+
+</div>
+</body>
+</html>

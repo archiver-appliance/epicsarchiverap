@@ -1,0 +1,195 @@
+<?xml version="1.0" ?>
+<database>
+<record recordName = "valueOnly">
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+</record>
+
+<record recordName = "simpleCounter" >
+
+ <structure name = "scan" extends = "scan">
+        <structure name = "type"><scalar name = "choice">periodic</scalar></structure>
+        <scalar name = "rate">1.0</scalar>
+    </structure>
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "int" />
+    <structure name = "input" extends = "calculation" >
+      <structure name = "calculator">
+        <scalar name ="expression">(value+1)&lt;=10 ? value+1 : 0</scalar>
+      </structure>
+    </structure>
+    <structure name = "valueAlarm" extends = "intAlarm">
+      <scalar name = "active">true</scalar>
+      <scalar name = "lowAlarmLimit">2</scalar>
+      <scalar name = "lowAlarmSeverity">2</scalar>
+      <scalar name = "lowWarningLimit">4</scalar>
+      <scalar name = "lowWarningSeverity">1</scalar>
+      <scalar name = "highWarningLimit">8</scalar>
+      <scalar name = "highWarningSeverity">1</scalar>
+      <scalar name = "highAlarmLimit">10</scalar>
+      <scalar name = "highAlarmSeverity">2</scalar>
+    </structure> 
+</record>
+
+<record recordName = "counter">
+    <structure name = "scan" extends = "scan">
+        <structure name = "type"><scalar name = "choice">periodic</scalar></structure>
+        <scalar name = "rate">1.0</scalar>
+    </structure>
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "input" extends = "calculation" >
+       <structure name = "calcArgs">
+          <structure name = "min">
+            <scalar name = "value" scalarType = "double" >0.0</scalar>
+          </structure>
+          <structure name = "max">
+            <scalar name = "value" scalarType = "double" >10.0</scalar>
+          </structure>
+          <structure name = "inc">
+            <scalar name = "value" scalarType = "double" >0.5</scalar>
+          </structure>
+       </structure>
+       <structure name = "calculator">
+         <scalar name = "expression">(value+inc)&lt;=max ? value+inc : min</scalar>
+       </structure>
+    </structure>
+
+</record>
+
+
+<record recordName = "counter7">
+    <structure name = "scan" extends = "scan">
+        <structure name = "type"><scalar name = "choice">periodic</scalar></structure>
+        <scalar name = "rate">1.0</scalar>
+    </structure>
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "input" extends = "calculation" >
+       <structure name = "calcArgs">
+          <structure name = "min">
+            <scalar name = "value" scalarType = "double" >0.0</scalar>
+          </structure>
+          <structure name = "max">
+            <scalar name = "value" scalarType = "double" >10.0</scalar>
+          </structure>
+          <structure name = "inc">
+            <scalar name = "value" scalarType = "double" >0.5</scalar>
+          </structure>
+       </structure>
+       <structure name = "calculator">
+         <scalar name = "expression">(value+inc)&lt;=max ? value+inc : min</scalar>
+       </structure>
+    </structure>
+    <structure name = "link" extends = "generic" >
+        <structure name = "0" extends = "dbOutputLink">
+            <scalar name = "wait" scalarType = "boolean" >true</scalar>
+             <scalar name = "pvname">counterOutput</scalar>
+             <scalar name = "process">true</scalar>
+        </structure>
+        <structure name = "1" extends = "dbProcessLink">
+            <scalar name = "pvname">counterInput</scalar>
+        </structure>
+    </structure>
+</record>
+
+<record recordName = "counterOutput" >
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <structure name = "display" extends = "display" >
+        <scalar name = "description">Sample Description</scalar>
+        <scalar name = "format">%f</scalar>
+        <scalar name = "units">volts</scalar>
+        <structure name = "limit">
+            <scalar name = "low">0.0</scalar>
+            <scalar name = "high">10.0</scalar>
+        </structure>
+    </structure>
+    <structure name = "control" extends = "control" >
+        <structure name = "limit">
+            <scalar name = "low">0.0</scalar>
+            <scalar name = "high">10.0</scalar>
+        </structure>
+        <scalar name = "minStep">.1</scalar>
+    </structure>
+    <structure name = "valueAlarm" extends = "doubleAlarm">
+      <scalar name = "active">true</scalar>
+      <scalar name = "lowAlarmLimit">2</scalar>
+      <scalar name = "lowAlarmSeverity">2</scalar>
+      <scalar name = "lowWarningLimit">4</scalar>
+      <scalar name = "lowWarningSeverity">1</scalar>
+      <scalar name = "highWarningLimit">8</scalar>
+      <scalar name = "highWarningSeverity">1</scalar>
+      <scalar name = "highAlarmLimit">10</scalar>
+      <scalar name = "highAlarmSeverity">2</scalar>
+      <scalar name = "hystersis">.2</scalar>
+    </structure> 
+    
+    
+</record>
+
+<record recordName = "counterInput">
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "display" extends = "display" />
+    <structure name = "input" extends = "caInputLink">
+        <scalar name = "pvname">counterOutput</scalar>
+        <scalar name = "request">value,alarm,display</scalar>
+    </structure>
+</record>
+
+
+
+
+<record recordName = "counterMonitor">
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "display" extends = "display" />
+    <structure name = "input" extends = "caMonitorLink">
+        <scalar name = "pvname">counterOutput</scalar>
+        <scalar name = "process">true</scalar>
+        <scalar name = "request">value,alarm,display</scalar>
+    </structure>
+    <structure name = "delay" extends = "delay"> 
+         <scalar name = "min">.1</scalar>
+         <scalar name = "max">.1</scalar>
+         <scalar name = "inc">.1</scalar>
+   </structure>
+</record>
+
+<record recordName = "addTwoArgs">
+    <structure name = "alarm" extends = "alarm" />
+    <structure name = "timeStamp" extends = "timeStamp" />
+    <scalar name = "value" scalarType = "double" />
+    <structure name = "input" extends = "calculation" >
+        <structure name = "calcArgs">
+            <structure name = "arg0" extends = "generic">
+                <scalar name = "value" scalarType = "double" >0.0</scalar>
+                <structure name = "alarm" extends = "alarm"/>
+                <structure name = "input" extends = "caMonitorLink">
+                    <scalar name = "pvname">counterOutput</scalar>
+                    <scalar name = "process">true</scalar>
+                    <scalar name = "request">value,alarm</scalar>
+                </structure>
+            </structure>
+            <structure name = "arg1" extends = "generic">
+                <scalar name = "value" scalarType = "double" >0.0</scalar>
+                <structure name = "alarm" extends = "alarm"/>
+                <structure name = "input" extends = "dbInputLink">
+                    <scalar name = "pvname">counterOutput</scalar>
+                </structure>
+            </structure>
+        </structure>
+        <structure name = "calculator">
+           <scalar name = "expression">arg0+arg1</scalar>
+        </structure>
+    </structure>
+</record>
+
+</database>

@@ -1,0 +1,226 @@
+package EPICS;
+
+option java_package = "edu.stanford.slac.archiverappliance.PB";
+option java_outer_classname = "EPICSEvent";
+
+message FieldValue {
+	required string name = 1;
+	required string val = 2;
+}
+
+message ScalarString {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required string val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6;
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message ScalarByte {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required bytes val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message ScalarShort {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required sint32 val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message ScalarInt {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required sfixed32 val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message ScalarEnum {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required sint32 val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message ScalarFloat {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required float val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+
+message ScalarDouble {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required double val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message VectorString {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  // No packed here as this is available only for primitive fields.
+  repeated string val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+// VectorChar is the same as ScalarChar as we use ByteString for both
+message VectorChar {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required bytes val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message VectorShort {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  repeated sint32 val = 3 [packed = true];
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message VectorInt {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  repeated sfixed32 val = 3  [packed = true];
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message VectorEnum {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  repeated sint32 val = 3 [packed = true];
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+message VectorFloat {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  repeated float val = 3  [packed = true];
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+
+message VectorDouble {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  repeated double val = 3  [packed = true];
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+// A generic v4 container; we simply store the bytes as obtained from EPICS v4 as the val.
+message V4GenericBytes {
+  required uint32 secondsintoyear = 1;
+  required uint32 nano = 2;
+  required bytes val = 3;
+  optional int32 severity = 4 [default = 0];
+  optional int32 status = 5 [default = 0];
+  optional uint32 repeatcount = 6; 
+  repeated FieldValue fieldvalues = 7;
+  optional bool fieldactualchange = 8;
+}
+
+
+// An enumeration that indicates what PB message should be used to unmarshall the following chunk of data
+// This is a copy of ArchDBRTypes and the numbers must match the integermap in ArchDBRTypes for the reverse lookup to work  
+// Look at DBR2PBTypeMapping to see how we can construct a hashmap that unmarshalls an appropriate language type based on this enum.
+enum PayloadType {
+	SCALAR_STRING = 0;      
+	SCALAR_SHORT = 1;         
+	SCALAR_FLOAT = 2;       
+	SCALAR_ENUM = 3;
+	SCALAR_BYTE = 4;
+	SCALAR_INT = 5;
+	SCALAR_DOUBLE = 6;
+	WAVEFORM_STRING = 7;      
+	WAVEFORM_SHORT = 8;         
+	WAVEFORM_FLOAT = 9;       
+	WAVEFORM_ENUM = 10;
+	WAVEFORM_BYTE = 11;
+	WAVEFORM_INT = 12;
+	WAVEFORM_DOUBLE = 13;
+	V4_GENERIC_BYTES = 14;
+}
+
+// A payload info is the first line in a chunk of data sent back to the client.
+// It tells you how to unmarshall, the pvname and the year for the data
+// It also has a lot of optional fields
+message PayloadInfo {
+  required PayloadType type = 1;
+  required string pvname = 2;
+  required int32 year = 3;
+  optional int32 elementCount = 4;
+// Items from 5 to 14 are no longer to be used. 
+// Stick these into the headers using the field names
+// For example, units comes in as EGU in the headers.
+  optional double unused00 = 5;
+  optional double unused01 = 6;
+  optional double unused02 = 7;
+  optional double unused03 = 8;
+  optional double unused04 = 9;
+  optional double unused05 = 10;
+  optional double unused06 = 11;
+  optional double unused07 = 12;
+  optional double unused08 = 13;
+  optional string unused09 = 14;
+// End of unused elements
+  repeated FieldValue headers = 15;
+}

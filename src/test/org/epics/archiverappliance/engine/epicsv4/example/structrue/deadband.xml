@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+<database xmlns="urn:schemas-epics-org:javaioc:1.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="urn:schemas-epics-org:javaioc:1.0 javaioc.xsd"
+   xmlns:model="urn:schemas-cosylab-com:model:1.0"
+   name="database">>
+
+<structure structureName = "deadband">
+    <structure name = "display">
+         <scalar name = "isPercent" scalarType = "boolean"/>
+         <!-- if true than percentage change. If false than absolute change -->
+         <scalar name = "value" scalarType = "double"/>
+         <!-- the deadband for display -->
+    </structure>
+    <structure name = "archive">
+         <scalar name = "isPercent" scalarType = "boolean"/>
+         <!-- if true than percentage change. If false than absolute change -->
+         <scalar name = "value" scalarType = "double"/>
+         <!-- the deadband for archive -->
+    </structure>
+</structure>
+
+</database>

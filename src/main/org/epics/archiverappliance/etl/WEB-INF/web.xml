@@ -1,0 +1,23 @@
+<web-app>
+   <servlet>
+        <servlet-name>StaticContent</servlet-name>
+        <servlet-class>org.epics.archiverappliance.common.StaticContentServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet>
+        <servlet-name>BPLServlet</servlet-name>
+        <servlet-class>org.epics.archiverappliance.etl.BPLServlet</servlet-class>
+   		<load-on-startup>1</load-on-startup>
+    </servlet>  
+    <servlet-mapping>
+        <servlet-name>StaticContent</servlet-name>
+        <url-pattern>/ui/*</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>BPLServlet</servlet-name>
+        <url-pattern>/bpl/*</url-pattern>
+    </servlet-mapping>
+	<listener>
+		<listener-class>org.epics.archiverappliance.config.ArchServletContextListener</listener-class>
+	</listener> 
+</web-app>

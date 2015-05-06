@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<title>appliance archiver - Appliances</title>
+<head>
+<!-- @begin(main_includes) -->
+<script type="text/javascript" src="comm/js/jquery-1.8.2.min.js"></script>
+<link type="text/css" href="comm/js/jquery-ui-1.9.1.custom/css/cupertino/jquery-ui-1.9.1.custom.css" rel="Stylesheet" />	
+<script type="text/javascript" src="comm/js/jquery-ui-1.9.1.custom/js/jquery-ui-1.9.1.custom.min.js"></script>
+<link type="text/css" href="comm/css/main.css" rel="Stylesheet" />	
+<script type="text/javascript" src="comm/js/common.js"></script>
+<!-- @end(main_includes) -->
+<link type="text/css" href="css/mgmt.css" rel="Stylesheet" />	
+<script type="text/javascript" src="js/reporttable.js"></script>
+<script type="text/javascript" src="js/mgmt.js"></script>
+
+<script src="comm/js/jquery.flot.js"></script>
+<script src="comm/js/jquery.flot.navigate.js"></script>
+<script src="comm/js/dateformat.js"></script>
+
+</head>
+<body>
+<!-- @begin(site_header) -->
+<div class="pageheader">
+<span class="apptitle" id="archiveInstallationTitle">LCLS Archiver Appliance</span>
+<span id="siteimages"><img src="comm/img/labLogo.png"></img><img src="comm/img/labLogo2.png"></img></span>
+</div>
+<!-- @end(site_header) -->
+
+<!-- @begin(site_navbar) -->
+<div class="navbar">
+<div class="nav">
+<ul class="mainmenu">
+<li><a href="index.html">Home</a></li>
+<li><a href="reports.html">Reports</a></li>
+<li><a href="metrics.html">Metrics</a></li>
+<li><a href="storage.html">Storage</a></li>
+<li><a href="appliance.html">Appliances</a></li>
+<li><a href="integration.html">Integration</a></li>
+<li><a href="#" id="help">Help</a></li>
+</ul>
+</div>
+</div>
+<!-- @end(site_navbar) -->
+
+
+<div class="page">
+<div id="instanceappliancesdiv">
+<table id="instanceappliancestable">
+<thead><tr><th>Appliance Name</th><th>Status</th><th>PV Count</th><th>Event Rate</th><th>Data Rate</th><th>Capacity consumed</th></tr></thead>
+<tbody>
+<!--  The table data will go here -->
+<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td></tr>
+</tbody>
+</table>
+</div>
+
+<div id="instanceappliancedetailsdiv">
+<div id="instancechartplaceholder" style="width:800px;height:600px;"></div>
+</div>
+
+<!-- @begin(site_footer) -->
+<div class="pagefooter">
+</div>
+<!-- @end(site_footer) -->
+
+<script type="text/javascript">
+$(document).ready(function() {
+	getInstanceMetrics();
+
+    // Set up help
+	$("#help").click(function() { window.open('help/userguide.html#Appliances'); } );	
+});
+</script>
+
+
+</body>
+</html>

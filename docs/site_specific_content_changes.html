@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>EPICS Archiver Appliance - Making simple site-specific content changes</title>
+<link type="text/css" href="docs.css" rel="Stylesheet" />
+<style type="text/css">
+span.tag {
+	color: #A65200;
+}
+
+</style>	
+</head>
+<body>
+<!-- Header starts here -->
+<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
+<div id="wrap">
+<div id="topbar">
+Last published on {publish_date}.
+</div>
+<aside id="leftnav">
+<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
+<ol>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/news/">News</a></li>
+<li><a href="details.html">Details</a></li>
+<li><a href="https://sourceforge.net/projects/epicsarchiverap/files/">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="installguide.html">Installation</a></li>
+<li><a href="userguide.html">User Guide</a></li>
+<li><a href="customization.html">Customize</a></li>
+<li><a href="developersguide.html">Developers</a></li>
+<li><a href="api/index.html">Javadoc</a></li>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="license.html">License</a></li>
+</ol>
+</aside>
+<!-- Header ends here -->
+
+<article id="rightcontent">
+
+<section>
+<h3>Making simple site-specific content changes</h3>
+<div>
+While the <a href="customization.html">Customization Guide</a> has details on a more flexible mechanism to customize the EPICS archiver appliance on a per-site basis, often what is required is a simple replacement of the images and text that are on the various pages. 
+This can be done after unpacking the WAR file during deployment.
+The <code>quickstart.sh</code> and <code>single_machine_install.sh</code> scripts has some sample code that does this that can be used as a starting point.
+<ul>
+<li>These rely on the presence of a folder <code>site_specific_content</code> in the deployment folder.</li>
+<li>All images in the folder <code>site_specific_content/img</code> is copied into the mgmt webapp's <code>ui/comm/img</code> folder and can be used for site logos and so on.</li>
+<li>The <a href="api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html">SyncStaticContentHeadersFooters</a> is run on a file called <code>template_changes.html</code></li>
+</ul> 
+</div>
+
+<div>
+At a high level, after unzipping the <code>mgmt.war</code> into the Tomcat <code>webapps</code> folder, one can replace/modify the files to implement some simple content changes.
+The various HTML files that comprise the UI have sections delimited by special tags. For example, the home page has
+<pre>
+<code>
+<span class="tag">&lt;!-- @begin(site_contact_text) --&gt;</span>
+This is the archiver appliance management console for the ... 
+<span class="tag">&lt;!-- @end(site_contact_text) --&gt;</span>
+</code>
+</pre>
+The simple java utility <a href="api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html">SyncStaticContentHeadersFooters</a> can be used to replace content between these tags based on a master template. 
+For example, create a master temple in <code>/tmp/master_template.html</code> that looks like so
+<pre>
+<code>
+<span class="tag">&lt;!-- @begin(site_header) --&gt;</span>
+&lt;div class="pageheader" style="background-image:url('comm/img/mylab.png'); background-size:1024px 400px;"&gt;
+&lt;span class="apptitle" id="archiveInstallationTitle"&gt;My Site Archiver Appliance&lt;/span&gt;
+&lt;/div&gt;
+<span class="tag">&lt;!-- @end(site_header) --&gt;</span>
+
+<span class="tag">&lt;!-- @begin(site_contact_text) --&gt;</span>
+This is the EPICS archiver appliance management console for my site/beamline/program. Please contact me at <code>555 - 555 - 5555</code> if you have any issues. 
+<span class="tag">&lt;!-- @end(site_contact_text) --&gt;</span>
+</code>
+</pre>
+
+Then run <code>SyncStaticContentHeadersFooters</code> using <code>/tmp/master_template.html</code> as the master template like so
+<pre>
+<code>
+java -cp ${TOMCAT_HOME}/webapps/mgmt/WEB-INF/classes \
+  org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters \
+  /tmp/master_template.html \
+  ${TOMCAT_HOME}/webapps/mgmt/ui
+</code>
+</pre>
+to generate
+<figure>
+<img src="images/simple_static_content.png"/>
+</figure>
+</div>
+ 
+</section>
+
+</article>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>EPICS Archiver Appliance - FAQ</title>
+<link type="text/css" href="docs.css" rel="Stylesheet" />	
+</head>
+<body>
+<!-- Header starts here -->
+<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance - FAQ</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
+<div id="wrap">
+<div id="topbar">
+Last published on {publish_date}.
+</div>
+<aside id="leftnav">
+<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
+<ol>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/news/">News</a></li>
+<li><a href="details.html">Details</a></li>
+<li><a href="https://sourceforge.net/projects/epicsarchiverap/files/">Download</a></li>
+<li><a href="quickstart.html">Quickstart</a></li>
+<li><a href="installguide.html">Installation</a></li>
+<li><a href="userguide.html">User Guide</a></li>
+<li><a href="customization.html">Customize</a></li>
+<li><a href="developersguide.html">Developers</a></li>
+<li><a href="api/index.html">Javadoc</a></li>
+<li><a href="https://sourceforge.net/p/epicsarchiverap/bugs/">Issues</a></li>
+<li><a href="faq.html">FAQ</a></li>
+<li><a href="license.html">License</a></li>
+</ol>
+</aside>
+<!-- Header ends here -->
+
+<article id="rightcontent">
+<ol class="QandA">
+<li>
+<div>Why another archiver?</div>
+<div>Archiving millions of PVS requires a few additional features.
+In addition to focusing on the EPICS side of the equation, we also need to address the various IT aspects like flexibility, scriptability, policy enforcement etc.
+A integrated multi-head, multi-stage solution was called for; hence the appliance.  
+</div>
+</li>
+
+<li>
+<div>What are the various configuration items?</div>
+<div>
+The various aspects of configuration are separated logically.
+<table>
+<thead>
+<tr><th>Environment variable</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
+<tr><td><code>ARCHAPPL_APPLIANCES</code></td><td>This is mandatory and points to a file containing the list of appliances in this cluster. This must be identical across all members in the cluster.</td><td><code>appliances.xml</code></td></tr>
+<tr><td><code>ARCHAPPL_POLICIES</code></td><td>This contains the full path name of your policies file. The policies file is a python script that controls the parameters for archiving.</td><td><code>policies.py</code> in <code>WEB/classes</code></td></tr>
+<tr><td><code>ARCHAPPL_PROPERTIES_FILENAME</code></td><td>This contains the full path name of <code>archappl.properties</code> file. The <code>archappl.properties</code> is the misc bucket for configuration and is a Java properties file with various name/value pairs.</td><td><code>archappl.properties</code> in <code>WEB/classes</code></td></tr>
+<tr><td><code>ARCHAPPL_MYIDENTITY</code></td><td>This contains the identity of this appliance; of course, this is different for each appliance. The appliance identity needs to match the identity as defined in the <code>appliances.xml</code></td><td><code>getCanonicalHostName()</code> in <code>InetAddress.getLocalHost()</code></td></tr>
+</tbody>
+</table>
+In addition to this, the configuration for each PV is stored in the <code>PVTypeInfo</code> table in the MySQL configuration database specific to each appliance.
+The connection pool for the database is typically configured in Tomcat's <code>conf/context.xml</code>.
+
+
+</div>
+</li>
+
+<li>
+<div>Where are the logs?</div>
+<div>Most deployment have four tomcat containers - one each for the engine, ETL, retrieval and mgmt components. All the logs typically are sent to <code>arch.log</code> or similar files in the <code>CATALINA_HOME/logs</code> of these containers.
+Log levels are typically controlled using a <code>log4j.properties</code> file in the <code>TOMCAT_HOME/lib</code> folder of these containers.
+</div>
+</li>
+
+
+
+</ol>
+
+
+
+
+</article>
+</div>
+</body>
+</html>

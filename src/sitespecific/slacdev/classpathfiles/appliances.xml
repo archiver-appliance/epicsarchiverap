@@ -1,0 +1,20 @@
+ <appliances>
+   <appliance>
+     <identity>archappl1</identity>
+     <cluster_inetport>archappl1:17670</cluster_inetport>
+     <mgmt_url>http://archappl1.slac.stanford.edu:17665/mgmt/bpl</mgmt_url>
+     <engine_url>http://archappl1.slac.stanford.edu:17666/engine/bpl</engine_url>
+     <etl_url>http://archappl1.slac.stanford.edu:17667/etl/bpl</etl_url>
+     <retrieval_url>http://archappl1.slac.stanford.edu:17668/retrieval/bpl</retrieval_url>
+     <data_retrieval_url>http://archappl1.slac.stanford.edu:17668/retrieval</data_retrieval_url>
+   </appliance>
+   <appliance>
+     <identity>archappl2</identity>
+     <cluster_inetport>archappl2:17670</cluster_inetport>
+     <mgmt_url>http://archappl2.slac.stanford.edu:17665/mgmt/bpl</mgmt_url>
+     <engine_url>http://archappl2.slac.stanford.edu:17665/engine/bpl</engine_url>
+     <etl_url>http://archappl2.slac.stanford.edu:17665/etl/bpl</etl_url>
+     <retrieval_url>http://archappl2.slac.stanford.edu:17665/retrieval/bpl</retrieval_url>
+     <data_retrieval_url>http://archappl2.slac.stanford.edu:17665/retrieval</data_retrieval_url>
+   </appliance>
+</appliances>

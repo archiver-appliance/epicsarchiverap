@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<title>appliance archiver - Reports</title>
+<head>
+<!-- @begin(main_includes) -->
+<script type="text/javascript" src="comm/js/jquery-1.8.2.min.js"></script>
+<link type="text/css" href="comm/js/jquery-ui-1.9.1.custom/css/cupertino/jquery-ui-1.9.1.custom.css" rel="Stylesheet" />	
+<script type="text/javascript" src="comm/js/jquery-ui-1.9.1.custom/js/jquery-ui-1.9.1.custom.min.js"></script>
+<link type="text/css" href="comm/css/main.css" rel="Stylesheet" />	
+<script type="text/javascript" src="comm/js/common.js"></script>
+<!-- @end(main_includes) -->
+<link type="text/css" href="css/mgmt.css" rel="Stylesheet" />	
+<script type="text/javascript" src="js/reporttable.js"></script>
+<script type="text/javascript" src="js/mgmt.js"></script>
+</head>
+<body>
+<!-- @begin(site_header) -->
+<div class="pageheader">
+<span class="apptitle" id="archiveInstallationTitle">LCLS Archiver Appliance</span>
+<span id="siteimages"><img src="comm/img/labLogo.png"></img><img src="comm/img/labLogo2.png"></img></span>
+</div>
+<!-- @end(site_header) -->
+
+<!-- @begin(site_navbar) -->
+<div class="navbar">
+<div class="nav">
+<ul class="mainmenu">
+<li><a href="index.html">Home</a></li>
+<li><a href="reports.html">Reports</a></li>
+<li><a href="metrics.html">Metrics</a></li>
+<li><a href="storage.html">Storage</a></li>
+<li><a href="appliance.html">Appliances</a></li>
+<li><a href="integration.html">Integration</a></li>
+<li><a href="#" id="help">Help</a></li>
+</ul>
+</div>
+</div>
+<!-- @end(site_navbar) -->
+
+<div class="page">
+<div id="reportlistdiv">
+<span id="reportchooselabel">Please choose a report:</span>
+<select id="reportoptions">
+  <option value="Blank" selected="selected">Select</option>
+  <option value="NeverConnected">PV's that may not exist</option>
+  <option value="CurrentlyDisconnected">Currently disconnected PVs</option>
+  <option value="PausedPVs">Paused PVs</option>
+  <option value="Top100EvRt">Top 100 PVs by event rate</option>
+  <option value="Top200EvRt">Top 200 PVs by event rate</option>
+  <option value="Top100StRt">Top 100 PVs by storage rate</option>
+  <option value="Top200StRt">Top 200 PVs by storage rate</option>
+  <option value="Top100RcAd">Recently added PVs (100)</option>
+  <option value="Top200RcAd">Recently added PVs (200)</option>
+  <option value="Top100RcMd">Recently modified PVs (100)</option>
+  <option value="Top200RcMd">Recently modified PVs (200)</option>
+  <option value="Top100StCm">PVs by storage consumed (100)</option>
+  <option value="Top200StCm">PVs by storage consumed (200)</option>
+  <option value="Top100LsCn">PVs by lost/regained connections (100)</option>
+  <option value="Top200LsCn">PVs by lost/regained connections (200)</option>
+  <option value="Top100TsOl">PVs by last known timestamp (100)</option>
+  <option value="Top200TsOl">PVs by last known timestamp (200)</option>
+  <option value="Top100DrpTs">PVs by dropped events from incorrect timestamps (100)</option>
+  <option value="Top200DrpTs">PVs by dropped events from incorrect timestamps (200)</option>
+  <option value="Top100DrpBf">PVs by dropped events from buffer overflows (100)</option>
+  <option value="Top200DrpBf">PVs by dropped events from buffer overflows (200)</option>
+  <option value="Top100DrpTyp">PVs by dropped events from type changes (100)</option>
+  <option value="Top200DrpTyp">PVs by dropped events from type changes (200)</option>
+</select> 
+</div>
+
+<div id="reporttablediv">
+</div>
+
+
+<script type="text/javascript">
+$('#reportoptions').change(function() {
+	var reportName = $('#reportoptions').val();
+	if(reportName == 'NeverConnected') {
+		getNeverConnectedPVsReport();
+	} else if(reportName == 'CurrentlyDisconnected') {
+		getCurrentlyDisconnectedPVsReport();
+	} else if(reportName == 'Top100EvRt') {
+		getEventRateReport(100);
+	} else if(reportName == 'Top200EvRt') {
+		getEventRateReport(200);
+	} else if(reportName == 'Top100StRt') {
+		getStorageRateReport(100);
+	} else if(reportName == 'Top200StRt') {
+		getStorageRateReport(200);
+	} else if(reportName == 'Top100RcAd') {
+		getRecentlyAddedPVsReport(100);
+	} else if(reportName == 'Top200RcAd') {
+		getRecentlyAddedPVsReport(200);
+	} else if(reportName == 'Top100RcMd') {
+		getRecentlyModifiedPVsReport(100);
+	} else if(reportName == 'Top200RcMd') {
+		getRecentlyModifiedPVsReport(200);
+	} else if(reportName == 'Top100StCm') {
+		getPVsByStorageConsumedReport(100);
+	} else if(reportName == 'Top200StCm') {
+		getPVsByStorageConsumedReport(200);
+	} else if(reportName == 'Top100LsCn') {
+		getPVsByLostConnections(100);
+	} else if(reportName == 'Top200LsCn') {
+		getPVsByLostConnections(200);
+	} else if(reportName == 'Top100TsOl') {
+		getSilentPVs(100);
+	} else if(reportName == 'Top200TsOl') {
+		getSilentPVs(200);
+	} else if(reportName == 'Top100DrpTs') {
+		getPVsByDroppedEventsTimestamp(100);
+	} else if(reportName == 'Top200DrpTs') {
+		getPVsByDroppedEventsTimestamp(200);
+	} else if(reportName == 'Top100DrpBf') {
+		getPVsByDroppedEventsBuffer(100);
+	} else if(reportName == 'Top200DrpBf') {
+		getPVsByDroppedEventsBuffer(200);
+	} else if(reportName == 'Top100DrpTyp') {
+		getPVsByDroppedEventsTypeChange(200);
+	} else if(reportName == 'Top200DrpTyp') {
+		getPVsByDroppedEventsTypeChange(200);
+	} else if(reportName == 'PausedPVs') {
+		getPausedPVsReport();
+	}
+});
+
+$(document).ready(function() {
+    // Set up help
+	$("#help").click(function() { window.open('help/userguide.html#Reports'); } );
+});
+
+</script>
+
+
+<!-- @begin(site_footer) -->
+<div class="pagefooter">
+</div>
+<!-- @end(site_footer) -->
+</div>
+
+</body>
+</html>
