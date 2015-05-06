@@ -1,4 +1,0 @@
-changeset = '{tags} {rev}\t{date|shortdate}\n\t{desc|fill68|strip|tabindent}\n'
-start_tags = '\n'
-tag = '{tag},'
-last_tag = '{tag} : {node|short} @ {date|shortdate}\n'
