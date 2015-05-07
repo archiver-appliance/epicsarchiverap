@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
@@ -21,7 +22,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  * @author mshankar
  *
  */
-public class FirstSamplePP implements PostProcessor {
+public class FirstSamplePP implements PostProcessor, AfterAllStreams {
 	private static Logger logger = Logger.getLogger(FirstSamplePP.class.getName());
 	private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private long firstBin = 0;
@@ -29,6 +30,7 @@ public class FirstSamplePP implements PostProcessor {
 	private long previousBinNum = -1;
 	Event lastSampleBeforeStart = null;
 	boolean lastSampleBeforeStartAdded = false;
+	private EventStreamDesc lastSampleDesc;
 
 	
 	@Override
@@ -71,6 +73,7 @@ public class FirstSamplePP implements PostProcessor {
 										logger.info("Adding the lastSampleBeforeStart at " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()) + " into the result stream");
 										buf.add(lastSampleBeforeStart);
 										lastSampleBeforeStartAdded = true; 
+										lastSampleDesc = null;
 									}
 									buf.add(e.makeClone());
 									previousBinNum = binNumber;
@@ -82,10 +85,12 @@ public class FirstSamplePP implements PostProcessor {
 									if(lastSampleBeforeStart != null) { 
 										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
 											lastSampleBeforeStart = e.makeClone();
-											logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
+											lastSampleDesc = strm.getDescription();
+											logger.info("Resetting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 										}
 									} else { 
 										lastSampleBeforeStart = e.makeClone();
+										lastSampleDesc = strm.getDescription();
 										logger.info("Setting the lastSampleBeforeStart to " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()));
 									}
 								}
@@ -95,11 +100,6 @@ public class FirstSamplePP implements PostProcessor {
 						}
 					}
 
-					if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) {
-						logger.info("Adding the lastSampleBeforeStart at " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()) + " into the result stream");
-						buf.add(lastSampleBeforeStart);
-						lastSampleBeforeStartAdded = true; 
-					}
 					return buf;
 				}
 			}
@@ -119,5 +119,18 @@ public class FirstSamplePP implements PostProcessor {
 		} else {
 			return "firstSample_" + Integer.toString(intervalSecs);
 		}
+	}
+
+	@Override
+	public EventStream anyFinalData() {
+		if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+			ArrayListEventStream buf = new ArrayListEventStream(0, (RemotableEventStreamDesc) lastSampleDesc);
+			logger.info("Returning the lastSampleBeforeStart at " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEventTimeStamp()) + " into the result stream after all the other streams have been processed.");
+			buf.add(lastSampleBeforeStart);
+			lastSampleBeforeStartAdded = true; 
+			lastSampleDesc = null;
+			return buf;
+		}
+		return null;
 	}
 }

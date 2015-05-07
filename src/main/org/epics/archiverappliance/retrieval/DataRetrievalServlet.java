@@ -65,6 +65,7 @@ import org.epics.archiverappliance.retrieval.mimeresponses.PBRAWResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.SVGResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.SinglePVCSVResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.TextResponse;
+import org.epics.archiverappliance.retrieval.postprocessors.AfterAllStreams;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.ExtraFieldsPostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.FirstSamplePP;
@@ -424,6 +425,15 @@ public class DataRetrievalServlet  extends HttpServlet {
 				}
 			}
 
+			// If the postProcessor needs to send final data across, give it a chance now...
+			if(postProcessor instanceof AfterAllStreams) {
+				EventStream finalEventStream = ((AfterAllStreams)postProcessor).anyFinalData();
+				if(finalEventStream != null) { 
+					mergeDedupCountingConsumer.consumeEventStream(finalEventStream);
+					resp.flushBuffer();
+				}
+			}
+			
 			pmansProfiler.mark("After writing all eventstreams to response");
 
 			long s2 = System.currentTimeMillis();
