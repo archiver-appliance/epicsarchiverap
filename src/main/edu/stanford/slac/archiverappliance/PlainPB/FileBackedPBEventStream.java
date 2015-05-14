@@ -9,6 +9,7 @@ package edu.stanford.slac.archiverappliance.PlainPB;
 
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -18,17 +19,20 @@ import java.sql.Timestamp;
 import java.util.Iterator;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.etl.ETLBulkStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.search.FileEventStreamSearch;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
@@ -187,14 +191,35 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 				endfound = bsend.seekToTime(dbrtype, endSecondsIntoYear);
 				if(endfound) {
 					endPosition = bsend.getFoundPosition();
+					
+					DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(this.type);;
+					Constructor<? extends DBRTimeEvent> unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
+					ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
 					try(LineByteStream lis = new LineByteStream(path, endPosition)) {
 						// The seekToTime call will have positioned the pointer to the last known event before the endSecondsIntoYear
 						// We'll skip two lines to get past the last known event before the endSecondsIntoYear and the event itself.
 						// We do have the ArchDBRType; so we can parse the pb messages and use time based iteration just for this part.
-						// We can consider this once we have a test case that can be used to test this.
-						lis.readLine();
-						lis.readLine();
-						endPosition = lis.getCurrentPosition();
+						// Jud Gaudenz pointed out a test case for this; so we not use time based iteration for this part..
+						lis.seekToFirstNewLine();
+						lis.readLine(nextLine);
+						while(!nextLine.isEmpty()) { 
+							DBRTimeEvent event = (DBRTimeEvent) unmarshallingConstructor.newInstance(this.desc.getYear(), nextLine);
+							if(event.getEventTimeStamp().after(endTime) || event.getEventTimeStamp().equals(endTime)) { 
+								break;
+							} else { 
+								if(logger.isDebugEnabled()) { 
+									logger.debug("Going past event at " + TimeUtils.convertToHumanReadableString(event.getEventTimeStamp()) 
+											+ " when seeking end position for PV " + pvName +
+											" at " 
+											+ TimeUtils.convertToHumanReadableString(endTime)
+											);
+								}
+							}
+							endPosition = lis.getCurrentPosition();
+							lis.readLine(nextLine);
+						}
+					} catch(Exception ex) { 
+						logger.error("Exception seeking to the end position for pv " + this.pvName, ex);
 					}
 				}
 			}

@@ -174,4 +174,12 @@ public class SimulationEvent implements DBRTimeEvent {
 	public void setSeverity(int severity) {
 		throw new UnsupportedOperationException("Not supported. Convert to a PB form if you want to use this.");
 	}
+
+	public int getNanos() {
+		return nanos;
+	}
+
+	public void setNanos(int nanos) {
+		this.nanos = nanos;
+	}
 }
