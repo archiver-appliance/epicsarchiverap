@@ -681,10 +681,5 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	@Override
 	public MetaInfo getTotalMetaInfo() {
 		return totalMetaInfo;
-	}
-	
-	@Override
-	public String getRecordTypeName() { 
-		return this.dbrtimeevent.getSampleValue().toString();
-	}
+	}	
 }

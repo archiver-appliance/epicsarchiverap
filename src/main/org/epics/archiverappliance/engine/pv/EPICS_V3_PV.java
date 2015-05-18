@@ -29,11 +29,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.common.POJOEvent;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.JCA2ArchDBRType;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 
 import com.cosylab.epics.caj.CAJChannel;
@@ -87,18 +90,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	
 	/** Store the value for this only in the runtime and not into the stores...*/
 	private boolean isruntimeFieldField = false;
-	
-	/**the pv.RTYP this is used to determine which meta fields of this pv are  archived*/
-	private String reacordTypeName = null;
-	
-	/**
-    * get the RTYP of this pv
-    * @return record type name
-    */
-	@Override
-	public String getRecordTypeName() {
-		return reacordTypeName;
-	}
 	
 	private PVConnectionState state = PVConnectionState.Idle;
 	
@@ -642,7 +633,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 					return;
 				}
 				if (this.name.endsWith(".RTYP")) {
-					this.reacordTypeName = (((DBR_String) dbr).getStringValue())[0];
+					String rtypName = (((DBR_String) dbr).getStringValue())[0];
+					dbrtimeevent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_STRING, TimeUtils.now(), new ScalarStringSampleValue(rtypName), 0, 0);
 					return;
 				}
 				// dbr.printInfo();

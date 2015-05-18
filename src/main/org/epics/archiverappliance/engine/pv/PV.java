@@ -142,13 +142,6 @@ public interface PV
 	 */
 	public MetaInfo getTotalMetaInfo();
 	
-	/**
-	 * Get the RTYP for this PV; in EPICS V3, there is a lot of complexity around the RTYP. So, we have a special method for this.
-	 * @return
-	 */
-	public String getRecordTypeName();
-	
-	
 	public  String getHostName();
 
 	/**

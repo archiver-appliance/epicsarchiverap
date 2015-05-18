@@ -149,7 +149,7 @@ public class MetaGet implements Runnable {
 					// These have already been processed; so do nothing.
 				} else { 
 					if (fieldName.endsWith("RTYP")) {
-						String rtyp = pvList.get(fieldName).getRecordTypeName();
+						String rtyp = pvList.get(fieldName).getDBRTimeEvent().getSampleValue().toString();
 						mainMeta.addOtherMetaInfo(fieldName, rtyp);
 						logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
 					} else {
