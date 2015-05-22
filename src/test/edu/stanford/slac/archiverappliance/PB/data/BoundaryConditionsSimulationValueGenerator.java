@@ -300,6 +300,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
 			retvd.setSeverity(1);
 			retvd.setStatus(0);
 			return retvd;
+		case DBR_V4_GENERIC_BYTES:
+			throw new RuntimeException("Currently don't support " + type + " when generating sample data");			
 		default: 
 			throw new RuntimeException("We seemed to have missed a DBR type when generating sample data");
 		}

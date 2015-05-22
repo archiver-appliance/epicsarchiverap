@@ -57,6 +57,10 @@ public class WebappReady implements BPLAction {
 				configService.getMgmtRuntimeState().componentStartedUp(WAR_FILE.ENGINE);
 				break;
 			}
+			case MGMT: {
+				configlogger.error("The MGMT webapp should not send itself a startupcomplete call. Did you wire your appliances incorrectly?");
+				break;
+			}
 			default: {
 				configlogger.error("Received a webappready for war file that we did not expect. " + warFile);
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND);

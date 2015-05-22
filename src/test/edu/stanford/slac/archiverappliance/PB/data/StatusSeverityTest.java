@@ -207,6 +207,8 @@ public class StatusSeverityTest {
 			retvd.setSeverity(severity);
 			retvd.setStatus(status);
 			return retvd;
+		case DBR_V4_GENERIC_BYTES:
+			throw new RuntimeException("Currently don't support " + type + " when generating sample data");			
 		default: 
 			throw new RuntimeException("We seemed to have missed a DBR type when generating sample data");
 		}
