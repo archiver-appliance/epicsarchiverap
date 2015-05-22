@@ -184,6 +184,8 @@ public class FileEventStreamSearch {
 					case STAY_WHERE_YOU_ARE:
 						foundPosition = mid;
 						return true;
+					default:
+						logger.error("Compare function returned something unexpeected " + nextStep);
 					}
 
 					maxIterations--;

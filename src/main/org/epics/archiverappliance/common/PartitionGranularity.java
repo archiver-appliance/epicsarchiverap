@@ -49,8 +49,8 @@ public enum PartitionGranularity {
 		case PARTITION_DAY : return PARTITION_MONTH;
 		case PARTITION_MONTH: return PARTITION_YEAR;
 		case PARTITION_YEAR: return null;
+		default: return null;
 		}
-		return null;
 	}
 
 	public int getApproxMinutesPerChunk() {

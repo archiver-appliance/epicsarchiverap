@@ -304,6 +304,8 @@ public class DefaultConfigService implements ConfigService {
 			this.etlPVLookup = new PBThreeTierETLPVLookup(this);
 			warFile = WAR_FILE.ETL;
 			break;
+		default:
+			logger.error("We seem to have introduced a new component into the system " + contextPath);
 		}
 		
 		

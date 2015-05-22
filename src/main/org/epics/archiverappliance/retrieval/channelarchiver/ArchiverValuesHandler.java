@@ -76,6 +76,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 				case CHANNEL_ARCHIVER_DOUBLE: return ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
 				case CHANNEL_ARCHIVER_ENUM: return ArchDBRTypes.DBR_WAVEFORM_ENUM;
 				case CHANNEL_ARCHIVER_INT: return ArchDBRTypes.DBR_WAVEFORM_INT;
+				default: throw new RuntimeException("Cannot map " + this + " element count " + elementCount + " to an ArchDBRTypes");
 				}
 			} else {
 				switch(this) {
@@ -83,10 +84,9 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 				case CHANNEL_ARCHIVER_DOUBLE: return ArchDBRTypes.DBR_SCALAR_DOUBLE;
 				case CHANNEL_ARCHIVER_ENUM: return ArchDBRTypes.DBR_SCALAR_ENUM;
 				case CHANNEL_ARCHIVER_INT: return ArchDBRTypes.DBR_SCALAR_INT;
+				default: throw new RuntimeException("Cannot map " + this + " element count " + elementCount + " to an ArchDBRTypes");
 				}
-			}
-			
-			throw new RuntimeException("Cannot map " + this + " element count " + elementCount + " to an ArchDBRTypes");
+			}			
 		}
 	};
 	
@@ -385,6 +385,8 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 					continueProcessing = this.endElement(streamReader.getLocalName(), text);
 					buf = new StringWriter();
 					break;
+				default:
+					// Should not really be here. Don't do anything..	
 				}
 				streamReader.next();
 			}
@@ -432,6 +434,8 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 					continueProcessing = this.endElement(streamReader.getLocalName(), text);
 					buf = new StringWriter();
 					break;
+				default:
+					// Should not really be here. Don't do anything..	
 				}
 				streamReader.next();
 			}

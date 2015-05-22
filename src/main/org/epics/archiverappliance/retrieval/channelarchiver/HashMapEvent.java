@@ -154,9 +154,9 @@ public class HashMapEvent implements DBRTimeEvent {
 		case DBR_V4_GENERIC_BYTES: {
 			throw new UnsupportedOperationException("Channel Archiver does not support V4 yet.");
 		}
+		default:
+			throw new UnsupportedOperationException("Unknown DBR type " + type);
 		}
-		
-		return null;
 	}
 	
 	@Override

@@ -220,6 +220,7 @@ public class ArchivePVState {
 				}
 				case FINISHED: {
 					logger.error("Archive state for PV " + this.pvName + " is finished.");
+					return;
 				}
 				default: {
 					logger.error("Invalid state when going thru the archive pv workflow");

@@ -52,6 +52,9 @@ public class StoragePluginURLParser {
 			case "rtree" : {
 				return parseChannelArchiverPlugin(srcURIStr, configService);
 			}
+			default : { 
+				logger.error("Unsupported plugin " + pluginIdentifier + ". Did you forget to register this?");
+			}
 			}
 		} catch(URISyntaxException ex) {
 			throw new IOException(ex);
@@ -68,6 +71,9 @@ public class StoragePluginURLParser {
 			switch(pluginIdentifier) {
 			case "pb" : {
 				return parsePlainPBStoragePlugin(srcURIStr, configService);
+			}
+			default : { 
+				logger.error("Unsupported plugin " + pluginIdentifier + ". Did you forget to register this?");
 			}
 			}
 		} catch(URISyntaxException ex) {
@@ -87,6 +93,9 @@ public class StoragePluginURLParser {
 			}
 			case "blackhole" : {
 				return parseBlackHolePlugin(srcURIStr, configService);
+			}
+			default : { 
+				logger.error("Unsupported plugin " + pluginIdentifier + ". Did you forget to register this?");
 			}
 			}
 		} catch(URISyntaxException ex) {
