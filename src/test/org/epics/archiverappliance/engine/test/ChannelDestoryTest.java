@@ -66,7 +66,7 @@ public class ChannelDestoryTest extends TestCase {
 		String pvName = "test_0";
 		try {
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 60, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
 			Thread.sleep(2000);
 
 			ArchiveEngine.destoryPv(pvName, testConfigService);
@@ -91,7 +91,7 @@ public class ChannelDestoryTest extends TestCase {
 
 			ArchiveEngine.archivePV(pvName, 0.1F, SamplingMethod.MONITOR, 60,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					null, false);
+					null, false, false);
 			Thread.sleep(2000);
 
 			ArchiveEngine.destoryPv(pvName, testConfigService);

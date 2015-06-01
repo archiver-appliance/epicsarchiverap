@@ -129,13 +129,6 @@ public interface PV
 	 */
 	public void updateTotalMetaInfo() throws IllegalStateException, CAException;
 
-
-	/**
-	 * Get the current value of all the meta fields. 
-	 * @return - Can return null if this PV has no meta fields.
-	 */
-	public HashMap<String, String> getCurrentCopyOfMetaFields();
-	
 	/**
 	 * Get the MetaInfo for this PV; used during initial MetaGet phase
 	 * @return

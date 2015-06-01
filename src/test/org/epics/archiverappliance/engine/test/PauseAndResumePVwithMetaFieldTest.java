@@ -13,7 +13,6 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
-import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.junit.After;
@@ -68,7 +67,7 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
 			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.SCAN, 60, writer,
 					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null,
-					metaFields, false);
+					metaFields, false, false);
 			// We wait for many minutes as the engine creates meta field channels after a delay
 			logger.info("After call to archiving PV");
 			Thread.sleep((8)*60*1000);
@@ -84,13 +83,9 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			// check the archive field archived
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				PV tempArchivePV = archiveChannel.getMetaPV(metaFieldTemp);
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be created but it is not",
-						tempArchivePV != null);
 				assertTrue("the channel for " + pvNameTemp
 						+ " should be connected but it is not",
-						tempArchivePV.isConnected());
+						archiveChannel.isMetaPVConnected(metaFieldTemp));
 
 			}
 			
@@ -118,13 +113,9 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			// check meta field
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				PV tempArchivePV = archiveChannel.getMetaPV(metaFieldTemp);
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be created but it is not",
-						tempArchivePV != null);
 				assertTrue("the channel for " + pvNameTemp
 						+ " should be not connected but it is ",
-						!tempArchivePV.isConnected());
+						!archiveChannel.isMetaPVConnected(metaFieldTemp));
 
 			}
 
@@ -147,13 +138,9 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			// check meta field
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				PV tempArchivePV = archiveChannel.getMetaPV(metaFieldTemp);
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be created but it is not",
-						tempArchivePV != null);
 				assertTrue("the channel for " + pvNameTemp
 						+ " should be reconnected but it is not",
-						tempArchivePV.isConnected());
+						archiveChannel.isMetaPVConnected(metaFieldTemp));
 
 			}
 

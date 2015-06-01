@@ -69,7 +69,7 @@ public class EngineShutDownTest extends TestCase {
 			for (int m = 0; m < 100; m++) {
 				ArchiveEngine.archivePV("test_" + m, 0.1F, SamplingMethod.SCAN,
 						5, writer, testConfigService,
-						ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
+						ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
 				Thread.sleep(10);
 			}
 			Thread.sleep(2000);

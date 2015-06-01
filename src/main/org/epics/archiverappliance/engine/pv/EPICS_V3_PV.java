@@ -824,27 +824,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		lastTimeStampWhenSavingarchiveFields = Calendar.getInstance();
 	}
 
-	/**
-	 * Get the current value of all the meta fields. 
-	 * @return
-	 */
-	@Override
-	public HashMap<String, String> getCurrentCopyOfMetaFields() { 
-		HashMap<String, String> retval = new HashMap<String, String>();
-		if(totalMetaInfo != null && totalMetaInfo.getUnit() != null) { 
-			retval.put("EGU", totalMetaInfo.getUnit());
-			retval.put("PREC", Integer.toString(totalMetaInfo.getPrecision()));
-		}
-		
-		if(allarchiveFieldsData != null && !allarchiveFieldsData.isEmpty()) { 
-			retval.putAll(allarchiveFieldsData);
-		}
-		if(runTimeFieldsData != null && !runTimeFieldsData.isEmpty()) { 
-			retval.putAll(runTimeFieldsData);
-		}
-		return retval;
-	}
-	
 	@Override
 	public String getLowLevelChannelInfo() {
 		// Commented out when using JCA. This seems to work in CAJ but not in JCA.

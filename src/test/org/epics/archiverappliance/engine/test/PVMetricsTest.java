@@ -66,7 +66,7 @@ public class PVMetricsTest extends TestCase {
 		try {
 
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 5, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
 			Thread.sleep(2000);
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
@@ -93,7 +93,7 @@ public class PVMetricsTest extends TestCase {
 
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.MONITOR, 5,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					null, false);
+					null, false, false);
 			Thread.sleep(2000);
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);

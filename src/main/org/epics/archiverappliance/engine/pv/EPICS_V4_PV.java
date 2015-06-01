@@ -272,23 +272,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	}
 
 	@Override
-	public HashMap<String, String> getCurrentCopyOfMetaFields() {
-		HashMap<String, String> retval = new HashMap<String, String>();
-		if(totalMetaInfo != null && totalMetaInfo.getUnit() != null) { 
-			retval.put("EGU", totalMetaInfo.getUnit());
-			retval.put("PREC", Integer.toString(totalMetaInfo.getPrecision()));
-		}
-		
-		if(allarchiveFieldsData != null && !allarchiveFieldsData.isEmpty()) { 
-			retval.putAll(allarchiveFieldsData);
-		}
-		if(runTimeFieldsData != null && !runTimeFieldsData.isEmpty()) { 
-			retval.putAll(runTimeFieldsData);
-		}
-		return retval;
-	}
-
-	@Override
 	public String getHostName() {
 		return hostName;
 	}

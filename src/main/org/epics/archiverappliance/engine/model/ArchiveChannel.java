@@ -16,6 +16,7 @@ package org.epics.archiverappliance.engine.model;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -165,15 +166,6 @@ abstract public class ArchiveChannel {
 	}
 
 	/**
-	 * update the meta field value and this is used for meta filed archiving
-	 * @param pvname
-	 * @param fieldValue
-	 */
-	public void updataMetaField(final String pvname, final String fieldValue) {
-		this.pv.updataMetaFieldValue(pvname, fieldValue);
-	}
-
-	/**
 	 * get the writer for this channel
 	 * @return  the writer for this channel
 	 */
@@ -285,6 +277,31 @@ abstract public class ArchiveChannel {
 
 	
 	/**
+	 * Initialize the metafields for this channel. In addition to the metafields specified  here, we also generate PV's for the runtime fields.
+	 * @param metaFields
+	 * @param configservice
+	 * @param usePVAccess
+	 * @throws IOException
+	 */
+	public void initializeMetaFieldPVS(final String[] metaFields, final ConfigService configservice, final boolean usePVAccess, final boolean useDBEProperties) throws IOException {
+		if(metaFields != null && metaFields.length > 0) { 
+			HashSet<String> runtTimeFieldsCopy = new HashSet<String>(configservice.getRuntimeFields());
+			for (String fieldName : metaFields) {
+				logger.debug("Adding monitor for meta field " + fieldName);
+				this.addMetaField(fieldName, configservice, false, usePVAccess);
+				runtTimeFieldsCopy.remove(fieldName);
+			}
+
+			for(String runtimeField : runtTimeFieldsCopy) { 
+				logger.debug("Adding monitor for runtime field " + runtimeField);
+				this.addMetaField(runtimeField, configservice, true, usePVAccess);
+			}
+		}
+	}
+
+
+	
+	/**
 	 * Add a pv for this PV for the given metafield.
 	 * @param fieldName
 	 * @param configservice
@@ -292,7 +309,7 @@ abstract public class ArchiveChannel {
 	 * @param usePVAccess
 	 * @throws IOException
 	 */
-	public void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess) throws IOException {
+	private void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess) throws IOException {
 		if(this.pv == null) throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
 		// This tells the main PV to create the hashmaps for the metafield storage
 		this.pv.markPVHasMetafields(true);
@@ -658,7 +675,7 @@ abstract public class ArchiveChannel {
 	 * @return - Can return null if this PV has no meta fields.
 	 */
 	public HashMap<String, String> getCurrentCopyOfMetaFields() { 
-		if(this.pv != null) return pv.getCurrentCopyOfMetaFields();
+		if(this.pv != null) return pv.getLatestMetadata();
 		return null;
 	}
 
@@ -677,8 +694,12 @@ abstract public class ArchiveChannel {
 	 * @param metaFieldName
 	 * @return
 	 */
-	public PV getMetaPV(String metaFieldName) {
-		return metaPVs.get(metaFieldName);
+	public boolean isMetaPVConnected(String metaFieldName) {
+		PV metaPV = metaPVs.get(metaFieldName);
+		if(metaPV != null) { 
+			return metaPV.isConnected();
+		}
+		return false;
 	}
 	
 	/**
@@ -727,19 +748,6 @@ abstract public class ArchiveChannel {
 		return false;
 	}
 
-	/**
-	 * Register a field channel with its parent PV.
-	 * @param metaFieldName
-	 * @param metaChannel
-	 */
-	public void addMetaChannel(String metaFieldName, PV metaPV) { 
-		if(metaPVs.containsKey(metaFieldName)) { 
-			logger.error("Channel for field " + metaFieldName + " for pv " + this.name + " already exists. Replacing it but this is not optimal");
-		}
-		metaPVs.put(metaFieldName, metaPV);
-	}
-	
-	
 	/**
 	 * Return the amount of time (in seconds) since we asked CAJ/JCA to connect to this channel.
 	 * @return

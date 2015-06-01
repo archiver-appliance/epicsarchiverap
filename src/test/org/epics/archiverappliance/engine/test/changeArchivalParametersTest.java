@@ -75,12 +75,12 @@ public class changeArchivalParametersTest extends TestCase {
 		try {
 
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 60, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
 
 			Thread.sleep(5000);
 
 			ArchiveEngine.changeArchivalParameters(pvName, 8,
-					SamplingMethod.SCAN, testConfigService, writer, false);
+					SamplingMethod.SCAN, testConfigService, writer, false, false);
 
 			Thread.sleep(11000);
 
@@ -117,12 +117,12 @@ public class changeArchivalParametersTest extends TestCase {
 		try {
 
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 60, writer,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false);
+					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
 
 			Thread.sleep(5000);
 
 			ArchiveEngine.changeArchivalParameters(pvName, 0.1F,
-					SamplingMethod.MONITOR, testConfigService, writer, false);
+					SamplingMethod.MONITOR, testConfigService, writer, false, false);
 
 			Thread.sleep(5000);
 			// ArchiveChannel
@@ -158,11 +158,11 @@ public class changeArchivalParametersTest extends TestCase {
 
 			ArchiveEngine.archivePV(pvName, 0.1F, SamplingMethod.MONITOR, 60,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					null, false);
+					null, false, false);
 
 			Thread.sleep(5000);
 			ArchiveEngine.changeArchivalParameters(pvName, 2,
-					SamplingMethod.SCAN, testConfigService, writer, false);
+					SamplingMethod.SCAN, testConfigService, writer, false, false);
 			Thread.sleep(5000);
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
@@ -194,12 +194,12 @@ public class changeArchivalParametersTest extends TestCase {
 
 			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.MONITOR, 60,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					null, false);
+					null, false, false);
 			ArchiveEngine.changeArchivalParameters(pvName, 0.1F,
-					SamplingMethod.MONITOR, testConfigService, writer, false);
+					SamplingMethod.MONITOR, testConfigService, writer, false, false);
 			Thread.sleep(5000);
 			ArchiveEngine.changeArchivalParameters(pvName, 2,
-					SamplingMethod.MONITOR, testConfigService, writer, false);
+					SamplingMethod.MONITOR, testConfigService, writer, false, false);
 			Thread.sleep(5000);
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);

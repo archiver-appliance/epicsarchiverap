@@ -866,7 +866,7 @@ public class DefaultConfigService implements ConfigService {
 				Timestamp lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(this);
 				if(logger.isDebugEnabled()) logger.debug("Last known timestamp from ETL stores is for pv " + pvName + " is "+ TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
 
-				ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, this, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName(), typeInfo.isUsePVAccess()); 
+				ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, this, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties()); 
 				currentPVCount++;
 				if(currentPVCount % pausePerGroupPVCount == 0) {
 					logger.debug("Sleeping for " + pausePerGroupPauseTimeInSeconds + " to prevent CA search storms");

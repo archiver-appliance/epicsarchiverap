@@ -127,6 +127,7 @@ public class PVTypeInfo implements Serializable {
 	private String controllingPV;
 	private String[] archiveFields = new String[0];
 	private boolean usePVAccess = false;
+	private boolean useDBEProperties = false;
 	
 	public PVTypeInfo() {
 		
@@ -597,5 +598,13 @@ public class PVTypeInfo implements Serializable {
 
 	public void setUsePVAccess(boolean usePVAccess) {
 		this.usePVAccess = usePVAccess;
+	}
+
+	public boolean isUseDBEProperties() {
+		return useDBEProperties;
+	}
+
+	public void setUseDBEProperties(boolean useDBEProperties) {
+		this.useDBEProperties = useDBEProperties;
 	}
 }
