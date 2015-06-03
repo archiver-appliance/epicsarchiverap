@@ -567,18 +567,15 @@ public class PVMetrics {
 	public void addConnectionLostRegainedFields(DBRTimeEvent event) {
 		if(firstDataAfterStartUp) {
 			long cnxregainedsecs = System.currentTimeMillis()/1000;
-			if(connectionLastLostEpochSeconds != 0 && connectionLastLostEpochSeconds != cnxregainedsecs) {
-				if(logger.isDebugEnabled()) { 
-					logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + pvName + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
-				}
-				event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
-				event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
-				event.addFieldValue("startup", Boolean.TRUE.toString());
-				connectionLastLostEpochSeconds = 0;
-			} else { 
-				logger.debug("Skipping adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + pvName);
+			if(logger.isDebugEnabled()) { 
+				logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + pvName + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
 			}
+			event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
+			event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
+			event.addFieldValue("startup", Boolean.TRUE.toString());
+			connectionLastLostEpochSeconds = 0;
 			firstDataAfterStartUp=false;
+			isFirstDataAfterConnection=false;
 		} else {
 			long cnxregainedsecs = System.currentTimeMillis()/1000;
 			if(isFirstDataAfterConnection) {
