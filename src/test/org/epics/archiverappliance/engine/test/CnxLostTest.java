@@ -62,6 +62,11 @@ public class CnxLostTest {
 		if(persistenceFolder.exists()) {
 			FileUtils.deleteDirectory(persistenceFolder);
 		}
+		
+		File mtsFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "UnitTestNoNamingConvention");
+		if(mtsFolder.exists()) { 
+			FileUtils.deleteDirectory(mtsFolder);
+		}
 	}
 	
 	enum ConnectionLossType { 
