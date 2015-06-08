@@ -158,7 +158,7 @@ public class ETLJob implements Runnable {
 							logger.warn("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
 						}
 					} catch(IOException ex) {
-						logger.error("Exception processing " + infoItem.getKey(), ex);
+						logger.error("Exception processing " + infoItem.getKey() + ": " + ex.getMessage());
 						if (handleFailedItem(infoItem, deleteList)) {
 							continue;
 						} else {
@@ -177,7 +177,7 @@ public class ETLJob implements Runnable {
 					commitSuccessful = curETLDest.commitETLAppendData(pvName, etlContext);
 					time4commitETLAppendData = time4commitETLAppendData+System.currentTimeMillis()-time7;
 				} catch (IOException e) {
-					logger.error("IOException from commitETLAppendData ", e);
+					logger.error("Exception from commitETLAppendData: " + e.getMessage());
 				}
 				
 				// Decide which source items should be deleted.
@@ -235,12 +235,10 @@ public class ETLJob implements Runnable {
 	
 	private boolean handleFailedItem(ETLInfo infoItem, List<ETLInfo> deleteList) {
 		if(getEffectiveOutOfSpaceHandling() == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
-			logger.error("Deleting src stream " + infoItem.getKey());
 			deleteList.add(infoItem);
 			lookupItem.outOfSpaceChunkDeleted();
 			return true;
 		} else { // outOfSpaceHandling == OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE
-			logger.warn("Skipping ETL this time for pv " + lookupItem.getPvName());
 			return false;
 		}
 	}
