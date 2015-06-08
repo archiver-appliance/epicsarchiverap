@@ -111,7 +111,10 @@ public class ETLJob implements Runnable {
 			List<ETLInfo> ETLInfoList = curETLSource.getETLStreams(pvName, processingTime, etlContext);
 			time4getETLStreams=time4getETLStreams+System.currentTimeMillis()-time1;
 			if (ETLInfoList != null) {
+				// Here we collect items which we will be moving and deleting respectively.
 				List<ETLInfo> movedList = new LinkedList<ETLInfo>();
+				List<ETLInfo> deleteList = new LinkedList<ETLInfo>();
+				
 				for (ETLInfo infoItem : ETLInfoList) {
 					if(logger.isDebugEnabled()) {
 						logger.debug("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
@@ -127,26 +130,10 @@ public class ETLJob implements Runnable {
 						long estimatedSpaceNeeded = sizeOfSrcStream + freeSpaceBuffer;
 						if(freeSpace < estimatedSpaceNeeded) { 
 							logger.error("No space on dest when moving ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString() + " as we estimate we need " +  estimatedSpaceNeeded + " bytes but we only have " + freeSpace);
-							OutOfSpaceHandling outOfSpaceHandling = this.lookupItem.getOutOfSpaceHandling();
-							if(outOfSpaceHandling == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
-								logger.error("Not enough space on dest. Deleting src stream " + infoItem.getKey());
-								movedList.add(infoItem);
-								lookupItem.outOfSpaceChunkDeleted();
+							if (handleFailedItem(infoItem, deleteList)) {
 								continue;
-							} else if(outOfSpaceHandling == OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE) { 
-								logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
+							} else {
 								break;
-							} else { 
-								// By default, we use the DELETE_SRC_STREAMS_IF_FIRST_DEST_WHEN_OUT_OF_SPACE...
-								if(lookupItem.getLifetimeorder() == 0) { 
-									logger.error("Not enough space on dest. Deleting src stream " + infoItem.getKey());
-									movedList.add(infoItem);
-									lookupItem.outOfSpaceChunkDeleted();
-									continue;
-								} else { 
-									logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
-									break;
-								}
 							}
 						}
 					}
@@ -162,7 +149,6 @@ public class ETLJob implements Runnable {
 						}
 						long time3=System.currentTimeMillis();
 						boolean status = curETLDest.appendToETLAppendData(pvName, stream, etlContext);
-						movedList.add(infoItem);
 						time4appendToETLAppendData=time4appendToETLAppendData+System.currentTimeMillis()-time3;
 						if (status) {
 							if(logger.isDebugEnabled()) {
@@ -172,38 +158,43 @@ public class ETLJob implements Runnable {
 							logger.warn("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
 						}
 					} catch(IOException ex) {
-						//TODO What do we do in the case of exceptions? Do we remove the source still? Do we stop the engine from recording this PV?
 						logger.error("Exception processing " + infoItem.getKey(), ex);
+						if (handleFailedItem(infoItem, deleteList)) {
+							continue;
+						} else {
+							break;
+						}
 					}
+					
+					movedList.add(infoItem);
 				}
-
 
 				// Concatenate any append data for the current ETLDest
 				// destination to this destination.
+				boolean commitSuccessful = false;
 				try {
-					long time7=System.currentTimeMillis();
-					boolean commitSuccessful = curETLDest.commitETLAppendData(pvName, etlContext);
-					time4commitETLAppendData=time4commitETLAppendData+System.currentTimeMillis()-time7;
-
-					if(commitSuccessful) {
-						// Now that ETL processing has completed for the current
-						// event time and PV name being processed, loop through
-						// the list of ETLInfo elements containing information
-						// about event streams and mark each ETLSource event stream
-						// (e.g., file) for deletion.
-						for (ETLInfo infoItem : movedList) { 
-							logger.debug("mark for deletion itemInfo key= " + infoItem.getKey());
-							long time4=System.currentTimeMillis();
-							curETLSource.markForDeletion(infoItem, etlContext);
-							time4markForDeletion=time4markForDeletion+System.currentTimeMillis()-time4;
-						}
-					} else {
-						logger.error("Unsuccessful commiting ETL for pv " + pvName);
-					}
+					long time7 = System.currentTimeMillis();
+					commitSuccessful = curETLDest.commitETLAppendData(pvName, etlContext);
+					time4commitETLAppendData = time4commitETLAppendData+System.currentTimeMillis()-time7;
 				} catch (IOException e) {
-					logger.error("IOException from prepareForNewPartition ", e);   
+					logger.error("IOException from commitETLAppendData ", e);
 				}
-
+				
+				// Decide which source items should be deleted.
+				for (ETLInfo infoItem : movedList) {
+					if (commitSuccessful || getEffectiveOutOfSpaceHandling() == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
+						deleteList.add(infoItem);
+					}
+				}
+				
+				// Mark for deletion all the items for which we have decided to to so.
+				for (ETLInfo infoItem : deleteList) { 
+					logger.debug("mark for deletion itemInfo key= " + infoItem.getKey());
+					long time4=System.currentTimeMillis();
+					curETLSource.markForDeletion(infoItem, etlContext);
+					time4markForDeletion=time4markForDeletion+System.currentTimeMillis()-time4;
+				}
+				
 				try {
 					long time5=System.currentTimeMillis();
 					curETLDest.runPostProcessors(pvName, lookupItem.getDbrType(), etlContext);
@@ -227,6 +218,30 @@ public class ETLJob implements Runnable {
 			logger.error("IOException processing ETL for pv " + lookupItem.getPvName(), ex);       
 		} finally {
 			currentlyRunning=false;
+		}
+	}
+	
+	private OutOfSpaceHandling getEffectiveOutOfSpaceHandling() {
+		OutOfSpaceHandling outOfSpaceHandling = lookupItem.getOutOfSpaceHandling();
+		if (outOfSpaceHandling == OutOfSpaceHandling.DELETE_SRC_STREAMS_IF_FIRST_DEST_WHEN_OUT_OF_SPACE) {
+			if (lookupItem.getLifetimeorder() == 0) {
+				return OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE;
+			} else {
+				return OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE;
+			}
+		}
+		return outOfSpaceHandling;
+	}
+	
+	private boolean handleFailedItem(ETLInfo infoItem, List<ETLInfo> deleteList) {
+		if(getEffectiveOutOfSpaceHandling() == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
+			logger.error("Deleting src stream " + infoItem.getKey());
+			deleteList.add(infoItem);
+			lookupItem.outOfSpaceChunkDeleted();
+			return true;
+		} else { // outOfSpaceHandling == OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE
+			logger.warn("Skipping ETL this time for pv " + lookupItem.getPvName());
+			return false;
 		}
 	}
 
