@@ -596,8 +596,6 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 				
 				logger.debug(String.format("ETL %s: path=%s startSec=%d endSec=%d", pvName, path, chunkStartSec, chunkEndSec));
 				
-				PBFileInfo fileinfo = new PBFileInfo(path);
-				ETLInfo etlInfo = new ETLInfo(pvName, fileinfo.getType(), path.toAbsolutePath().toString(), partitionGranularity, new FileStreamCreator(pvName, path, fileinfo), fileinfo.getFirstEvent(), Files.size(path));
 				if(keepParitions == 0) {
 					logger.debug("Skipping computation of hold");
 				} else {
@@ -607,6 +605,23 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 						logger.debug(String.format("ETL %s: stopping at path %s due to hold", pvName, path));
 						break;
 					}
+				}
+				
+				// The following attempts to read and parse the file.
+				// We want to delete the file if there is an error here (probably because the file is corrupt).
+				ETLInfo etlInfo;
+				try {
+					PBFileInfo fileinfo = new PBFileInfo(path);
+					etlInfo = new ETLInfo(pvName, fileinfo.getType(), path.toAbsolutePath().toString(), partitionGranularity, new FileStreamCreator(pvName, path, fileinfo), fileinfo.getFirstEvent(), Files.size(path));
+				} catch (PBFileInfo.MissingHeaderException ex) {
+					// Delete files which are missing a header, they can't possibly contain data.
+					logger.warn("Deleting " + path.toAbsolutePath().toString() + " due to incomplete header");
+					try {
+						Files.delete(path);
+					} catch (Exception ex2) {
+						logger.error("Cannot delete " + path.toAbsolutePath().toString() + " with incomplete header", ex2);
+					}
+					continue;
 				}
 				
 				// ETL gating - delete partitions which do not pass the gate.
@@ -623,7 +638,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					markForDeletion(etlInfo, context);
 				}
 			} catch(IOException ex) {
-				logger.error("Skipping ading " + path.toAbsolutePath().toString() + " to ETL list due to exception. Should we go ahead and mark this file for deletion in this case? ", ex);
+				logger.error("Skipping ading " + path.toAbsolutePath().toString() + " to ETL list due to exception.", ex);
 			}
 		}
 		
