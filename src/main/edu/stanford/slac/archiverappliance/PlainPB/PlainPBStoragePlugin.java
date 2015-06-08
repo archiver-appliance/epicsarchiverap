@@ -193,33 +193,52 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			boolean doNotuseSearchForPositions = !useSearchForPositions;
 			
 			ArrayList<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
+			
 			// Regardless of what we find, we add the last event from the partition before the start time
 			// This takes care of several multi-year bugs and hopefully does not introduce more.
 			// The mergededup consumer will digest this using its buffers and serve data appropriately.
-			Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(context, pvName, startTime, postProcessor, askingForProcessedDataButAbsentInCache);
+			Callable<EventStream> lastEventOfPreviousStream = null;
+			try {
+				lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(context, pvName, startTime, postProcessor, askingForProcessedDataButAbsentInCache);
+			} catch (Exception ex) {
+				logger.error("could not get last event from previous partition for " + pvName, ex);
+			}
 			if(lastEventOfPreviousStream != null) ret.add(lastEventOfPreviousStream);
-
-			if(paths != null && paths.length == 1) {
-				PBFileInfo fileInfo = new PBFileInfo(paths[0]); 
-				ArchDBRTypes dbrtype = fileInfo.getType();
-				if(fileInfo.getLastEventEpochSeconds() <= TimeUtils.convertToEpochSeconds(startTime)) { 
-					logger.debug("All we can get from this store is the last known event at " + TimeUtils.convertToHumanReadableString(fileInfo.getLastEventEpochSeconds()));
-					ret.add(CallableEventStream.makeOneEventCallable(fileInfo.getLastEvent(), new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear()), postProcessor, askingForProcessedDataButAbsentInCache));
-				} else { 
-					ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[0], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));
-				}
-			} else if(paths != null && paths.length > 1) {
-				PBFileInfo fileInfo = new PBFileInfo(paths[0]); 
-				ArchDBRTypes dbrtype = fileInfo.getType();
+			
+			if (paths != null && paths.length >= 1) {
 				int pathsCount = paths.length;
-				for(int pathid = 0; pathid < pathsCount; pathid++) {
-					if(pathid == 0) {
-						ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[pathid], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));						
-					} else if(pathid == pathsCount -1 ) {
-						ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[pathid], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));
-					} else {
-						ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[pathid], dbrtype), postProcessor, askingForProcessedDataButAbsentInCache));
+				ArchDBRTypes dbrtype = null;
+				
+				for (int pathid = 0; pathid < pathsCount; pathid++) {
+					if (dbrtype == null) {
+						PBFileInfo fileInfo;
+						try {
+							fileInfo = new PBFileInfo(paths[pathid]); 
+							dbrtype = fileInfo.getType();
+						} catch (Exception ex) {
+							logger.error("could not read data type from " + paths[pathid], ex);
+							continue;
+						}
+						
+						if (fileInfo.getLastEventEpochSeconds() <= TimeUtils.convertToEpochSeconds(startTime)) {
+							ret.add(CallableEventStream.makeOneEventCallable(fileInfo.getLastEvent(), new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear()), postProcessor, askingForProcessedDataButAbsentInCache));
+							continue;
+						}
 					}
+					
+					FileBackedPBEventStream stream;
+					try {
+						if (pathid == 0 || pathid == pathsCount - 1) {
+							stream = new FileBackedPBEventStream(pvName, paths[pathid], dbrtype, startTime, endTime, doNotuseSearchForPositions);
+						} else {
+							stream = new FileBackedPBEventStream(pvName, paths[pathid], dbrtype);
+						}
+					} catch (Exception ex) {
+						logger.error("could not create FileBackedPBEventStream for " + paths[pathid], ex);
+						continue;
+					}
+					
+					ret.add(CallableEventStream.makeOneStreamCallable(stream, postProcessor, askingForProcessedDataButAbsentInCache));
 				}
 			} else {
 				logger.debug("Ret should have only the last event of the previous partition for pv " + pvName);
