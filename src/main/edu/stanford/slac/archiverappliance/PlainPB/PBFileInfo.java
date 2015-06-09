@@ -38,6 +38,10 @@ public class PBFileInfo {
 	long positionOfFirstSample = 0L;
 	long positionOfLastSample = 0;
 	
+	public static class MissingHeaderException extends IOException {
+		public MissingHeaderException() {}
+	}
+	
 	public PBFileInfo(Path path) throws IOException {
 		this(path, true);
 	}
@@ -45,6 +49,10 @@ public class PBFileInfo {
 	public PBFileInfo(Path path, boolean lookupLastEvent) throws IOException {
 		try(LineByteStream lis = new LineByteStream(path)) {
 			byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
+			if (payloadLine == null) {
+				throw new MissingHeaderException();
+			}
+			
 			info = PayloadInfo.parseFrom(payloadLine);
 			positionOfFirstSample = lis.getCurrentPosition();
 			// This is not strictly correct; but this will be adjusted below.
@@ -64,9 +72,13 @@ public class PBFileInfo {
 			} else {
 				logger.debug("File " + path.toAbsolutePath().toString() + " does not seem to have any first line?");
 			}
-		} catch(Exception e) {
+		}
+		catch (MissingHeaderException e) {
+			throw e;
+		}
+		catch (Exception e) {
 			logger.warn("Exception determing header information from file " + path.toAbsolutePath().toString(), e);
-			throw new IOException(e);
+			throw (e instanceof IOException) ? (IOException)e : new IOException(e);
 		}
 	}
 	

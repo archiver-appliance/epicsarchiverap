@@ -156,20 +156,20 @@ public class AppendDataStateData {
 					logger.debug("Making a backup from " + pathToCopyFrom.toAbsolutePath().toString() + " to file " + pvPath.toAbsolutePath().toString() + " when appending data for pv " + pvName);
 					Files.copy(pathToCopyFrom, pvPath);
 					// We still have to create an os so that the logic can continue.
-					updateStateBasedOnExistingFile(pvName, pvPath);
+					updateStateBasedOnExistingFile(pvName, pvPath, stream);
 					
 					
 				} else {
 					logger.debug("File to copy from " + pathToCopyFrom.toAbsolutePath().toString() + " does not exist when appending data for pv " + pvName);
-					createNewFileAndWriteAHeader(pvName, pvPath, stream);
+					createNewFileAndWriteAHeader(pvName, pvPath, stream, false);
 				}
 			} else {
 				logger.debug("File to copy from is not specified and the file " + pvPath.toAbsolutePath().toString() + " does not exist when appending data for pv " + pvName);
-				createNewFileAndWriteAHeader(pvName, pvPath, stream);
+				createNewFileAndWriteAHeader(pvName, pvPath, stream, false);
 			}
 		} else {
 			if(logger.isDebugEnabled()) { logger.debug(desc + ": Appending to existing PB file " + pvPath.toAbsolutePath().toString() + " for PV " + pvName + " for year " + this.currentEventsYear); }
-			updateStateBasedOnExistingFile(pvName, pvPath);
+			updateStateBasedOnExistingFile(pvName, pvPath, stream);
 		}
 		return pvPath;
 	}
@@ -250,8 +250,17 @@ public class AppendDataStateData {
 	 * @param pvPath
 	 * @throws IOException
 	 */
-	private void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException {
-		PBFileInfo info = new PBFileInfo(pvPath);
+	private void updateStateBasedOnExistingFile(String pvName, Path pvPath, EventStream stream) throws IOException {
+		PBFileInfo info;
+		try {
+			info = new PBFileInfo(pvPath);
+		} catch (PBFileInfo.MissingHeaderException ex) {
+			// handle incomplete header - truncate the file and write the header
+			logger.debug("Restarting PB file " + pvPath + " due to incomplete header");
+			createNewFileAndWriteAHeader(pvName, pvPath, stream, true);
+			return;
+		}
+		
 		if(!info.getPVName().equals(pvName)) throw new IOException("Trying to append data for " + pvName + " to a file " + pvPath + " that has data for " + info.getPVName());
 		this.previousYear = info.getDataYear();
 		this.previousEpochSeconds = info.getLastEventEpochSeconds();
@@ -268,8 +277,8 @@ public class AppendDataStateData {
 	 * @param stream
 	 * @throws IOException
 	 */
-	private void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream) throws IOException {
-		if(Files.exists(pvPath)) throw new IOException("Trying to write a header into a file that exists " + pvPath.toAbsolutePath().toString());
+	private void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream, boolean allow_existing) throws IOException {
+		if(!allow_existing && Files.exists(pvPath)) throw new IOException("Trying to write a header into a file that exists " + pvPath.toAbsolutePath().toString());
 		if(logger.isDebugEnabled()) logger.debug(desc + ": Writing new PB file" + pvPath.toAbsolutePath().toString() 
 				+ " for PV " + pvName 
 				+ " for year " + this.currentEventsYear 
@@ -285,7 +294,6 @@ public class AppendDataStateData {
 		this.os.write(LineEscaper.NEWLINE_CHAR);
 		this.previousFileName = pvPath.getFileName().toString();
 	}
-	
 	
 	/**
 	 * Append data in bulk skipping some of the per event checks.
@@ -324,7 +332,7 @@ public class AppendDataStateData {
 
 		try { 
 			// Update the last known timestamp and the like...
-			updateStateBasedOnExistingFile(pvName, pvPath);
+			updateStateBasedOnExistingFile(pvName, pvPath, bulkStream);
 		} finally { 
 			// Close the current stream first and set it to null.
 			if(this.os != null) try { this.os.close(); } catch(Throwable t) {}
