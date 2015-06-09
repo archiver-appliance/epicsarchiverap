@@ -55,8 +55,11 @@ public class PBFileInfo {
 			
 			info = PayloadInfo.parseFrom(payloadLine);
 			positionOfFirstSample = lis.getCurrentPosition();
-			// This is not strictly correct; but this will be adjusted below.
-			positionOfLastSample = Files.size(path);
+			
+			// This will be corrected as long as there are any samples found (and lookupLastEvent is true).
+			// Otherwise, the fileSize value will make anyone reading from this offset not find any events
+			// (that we know of at this time).
+			positionOfLastSample = fileSize;
 
 			ArchDBRTypes type = ArchDBRTypes.valueOf(info.getType());
 			Constructor<? extends DBRTimeEvent> unmarshallingConstructor = DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
@@ -143,44 +146,39 @@ public class PBFileInfo {
 	
 	
 	private void lookupLastEvent(Path path, LineByteStream lis, Constructor<? extends DBRTimeEvent> unmarshallingConstructor) throws Exception { 
-		// If we do not have a first line, we probably do not have a last line
-		lis.seekToBeforeLastLine();
-		long posn = lis.getCurrentPosition();
-		int lineTries = 0;
-		byte[] lastLine = lis.readLine();
-		while(lastLine == null && posn > 0 && lineTries < 1000) { 
-			lis.seekToBeforePreviousLine(posn-2);
-			posn = lis.getCurrentPosition();
-			lastLine = lis.readLine();
-			lineTries++;
+		// Look for the right-most newline except the last character.
+		// If there is none, there is no last event.
+		if (!lis.seekToBeforeLastLine()) {
+			return;
 		}
-
-		int tries = 0;
-		// Potential infinite loop here; we'll try about 1000 times
-		while(lastEvent == null && tries < 1000) {
-			try { 
-				lastEvent = (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(lastLine));
-				lastEvent.getEventTimeStamp();
-				positionOfLastSample = posn;
+		long lastLinePos = lis.getCurrentPosition();
+		
+		// Read the line following this newline.
+		// If we have an incomplete line, we will try to look for the previous line.
+		byte[] lastLine = lis.readLine();
+		if (lastLine == null) {
+			// If no previous line, there is no last event.
+			if (!lis.seekToBeforePreviousLine(lastLinePos - 1)) {
 				return;
-			} catch(PBParseException ex) {
-				logger.warn(path.toString() + " seems to have some data corruption at the end of the file; moving onto the previous line");
-				lastEvent = null;
-				lis.seekToBeforePreviousLine(posn-2);
-				posn = lis.getCurrentPosition();
-				lineTries = 0;
-				lastLine = lis.readLine();
-				while(lastLine == null && posn > 0 && lineTries < 1000) { 
-					lis.seekToBeforePreviousLine(posn-2);
-					posn = lis.getCurrentPosition();
-					lastLine = lis.readLine();
-					lineTries++;
-				}
 			}
-			tries++;
+			
+			// Try to read this line now. Since we have found an incomplete
+			// line at the end, this one will normally be complete.
+			lastLinePos = lis.getCurrentPosition();
+			lastLine = lis.readLine();
+			if (lastLine == null) {
+				return;
+			}
 		}
 		
-		logger.debug("File " + path.toAbsolutePath().toString() + " does not seem to have any last line?");
-		lastEvent = null;
+		// Parse the line. We expect success since it is a complete line.
+		try { 
+			lastEvent = (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(lastLine));
+			lastEvent.getEventTimeStamp();
+			positionOfLastSample = lastLinePos;
+		} catch (PBParseException ex) {
+			logger.warn(path.toString() + " has a corrupt last complete line");
+			lastEvent = null;
+		}
 	}
 }

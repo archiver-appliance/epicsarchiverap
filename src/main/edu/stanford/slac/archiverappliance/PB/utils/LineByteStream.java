@@ -31,109 +31,98 @@ public class LineByteStream implements Closeable {
 	private static Logger logger = Logger.getLogger(LineByteStream.class.getName());
 	public static int MAX_LINE_SIZE = 16 * 1024;
 	public static int MAX_ITERATIONS_TO_DETERMINE_LINE = 1024;
+	
 	private SeekableByteChannel byteChannel = null;
 	private Path path = null;
 	byte[] buf = null;
 	int bytesRead = 0;
 	int currentReadPosition = 0;
 	long lastReadPointer = 0;
-	long totalBytesToRead = Long.MAX_VALUE;
-	long totalBytesReadSoFar = 0L;
+	long startPosition = 0;
+	long endPosition = 0;
 	ByteBuffer byteBuf = null;
-	
+
 	public LineByteStream(Path path) throws IOException {
-		this.path = path;
-		this.byteChannel = ArchPaths.newByteChannel(path, StandardOpenOption.READ);
-		buf = new byte[MAX_LINE_SIZE];
-		lastReadPointer = byteChannel.position();
-		byteBuf = ByteBuffer.allocate(MAX_LINE_SIZE); 
-		readNextBatch();
+		this(path, 0, Long.MAX_VALUE);
 	}
-
+	
 	public LineByteStream(Path path, long startPosition) throws IOException {
-		this.path = path;
-		this.byteChannel = ArchPaths.newByteChannel(path, StandardOpenOption.READ);
-		this.byteChannel.position(startPosition);
-		buf = new byte[MAX_LINE_SIZE];
-		lastReadPointer = byteChannel.position();
-		byteBuf = ByteBuffer.allocate(MAX_LINE_SIZE); 
-		readNextBatch();
+		this(path, startPosition, Long.MAX_VALUE);
 	}
-
+	
 	public LineByteStream(Path path, long startPosition, long endPosition) throws IOException {
 		this.path = path;
+		this.startPosition = startPosition;
+		this.endPosition = endPosition;
 		this.byteChannel = ArchPaths.newByteChannel(path, StandardOpenOption.READ);
-		this.byteChannel.position(startPosition);
-		totalBytesToRead = endPosition - startPosition + 1;
 		buf = new byte[MAX_LINE_SIZE];
-		lastReadPointer = byteChannel.position();
-		byteBuf = ByteBuffer.allocate(MAX_LINE_SIZE); 
-		readNextBatch();
+		byteBuf = ByteBuffer.allocate(MAX_LINE_SIZE);
+		
+		seekTo(startPosition);
 	}
 
+	private void seekTo(long position) throws IOException {
+		byteChannel.position(position);
+		
+		lastReadPointer = position;
+		bytesRead = 0;
+		
+		readNextBatch();
+	}
+	
 	private void readNextBatch() throws IOException {
-		if(totalBytesReadSoFar >= totalBytesToRead) {
-			bytesRead = 0;
+		// Assume the current bunch has been read.
+		// Note, this works OK even for repeated calls at the end.
+		lastReadPointer += bytesRead;
+		bytesRead = 0;
+		currentReadPosition = 0;
+		
+		// If we're past the endPosition, don't read any further.
+		if (lastReadPointer >= endPosition) {
 			return;
 		}
 		
-		lastReadPointer = lastReadPointer+bytesRead;
+		// Read some data.
 		byteBuf.clear();
 		bytesRead = this.byteChannel.read(byteBuf);
 		byteBuf.flip();
-		if(bytesRead > 0) { 
+		if (bytesRead > 0) { 
 			byteBuf.get(buf, 0, bytesRead);
+		} else {
+			bytesRead = 0; // -1 is EOF, don't want negative values
 		}
-		currentReadPosition = 0;
 		
-		long lastTotalBytes = totalBytesReadSoFar; 
-		totalBytesReadSoFar += bytesRead;
-		if(totalBytesReadSoFar >= totalBytesToRead) {
-			// The downcasting to int should be safe as the most we'll read over the limit is MAX_LINE_SIZE
-			int resetBytesRead = (int) (totalBytesToRead - lastTotalBytes);
-			// We find the first new line and stop there.
-			while(resetBytesRead < bytesRead && buf[resetBytesRead] != LineEscaper.NEWLINE_CHAR) resetBytesRead++;
-			if(resetBytesRead <= bytesRead) { 
-				bytesRead = resetBytesRead;
-			} else {
-				if(logger.isDebugEnabled()) { 
-					logger.debug("Cannot find newline at tail end of file. resetBytesRead = " + resetBytesRead + " bytesRead=" + bytesRead + " totalBytesReadSoFar=" + totalBytesReadSoFar + "totalBytesToRead=" + totalBytesToRead);
-				}
-			}
-		}
-		// We leave totalBytesReadSoFar so far at the higher value so the next readNextBatch will terminate at the first if statement.
+		// Fixup bytesRead so that we ignore any data beyond endPosition.
+		bytesRead = (int)Math.min((long)bytesRead, endPosition - lastReadPointer);
 	}
 
 	
 	public byte[] readLine() throws IOException {
-		if(bytesRead <= 0) return null;
-
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		int loopcount = 0;
-		while(loopcount < MAX_ITERATIONS_TO_DETERMINE_LINE) {
+		while(loopcount++ < MAX_ITERATIONS_TO_DETERMINE_LINE) {
+			// Look for a newline in the current buffer.
 			int start = currentReadPosition;
-			int posnofnewlinechar = -1;
 			while(currentReadPosition < bytesRead) {
 				if(buf[currentReadPosition++] == LineEscaper.NEWLINE_CHAR) { 
-					posnofnewlinechar = currentReadPosition-1;
-					break;
+					// Found the newline. Add any data we still have before the newline,
+					// then return this line.
+					int linelength = (currentReadPosition - start) - 1;
+					out.write(buf, start, linelength);
+					return out.toByteArray();
 				}
 			}
 			
-			if(posnofnewlinechar == -1) {
-				int linelength = (bytesRead - start);
-				out.write(buf, start, linelength);
-				readNextBatch();
-				start = currentReadPosition;
-				if(bytesRead <= 0) {
-					// End of file reached and we have not found a newline.
-					// we cannot return what we have as we'll get PBParseExceptions upstream.
-					return null;
-				}				
-			} else {
-				int linelength = (currentReadPosition - start) - 1;
-				out.write(buf, start, linelength);
-				return out.toByteArray();
+			// No newline found here. Append the partial data from this buffer.
+			int linelength = bytesRead - start;
+			out.write(buf, start, linelength);
+			
+			// Read another batch of data.
+			readNextBatch();
+			if(bytesRead <= 0) {
+				// End of file reached and we have not found a newline.
+				// we cannot return what we have as we'll get PBParseExceptions upstream.
+				return null;
 			}
 		}
 		
@@ -151,40 +140,31 @@ public class LineByteStream implements Closeable {
 	 */
 	public ByteArray readLine(ByteArray bar) throws IOException {
 		bar.reset();
-		if(bytesRead <= 0 || currentReadPosition >= bytesRead) { 
-			return bar;
-		}
 
 		int loopcount = 0;
 		while(loopcount++ < MAX_ITERATIONS_TO_DETERMINE_LINE) {
 			try {
-				while(currentReadPosition < bytesRead) {
-					assert(currentReadPosition < buf.length);
-					byte b = buf[currentReadPosition];
-					if(b == LineEscaper.NEWLINE_CHAR) {  
-						if(currentReadPosition >= bytesRead - 1) {
-							readNextBatch();
-						} else { 
-							currentReadPosition++;
-						}
+				// Look for a newline in the current buffer while adding characters to the outbut.
+				while (currentReadPosition < bytesRead) {
+					byte b = buf[currentReadPosition++];
+					if (b == LineEscaper.NEWLINE_CHAR) {
 						return bar;
-					} else {
-						bar.data[bar.len++] = b;
 					}
-					if(currentReadPosition >= bytesRead - 1) {
-						readNextBatch();
-						if(bytesRead <= 0 || currentReadPosition >= bytesRead) {
-							// We have not found a new line; we cannot return what we have as we'll get PBParseExceptions upstream.
-							bar.reset();
-							return bar;
-						}
-					} else { 
-						currentReadPosition++;
-					}
+					bar.data[bar.len++] = b; // expecting ArrayIndexOutOfBoundsException, see below
+				}
+				
+				// No newline here, read next batch.
+				readNextBatch();
+				if (bytesRead == 0) {
+					// We have not found a new line; we cannot return what we have as we'll get PBParseExceptions upstream.
+					bar.reset();
+					return bar;
 				}
 			} catch(ArrayIndexOutOfBoundsException ex) {
-				// We would have incremeted the pointer; so decrement it back..
+				// We have incremeted these indexes, so decrement it them back..
 				bar.len--; 
+				currentReadPosition--;
+				loopcount--;
 				logger.debug("ByteBuffer is too small, doubling it to accomodate longer lines.");
 				bar.doubleBufferSize();
 			}
@@ -206,79 +186,55 @@ public class LineByteStream implements Closeable {
 	}
 	
 	/**
-	 * Seeks and positions the pointer to to the last line in the file.
-	 * The file pointer is located just before the last line so that readLine gets a valid line.
-	 * About the only thing once can do after this is to read a line and stop...
-	 */
-	public void seekToBeforeLastLine() throws IOException {
-		buf = new byte[MAX_LINE_SIZE];
-		long seekPos = this.byteChannel.size() - MAX_LINE_SIZE;
-		int loopcount = 0;
-		while(loopcount < MAX_ITERATIONS_TO_DETERMINE_LINE) {
-			if(seekPos < 0) seekPos = 0L;
-			this.byteChannel.position(seekPos);
-			lastReadPointer = seekPos;
-			readNextBatch();
-			// We are shaving off 2 bytes from the end to skip the last newline if indeed the last line is terminated by a newline.
-			for(int i = bytesRead-2; i >= 0; i--) {
-				if(buf[i] == LineEscaper.NEWLINE_CHAR) {
-					currentReadPosition = i+1;
-					return;
-				}
-			}
-			if(seekPos == 0) { 
-				logger.debug("Is it possible that the file has only line? We have come to the beginning of the file and this should be definitely before the last line.");
-				return;
-			}
-			seekPos = seekPos - MAX_LINE_SIZE;
-			loopcount++;
-		}
-		throw new LineTooLongException("Unable to determine end of line within iteration count " + MAX_ITERATIONS_TO_DETERMINE_LINE);
-	}
-	
-	/**
-	 * Seeks and positions the pointer to line previous to the specified position.
-	 * The file pointer is located just so that one can do a readline.
+	 * Look for the right-most newline character before posn.
+	 * Seeks and positions the pointer to just after the found newline character,
+	 * so that one can do a readLine. Returns true if a newline was found and
+	 * false if the beginning of file was reached.
 	 * Note that this method is not efficient at all; so use with care.
 	 * @param posn
 	 * @throws IOException
 	 */
-	public void seekToBeforePreviousLine(long posn) throws IOException {
-		// This is a variation of seekToBeforeLastLine
-		buf = new byte[MAX_LINE_SIZE];
-		long seekPos = posn - MAX_LINE_SIZE;
+	public boolean seekToBeforePreviousLine(long posn) throws IOException {
+		long seekPos = posn;
+		
 		int loopcount = 0;
-		while(loopcount < MAX_ITERATIONS_TO_DETERMINE_LINE) {
-			if(seekPos < 0) seekPos = 0L;
-			this.byteChannel.position(seekPos);
-			readNextBatch();
-			lastReadPointer = seekPos;
+		while(loopcount++ < MAX_ITERATIONS_TO_DETERMINE_LINE) {
+			seekPos = Math.max(0, seekPos - MAX_LINE_SIZE);
+			seekTo(seekPos);
 			
-			// If we are reading the first block, we read more than what we need; so adjust what we read to where we need to be.
-			if(posn < bytesRead) { 
-				bytesRead = (int) posn;
-			}
+			int limitedBytesRead = (int)Math.min((long)bytesRead, posn - seekPos);
 			
-			// We are shaving off 2 bytes from the end to skip the last newline if indeed the last line is terminated by a newline.
-			for(int i = bytesRead-2; i >= 0; i--) {
-				if(buf[i] == LineEscaper.NEWLINE_CHAR) {
-					currentReadPosition = i+1;
-					return;
+			for (int i = limitedBytesRead - 1; i >= 0; i--) {
+				if (buf[i] == LineEscaper.NEWLINE_CHAR) {
+					currentReadPosition = i + 1;
+					return true;
 				}
 			}
+			
 			if(seekPos == 0) { 
 				logger.debug("Is it possible that the file has only line? We have come to the beginning of the file and this should be definitely before the last line.");
-				return;
+				return false;
 			}
-			seekPos = seekPos - MAX_LINE_SIZE;
-			loopcount++;
 		}
+		
 		throw new LineTooLongException("Unable to determine end of line within iteration count " + MAX_ITERATIONS_TO_DETERMINE_LINE);
 	}
 
+	/**
+	 * Shortcut for seekToBeforePreviousLine(getFileSize() - 1).
+	 * Effectively this locates the last line, either complete
+	 * (terminated with a newline) or incomplete.
+	 */
+	public boolean seekToBeforeLastLine() throws IOException {
+		return seekToBeforePreviousLine(getFileSize() - 1);
+	}
 
 	public long getCurrentPosition() throws IOException {
 		return lastReadPointer + currentReadPosition;
+	}
+	
+	public long getFileSize() throws IOException {
+		return byteChannel.size();
 	}
 	
 	public void safeClose() {
