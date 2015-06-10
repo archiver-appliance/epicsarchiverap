@@ -35,8 +35,10 @@ public class PBFileInfo {
 	PayloadInfo info;
 	DBRTimeEvent firstEvent = null;
 	DBRTimeEvent lastEvent = null;
+	long fileSize = 0L;
 	long positionOfFirstSample = 0L;
 	long positionOfLastSample = 0;
+	long positionOfDataEnd = 0L;
 	
 	public static class MissingHeaderException extends IOException {
 		public MissingHeaderException() {}
@@ -48,6 +50,8 @@ public class PBFileInfo {
 
 	public PBFileInfo(Path path, boolean lookupLastEvent) throws IOException {
 		try(LineByteStream lis = new LineByteStream(path)) {
+			fileSize = lis.getFileSize();
+			
 			byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
 			if (payloadLine == null) {
 				throw new MissingHeaderException();
@@ -74,6 +78,9 @@ public class PBFileInfo {
 				}
 			} else {
 				logger.debug("File " + path.toAbsolutePath().toString() + " does not seem to have any first line?");
+				if (lookupLastEvent) {
+					positionOfDataEnd = positionOfFirstSample;
+				}
 			}
 		}
 		catch (MissingHeaderException e) {
@@ -117,6 +124,10 @@ public class PBFileInfo {
 		return (lastEvent != null) ? lastEvent.getEpochSeconds() : 0;
 	}
 
+	public long getFileSize() {
+		return fileSize;
+	}
+	
 	public long getPositionOfFirstSample() {
 		return positionOfFirstSample;
 	}
@@ -125,6 +136,15 @@ public class PBFileInfo {
 		return positionOfLastSample;
 	}
 	
+	/**
+	 * Returns the position at the end where any incomplete sample begins.
+	 * In other words what we want to truncate the file to before appending
+	 * new data. Note, to get a correct value, construct with lookupLastEvent=true,
+	 * otherwise this will be 0!
+	 */
+	public long getPositionOfDataEnd() {
+		return positionOfDataEnd;
+	}
 	
 	/**
 	 * Checks the payload info and makes sure we are using appropriate files.
@@ -147,23 +167,31 @@ public class PBFileInfo {
 	
 	private void lookupLastEvent(Path path, LineByteStream lis, Constructor<? extends DBRTimeEvent> unmarshallingConstructor) throws Exception { 
 		// Look for the right-most newline except the last character.
-		// If there is none, there is no last event.
-		if (!lis.seekToBeforeLastLine()) {
+		if (!lis.seekToBeforePreviousLine(fileSize - 1)) {
+			// This is very unexpected since we have already found the first line before.
+			logger.error("File " + path.toAbsolutePath().toString() + " has no first line after we have just found it?");
+			positionOfDataEnd = positionOfFirstSample;
 			return;
 		}
 		long lastLinePos = lis.getCurrentPosition();
 		
 		// Read the line following this newline.
-		// If we have an incomplete line, we will try to look for the previous line.
 		byte[] lastLine = lis.readLine();
-		if (lastLine == null) {
-			// If no previous line, there is no last event.
+		if (lastLine != null) {
+			// End of data is at the end of file.
+			positionOfDataEnd = fileSize;
+		} else {
+			// It must be an incomplete line at the end.
+			// The end of data is just after this newline character.
+			positionOfDataEnd = lastLinePos;
+			
+			// Try to find the previous line to get the last event.
 			if (!lis.seekToBeforePreviousLine(lastLinePos - 1)) {
 				return;
 			}
 			
-			// Try to read this line now. Since we have found an incomplete
-			// line at the end, this one will normally be complete.
+			// Read this line. Since we have found an incomplete line
+			// at the end, we really expect to find this one to be complete.
 			lastLinePos = lis.getCurrentPosition();
 			lastLine = lis.readLine();
 			if (lastLine == null) {
@@ -177,7 +205,7 @@ public class PBFileInfo {
 			lastEvent.getEventTimeStamp();
 			positionOfLastSample = lastLinePos;
 		} catch (PBParseException ex) {
-			logger.warn(path.toString() + " has a corrupt last complete line");
+			logger.error(path.toString() + " has a corrupt last complete line");
 			lastEvent = null;
 		}
 	}

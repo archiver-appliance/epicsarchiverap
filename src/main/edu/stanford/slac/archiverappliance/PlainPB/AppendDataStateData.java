@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -256,9 +257,17 @@ public class AppendDataStateData {
 			info = new PBFileInfo(pvPath);
 		} catch (PBFileInfo.MissingHeaderException ex) {
 			// handle incomplete header - truncate the file and write the header
-			logger.debug("Restarting PB file " + pvPath + " due to incomplete header");
+			logger.warn("Restarting PB file " + pvPath + " due to incomplete header");
 			createNewFileAndWriteAHeader(pvName, pvPath, stream, true);
 			return;
+		}
+		
+		if (info.getPositionOfDataEnd() != info.getFileSize()) {
+			// Fix corruption at the end.
+			logger.warn("Truncating incomplete data in PB file " + pvPath);
+			try (SeekableByteChannel channel = Files.newByteChannel(pvPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
+				channel.truncate(info.getPositionOfDataEnd());
+			}
 		}
 		
 		if(!info.getPVName().equals(pvName)) throw new IOException("Trying to append data for " + pvName + " to a file " + pvPath + " that has data for " + info.getPVName());
