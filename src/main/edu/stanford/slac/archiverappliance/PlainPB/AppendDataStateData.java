@@ -121,7 +121,8 @@ public class AppendDataStateData {
 			logger.error("Exception appending data for PV " + pvName, t);
 			throw new IOException(t);
 		} finally {
-			if(this.os != null) { try { this.os.close(); this.os = null; } catch(Throwable t) { logger.error("Exception closing os", t); } }
+			if(this.os != null) { try { this.os.close(); } catch(Throwable t) { logger.error("Exception closing os", t); } }
+			this.os = null;
 			try { stream.close(); } catch (Throwable t) {} 
 		}
 	}
