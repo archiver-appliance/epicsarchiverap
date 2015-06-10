@@ -73,7 +73,7 @@ public class ETLExecutor {
 			logger.info("storage name:"+identifyDest);
 			String sourceStr=dataStores[i-1];
 			ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
-			lookupItems.add(new ETLPVLookupItems(pvName, pvTypeInfo.getDBRType(), etlSource, etlDest, i-1, new ETLMetricsForLifetime(i-1), PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService), etlLookup.getGatingState()));
+			lookupItems.add(new ETLPVLookupItems(pvName, pvTypeInfo.getDBRType(), etlSource, etlDest, i-1, new ETLMetricsForLifetime(i-1), PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService), PBThreeTierETLPVLookup.determineFreeSpaceClearance(configService), etlLookup.getGatingState()));
 			if(storageName.equals(identifyDest)){
 				break;
 			}

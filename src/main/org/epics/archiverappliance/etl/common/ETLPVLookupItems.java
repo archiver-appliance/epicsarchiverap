@@ -46,11 +46,12 @@ public class ETLPVLookupItems {
 	private ScheduledFuture<?> cancellingFuture;
 	
 	private OutOfSpaceHandling outOfSpaceHandling;
+	private long freeSpaceClearance;
 	private long outOfSpaceChunksDeleted = 0;
 	
 	private final ETLGatingState gatingState;
 	
-	public ETLPVLookupItems(String pvName, ArchDBRTypes dbrType, ETLSource source, ETLDest dest, int lifetimeorder, ETLMetricsForLifetime metricsForLifetime, OutOfSpaceHandling outOfSpaceHandling, ETLGatingState gatingState) {
+	public ETLPVLookupItems(String pvName, ArchDBRTypes dbrType, ETLSource source, ETLDest dest, int lifetimeorder, ETLMetricsForLifetime metricsForLifetime, OutOfSpaceHandling outOfSpaceHandling, long freeSpaceClearance, ETLGatingState gatingState) {
 		this.pvName = pvName;
 		this.dbrType = dbrType;
 		this.source = source;
@@ -58,6 +59,7 @@ public class ETLPVLookupItems {
 		this.lifetimeorder = lifetimeorder;
 		this.metricsForLifetime = metricsForLifetime;
 		this.outOfSpaceHandling = outOfSpaceHandling;
+		this.freeSpaceClearance = freeSpaceClearance;
 		this.gatingState = gatingState;
 	}
 
@@ -193,6 +195,10 @@ public class ETLPVLookupItems {
 		return outOfSpaceHandling;
 	}
 
+	public long getFreeSpaceClearance() {
+		return freeSpaceClearance;
+	}
+	
 	public long getOutOfSpaceChunksDeleted() {
 		return outOfSpaceChunksDeleted;
 	}

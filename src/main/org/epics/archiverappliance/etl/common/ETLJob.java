@@ -125,9 +125,12 @@ public class ETLJob implements Runnable {
 					totalSrcBytes += sizeOfSrcStream;
 					if(sizeOfSrcStream > 0 && destMetrics != null) { 
 						long freeSpace = destMetrics.getUsableSpace(lookupItem.getMetricsForLifetime());
-						long freeSpaceBuffer = 1024*1024;
-						// We leave space for at lease freeSpaceBuffer in the dest so that you can login and have some room to repair damage coming in from an out of space condition.
-						long estimatedSpaceNeeded = sizeOfSrcStream + freeSpaceBuffer;
+						long freeSpaceClearance = lookupItem.getFreeSpaceClearance();
+						// We leave space for at least freeSpaceClearance in the dest so that:
+						// - You can login and have some room to repair damage coming in from an out of space condition.
+						// - We avoid writing incomplete samples at the end (which would later be truncated).
+						// - We avoid write operations taking a long time (presumably due to the system looking for free space).
+						long estimatedSpaceNeeded = sizeOfSrcStream + freeSpaceClearance;
 						if(freeSpace < estimatedSpaceNeeded) { 
 							logger.error("No space on dest when moving ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString() + " as we estimate we need " +  estimatedSpaceNeeded + " bytes but we only have " + freeSpace);
 							if (handleFailedItem(infoItem, deleteList)) {

@@ -155,7 +155,7 @@ public final class PBThreeTierETLPVLookup {
 					ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
 					String destStr=dataSources[etllifetimeid+1];
 					ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
-					ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(pvName, typeInfo.getDBRType(), etlSource, etlDest, etllifetimeid, applianceMetrics.get(etllifetimeid), determineOutOfSpaceHandling(configService), gatingState);
+					ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(pvName, typeInfo.getDBRType(), etlSource, etlDest, etllifetimeid, applianceMetrics.get(etllifetimeid), determineOutOfSpaceHandling(configService), determineFreeSpaceClearance(configService), gatingState);
 					if(etlDest instanceof StorageMetrics) { 
 						// At least on some of the test machines, checking free space seems to take the longest time. In this, getting the fileStore seems to take the longest time. 
 						// The plainPB plugin caches the fileStore; so we make a call once when adding to initialize this upfront.
@@ -338,6 +338,10 @@ public final class PBThreeTierETLPVLookup {
 	public void addETLJobsForUnitTests(String pvName, PVTypeInfo typeInfo) {
 		logger.warn("This message should only be called from the unit tests.");
 		addETLJobs(pvName, typeInfo);
+	}
+
+	public static long determineFreeSpaceClearance(ConfigService configService) { 
+		return Long.parseLong(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.etl.common.FreeSpaceClearance", Long.toString(1024*1024)));
 	}
 
 	public ETLGatingState getGatingState() {
