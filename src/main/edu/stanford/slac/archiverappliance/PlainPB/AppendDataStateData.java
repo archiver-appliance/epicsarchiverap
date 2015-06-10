@@ -116,13 +116,16 @@ public class AppendDataStateData {
 				eventsAppended++;
 				// logger.debug("Done appending event " + TimeUtils.convertToISO8601String(event.getEventTimeStamp()) + " into " + previousFileName + " of len " + val.len);
 			}
+			
+			// Close the current stream, propagating exceptions.
+			closeOutputStream(true);
+			
 			return eventsAppended;
 		} catch(Throwable t) {
 			logger.error("Exception appending data for PV " + pvName, t);
 			throw new IOException(t);
 		} finally {
-			if(this.os != null) { try { this.os.close(); } catch(Throwable t) { logger.error("Exception closing os", t); } }
-			this.os = null;
+			closeOutputStream(false);
 			try { stream.close(); } catch (Throwable t) {} 
 		}
 	}
@@ -201,10 +204,11 @@ public class AppendDataStateData {
 							+ " Next partition is to be switched at " + TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(this.nextPartitionFirstSecond, 0)));
 				}
 			}
+			
 			// Simply closing the current stream should be good enough for the roll over to work.
-			if(this.os != null) try { this.os.close(); } catch(Throwable t) {}
-			// Set this to null outside the try/catch so that we are using a new file even if the close fails.
-			this.os = null;
+			// Note, propagate close exceptions here.
+			closeOutputStream(true);
+			
 			return nextPath;
 		}
 		return currentPath;
@@ -323,9 +327,8 @@ public class AppendDataStateData {
 			pvPath = preparePartition(pvName, bulkStream, context,extension, extensionToCopyFrom, firstEvent.getEpochSeconds(),pvPath);
 		}
 
-		// Close the current stream first and set it to null.
-		if(this.os != null) try { this.os.close(); } catch(Throwable t) {}
-		this.os = null;
+		// Close the current stream first, propagating exceptions.
+		closeOutputStream(true);
 		
 		// The preparePartition should have created the needed file; so we only append
 		try(ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND); ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
@@ -343,11 +346,28 @@ public class AppendDataStateData {
 		try { 
 			// Update the last known timestamp and the like...
 			updateStateBasedOnExistingFile(pvName, pvPath, bulkStream);
-		} finally { 
-			// Close the current stream first and set it to null.
-			if(this.os != null) try { this.os.close(); } catch(Throwable t) {}
-			this.os = null;
+			
+			// Close the current stream, propagating exceptions.
+			closeOutputStream(true);
+		} finally {
+			closeOutputStream(false);
 		}
+		
 		return true;
-	}	
+	}
+	
+	private void closeOutputStream(boolean allow_throw) throws IOException {
+		OutputStream the_os = this.os;
+		this.os = null;
+		if (the_os != null) {
+			try {
+				the_os.close();
+			} catch (IOException ex) {
+				logger.error("Exception closing os", ex);
+				if (allow_throw) {
+					throw ex;
+				}
+			}
+		}
+	}
 }
