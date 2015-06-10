@@ -77,13 +77,8 @@ public class WriterRunnable implements Runnable {
 
 					@Override
 					public void run() {
-						try {
-							write(sampleBuffer);
-							logger.info(sampleBuffer.getChannelName() + ":year change");
-						} catch (IOException e) {
-							logger.error("Exception", e);
-						}
-						
+						write(sampleBuffer);
+						logger.info(sampleBuffer.getChannelName() + ":year change");
 					}
 					
 				});
@@ -113,110 +108,97 @@ public class WriterRunnable implements Runnable {
   
 	@Override
 	public void run() {
-		try {
-			// final long written = write();
-			long startTime = System.currentTimeMillis();
-			write();
-			long endTime = System.currentTimeMillis();
-			configservice.getEngineContext().setSecondsConsumedByWritter(
-					(double) (endTime - startTime) / 1000);
-		} catch (Exception e) {
-			logger.error("Exception", e);
-		}
-
+		// final long written = write();
+		long startTime = System.currentTimeMillis();
+		write();
+		long endTime = System.currentTimeMillis();
+		configservice.getEngineContext().setSecondsConsumedByWritter(
+				(double) (endTime - startTime) / 1000);
 	}
    /**
     * write the sample buffer to the short term storage
     * @param buffer the sample buffer to be written
     * @throws IOException  error occurs during writing the sample buffer to the short term storage
     */
-	private void write(SampleBuffer buffer) throws IOException {
+	private void write(SampleBuffer buffer) {
 		if(isRunning) return;
 		isRunning=true;
-		ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
-				.getEngineContext().getChannelList();
-		buffer.updateStats();
-		String channelNname = buffer.getChannelName();
-		buffer.resetSamples();
-		ArrayListEventStream previousSamples = buffer.getPreviousSamples();
 		
-
-		try (BasicContext basicContext = new BasicContext()) {
-
-			if (previousSamples.size() > 0) {
-				ArchiveChannel tempChannel = channelList.get(channelNname);
-				tempChannel.setlastRotateLogsEpochSeconds(System
-						.currentTimeMillis() / 1000);
-				tempChannel.getWriter().appendData(basicContext, channelNname,
-						previousSamples);
+		try {
+			ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
+					.getEngineContext().getChannelList();
+			String channelNname = buffer.getChannelName();
+			
+			try {
+				buffer.updateStats();
+				buffer.resetSamples();
+				ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+				
+				try (BasicContext basicContext = new BasicContext()) {
+					if (previousSamples.size() > 0) {
+						ArchiveChannel tempChannel = channelList.get(channelNname);
+						tempChannel.setlastRotateLogsEpochSeconds(System
+								.currentTimeMillis() / 1000);
+						tempChannel.getWriter().appendData(basicContext, channelNname,
+								previousSamples);
+					}
+				}
+			} catch (Exception ex) {
+				logger.error("Error writing PV " + channelNname + ": " + ex.getMessage());
 			}
-		} catch (IOException e) {
-			throw (e);
-		}
-		finally{
+		} finally {
 			isRunning=false;
 		}
-		isRunning=false;
 	}
 /**
  * write all sample buffers into short term storage
  * @throws Exception error occurs during writing the sample buffer to the short term storage
  */
-	private void write() throws Exception {
+	private void write() {
 		if(isRunning) return;
 		isRunning=true;
-		ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
-				.getEngineContext().getChannelList();
 		
-
-		Iterator<Entry<String, SampleBuffer>> it = buffers.entrySet()
-				.iterator();
-
-		
-		while (it.hasNext())
-		
-		{
-		
-			Entry<String, SampleBuffer> entry = (Entry<String, SampleBuffer>) it
-					.next();
-			SampleBuffer buffer = entry.getValue();
-		
-			buffer.updateStats();
-			String channelNname = buffer.getChannelName();
+		try {
+			ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
+					.getEngineContext().getChannelList();
 			
-			buffer.resetSamples();
-			ArrayListEventStream previousSamples = buffer.getPreviousSamples();
-			try (BasicContext basicContext = new BasicContext()) {
-				if (previousSamples.size() > 0)
+			Iterator<Entry<String, SampleBuffer>> it = buffers.entrySet().iterator();
 
-				{
-					ArchiveChannel tempChannel = channelList.get(channelNname);
-					tempChannel.setlastRotateLogsEpochSeconds(System
-							.currentTimeMillis() / 1000);
-					tempChannel.getWriter().appendData(basicContext,
-							channelNname, previousSamples);
+			while (it.hasNext())
+			{
+				Entry<String, SampleBuffer> entry = (Entry<String, SampleBuffer>) it.next();
+				SampleBuffer buffer = entry.getValue();
+				String channelNname = buffer.getChannelName();
+				
+				try {
+					buffer.updateStats();
+					buffer.resetSamples();
+					ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+					
+					try (BasicContext basicContext = new BasicContext()) {
+						if (previousSamples.size() > 0) {
+							ArchiveChannel tempChannel = channelList.get(channelNname);
+							tempChannel.setlastRotateLogsEpochSeconds(System
+									.currentTimeMillis() / 1000);
+							tempChannel.getWriter().appendData(basicContext,
+									channelNname, previousSamples);
+						}
+					}
+				} catch (Exception ex) {
+					logger.error("Error writing PV " + channelNname + ": " + ex.getMessage());
 				}
-			} catch (IOException e) {
-				throw (e);
-			}finally{
-				isRunning=false;
 			}
-
+		} finally {
+			isRunning=false;
 		}
-		
-		isRunning=false;
-		
-		
-
-
 	}
+	
 	/**
 	 * flush out the sample buffer to the short term storage before shutting down the engine
 	 * @throws Exception  error occurs during writing the sample buffer to the short term storage
 	 */
-	public void flushBuffer() throws Exception {
-		
-			write();
+	public void flushBuffer() {
+		write();
 	}
 
 }

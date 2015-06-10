@@ -122,8 +122,7 @@ public class AppendDataStateData {
 			
 			return eventsAppended;
 		} catch(Throwable t) {
-			logger.error("Exception appending data for PV " + pvName, t);
-			throw new IOException(t);
+			throw (t instanceof IOException) ? (IOException)t : new IOException(t);
 		} finally {
 			closeOutputStream(false);
 			try { stream.close(); } catch (Throwable t) {} 
@@ -262,14 +261,14 @@ public class AppendDataStateData {
 			info = new PBFileInfo(pvPath);
 		} catch (PBFileInfo.MissingHeaderException ex) {
 			// handle incomplete header - truncate the file and write the header
-			logger.warn("Restarting PB file " + pvPath + " due to incomplete header");
+			logger.info("Restarting PB file " + pvPath + " due to incomplete header");
 			createNewFileAndWriteAHeader(pvName, pvPath, stream, true);
 			return;
 		}
 		
 		if (info.getPositionOfDataEnd() != info.getFileSize()) {
 			// Fix corruption at the end.
-			logger.warn("Truncating incomplete data in PB file " + pvPath);
+			logger.info("Truncating incomplete data in PB file " + pvPath);
 			try (SeekableByteChannel channel = Files.newByteChannel(pvPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
 				channel.truncate(info.getPositionOfDataEnd());
 			}
@@ -363,7 +362,7 @@ public class AppendDataStateData {
 			try {
 				the_os.close();
 			} catch (IOException ex) {
-				logger.error("Exception closing os", ex);
+				logger.info("Error closing output: " + ex.getMessage());
 				if (allow_throw) {
 					throw ex;
 				}
