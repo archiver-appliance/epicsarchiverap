@@ -330,12 +330,12 @@ public class AppendDataStateData {
 		try(ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND); ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
 			logger.debug("ETL bulk appends for pv " + pvName);
 			ByteBuffer buf = ByteBuffer.allocate(1024*1024);
-			int bytesRead = srcChannel.read(buf);
-			while(bytesRead > 0) {
+			while (srcChannel.read(buf) > 0) {
 				buf.flip();
-				destChannel.write(buf);
+				do {
+					destChannel.write(buf);
+				} while (buf.remaining() > 0);
 				buf.clear();
-				bytesRead = srcChannel.read(buf);
 			}
 		}
 
