@@ -97,7 +97,6 @@ public class MatlabResponse implements MimeResponse {
 			dataList.add(headerStruct);
 			dataList.add(dataStruct);
 			new MatFileWriter(channel, dataList);
-			channel.close();
 		} catch (IOException ex) { 
 			if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
 				// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
@@ -106,6 +105,8 @@ public class MatlabResponse implements MimeResponse {
 			} else { 
 				logger.error("Exception generating matlab file", ex);
 			}
+		} finally { 
+			try { channel.close(); channel = null; } catch (Exception ex) { } 
 		}
 	}
 
