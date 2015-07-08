@@ -119,6 +119,14 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 					if(summaryValue.connectionChanged) { 
 						pbevent.addFieldValue("connectionChange", "true");
 					}
+					
+					if(summaryValue.additionalCols != null && !summaryValue.additionalCols.isEmpty()) { 
+						for(String addnName : summaryValue.additionalCols.keySet()) { 
+							String addnValue = summaryValue.additionalCols.get(addnName);
+							pbevent.addFieldValue(addnName, addnValue);
+						}
+					}
+					
 					strm.add(pbevent);
 					if(currentYear == -1) { 
 						// Initialize the current year as the year of the first bin with a value it it.

@@ -75,6 +75,7 @@ public class PostProcessors {
 		registerPostProcessor(new Nth().getIdentity(), Nth.class);
 		registerPostProcessor(new CAPlotBinning().getIdentity(), CAPlotBinning.class);
 		registerPostProcessor(new DeadBand().getIdentity(), DeadBand.class);
+		registerPostProcessor(new ErrorBars().getIdentity(), ErrorBars.class);
 	}
 
 	public static PostProcessor findPostProcessor(String postProcessorUserArg) {

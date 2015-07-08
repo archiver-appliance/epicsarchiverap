@@ -2,6 +2,7 @@ package org.epics.archiverappliance.retrieval.postprocessors;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
@@ -48,12 +49,24 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 		 * Do we have any connection changed events
 		 */
 		boolean connectionChanged;
+		
+		HashMap<String, String> additionalCols = null;
 
 		public SummaryValue(double value, int severity, boolean connectionChanged) {
 			this.value = value;
 			this.severity = severity;
 			this.connectionChanged = connectionChanged;
 		}		
+		
+		public void addAdditionalColumn(HashMap<String, String> additionalColumns) {
+			for(String name : additionalColumns.keySet()) { 
+				String value = additionalColumns.get(name);
+				if(this.additionalCols == null) { 
+					this.additionalCols = new HashMap<String, String>();
+				}
+				this.additionalCols.put(name,  value);
+			}
+		}
 	}
 
 	protected LinkedHashMap<Long, SummaryValue> consolidatedData = new LinkedHashMap<Long, SummaryValue>();
@@ -127,7 +140,11 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 								}
 								if(binNumber != currentBin) {
 									if(currentBin != -1) { 
-										consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
+										SummaryValue summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
+										if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
+											summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
+										}
+										consolidatedData.put(currentBin, summaryValue);
 									}
 									switchToNewBin(binNumber);
 								}
@@ -188,7 +205,11 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 			lastSampleBeforeStartAdded = true; 
 		}
 		if(currentBin != -1) { 
-			consolidatedData.put(currentBin, new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents));
+			SummaryValue summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
+			if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
+				summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
+			}
+			consolidatedData.put(currentBin, summaryValue);
 			currentBinCollector = null;
 		}
 		if(consolidatedData.isEmpty()) { 
