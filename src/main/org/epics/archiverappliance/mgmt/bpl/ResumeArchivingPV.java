@@ -101,7 +101,7 @@ public class ResumeArchivingPV implements BPLAction {
 	}
 
 	private void resumeMultiplePVs(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false);
+		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
 		// String pvNameFromRequest = pvName;
 		try(PrintWriter out = resp.getWriter()) {
 			boolean printComma = false;

@@ -26,18 +26,25 @@ import org.json.simple.parser.ParseException;
  */
 public class PVsMatchingParameter {
 	private static Logger logger = Logger.getLogger(PVsMatchingParameter.class.getName());
-	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService) {
-		return getMatchingPVs(req, configService, false);
+	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService, int defaultLimit) {
+		return getMatchingPVs(req, configService, false, defaultLimit);
 	}
 	/**
 	 * Given a BPL request, get all the matching PVs
 	 * @param req
 	 * @param configService
 	 * @param includePVSThatDontExist - Some BPL requires us to include PVs that don't exist so that they can give explicit status
+	 * @param defaultLimit - The default value for the limit if the limit is not specified in the request.
 	 * @return
 	 */
-	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService, boolean includePVSThatDontExist) {
+	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService, boolean includePVSThatDontExist, int defaultLimit) {
 		LinkedList<String> pvNames = new LinkedList<String>();
+		int limit = defaultLimit;
+		String limitParam = req.getParameter("limit");
+		if(limitParam != null) { 
+			limit = Integer.parseInt(limitParam);
+		}
+		
 		if(req.getParameter("pv") != null) { 
 			String[] pvs = req.getParameter("pv").split(",");
 			for(String pv : pvs) { 
@@ -46,15 +53,24 @@ public class PVsMatchingParameter {
 					for(String pvName : configService.getAllPVs()) {
 						if(matcher.accept((new File(pvName)))) {
 							pvNames.add(pvName);
+							if(limit != -1 && pvNames.size() >= limit) { 
+								return pvNames;
+							}
 						}
 					}
 				} else {
 					ApplianceInfo info = configService.getApplianceForPV(pv);
 					if(info != null) { 
 						pvNames.add(pv);
+						if(limit != -1 && pvNames.size() >= limit) { 
+							return pvNames;
+						}
 					} else { 
 						if(includePVSThatDontExist) { 
 							pvNames.add(pv);							
+							if(limit != -1 && pvNames.size() >= limit) { 
+								return pvNames;
+							}
 						}
 					}
 				}
@@ -66,11 +82,17 @@ public class PVsMatchingParameter {
 				for(String pvName : configService.getAllPVs()) {
 					if(pattern.matcher(pvName).matches()) { 
 						pvNames.add(pvName);
+						if(limit != -1 && pvNames.size() >= limit) { 
+							return pvNames;
+						}
 					}
 				}
 			} else { 
 				for(String pvName : configService.getAllPVs()) {
 					pvNames.add(pvName);
+					if(limit != -1 && pvNames.size() >= limit) { 
+						return pvNames;
+					}
 				}
 			}
 		}

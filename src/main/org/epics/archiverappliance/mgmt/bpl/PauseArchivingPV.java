@@ -106,7 +106,7 @@ public class PauseArchivingPV implements BPLAction {
 	
 	private void pauseMultiplePVs(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
 		// String pvNameFromRequest = pvName;
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false);
+		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try(PrintWriter out = resp.getWriter()) {
 			boolean printComma = false;

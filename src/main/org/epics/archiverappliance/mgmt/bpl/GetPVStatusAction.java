@@ -45,7 +45,7 @@ public class GetPVStatusAction implements BPLAction {
 	public void execute(HttpServletRequest req, HttpServletResponse resp,
 			ConfigService configService) throws IOException {
 		logger.info("Getting the status of pv(s) " + req.getParameter("pv"));
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, true);
+		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, true, -1);
 		
 		
 		HashMap<String, String> pvStatuses = new HashMap<String, String>();
