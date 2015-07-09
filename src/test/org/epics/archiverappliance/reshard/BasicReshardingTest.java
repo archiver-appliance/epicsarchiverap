@@ -29,6 +29,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
@@ -107,7 +108,7 @@ public class BasicReshardingTest {
 		logger.debug("About to submit");
 		archiveButton.click();
 		// We have to wait for some time here as it does take a while for the workflow to complete.
-		Thread.sleep(7*60*1000);
+		Thread.sleep(4*60*1000);
 		WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		checkStatusButton.click();
 		Thread.sleep(2*1000);
@@ -131,6 +132,8 @@ public class BasicReshardingTest {
 		String updatePVTypeInfoURL = "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true";
 		GetUrlContent.postObjectAndGetContentAsJSONObject(updatePVTypeInfoURL, JSONEncoder.getEncoder(PVTypeInfo.class).encode(typeInfoBeforePausing));
 		
+		Timestamp beforeReshardingCreationTimedstamp = typeInfoBeforePausing.getCreationTime();
+
 		// Generate some data into the MTS and LTS
 		String[] dataStores = typeInfoBeforePausing.getDataStores();
 		assertTrue("Data stores is null or empty for pv from typeinfo ", dataStores != null && dataStores.length > 1);
@@ -210,6 +213,7 @@ public class BasicReshardingTest {
 		PVTypeInfo typeInfoAfterResharding = getPVTypeInfo();
 		String afterReshardingAppliance = typeInfoAfterResharding.getApplianceIdentity();
 		assertTrue("Invalid appliance identity after resharding " + afterReshardingAppliance, afterReshardingAppliance != null && afterReshardingAppliance.equals(otherAppliance));
+		Timestamp afterReshardingCreationTimedstamp = typeInfoAfterResharding.getCreationTime();
 		
 		// Let's resume the PV.
 		String resumePVURL = "http://localhost:17665/mgmt/bpl/resumeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
@@ -218,7 +222,26 @@ public class BasicReshardingTest {
 
 		long postReshardEventCount = getNumberOfEvents();
 		logger.info("After resharding, got " + postReshardEventCount + " events");
-		assertTrue("Expecting at least " + expectedMinEventCount  + " got " + postReshardEventCount + " for ", postReshardEventCount >= expectedMinEventCount);		
+		assertTrue("Expecting at least " + expectedMinEventCount  + " got " + postReshardEventCount + " for ", postReshardEventCount >= expectedMinEventCount);
+		
+		checkRemnantShardPVs();
+
+		// Make sure the creation timestamps are ok. If we have external integration, these play a part and you can not serve data because the creation timestamp is off
+		assertTrue("Creation timestamps before " 
+				+ TimeUtils.convertToHumanReadableString(beforeReshardingCreationTimedstamp) 
+				+ " and after "
+				+ TimeUtils.convertToHumanReadableString(afterReshardingCreationTimedstamp)
+				+ " should be the same", beforeReshardingCreationTimedstamp.equals(afterReshardingCreationTimedstamp));
+
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	private void checkRemnantShardPVs() {
+		// Make sure we do not have any temporary PV's present.
+		String tempReshardPVs = "http://localhost:17665/mgmt/bpl/getAllPVs?pv=*_reshard_*";
+		JSONArray reshardPVs = GetUrlContent.getURLContentAsJSONArray(tempReshardPVs);
+		assertTrue("We seem to have some reshard temporary PV's present " + String.join(",", reshardPVs), reshardPVs.size() == 0);
 	}
 	
 	private PVTypeInfo getPVTypeInfo() throws Exception { 

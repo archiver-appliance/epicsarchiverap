@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -122,6 +123,8 @@ public class RenamePVAction implements BPLAction {
 		
 		try(PrintWriter out = resp.getWriter()) {
 			PVTypeInfo newPVTypeInfo = new PVTypeInfo(newPVName, typeInfo);
+			newPVTypeInfo.setCreationTime(typeInfo.getCreationTime());
+			newPVTypeInfo.setModificationTime(TimeUtils.now());
 			configService.registerPVToAppliance(newPVName, info);
 			newPVTypeInfo.setApplianceIdentity(info.getIdentity());
 			configService.updateTypeInfoForPV(newPVName, newPVTypeInfo);

@@ -323,6 +323,8 @@ public class ReshardPV implements BPLAction {
 			}
 		} else { 
 			logger.info("Renamed temporary PV from system using " + renameURL);
+			// Cleanup the temporary PV after the rename is successful.
+			cleanupTemporaryPV(configService, destPVName);
 			try(PrintWriter out = resp.getWriter()) {
 				infoValues.put("status", "ok");
 				infoValues.put("desc", "Successfully assigned " + srcPVName + " to appliance " + destApplianceIdentity);
