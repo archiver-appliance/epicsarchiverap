@@ -17,6 +17,7 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
+import org.epics.archiverappliance.mgmt.ArchiveWorkflowCompleted;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
@@ -93,8 +94,7 @@ public class CnxLostTest {
 		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
 		 logger.debug("About to submit");
 		 archiveButton.click();
-		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
-		 Thread.sleep(4*60*1000);
+		 ArchiveWorkflowCompleted.isArchiveRequestComplete(pvNameToArchive);
 		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		 checkStatusButton.click();
 		 Thread.sleep(2*1000);
@@ -190,6 +190,7 @@ public class CnxLostTest {
 		 });
 		 
 	}
+
 	
 	private void checkRetrieval(String retrievalPVName, ExpectedEventType[] expectedEvents) throws IOException {
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
@@ -202,7 +203,8 @@ public class CnxLostTest {
 			int eventCount = 0;
 			assertTrue("We should get some data, we are getting a null stream back", strm != null);
 				for(EpicsMessage dbrevent : strm) {
-					logger.info("Adding event with value " + dbrevent.getNumberValue().doubleValue());
+					logger.info("Adding event with value " + dbrevent.getNumberValue().doubleValue()
+							+ " at time " + TimeUtils.convertToHumanReadableString(dbrevent.getTimestamp()));
 					retrievedData.add(dbrevent);
 					eventCount++;
 				}
