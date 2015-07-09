@@ -136,6 +136,7 @@ public class DefaultConfigService implements ConfigService {
 	protected Map<String, String> clusterInet2ApplianceIdentity = null;
 	protected Map<String, List<ChannelArchiverDataServerPVInfo>> pv2ChannelArchiverDataServer = null;
 	protected ITopic<PubSubEvent> pubSub = null;
+	protected Map<String, Boolean> namedFlags = null;
 	// Configuration state ends here.
 	
 	// Runtime state begins here 
@@ -536,6 +537,7 @@ public class DefaultConfigService implements ConfigService {
 		
 		
 		pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
+		namedFlags = hzinstance.getMap("namedflags");
 		typeInfos = hzinstance.getMap("typeinfo");
 		archivePVRequests = hzinstance.getMap("archivePVRequests");
 		channelArchiverDataServers = hzinstance.getMap("channelArchiverDataServers");
@@ -637,6 +639,32 @@ public class DefaultConfigService implements ConfigService {
 				}
 			}
 			logger.info("Established subscription(s) for appliance availability");
+			
+			if(this.getInstallationProperties().containsKey(ARCHAPPL_NAMEDFLAGS_PROPERTIES_FILE_PROPERTY)) {
+				String namedFlagsFileName = (String) this.getInstallationProperties().get(ARCHAPPL_NAMEDFLAGS_PROPERTIES_FILE_PROPERTY);
+				configlogger.info("Loading named flags from file " + namedFlagsFileName);
+				File namedFlagsFile = new File(namedFlagsFileName);
+				if(!namedFlagsFile.exists()) { 
+					configlogger.error("File containing named flags " + namedFlagsFileName + " specified but not present");
+				} else { 
+					Properties namedFlagsFromFile = new Properties();
+					try(FileInputStream is = new FileInputStream(namedFlagsFile)) { 
+						namedFlagsFromFile.load(is);
+						for(Object namedFlagFromFile : namedFlagsFromFile.keySet()) {
+							try { 
+								String namedFlagFromFileStr = (String) namedFlagFromFile;
+								Boolean namedFlagFromFileValue = Boolean.parseBoolean((String)namedFlagsFromFile.get(namedFlagFromFileStr));
+								logger.debug("Setting named flag " + namedFlagFromFileStr + " to " + namedFlagFromFileValue);
+								this.namedFlags.put(namedFlagFromFileStr, namedFlagFromFileValue);
+							} catch(Exception ex) { 
+								logger.error("Exception loading named flag from file" + namedFlagsFileName, ex);
+							}
+						}
+					} catch(Exception ex) { 
+						configlogger.error("Exception loading named flags from " + namedFlagsFileName, ex);
+					}
+				}
+			}
 		}
 		
 		if(this.warFile == WAR_FILE.ENGINE) {
@@ -1801,5 +1829,24 @@ public class DefaultConfigService implements ConfigService {
 				logger.error("Exception adding Channel Archiver archives " + serverURL + " - " + archivesCSV, ex);
 			}
 		}
+	}
+
+	@Override
+	public boolean getNamedFlag(String name) {
+		if(namedFlags.containsKey(name)) { 
+			return namedFlags.get(name);
+		}
+		// If we don't know about this named flag, we return false;
+		return false;
+	}
+
+	@Override
+	public void setNamedFlag(String name, boolean value) {
+		namedFlags.put(name, value);
+	}
+
+	@Override
+	public Set<String> getNamedFlagNames() {
+		return namedFlags.keySet();
 	}
 }

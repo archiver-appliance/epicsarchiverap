@@ -520,5 +520,30 @@ public interface ConfigService {
 	public Set<String> getPausedPVsInThisAppliance();
 	
 	
+	public static final String ARCHAPPL_NAMEDFLAGS_PROPERTIES_FILE_PROPERTY = "org.epics.archiverappliance.config.NamedFlags.readFromFile";
+	
+	/**
+	 * Named flags are used to control various process in the appliance; for example, the ETL process in a PlainPBStoragePlugin
+	 * Named flags are not persistent; each time the server starts up, all the named flags are set to false
+	 * You can optionally load values for named flags from a file by specifying the ARCHAPPL_NAMEDFLAGS_PROPERTIES_FILE_PROPERTY property in archappl.properties.
+	 * This method gets the value of the specified named flag.
+	 * If the flag has not been defined before in the cluster, this method will return false.  
+	 * @param name
+	 * @return
+	 */
+	public boolean getNamedFlag(String name);
+
+	/**
+	 * Sets the value of the named flag specified by name to the specified value
+	 * @param name
+	 * @param value
+	 */
+	public void setNamedFlag(String name, boolean value);
+	
+	/**
+	 * Return the names of all the named flags that we know about
+	 * @return
+	 */
+	public Set<String> getNamedFlagNames();
 }
 

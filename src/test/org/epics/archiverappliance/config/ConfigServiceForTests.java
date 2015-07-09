@@ -66,6 +66,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
 		appliances = new HashMap<String, ApplianceInfo>();
 		pv2appliancemapping = new  ConcurrentHashMap<String, ApplianceInfo>();
+		namedFlags = new ConcurrentHashMap<String, Boolean>(); 
 		typeInfos = new ConcurrentHashMap<String, PVTypeInfo>();
 		archivePVRequests = new ConcurrentHashMap<String, UserSpecifiedSamplingParams>();
 		aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
