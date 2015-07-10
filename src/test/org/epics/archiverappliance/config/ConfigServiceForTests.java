@@ -72,6 +72,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
 		channelArchiverDataServers = new ConcurrentHashMap<String, String>();
 		pvsForThisAppliance = new ConcurrentSkipListSet<String>();
+		pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
 		pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
 		
 		myApplianceInfo = new ApplianceInfo(TESTAPPLIANCE0,

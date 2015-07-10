@@ -91,6 +91,12 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  * The difference between this parameter and the <code>pp</code> parameter is that in the <code>reducedata</code> case, only the reduced data is stored. The raw data is thrown away.
  * If you specify both the <code>pp</code> and the <code>reducedata</code>, you may get unpredictable results because the raw data is necessary to precompute the caches. 
  * </dd>
+ * <dt>etlIntoStoreIf</dt><dd>An optional parameter; use this parameter to control if ETL should move data into this store. 
+ * If the named flag specified by this parameter is false, this plugin will behave like the blackhole plugin (and you will lose data).
+ * Note that named flags are false by default; so the default behavior if you specify this flag and forget to the set the named flag is to lose data.
+ * If you don't set this flag at all; then this plugin behaves normally and will accept all the ETL data coming in.
+ * For example, if you add a <code>etlIntoStoreIf=testFlag</code>; then data will be moved into this store only if the value of the named flag <code>testFlag</code> is true.
+ * </dd>
  * </dl>
  * @author mshankar
  *
@@ -134,6 +140,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	private int holdETLForPartions = 0;
 	private int gatherETLinPartitions = 0;
 	private boolean consolidateOnShutdown = false;
+	/**
+	 * Most of the time; this will be null.
+	 * However; if specified; we should use the value of the named flag identified by this variable to control if this plugin behaves like a black hole plugin or not.
+	 */
+	private String etlIntoStoreIf;
 
 	
 	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime) throws IOException {
@@ -259,6 +270,15 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	 */
 	@Override
 	public boolean appendToETLAppendData(String pvName, EventStream stream, ETLContext context) throws IOException {
+		
+		if(this.etlIntoStoreIf != null) { 
+			boolean namedFlagValue = this.configService.getNamedFlag(this.etlIntoStoreIf);
+			if(!namedFlagValue) { 
+				logger.info("Skipping ETL append data for " + pvName + " as named flag " + this.etlIntoStoreIf + " is false.");
+				return true;
+			}
+		}
+		
 		AppendDataStateData state = getAppendDataState(context, pvName);
 		
 		if(this.reducedataPostProcessor != null) {
@@ -362,6 +382,9 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 				this.consolidateOnShutdown = Boolean.parseBoolean(queryNVPairs.get("consolidateOnShutdown"));
 			}
 
+			if(queryNVPairs.containsKey("etlIntoStoreIf")) { 
+				this.etlIntoStoreIf = queryNVPairs.get("etlIntoStoreIf");
+			}
 
 
 			this.setDesc("PlainPBStorage plugin  - " + name + " with rootFolder " + rootFolder + " and granularity " + partitionGranularity);
@@ -413,6 +436,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(this.reducedataPostProcessor != null) { 
 				buf.append("&reducedata=");
 				buf.append(reducedataPostProcessor);
+			}
+			
+			if(this.etlIntoStoreIf != null) { 
+				buf.append("&etlIntoStoreIf=");
+				buf.append(this.etlIntoStoreIf);
 			}
 			
 			String ret =  buf.toString();
