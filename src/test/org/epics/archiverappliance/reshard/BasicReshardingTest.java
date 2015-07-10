@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.List;
@@ -236,12 +237,16 @@ public class BasicReshardingTest {
 		
 	}
 
-	@SuppressWarnings("unchecked")
 	private void checkRemnantShardPVs() {
 		// Make sure we do not have any temporary PV's present.
 		String tempReshardPVs = "http://localhost:17665/mgmt/bpl/getAllPVs?pv=*_reshard_*";
 		JSONArray reshardPVs = GetUrlContent.getURLContentAsJSONArray(tempReshardPVs);
-		assertTrue("We seem to have some reshard temporary PV's present " + String.join(",", reshardPVs), reshardPVs.size() == 0);
+		StringWriter buf = new StringWriter();
+		for(Object reshardPV : reshardPVs) {
+			buf.append(reshardPV.toString());
+			buf.append(",");
+		}
+		assertTrue("We seem to have some reshard temporary PV's present " + buf.toString(), reshardPVs.size() == 0);
 	}
 	
 	private PVTypeInfo getPVTypeInfo() throws Exception { 
