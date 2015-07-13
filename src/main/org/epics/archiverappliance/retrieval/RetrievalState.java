@@ -82,24 +82,28 @@ public class RetrievalState {
 			
 			// Add any external servers if any only if the creation time for this type info is after the start time of the request.
 			Timestamp creationTime = typeInfo.getCreationTime();
-			if(creationTime == null || start.before(creationTime)) { 
-				List<ChannelArchiverDataServerPVInfo> caServers = this.configService.getChannelArchiverDataServers(pvName);
-				if(caServers != null) {
-					for(ChannelArchiverDataServerPVInfo caServer : caServers) { 
-						int count = determineCount(req);
-						String howStr = determineHowStr(req);
-						logger.debug("Adding Channel Archiver server for " + pvName + " " + caServer.toString() 
-								+ " and asking for data from " + TimeUtils.convertToHumanReadableString(start)
-								+ " and " + TimeUtils.convertToHumanReadableString(creationTime));
-						dataSourcesForPV.add(new DataSourceforPV(pvName, caServer.getServerInfo().getPlugin(count, howStr), lifetimeid++, start, creationTime));
+			if(includeExternalServers(req)) { 
+				if(creationTime == null || start.before(creationTime)) { 
+					List<ChannelArchiverDataServerPVInfo> caServers = this.configService.getChannelArchiverDataServers(pvName);
+					if(caServers != null) {
+						for(ChannelArchiverDataServerPVInfo caServer : caServers) { 
+							int count = determineCount(req);
+							String howStr = determineHowStr(req);
+							logger.debug("Adding Channel Archiver server for " + pvName + " " + caServer.toString() 
+									+ " and asking for data from " + TimeUtils.convertToHumanReadableString(start)
+									+ " and " + TimeUtils.convertToHumanReadableString(creationTime));
+							dataSourcesForPV.add(new DataSourceforPV(pvName, caServer.getServerInfo().getPlugin(count, howStr), lifetimeid++, start, creationTime));
+						}
 					}
+				} else { 
+					logger.debug("Start time " 
+							+ TimeUtils.convertToHumanReadableString(start) 
+							+ " is on or after creation time stamp "
+							+ TimeUtils.convertToHumanReadableString(creationTime) 
+							+ ". Skipping adding any external data sources...");
 				}
 			} else { 
-				logger.debug("Start time " 
-						+ TimeUtils.convertToHumanReadableString(start) 
-						+ " is on or after creation time stamp "
-						+ TimeUtils.convertToHumanReadableString(creationTime) 
-						+ ". Skipping adding any external data sources...");
+				logger.debug("Not including external servers on user request for pv" + pvName);
 			}
 
 			return new ArrayList<DataSourceforPV>(dataSourcesForPV);
@@ -132,4 +136,22 @@ public class RetrievalState {
 		}
 		return count;
 	}
+	
+	private boolean includeExternalServers(HttpServletRequest req) {
+		String skipExternalServersStr = req.getParameter("skipExternalServers");
+		if(skipExternalServersStr != null) { 
+			try { 
+				boolean skipExternalServers = Boolean.parseBoolean(skipExternalServersStr);
+				if(skipExternalServers) {
+					// We want to skip external servers; so we tell the caller not to include external servers.
+					return false;
+				}
+			} catch(Exception ex) { 
+				logger.error("Exception parsing external servers inclusion str" + skipExternalServersStr, ex);
+			}
+		}
+		return true;
+	}
+
+
 }
