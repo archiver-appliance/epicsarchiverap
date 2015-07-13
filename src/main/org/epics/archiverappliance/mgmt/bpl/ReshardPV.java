@@ -242,14 +242,15 @@ public class ReshardPV implements BPLAction {
 
 		long distantFutureEpochSeconds = System.currentTimeMillis()/1000 + 2*365*24*60*60;
 		Timestamp distantFuture = TimeUtils.convertFromEpochSeconds(distantFutureEpochSeconds, 0);
-		long beforeEventCount = getEventCount(configService, srcApplianceInfo, srcPVName, srcTypeInfo.getCreationTime(), distantFuture);
+		Timestamp distantPast = TimeUtils.minusDays(srcTypeInfo.getCreationTime(), 5*366);
+		long beforeEventCount = getEventCount(configService, srcApplianceInfo, srcPVName, distantPast, distantFuture);
 		logger.info("Before data transfer, we have " + beforeEventCount + " events");
 		
 		String dataRetrievalURL = srcApplianceInfo.getRetrievalURL().replace("/bpl", "") + "/data/getData.raw"; 
 		logger.info("Getting data for source PV using URL " + dataRetrievalURL);
-		StoragePlugin srcStoragePlugin = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + dataRetrievalURL, configService);
+		StoragePlugin srcStoragePlugin = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + dataRetrievalURL+"&skipExternalServers=true", configService);
 		try(BasicContext context = new BasicContext()) { 
-			List<Callable<EventStream>> callables = srcStoragePlugin.getDataForPV(context, srcPVName, srcTypeInfo.getCreationTime(), distantFuture, new DefaultRawPostProcessor());
+			List<Callable<EventStream>> callables = srcStoragePlugin.getDataForPV(context, srcPVName, distantPast, distantFuture, new DefaultRawPostProcessor());
 			if(callables != null) { 
 				for(Callable<EventStream> callable : callables) { 
 					try(EventStream st = callable.call()) { 
@@ -273,7 +274,7 @@ public class ReshardPV implements BPLAction {
 		}
 		
 		
-		long afterEventCount = getEventCount(configService, configService.getMyApplianceInfo(), destPVName, destTypeInfo.getCreationTime(), distantFuture);
+		long afterEventCount = getEventCount(configService, configService.getMyApplianceInfo(), destPVName, distantPast, distantFuture);
 		logger.info("After data transfer, we have " + afterEventCount + " events");
 		
 		if(beforeEventCount != afterEventCount) { 
@@ -356,7 +357,7 @@ public class ReshardPV implements BPLAction {
 		long eventCount = 0;
 		String dataRetrievalURL = info.getRetrievalURL().replace("/bpl", "") + "/data/getData.raw";
 		try { 
-			StoragePlugin srcStoragePlugin = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + dataRetrievalURL, configService);
+			StoragePlugin srcStoragePlugin = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + dataRetrievalURL + "&skipExternalServers=true", configService);
 			try(BasicContext context = new BasicContext()) { 
 				List<Callable<EventStream>> callables = srcStoragePlugin.getDataForPV(context, pvName, from, to, new DefaultRawPostProcessor());
 				if(callables == null) return eventCount;

@@ -45,13 +45,15 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 	private String accessURL = null;
 	private String desc = "A event stream backed by a .raw response from a remote server.";
 	private String name;
+	private boolean skipExternalServers = false;
 
 	@Override
 	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor)  throws IOException {
 		String getURL = accessURL + "?pv=" + pvName 
 				+ "&from=" + TimeUtils.convertToISO8601String(startTime) 
 				+ "&to=" + TimeUtils.convertToISO8601String(endTime) 
-				+ (postProcessor != null ? "&pp="+postProcessor.getExtension() : "");
+				+ (postProcessor != null ? "&pp="+postProcessor.getExtension() : "")
+				+ (skipExternalServers ? "skipExternalServers=true" : "");
 		logger.info("URL to fetch data is " + getURL);
 		return getDataBehindURL(getURL, startTime, postProcessor);
 	}
@@ -125,6 +127,10 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 				logger.debug("Using the default name of " + name + " for this plain pb engine");
 			}
 
+			if(queryNVPairs.containsKey("skipExternalServers")) {
+				logger.debug("Telling the remote server to skip all data from external (potentially ChannelArchiver) servers");
+				this.skipExternalServers = Boolean.parseBoolean(queryNVPairs.get("skipExternalServers"));
+			}
 		} catch(URISyntaxException ex) {
 			throw new IOException(ex);
 		}
