@@ -265,7 +265,7 @@ public class ReshardPV implements BPLAction {
 		} catch (Exception ex) { 
 			try(PrintWriter out = resp.getWriter()) {
 				String errorMsg = "Exception appending data for " + destPVName + ". Giving up on resharding " + srcPVName;
-				logger.error(errorMsg);
+				logger.error(errorMsg, ex);
 				infoValues.put("validation", errorMsg);
 				out.println(JSONValue.toJSONString(infoValues));
 				cleanupTemporaryPV(configService, destPVName);
