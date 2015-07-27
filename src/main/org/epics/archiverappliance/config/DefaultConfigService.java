@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -38,6 +39,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
 
@@ -150,6 +152,8 @@ public class DefaultConfigService implements ConfigService {
 
 	// This is an optimization; we cache a copy of PVs that are registered for this appliance.
 	protected ConcurrentSkipListSet<String> pvsForThisAppliance = null;
+	// Maintain a TRIE index for the pvNames in this appliance.
+	protected ConcurrentHashMap<String, ConcurrentSkipListSet<String>> parts2PVNamesForThisAppliance = new ConcurrentHashMap<String, ConcurrentSkipListSet<String>>(); 
 	protected ConcurrentSkipListSet<String> pausedPVsForThisAppliance = null;
 	protected ApplianceAggregateInfo applianceAggregateInfo = new ApplianceAggregateInfo();
 	protected EventBus eventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(new ThreadFactory() { @Override public Thread newThread(Runnable r) { return new Thread(r, "Event bus");}}));
@@ -824,6 +828,10 @@ public class DefaultConfigService implements ConfigService {
 						pausedPVsForThisAppliance.remove(pvName);
 						// For now, we do not anticipate many PVs being deleted from the cache to worry about keeping applianceAggregateInfo upto date...
 						// This may change later... 
+						String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
+						for(String part : parts) { 
+							parts2PVNamesForThisAppliance.get(part).remove(pvName);
+						}
 					}
 				}
 			} else {
@@ -833,6 +841,13 @@ public class DefaultConfigService implements ConfigService {
 						pvsForThisAppliance.add(pvName);
 						if(typeInfo.isPaused()) { 
 							pausedPVsForThisAppliance.add(typeInfo.getPvName());
+						}
+						String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
+						for(String part : parts) { 
+							if(!parts2PVNamesForThisAppliance.containsKey(part)) { 
+								parts2PVNamesForThisAppliance.put(part, new ConcurrentSkipListSet<String>());
+							}
+							parts2PVNamesForThisAppliance.get(part).add(pvName);
 						}
 						applianceAggregateInfo.addInfoForPV(pvName, typeInfo, this);
 					} else { 
@@ -1004,6 +1019,62 @@ public class DefaultConfigService implements ConfigService {
 		}
 	}
 	
+	
+	
+	@Override
+	public Set<String> getPVsForApplianceMatchingRegex(String nameToMatch) {
+		logger.debug("Finding matching names for " + nameToMatch);
+		LinkedList<String> fixedStringParts = new LinkedList<String>();
+		String[] parts = this.pvName2KeyConverter.breakIntoParts(nameToMatch);
+		Pattern fixedStringParttern = Pattern.compile("[a-zA-Z_0-9-]+");
+		for(String part : parts) { 
+			if(fixedStringParttern.matcher(part).matches()) { 
+				logger.debug("Fixed string part " +  part);
+				fixedStringParts.add(part);
+			} else { 
+				logger.debug("Regex string part " + part);
+			}
+		}
+		
+		if(fixedStringParts.size() > 0) {
+			HashSet<String> ret = new HashSet<String>();
+			HashSet<String> namesSubset = new HashSet<String>();
+			// This reverse is probably specific to SLAC's namespace rules but it does make a big difference. 
+			// Perhaps we can use a more intelligent way of choosing the specific path thru the trie.
+			Collections.reverse(fixedStringParts);
+			for(String fixedStringPart : fixedStringParts) { 
+				ConcurrentSkipListSet<String> pvNamesForPart = parts2PVNamesForThisAppliance.get(fixedStringPart);
+				if(pvNamesForPart != null) { 
+					if(namesSubset.isEmpty()) { 
+						namesSubset.addAll(pvNamesForPart);
+					} else { 
+						namesSubset.retainAll(pvNamesForPart);
+					}
+				}
+			}
+			logger.debug("Using fixed string path matching against names " + namesSubset.size());
+			Pattern pattern = Pattern.compile(nameToMatch);
+			for(String pvName : namesSubset) { 
+				if(pattern.matcher(pvName).matches()) { 
+					ret.add(pvName);
+				}
+			}
+			return ret;
+		} else { 
+			// The use pattern did not have any fixed elements at all. 
+			// In this case we do brute force matching; should take longer. 
+			logger.debug("Using brute force pattern matching against names");
+			HashSet<String> ret = new HashSet<String>();
+			Pattern pattern = Pattern.compile(nameToMatch);
+			for(String pvName : this.pvsForThisAppliance) { 
+				if(pattern.matcher(pvName).matches()) { 
+					ret.add(pvName);
+				}
+			}
+			return ret;
+		}
+	}	
+
 
 	@Override
 	public ApplianceAggregateInfo getAggregatedApplianceInfo(ApplianceInfo applianceInfo) throws IOException {
@@ -1058,9 +1129,13 @@ public class DefaultConfigService implements ConfigService {
 	public void removePVFromCluster(String pvName) {
 		logger.info("Removing PV from cluster.." + pvName);
 		pv2appliancemapping.remove(pvName);
-		pvsForThisAppliance.remove(pvName);
+		pvsForThisAppliance.remove(pvName);		
 		typeInfos.remove(pvName);
 		pausedPVsForThisAppliance.remove(pvName);
+		String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
+		for(String part : parts) { 
+			parts2PVNamesForThisAppliance.get(part).remove(pvName);
+		}
 	}
 
 	private class PVApplianceCombo implements Comparable<PVApplianceCombo> {
@@ -1548,12 +1623,21 @@ public class DefaultConfigService implements ConfigService {
 					// Here's where we put schema update logic
 					upgradeTypeInfo(typeInfo, upgradedPVs);
 					
-					newTypeInfos.put(typeInfo.getPvName(), typeInfo);
-					newPVMappings.put(typeInfo.getPvName(), appliances.get(typeInfo.getApplianceIdentity()));
-					pvsForThisAppliance.add(typeInfo.getPvName());
+					String pvName = typeInfo.getPvName();
+					newTypeInfos.put(pvName, typeInfo);
+					newPVMappings.put(pvName, appliances.get(typeInfo.getApplianceIdentity()));
+					pvsForThisAppliance.add(pvName);
 					if(typeInfo.isPaused()) { 
-						pausedPVsForThisAppliance.add(typeInfo.getPvName());
+						pausedPVsForThisAppliance.add(pvName);
 					}
+					String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
+					for(String part : parts) { 
+						if(!parts2PVNamesForThisAppliance.containsKey(part)) { 
+							parts2PVNamesForThisAppliance.put(part, new ConcurrentSkipListSet<String>());
+						}
+						parts2PVNamesForThisAppliance.get(part).add(pvName);
+					}
+
 					objectCount++;
 				}
 				// Add in batch sizes of 1000 or so...

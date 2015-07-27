@@ -209,7 +209,7 @@ public interface ConfigService {
 	 * @param info
 	 * @return
 	 */
-	public Iterable<String> getPVsForAppliance(ApplianceInfo info); 
+	public Iterable<String> getPVsForAppliance(ApplianceInfo info);
 	
 	
 	/**
@@ -218,6 +218,15 @@ public interface ConfigService {
 	 * @return
 	 */
 	public Iterable<String> getPVsForThisAppliance();
+	
+
+	/**
+	 * Get the pvNames for this appliance matching the given regex.
+	 * @param nameToMatch
+	 * @return
+	 */
+	public Set<String> getPVsForApplianceMatchingRegex(String nameToMatch);
+
 	
 	/**
 	 * Make changes in the config service to register this PV to an appliance

@@ -37,6 +37,7 @@ import org.epics.archiverappliance.mgmt.bpl.ExportConfig;
 import org.epics.archiverappliance.mgmt.bpl.ExportConfigForThisInstance;
 import org.epics.archiverappliance.mgmt.bpl.GetAllPVs;
 import org.epics.archiverappliance.mgmt.bpl.GetApplianceInfo;
+import org.epics.archiverappliance.mgmt.bpl.GetMatchingPVsForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPVStatusAction;
 import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfo;
 import org.epics.archiverappliance.mgmt.bpl.GetPVsForThisAppliance;
@@ -172,6 +173,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getProcessMetrics", ProcessMetricsReport.class);
 		addAction("/getProcessMetricsDataForAppliance", ProcessMetricsChartData.class);
 		addAction("/refreshPVDataFromChannelArchivers", RefreshPVDataFromChannelArchivers.class);
+		addAction("/getMatchingPVsForThisAppliance", GetMatchingPVsForAppliance.class);
 	}
 	
 	@Override

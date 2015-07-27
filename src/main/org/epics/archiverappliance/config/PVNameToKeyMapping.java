@@ -16,5 +16,12 @@ public interface PVNameToKeyMapping {
 	 */
 	public boolean containsSiteSeparators(String pvName);
 	public abstract String convertPVNameToKey(String pvName);
+	/**
+	 * Break a PV name into parts separated by the site specific separators
+	 * For examples, ABC:123:DEF gets broken into [ABC, 123, DEF]
+	 * @param pvName
+	 * @return
+	 */
+	public String[] breakIntoParts(String pvName);
 
 }

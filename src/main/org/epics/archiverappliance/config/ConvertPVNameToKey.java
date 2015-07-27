@@ -110,4 +110,10 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 		String afterConversion = pvName.replaceAll(siteNameSpaceSeparators, File.separator);
 		return !afterConversion.equals(pvName);
 	}
+
+
+	@Override
+	public String[] breakIntoParts(String pvName) {
+		return pvName.split(siteNameSpaceSeparators);
+	}
 }
