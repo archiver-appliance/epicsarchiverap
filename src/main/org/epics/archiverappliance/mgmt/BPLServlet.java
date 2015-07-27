@@ -37,6 +37,7 @@ import org.epics.archiverappliance.mgmt.bpl.ExportConfig;
 import org.epics.archiverappliance.mgmt.bpl.ExportConfigForThisInstance;
 import org.epics.archiverappliance.mgmt.bpl.GetAllPVs;
 import org.epics.archiverappliance.mgmt.bpl.GetApplianceInfo;
+import org.epics.archiverappliance.mgmt.bpl.GetAppliancesInCluster;
 import org.epics.archiverappliance.mgmt.bpl.GetMatchingPVsForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPVStatusAction;
 import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfo;
@@ -117,6 +118,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/changeArchivalParameters", ChangeArchivalParamsAction.class);
 		addAction("/getPVDetails", PVDetails.class);
 		addAction("/getApplianceInfo", GetApplianceInfo.class);
+		addAction("/getAppliancesInCluster", GetAppliancesInCluster.class);
 		addAction("/renamePV", RenamePVAction.class);
 		addAction("/reshardPV", ReshardPV.class);
 		addAction("/addAlias", AddAliasAction.class);
