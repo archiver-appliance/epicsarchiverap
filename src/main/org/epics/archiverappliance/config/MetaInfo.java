@@ -710,6 +710,14 @@ public class MetaInfo {
 		for(String fieldName : otherMetaInfo.keySet()) {
 			retVal.put(fieldName, otherMetaInfo.get(fieldName));
 		}
+		
+		if(this.label != null) { 
+			int li= 0;
+			for(String lbl : this.label) { 
+				retVal.put("LABEL_"+li, lbl);
+				li++;
+			}
+		}
 	}
 
     public void applyV4BasicInfo(String pvName, PVStructure pvStructure, ConfigService configService) {
