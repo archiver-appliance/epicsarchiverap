@@ -20,6 +20,7 @@ import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration;
 import org.epics.archiverappliance.retrieval.bpl.SearchForPVsRegex;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetricsDetails;
@@ -41,6 +42,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/searchForPVsRegex", SearchForPVsRegex.class);
 		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
 		getActions.put("/getVersion", GetVersion.class);
+		getActions.put("/getClientConfig", GetClientConfiguration.class);
 	}
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -48,6 +50,17 @@ public class BPLServlet extends HttpServlet {
 		BasicDispatcher.dispatch(req, resp, configService, getActions);
 	}
 	
+	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
+	static {
+		// Uncomment after adding readonly support for the client config.
+		// postActions.put("/putClientConfig", PutClientConfiguration.class);
+	}
+
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		BasicDispatcher.dispatch(req, resp, configService, postActions);
+	}
+
 	
 
 	@Override
