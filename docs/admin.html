@@ -47,6 +47,16 @@ There are also many scripting samples in the <code><i>tomcat_mgmt</i>/webapps/mg
 <h3>Monitoring</h3>
 Here are some aspects of the EPICS archiver appliance that should be monitored
 <ol>
+<li>Monitor the logs periodically for Exceptions, OutOfMemory and FATAL error messages. You can use a variation of these commands
+<pre>
+<code>
+find /arch/tomcats -wholename '*/logs/*' -exec grep -l xception {} \;
+find /arch/tomcats -wholename '*/logs/*' -exec grep -l FATAL {} \;
+find /arch/tomcats -wholename '*/logs/*' -exec grep -l OutOfMemoryError {} \;
+</code>
+</pre>
+While exceptions in the retrieval and mgmt components could potentially be from user errors, any exceptions/FATAL messages in the ETL/Engine components should immediately be investigated.
+</li>
 <li><span class="term">Connected PVs</span> - You can use the <code>getApplianceMetrics</code> BPL (see <code>samples/checkConnectedPVs.py</code>) to monitor the number of currently disconnected PVs.
 You can then send an email notification to the system administrators if this is greater than a certain percentage or absolute number.
 </li>
