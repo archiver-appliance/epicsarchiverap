@@ -718,7 +718,7 @@ public class MetaInfo {
 		if(this.label != null) { 
 			int li= 0;
 			for(String lbl : this.label) { 
-				retVal.put("LABEL_"+li, lbl);
+				retVal.put("ENUM_"+li, lbl);
 				li++;
 			}
 		}
