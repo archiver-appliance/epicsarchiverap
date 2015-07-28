@@ -1920,6 +1920,15 @@ public class DefaultConfigService implements ConfigService {
 
 	@Override
 	public boolean getNamedFlag(String name) {
+		if(name == null) { 
+			return false;
+		}
+		if(name.equalsIgnoreCase("false")) { 
+			return false;
+		}
+		if(name.equalsIgnoreCase("true")) { 
+			return true;
+		}
 		if(namedFlags.containsKey(name)) { 
 			return namedFlags.get(name);
 		}
