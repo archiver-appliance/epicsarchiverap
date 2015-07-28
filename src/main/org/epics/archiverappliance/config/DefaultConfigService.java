@@ -1134,7 +1134,10 @@ public class DefaultConfigService implements ConfigService {
 		pausedPVsForThisAppliance.remove(pvName);
 		String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
 		for(String part : parts) { 
-			parts2PVNamesForThisAppliance.get(part).remove(pvName);
+			ConcurrentSkipListSet<String> pvNamesForPart = parts2PVNamesForThisAppliance.get(part);
+			if(pvNamesForPart != null) { 
+				pvNamesForPart.remove(pvName);
+			}
 		}
 	}
 
