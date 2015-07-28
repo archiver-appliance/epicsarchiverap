@@ -223,9 +223,11 @@ public class MetaInfo {
 
 	public void applyBasicInfo(String pvName, final DBR dbr, ConfigService configService) {
 		if (dbr.isLABELS()) {
+			logger.debug("Updating labels for ENUM pv " + pvName);
 			final DBR_LABELS_Enum labels = (DBR_LABELS_Enum)dbr;
 			label=labels.getLabels();
 		} else if (dbr instanceof DBR_CTRL_Double) {
+			logger.debug("Updating metafields for DBR_CTRL_Double for pv " + pvName);
 			final DBR_CTRL_Double ctrl = (DBR_CTRL_Double)dbr;
 			this.lowerDisplayLimit= ctrl.getLowerDispLimit().doubleValue();
 			this.upperDisplayLimit=ctrl.getUpperDispLimit().doubleValue();
@@ -239,6 +241,7 @@ public class MetaInfo {
 			this.unit=ctrl.getUnits();
 			updateTypeInfo(pvName, configService);
 		} else if (dbr instanceof DBR_CTRL_Int) {
+			logger.debug("Updating metafields for DBR_CTRL_Int pv " + pvName);
 			final DBR_CTRL_Int ctrl = (DBR_CTRL_Int)dbr;
 			this.lowerDisplayLimit= ctrl.getLowerDispLimit().doubleValue();
 			this.upperDisplayLimit=ctrl.getUpperDispLimit().doubleValue();
@@ -252,6 +255,7 @@ public class MetaInfo {
 			this.unit=ctrl.getUnits();
 			updateTypeInfo(pvName, configService);
 		} else if (dbr instanceof GR) {
+			logger.debug("Updating metafields for GR pv " + pvName);
 			final GR ctrl = (GR)dbr;
 			this.lowerDisplayLimit= ctrl.getLowerDispLimit().doubleValue();
 			this.upperDisplayLimit=ctrl.getUpperDispLimit().doubleValue();

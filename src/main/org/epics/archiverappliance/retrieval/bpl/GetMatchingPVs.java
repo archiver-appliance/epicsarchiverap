@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONArray;
@@ -33,6 +34,10 @@ public class GetMatchingPVs implements BPLAction {
 	private static Logger logger = Logger.getLogger(GetMatchingPVs.class.getName());
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
+		
+		resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+
 		int limit = 500;
 		String limitParam = req.getParameter("limit");
 		if(limitParam != null) { 
@@ -52,7 +57,11 @@ public class GetMatchingPVs implements BPLAction {
 			logger.debug("Finding PV's for glob (converted to regex)" + nameToMatch);			
 		}
 		
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		if(nameToMatch == null) { 
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
 		try (PrintWriter out = resp.getWriter()) {
 			LinkedList<String> mgmtURLs = getMgmtURLsInCluster(configService);
 			

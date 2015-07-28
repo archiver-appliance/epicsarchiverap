@@ -22,6 +22,7 @@ import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration;
 import org.epics.archiverappliance.retrieval.bpl.GetMatchingPVs;
+import org.epics.archiverappliance.retrieval.bpl.GetPVMetaData;
 import org.epics.archiverappliance.retrieval.bpl.SearchForPVsRegex;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetricsDetails;
@@ -45,6 +46,8 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
 		getActions.put("/getVersion", GetVersion.class);
 		getActions.put("/getClientConfig", GetClientConfiguration.class);
+		getActions.put("/getMetadata", GetPVMetaData.class);
+
 	}
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
