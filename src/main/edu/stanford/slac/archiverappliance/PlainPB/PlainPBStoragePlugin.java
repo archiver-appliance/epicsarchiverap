@@ -97,6 +97,12 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  * If you don't set this flag at all; then this plugin behaves normally and will accept all the ETL data coming in.
  * For example, if you add a <code>etlIntoStoreIf=testFlag</code>; then data will be moved into this store only if the value of the named flag <code>testFlag</code> is true.
  * </dd>
+ * <dt>etlOutofStoreIf</dt><dd>An optional parameter; use this parameter to control if ETL should move data out of this store. 
+ * If the named flag specified by this parameter is false, this plugin will behave like a bag of holding and accumulate all the data it can.
+ * Note that named flags are false by default; so the default behavior if you specify this flag and forget to the set the named flag is to collect data till you run out of space.
+ * If you don't set this flag at all; then this plugin behaves normally and will move data out as before.
+ * For example, if you add a <code>etlOutofStoreIf=testFlag</code>; then data will be moved ouf of this store only if the value of the named flag <code>testFlag</code> is true.
+ * </dd>
  * </dl>
  * @author mshankar
  *
@@ -145,6 +151,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	 * However; if specified; we should use the value of the named flag identified by this variable to control if this plugin behaves like a black hole plugin or not.
 	 */
 	private String etlIntoStoreIf;
+	private String etlOutofStoreIf;
 
 	
 	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime) throws IOException {
@@ -386,6 +393,9 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 				this.etlIntoStoreIf = queryNVPairs.get("etlIntoStoreIf");
 			}
 
+			if(queryNVPairs.containsKey("etlOutofStoreIf")) { 
+				this.etlOutofStoreIf = queryNVPairs.get("etlOutofStoreIf");
+			}
 
 			this.setDesc("PlainPBStorage plugin  - " + name + " with rootFolder " + rootFolder + " and granularity " + partitionGranularity);
 		} catch(URISyntaxException ex) {
@@ -441,6 +451,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(this.etlIntoStoreIf != null) { 
 				buf.append("&etlIntoStoreIf=");
 				buf.append(this.etlIntoStoreIf);
+			}
+
+			if(this.etlOutofStoreIf != null) { 
+				buf.append("&etlOutofStoreIf=");
+				buf.append(this.etlOutofStoreIf);
 			}
 			
 			String ret =  buf.toString();
@@ -526,6 +541,15 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 
 	@Override
 	public List<ETLInfo> getETLStreams(String pvName, Timestamp currentTime, ETLContext context) throws IOException {
+
+		if(etlOutofStoreIf != null) { 
+			boolean namedFlagValue = this.configService.getNamedFlag(etlOutofStoreIf);
+			if(!namedFlagValue) { 
+				logger.info("Skipping getting ETL Streams for " + pvName + " as named flag " + this. etlOutofStoreIf + " is false.");
+				return new LinkedList<ETLInfo>();
+			}
+		}
+
 		Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(context.getPaths(), rootFolder, pvName, currentTime, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
 		if(paths == null || paths.length == 0) { 
 			if(logger.isInfoEnabled()) { 
