@@ -2,7 +2,6 @@
    <servlet>
         <servlet-name>StaticContent</servlet-name>
         <servlet-class>org.epics.archiverappliance.common.StaticContentServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet>
         <servlet-name>DataRetrievalServlet</servlet-name>

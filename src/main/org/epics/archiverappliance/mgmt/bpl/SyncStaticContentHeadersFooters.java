@@ -1,12 +1,16 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -85,7 +89,7 @@ public class SyncStaticContentHeadersFooters {
 		}
 	}
 	
-	static class TextChunk {
+	public static class TextChunk {
 		String typeOfChunk;
 		String textChunk;
 		public TextChunk(String typeOfChunk, String textChunk) {
@@ -97,16 +101,30 @@ public class SyncStaticContentHeadersFooters {
 	private static final String REGULAR_TEXT = "RegularText";
 	/**
 	 * Break down a file into a list of text chunks each of which is identified by the text string in the @begin(...) if any...
-	 * Regulat text chunks come as REGULAR_TEXT chunks
+	 * Regular text chunks come as REGULAR_TEXT chunks
 	 * @param file
 	 * @return
 	 * @throws IOException
 	 */
-	private static LinkedList<TextChunk> breakFileIntoChunks(File file) throws IOException {
+	public static LinkedList<TextChunk> breakFileIntoChunks(File file) throws IOException {
+		FileInputStream fis = new FileInputStream(file);
+		return breakFileIntoChunks(fis);
+	}
+	
+	
+	/**
+	 * Break down a file into a list of text chunks each of which is identified by the text string in the @begin(...) if any...
+	 * Regular text chunks come as REGULAR_TEXT chunks
+	 * This method closes the inputstream is after it is done.
+	 * @param is
+	 * @return
+	 * @throws IOException
+	 */
+	public static LinkedList<TextChunk> breakFileIntoChunks(InputStream is) throws IOException {
 		LinkedList<TextChunk> textChunks = new LinkedList<TextChunk>();
 		String currentChunkType = REGULAR_TEXT;
 		StringBuffer currentTextChunk = new StringBuffer();
-		try(LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(new FileInputStream(file)))) {
+		try(LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is))) {
 			String line = lineReader.readLine();
 			while(line != null) {
 				if(line.contains("<!-- @begin(")) {
@@ -137,5 +155,34 @@ public class SyncStaticContentHeadersFooters {
 		textChunks.add(new TextChunk(currentChunkType, currentTextChunk.toString()));
 		
 		return textChunks;
+	}
+	
+	
+	/**
+	 * Breaks the inputstream is into chunks and replaces the templates with the content in templateReplacements.
+	 * The inputstream is is closed after this operation.
+	 * @param is
+	 * @param templateReplacements
+	 * @return
+	 * @throws IOException
+	 */
+	public static ByteArrayInputStream templateReplaceChunks(InputStream is, HashMap<String, String> templateReplacements) throws IOException { 
+		LinkedList<TextChunk> destTextChunks = SyncStaticContentHeadersFooters.breakFileIntoChunks(is);
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		try(PrintWriter out = new PrintWriter(new OutputStreamWriter(bos))) {
+			for(TextChunk destTextChunk : destTextChunks) {
+				if(destTextChunk.typeOfChunk.equals(REGULAR_TEXT)) {
+					out.print(destTextChunk.textChunk);
+				} else {
+					String srcChunk = templateReplacements.get(destTextChunk.typeOfChunk);
+					if(srcChunk == null) {
+						out.print(destTextChunk.textChunk);
+					} else {
+						out.print(srcChunk);
+					}
+				}
+			}
+		}
+		return new ByteArrayInputStream(bos.toByteArray());
 	}
 }
