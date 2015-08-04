@@ -178,7 +178,9 @@ public class SyncStaticContentHeadersFooters {
 					if(srcChunk == null) {
 						out.print(destTextChunk.textChunk);
 					} else {
-						out.print(srcChunk);
+						out.println("<!-- @begin(" + destTextChunk.typeOfChunk + ") -->");
+						out.println(srcChunk);
+						out.println("<!-- @end(" + destTextChunk.typeOfChunk + ") -->");
 					}
 				}
 			}
