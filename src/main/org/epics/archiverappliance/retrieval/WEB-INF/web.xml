@@ -12,10 +12,6 @@
         <servlet-class>org.epics.archiverappliance.retrieval.PingServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>TemplatedContentServlet</servlet-name>
-        <servlet-class>org.epics.archiverappliance.utils.ui.TemplatedContentServlet</servlet-class>
-    </servlet>
-    <servlet>
         <servlet-name>BPLServlet</servlet-name>
         <servlet-class>org.epics.archiverappliance.retrieval.BPLServlet</servlet-class>
     </servlet>
@@ -30,10 +26,6 @@
     <servlet-mapping>
         <servlet-name>DataRetrievalServlet</servlet-name>
         <url-pattern>/data/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>TemplatedContentServlet</servlet-name>
-        <url-pattern>/content/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>BPLServlet</servlet-name>

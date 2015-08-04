@@ -80,7 +80,6 @@
     		</fileset>
    		</copy>	
         <war destfile="${wardest}/retrieval.war"  webxml="${src}/org/epics/archiverappliance/retrieval/WEB-INF/web.xml">
-        	<zipfileset dir="${stage}/org/epics/archiverappliance/retrieval/staticcontent/templates" prefix="WEB-INF/classes/templates"/>
         	<zipfileset dir="${stage}/org/epics/archiverappliance/staticcontent" prefix="ui/comm"/>
 			<zipfileset dir="${stage}/org/epics/archiverappliance/retrieval/staticcontent" prefix="ui" followsymlinks="no"/>
     		<classes dir="${classes}"/>
@@ -161,9 +160,6 @@
     	<mkdir dir="${stage}"/>
 		<copy todir="${stage}/org/epics/archiverappliance/staticcontent">
 			<fileset dir="${src}/org/epics/archiverappliance/staticcontent" followsymlinks="no"/>
-		</copy>
-		<copy todir="${stage}/org/epics/archiverappliance/retrieval/staticcontent/templates">
-        	<fileset dir="${src}/org/epics/archiverappliance/retrieval/staticcontent/templates" followsymlinks="no"/>
 		</copy>
 		<copy todir="${stage}/org/epics/archiverappliance/retrieval/staticcontent">
 			<fileset dir="${src}/org/epics/archiverappliance/retrieval/staticcontent" followsymlinks="no"/>
