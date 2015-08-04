@@ -37,7 +37,7 @@ public class StorageWithLifetime {
 
 		for(StorageWithLifetime storage : finalStorages) {
 			try {
-				ETLMetricsForLifetime metricsForLifetime = configService.getETLLookup().getApplianceMetrics()[storage.lifetimeid];
+				ETLMetricsForLifetime metricsForLifetime = configService.getETLLookup().getApplianceMetrics().get(storage.lifetimeid);
 				HashMap<String, String> storageMetrics = new HashMap<String, String>();
 				allStorageMetrics.add(storageMetrics);
 
@@ -63,7 +63,7 @@ public class StorageWithLifetime {
 		LinkedList<StorageWithLifetime> finalStorages = getStorageWithLifetimes(configService);
 
 		for(StorageWithLifetime storage : finalStorages) {
-			ETLMetricsForLifetime metricsForLifetime = configService.getETLLookup().getApplianceMetrics()[storage.lifetimeid];
+			ETLMetricsForLifetime metricsForLifetime = configService.getETLLookup().getApplianceMetrics().get(storage.lifetimeid);
 			HashMap<String, String> detail = new HashMap<String, String>();
 			details.add(detail);
 			try {

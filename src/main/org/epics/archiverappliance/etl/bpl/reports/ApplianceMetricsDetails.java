@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -40,8 +41,8 @@ public class ApplianceMetricsDetails implements BPLAction {
 	public static String getETLMetricsDetails(ConfigService configService) {
 		DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
 		LinkedList<Map<String, String>> details = new LinkedList<Map<String, String>>();
-		ETLMetricsForLifetime[] metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
-		if(metricsForLifetime == null || metricsForLifetime.length < 1) {
+		List<ETLMetricsForLifetime> metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
+		if(metricsForLifetime == null || metricsForLifetime.size() < 1) {
 			addDetailedStatus(details, "Startup", "In Progress");
 		} else { 
 			for(ETLMetricsForLifetime metricForLifetime : metricsForLifetime) {

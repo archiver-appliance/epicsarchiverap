@@ -155,7 +155,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 			logger.debug("Adding pv " + pvName + " to this appliance's pvs and to ETL");
 			this.pvsForThisAppliance.add(pvName);
             if(this.getETLLookup() != null) { 
-            	this.getETLLookup().addETLJobs(pvName, this.getTypeInfoForPV(pvName));
+            	this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));
             }
 		}
 	}

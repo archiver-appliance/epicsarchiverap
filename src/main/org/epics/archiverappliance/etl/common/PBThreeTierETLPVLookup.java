@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ScheduledFuture;
@@ -36,11 +37,9 @@ import org.epics.archiverappliance.etl.StorageMetrics;
  *
  * @author rdh
  * @version 4-Jun-2012, Luofeng Li:added codes to create one ETL thread for each ETL
- * @version 7-Aug-2012, Murali Shankar:Refactored the threading to take advantage of maximumNumberOfLifetimesInInstallation
  */
 
 public final class PBThreeTierETLPVLookup {
-	private static final String MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION = "org.epics.archiverappliance.config.PVTypeInfo.maximumNumberOfLifetimesInInstallation";
 	private static Logger logger = Logger.getLogger(PBThreeTierETLPVLookup.class.getName());
 	private static Logger configlogger = Logger.getLogger("config." + PBThreeTierETLPVLookup.class.getName());
 	private static int DEFAULT_ETL_PERIOD = 60*5; // Seconds; needs to be the smallest time interval in the PartitionGranularity.
@@ -48,8 +47,6 @@ public final class PBThreeTierETLPVLookup {
 
 	private ConfigService configService = null;
 	
-	private int maxLifetimes = 3;
-
 	/**
 	 * Used to poll the config service in the background and add ETL jobs for PVs 
 	 */
@@ -71,9 +68,9 @@ public final class PBThreeTierETLPVLookup {
 	 * We have a thread pool for each lifetime id transition.
 	 * Adding a pv to ETL involves scheduling an ETLPVLookupItem into each of the appropriate lifetimeid transitions with a period appropriate to the source partition granularity
 	 */
-	private ScheduledThreadPoolExecutor[] etlLifeTimeThreadPoolExecutors = null;
+	private List<ScheduledThreadPoolExecutor> etlLifeTimeThreadPoolExecutors = new LinkedList<ScheduledThreadPoolExecutor>();
 	
-	private ETLMetricsForLifetime[] applianceMetrics = null;
+	private List<ETLMetricsForLifetime> applianceMetrics = new LinkedList<ETLMetricsForLifetime>();
 	
 	public PBThreeTierETLPVLookup(ConfigService configService) {
 		this.configService = configService;
@@ -84,18 +81,6 @@ public final class PBThreeTierETLPVLookup {
 				return ret;
 			}
 		});
-		
-		maxLifetimes = Integer.parseInt(configService.getInstallationProperties().getProperty(MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION, "3"));
-		if(maxLifetimes-1 > 0) { 
-			logger.info("Creating a thread pool for each lifetimeid transition => " + (maxLifetimes-1));
-			etlLifeTimeThreadPoolExecutors = new ScheduledThreadPoolExecutor[maxLifetimes-1];
-			applianceMetrics = new ETLMetricsForLifetime[maxLifetimes-1];
-			for(int lifetimeId = 0; lifetimeId < maxLifetimes-1; lifetimeId++) {
-				etlLifeTimeThreadPoolExecutors[lifetimeId] = new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(lifetimeId));
-				lifetimeId2PVName2LookupItem.put(new Integer(lifetimeId), new ConcurrentHashMap<String, ETLPVLookupItems>());
-				applianceMetrics[lifetimeId] = new ETLMetricsForLifetime(lifetimeId);
-			}
-		}
 		
 		configService.addShutdownHook(new ETLShutdownThread(this));
 	}
@@ -137,7 +122,7 @@ public final class PBThreeTierETLPVLookup {
 	 * @param pvName
 	 * @param typeInfo
 	 */
-	public void addETLJobs(String pvName, PVTypeInfo typeInfo) {
+	private void addETLJobs(String pvName, PVTypeInfo typeInfo) {
 		if(!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) {
 			// Precompute the chunkKey when we have access to the typeInfo. The keyConverter should store it in its cache.
 			String chunkKey = configService.getPVNameToKeyConverter().convertPVNameToKey(pvName);
@@ -148,20 +133,21 @@ public final class PBThreeTierETLPVLookup {
 				return;
 			}
 
-			if((dataSources.length-1) > applianceMetrics.length) { 
-				configlogger.fatal("The pv " + pvName + " has " + dataSources.length + " datasources. This installation is configured for a max of " + (applianceMetrics.length+1) + " datasources. To change this, please edit the archappl.properties for your installation and change the " + MAXIMUM_NUMBER_OF_LIFETIMES_IN_INSTALLATION + " to at least " + dataSources.length);
-				return;
-			}
-
-			
 			for(int etllifetimeid = 0; etllifetimeid < dataSources.length-1; etllifetimeid++) {
 				try {
+					if(etlLifeTimeThreadPoolExecutors.size() < (etllifetimeid+1)) { 
+						configlogger.info("Adding ETL schedulers and metrics for lifetimeid " + etllifetimeid);
+						etlLifeTimeThreadPoolExecutors.add(new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(etllifetimeid)));
+						lifetimeId2PVName2LookupItem.put(new Integer(etllifetimeid), new ConcurrentHashMap<String, ETLPVLookupItems>());
+						applianceMetrics.add(new ETLMetricsForLifetime(etllifetimeid));
+					}
+					
 					
 					String sourceStr=dataSources[etllifetimeid];
 					ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
 					String destStr=dataSources[etllifetimeid+1];
 					ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
-					ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(pvName, typeInfo.getDBRType(), etlSource, etlDest, etllifetimeid, applianceMetrics[etllifetimeid], determineOutOfSpaceHandling(configService));
+					ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(pvName, typeInfo.getDBRType(), etlSource, etlDest, etllifetimeid, applianceMetrics.get(etllifetimeid), determineOutOfSpaceHandling(configService));
 					if(etlDest instanceof StorageMetrics) { 
 						// At least on some of the test machines, checking free space seems to take the longest time. In this, getting the fileStore seems to take the longest time. 
 						// The plainPB plugin caches the fileStore; so we make a call once when adding to initialize this upfront.
@@ -179,7 +165,7 @@ public final class PBThreeTierETLPVLookup {
 					long initialDelay = nextExpectedETLRunInSecs - epochSeconds;
 					// We schedule a ETLPVLookupItems with the appropriate thread using an ETLJob
 					ETLJob etlJob = new ETLJob(etlpvLookupItems);
-					ScheduledFuture<?> cancellingFuture = etlLifeTimeThreadPoolExecutors[etllifetimeid].scheduleWithFixedDelay(etlJob, initialDelay, delaybetweenETLJobs, TimeUnit.SECONDS);
+					ScheduledFuture<?> cancellingFuture = etlLifeTimeThreadPoolExecutors.get(etllifetimeid).scheduleWithFixedDelay(etlJob, initialDelay, delaybetweenETLJobs, TimeUnit.SECONDS);
 					etlpvLookupItems.setCancellingFuture(cancellingFuture);
 					logger.debug("Scheduled ETL job for " + pvName + " and lifetime " + etllifetimeid + " with initial delay of " + initialDelay + " and between job delay of " + delaybetweenETLJobs);
 				} catch(Throwable t) {
@@ -200,7 +186,8 @@ public final class PBThreeTierETLPVLookup {
 	public void deleteETLJobs(String pvName){
 		if(pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
 			logger.debug("deleting etl jobs for  pv " + pvName + " from the locally cached copy of pvs for this appliance");
-			for(int etllifetimeid = 0; etllifetimeid < maxLifetimes-1; etllifetimeid++) {
+			int lifetTimeIdTransitions = this.etlLifeTimeThreadPoolExecutors.size();
+			for(int etllifetimeid = 0; etllifetimeid < lifetTimeIdTransitions; etllifetimeid++) {
 				ETLPVLookupItems lookupItem = lifetimeId2PVName2LookupItem.get(etllifetimeid).get(pvName);
 				if(lookupItem != null) { 
 					lookupItem.getCancellingFuture().cancel(false);
@@ -230,7 +217,8 @@ public final class PBThreeTierETLPVLookup {
 	public LinkedList<ETLPVLookupItems> getLookupItemsForPV(String pvName) {
 		LinkedList<ETLPVLookupItems> ret = new LinkedList<ETLPVLookupItems>();
 		if(pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
-			for(int etllifetimeid = 0; etllifetimeid < maxLifetimes-1; etllifetimeid++) {
+			int lifetTimeIdTransitions = this.etlLifeTimeThreadPoolExecutors.size();
+			for(int etllifetimeid = 0; etllifetimeid < lifetTimeIdTransitions; etllifetimeid++) {
 				ETLPVLookupItems lookupItem = lifetimeId2PVName2LookupItem.get(etllifetimeid).get(pvName);
 				if(lookupItem != null) { 
 					ret.add(lookupItem);
@@ -273,9 +261,10 @@ public final class PBThreeTierETLPVLookup {
 		public void run() {
 			logger.debug("Shutting down ETL threads.");
 			theLookup.configServiceSyncThread.shutdown();
-			for(int lifetimeId = 0; lifetimeId < theLookup.maxLifetimes-1; lifetimeId++) {
+			int lifetTimeIdTransitions = theLookup.etlLifeTimeThreadPoolExecutors.size();
+			for(int lifetimeId = 0; lifetimeId < lifetTimeIdTransitions; lifetimeId++) {
 				logger.debug("Shutting down ETL lifetimeid transition thread " + lifetimeId);
-				theLookup.etlLifeTimeThreadPoolExecutors[lifetimeId].shutdown();
+				theLookup.etlLifeTimeThreadPoolExecutors.get(lifetimeId).shutdown();
 				
 				ConcurrentHashMap<String, ETLPVLookupItems> lifetimeItems = theLookup.lifetimeId2PVName2LookupItem.get(lifetimeId);
 				for(String pvName : lifetimeItems.keySet()) { 
@@ -311,7 +300,7 @@ public final class PBThreeTierETLPVLookup {
 		}
 	}
 
-	public ETLMetricsForLifetime[] getApplianceMetrics() {
+	public List<ETLMetricsForLifetime> getApplianceMetrics() {
 		return applianceMetrics;
 	}
 	
@@ -332,5 +321,12 @@ public final class PBThreeTierETLPVLookup {
 		String outOfSpaceHandler = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.etl.common.OutOfSpaceHandling", OutOfSpaceHandling.DELETE_SRC_STREAMS_IF_FIRST_DEST_WHEN_OUT_OF_SPACE.toString());
 		return OutOfSpaceHandling.valueOf(outOfSpaceHandler);
 	}
+	
+	
+	public void addETLJobsForUnitTests(String pvName, PVTypeInfo typeInfo) {
+		logger.warn("This message should only be called from the unit tests.");
+		addETLJobs(pvName, typeInfo);
+	}
+
 }
 

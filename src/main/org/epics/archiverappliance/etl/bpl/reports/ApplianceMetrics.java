@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,8 +40,8 @@ public class ApplianceMetrics implements BPLAction {
 	
 	private String getETLMetrics(ConfigService configService) {
 		HashMap<String, String> metrics = new HashMap<String, String>();
-		ETLMetricsForLifetime[] metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
-		if(metricsForLifetime == null || metricsForLifetime.length < 1) {
+		List<ETLMetricsForLifetime> metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
+		if(metricsForLifetime == null || metricsForLifetime.size() < 1) {
 			metrics.put("Startup", "In Progress");
 		} else { 
 			double maxETLPercentage = 0.0; 
