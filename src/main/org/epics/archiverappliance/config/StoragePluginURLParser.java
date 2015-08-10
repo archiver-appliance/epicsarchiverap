@@ -27,6 +27,13 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * Parses a URL representation of a storage plugin.
  * Storage plugins can optionally implement ETLSource, ETLDest and perhaps other interfaces.
  * This is one stop shopping for initializing all of these from a URL representation.
+ * For example, <code>pb://localhost?name=LTS&amp;rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&amp;partitionGranularity=PARTITION_YEAR</code> will initialize a PlainPBStoragePlugin.
+ * <ol>
+ * <li>The <code>pb</code> prefix initializes {@link edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin PlainPBStoragePlugin}.</li>
+ * <li>The <code>pbraw</code> prefix initializes {@link edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin PBOverHTTPStoragePlugin}.</li>
+ * <li>The <code>blackhole</code> prefix initializes {@link org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin BlackholeStoragePlugin}.</li>
+ * <li>The <code>rtree</code> prefix initializes {@link org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin ChannelArchiverReadOnlyPlugin}.</li>
+ * </ol>
  * @author mshankar
  *
  */

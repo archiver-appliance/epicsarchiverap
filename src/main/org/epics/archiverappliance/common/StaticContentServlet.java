@@ -452,7 +452,7 @@ public class StaticContentServlet extends HttpServlet {
 			HashMap<String, String> templateReplacementsForViewer = new HashMap<String, String>();
 			templateReplacementsForViewer.put("client_retrieval_url_base", 
 					"<script>\n" 
-			+ "window.global_options.retrieval_url_base = '" + configService.getMyApplianceInfo().getDataRetrievalURL() +  "' ;" 
+			+ "window.global_options.retrieval_url_base = '" + configService.getMyApplianceInfo().getDataRetrievalURL() +  "';\n" 
 			+ "</script>");
 			ByteArrayInputStream replacedContent = SyncStaticContentHeadersFooters.templateReplaceChunks(is, templateReplacementsForViewer);
 			this.content = new BufferedInputStream(replacedContent);
