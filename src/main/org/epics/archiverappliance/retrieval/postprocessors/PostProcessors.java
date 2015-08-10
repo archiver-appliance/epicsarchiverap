@@ -73,6 +73,8 @@ public class PostProcessors {
 		registerPostProcessor(new Count().getIdentity(), Count.class);
 		registerPostProcessor(new NCount().getIdentity(), NCount.class);
 		registerPostProcessor(new Nth().getIdentity(), Nth.class);
+		registerPostProcessor(new Statistics().getIdentity(), Statistics.class);
+		registerPostProcessor(new Optimized().getIdentity(), Optimized.class);
 		registerPostProcessor(new CAPlotBinning().getIdentity(), CAPlotBinning.class);
 		registerPostProcessor(new DeadBand().getIdentity(), DeadBand.class);
 		registerPostProcessor(new ErrorBars().getIdentity(), ErrorBars.class);

@@ -5,6 +5,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +33,20 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	public abstract String getIdentity();
 	public abstract SummaryStatsCollector getCollector();
 	
+	/**
+	 * @return true if this post processor is providing an array (list) of data, or false if a single value is provided 
+	 */
+	public boolean isProvidingVectorData() {
+	    return false;
+	}
+	
+	/**
+	 * @return the number of elements per sample that this post processor provides
+	 */
+	public int getElementCount() {
+	    return 1;
+	}
+	
 	private static Logger logger = Logger.getLogger(SummaryStatsPostProcessor.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private Timestamp previousEventTimestamp = new Timestamp(1);
@@ -51,11 +66,23 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 		boolean connectionChanged;
 		
 		HashMap<String, String> additionalCols = null;
+		
+        /**
+         * Summary values
+         */
+        List<Double> values;
 
 		public SummaryValue(double value, int severity, boolean connectionChanged) {
 			this.value = value;
 			this.severity = severity;
 			this.connectionChanged = connectionChanged;
+		}
+
+		public SummaryValue(List<Double> values, int severity, boolean connectionChanged) {
+		    this.values = values;
+		    this.value = Double.NaN;
+		    this.severity = severity;
+		    this.connectionChanged = connectionChanged;
 		}		
 		
 		public void addAdditionalColumn(HashMap<String, String> additionalColumns) {
@@ -109,6 +136,8 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 
 	@Override
 	public Callable<EventStream> wrap(final Callable<EventStream> callable) {
+	    final boolean vectorType = isProvidingVectorData();
+	    final int elementCount = getElementCount();
 		return new Callable<EventStream>() {
 			@Override
 			public EventStream call() throws Exception {
@@ -139,11 +168,16 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 									lastSampleBeforeStartAdded = true; 
 								}
 								if(binNumber != currentBin) {
-									if(currentBin != -1) { 
-										SummaryValue summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
-										if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
-											summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
-										}
+									if(currentBin != -1) {
+									    SummaryValue summaryValue;
+									    if (vectorType) {
+							                summaryValue = new SummaryValue(((SummaryStatsVectorCollector)currentBinCollector).getVectorValues(), currentMaxSeverity, currentConnectionChangedEvents);
+							            } else {
+    										summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
+    										if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
+    											summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
+    										}
+							            }
 										consolidatedData.put(currentBin, summaryValue);
 									}
 									switchToNewBin(binNumber);
@@ -171,7 +205,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
-					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins());
+					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins(), vectorType, elementCount);
 				}
 			}
 		};
@@ -204,18 +238,23 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 			currentBinCollector.addEvent(lastSampleBeforeStart);
 			lastSampleBeforeStartAdded = true; 
 		}
-		if(currentBin != -1) { 
-			SummaryValue summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
-			if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
-				summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
-			}
-			consolidatedData.put(currentBin, summaryValue);
+		if(currentBin != -1) {
+		    SummaryValue summaryValue;
+		    if (isProvidingVectorData()) {
+		        summaryValue = new SummaryValue(((SummaryStatsVectorCollector)currentBinCollector).getVectorValues(), currentMaxSeverity, currentConnectionChangedEvents);
+		    } else {
+    			summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
+    			if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
+    				summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
+    			}
+		    }
+    		consolidatedData.put(currentBin, summaryValue);
 			currentBinCollector = null;
 		}
 		if(consolidatedData.isEmpty()) { 
 			return new ArrayListEventStream(0, srcDesc);			
 		} else { 
-			return new SummaryStatsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, this.lastBin, this.intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins());
+			return new SummaryStatsCollectorEventStream(this.firstBin == 0 ? 0 : this.firstBin-1, this.lastBin, this.intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins(), isProvidingVectorData(), getElementCount());
 		}
 
 	}

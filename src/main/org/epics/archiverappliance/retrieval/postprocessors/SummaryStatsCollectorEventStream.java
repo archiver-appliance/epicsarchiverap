@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -14,6 +15,7 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.data.VectorValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -36,13 +38,20 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 	private boolean inheritValuesFromPreviousBins;
 	private boolean zeroOutEmptyBins;
 	private Iterator<Event> theOneAndOnlyIterator;
-	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins, boolean zeroOutEmptyBins) {
+	private final boolean vectorType;
+	private final ArchDBRTypes dbrType;
+	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins, boolean zeroOutEmptyBins, boolean vectorType, int elementCount) {
+	    this.vectorType = vectorType;
 		this.firstBin = firstBin;
 		this.lastBin = lastBin;
 		this.intervalSecs = intervalSecs;
 		this.desc = new RemotableEventStreamDesc(desc);
 		// Summaries of scalars are always double. That's what commons.math returns.
-		this.desc.setArchDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE);
+		this.dbrType = vectorType ? ArchDBRTypes.DBR_WAVEFORM_DOUBLE : ArchDBRTypes.DBR_SCALAR_DOUBLE;
+		this.desc.setArchDBRType(dbrType);
+		if (vectorType) {
+		    this.desc.setElementCount(elementCount);
+		}
 		this.consolidatedData = consolidatedData;
 		this.inheritValuesFromPreviousBins = inheritValuesFromPreviousBins;
 		this.zeroOutEmptyBins = zeroOutEmptyBins;
@@ -111,10 +120,18 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 				}
 				if(foundValue) { 
 					long epochSeconds = binNum*intervalSecs + intervalSecs/2;
-					POJOEvent pojoEvent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE,
-							TimeUtils.convertFromEpochSeconds(epochSeconds, nanos), 
-							new ScalarValue<Double>(summaryValue.value), 
-							0, summaryValue.severity);
+					POJOEvent pojoEvent;
+					if (vectorType) {
+					    pojoEvent = new POJOEvent(dbrType,
+                                TimeUtils.convertFromEpochSeconds(epochSeconds, nanos), 
+                                new VectorValue<>(summaryValue.values), 
+                                0, summaryValue.severity);
+					} else {
+    					pojoEvent = new POJOEvent(dbrType,
+    							TimeUtils.convertFromEpochSeconds(epochSeconds, nanos), 
+    							new ScalarValue<Double>(summaryValue.value), 
+    							0, summaryValue.severity);
+					}
 					DBRTimeEvent pbevent = (DBRTimeEvent) pojoEvent.makeClone();
 					if(summaryValue.connectionChanged) { 
 						pbevent.addFieldValue("connectionChange", "true");
