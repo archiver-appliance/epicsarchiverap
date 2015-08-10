@@ -106,7 +106,8 @@ public class OptimizedPostProcessorTest {
                 //first and last bin are shifted
                 assertTrue("Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp), 
                         eventTs.compareTo(previousTimeStamp) >= 0);
-                VectorValue<Double> list = (VectorValue<Double>)e.getSampleValue();
+                @SuppressWarnings("unchecked")
+				VectorValue<Double> list = (VectorValue<Double>)e.getSampleValue();
                 assertEquals("There should be 5 numbers for each event",5, list.getElementCount());
                 assertEquals("Each bin should be composed from 9 values",9, list.getValue(4).intValue());
                 double mean = ((eventCount-1)*9 + 7);
