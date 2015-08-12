@@ -22,9 +22,10 @@ import org.json.simple.JSONValue;
 /**
  * Gets information about the PV from PVTypeInfo, the engine and other places
  * 
- * @epics.BPLAction - Gets information about the PV from PVTypeInfo, the engine and other places 
- * @epics.BPLActionParam pv - The name of the pv.
- * @epics.BPLActionEnd
+ * Gets information about the PV from PVTypeInfo, the engine and other places
+ * <ol> 
+ * <li>pv - The name of the pv.</li>
+ * </ol>
  * @author mshankar
  *
  */
