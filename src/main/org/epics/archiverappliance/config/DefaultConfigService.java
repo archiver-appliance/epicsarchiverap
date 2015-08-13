@@ -513,6 +513,7 @@ public class DefaultConfigService implements ConfigService {
 				ClientConfig clientConfig = new ClientConfig();
 				clientConfig.getGroupConfig().setName("archappl");
 				clientConfig.getGroupConfig().setPassword("archappl");
+				clientConfig.setExecutorPoolSize(4);
 				// Non mgmt client can only connect to their MGMT webapp.
 				String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
 				String myHostName = myAddrParts[0];
