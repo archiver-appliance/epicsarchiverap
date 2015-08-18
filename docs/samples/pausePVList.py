@@ -11,11 +11,12 @@ import json
 import datetime
 import time
 
-def pausePV(bplURL, pvName):
-    '''Pauses the pv specified by pvName'''
-    url = bplURL + '/pauseArchivingPV?pv=' + urllib.quote_plus(pvName)
+def pausePVs(bplURL, pvNames):
+    '''Pauses the pvs specified by the list pvNames'''
+    url = bplURL + '/pauseArchivingPV'
     req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
+    req.add_header('Content-Type', 'application/json')
+    response = urllib2.urlopen(req, json.dumps(pvNames))
     the_page = response.read()
     pausePVResponse = json.loads(the_page)
     return pausePVResponse
@@ -29,9 +30,10 @@ if __name__ == "__main__":
     lines = []
     with open(args.file, 'r') as f:
         lines = f.readlines()
+    pvNames = []
     for line in lines:
         pvName = line.strip()
-        pauseResponse = pausePV(args.url, pvName)
-        print "{0} has been paused with status {1}".format(pvName, pauseResponse['status'] if 'status' in pauseResponse else "N/A")
-        time.sleep(1.0)
+        pvNames.append(pvName)
     
+    pauseResponse = pausePVs(args.url, pvNames)
+    print pauseResponse

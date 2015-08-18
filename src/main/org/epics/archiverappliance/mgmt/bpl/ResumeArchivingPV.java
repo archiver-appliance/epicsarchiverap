@@ -35,6 +35,12 @@ public class ResumeArchivingPV implements BPLAction {
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
+		if(req.getMethod().equals("POST")) { 
+			resumeMultiplePVs(req, resp, configService);
+			return;
+		}
+
+		
 		String pvName = req.getParameter("pv");
 		if(pvName == null || pvName.equals("")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -101,7 +107,13 @@ public class ResumeArchivingPV implements BPLAction {
 	}
 
 	private void resumeMultiplePVs(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
+		LinkedList<String> pvNames = null;
+		if(req.getMethod().equals("POST")) { 
+			pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+		} else { 
+			pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
+		}
+
 		// String pvNameFromRequest = pvName;
 		try(PrintWriter out = resp.getWriter()) {
 			boolean printComma = false;

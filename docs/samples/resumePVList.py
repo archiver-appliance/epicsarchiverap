@@ -11,11 +11,12 @@ import json
 import datetime
 import time
 
-def resumePV(bplURL, pvName):
-    '''Resumes the pv specified by pvName'''
-    url = bplURL + '/resumeArchivingPV?pv=' + urllib.quote_plus(pvName)
+def resumePVs(bplURL, pvNames):
+    '''Resumes the pvs specified by list pvNames'''
+    url = bplURL + '/resumeArchivingPV'
     req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
+    req.add_header('Content-Type', 'application/json')
+    response = urllib2.urlopen(req, json.dumps(pvNames))
     the_page = response.read()
     resumePVResponse = json.loads(the_page)
     return resumePVResponse
@@ -29,9 +30,10 @@ if __name__ == "__main__":
     lines = []
     with open(args.file, 'r') as f:
         lines = f.readlines()
+    pvNames = []
     for line in lines:
         pvName = line.strip()
-        resumeResponse = resumePV(args.url, pvName)
-        print "{0} has been resumed with status {1}".format(pvName, resumeResponse['status'] if 'status' in resumeResponse else "N/A")
-        time.sleep(1.0)
-    
+        pvNames.append(pvName)
+
+    resumeResponse = resumePVs(args.url, pvNames)
+    print resumeResponse

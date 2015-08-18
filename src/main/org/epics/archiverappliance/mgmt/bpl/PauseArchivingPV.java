@@ -34,6 +34,13 @@ public class PauseArchivingPV implements BPLAction {
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
+		
+		if(req.getMethod().equals("POST")) { 
+			pauseMultiplePVs(req, resp, configService);
+			return;
+		}
+		
+		
 		String pvName = req.getParameter("pv");
 		if(pvName == null || pvName.equals("")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -106,7 +113,13 @@ public class PauseArchivingPV implements BPLAction {
 	
 	private void pauseMultiplePVs(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
 		// String pvNameFromRequest = pvName;
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
+		LinkedList<String> pvNames = null;
+		if(req.getMethod().equals("POST")) { 
+			pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+		} else { 
+			pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
+		}
+		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try(PrintWriter out = resp.getWriter()) {
 			boolean printComma = false;
