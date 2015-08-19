@@ -36,4 +36,5 @@ if __name__ == "__main__":
         pvNames.append(pvName)
     
     pauseResponse = pausePVs(args.url, pvNames)
-    print pauseResponse
+    for pvResponse in pauseResponse:
+        print "{0} => {1}".format(pvResponse['pvName'], pvResponse['status'] if 'status' in pvResponse else pvResponse['validation'])

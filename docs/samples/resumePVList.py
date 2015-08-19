@@ -36,4 +36,5 @@ if __name__ == "__main__":
         pvNames.append(pvName)
 
     resumeResponse = resumePVs(args.url, pvNames)
-    print resumeResponse
+    for pvResponse in resumeResponse:
+        print "{0} => {1}".format(pvResponse['pvName'], pvResponse['status'] if 'status' in pvResponse else pvResponse['validation'])

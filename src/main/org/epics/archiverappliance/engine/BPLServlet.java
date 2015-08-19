@@ -99,6 +99,8 @@ public class BPLServlet extends HttpServlet {
 	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
 	static {
 		postActions.put("/status", PVStatusAction.class);
+		postActions.put("/pauseArchivingPV", PauseArchivingPV.class);
+		postActions.put("/resumeArchivingPV", ResumeArchivingPV.class);
 	}
 	
 	@Override

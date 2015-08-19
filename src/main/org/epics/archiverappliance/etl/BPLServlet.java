@@ -66,7 +66,18 @@ public class BPLServlet extends HttpServlet {
 			throws ServletException, IOException {
 		BasicDispatcher.dispatch(req, resp, configService, getActions);
 	}
+
+	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
+	static {
+		postActions.put("/pauseArchivingPV", PauseArchivingPV.class);
+	}
 	
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		logger.info("Beginning POST request into ETL servlet " + req.getPathInfo());
+		BasicDispatcher.dispatch(req, resp, configService, postActions);
+	}
+
 	
 
 	@Override
