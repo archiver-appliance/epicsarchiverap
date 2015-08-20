@@ -147,6 +147,38 @@ The sources for the <a href="archiveviewer.html">Archive Viewer</a> integration 
 <h3>Information useful to developers</h3>
 <ol>
 <li>Here's a document on the steps to follow when <a href="bundlingJCA.html">bundling JCA</a> with the EPICS archiver appliance.</li>
+<li>If you unfamiliar with servlet containers; here's a small overview that a few collaborators found useful
+<ul>
+<li>Reading up on a few basics will help; there are several good sources of information on the net; but don't get bogged down by the details.</li>
+<li>Please do use Eclipse/Netbeans to navigate the code. This makes life so much easier.</li>
+<li>To get a quick sense of what a class/interface does, you can use the <a href="api/index.html">javadoc</a>. Some attempts have been made to have some Javadoc in most classes and all interfaces</li>
+<li>We use Tomcat purely as a servlet container; that is, a quick way of servicing HTTP requests using Java code.</li>
+<li>A WAR file is basically a ZIP file (you can use unzip) with some conventions. For example, all the libraries (.jar's) that the application depends on will be located in the WEB-INF/lib folder.</li>
+<li>The starting point for servlet's in a WAR file is the file <code>WEB-INF/web.xml</code>. For example, in the mgmt.war's <code>WEB-INF/web.xml</code>, you can see that all HTTP requests matching the pattern <code>/bpl/*</code> are satisfied using the Java class <code>org.epics.archiverappliance.mgmt.BPLServlet</code>.</li>
+<li>If you navigate to this class in Eclipse, you'll see that it is basically a registry of BPLActions.</li>
+<li>For example, the HTTP request, <code>/mgmt/bpl/getAllPVs</code> is satisfied using the <code>GetAllPVs</code> class.
+Breaking this down,
+<ol>
+<li><code>/mgmt</code> gets you into the mgmt.war file.</li>
+<li><code>/bpl</code> gets you into the BPLServlet class.</li>
+<li><code>/getAllPVs</code> gets you into the GetAllPVs class.</li>
+</ol>
+</li>
+<li>
+From a very high level
+<ul> 
+<li>The engine.war establishes Channel Access monitors and then writes the data into the short term store (STS).</li>
+<li>The etl.war file moves data between stores - that is from the STS to the MTS and from the MTS to the LTS and so on.</li>
+<li>The retrieval.war gathers data from all the stores, stitches them together to satisfy data retrieval requests.</li>
+<li>The mgmt.war manages all the other three and holds configuration state.</li>
+</ul>
+</li>
+<li>In terms of configuration, the most important is the <code>PVTypeInfo</code>; you can see what one looks like by looking at <code>http://machine:17665/mgmt/bpl/getPVTypeInfo?pv=MYPV:111:BDES</code></li>
+<li>The main interfaces are the ones in the <a href="api/org/epics/archiverappliance/package-frame.html"><code>org.epics.archiverappliance</code></a> package.</li>
+<li>The <a href="api/org/epics/archiverappliance/config/ConfigService.html">ConfigService</a> class does all configuration management.</li>
+<li>The <a href="customization.html">customization guide</a> is also a good guide to way in which this product can be customized.</li>
+</ul>
+</li>
 </ol>
 </section>
 
