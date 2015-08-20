@@ -20,22 +20,22 @@ fi
 
 if [[ -z ${JAVA_HOME} ]]
 then
-  echo "Please set JAVA_HOME to point to a 1.7 JDK"
+  echo "Please set JAVA_HOME to point to a 1.8 JDK"
   exit 1
 fi
 
 if [[ ! -f  ${JAVA_HOME}/include/linux/jni_md.h ]]
 then
-  echo "Missing the include/jni.md.h file in ${JAVA_HOME}. Please set JAVA_HOME to point to a 1.7 JDK (not a JRE)"
+  echo "Missing the include/jni.md.h file in ${JAVA_HOME}. Please set JAVA_HOME to point to a 1.8 JDK (not a JRE)"
   exit 1
 fi
 
 export PATH=${JAVA_HOME}/bin:${PATH}
 
-java -version 2>&1 | grep 'version "1.7'
+java -version 2>&1 | grep 'version "1.8'
 if (( ( $? != 0 ) ))
 then
-  echo "Cannot find the string 1.7 in java -version. Please set JAVA_HOME to point to a 1.7 JDK"
+  echo "Cannot find the string 1.8 in java -version. Please set JAVA_HOME to point to a 1.8 JDK"
   exit 1
 fi
 
