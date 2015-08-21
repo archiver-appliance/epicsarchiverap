@@ -604,13 +604,33 @@ function addExternalChannelArchiverServer(serverUrl, externCAType) {
 		data: 'externalarchiverserverurl='+encodeURIComponent(serverUrl) + "&externalServerType=" + encodeURIComponent(externCAType),
 		success: function(data, textStatus, jqXHR) {
 			if(data.desc != null && data.desc != undefined) {
-				$("#addchannelarchivermsg").text("We were able to establish a connection to the Channel Archiver Data Server at " + serverUrl + ". Please select the archives you want to serve.");
-				for(var i = 0; i < data.archives.length; i++) {
-					var archive = data.archives[i];
-					$("#addchannelarchiverarchives").append($('<option>', { value : archive.key }).text(archive.name));
+				if(externCAType == "CA_XMLRPC") { 
+					$("#addchannelarchivermsg").text("We were able to establish a connection to the external Channel Archiver Data Server at " + serverUrl + ". Please select the archives you want to serve.");
+					for(var i = 0; i < data.archives.length; i++) {
+						var archive = data.archives[i];
+						$("#addchannelarchiverarchives").append($('<option>', { value : archive.key }).text(archive.name));
+					}
+					$("#addchannelarchiverGetUrl").hide();
+					$("#addchannelarchiversuccess").show();
+				} else { 
+					$("#addchannelarchivermsg").text("We were able to establish a connection to the external EPICS Archiver Appliance at " + serverUrl + ".");
+					$.ajax({
+						url: '../bpl/addExternalArchiverServerArchives',
+						dataType: 'json',
+						data: 'channelarchiverserverurl='+encodeURIComponent(serverUrl)+'&archives=pbraw',
+						success: function() {
+							$("#addchannelarchiversuccess").hide();
+							$("#addchannelarchiverurl").val('');
+							$("#addchannelarchiverarchives").empty();
+							$("#addchannelarchiverdialog").dialog('close');
+							showExternalCAListView();
+						},
+						error: function(jqXHR, textStatus, errorThrown) {
+							alert("An error occured on the server");
+						}
+					});
+
 				}
-				$("#addchannelarchiverGetUrl").hide();
-				$("#addchannelarchiversuccess").show();
 			} else if(data.validation != null && data.validation != undefined){
 				alert(data.validation);
 			} else {
@@ -644,7 +664,7 @@ function selectExternalChannelArchiveServerArchives(serverUrl) {
 	}
 	
 	$.ajax({
-		url: '../bpl/addChannelArchiverServerArchives',
+		url: '../bpl/addExternalArchiverServerArchives',
 		dataType: 'json',
 		data: 'channelarchiverserverurl='+encodeURIComponent(serverUrl)+'&archives='+selectedArchives.toString(),
 		success: function() {

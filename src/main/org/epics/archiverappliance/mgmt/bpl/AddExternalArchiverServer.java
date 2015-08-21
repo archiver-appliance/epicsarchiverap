@@ -110,10 +110,17 @@ public class AddExternalArchiverServer implements BPLAction {
 					}
 					String pingresponse = bos.toString();
 					logger.info("Response from external EPICS Archiver Appliance at " + serverUrl + " => " + pingresponse);
-					if(pingresponse.contains("pong")) { 
+					if(pingresponse.contains("Pong")) { 
 						resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 						infoValues.put("Connected", "ok");
+						infoValues.put("desc", "EPICS Archiver Appliance at " + serverUrl);
 						infoValues.put("archives", "pbraw");
+						try(PrintWriter out = resp.getWriter()) {
+							out.println(JSONValue.toJSONString(infoValues));
+						}			
+					} else { 
+						resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+						infoValues.put("validation", "Unexpected response " + pingresponse + " from the EPICS Archiver Appliance at " + serverUrl);
 						try(PrintWriter out = resp.getWriter()) {
 							out.println(JSONValue.toJSONString(infoValues));
 						}			

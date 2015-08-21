@@ -1359,7 +1359,7 @@ public class DefaultConfigService implements ConfigService {
 			if(loadCAPVs) { 
 				for(int i = 0; i < archives.length; i++) {
 					String archive = archives[i];
-					loadChannelArchiverPVs(serverURL, archive);
+					loadExternalArchiverPVs(serverURL, archive);
 				}
 			}
 		} catch(Exception ex) {
@@ -1382,13 +1382,20 @@ public class DefaultConfigService implements ConfigService {
 
 
 	/**
-	 * Given a Channel Archiver data server URL and an archive; this adds the PVs in the Channel Archiver so that they can be proxied.
+	 * Given a external Archiver data server URL and an archive; 
+	 * If this is a ChannelArchiver (archives != pbraw); 
+	 * this adds the PVs in the Channel Archiver so that they can be proxied.
 	 * @param serverURL
 	 * @param archive
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	private void loadChannelArchiverPVs(String serverURL, String archive) throws IOException, SAXException {
+	private void loadExternalArchiverPVs(String serverURL, String archive) throws IOException, SAXException {
+		if(archive.equals("pbraw")) {
+			logger.debug("We do not load PV names from external EPICS archiver appliances. These can number in the multiple millions and the respone on retrieval is fast enough anyways");
+			return;
+		}
+		
 		ChannelArchiverDataServerInfo serverInfo = new ChannelArchiverDataServerInfo(serverURL, archive);
 		NamesHandler handler = new NamesHandler();
 		logger.debug("Getting list of PV's from Channel Archiver Server at " + serverURL + " using index " + archive);
@@ -1823,7 +1830,7 @@ public class DefaultConfigService implements ConfigService {
 					try {
 						for(int i = 0; i < archives.length; i++) {
 							String archive = archives[i];
-							loadChannelArchiverPVs(serverUrl, archive);
+							loadExternalArchiverPVs(serverUrl, archive);
 						}
 					} catch(Exception ex) {
 						logger.error("Exception adding Channel Archiver archives " + serverUrl + " - " + archivesCSV, ex);
@@ -1911,7 +1918,7 @@ public class DefaultConfigService implements ConfigService {
 			try {
 				for(int i = 0; i < archives.length; i++) {
 					String archive = archives[i];
-					loadChannelArchiverPVs(serverURL, archive);
+					loadExternalArchiverPVs(serverURL, archive);
 				}
 			} catch(Throwable ex) {
 				logger.error("Exception adding Channel Archiver archives " + serverURL + " - " + archivesCSV, ex);

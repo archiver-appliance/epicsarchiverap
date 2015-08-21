@@ -25,7 +25,7 @@ import org.epics.archiverappliance.mgmt.bpl.AbortArchiveRequest;
 import org.epics.archiverappliance.mgmt.bpl.AbortArchiveRequestForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.AddAliasAction;
 import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServer;
-import org.epics.archiverappliance.mgmt.bpl.AddChannelArchiverServerArchives;
+import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServerArchives;
 import org.epics.archiverappliance.mgmt.bpl.AggregatedApplianceInfo;
 import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsNotInListAction;
@@ -165,7 +165,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
 		addAction("/getExternalArchiverServers", ChannelArchiverListView.class);
 		addAction("/addExternalArchiverServer", AddExternalArchiverServer.class);
-		addAction("/addChannelArchiverServerArchives", AddChannelArchiverServerArchives.class);
+		addAction("/addExternalArchiverServerArchives", AddExternalArchiverServerArchives.class);
 		addAction("/removeExternalArchiverServer", RemoveExternalArchiverServer.class);
 		addAction("/test/compareWithChannelArchiver", CompareWithChannelArchiver.class);
 		addAction("/getAggregatedApplianceInfo", AggregatedApplianceInfo.class);
