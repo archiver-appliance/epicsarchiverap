@@ -45,7 +45,7 @@ public class AddChannelArchiverServerArchives implements BPLAction {
 
 		logger.info("Adding Channel Archiver server archives " + archivesCSV + " for server " + serverUrl);
 		
-		configService.addChannelArchiverDataServer(serverUrl, archivesCSV);
+		configService.addExternalArchiverDataServer(serverUrl, archivesCSV);
 		
 
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);

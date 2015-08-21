@@ -1333,16 +1333,16 @@ public class DefaultConfigService implements ConfigService {
 	
 	
 	@Override
-	public Map<String, String> getChannelArchiverDataServers() {
+	public Map<String, String> getExternalArchiverDataServers() {
 		return channelArchiverDataServers;
 	}
 
 	@Override
-	public void addChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
+	public void addExternalArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
 		String[] archives = archivesCSV.split(",");
 		boolean loadCAPVs = false;
-		if(!this.getChannelArchiverDataServers().containsKey(serverURL)) { 
-			this.getChannelArchiverDataServers().put(serverURL, archivesCSV);
+		if(!this.getExternalArchiverDataServers().containsKey(serverURL)) { 
+			this.getExternalArchiverDataServers().put(serverURL, archivesCSV);
 			loadCAPVs = true;
 		} else { 
 			logger.info(serverURL + " already exists in the map. So, skipping loading PVs from the external server.");
@@ -1370,8 +1370,8 @@ public class DefaultConfigService implements ConfigService {
 	
 	
 	@Override
-	public void removeChannelArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
-		this.getChannelArchiverDataServers().remove(serverURL);
+	public void removeExternalArchiverDataServer(String serverURL, String archivesCSV) throws IOException {
+		this.getExternalArchiverDataServers().remove(serverURL);
 		// We always add to persistence; whether this is from the UI or from the other appliances in the cluster.
 		if(this.persistanceLayer != null) { 
 			logger.info("Removing the channel archiver server " + serverURL + " from the persistent store.");
@@ -1814,10 +1814,10 @@ public class DefaultConfigService implements ConfigService {
 			List<String> externalServerKeys = persistanceLayer.getExternalDataServersKeys();
 			for(String serverUrl : externalServerKeys) {
 				String archivesCSV = persistanceLayer.getExternalDataServer(serverUrl);
-				if(this.getChannelArchiverDataServers().containsKey(serverUrl)) { 
+				if(this.getExternalArchiverDataServers().containsKey(serverUrl)) { 
 					configlogger.info("Skipping adding " + serverUrl + " on this appliance as another appliance has already added it");
 				} else { 
-					this.getChannelArchiverDataServers().put(serverUrl, archivesCSV);
+					this.getExternalArchiverDataServers().put(serverUrl, archivesCSV);
 					String[] archives = archivesCSV.split(",");
 
 					try {
@@ -1850,7 +1850,7 @@ public class DefaultConfigService implements ConfigService {
 				String url = (String) arg0.getKey();
 				String archivesCSV = (String) arg0.getValue();
 				try { 
-					removeChannelArchiverDataServer(url, archivesCSV);
+					removeExternalArchiverDataServer(url, archivesCSV);
 				} catch(Exception ex) { 
 					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
 				}
@@ -1865,7 +1865,7 @@ public class DefaultConfigService implements ConfigService {
 				String url = (String) arg0.getKey();
 				String archivesCSV = (String) arg0.getValue();
 				try { 
-					addChannelArchiverDataServer(url, archivesCSV);
+					addExternalArchiverDataServer(url, archivesCSV);
 				} catch(Exception ex) { 
 					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
 				}
@@ -1903,7 +1903,7 @@ public class DefaultConfigService implements ConfigService {
 
 	@Override
 	public void refreshPVDataFromChannelArchiverDataServers() {
-		Map<String, String> existingCAServers = this.getChannelArchiverDataServers();
+		Map<String, String> existingCAServers = this.getExternalArchiverDataServers();
 		for(String serverURL : existingCAServers.keySet()) { 
 			String archivesCSV = existingCAServers.get(serverURL);
 			String[] archives = archivesCSV.split(",");

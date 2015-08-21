@@ -377,6 +377,23 @@ s}
 	margin-bottom: 0.5em;
 }
 
+#externalXMLRPCText {
+	margin-top: 0.75em;
+	margin-bottom: 0.75em;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+}
+
+#externalApplianceText {
+	margin-top: 0.75em;
+	margin-bottom: 0.75em;
+	padding: 0.25em;
+	font-weight: normal;
+	font-size: small;
+	display: none;
+}
+
 
 #cacomparefields {
 	padding-left: 1.0em;

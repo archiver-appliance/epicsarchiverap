@@ -597,11 +597,11 @@ function getApplianceMetricsForAppliance(instanceidentity) {
 }
 
 
-function addExternalChannelArchiverServer(serverUrl) {
+function addExternalChannelArchiverServer(serverUrl, externCAType) {
 	$.ajax({
-		url: '../bpl/addChannelArchiverServer',
+		url: '../bpl/addExternalArchiverServer',
 		dataType: 'json',
-		data: 'channelarchiverserverurl='+encodeURIComponent(serverUrl),
+		data: 'externalarchiverserverurl='+encodeURIComponent(serverUrl) + "&externalServerType=" + encodeURIComponent(externCAType),
 		success: function(data, textStatus, jqXHR) {
 			if(data.desc != null && data.desc != undefined) {
 				$("#addchannelarchivermsg").text("We were able to establish a connection to the Channel Archiver Data Server at " + serverUrl + ". Please select the archives you want to serve.");
@@ -614,7 +614,7 @@ function addExternalChannelArchiverServer(serverUrl) {
 			} else if(data.validation != null && data.validation != undefined){
 				alert(data.validation);
 			} else {
-				alert("addChannelArchiverServer returned something valid but did not have a desc field.");
+				alert("addExternalArchiverServer returned something valid but did not have a desc field.");
 			}
 		},
 		error: function(jqXHR, textStatus, errorThrown) {
@@ -626,7 +626,7 @@ function addExternalChannelArchiverServer(serverUrl) {
 
 
 function showExternalCAListView() {
-	var jsonurl = '../bpl/getChannelArchiverServers';
+	var jsonurl = '../bpl/getExternalArchiverServers';
 	var tabledivname = 'externalCAlistview';
 	createReportTable(jsonurl, tabledivname, 
 			[{'srcAttr' : 'CAUrl', 'label' : 'URL'}, 
@@ -1163,7 +1163,7 @@ function showVersions() {
 
 function removeCAServer(serverURL, indexes) { 
 	$.ajax({
-		url: "../bpl/removeChannelArchiverServer?channelarchiverserverurl=" + encodeURIComponent(serverURL) + "&archives=" + encodeURIComponent(indexes),
+		url: "../bpl/removeExternalArchiverServer?channelarchiverserverurl=" + encodeURIComponent(serverURL) + "&archives=" + encodeURIComponent(indexes),
 		dataType: 'json',
 		success: function(data, textStatus, jqXHR) {
 			if(data.status == "ok") { 

@@ -52,13 +52,18 @@
 </div>
 
 <div id="externalCAdiv">
-<h1 class="internalheading">External Channel Archiver data server(s)</h1>
-<div id="addchannelarchiverform">To support retrieval of data from an existing Channel Archiver Data Server, please click <input type="button" name="Add" value="Add" id="addchannelarchiversubmitbtn"/></div>
+<h1 class="internalheading">External Archiver data server(s)</h1>
+<div id="addchannelarchiverform">To support proxying of data from an external Archiver Data Server, please click <input type="button" name="Add" value="Add" id="addchannelarchiversubmitbtn"/></div>
 <div id="externalCAlistview"></div>
 
-<div id="addchannelarchiverdialog"  title="Add Channel Archiver Data Server">
+<div id="addchannelarchiverdialog"  title="Add external Archiver Data Server">
 <div id="addchannelarchiverGetUrl">
-<div>To point to an existing Channel Archiver Data Server, please provide the URL to the server:</div>
+<div><select id="externalServerType">
+<option value="1">External Channel Archiver XMLRPC Data Server</option>
+<option value="2">External EPICS Archiver Appliance</option>
+</select></div>
+<div id="externalXMLRPCText">To proxy data from an external Channel Archiver Data Server, please provide the XMLRPC URL to the server:</div>
+<div id="externalApplianceText">To proxy data from an external EPICS Archiver Appliance, please provide the <code>data_retrieval_url</code> of the cluster as defined in the <code>appliances.xml</code>:</div>
 <div><input type="text" id="addchannelarchiverurl"/></div>
 <div id="addchannelarchiverurlokdiv"><input id="addchannelarchiverurlok" type="button" name="Ok" value="Ok"></input></div>
 </div>
@@ -98,12 +103,24 @@ $(document).ready(function() {
 	  }
   }
   
+  $("#externalServerType").change(function() {
+	  var externCAType = $("#externalServerType").val();
+	  console.log(externCAType);
+	  if(externCAType == 1) { 
+		  $("#externalXMLRPCText").show();
+		  $("#externalApplianceText").hide();
+	  } else if(externCAType == 2) {
+		  $("#externalXMLRPCText").hide();
+		  $("#externalApplianceText").show();
+	  }
+	});
+  
   showExternalCAListView();
   
   $("#addchannelarchiversubmitbtn").click(function() {
 	  $("#addchannelarchiverGetUrl").show();
 	  $("#addchannelarchiverdialog").dialog({
-			height: 250,
+			height: 300,
 			width: 600,
 			modal: true
 		});
@@ -111,10 +128,15 @@ $(document).ready(function() {
   
   $("#addchannelarchiverurlok").click(function() {
 	  var serverUrl = $("#addchannelarchiverurl").val();
+	  var externCATypeSelection = $("#externalServerType").val();
+	  var externCAType = "CA_XMLRPC";
+	  if(externCATypeSelection == 2) { 
+		  externCAType = "ARCHAPPL_PBRAW";
+	  }
 	  if(serverUrl != "") {
-		  addExternalChannelArchiverServer(serverUrl);
+		  addExternalChannelArchiverServer(serverUrl, externCAType);
 	  } else {
-		  alert("Please enter a valid URL to a Channel Archiver Data Server.");
+		  alert("Please enter a valid URL to a External Archiver Data Server.");
 	  }
   });
 

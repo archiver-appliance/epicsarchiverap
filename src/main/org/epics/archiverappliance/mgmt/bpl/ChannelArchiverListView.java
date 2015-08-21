@@ -33,7 +33,7 @@ public class ChannelArchiverListView implements BPLAction {
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		logger.info("Getting a list of Channel Access servers");
 		LinkedList<HashMap<String,String>> infoValues = new LinkedList<HashMap<String,String>>();
-		Map<String, String> serverlist = configService.getChannelArchiverDataServers();
+		Map<String, String> serverlist = configService.getExternalArchiverDataServers();
 		if(serverlist != null) {
 			for(String serverURL : serverlist.keySet()) {
 				HashMap<String, String> serverInfo = new HashMap<String, String>();

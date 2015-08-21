@@ -21,13 +21,13 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
 
 /**
- * Remove the entry for a ChannelArchiver server from the config database
+ * Remove the entry for a external Archiver Data Server from the config database
  * Note that the entire cluster may need to be restarted for this change to take effect.
  * @author mshankar
  *
  */
-public class RemoveChannelArchiverServer implements BPLAction {
-	private static Logger logger = Logger.getLogger(RemoveChannelArchiverServer.class.getName());
+public class RemoveExternalArchiverServer implements BPLAction {
+	private static Logger logger = Logger.getLogger(RemoveExternalArchiverServer.class.getName());
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
@@ -46,7 +46,7 @@ public class RemoveChannelArchiverServer implements BPLAction {
 
 		logger.info("Removing channel archiver server archives " + archivesCSV + " for server " + serverUrl);
 		
-		configService.removeChannelArchiverDataServer(serverUrl, archivesCSV);
+		configService.removeExternalArchiverDataServer(serverUrl, archivesCSV);
 		
 
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
