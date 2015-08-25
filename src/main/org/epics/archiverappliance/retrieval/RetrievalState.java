@@ -137,7 +137,12 @@ public class RetrievalState {
 		return count;
 	}
 	
-	private boolean includeExternalServers(HttpServletRequest req) {
+	/**
+	 * To prevent infinite loops and such, we can specify that we do not proxy to external servers for this data retrieval request.
+	 * @param req
+	 * @return
+	 */
+	public static boolean includeExternalServers(HttpServletRequest req) {
 		String skipExternalServersStr = req.getParameter("skipExternalServers");
 		if(skipExternalServersStr != null) { 
 			try { 

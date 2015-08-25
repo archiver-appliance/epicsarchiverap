@@ -272,12 +272,18 @@ public class DataRetrievalServlet  extends HttpServlet {
 		PVTypeInfo typeInfo  = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
 		pmansProfiler.mark("After PVTypeInfo");
 		
-		if(typeInfo == null) {
-			logger.debug("Checking to see if pv " + pvName + " is served by a Channel Archiver Server");
-			typeInfo = checkIfPVisServedByExternalServer(pvName, start);
+		if(typeInfo == null && RetrievalState.includeExternalServers(req)) {
+			logger.debug("Checking to see if pv " + pvName + " is served by a external Archiver Server");
+			typeInfo = checkIfPVisServedByExternalServer(pvName, start, req, resp, useChunkedEncoding);
 		}
 		
+		
 		if(typeInfo == null) {
+			if(resp.isCommitted()) { 
+				logger.debug("Proxied the data thru an external server for PV " + pvName);
+				return;
+			}
+			
 			logger.error("Unable to find typeinfo for pv " + pvName);
 			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -311,7 +317,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		if(!applianceForPV.equals(configService.getMyApplianceInfo())) {
 			// Data for pv is elsewhere. Proxy/redirect and return.
-			proxyRetrievalRequest(req, resp, pvName, useChunkedEncoding, applianceForPV);
+			proxyRetrievalRequest(req, resp, pvName, useChunkedEncoding, applianceForPV.getRetrievalURL()  + "/../data" );
 			return;
 		}
 
@@ -565,12 +571,16 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 * Check to see if the PV is served up by an external server. 
 	 * If it is, make a typeInfo up and set the appliance as this appliance.
 	 * We need the start time of the request as the ChannelArchiver does not serve up data if the starttime is much later than the last event in the dataset.
+	 * For external EPICS Archiver Appliances, we simply proxy the data right away. Use the response isCommited to see if we have already processed the request
 	 * @param pvName
 	 * @param start
+	 * @param req
+	 * @param resp
+	 * @param useChunkedEncoding
 	 * @return
 	 * @throws IOException
 	 */
-	private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Timestamp start) throws IOException {
+	private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Timestamp start, HttpServletRequest req, HttpServletResponse resp, boolean useChunkedEncoding) throws IOException {
 		PVTypeInfo typeInfo = null;
 		List<ChannelArchiverDataServerPVInfo> caServers = configService.getChannelArchiverDataServers(pvName);
 		if(caServers != null && !caServers.isEmpty()) {
@@ -599,10 +609,33 @@ public class DataRetrievalServlet  extends HttpServlet {
 					}
 				}
 			}
+			logger.error("Unable to determine typeinfo from CA for pv " + pvName);
+			return typeInfo;
 		}
-
-		logger.error("Unable to determine typeinfo from CA for pv " + pvName);
-		return typeInfo;
+		
+		// See if external EPICS archiver appliances have this PV.
+		Map<String, String> externalServers = configService.getExternalArchiverDataServers();
+		if(externalServers != null) { 
+			for(String serverUrl : externalServers.keySet()) { 
+				String index = externalServers.get(serverUrl);
+				if(index.equals("pbraw")) { 
+					logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv " + pvName);
+					JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8"), false);
+					if(areWeArchivingPVObj != null) {
+						@SuppressWarnings("unchecked")
+						Map<String, String> areWeArchivingPV = (Map<String, String>) areWeArchivingPVObj;
+						if(areWeArchivingPV.containsKey("status") && Boolean.parseBoolean(areWeArchivingPV.get("status"))) {
+							logger.info("Proxying data retrieval for pv " + pvName + " to " + serverUrl);
+							proxyRetrievalRequest(req, resp, pvName, useChunkedEncoding, serverUrl  + "/data" );
+						}
+						return null;
+					}
+				}
+			}
+		}
+		
+		logger.debug("Cannot find the PV anywhere " + pvName);
+		return null;
 	}
 
 
@@ -730,24 +763,24 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 * @param resp
 	 * @param pvName
 	 * @param useChunkedEncoding
-	 * @param applianceForPV
+	 * @param dataRetrievalURLForPV
 	 * @throws IOException
 	 */
-	private void proxyRetrievalRequest(HttpServletRequest req, HttpServletResponse resp, String pvName, boolean useChunkedEncoding, ApplianceInfo applianceForPV) throws IOException {
+	private void proxyRetrievalRequest(HttpServletRequest req, HttpServletResponse resp, String pvName, boolean useChunkedEncoding, String dataRetrievalURLForPV) throws IOException {
 		try {
 			// TODO add some intelligent business logic to determine if redirect/proxy. 
 			// It may be beneficial to support both and choose based on where the client in calling from or perhaps from a header?
 			boolean redirect = false;
 			if(redirect) { 
-				logger.debug("Data for pv " + pvName + "is elsewhere. Redirecting to appliance " + applianceForPV.getIdentity());
-				URI redirectURI = new URI(applianceForPV.getRetrievalURL() + "/../data/" + req.getPathInfo());
+				logger.debug("Data for pv " + pvName + "is elsewhere. Redirecting to appliance " + dataRetrievalURLForPV);
+				URI redirectURI = new URI(dataRetrievalURLForPV + "/" + req.getPathInfo());
 				String redirectURIStr = redirectURI.normalize().toString() +  "?" + req.getQueryString();
 				logger.debug("URI for redirect is " + redirectURIStr);
 				resp.sendRedirect(redirectURIStr);
 				return;
 			} else { 
-				logger.debug("Data for pv " + pvName + "is elsewhere. Proxying appliance " + applianceForPV.getIdentity());
-				URI redirectURI = new URI(applianceForPV.getRetrievalURL() + "/../data/" + req.getPathInfo());
+				logger.debug("Data for pv " + pvName + "is elsewhere. Proxying appliance " + dataRetrievalURLForPV);
+				URI redirectURI = new URI(dataRetrievalURLForPV + "/" + req.getPathInfo());
 				String redirectURIStr = redirectURI.normalize().toString() +  "?" + req.getQueryString();
 				logger.debug("URI for proxying is " + redirectURIStr);
 
