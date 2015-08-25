@@ -43,6 +43,9 @@ import org.epics.archiverappliance.engine.metadata.MetaCompletedListener;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.writer.WriterRunnable;
+import org.epics.archiverappliance.engine.generic.GenericEngineRegistry;
+import org.epics.archiverappliance.engine.generic.GenericEngineMediator;
+import org.epics.archiverappliance.engine.generic.DummyGenericEngineDefinition;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
@@ -112,6 +115,7 @@ public class EngineContext {
 	
 	private double sampleBufferCapacityAdjustment = 1.0;
 	
+	private GenericEngineRegistry genericEngineRegistry = null;
 
 	/***
 	 * 
@@ -144,6 +148,15 @@ public class EngineContext {
  * @param configService the config service to initialize the engine context
  */
 	public EngineContext(final ConfigService configService) {
+		// Initialize the generic engine registry and register engine types.
+		genericEngineRegistry = new GenericEngineRegistry(configService);
+		
+		// Register engines (add your custom engines here).
+		genericEngineRegistry.registerEngineDefinition(new DummyGenericEngineDefinition());
+		
+		// Load on statup any engines that are configured such.
+		genericEngineRegistry.autoloadEnginesAsNeeded();
+
 		String commandThreadCountVarName = "org.epics.archiverappliance.engine.epics.commandThreadCount";
 		String commandThreadCountStr = configService.getInstallationProperties().getProperty(commandThreadCountVarName, "10");
 		configlogger.info("Creating " + commandThreadCountStr + " command threads as specified by " + commandThreadCountVarName + " in archappl.properties");
@@ -172,6 +185,8 @@ public class EngineContext {
 					if (scheduler != null) {
 						scheduler.shutdown();
 					}
+					
+					genericEngineRegistry.destroy();
 					
 					Iterator<Entry<String, ArchiveChannel>> itChannel = channelList.entrySet().iterator();
 					while (itChannel.hasNext()) {
@@ -601,6 +616,15 @@ public class EngineContext {
 	
 	
 	public boolean abortComputeMetaInfo(String pvName) { 
+		GenericEngineRegistry.ParsedUri generic_uri = genericEngineRegistry.readRequestUri(pvName);
+		if (generic_uri != null) {
+			try {
+				return genericEngineRegistry.getUriEngine(generic_uri).abortMetaInfo(generic_uri.path);
+			} catch (Exception e) {
+				logger.error("Generic abortMetaInfo failed", e);
+				return false;
+			}
+		}
 		return MetaGet.abortMetaGet(pvName);
 	}
 
@@ -725,4 +749,7 @@ public class EngineContext {
 		return channelProvider;
 	}
 
+	public GenericEngineRegistry getGenericEngineRegistry() {
+		return genericEngineRegistry;
+	}
 }

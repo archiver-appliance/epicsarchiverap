@@ -49,7 +49,7 @@ import org.epics.archiverappliance.engine.pv.PVMetrics;
  */
 
 @SuppressWarnings("nls")
-abstract public class ArchiveChannel {
+abstract public class ArchiveChannel implements EngineWritable {
 	private static final Logger logger = Logger.getLogger(ArchiveChannel.class);
 
 	/** Throttled log for NaN samples */

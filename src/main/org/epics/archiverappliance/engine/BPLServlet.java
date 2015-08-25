@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.BPLDefaultHandler;
 import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
@@ -49,6 +50,7 @@ import org.epics.archiverappliance.engine.bpl.reports.PVDetails;
 import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.engine.bpl.reports.WaveformPVsAction;
+import org.epics.archiverappliance.engine.generic.GenericEngineRegistry;
 
 /**
  * The main business logic servlet for the engine. All BPLActions are registered here.
@@ -95,7 +97,7 @@ public class BPLServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String path = req.getPathInfo();
 		logger.info("Beginning request into Engine servlet " + path);
-		BasicDispatcher.dispatch(req, resp, configService, getActions);
+		BasicDispatcher.dispatch(req, resp, configService, getActions, defaultHandler);
 	}
 	
 	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
@@ -108,7 +110,7 @@ public class BPLServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		logger.info("Beginning POST request into Engine servlet " + req.getPathInfo());
-		BasicDispatcher.dispatch(req, resp, configService, postActions);
+		BasicDispatcher.dispatch(req, resp, configService, postActions, defaultHandler);
 	}
 
 	private ConfigService configService;
@@ -117,4 +119,12 @@ public class BPLServlet extends HttpServlet {
 		super.init(config);
 		configService = (ConfigService) getServletConfig().getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
 	}
+	
+	private BPLDefaultHandler defaultHandler = new BPLDefaultHandler() {
+		public boolean handleRequest(HttpServletRequest req, HttpServletResponse resp, ConfigService theConfigService) throws IOException
+		{
+			GenericEngineRegistry registry = theConfigService.getEngineContext().getGenericEngineRegistry();
+			return registry.handleHttpRequest(req, resp);
+		}
+	};
 }

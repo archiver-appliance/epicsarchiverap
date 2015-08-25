@@ -30,7 +30,17 @@ import org.json.simple.JSONObject;
 public class BasicDispatcher {
 	private static final Logger logger = Logger.getLogger(BasicDispatcher.class);
 
-	public static void dispatch(HttpServletRequest req, HttpServletResponse resp, ConfigService configService, HashMap<String, Class<? extends BPLAction>> actions) throws IOException {
+	public static void dispatch(
+		HttpServletRequest req, HttpServletResponse resp, ConfigService configService,
+		HashMap<String, Class<? extends BPLAction>> actions
+	) throws IOException {
+		dispatch(req, resp, configService, actions, null);
+	}
+	
+	public static void dispatch(
+		HttpServletRequest req, HttpServletResponse resp, ConfigService configService,
+		HashMap<String, Class<? extends BPLAction>> actions, BPLDefaultHandler defaultHandler
+	) throws IOException {
 		String requestPath = req.getPathInfo();
 		logger.info("Servicing " + requestPath);
 		if(requestPath.equals("/ping")) {
@@ -83,6 +93,17 @@ public class BasicDispatcher {
 		
 		Class<? extends BPLAction> actionClass = actions.get(requestPath);
 		if(actionClass == null) {
+			if (defaultHandler != null) {
+				try {
+					if (defaultHandler.handleRequest(req, resp, configService)) {
+						return;
+					}
+				} catch (Exception e) {
+					logger.error(e.getMessage(), e);
+					throw new IOException(e);
+				}
+			}
+			
 			logger.error("Do not have a appropriate BPL action for " + requestPath + ". Please register the appropriate business method in getActions.");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;

@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.engine.epics;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -22,6 +23,7 @@ import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PVContext;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
+import org.epics.archiverappliance.engine.generic.GenericEngineMediator;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONValue;
 
@@ -136,6 +138,7 @@ public class EngineMetrics implements JSONAware {
         int connectedChannels = 0;
         int disconnectedChannels = 0;
         int totalChannels = 0;
+        int totalEpicsChannelsCount = 0;
         
 		Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
         
@@ -151,6 +154,7 @@ public class EngineMetrics implements JSONAware {
         	}
         	
         	totalChannels++;
+        	totalEpicsChannelsCount += 1 + channel.getMetaChannelCount();
         	if(pvMetrics==null) {
 				disconnectedChannels++;
 				continue;
@@ -163,18 +167,45 @@ public class EngineMetrics implements JSONAware {
 			eventRate += pvMetrics.getEventRate();
 			dataRate += pvMetrics.getStorageRate();
         }
+        
+        for (GenericEngineMediator engine : engineContext.getGenericEngineRegistry().getEngines().values()) {
+            ArrayList<String> channels;
+            try {
+                channels = engine.getChannelNames();
+            } catch (Exception ex) {
+                continue;
+            }
+            
+            for (String channel_name : channels) {
+                if(pausedPVs.contains(channel_name)) {
+                    continue;
+                }
+                
+                PVMetrics pvMetrics;
+                try {
+                    pvMetrics = engine.getChannelMetrics(channel_name);
+                } catch (Exception ex) {
+                    continue;
+                }
+                
+                totalChannels++;
+                if (pvMetrics.isConnected()) {
+                    connectedChannels++;
+                } else {
+                    disconnectedChannels++;
+                }
+                eventRate += pvMetrics.getEventRate();
+                dataRate += pvMetrics.getStorageRate();
+            }
+        }
+        
 		engineMetrics.setEventRate(eventRate);
 		engineMetrics.setDataRate(dataRate);
-
 		engineMetrics.setPvCount(totalChannels);
 		engineMetrics.setConnectedPVCount(connectedChannels);
 		engineMetrics.setDisconnectedPVCount(disconnectedChannels);
 		engineMetrics.setPausedPVCount(pausedPVs.size());
-		int totalchannelCount = engineContext.getChannelList().size();
-		for(ArchiveChannel archiveChannel : engineContext.getChannelList().values()) { 
-			totalchannelCount += archiveChannel.getMetaChannelCount();
-		}
-		engineMetrics.setTotalEPICSChannels(totalchannelCount);
+		engineMetrics.setTotalEPICSChannels(totalEpicsChannelsCount);
 		engineMetrics.setSecondsConsumedByWritter(engineContext.getAverageSecondsConsumedByWritter());
 
 		return engineMetrics;

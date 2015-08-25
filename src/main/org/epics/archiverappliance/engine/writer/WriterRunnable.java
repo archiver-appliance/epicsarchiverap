@@ -18,7 +18,7 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
-import org.epics.archiverappliance.engine.model.ArchiveChannel;
+import org.epics.archiverappliance.engine.model.EngineWritable;
 import org.epics.archiverappliance.engine.model.SampleBuffer;
 import org.epics.archiverappliance.engine.model.YearListener;
 
@@ -32,7 +32,7 @@ public class WriterRunnable implements Runnable {
 	/** Minimum write period [seconds] */
 	private static final double MIN_WRITE_PERIOD = 1.0;
     /**the sample buffer hash map*/
-	final private ConcurrentHashMap<String, SampleBuffer> buffers = new ConcurrentHashMap<String, SampleBuffer>();
+	final private ConcurrentHashMap<String, EngineWritable> channels = new ConcurrentHashMap<String, EngineWritable>();
 
 	/**the configservice used by this WriterRunnable*/
 	private ConfigService configservice = null;
@@ -48,27 +48,10 @@ public class WriterRunnable implements Runnable {
 	}
 
 	/** Add a channel's buffer that this thread reads */
-	public void addChannel(final ArchiveChannel channel) {
-		addSampleBuffer(channel.getName(), channel.getSampleBuffer());
-	}
-/**
- * remove one sample buffer from the buffer hash map.
- * At the same time. it also removes the channel from the channel hash map in the engine context
- * @param channelName the name of the channel who and whose sample buffer are removed
- */
-	public void removeChannel(final String channelName) {
-		buffers.remove(channelName);
-	}
-
-	/**
-	 * add sample buffer into this writer runnable and add year listener to each sample buffer
-	 * @param name the name of the channel
-	 * @param buffer the sample buffer for this channel
-	 */
-	void addSampleBuffer(final String name, final SampleBuffer buffer) {
-		// buffers.add(buffer);
-		buffers.put(name, buffer);
-		buffer.addYearListener(new YearListener() {
+	public void addChannel(EngineWritable channel) {
+		channels.put(channel.getName(), channel);
+		
+		channel.getSampleBuffer().addYearListener(new YearListener() {
 
 			@Override
 			public void yearChanged(final SampleBuffer sampleBuffer) {
@@ -77,7 +60,7 @@ public class WriterRunnable implements Runnable {
 
 					@Override
 					public void run() {
-						write(sampleBuffer);
+						write(sampleBuffer, channel);
 						logger.info(sampleBuffer.getChannelName() + ":year change");
 					}
 					
@@ -86,6 +69,14 @@ public class WriterRunnable implements Runnable {
 			}
 
 		});
+	}
+/**
+ * remove one sample buffer from the buffer hash map.
+ * At the same time. it also removes the channel from the channel hash map in the engine context
+ * @param channelName the name of the channel who and whose sample buffer are removed
+ */
+	public void removeChannel(final String channelName) {
+		channels.remove(channelName);
 	}
 
 /**
@@ -120,14 +111,12 @@ public class WriterRunnable implements Runnable {
     * @param buffer the sample buffer to be written
     * @throws IOException  error occurs during writing the sample buffer to the short term storage
     */
-	private void write(SampleBuffer buffer) {
+	private void write(SampleBuffer buffer, EngineWritable channel) {
 		if(isRunning) return;
 		isRunning=true;
 		
 		try {
-			ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
-					.getEngineContext().getChannelList();
-			String channelNname = buffer.getChannelName();
+			String channelNname = channel.getName();
 			
 			try {
 				buffer.updateStats();
@@ -136,10 +125,9 @@ public class WriterRunnable implements Runnable {
 				
 				try (BasicContext basicContext = new BasicContext()) {
 					if (previousSamples.size() > 0) {
-						ArchiveChannel tempChannel = channelList.get(channelNname);
-						tempChannel.setlastRotateLogsEpochSeconds(System
+						channel.setlastRotateLogsEpochSeconds(System
 								.currentTimeMillis() / 1000);
-						tempChannel.getWriter().appendData(basicContext, channelNname,
+						channel.getWriter().appendData(basicContext, channelNname,
 								previousSamples);
 					}
 				}
@@ -159,16 +147,14 @@ public class WriterRunnable implements Runnable {
 		isRunning=true;
 		
 		try {
-			ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
-					.getEngineContext().getChannelList();
-			
-			Iterator<Entry<String, SampleBuffer>> it = buffers.entrySet().iterator();
+			Iterator<Entry<String, EngineWritable>> it = channels.entrySet().iterator();
 
 			while (it.hasNext())
 			{
-				Entry<String, SampleBuffer> entry = (Entry<String, SampleBuffer>) it.next();
-				SampleBuffer buffer = entry.getValue();
-				String channelNname = buffer.getChannelName();
+				Entry<String, EngineWritable> entry = (Entry<String, EngineWritable>) it.next();
+				EngineWritable channel = entry.getValue();
+				String channelNname = channel.getName();
+				SampleBuffer buffer = channel.getSampleBuffer();
 				
 				try {
 					buffer.updateStats();
@@ -177,10 +163,9 @@ public class WriterRunnable implements Runnable {
 					
 					try (BasicContext basicContext = new BasicContext()) {
 						if (previousSamples.size() > 0) {
-							ArchiveChannel tempChannel = channelList.get(channelNname);
-							tempChannel.setlastRotateLogsEpochSeconds(System
+							channel.setlastRotateLogsEpochSeconds(System
 									.currentTimeMillis() / 1000);
-							tempChannel.getWriter().appendData(basicContext,
+							channel.getWriter().appendData(basicContext,
 									channelNname, previousSamples);
 						}
 					}

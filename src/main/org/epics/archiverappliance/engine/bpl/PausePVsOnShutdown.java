@@ -26,17 +26,8 @@ public class PausePVsOnShutdown implements BPLAction {
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		configlogger.info("Pausing PVs on potential shutdown");
-		EngineContext engineRuntime = configService.getEngineContext();
-		int pvCount = 0;
-		for(String pvName : engineRuntime.getChannelList().keySet()) {
-			try { 
-				ArchiveEngine.pauseArchivingPV(pvName, configService);
-				pvCount++;
-			} catch(Exception ex) {
-				configlogger.error("Exception pausing PV " + pvName, ex);
-			}
-		}
-
+		int pvCount = ArchiveEngine.pauseAllPvs(configlogger, configService);
+		
 		HashMap<String, Object> infoValues = new HashMap<String, Object>();
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try(PrintWriter out = resp.getWriter()) {

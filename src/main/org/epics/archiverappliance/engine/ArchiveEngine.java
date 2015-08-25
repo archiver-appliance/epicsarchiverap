@@ -16,6 +16,9 @@ package org.epics.archiverappliance.engine;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -40,6 +43,8 @@ import org.epics.archiverappliance.engine.pv.ControllingPV;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PVFactory;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
+import org.epics.archiverappliance.engine.generic.GenericEngineRegistry;
+import org.epics.archiverappliance.engine.generic.GenericEngineMediator;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 
@@ -184,6 +189,12 @@ public class ArchiveEngine {
 	public static void getArchiveInfo(final String pvName,
 			final ConfigService configservice, final String metadatafields[], boolean usePVAccess,
 			final MetaCompletedListener metaListener) throws Exception {
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			getGeneric(configservice).getUriEngine(generic_uri).getMetaInfo(generic_uri.path, metadatafields, metaListener);
+			return;
+		}
+		
 		MetaGet metaget = new MetaGet(pvName, configservice, metadatafields, usePVAccess, metaListener);
 		metaget.initpv();
 	}
@@ -252,6 +263,12 @@ public class ArchiveEngine {
 			final Timestamp lastKnownEventTimeStamp,
 			final String controllingPVName, final String[] metaFieldNames, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			getGeneric(configservice).getUriEngine(generic_uri).addChannel(generic_uri.path, pvName, samplingPeriod, mode, secondstoBuffer, writer, archdbrtype, lastKnownEventTimeStamp);
+			return;
+		}
+		
 		boolean start = true;
 		if (controllingPVName != null) {
 			ConcurrentHashMap<String, ControllingPV> controlingPVList = configservice .getEngineContext().getControlingPVList();
@@ -294,6 +311,12 @@ public class ArchiveEngine {
 	 *              error in pausing the channel .
 	 */
 	public static void pauseArchivingPV(final String pvName, ConfigService configservice) throws Exception {
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			getGeneric(configservice).getUriEngine(generic_uri).destroyChannel(generic_uri.path);
+			return;
+		}
+		
 		EngineContext engineContext = configservice.getEngineContext();
        // pause the pv
 		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
@@ -316,6 +339,16 @@ public class ArchiveEngine {
 	 */
 
 	public static void resumeArchivingPV(final String pvName, ConfigService configservice) throws Exception {
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			// If the engine doesn't know about the channel yet, start it with parameters
+			// from the configuration.
+			if (!getGeneric(configservice).getUriEngine(generic_uri).haveChannel(generic_uri.path)) {
+				startChannelsForPV(pvName, configservice);
+			}
+			return;
+		}
+		
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
 		if (channel != null) {
@@ -367,12 +400,28 @@ public class ArchiveEngine {
 	 *             On error in getting the pv info and status .
 	 */
 	public static PVMetrics getMetricsforPV(String pvName, ConfigService configservice) throws Exception {
-		EngineContext engineContext = configservice.getEngineContext();
-		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			return getGeneric(configservice).getUriEngine(generic_uri).getChannelMetrics(generic_uri.path);
+		}
+		ArchiveChannel channel = configservice.getEngineContext().getChannelList().get(pvName);
 		if (channel == null) { 
 			return null;
 		}
 		return channel.getPVMetrics();
+	}
+	
+	
+	public static HashMap<String, String> getLatestMetaDataForPV(String pvName, ConfigService configservice) throws Exception {
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			return getGeneric(configservice).getUriEngine(generic_uri).getChannelMetadata(generic_uri.path);
+		}
+		ArchiveChannel channel = configservice.getEngineContext().getChannelList().get(pvName);
+		if (channel == null) { 
+			return null;
+		}
+		return channel.getLatestMetadata();
 	}
 	
 	
@@ -410,6 +459,13 @@ public class ArchiveEngine {
 	public static void changeArchivalParameters(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
 			final ConfigService configservice, final Writer writer, final boolean usePVAccess, final boolean useDBEPropeties) throws Exception {
+		
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			getGeneric(configservice).getUriEngine(generic_uri).changeChannelParameters(generic_uri.path, samplingPeriod, mode, writer);
+			return;
+		}
+		
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
 		if (channel == null) {
@@ -482,6 +538,12 @@ public class ArchiveEngine {
  *        error when destroy the PV
  */
 	public static void destoryPv(String pvName, final ConfigService configservice) throws Exception {
+		GenericEngineRegistry.ParsedUri generic_uri = getGeneric(configservice).readRequestUri(pvName);
+		if (generic_uri != null) {
+			getGeneric(configservice).getUriEngine(generic_uri).destroyChannel(generic_uri.path);
+			return;
+		}
+		
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
 
@@ -507,5 +569,48 @@ public class ArchiveEngine {
 			engineContext.getWriteThead().removeChannel(pvName);
 			engineContext.getChannelList().remove(pvName);
 		}
+	}
+	
+	public static int pauseAllPvs(Logger error_logger, final ConfigService configservice)
+	{
+		int pvCount = 0;
+		
+		for (Entry<String, GenericEngineMediator> entry : getGeneric(configservice).getEngines().entrySet()) {
+			String engine_type = entry.getKey();
+			GenericEngineMediator engine = entry.getValue();
+			
+			ArrayList<String> channels;
+			try {
+				channels = engine.getChannelNames();
+			} catch (Exception ex) {
+				error_logger.error(String.format("Exception in getChannelNames to pause PVs for generic engine %s", engine_type));
+				continue;
+			}
+			
+			for (String channel_name : channels) {
+				try {
+					engine.destroyChannel(channel_name);
+					pvCount++;
+				} catch (Exception ex) {
+					error_logger.error(String.format("Exception pausing channel %s in engine %s", channel_name, engine_type));
+				}
+			}
+		}
+		
+		EngineContext engineContext = configservice.getEngineContext();
+		for (String pvName : engineContext.getChannelList().keySet()) {
+			try {
+				pauseArchivingPV(pvName, configservice);
+				pvCount++;
+			} catch (Exception ex) {
+				error_logger.error("Exception pausing PV " + pvName, ex);
+			}
+		}
+		
+		return pvCount;
+	}
+	
+	private static GenericEngineRegistry getGeneric(final ConfigService configservice) {
+		return configservice.getEngineContext().getGenericEngineRegistry();
 	}
 }

@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
@@ -38,19 +39,24 @@ public class GetLatestMetaDataAction implements BPLAction {
 			return;
 		}
 
-		EngineContext engineContext = configService.getEngineContext();
-		if(engineContext.getChannelList().containsKey(pvName)){
-			ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
-			HashMap<String, String> retVal = archiveChannel.getLatestMetadata();
-			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			try(PrintWriter out = resp.getWriter()) {
-				out.println(JSONValue.toJSONString(retVal));
-			}
+		HashMap<String, String> retVal;
+		try {
+			retVal = ArchiveEngine.getLatestMetaDataForPV(pvName, configService);
+		} catch (Exception ex) {
+			logger.error("Exception getting latest metadata of PV " + pvName, ex);
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
-
-		logger.debug("No data for PV " + pvName + " in this engine.");
-		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-		return;
+		
+		if (retVal == null) {
+			logger.debug("No data for PV " + pvName + " in this engine.");
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+		
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		try(PrintWriter out = resp.getWriter()) {
+			out.println(JSONValue.toJSONString(retVal));
+		}
 	}	
 }
