@@ -187,7 +187,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					logger.debug("Found " + paths.length + " cached entries for " + pvName + " for post processor " + extension);
 				}
 			}
-			logger.debug(desc + " Found " + (paths != null ? paths.length : 0) + " matching files for pv " + pvName);
+			logger.debug(desc + " Found " + (paths != null ? paths.length : 0) + " matching files for pv " + pvName + " in store " + this.getName());
 			boolean useSearchForPositions = (this.compressionMode == CompressionMode.NONE);
 			boolean doNotuseSearchForPositions = !useSearchForPositions;
 			
@@ -201,7 +201,12 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(paths != null && paths.length == 1) {
 				PBFileInfo fileInfo = new PBFileInfo(paths[0]); 
 				ArchDBRTypes dbrtype = fileInfo.getType();
-				ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[0], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));
+				if(fileInfo.getLastEventEpochSeconds() <= TimeUtils.convertToEpochSeconds(startTime)) { 
+					logger.debug("All we can get from this store is the last known event at " + TimeUtils.convertToHumanReadableString(fileInfo.getLastEventEpochSeconds()));
+					ret.add(CallableEventStream.makeOneEventCallable(fileInfo.getLastEvent(), new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear()), postProcessor, askingForProcessedDataButAbsentInCache));
+				} else { 
+					ret.add(CallableEventStream.makeOneStreamCallable(new FileBackedPBEventStream(pvName, paths[0], dbrtype, startTime, endTime, doNotuseSearchForPositions), postProcessor, askingForProcessedDataButAbsentInCache));
+				}
 			} else if(paths != null && paths.length > 1) {
 				PBFileInfo fileInfo = new PBFileInfo(paths[0]); 
 				ArchDBRTypes dbrtype = fileInfo.getType();
