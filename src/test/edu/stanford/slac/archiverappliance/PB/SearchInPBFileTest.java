@@ -70,7 +70,7 @@ public class SearchInPBFileTest {
 			// step is some random prime number that hopefully makes this go thru all the reasonable cases.
 			// We need to start from 2 as the SimulationEventStreamIterator generates data from 1 and we return success only if we find e1 < sample <= e2
 			for(int secondsintoyear = 2; secondsintoyear < SimulationEventStreamIterator.DEFAULT_NUMBER_OF_SAMPLES; secondsintoyear+=step) {
-				FileEventStreamSearch bsend = new FileEventStreamSearch(testPath, fileInfo.getActualDataStartsHere());
+				FileEventStreamSearch bsend = new FileEventStreamSearch(testPath, fileInfo.getPositionOfFirstSample());
 				boolean posFound = bsend.seekToTime(ArchDBRTypes.DBR_SCALAR_DOUBLE, secondsintoyear);
 				assertTrue("Could not find " + secondsintoyear, posFound);
 				long position = bsend.getFoundPosition();

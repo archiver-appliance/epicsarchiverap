@@ -31,11 +31,9 @@ import org.epics.archiverappliance.etl.ETLBulkStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.search.FileEventStreamSearch;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 
 /**
  * An EventStream that is backed by a single PB file.
@@ -56,8 +54,15 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	private ArchDBRTypes type;
 	private FileBackedPBEventStreamIterator theIterator = null;
 	private RemotableEventStreamDesc desc;
-	private PayloadInfo info = null;
+	private PBFileInfo fileInfo = null;
 	
+	/**
+	 * Used when we want to include data from the entire file. 
+	 * @param pvname
+	 * @param path
+	 * @param type
+	 * @throws IOException
+	 */
 	public FileBackedPBEventStream(String pvname, Path path, ArchDBRTypes type) throws IOException {
 		this.pvName = pvname;
 		this.path = path;
@@ -67,6 +72,15 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 		this.positionBoundaries = true;
 	}
 	
+	/**
+	 * Used when we know the file locations of the start and end. Really only used in one utility...
+	 * @param pvname
+	 * @param path
+	 * @param type
+	 * @param startPosition
+	 * @param endPosition
+	 * @throws IOException
+	 */
 	public FileBackedPBEventStream(String pvname, Path path, ArchDBRTypes type, long startPosition, long endPosition) throws IOException {
 		this.pvName = pvname;
 		this.path = path;
@@ -76,6 +90,18 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 		this.positionBoundaries = true;
 	}
 	
+	/**
+	 * Used when we know the start and end times. There are six cases here; see the FileBackedIteratorTest for more details.
+	 * For performance reasons, we want to use the location based iterator as much as possible.
+	 * But in case of issues, we do not want to not return data. So, fall back to a time based iterator
+	 * @param pvname
+	 * @param path
+	 * @param dbrtype
+	 * @param startTime
+	 * @param endTime
+	 * @param skipSearch
+	 * @throws IOException
+	 */
 	public FileBackedPBEventStream(String pvname, Path path, ArchDBRTypes dbrtype, Timestamp startTime, Timestamp endTime, boolean skipSearch) throws IOException {
 		this.pvName = pvname;
 		this.path = path;
@@ -102,7 +128,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 				return null;
 			}
 			
-			if(info == null) {
+			if(fileInfo == null) {
 				readPayLoadInfo();
 			}
 			
@@ -135,7 +161,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	@Override
 	public RemotableEventStreamDesc getDescription() {
 		try {
-			if(info == null) {
+			if(fileInfo == null) {
 				readPayLoadInfo();
 			}
 		} catch(IOException ex) {
@@ -146,20 +172,19 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	}
 	
 	private void readPayLoadInfo() throws IOException {
-		try(LineByteStream lis = new LineByteStream(path, 0L)) {
-			byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
-			info = PayloadInfo.parseFrom(payloadLine);
-			desc = new RemotableEventStreamDesc(pvName, info);
+		try { 
+			fileInfo = new PBFileInfo(path);
+			desc = new RemotableEventStreamDesc(pvName, fileInfo.getInfo());
 			desc.setSource(path.toString());
-			if(!this.pvName.equals(info.getPvname())) {
-				logger.error("File " + path.toAbsolutePath().toString() + " is being used to read data for pv " + this.pvName + " but it actually contains data for pv " + info.getPvname());
+			if(!this.pvName.equals(fileInfo.getPVName())) {
+				logger.error("File " + path.toAbsolutePath().toString() + " is being used to read data for pv " + this.pvName + " but it actually contains data for pv " + fileInfo.getPVName());
 			}
-			if(!this.type.equals(ArchDBRTypes.valueOf(info.getType()))) {
-				throw new Exception("File " + path.toAbsolutePath().toString() + " contains " + ArchDBRTypes.valueOf(info.getType()).toString() + " we are expecting " + this.type.toString());
+			if(!this.type.equals(fileInfo.getType())) {
+				throw new Exception("File " + path.toAbsolutePath().toString() + " contains " + fileInfo.getType().toString() + " we are expecting " + this.type.toString());
 			}
 			if(startFilePos == 0L) {
 				// We add the -1 here to make sure we include the first line.
-				startFilePos = lis.getCurrentPosition()-1;
+				startFilePos = fileInfo.getPositionOfFirstSample()-1;
 				logger.debug("Setting start position after header " + startFilePos);
 			}
 		} catch(Throwable t) {
@@ -172,82 +197,158 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 		return pvName;
 	}
 	
-	private void seekToTimes(Path path, ArchDBRTypes dbrtype, Timestamp startTime, Timestamp endTime) throws IOException {
-		int startSecondsIntoYear = TimeUtils.convertToYearSecondTimestamp(startTime).getSecondsintoyear();
-		int endSecondsIntoYear = TimeUtils.convertToYearSecondTimestamp(endTime).getSecondsintoyear();
-		YearSecondTimestamp startYTS = TimeUtils.convertToYearSecondTimestamp(startTime); 
-		YearSecondTimestamp endYTS = TimeUtils.convertToYearSecondTimestamp(endTime); 
-
+	/**
+	 * Determine the iterator to be used for this query based on the query start and end times and the first and last sample times.
+	 * @param path
+	 * @param dbrtype
+	 * @param queryStartTime
+	 * @param queryEndTime
+	 * @throws IOException
+	 */
+	private void seekToTimes(Path path, ArchDBRTypes dbrtype, Timestamp queryStartTime, Timestamp queryEndTime) throws IOException {
 		readPayLoadInfo();
+		
+		long queryStartEpoch = TimeUtils.convertToEpochSeconds(queryStartTime);
+		long queryEndEpoch = TimeUtils.convertToEpochSeconds(queryEndTime);
 
-		long endPosition = Files.size(path);
-		boolean endfound = false;
-		long startPosition = 0;
-		boolean startfound = false;
-
-		try { 
-			if(info.getYear() == endYTS.getYear()) {
-				FileEventStreamSearch bsend = new FileEventStreamSearch(path, startFilePos);
-				endfound = bsend.seekToTime(dbrtype, endSecondsIntoYear);
-				if(endfound) {
-					endPosition = bsend.getFoundPosition();
-					
-					DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(this.type);;
-					Constructor<? extends DBRTimeEvent> unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
-					ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
-					try(LineByteStream lis = new LineByteStream(path, endPosition)) {
-						// The seekToTime call will have positioned the pointer to the last known event before the endSecondsIntoYear
-						// We'll skip two lines to get past the last known event before the endSecondsIntoYear and the event itself.
-						// We do have the ArchDBRType; so we can parse the pb messages and use time based iteration just for this part.
-						// Jud Gaudenz pointed out a test case for this; so we not use time based iteration for this part..
-						lis.seekToFirstNewLine();
-						lis.readLine(nextLine);
-						while(!nextLine.isEmpty()) { 
-							DBRTimeEvent event = (DBRTimeEvent) unmarshallingConstructor.newInstance(this.desc.getYear(), nextLine);
-							if(event.getEventTimeStamp().after(endTime) || event.getEventTimeStamp().equals(endTime)) { 
-								break;
-							} else { 
-								if(logger.isDebugEnabled()) { 
-									logger.debug("Going past event at " + TimeUtils.convertToHumanReadableString(event.getEventTimeStamp()) 
-											+ " when seeking end position for PV " + pvName +
-											" at " 
-											+ TimeUtils.convertToHumanReadableString(endTime)
-											);
-								}
-							}
-							endPosition = lis.getCurrentPosition();
-							lis.readLine(nextLine);
-						}
-					} catch(Exception ex) { 
-						logger.error("Exception seeking to the end position for pv " + this.pvName, ex);
-					}
-				}
-			}
-
-			if(info.getYear() == startYTS.getYear()) {
-				FileEventStreamSearch bsstart = new FileEventStreamSearch(path, startFilePos);
-				startfound = bsstart.seekToTime(dbrtype, startSecondsIntoYear);
-				if(startfound) {
-					startPosition = bsstart.getFoundPosition();
-				}
-			}
-		} catch(IOException ex) { 
-			logger.error("Exception seeking to times for pv " + pvName + " in file " + path.toAbsolutePath().toString() , ex);
-		}
-
-		logger.debug("Found start position " + startPosition + " and end position " + endPosition + " in " + path.toString());
-		if(startfound && endfound) {
-			// We are assuming that the max span of a PB file is a year and the caller will use TimeUtils.breakIntoYearlyTimeSpans or equivalent to make multiple calls into this method.
-			this.startFilePos = startPosition;
-			this.endFilePos = endPosition;
-			this.positionBoundaries = true;
-		} else {
-			logger.debug("Did not find the start and end positions for pv " + pvName + " in file " + path.toAbsolutePath().toString() + ". Switching to using a time based iterator");
-			// We filter events as we are processing the stream...
+		if(fileInfo.getLastEvent() == null) { 
+			logger.warn("Cannot determine last event; defaulting to a time based iterator " + path.toAbsolutePath().toString());
 			this.positionBoundaries = false;
-			this.startTime = startTime;
-			this.endTime = endTime;
+			this.startTime = queryStartTime;
+			this.endTime = queryEndTime;
 		}
+
+		long firstSampleEpoch = TimeUtils.convertToEpochSeconds(fileInfo.getFirstEvent().getEventTimeStamp());
+		long lastSampleEpoch = TimeUtils.convertToEpochSeconds(fileInfo.getLastEvent().getEventTimeStamp());
+		
+		if(queryStartEpoch < firstSampleEpoch && queryEndEpoch < firstSampleEpoch) {
+			logger.debug("Case 1 - this file should not be included in request");
+			this.positionBoundaries = false;
+			this.startTime = queryStartTime;
+			this.endTime = queryEndTime;
+		} else if(queryStartEpoch < firstSampleEpoch && queryEndEpoch >= firstSampleEpoch && queryEndEpoch < lastSampleEpoch) { 
+			logger.debug("Case 2 - start at the beginning and lookup the end");
+			long endPosition = seekToEndTime(path, dbrtype, queryStartTime, queryEndTime);
+			if(endPosition != -1) { 
+				this.positionBoundaries = true;
+				this.startFilePos = fileInfo.getPositionOfFirstSample() - 1;
+				this.endFilePos = endPosition;
+			} else { 
+				logger.warn("Case 2 - did not find the end  for pv " + pvName + " in file " + path.toAbsolutePath().toString() + ". Switching to using a time based iterator");
+				this.positionBoundaries = false;
+				this.startTime = queryStartTime;
+				this.endTime = queryEndTime;
+			}
+		} else if(queryStartEpoch <= firstSampleEpoch && queryEndEpoch > lastSampleEpoch) { 
+			logger.debug("Case 3 - we need all of the data in this file");
+			this.positionBoundaries = true;
+			this.startFilePos = fileInfo.getPositionOfFirstSample() - 1;
+			this.endFilePos = Files.size(path);
+		} else if(queryStartEpoch >= firstSampleEpoch && queryEndEpoch < lastSampleEpoch) { 
+			logger.debug("Case 4 - Lookup start and end");
+			long endPosition = seekToEndTime(path, dbrtype, queryStartTime, queryEndTime);
+			long startPosition = seekToStartTime(path, dbrtype, queryStartTime, queryEndTime);
+			if(startPosition != -1 && endPosition != -1) {
+				this.positionBoundaries = true;
+				this.startFilePos = startPosition;
+				this.endFilePos = endPosition;
+			} else { 
+				logger.warn("Case 4 - did not find the either the start " + startPosition + " or end " + endPosition + " for pv " + pvName + " in file " + path.toAbsolutePath().toString() + ". Switching to using a time based iterator");
+				this.positionBoundaries = false;
+				this.startTime = queryStartTime;
+				this.endTime = queryEndTime;
+			}
+		} else if(queryStartEpoch >= firstSampleEpoch && queryEndEpoch > lastSampleEpoch) { 
+			logger.debug("Case 5 - lookup the start and go all the way to the end");
+			long startPosition = seekToStartTime(path, dbrtype, queryStartTime, queryEndTime);
+			if(startPosition != -1) { 
+				this.positionBoundaries = true;
+				this.startFilePos = startPosition;
+				this.endFilePos = Files.size(path);
+			} else { 
+				logger.warn("Case 5 - did not find the start for pv " + pvName + " in file " + path.toAbsolutePath().toString() + ". Switching to using a time based iterator");
+				this.positionBoundaries = false;
+				this.startTime = queryStartTime;
+				this.endTime = queryEndTime;
+			}
+		} else if(queryStartEpoch > lastSampleEpoch && queryEndEpoch > lastSampleEpoch) { 
+			logger.debug("Case 6 - we only the last sample");
+			this.positionBoundaries = true;
+			this.startFilePos = fileInfo.getPositionOfLastSample() - 1;
+			this.endFilePos = Files.size(path);
+		} else {
+			logger.error("Unexpected case in seekToTimes for pv " + pvName 
+					+ " in file " + path.toAbsolutePath().toString()
+					+ " Query start " + TimeUtils.convertToISO8601String(queryStartTime)
+					+ " Query end " + TimeUtils.convertToISO8601String(queryEndTime)
+					+ " First sample " + TimeUtils.convertToISO8601String(firstSampleEpoch)
+					+ " Last sample " + TimeUtils.convertToISO8601String(lastSampleEpoch)
+					+ ". Switching to using a time based iterator");
+			this.positionBoundaries = false;
+			this.startTime = queryStartTime;
+			this.endTime = queryEndTime;
+		}
+	}
+	
+	
+	private long seekToEndTime(Path path, ArchDBRTypes dbrtype, Timestamp queryStartTime, Timestamp queryEndTime) throws IOException { 
+		long endPosition = -1;
+		YearSecondTimestamp queryEndYTS = TimeUtils.convertToYearSecondTimestamp(queryEndTime); 
+		int queryEndSecondsIntoYear = TimeUtils.convertToYearSecondTimestamp(queryEndTime).getSecondsintoyear();
+		if(fileInfo.getInfo().getYear() == queryEndYTS.getYear()) {
+			FileEventStreamSearch bsend = new FileEventStreamSearch(path, startFilePos);
+			boolean endfound = bsend.seekToTime(dbrtype, queryEndSecondsIntoYear);
+			if(endfound) {
+				endPosition = bsend.getFoundPosition();
+				
+				DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(this.type);;
+				Constructor<? extends DBRTimeEvent> unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
+				ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
+				try(LineByteStream lis = new LineByteStream(path, endPosition)) {
+					// The seekToTime call will have positioned the pointer to the last known event before the endSecondsIntoYear
+					// We'll skip two lines to get past the last known event before the endSecondsIntoYear and the event itself.
+					// We do have the ArchDBRType; so we can parse the pb messages and use time based iteration just for this part.
+					// Jud Gaudenz pointed out a test case for this; so we not use time based iteration for this part..
+					lis.seekToFirstNewLine();
+					lis.readLine(nextLine);
+					while(!nextLine.isEmpty()) { 
+						DBRTimeEvent event = (DBRTimeEvent) unmarshallingConstructor.newInstance(this.desc.getYear(), nextLine);
+						if(event.getEventTimeStamp().after(queryEndTime) || event.getEventTimeStamp().equals(queryEndTime)) { 
+							break;
+						} else { 
+							if(logger.isDebugEnabled()) { 
+								logger.debug("Going past event at " + TimeUtils.convertToHumanReadableString(event.getEventTimeStamp()) 
+										+ " when seeking end position for PV " + pvName +
+										" at " 
+										+ TimeUtils.convertToHumanReadableString(queryEndTime)
+										);
+							}
+						}
+						endPosition = lis.getCurrentPosition();
+						lis.readLine(nextLine);
+					}
+				} catch(Exception ex) { 
+					logger.error("Exception seeking to the end position for pv " + this.pvName, ex);
+				}
+			}
+		}
+		
+		return endPosition;
+	}
+	
+	private long seekToStartTime(Path path, ArchDBRTypes dbrtype, Timestamp queryStartTime, Timestamp queryEndTime) throws IOException { 
+		int queryStartSecondsIntoYear = TimeUtils.convertToYearSecondTimestamp(queryStartTime).getSecondsintoyear();
+		YearSecondTimestamp queryStartYTS = TimeUtils.convertToYearSecondTimestamp(queryStartTime);
+		long startPosition = -1;
+
+		if(fileInfo.getInfo().getYear() == queryStartYTS.getYear()) {
+			FileEventStreamSearch bsstart = new FileEventStreamSearch(path, startFilePos);
+			boolean startfound = bsstart.seekToTime(dbrtype, queryStartSecondsIntoYear);
+			if(startfound) {
+				startPosition = bsstart.getFoundPosition();
+			}
+		}
+		return startPosition;
 	}
 
 	@Override
@@ -260,7 +361,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	public ReadableByteChannel getByteChannel(BasicContext context) throws IOException {
 		PBFileInfo fileInfo = new PBFileInfo(path, false);
 		SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.READ);
-		channel.position(fileInfo.getActualDataStartsHere());
+		channel.position(fileInfo.getPositionOfFirstSample());
 		return channel;
 	}
 }

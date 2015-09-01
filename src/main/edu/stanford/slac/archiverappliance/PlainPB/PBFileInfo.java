@@ -9,6 +9,7 @@ package edu.stanford.slac.archiverappliance.PlainPB;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
@@ -34,7 +35,8 @@ public class PBFileInfo {
 	PayloadInfo info;
 	DBRTimeEvent firstEvent = null;
 	DBRTimeEvent lastEvent = null;
-	long actualDataStartsHere = 0L;
+	long positionOfFirstSample = 0L;
+	long positionOfLastSample = 0;
 	
 	public PBFileInfo(Path path) throws IOException {
 		this(path, true);
@@ -44,7 +46,9 @@ public class PBFileInfo {
 		try(LineByteStream lis = new LineByteStream(path)) {
 			byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
 			info = PayloadInfo.parseFrom(payloadLine);
-			actualDataStartsHere = lis.getCurrentPosition();
+			positionOfFirstSample = lis.getCurrentPosition();
+			// This is not strictly correct; but this will be adjusted below.
+			positionOfLastSample = Files.size(path);
 
 			ArchDBRTypes type = ArchDBRTypes.valueOf(info.getType());
 			Constructor<? extends DBRTimeEvent> unmarshallingConstructor = DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
@@ -98,8 +102,12 @@ public class PBFileInfo {
 		return (lastEvent != null) ? lastEvent.getEpochSeconds() : 0;
 	}
 
-	public long getActualDataStartsHere() {
-		return actualDataStartsHere;
+	public long getPositionOfFirstSample() {
+		return positionOfFirstSample;
+	}
+	
+	public long getPositionOfLastSample() { 
+		return positionOfLastSample;
 	}
 	
 	
@@ -141,6 +149,7 @@ public class PBFileInfo {
 			try { 
 				lastEvent = (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(lastLine));
 				lastEvent.getEventTimeStamp();
+				positionOfLastSample = posn;
 				return;
 			} catch(PBParseException ex) {
 				logger.warn(path.toString() + " seems to have some data corruption at the end of the file; moving onto the previous line");

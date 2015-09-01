@@ -40,7 +40,7 @@ public class FileBackedPBEventStreamTest {
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":FileBackedPBEventStreamTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	PlainPBStoragePlugin storagePlugin;
-	private boolean leapYear = new GregorianCalendar().isLeapYear(TimeUtils.getCurrentYear());;
+	private boolean leapYear = new GregorianCalendar().isLeapYear(TimeUtils.getCurrentYear());
 	private ConfigServiceForTests configService;
 
 

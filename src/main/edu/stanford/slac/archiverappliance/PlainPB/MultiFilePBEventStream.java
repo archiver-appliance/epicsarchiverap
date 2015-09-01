@@ -62,7 +62,7 @@ public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
 				if(i == 0) {
 					if(pbinfo.getDataYear() == startYTS.getYear()) {
 						logger.debug("Looking for start position in file " + path.toAbsolutePath().toString());
-						FileEventStreamSearch bsstart = new FileEventStreamSearch(path, pbinfo.getActualDataStartsHere());
+						FileEventStreamSearch bsstart = new FileEventStreamSearch(path, pbinfo.getPositionOfFirstSample());
 						boolean startfound = bsstart.seekToTime(dbrtype, startSecondsIntoYear);
 						long startPosition = 0;
 						if(startfound) {
@@ -85,7 +85,7 @@ public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
 					}
 				} else if (i == (paths.length-1)) {
 					if(pbinfo.getDataYear() == endYTS.getYear()) {
-						FileEventStreamSearch bsend = new FileEventStreamSearch(path, pbinfo.actualDataStartsHere);
+						FileEventStreamSearch bsend = new FileEventStreamSearch(path, pbinfo.positionOfFirstSample);
 						boolean endfound = bsend.seekToTime(dbrtype, endSecondsIntoYear);
 						long endPosition = Files.size(path);
 						if(endfound) {
