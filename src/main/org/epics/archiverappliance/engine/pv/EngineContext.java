@@ -425,9 +425,12 @@ public class EngineContext {
 					JSONDecoder<UserSpecifiedSamplingParams> decoder = JSONDecoder.getDecoder(UserSpecifiedSamplingParams.class);
 					decoder.decode(jsonObj, userSpec);
 
-					ArchiveEngine.getArchiveInfo(pvName, configService, extraFields, userSpec.isUsePVAccess(), new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
-					PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoRequested", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
-					configService.getEventBus().post(confirmationEvent);
+					ArchivePVMetaCompletedListener listener = new ArchivePVMetaCompletedListener(pvName, configService, myIdentity);
+					synchronized (listener) {
+						ArchiveEngine.getArchiveInfo(pvName, configService, extraFields, userSpec.isUsePVAccess(), listener);
+						PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoRequested", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
+						configService.getEventBus().post(confirmationEvent);
+					}
 				} catch(Exception ex) {
 					logger.error("Exception requesting metainfo for pv " + pvName, ex);
 				}
@@ -560,7 +563,7 @@ public class EngineContext {
 		
 		
 		@Override
-		public void completed(MetaInfo metaInfo) {
+		public synchronized void completed(MetaInfo metaInfo) {
 			try { 
 				logger.debug("Completed computing archive info for pv " + pvName);
 				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
