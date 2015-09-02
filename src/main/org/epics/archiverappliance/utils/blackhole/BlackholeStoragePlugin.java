@@ -57,6 +57,11 @@ public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
 		// A blackhole plugin has no data
 		return null;
 	}
+	
+	@Override
+	public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
+		return null;
+	}
 
 	@Override
 	public boolean prepareForNewPartition(String pvName, Event ev, ArchDBRTypes archDBRType, ETLContext context) throws IOException {

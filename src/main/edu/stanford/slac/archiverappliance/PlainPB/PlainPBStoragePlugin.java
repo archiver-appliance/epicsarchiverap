@@ -664,6 +664,33 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 		return null;
 	}
 	
+	@Override
+	public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
+		try {
+			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
+			logger.debug(desc + " Found " + (paths != null ? paths.length : 0) + " matching files for pv " + pvName);
+			if(paths != null && paths.length > 0) {
+				for(int i = 0; i < paths.length; i++) {
+					if(logger.isDebugEnabled()) logger.debug("Looking for first known event in file " + paths[i].toAbsolutePath().toString());
+					try { 
+						PBFileInfo fileInfo = new PBFileInfo(paths[i]);
+						if(fileInfo.getFirstEvent() != null) return fileInfo.getFirstEvent();
+					} catch(Exception ex) { 
+						logger.warn("Exception determing header information from file " + paths[i].toAbsolutePath().toString(), ex);
+					}
+				}
+			}
+		} catch(NoSuchFileException ex) {
+			// We expect a NoSuchFileException if the file does not exist.
+			return null;
+		} catch (Exception ex) {
+			logger.error("Exception determining first known event for " + pvName, ex);
+		}
+		
+		return null;
+	}
+
+	
 	/**
 	 * Get last known timestamp for append purposes. If last event is not known, we return time(0)
 	 * @param pvName

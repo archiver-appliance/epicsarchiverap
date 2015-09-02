@@ -24,4 +24,14 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  */
 public interface Reader {
 	List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor) throws IOException;
+	
+	/**
+	 * Get the first event for this PV.
+	 * This call is used to optimize away calls to other readers that have older data.
+	 * @param context
+	 * @param pvName
+	 * @return
+	 * @throws IOException
+	 */
+	public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException;
 }

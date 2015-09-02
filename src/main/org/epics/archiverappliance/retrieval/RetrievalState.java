@@ -10,7 +10,9 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.StoragePlugin;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
@@ -35,7 +37,7 @@ public class RetrievalState {
 	 * @return
 	 * @throws IOException
 	 */
-	public List<DataSourceforPV> getDataSources(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) throws IOException {
+	public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) throws IOException {
 		if(typeInfo == null) {
 			List<ChannelArchiverDataServerPVInfo> caServers = this.configService.getChannelArchiverDataServers(pvName);
 			if(caServers != null) {
@@ -78,6 +80,12 @@ public class RetrievalState {
 			for(String store : typeInfo.getDataStores()) {
 				StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
 				dataSourcesForPV.add(new DataSourceforPV(pvName, storagePlugin, lifetimeid++, null, null));
+				Event firstKnownEvent = storagePlugin.getFirstKnownEvent(context, pvName);
+				if(firstKnownEvent != null && firstKnownEvent.getEventTimeStamp().before(start)) { 
+					logger.info("Found a data source " + storagePlugin.getName() + " that has an event " + TimeUtils.convertToISO8601String(firstKnownEvent.getEventTimeStamp()) + " older than the request start time " + TimeUtils.convertToISO8601String(start));
+					// Optimize the rest of the data sources away....
+					return new ArrayList<DataSourceforPV>(dataSourcesForPV);
+				}
 			}
 			
 			// Add any external servers if any only if the creation time for this type info is after the start time of the request.

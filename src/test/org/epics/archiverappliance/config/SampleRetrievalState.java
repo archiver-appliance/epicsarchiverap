@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.retrieval.DataSourceforPV;
 import org.epics.archiverappliance.retrieval.RetrievalState;
 
@@ -27,13 +28,13 @@ public class SampleRetrievalState extends RetrievalState {
 	}
 	
 	@Override
-	public List<DataSourceforPV> getDataSources(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req)  throws IOException {
+	public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req)  throws IOException {
 		if(pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX)) {
 			logger.info("Returnng unit test data sources");
 			return getUnitTestDataSources(pvName);
 		}
 		
-		return super.getDataSources(pvName, typeInfo, start, end, req);
+		return super.getDataSources(context, pvName, typeInfo, start, end, req);
 	}
 
 	/**
