@@ -26,7 +26,7 @@ function getPVQueryParam() {
 		} else {
 			pvQuery = pvQuery.concat(",");
 		}
-		pvQuery = pvQuery.concat(encodeURIComponent(pvS[i]));
+		pvQuery = pvQuery.concat(encodeURIComponent(pvS[i].trim()));
 	}
 	return pvQuery;
 }
@@ -46,7 +46,7 @@ function validatePVNames() {
 	var errors = false;
 	for(var i = 0; i < pvS.length; i++) {
 		if(!pvS[i] || 0 === pvS[i] || (/^\s*$/.test(pvS[i]))) continue;
-		if(!patternForPVNames.test(pvS[i])) {
+		if(!patternForPVNames.test(pvS[i].trim())) {
 			message = message.concat('\n' + pvS[i]);
 			errors = true;
 		}
