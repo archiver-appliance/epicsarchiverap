@@ -100,12 +100,12 @@ public class FileBackedIteratorTest {
 
 	@Test
 	public void testIterator() throws IOException {
-		makeSureWeGetPositionBasedIterator("Case 1", TimeUtils.minusDays(FKTS, 60), TimeUtils.minusDays(FKTS, 2), TimeUtils.minusDays(FKTS, 59), TimeUtils.minusDays(FKTS, 1), FileBackedPBEventStreamTimeBasedIterator.class);
-		makeSureWeGetPositionBasedIterator("Case 2", TimeUtils.minusDays(FKTS, 60), TimeUtils.minusDays(FKTS, 2), TimeUtils.plusDays(FKTS,1), TimeUtils.plusDays(FKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
-		makeSureWeGetPositionBasedIterator("Case 3", TimeUtils.minusDays(FKTS, 60), TimeUtils.minusDays(FKTS, 2), TimeUtils.plusDays(LKTS,1), TimeUtils.plusDays(LKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
-		makeSureWeGetPositionBasedIterator("Case 4", TimeUtils.plusDays(FKTS, 1), TimeUtils.plusDays(FKTS, 60), TimeUtils.minusDays(LKTS,90), TimeUtils.minusDays(LKTS, 1), FileBackedPBEventStreamPositionBasedIterator.class);
-		makeSureWeGetPositionBasedIterator("Case 5", TimeUtils.plusDays(FKTS, 1), TimeUtils.plusDays(FKTS, 60), TimeUtils.plusDays(LKTS,1), TimeUtils.plusDays(LKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
-		makeSureWeGetPositionBasedIterator("Case 6", TimeUtils.plusDays(LKTS, 1), TimeUtils.plusDays(LKTS, 10), TimeUtils.plusDays(LKTS,2), TimeUtils.plusDays(LKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
+		makeSureWeGetCorrectIterator("Case 1", TimeUtils.minusDays(FKTS, 60), TimeUtils.minusDays(FKTS, 2), TimeUtils.minusDays(FKTS, 59), FKTS, FileBackedPBEventStreamTimeBasedIterator.class);
+		makeSureWeGetCorrectIterator("Case 2", TimeUtils.minusDays(FKTS, 60), TimeUtils.minusDays(FKTS, 2), TimeUtils.plusDays(FKTS,1), TimeUtils.plusDays(FKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
+		makeSureWeGetCorrectIterator("Case 3", TimeUtils.minusDays(FKTS, 60), TimeUtils.minusDays(FKTS, 1), TimeUtils.plusDays(LKTS,1), TimeUtils.plusDays(LKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
+		makeSureWeGetCorrectIterator("Case 4", FKTS, TimeUtils.plusDays(FKTS, 60), TimeUtils.minusDays(LKTS,90), TimeUtils.minusDays(LKTS, 1), FileBackedPBEventStreamPositionBasedIterator.class);
+		makeSureWeGetCorrectIterator("Case 5", FKTS, TimeUtils.plusDays(FKTS, 60), LKTS, TimeUtils.plusDays(LKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
+		makeSureWeGetCorrectIterator("Case 6", LKTS, TimeUtils.plusDays(LKTS, 10), TimeUtils.plusDays(LKTS,1), TimeUtils.plusDays(LKTS, 90), FileBackedPBEventStreamPositionBasedIterator.class);
 	}
 	
 	
@@ -116,7 +116,7 @@ public class FileBackedIteratorTest {
 	 * @param maxQTS
 	 * @param expectedIteratorClass
 	 */
-	private void makeSureWeGetPositionBasedIterator(String testCase, 
+	private void makeSureWeGetCorrectIterator(String testCase, 
 			Timestamp minQTS, Timestamp maxQTS, 
 			Timestamp minQTE, Timestamp maxQTE, 
 			Class<? extends Iterator<Event>> expectedIteratorClass) throws IOException {

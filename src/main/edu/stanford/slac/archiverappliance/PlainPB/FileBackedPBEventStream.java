@@ -258,7 +258,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 				this.startTime = queryStartTime;
 				this.endTime = queryEndTime;
 			}
-		} else if(queryStartEpoch >= firstSampleEpoch && queryEndEpoch > lastSampleEpoch) { 
+		} else if(queryStartEpoch >= firstSampleEpoch && queryEndEpoch >= lastSampleEpoch) { 
 			logger.debug("Case 5 - lookup the start and go all the way to the end");
 			long startPosition = seekToStartTime(path, dbrtype, queryStartTime, queryEndTime);
 			if(startPosition != -1) { 
@@ -340,6 +340,10 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 		int queryStartSecondsIntoYear = TimeUtils.convertToYearSecondTimestamp(queryStartTime).getSecondsintoyear();
 		YearSecondTimestamp queryStartYTS = TimeUtils.convertToYearSecondTimestamp(queryStartTime);
 		long startPosition = -1;
+		
+		if(queryStartTime.equals(fileInfo.getFirstEvent().getEventTimeStamp())) {
+			return fileInfo.positionOfFirstSample - 1;
+		}
 
 		if(fileInfo.getInfo().getYear() == queryStartYTS.getYear()) {
 			FileEventStreamSearch bsstart = new FileEventStreamSearch(path, startFilePos);
