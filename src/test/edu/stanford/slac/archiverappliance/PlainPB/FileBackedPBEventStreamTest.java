@@ -147,24 +147,24 @@ public class FileBackedPBEventStreamTest {
 			try(BasicContext context = new BasicContext()) {
 				Path path = PlainPBPathNameUtility.getPathNameForTime(storagePlugin, pvName, TimeUtils.getStartOfCurrentYearInSeconds() + 24*60*60*7, context.getPaths(), configService.getPVNameToKeyConverter());
 				int eventCount = 0;
-				// Start 11 days into the year and get two days worth of data.
 				long startEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds() - 24*60*60;
 				Timestamp start = TimeUtils.convertFromEpochSeconds(startEpochSeconds, 0);
 				int secondsToExtract = 24*60*60*2;
 				Timestamp end = TimeUtils.convertFromEpochSeconds(startEpochSeconds + secondsToExtract, 0);
+				logger.debug("Looking for data between " + TimeUtils.convertToISO8601String(start) + " and " + TimeUtils.convertToISO8601String(end) + " with skipSearch " + skipSearch);
 				try(FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType, start, end, skipSearch)) {
 					long eventEpochSeconds = 0;
 					for(Event e : stream) {
 						eventEpochSeconds = e.getEpochSeconds();
 						if(eventCount < 2) {
-							logger.info("Starting event timestamp " + TimeUtils.convertToHumanReadableString(eventEpochSeconds));
+							logger.info("Starting event timestamp " + TimeUtils.convertToISO8601String(eventEpochSeconds));
 						}
 						eventCount++;
 					}
-					logger.info("Final event timestamp " + TimeUtils.convertToHumanReadableString(eventEpochSeconds));
+					logger.info("Final event timestamp " + TimeUtils.convertToISO8601String(eventEpochSeconds));
 				}
 				// We should only get one days worth of data.
-				int expectedSamples = 24*60*60 + 1;
+				int expectedSamples = 24*60*60;
 				assertTrue("Expected " + expectedSamples + " got " + eventCount + " with skipSearch " + skipSearch, eventCount == expectedSamples);
 			}
 
@@ -172,7 +172,6 @@ public class FileBackedPBEventStreamTest {
 			try(BasicContext context = new BasicContext()) {
 				Path path = PlainPBPathNameUtility.getPathNameForTime(storagePlugin, pvName, TimeUtils.getStartOfCurrentYearInSeconds() + 24*60*60*7, context.getPaths(), configService.getPVNameToKeyConverter());
 				int eventCount = 0;
-				// Start 11 days into the year and get two days worth of data.
 				long startEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds() + 360*24*60*60;
 				Timestamp start = TimeUtils.convertFromEpochSeconds(startEpochSeconds, 0);
 				int secondsToExtract = 24*60*60*10;

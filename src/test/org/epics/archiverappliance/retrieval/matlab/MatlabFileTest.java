@@ -130,7 +130,7 @@ public class MatlabFileTest {
 			
 			ArrayListEventStream dest = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
 			for(Event e : strm) { 
-				dest.add(e);
+				dest.add(e.makeClone());
 			}
 			
 			logger.info("Generating matlab file to " + fileName);

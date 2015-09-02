@@ -121,6 +121,7 @@ public class PostProcessorWithPBErrorTest {
 		 Thread.sleep(1*60*1000);
 		 
 		 int totalCount = checkRetrieval(pvName, dataGeneratedForYears*365*24*60, true);
+		 logger.info("*** -> Corrupting some data now");
 		 corruptSomeData();
 		 
 		 // We have now archived this PV, get some data and validate we got the expected number of events

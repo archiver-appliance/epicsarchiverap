@@ -58,7 +58,7 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
 							event1 = (Event) unmarshallingConstructor.newInstance(year, line1);
 							long event1EpochSeconds = event1.getEpochSeconds();
 							done = true;
-							if(event1EpochSeconds > endTimeEpochSeconds) { 
+							if(event1EpochSeconds >= endTimeEpochSeconds) { 
 								event1 = null;
 								line1.reset();
 								return;

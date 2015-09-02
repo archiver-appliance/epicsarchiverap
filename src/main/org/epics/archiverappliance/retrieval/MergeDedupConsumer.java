@@ -108,47 +108,55 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 		try {
 			int eventsInCurrentStream = 0;
 			for(Event e : strm) {
-				eventsInCurrentStream++;
-				
-				if(!haveIpushedTheFirstEvent && firstEvent == null) {
-					logger.debug("Making a copy of the first event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-					firstEvent = e.makeClone();
-					continue;
-				}
-				
-				if(!haveIpushedTheFirstEvent) { 
-					if(e.getEventTimeStamp().before(this.startTimeStamp)) {
-						logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+				try {
+					eventsInCurrentStream++;
+					
+					if(!haveIpushedTheFirstEvent && firstEvent == null) {
+						logger.debug("Making a copy of the first event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 						firstEvent = e.makeClone();
 						continue;
-					} else { 
-						haveIpushedTheFirstEvent = true;
-						logger.debug("Consuming first and current events " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-						mimeresponse.consumeEvent(firstEvent);
-						totalEvents++;
-						mimeresponse.consumeEvent(e);
-						totalEvents++;
-						epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
-						continue;
 					}
-				}
-				
-				if(amIDeduping) {
-					comparedEvents++;
-					long currentEpochSeconds = e.getEpochSeconds(); 
-					if(currentEpochSeconds <= epochSecondsOfLastEventInPreviousStream) {
-						skippedEvents++;
-						continue;
+					
+					if(!haveIpushedTheFirstEvent) { 
+						if(e.getEventTimeStamp().before(this.startTimeStamp)) {
+							logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+							firstEvent = e.makeClone();
+							continue;
+						} else { 
+							haveIpushedTheFirstEvent = true;
+							logger.debug("Consuming first and current events " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+							mimeresponse.consumeEvent(firstEvent);
+							totalEvents++;
+							mimeresponse.consumeEvent(e);
+							totalEvents++;
+							epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
+							continue;
+						}
+					}
+					
+					if(amIDeduping) {
+						comparedEvents++;
+						long currentEpochSeconds = e.getEpochSeconds(); 
+						if(currentEpochSeconds <= epochSecondsOfLastEventInPreviousStream) {
+							skippedEvents++;
+							continue;
+						} else {
+							amIDeduping = false;
+							mimeresponse.consumeEvent(e);
+							epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
+							totalEvents++;
+						}
 					} else {
-						amIDeduping = false;
 						mimeresponse.consumeEvent(e);
 						epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
 						totalEvents++;
 					}
-				} else {
-					mimeresponse.consumeEvent(e);
-					epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
-					totalEvents++;
+				} catch(InvalidProtocolBufferException|PBParseException ex) { 
+					logger.warn(ex.getMessage(), ex);
+					if(this.mimeresponse instanceof ExceptionCommunicator) { 
+						((ExceptionCommunicator)this.mimeresponse).comminucateException(ex);
+					}
+					skippedEvents++;
 				}
 			}
 			
