@@ -299,6 +299,13 @@ abstract public class ArchiveChannel {
 		}
 	}
 
+	
+	// By default, the ArchDBRTypes for the metafields are the same as those of the PV.
+	// In some cases, however, these are always different and fixed.
+	static HashMap<String, ArchDBRTypes> metaFieldOverrideTypes = new  HashMap<String, ArchDBRTypes>();
+	static { 
+		metaFieldOverrideTypes.put("DESC", ArchDBRTypes.DBR_SCALAR_STRING);
+	}
 
 	
 	/**
@@ -314,8 +321,13 @@ abstract public class ArchiveChannel {
 		// This tells the main PV to create the hashmaps for the metafield storage
 		this.pv.markPVHasMetafields(true);
 		final String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
-		logger.debug("Initializing the metafield for field " + pvNameForField);
-		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, this.pv.getArchDBRTypes(), this.JCACommandThreadID, usePVAccess);
+		ArchDBRTypes metaFieldDBRType = this.pv.getArchDBRTypes();
+		if(metaFieldOverrideTypes.containsKey(fieldName)) { 
+			metaFieldDBRType = metaFieldOverrideTypes.get(fieldName);
+		}
+		logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType " + metaFieldDBRType.toString());
+		
+		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, usePVAccess);
 		metaPV.setMetaFieldParentPV(this.pv, isRuntimeOnly);
 		this.metaPVs.put(fieldName, metaPV);
 	}
@@ -499,7 +511,7 @@ abstract public class ArchiveChannel {
 			metaPV.stop();
 			metaPV.start();
 		}
-		logger.debug("Done starting down monitors on the fields for pv " + this.name);
+		logger.debug("Done starting up monitors on the fields for pv " + this.name);
 	}
 
 	public void shutdownMetaChannels() throws Exception {
