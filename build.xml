@@ -164,6 +164,9 @@
 		<copy todir="${stage}/org/epics/archiverappliance/retrieval/staticcontent">
 			<fileset dir="${src}/org/epics/archiverappliance/retrieval/staticcontent" followsymlinks="no"/>
 		</copy>
+		<!-- Zip up the web based viewer into a file called viewer.zip -->
+		<zip destfile="${stage}/org/epics/archiverappliance/retrieval/staticcontent/viewer.zip" basedir="epicsarchiverap_viewer">
+		</zip>
 		<copy todir="${stage}/org/epics/archiverappliance/mgmt/staticcontent">
 			<fileset dir="${src}/org/epics/archiverappliance/mgmt/staticcontent" followsymlinks="no"/>
 		</copy>
