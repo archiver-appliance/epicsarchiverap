@@ -1,0 +1,3 @@
+[submodule "epicsarchiverap_viewer"]
+	path = epicsarchiverap_viewer
+	url = https://github.com/slacmshankar/epicsarchiverap_viewer.git
