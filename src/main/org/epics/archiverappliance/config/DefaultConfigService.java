@@ -492,14 +492,18 @@ public class DefaultConfigService implements ConfigService {
 					} else { 
 						String[] addressparts = applInfo.getClusterInetPort().split(":");
 						String inetaddrpart = addressparts[0];
-						InetAddress inetaddr = InetAddress.getByName(inetaddrpart);
-						if(!inetaddrpart.equals("localhost") && inetaddr.isLoopbackAddress()) { 
-							logger.info("Address for appliance " + applInfo.getIdentity() + " -  "+ inetaddr.toString() + " is a loopback address. Changing this to 127.0.0.1 to clustering happy");
-							inetaddr = InetAddress.getByName("127.0.0.1");
+						try { 
+							InetAddress inetaddr = InetAddress.getByName(inetaddrpart);
+							if(!inetaddrpart.equals("localhost") && inetaddr.isLoopbackAddress()) { 
+								logger.info("Address for appliance " + applInfo.getIdentity() + " -  "+ inetaddr.toString() + " is a loopback address. Changing this to 127.0.0.1 to clustering happy");
+								inetaddr = InetAddress.getByName("127.0.0.1");
+							}
+							int clusterPort = Integer.parseInt(addressparts[1]);
+							logger.info("Adding " + applInfo.getIdentity() + " from appliances.xml to the cluster discovery using cluster inetport " + inetaddr.toString() + ":" + clusterPort);
+							config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(inetaddr.getHostAddress() + ":" + clusterPort);
+						} catch(UnknownHostException ex) { 
+							configlogger.info("Cannnot resolve the IP address for appliance " + inetaddrpart + ". Skipping adding this appliance to the cliuster.");
 						}
-						int clusterPort = Integer.parseInt(addressparts[1]);
-						logger.info("Adding " + applInfo.getIdentity() + " from appliances.xml to the cluster discovery using cluster inetport " + inetaddr.toString() + ":" + clusterPort);
-						config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(inetaddr.getHostAddress() + ":" + clusterPort);
 					}
 				}
 				hzinstance = Hazelcast.newHazelcastInstance(config);
