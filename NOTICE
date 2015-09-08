@@ -39,3 +39,11 @@ These components are included under the terms of the MIT license agreement, a lo
 jquery-1.8.2.min.js
 jquery-ui-1.9.1.custom.zip
 jquery.flot.js
+require.js
+require.min.js
+
+These components are included under the DocumentCloud license, a local copy of which can be found in the file documentcloud_license.txt
+underscore.js
+unserscore-min.js
+
+
