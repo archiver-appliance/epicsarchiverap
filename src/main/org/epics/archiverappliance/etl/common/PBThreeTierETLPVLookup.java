@@ -137,7 +137,7 @@ public final class PBThreeTierETLPVLookup {
 			logger.debug("Adding etl jobs for pv " + pvName + " for chunkkey " + chunkKey);
 			String[] dataSources = typeInfo.getDataStores();
 			if(dataSources == null ||  dataSources.length < 2) { 
-				logger.warn("Skipping adding PV to ETL as it has less than 2 datasources" + pvName);
+				logger.debug("Skipping adding PV to ETL as it has less than 2 datasources" + pvName);
 				return;
 			}
 
