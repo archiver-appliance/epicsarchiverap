@@ -47,7 +47,7 @@ public class ApplianceMetrics implements BPLAction {
 			double maxETLPercentage = 0.0; 
 			long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
 			for(ETLMetricsForLifetime metricForLifetime : metricsForLifetime) {
-				double etlPercentage = (metricForLifetime.getTimeForOverallETLInMilliSeconds()/1000)*100/(currentEpochSeconds - metricForLifetime.getStartOfMetricsMeasurementInEpochSeconds());
+				double etlPercentage = ((double)metricForLifetime.getTimeForOverallETLInMilliSeconds()/1000)*100/(currentEpochSeconds - metricForLifetime.getStartOfMetricsMeasurementInEpochSeconds());
 				maxETLPercentage = Math.max(etlPercentage, maxETLPercentage);
 				metrics.put("totalETLRuns("+metricForLifetime.getLifeTimeId()+")", Long.toString(metricForLifetime.getTotalETLRuns()));
 				metrics.put("timeForOverallETLInSeconds("+metricForLifetime.getLifeTimeId()+")", Long.toString(metricForLifetime.getTimeForOverallETLInMilliSeconds()/1000));
