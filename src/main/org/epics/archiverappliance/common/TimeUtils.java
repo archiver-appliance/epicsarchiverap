@@ -89,36 +89,58 @@ public class TimeUtils {
 	public static long convertToEpochMillis(java.sql.Timestamp ts) {
 		return ts.getTime();
 	}
-
+	
+	private static class YearCache {
+		public YearCache(int first_year, int num_years) {
+			m_first_year = first_year;
+			m_year_start_sec = new long[num_years];
+			for (int i = 0; i < num_years; i++) {
+				int year = first_year + i;
+				DateTime startoftheYear = new DateTime(year, 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
+				m_year_start_sec[i] = startoftheYear.getMillis()/1000;
+			}
+		}
+		
+		public YearSecondTimestamp convertToYearSecond(long seconds, int nanos) {
+			for (int i = 0; i < m_year_start_sec.length-1; i++) {
+				long year_start = m_year_start_sec[i];
+				long year_next = m_year_start_sec[i+1];
+				if (seconds >= year_start && seconds < year_next) {
+						return new YearSecondTimestamp((short)(m_first_year+i), (int)(seconds-year_start), nanos);
+				}
+			}
+			DateTime dateTime = new DateTime(seconds*1000, DateTimeZone.UTC);
+			DateTime startoftheYear = new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
+			long startOfYearInSeconds = startoftheYear.getMillis()/1000;
+			long epochSeconds = dateTime.getMillis()/1000;
+			assert((epochSeconds - startOfYearInSeconds) < Integer.MAX_VALUE);
+			int secondsIntoYear = (int) (epochSeconds - startOfYearInSeconds);
+			return new YearSecondTimestamp((short) (dateTime.getYear()), secondsIntoYear, nanos);
+		}
+		
+		private final int m_first_year;
+		private final long[] m_year_start_sec;
+	}
+	
+	private static final YearCache year_cache;
+	
+	static {
+		int year = (new DateTime(DateTimeZone.UTC)).getYear();
+		year_cache = new YearCache(year-1, 10);
+	}
+	
 	public static YearSecondTimestamp convertToYearSecondTimestamp(java.sql.Timestamp ts) {
-		DateTime dateTime = new DateTime(ts.getTime(), DateTimeZone.UTC);
-		DateTime startoftheYear = new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-		long startOfYearInSeconds = startoftheYear.getMillis()/1000;
-		long epochSeconds = dateTime.getMillis()/1000;
-		assert((epochSeconds - startOfYearInSeconds) < Integer.MAX_VALUE);
-		int secondsIntoYear = (int) (epochSeconds - startOfYearInSeconds);
-		return new YearSecondTimestamp((short) (dateTime.getYear()), secondsIntoYear, ts.getNanos());
+		return year_cache.convertToYearSecond(ts.getTime()/1000, ts.getNanos());
 	}
 	
 	public static YearSecondTimestamp convertToYearSecondTimestamp(gov.aps.jca.dbr.TimeStamp jcats) {
-		DateTime dateTime = new DateTime((jcats.secPastEpoch()+EPICS_EPOCH_2_JAVA_EPOCH_OFFSET)*1000, DateTimeZone.UTC);
-		DateTime startoftheYear = new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-		long startOfYearInSeconds = startoftheYear.getMillis()/1000;
-		long epochSeconds = dateTime.getMillis()/1000;
-		assert((epochSeconds - startOfYearInSeconds) < Integer.MAX_VALUE);
-		int secondsIntoYear = (int) (epochSeconds - startOfYearInSeconds);
-		return new YearSecondTimestamp((short) (dateTime.getYear()), secondsIntoYear, (int) jcats.nsec());
+		return year_cache.convertToYearSecond(jcats.secPastEpoch()+EPICS_EPOCH_2_JAVA_EPOCH_OFFSET, (int)jcats.nsec());
 	}
 
 	public static YearSecondTimestamp convertToYearSecondTimestamp(long epochSeconds) {
-		DateTime dateTime = new DateTime(epochSeconds*1000, DateTimeZone.UTC);
-		DateTime startoftheYear = new DateTime(dateTime.getYear(), 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
-		long startOfYearInSeconds = startoftheYear.getMillis()/1000;
-		assert((epochSeconds - startOfYearInSeconds) < Integer.MAX_VALUE);
-		int secondsIntoYear = (int) (epochSeconds - startOfYearInSeconds);
-		return new YearSecondTimestamp((short) (dateTime.getYear()), secondsIntoYear, 0);
+		return year_cache.convertToYearSecond(epochSeconds, 0);
 	}
-
+	
 	public static String convertToISO8601String(java.sql.Timestamp ts) {
 		DateTimeFormatter fmt = ISODateTimeFormat.dateTime();
 		DateTime dateTime = new DateTime(ts.getTime(), DateTimeZone.UTC);
