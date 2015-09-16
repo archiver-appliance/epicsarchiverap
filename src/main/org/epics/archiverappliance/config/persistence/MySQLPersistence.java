@@ -209,7 +209,7 @@ public class MySQLPersistence implements ConfigPersistence {
 				stmt.setString(3, jsonStr);
 				int rowsChanged = stmt.executeUpdate();
 				if(rowsChanged != 1) {
-					logger.warn(rowsChanged + " rows changed when updating key  " + key + " in " + msg);
+					logger.debug(rowsChanged + " rows changed when updating key  " + key + " in " + msg);
 				} else {
 					logger.debug("Successfully updated value for key " + key + " in " + msg);
 				}
@@ -231,7 +231,7 @@ public class MySQLPersistence implements ConfigPersistence {
 				stmt.setString(3, value);
 				int rowsChanged = stmt.executeUpdate();
 				if(rowsChanged != 1) {
-					logger.warn(rowsChanged + " rows changed when updating key  " + key + " in " + msg);
+					logger.debug(rowsChanged + " rows changed when updating key  " + key + " in " + msg);
 				} else {
 					logger.debug("Successfully updated value for key " + key + " in " + msg);
 				}
@@ -248,7 +248,7 @@ public class MySQLPersistence implements ConfigPersistence {
 				stmt.setString(1, key);
 				int rowsChanged = stmt.executeUpdate();
 				if(rowsChanged != 1) {
-					logger.warn(rowsChanged + " rows changed when removing key  " + key + " in " + msg);
+					logger.debug(rowsChanged + " rows changed when removing key  " + key + " in " + msg);
 				} else {
 					logger.debug("Successfully removed key " + key + " in " + msg);
 				}
