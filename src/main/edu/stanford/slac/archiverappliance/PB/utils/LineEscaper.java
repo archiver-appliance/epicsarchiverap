@@ -23,40 +23,52 @@ import org.apache.log4j.Logger;
 public class LineEscaper {
 	public static final byte ESCAPE_CHAR = 0x1B;
 	public static final byte ESCAPE_ESCAPE_CHAR = 0x01;
-	public static final byte[] ESCAPE_CHAR_SEQUENCE = { ESCAPE_CHAR, ESCAPE_ESCAPE_CHAR} ;
 	public static final byte NEWLINE_CHAR = 0x0A;
 	public static final byte NEWLINE_ESCAPE_CHAR = 0x02;
 	public static final String NEWLINE_CHAR_STR = "\n";
-	public static final byte[] NEWLINE_CHAR_SEQUENCE = { ESCAPE_CHAR, NEWLINE_ESCAPE_CHAR} ;
 	public static final byte CARRIAGERETURN_CHAR = 0x0D;
 	public static final byte CARRIAGERETURN_ESCAPE_CHAR = 0x03;
-	public static final byte[] CARRIAGERETURN_CHAR_SEQUENCE = { ESCAPE_CHAR, CARRIAGERETURN_ESCAPE_CHAR} ;
 	private static Logger logger = Logger.getLogger(LineEscaper.class.getName());
-	
-
-	public static void escapeNewLines(byte[] input, OutputStream os) throws IOException {
-		if(input == null) return;
-		for(byte b : input) {
-			switch(b) {
-			case ESCAPE_CHAR: os.write(ESCAPE_CHAR_SEQUENCE);break;
-			case NEWLINE_CHAR: os.write(NEWLINE_CHAR_SEQUENCE);break;
-			case CARRIAGERETURN_CHAR: os.write(CARRIAGERETURN_CHAR_SEQUENCE);break;
-			default: os.write(b);break;
-			}
-		}
-	}
 	
 	public static byte[] escapeNewLines(byte[] input) {
 		if(input == null) return null;
-		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream(input.length*2);
-			escapeNewLines(input, bos);
-			bos.close();
-			return bos.toByteArray();
-		} catch(IOException ex) {
-			logger.error("Exception escaping newlines in buffer", ex);
-			return null;
+		
+		int output_len = input.length;
+		
+		for (byte b : input) {
+				switch(b) {
+				case ESCAPE_CHAR:
+				case NEWLINE_CHAR:
+				case CARRIAGERETURN_CHAR:
+						output_len++;
+						break;
+				}
 		}
+		
+		byte[] output = new byte[output_len];
+		int o = 0;
+		
+		for (byte b : input) {
+				switch(b) {
+				case ESCAPE_CHAR:
+						output[o++] = ESCAPE_CHAR;
+						output[o++] = ESCAPE_ESCAPE_CHAR;
+						break;
+				case NEWLINE_CHAR:
+						output[o++] = ESCAPE_CHAR;
+						output[o++] = NEWLINE_ESCAPE_CHAR;
+						break;
+				case CARRIAGERETURN_CHAR:
+						output[o++] = ESCAPE_CHAR;
+						output[o++] = CARRIAGERETURN_ESCAPE_CHAR;
+						break;
+				default:
+						output[o++] = b;
+						break;
+				}
+		}
+		
+		return output;
 	}
 
 	public static byte[] unescapeNewLines(byte[] input) {
