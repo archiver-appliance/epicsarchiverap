@@ -43,6 +43,7 @@ import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeSpan;
@@ -54,7 +55,9 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.STARTUP_SEQUENCE;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.retrieval.mimeresponses.FlxXMLResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.JPlotResponse;
@@ -163,6 +166,10 @@ public class DataRetrievalServlet  extends HttpServlet {
 			fetchLatestMetadata = true;
 		}
 
+		// For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want to have PVTypeInfo's in the system.
+		// So, we support a template PV that lays out the data sources.
+		// During retrieval, you can pass in the PV as a template and we'll clone this and make a temporary copy.
+		String retiredPVTemplate = req.getParameter("retiredPVTemplate");
 		
 		
 		if(pvName == null) {
@@ -283,7 +290,24 @@ public class DataRetrievalServlet  extends HttpServlet {
 				logger.debug("Proxied the data thru an external server for PV " + pvName);
 				return;
 			}
+		}
 			
+		if(typeInfo == null) {
+			if(retiredPVTemplate != null) {
+				PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
+				if(templateTypeInfo != null) { 
+					typeInfo = new PVTypeInfo(pvName, templateTypeInfo);
+					typeInfo.setPaused(true);
+					typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+					// Somehow tell the code downstream that this is a fake typeInfo.
+					typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
+					logger.debug("Using a template PV for " + pvName + " Need to determine the actual DBR type.");
+					setActualDBRTypeFromData(pvName, typeInfo, configService);
+				}
+			}
+		}
+		
+		if(typeInfo == null) { 
 			logger.error("Unable to find typeinfo for pv " + pvName);
 			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -902,5 +926,31 @@ public class DataRetrievalServlet  extends HttpServlet {
 			requestTimes.add(new TimeSpan(t0, t1));	
 		}
 		return true;
+	}
+	
+	/**
+	 * Used when we are constructing a TypeInfo from a template. We want to look at the actual data and see if we can set the DBR type correctly.
+	 * Return true if we are able to do this.
+	 * @param typeInfo
+	 * @return
+	 * @throws IOException
+	 */
+	private boolean setActualDBRTypeFromData(String pvName, PVTypeInfo typeInfo, ConfigService configService) throws IOException {
+		String[] dataStores = typeInfo.getDataStores();
+		for(String dataStore : dataStores) { 
+			StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(dataStore, configService);
+			if(plugin instanceof ETLDest) { 
+				ETLDest etlDest = (ETLDest) plugin;
+				try(BasicContext context = new BasicContext()) { 
+					Event e = etlDest.getLastKnownEvent(context, pvName);
+					if(e != null) { 
+						typeInfo.setDBRType(e.getDBRType());
+						return true;
+					}
+				}
+			}
+		}
+		
+		return false;
 	}
 }
