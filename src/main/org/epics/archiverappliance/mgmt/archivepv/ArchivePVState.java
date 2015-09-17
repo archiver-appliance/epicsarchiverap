@@ -48,7 +48,7 @@ public class ArchivePVState {
 		this.myIdentity = this.configService.getMyApplianceInfo().getIdentity();
 	}
 
-	public void nextStep() {
+	public synchronized void nextStep() {
 		try { 
 			logger.debug("Archive workflow for pv " + pvName + " in state " + currentState);
 				switch(currentState) {
@@ -244,7 +244,7 @@ public class ArchivePVState {
 		}
 	}
 
-	public boolean hasNotConnectedSoFar() {
+	public synchronized boolean hasNotConnectedSoFar() {
 		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
 	}
 
@@ -274,22 +274,22 @@ public class ArchivePVState {
 	}
 	
 	
-	public void metaInfoRequestAcknowledged() { 
+	public synchronized void metaInfoRequestAcknowledged() { 
 		metaInfoRequestedSubmitted = TimeUtils.now();
 		this.currentState = ArchivePVStateMachine.METAINFO_REQUESTED;
 	}
 	
-	public void metaInfoObtained(MetaInfo metaInfo) { 
+	public synchronized void metaInfoObtained(MetaInfo metaInfo) { 
 		this.metaInfo = metaInfo;
 		this.currentState = ArchivePVStateMachine.METAINFO_OBTAINED;
 	}
 	
-	public void errorGettingMetaInfo() { 
+	public synchronized void errorGettingMetaInfo() { 
 		abortReason = "Error getting meta info";
 		this.currentState = ArchivePVStateMachine.ABORTED;
 	}	
 	
-	public void confirmedStartedArchivingPV() {
+	public synchronized void confirmedStartedArchivingPV() {
 		this.currentState = ArchivePVStateMachine.ARCHIVING;
 	}
 
@@ -377,7 +377,7 @@ public class ArchivePVState {
 	/**
 	 * @return The current archiving state machine state
 	 */
-	public ArchivePVStateMachine getCurrentState() {
+	public synchronized ArchivePVStateMachine getCurrentState() {
 		return currentState;
 	}
 
@@ -385,7 +385,7 @@ public class ArchivePVState {
 		return pvName;
 	}
 
-	public Timestamp getMetaInfoRequestedSubmitted() {
+	public synchronized Timestamp getMetaInfoRequestedSubmitted() {
 		return metaInfoRequestedSubmitted;
 	}
 }
