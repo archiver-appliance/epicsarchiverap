@@ -63,10 +63,13 @@ public class GetPVMetaData implements BPLAction {
 			GetUrlContent.combineJSONObjects(retVal, typeInfoJSON);
 			String engineURL = configService.getAppliance(typeInfo.getApplianceIdentity()).getEngineURL() + "/getMetadata?pv=" + URLEncoder.encode(pvName, "UTF-8");
 			JSONObject engineMetaData = GetUrlContent.getURLContentAsJSONObject(engineURL);
+			// If we can't get info from the engine, return only what we have.
+			// For example the PV could just be paused and we also shouldn't fail completely
+			// if the engine is down.
 			if(engineMetaData != null) { 
 				GetUrlContent.combineJSONObjects(retVal, engineMetaData);
-				out.println(JSONValue.toJSONString(retVal));
 			}
+			out.println(JSONValue.toJSONString(retVal));
 		} catch(Exception ex) {
 			logger.error("Exception getting metadata typeinfo for pv " + pvName, ex);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
