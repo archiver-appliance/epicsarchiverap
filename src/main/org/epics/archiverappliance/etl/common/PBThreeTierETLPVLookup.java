@@ -30,7 +30,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
-import org.epics.archiverappliance.etl.common.ETLGatingState;
+import org.epics.archiverappliance.etl.StorageMetricsContext;
 
 /**
  * Holds runtime state for ETL.
@@ -59,6 +59,12 @@ public final class PBThreeTierETLPVLookup {
 	private ConcurrentSkipListSet<String> pvsForWhomWeHaveAddedETLJobs = new ConcurrentSkipListSet<String>();
 
 	/**
+	 * Metrics for PVs which only have one storage lifetime.
+	 * We need these so that it is possible to retrieve the storage stats.
+	 */
+	private ConcurrentHashMap<String, StorageMetrics> lonelyStorageMetrics = new ConcurrentHashMap();
+	
+	/**
 	 * Metrics and state for each lifetimeid transition for a pv
 	 * The first level index is the source lifetimeid
 	 * The seconds level index is the pv name.
@@ -72,6 +78,8 @@ public final class PBThreeTierETLPVLookup {
 	private List<ScheduledThreadPoolExecutor> etlLifeTimeThreadPoolExecutors = new LinkedList<ScheduledThreadPoolExecutor>();
 	
 	private List<ETLMetricsForLifetime> applianceMetrics = new LinkedList<ETLMetricsForLifetime>();
+	
+	private DefaultStorageMetricsContext metricsContext = new DefaultStorageMetricsContext();
 	
 	/**
 	 * State for ETL gating.
@@ -138,6 +146,17 @@ public final class PBThreeTierETLPVLookup {
 			String[] dataSources = typeInfo.getDataStores();
 			if(dataSources == null ||  dataSources.length < 2) { 
 				logger.debug("Skipping adding PV to ETL as it has less than 2 datasources" + pvName);
+				if (dataSources.length == 1) {
+					try {
+						String sourceStr=dataSources[0];
+						ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
+						if (etlSource instanceof StorageMetrics) {
+							lonelyStorageMetrics.put(pvName, (StorageMetrics)etlSource);
+						}
+					} catch(Throwable t) {
+						logger.error("Exception get  for pv " + pvName, t);
+					}
+				}
 				return;
 			}
 
@@ -147,7 +166,7 @@ public final class PBThreeTierETLPVLookup {
 						configlogger.info("Adding ETL schedulers and metrics for lifetimeid " + etllifetimeid);
 						etlLifeTimeThreadPoolExecutors.add(new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(etllifetimeid)));
 						lifetimeId2PVName2LookupItem.put(new Integer(etllifetimeid), new ConcurrentHashMap<String, ETLPVLookupItems>());
-						applianceMetrics.add(new ETLMetricsForLifetime(etllifetimeid));
+						applianceMetrics.add(new ETLMetricsForLifetime(etllifetimeid, metricsContext));
 					}
 					
 					
@@ -159,7 +178,7 @@ public final class PBThreeTierETLPVLookup {
 					if(etlDest instanceof StorageMetrics) { 
 						// At least on some of the test machines, checking free space seems to take the longest time. In this, getting the fileStore seems to take the longest time. 
 						// The plainPB plugin caches the fileStore; so we make a call once when adding to initialize this upfront.
-						((StorageMetrics)etlDest).getUsableSpace(etlpvLookupItems.getMetricsForLifetime());
+						((StorageMetrics)etlDest).getUsableSpace(metricsContext);
 					}
 					lifetimeId2PVName2LookupItem.get(etllifetimeid).put(pvName, etlpvLookupItems);
 					// We schedule using the source granularity or a shift (8 hours) whichever is smaller.
@@ -198,6 +217,9 @@ public final class PBThreeTierETLPVLookup {
 	public void deleteETLJobs(String pvName){
 		if(pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
 			logger.debug("deleting etl jobs for  pv " + pvName + " from the locally cached copy of pvs for this appliance");
+			
+			lonelyStorageMetrics.remove(pvName);
+			
 			int lifetTimeIdTransitions = this.etlLifeTimeThreadPoolExecutors.size();
 			for(int etllifetimeid = 0; etllifetimeid < lifetTimeIdTransitions; etllifetimeid++) {
 				ETLPVLookupItems lookupItem = lifetimeId2PVName2LookupItem.get(etllifetimeid).get(pvName);
@@ -244,6 +266,9 @@ public final class PBThreeTierETLPVLookup {
 		return ret;
 	}
 	
+	public StorageMetrics getLonelyStorageMetricsForPV(String pvName) {
+		return lonelyStorageMetrics.get(pvName);
+	}
 
 
 	/**
@@ -316,6 +341,10 @@ public final class PBThreeTierETLPVLookup {
 		return applianceMetrics;
 	}
 	
+	
+	public StorageMetricsContext getMetricsContext() {
+		return metricsContext;
+	}
 	
 	/**
 	 * Some unit tests want to run the ETL jobs manually; so we shut down the threads.

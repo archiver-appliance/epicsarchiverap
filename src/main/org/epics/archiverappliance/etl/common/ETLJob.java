@@ -124,7 +124,7 @@ public class ETLJob implements Runnable {
 					long sizeOfSrcStream = infoItem.getSize();
 					totalSrcBytes += sizeOfSrcStream;
 					if(sizeOfSrcStream > 0 && destMetrics != null) { 
-						long freeSpace = destMetrics.getUsableSpace(lookupItem.getMetricsForLifetime());
+						long freeSpace = destMetrics.getUsableSpace(lookupItem.getMetricsForLifetime().getMetricsContext());
 						long freeSpaceClearance = lookupItem.getFreeSpaceClearance();
 						// We leave space for at least freeSpaceClearance in the dest so that:
 						// - You can login and have some room to repair damage coming in from an out of space condition.

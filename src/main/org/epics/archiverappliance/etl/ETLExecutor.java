@@ -14,6 +14,7 @@ import org.epics.archiverappliance.etl.common.ETLJob;
 import org.epics.archiverappliance.etl.common.ETLMetricsForLifetime;
 import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
+import org.epics.archiverappliance.etl.common.DefaultStorageMetricsContext;
 
 /**
  * Run ETLs for one PV; mostly for unit tests..
@@ -64,6 +65,8 @@ public class ETLExecutor {
 			throw new IOException("The pv " + pvName + " has not enough stores.");
 		}
 		
+		DefaultStorageMetricsContext metricsContext = new DefaultStorageMetricsContext();
+		
 		lookupItems = new LinkedList<ETLPVLookupItems>();
 		for(int i=1;i<dataStores.length;i++){
 			String destStr=dataStores[i];
@@ -73,7 +76,7 @@ public class ETLExecutor {
 			logger.info("storage name:"+identifyDest);
 			String sourceStr=dataStores[i-1];
 			ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
-			lookupItems.add(new ETLPVLookupItems(pvName, pvTypeInfo.getDBRType(), etlSource, etlDest, i-1, new ETLMetricsForLifetime(i-1), PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService), PBThreeTierETLPVLookup.determineFreeSpaceClearance(configService), etlLookup.getGatingState()));
+			lookupItems.add(new ETLPVLookupItems(pvName, pvTypeInfo.getDBRType(), etlSource, etlDest, i-1, new ETLMetricsForLifetime(i-1, metricsContext), PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService), PBThreeTierETLPVLookup.determineFreeSpaceClearance(configService), etlLookup.getGatingState()));
 			if(storageName.equals(identifyDest)){
 				break;
 			}

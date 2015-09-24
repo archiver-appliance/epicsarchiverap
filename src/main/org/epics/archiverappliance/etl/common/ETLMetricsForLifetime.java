@@ -1,24 +1,18 @@
 package org.epics.archiverappliance.etl.common;
 
-import java.io.IOException;
-import java.nio.file.FileStore;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
-import org.epics.archiverappliance.utils.nio.ArchPaths;
 
 /**
  * ETL metrics for the appliance as a whole for one lifetime
  * @author mshankar
  *
  */
-public class ETLMetricsForLifetime implements StorageMetricsContext {
+public class ETLMetricsForLifetime {
 	private static Logger logger = Logger.getLogger(ETLMetricsForLifetime.class.getName());
 	int lifeTimeId;
+	StorageMetricsContext metricsContext;
 	long totalETLRuns;
 	long timeForOverallETLInMilliSeconds;
 	
@@ -36,12 +30,11 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 	private long approximateLastGlobalETLTimeInMillis = 0;
 	private long lastTimeGlobalETLTimeWasUpdatedInEpochSeconds = 0;
 	private long[] weeklyETLUsageInMillis = new long[7];
-
-	private HashMap<String, FileStore> storageMetricsFileStores = new HashMap<String, FileStore>();
 	
 	
-	public ETLMetricsForLifetime(int lifeTimeId) { 
+	public ETLMetricsForLifetime(int lifeTimeId, StorageMetricsContext metricsContext) { 
 		this.lifeTimeId = lifeTimeId;
+		this.metricsContext = metricsContext;
 		this.startOfMetricsMeasurementInEpochSeconds = TimeUtils.getCurrentEpochSeconds();
 		for(int i = 0; i < 7; i++) { 
 			weeklyETLUsageInMillis[i] = -1;
@@ -50,6 +43,10 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 
 	public int getLifeTimeId() {
 		return lifeTimeId;
+	}
+	
+	public StorageMetricsContext getMetricsContext() {
+		return metricsContext;
 	}
 
 	public long getTotalETLRuns() {
@@ -166,24 +163,5 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 		long totalSecondsInMetric = totalDaysInMetric * (24*60*60) + secondsIntoDay;
 		logger.debug("totalWeeklyETLSeconds = " + totalWeeklyETLSeconds + " totalSecondsInMetric " + totalSecondsInMetric);
 		return (totalWeeklyETLSeconds*100.0)/totalSecondsInMetric;
-	}
-
-	/* (non-Javadoc)
-	 * @see org.epics.archiverappliance.etl.StorageMetricsContext#getFileStore(java.lang.String)
-	 */
-	@Override
-	public FileStore getFileStore(String rootFolder) throws IOException {
-		FileStore fileStore = this.storageMetricsFileStores.get(rootFolder);
-		if(fileStore == null) { 
-			try(ArchPaths paths = new ArchPaths()) {
-				Path rootF = paths.get(rootFolder);
-				fileStore = Files.getFileStore(rootF);
-				this.storageMetricsFileStores.put(rootFolder, fileStore);
-				logger.debug("Adding filestore to ETLMetricsForLifetime cache for rootFolder " + rootFolder);
-			}
-		} else { 
-			logger.debug("Filestore for rootFolder " + rootFolder + " is already in ETLMetricsForLifetime cache");
-		}
-		return fileStore;
 	}
 }
