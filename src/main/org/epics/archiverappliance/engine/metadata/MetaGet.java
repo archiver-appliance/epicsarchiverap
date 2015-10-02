@@ -149,9 +149,13 @@ public class MetaGet implements Runnable {
 					// These have already been processed; so do nothing.
 				} else { 
 					if (fieldName.endsWith("RTYP")) {
-						String rtyp = pvList.get(fieldName).getDBRTimeEvent().getSampleValue().toString();
-						mainMeta.addOtherMetaInfo(fieldName, rtyp);
-						logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
+						if(pvList.get(fieldName) != null && pvList.get(fieldName).getDBRTimeEvent() != null && pvList.get(fieldName).getDBRTimeEvent().getSampleValue() != null) { 
+							String rtyp = pvList.get(fieldName).getDBRTimeEvent().getSampleValue().toString();
+							mainMeta.addOtherMetaInfo(fieldName, rtyp);
+							logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
+						} else { 
+							logger.debug("Something about RTYP is null for PV " + MetaGet.this.pvName);
+						}
 					} else {
 						DBRTimeEvent valueTemp = pvList.get(fieldName).getDBRTimeEvent();
 						if (valueTemp != null) {
