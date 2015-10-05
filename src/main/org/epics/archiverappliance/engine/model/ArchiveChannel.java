@@ -183,6 +183,8 @@ abstract public class ArchiveChannel {
 		// This should hopefully tell us the last timestamp from the IOC just before it is displayed in PVDetails.
 		if(this.pv.getDBRTimeEvent() != null) { 
 			this.pvMetrics.setLastEventFromIOCTimeStamp(this.pv.getDBRTimeEvent().getEventTimeStamp());
+		} else { 
+			this.pvMetrics.setLastEventFromIOCTimeStamp(null);
 		}
 		return pvMetrics;
 	}
