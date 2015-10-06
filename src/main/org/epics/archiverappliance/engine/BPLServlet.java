@@ -23,6 +23,7 @@ import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.bpl.AbortArchiveRequestForAppliance;
+import org.epics.archiverappliance.engine.bpl.ArchiveChannelObjectDetailsAction;
 import org.epics.archiverappliance.engine.bpl.ChangeArchivalParamsAction;
 import org.epics.archiverappliance.engine.bpl.CleanUpAnyImmortalChannels;
 import org.epics.archiverappliance.engine.bpl.DeletePV;
@@ -87,6 +88,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
 		getActions.put("/getVersion", GetVersion.class);
 		getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
+		getActions.put("/getArchiveChannelObjectDetails", ArchiveChannelObjectDetailsAction.class);
 	}
 
 	@Override
