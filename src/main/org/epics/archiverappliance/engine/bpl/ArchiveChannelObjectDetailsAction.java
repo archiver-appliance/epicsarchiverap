@@ -55,7 +55,7 @@ public class ArchiveChannelObjectDetailsAction implements BPLAction {
 	}
 	public HashMap<String, Object> objectToJSON(String pvName, Object obj, boolean useSuperClassFields) throws IllegalAccessException {
 		HashMap<String, Object> objValues = new HashMap<String, Object>();
-		Class theClass = null;
+		Class<?> theClass = null;
 		Field[] objFields = null;
 		if(useSuperClassFields) {
 			theClass = obj.getClass().getSuperclass();
