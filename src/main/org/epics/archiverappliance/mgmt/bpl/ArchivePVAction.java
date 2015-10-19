@@ -130,7 +130,7 @@ public class ArchivePVAction implements BPLAction {
 				buf.append(req.getQueryString());
 				String redirectURL = buf.toString();
 				logger.info("Redirecting archivePV request for PV to " + applInfo.getIdentity() + " using URL " + redirectURL);
-				JSONObject status = GetUrlContent.getURLContentAsJSONObject(redirectURL);
+				JSONArray status = GetUrlContent.getURLContentAsJSONArray(redirectURL);
 				resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 				try(PrintWriter out = resp.getWriter()) {
 					out.println(JSONValue.toJSONString(status));
@@ -298,6 +298,9 @@ public class ArchivePVAction implements BPLAction {
 				if(usePVAccess) { 
 					userSpecifiedSamplingParams.setUsePVAccess(usePVAccess);
 				}
+				if(skipCapacityPlanning) { 
+					userSpecifiedSamplingParams.setSkipCapacityPlanning(skipCapacityPlanning);
+				}
 
 				if(alias != null) { 
 					logger.debug("Adding alias " + alias + " to user params of " + actualPVName + "(3)");
@@ -326,7 +329,7 @@ public class ArchivePVAction implements BPLAction {
 			logger.debug("PV count " + pvArchiveParams.size());
 			
 			String myIdentity = configService.getMyApplianceInfo().getIdentity();
-			if(allRequestsCannotBeSampledOnThisAppliance(pvArchiveParams, myIdentity)) { 
+			if(!allRequestsCanBeSampledOnThisAppliance(pvArchiveParams, myIdentity)) { 
 				logger.debug("Breaking down the requests into appliance calls.");
 				breakDownPVRequestsByAssignedAppliance(pvArchiveParams, myIdentity, configService, resp);
 				return;
@@ -349,6 +352,9 @@ public class ArchivePVAction implements BPLAction {
 					logger.debug("Calling archivePV for pv " + pvName);
 					// By the time we get here, if the appliance is set in the request, we skip capacityPlanning.
 					boolean skipCapacityPlanning = pvArchiveParam.containsKey("appliance");
+					if(skipCapacityPlanning) { 
+						logger.debug("Skipping capacity planning for PV " + pvName);
+					}
 					ArchivePVAction.archivePV(out, 
 							pvName, 
 							pvArchiveParam.containsKey("samplingperiod"), 
@@ -379,7 +385,7 @@ public class ArchivePVAction implements BPLAction {
 	 * @param myIdentity
 	 * @return
 	 */
-	private boolean allRequestsCannotBeSampledOnThisAppliance(JSONArray pvArchiveParams, String myIdentity) {
+	private boolean allRequestsCanBeSampledOnThisAppliance(JSONArray pvArchiveParams, String myIdentity) {
 		for(Object pvArchiveParamObj : pvArchiveParams) {
 			JSONObject pvArchiveParam = (JSONObject) pvArchiveParamObj;
 			if(pvArchiveParam.containsKey("appliance") && !pvArchiveParam.get("appliance").equals(myIdentity)) {
@@ -412,8 +418,10 @@ public class ArchivePVAction implements BPLAction {
 				if(!archiveRequestsByAppliance.containsKey(assignedAppliance)) { 
 					archiveRequestsByAppliance.put(assignedAppliance, new LinkedList<JSONObject>());
 				}
+				logger.debug("PV " + pvArchiveParam.get("pv") + " should be sampled on appliance " + assignedAppliance);
 				archiveRequestsByAppliance.get(assignedAppliance).add(pvArchiveParam);
 			} else { 
+				logger.debug("PV " + pvArchiveParam.get("pv") + " should be sampled here " + myIdentity);
 				archiveRequestsByAppliance.get(myIdentity).add(pvArchiveParam);
 			}
 		}
@@ -424,7 +432,7 @@ public class ArchivePVAction implements BPLAction {
 		for(String appliance : archiveRequestsByAppliance.keySet()) { 
 			LinkedList<JSONObject> requestsForAppliance = archiveRequestsByAppliance.get(appliance);
 			if(!requestsForAppliance.isEmpty()) { 
-				String archiveURL = configService.getAppliance(appliance).getMgmtURL() + "/bpl/archivePV";
+				String archiveURL = configService.getAppliance(appliance).getMgmtURL() + "/archivePV";
 				JSONArray archiveResponse = GetUrlContent.postDataAndGetContentAsJSONArray(archiveURL, requestsForAppliance);
 				finalResult.addAll(archiveResponse);
 			}
