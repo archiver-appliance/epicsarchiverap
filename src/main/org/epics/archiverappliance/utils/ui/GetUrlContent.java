@@ -250,6 +250,37 @@ public class GetUrlContent {
 	}
 	
 	/**
+	 * Post a JSONArray to a remote server and get the response as a JSON object.
+	 * @param url
+	 * @param array
+	 * @return
+	 * @throws IOException
+	 */
+	public static JSONArray postDataAndGetContentAsJSONArray(String url, LinkedList<JSONObject> array) throws IOException {
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpPost postMethod = new HttpPost(url);
+		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
+		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
+		postMethod.setEntity(archiverValues);
+		if(logger.isDebugEnabled()) {
+			logger.debug("About to make a POST with " + url);
+		}
+		HttpResponse response = httpclient.execute(postMethod);
+		HttpEntity entity = response.getEntity();
+		if (entity != null) {
+			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+			// ArchiverValuesHandler takes over the burden of closing the input stream.
+			try(InputStream is = entity.getContent()) {
+				JSONArray retval = (JSONArray) JSONValue.parse(new InputStreamReader(is));
+				return retval;
+			}
+		} else {
+			throw new IOException("HTTP response did not have an entity associated with it");
+		}
+	}
+
+	/**
 	 * Post a JSONObject to a remote server and get the response as a JSON object.
 	 * @param url
 	 * @param object

@@ -156,19 +156,25 @@ public class ArchivePVState {
 					}
 					
 					ApplianceInfo applianceInfoForPV = null;
-					if(isField) {
-						String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
-						ApplianceInfo pvNameAloneAssignedToAppliance = configService.getApplianceForPV(pvNameAlone);
-						if(pvNameAloneAssignedToAppliance != null) {
-							logger.info("Assinging field " + pvName + " to the same appliance as the pv itself " + pvNameAloneAssignedToAppliance.getIdentity());
-							applianceInfoForPV = pvNameAloneAssignedToAppliance;
+					
+					if(userSpec.isSkipCapacityPlanning()) { 
+						logger.info("Skipping capacity planning for pv " + pvName + ". Assigning to myself.");
+						applianceInfoForPV = configService.getMyApplianceInfo();
+					} else { 
+						if(isField) {
+							String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
+							ApplianceInfo pvNameAloneAssignedToAppliance = configService.getApplianceForPV(pvNameAlone);
+							if(pvNameAloneAssignedToAppliance != null) {
+								logger.info("Assinging field " + pvName + " to the same appliance as the pv itself " + pvNameAloneAssignedToAppliance.getIdentity());
+								applianceInfoForPV = pvNameAloneAssignedToAppliance;
+							} else {
+								logger.info("Assinging field " + pvName + " to a new appliance");
+								applianceInfoForPV = CapacityPlanningBPL.pickApplianceForPV(pvName, configService, typeInfo);
+							}
 						} else {
-							logger.info("Assinging field " + pvName + " to a new appliance");
+							logger.debug("Not a field " + pvName + " picking a new appliance.");
 							applianceInfoForPV = CapacityPlanningBPL.pickApplianceForPV(pvName, configService, typeInfo);
 						}
-					} else {
-						logger.debug("Not a field " + pvName + " picking a new appliance.");
-						applianceInfoForPV = CapacityPlanningBPL.pickApplianceForPV(pvName, configService, typeInfo);
 					}
 
 					assert(applianceInfoForPV != null);
@@ -354,7 +360,7 @@ public class ArchivePVState {
 				logger.debug("We are not archiving the real PV " + realName + " which is the alias for " + pvName + ". Aborting this request and asking to archive " + realName);
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				PrintWriter out = new PrintWriter(bos);
-				ArchivePVAction.archivePV(out, realName, userSpec.isUserOverrideParams(), userSpec.getUserSpecifedsamplingMethod(), userSpec.getUserSpecifedSamplingPeriod(), userSpec.getControllingPV(), userSpec.getPolicyName(), pvName, configService, ArchivePVAction.getFieldsAsPartOfStream(configService));
+				ArchivePVAction.archivePV(out, realName, userSpec.isUserOverrideParams(), userSpec.getUserSpecifedsamplingMethod(), userSpec.getUserSpecifedSamplingPeriod(), userSpec.getControllingPV(), userSpec.getPolicyName(), pvName, userSpec.isSkipCapacityPlanning(), configService, ArchivePVAction.getFieldsAsPartOfStream(configService));
 				out.close();
 			}
 		} catch(Exception ex) { 

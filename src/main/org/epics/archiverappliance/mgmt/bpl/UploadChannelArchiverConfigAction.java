@@ -70,7 +70,7 @@ public class UploadChannelArchiverConfigAction implements BPLAction {
 							boolean scan = !pvConfig.isMonitor();
 							float samplingPeriod = pvConfig.getPeriod();
 							if(logger.isDebugEnabled()) logger.debug("Adding " + pvConfig.getPVName() + " using " + (scan ? SamplingMethod.SCAN : SamplingMethod.MONITOR) + " and a period of " + samplingPeriod);
-							ArchivePVAction.archivePV(out, pvConfig.getPVName(), true, scan ? SamplingMethod.SCAN : SamplingMethod.MONITOR, samplingPeriod, null, null, null, configService, fieldsAsPartOfStream);
+							ArchivePVAction.archivePV(out, pvConfig.getPVName(), true, scan ? SamplingMethod.SCAN : SamplingMethod.MONITOR, samplingPeriod, null, null, null, false, configService, fieldsAsPartOfStream);
 						}
 					} catch(Exception ex) {
 						logger.error("Error importing configuration", ex);

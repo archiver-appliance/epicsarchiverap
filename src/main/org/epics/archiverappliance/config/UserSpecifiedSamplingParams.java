@@ -22,6 +22,7 @@ public class UserSpecifiedSamplingParams implements Comparable<UserSpecifiedSamp
 	private String[] aliases = new String[0];
 	private boolean skipAliasCheck = false;
 	private boolean usePVAccess = false;
+	private boolean skipCapacityPlanning = false;
 	
 	
 	public String getPolicyName() {
@@ -53,12 +54,13 @@ public class UserSpecifiedSamplingParams implements Comparable<UserSpecifiedSamp
 		this.controllingPV = controllingPV;
 	}
 
-	public UserSpecifiedSamplingParams(SamplingMethod userSpecifedsamplingMethod, float userSpecifedSamplingPeriod, String controllingPV, String policyName) {
+	public UserSpecifiedSamplingParams(SamplingMethod userSpecifedsamplingMethod, float userSpecifedSamplingPeriod, String controllingPV, String policyName, boolean skipCapacityPlanning) {
 		this.userSpecifedsamplingMethod = userSpecifedsamplingMethod;
 		this.userSpecifedSamplingPeriod = userSpecifedSamplingPeriod;
 		this.controllingPV = controllingPV;
 		this.policyName = policyName;
 		userOverrideParams = true;
+		this.skipCapacityPlanning = skipCapacityPlanning;
 	}
 
 	@Override
@@ -188,5 +190,13 @@ public class UserSpecifiedSamplingParams implements Comparable<UserSpecifiedSamp
 
 	public void setUsePVAccess(boolean usePVAccess) {
 		this.usePVAccess = usePVAccess;
+	}
+
+	public boolean isSkipCapacityPlanning() {
+		return skipCapacityPlanning;
+	}
+
+	public void setSkipCapacityPlanning(boolean skipCapacityPlanning) {
+		this.skipCapacityPlanning = skipCapacityPlanning;
 	}
 }

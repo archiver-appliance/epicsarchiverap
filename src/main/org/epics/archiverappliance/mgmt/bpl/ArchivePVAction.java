@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,27 +23,22 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.UserSpecifiedSamplingParams;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
 /**
  * BPL for archiving a PV.
- * 
- * @epics.BPLAction - Archive one or more PV's. 
- * @epics.BPLActionParam pv - The name of the pv to be archived. If archiving more than one PV, use a comma separated list. You can also send the PV list as part of the POST body using standard techniques. If you need to specify different archiving parameters for each PV, send the data as a JSON array (remember to send the content type correctly).
- * @epics.BPLActionParam samplingperiod - The sampling period to be used. Optional, default value is 1.0 seconds.
- * @epics.BPLActionParam samplingmethod - The sampling method to be used. For now, this is one of SCAN or MONITOR. Optional, default value is MONITOR.
- * @epics.BPLActionParam controllingPV - The controlling PV for coditional archiving. Optional; if unspecified, we do not use conditional archiving.
- * @epics.BPLActionParam policy - Override the policy execution process and use this policy instead. Optional; if unspecified, we go thru the normal policy execution process.
- * @epics.BPLActionEnd
  * 
  * Here's an example of how to archive a couple of PV's using a JSON request.
  * <pre><code>
@@ -65,6 +62,16 @@ import org.json.simple.parser.JSONParser;
  * ]
  *  
  *</code></pre>
+ * 
+ * @epics.BPLAction - Archive one or more PV's. 
+ * @epics.BPLActionParam pv - The name of the pv to be archived. If archiving more than one PV, use a comma separated list. You can also send the PV list as part of the POST body using standard techniques. If you need to specify different archiving parameters for each PV, send the data as a JSON array (remember to send the content type correctly).
+ * @epics.BPLActionParam samplingperiod - The sampling period to be used. Optional, default value is 1.0 seconds.
+ * @epics.BPLActionParam samplingmethod - The sampling method to be used. For now, this is one of SCAN or MONITOR. Optional, default value is MONITOR.
+ * @epics.BPLActionParam controllingPV - The controlling PV for coditional archiving. Optional; if unspecified, we do not use conditional archiving.
+ * @epics.BPLActionParam policy - Override the policy execution process and use this policy instead. Optional; if unspecified, we go thru the normal policy execution process.
+ * @epics.BPLActionParam appliance - Optional; you can specify an appliance in a cluster. If specified (value is the identity of the appliance), the sampling and archiving are done on the specified appliance.
+ * @epics.BPLActionEnd
+ * 
  *
  * @author mshankar
  *
@@ -105,8 +112,36 @@ public class ArchivePVAction implements BPLAction {
 			logger.info("We have a user override for policy " + policyName);
 		}
 		List<String> fieldsAsPartOfStream = ArchivePVAction.getFieldsAsPartOfStream(configService);
-		
+
 		if(pvs.length < 1) { return; }
+
+		
+		boolean skipCapacityPlanning = false; 
+		String applianceId = req.getParameter("appliance");
+		if(applianceId != null) { 
+			logger.debug("Appliance specified " + applianceId);
+			skipCapacityPlanning = true;
+			String myIdentity = configService.getMyApplianceInfo().getIdentity();
+			if(!applianceId.equals(myIdentity)) {
+				ApplianceInfo applInfo = configService.getAppliance(applianceId);
+				StringWriter buf = new StringWriter();
+				buf.append(applInfo.getMgmtURL());
+				buf.append("/archivePV?"); 
+				buf.append(req.getQueryString());
+				String redirectURL = buf.toString();
+				logger.info("Redirecting archivePV request for PV to " + applInfo.getIdentity() + " using URL " + redirectURL);
+				JSONObject status = GetUrlContent.getURLContentAsJSONObject(redirectURL);
+				resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+				try(PrintWriter out = resp.getWriter()) {
+					out.println(JSONValue.toJSONString(status));
+				}
+				return;
+			}
+		}
+		
+
+
+		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
 			out.println("[");
@@ -114,7 +149,7 @@ public class ArchivePVAction implements BPLAction {
 			for(String pv : pvs) {
 				if(isFirst) { isFirst = false; } else { out.println(","); }
 				logger.debug("Calling archivePV for pv " + pv);
-				archivePV(out, pv, samplingPeriodSpecified, samplingMethod, samplingPeriod, controllingPV, policyName, null, configService, fieldsAsPartOfStream);
+				archivePV(out, pv, samplingPeriodSpecified, samplingMethod, samplingPeriod, controllingPV, policyName, null, skipCapacityPlanning, configService, fieldsAsPartOfStream);
 			}
 			out.println("]");
 		}
@@ -146,9 +181,10 @@ public class ArchivePVAction implements BPLAction {
 	 * @param controllingPV - The PV used for controlling whether we archive this PV or not in conditional archiving.
 	 * @param policyName - If you want to override the policy on a per PV basis.
 	 * @param alias - Optional, any alias that you'd like to register at the same time.
+	 * @param skipCapacityPlanning - By default false. However, if you want to skip capacity planning and assign to this appliance, set this to true.
 	 * @param configService
 	 */
-	public static void archivePV(PrintWriter out, String pvName, boolean overridePolicyParams, SamplingMethod overriddenSamplingMethod, float overRiddenSamplingPeriod, String controllingPV, String policyName, String alias, ConfigService configService, List<String> fieldsArchivedAsPartOfStream) throws IOException {
+	public static void archivePV(PrintWriter out, String pvName, boolean overridePolicyParams, SamplingMethod overriddenSamplingMethod, float overRiddenSamplingPeriod, String controllingPV, String policyName, String alias, boolean skipCapacityPlanning, ConfigService configService, List<String> fieldsArchivedAsPartOfStream) throws IOException {
 		String fieldName = PVNames.getFieldName(pvName);
 		boolean isStandardFieldName = false;
 
@@ -240,7 +276,7 @@ public class ArchivePVAction implements BPLAction {
 					overRiddenSamplingPeriod = minumumSamplingPeriod;
 				}
 				logger.debug("Overriding policy params with sampling method " + overriddenSamplingMethod + " and sampling period " + overRiddenSamplingPeriod);
-				UserSpecifiedSamplingParams userSpecifiedSamplingParams = new UserSpecifiedSamplingParams(overridePolicyParams ? overriddenSamplingMethod : SamplingMethod.MONITOR, overRiddenSamplingPeriod, controllingPV, policyName);
+				UserSpecifiedSamplingParams userSpecifiedSamplingParams = new UserSpecifiedSamplingParams(overridePolicyParams ? overriddenSamplingMethod : SamplingMethod.MONITOR, overRiddenSamplingPeriod, controllingPV, policyName, skipCapacityPlanning);
 				if(fieldName != null && !fieldName.equals("") && isStandardFieldName) {
 					userSpecifiedSamplingParams.addArchiveField(fieldName);
 				}
@@ -288,6 +324,16 @@ public class ArchivePVAction implements BPLAction {
 			JSONParser parser=new JSONParser();
 			JSONArray pvArchiveParams = (JSONArray) parser.parse(lineReader);
 			logger.debug("PV count " + pvArchiveParams.size());
+			
+			String myIdentity = configService.getMyApplianceInfo().getIdentity();
+			if(allRequestsCannotBeSampledOnThisAppliance(pvArchiveParams, myIdentity)) { 
+				logger.debug("Breaking down the requests into appliance calls.");
+				breakDownPVRequestsByAssignedAppliance(pvArchiveParams, myIdentity, configService, resp);
+				return;
+			}
+			
+			logger.debug("All calls can be sampled on this appliance.");
+			
 			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 			try(PrintWriter out = resp.getWriter()) { 			
 				out.println("[");
@@ -301,6 +347,8 @@ public class ArchivePVAction implements BPLAction {
 					logger.debug("Processing...");
 					String pvName = (String) pvArchiveParam.get("pv");
 					logger.debug("Calling archivePV for pv " + pvName);
+					// By the time we get here, if the appliance is set in the request, we skip capacityPlanning.
+					boolean skipCapacityPlanning = pvArchiveParam.containsKey("appliance");
 					ArchivePVAction.archivePV(out, 
 							pvName, 
 							pvArchiveParam.containsKey("samplingperiod"), 
@@ -309,6 +357,7 @@ public class ArchivePVAction implements BPLAction {
 											(String) pvArchiveParam.get("controllingPV"),
 											(String) pvArchiveParam.get("policy"),
 											(String) pvArchiveParam.get("alias"),
+											skipCapacityPlanning,
 											configService,
 											fieldsAsPartOfStream);
 				}
@@ -322,4 +371,68 @@ public class ArchivePVAction implements BPLAction {
 		}
 		return;
 	}
+
+	/**
+	 * Given a JSON array of archive requests, can we process all these requests on this appliance.
+	 * We can do this if the applianceID is not specified or if the applianceID is this appliance for all requests.
+	 * @param pvArchiveParams
+	 * @param myIdentity
+	 * @return
+	 */
+	private boolean allRequestsCannotBeSampledOnThisAppliance(JSONArray pvArchiveParams, String myIdentity) {
+		for(Object pvArchiveParamObj : pvArchiveParams) {
+			JSONObject pvArchiveParam = (JSONObject) pvArchiveParamObj;
+			if(pvArchiveParam.containsKey("appliance") && !pvArchiveParam.get("appliance").equals(myIdentity)) {
+				logger.debug("Not all PVs can be sampled on this appliance. We need to break up the request based on appliance");
+				return false;
+			}
+		}
+		logger.debug("All PVs can be sampled on this appliance");
+		return true;
+	}
+
+	/**
+	 * Break down a JSON request for archiving into parts based on appliance and then make the calls to the individual appliances.
+	 * All archive requests that do not have an appliance specified will be sampled on this appliance and go thru capacity planning.
+	 * @param pvArchiveParams
+	 * @param myIdentity
+	 * @param configService
+	 */
+	@SuppressWarnings("unchecked")
+	private void breakDownPVRequestsByAssignedAppliance(JSONArray pvArchiveParams, String myIdentity, ConfigService configService, HttpServletResponse resp) throws IOException {
+		HashMap<String, LinkedList<JSONObject>> archiveRequestsByAppliance = new HashMap<String, LinkedList<JSONObject>>();
+		archiveRequestsByAppliance.put(myIdentity, new LinkedList<JSONObject>());
+		for(Object pvArchiveParamObj : pvArchiveParams) {
+			JSONObject pvArchiveParam = (JSONObject) pvArchiveParamObj;
+			if(pvArchiveParam.containsKey("appliance")) {
+				String assignedAppliance = (String) pvArchiveParam.get("appliance");
+				if(configService.getAppliance(assignedAppliance) == null) {
+					throw new IOException("Cannot find appliance info for " + assignedAppliance + " for pv " + pvArchiveParam.get("pv"));
+				}
+				if(!archiveRequestsByAppliance.containsKey(assignedAppliance)) { 
+					archiveRequestsByAppliance.put(assignedAppliance, new LinkedList<JSONObject>());
+				}
+				archiveRequestsByAppliance.get(assignedAppliance).add(pvArchiveParam);
+			} else { 
+				archiveRequestsByAppliance.get(myIdentity).add(pvArchiveParam);
+			}
+		}
+		
+		// Now we have the requests broken down by appliance.
+		// Route them appropriately and combine the results...
+		JSONArray finalResult = new JSONArray();
+		for(String appliance : archiveRequestsByAppliance.keySet()) { 
+			LinkedList<JSONObject> requestsForAppliance = archiveRequestsByAppliance.get(appliance);
+			if(!requestsForAppliance.isEmpty()) { 
+				String archiveURL = configService.getAppliance(appliance).getMgmtURL() + "/bpl/archivePV";
+				JSONArray archiveResponse = GetUrlContent.postDataAndGetContentAsJSONArray(archiveURL, requestsForAppliance);
+				finalResult.addAll(archiveResponse);
+			}
+		}
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		try(PrintWriter out = resp.getWriter()) {
+			out.println(JSONValue.toJSONString(finalResult));
+		}
+	}
+
 }
