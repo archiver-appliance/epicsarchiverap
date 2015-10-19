@@ -43,6 +43,29 @@ import org.json.simple.parser.JSONParser;
  * @epics.BPLActionParam policy - Override the policy execution process and use this policy instead. Optional; if unspecified, we go thru the normal policy execution process.
  * @epics.BPLActionEnd
  * 
+ * Here's an example of how to archive a couple of PV's using a JSON request.
+ * <pre><code>
+ * $ cat archivePVs.json 
+ * [
+ *  {"samplingperiod": "1.0", "pv": "mshankar:arch:sine", "samplingmethod": "SCAN"},
+ *  {"samplingperiod": "2.0", "pv": "mshankar:arch:cosine", "samplingmethod": "MONITOR"}
+ * ]
+ * $ curl -H "Content-Type: application/json" --data @archivePVs.json http://localhost:17665/mgmt/bpl/archivePV
+ * [
+ *  { "pvName": "mshankar:arch:sine", "status": "Archive request submitted" },
+ *  { "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }
+ * ]
+ * 
+ * After some time...
+ * 
+ * $ GET "http://localhost:17665/mgmt/bpl/getPVStatus?pv=mshankar:arch:*" 
+ * [
+ *  {"lastRotateLogs":"Never","appliance":"appliance0","pvName":"mshankar:arch:cosine","pvNameOnly":"mshankar:arch:cosine","connectionState":"true","lastEvent":"Oct\/12\/2015 13:54:53 -07:00","samplingPeriod":"2.0","isMonitored":"true","connectionLastRestablished":"Never","connectionFirstEstablished":"Oct\/12\/2015 13:53:05 -07:00","connectionLossRegainCount":"0","status":"Being archived"},
+ *  {"lastRotateLogs":"Never","appliance":"appliance0","pvName":"mshankar:arch:sine","pvNameOnly":"mshankar:arch:sine","connectionState":"true","lastEvent":"Oct\/12\/2015 13:54:53 -07:00","samplingPeriod":"1.0","isMonitored":"false","connectionLastRestablished":"Never","connectionFirstEstablished":"Oct\/12\/2015 13:53:05 -07:00","connectionLossRegainCount":"0","status":"Being archived"}
+ * ]
+ *  
+ *</code></pre>
+ *
  * @author mshankar
  *
  */
