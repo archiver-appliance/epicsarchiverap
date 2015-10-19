@@ -196,6 +196,12 @@ public interface ConfigService {
 	public Iterable<String> getAllPVs();
 	
 	/**
+	 * Get a set of pending archive requests.
+	 * This is meant to be read only, and may be just an unmodifiableSet on top of a live data structure.
+	 */
+	public Set<String> getArchiveRequestsSet ();
+	
+	/**
 	 * Given a PV, get us the appliance that is responsible for archiving it.
 	 * Note that this may be null as the assignment of PV's to appliances can take some time. 
 	 * @param pvName

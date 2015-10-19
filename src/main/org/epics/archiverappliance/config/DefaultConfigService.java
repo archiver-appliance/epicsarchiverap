@@ -978,7 +978,12 @@ public class DefaultConfigService implements ConfigService {
 		}
 		return allPVs;
 	}
-
+	
+	@Override
+	public Set<String> getArchiveRequestsSet () {
+		return Collections.unmodifiableSet(archivePVRequests.keySet());
+	}
+	
 	@Override
 	public ApplianceInfo getApplianceForPV(String pvName) {
 		ApplianceInfo applianceInfo = pv2appliancemapping.get(pvName);

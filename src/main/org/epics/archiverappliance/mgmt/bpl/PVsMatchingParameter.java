@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
+import java.util.Set;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -45,12 +46,25 @@ public class PVsMatchingParameter {
 			limit = Integer.parseInt(limitParam);
 		}
 		
+		boolean requests = false;
+		String requestsParam = req.getParameter("requests");
+		if (requestsParam != null) {
+			requests = Boolean.parseBoolean(requestsParam);
+		}
+		
+		PVSetForMatch pvSet;
+		if (requests) {
+			pvSet = new SetPVSetForMatch(configService.getArchiveRequestsSet());
+		} else {
+			pvSet = new ArchivedPVSet(configService);
+		}
+		
 		if(req.getParameter("pv") != null) { 
 			String[] pvs = req.getParameter("pv").split(",");
 			for(String pv : pvs) { 
 				if(pv.contains("*") || pv.contains("?")) {
 					WildcardFileFilter matcher = new WildcardFileFilter(pv); 
-					for(String pvName : configService.getAllPVs()) {
+					for(String pvName : pvSet.getAllPVs()) {
 						if(matcher.accept((new File(pvName)))) {
 							pvNames.add(pvName);
 							if(limit != -1 && pvNames.size() >= limit) { 
@@ -59,8 +73,7 @@ public class PVsMatchingParameter {
 						}
 					}
 				} else {
-					ApplianceInfo info = configService.getApplianceForPV(pv);
-					if(info != null) { 
+					if(pvSet.doesPVExist(pv)) { 
 						pvNames.add(pv);
 						if(limit != -1 && pvNames.size() >= limit) { 
 							return pvNames;
@@ -79,7 +92,7 @@ public class PVsMatchingParameter {
 			if(req.getParameter("regex") != null) { 
 				String regex = req.getParameter("regex");
 				Pattern pattern = Pattern.compile(regex);
-				for(String pvName : configService.getAllPVs()) {
+				for(String pvName : pvSet.getAllPVs()) {
 					if(pattern.matcher(pvName).matches()) { 
 						pvNames.add(pvName);
 						if(limit != -1 && pvNames.size() >= limit) { 
@@ -88,7 +101,7 @@ public class PVsMatchingParameter {
 					}
 				}
 			} else { 
-				for(String pvName : configService.getAllPVs()) {
+				for(String pvName : pvSet.getAllPVs()) {
 					pvNames.add(pvName);
 					if(limit != -1 && pvNames.size() >= limit) { 
 						return pvNames;
@@ -137,5 +150,44 @@ public class PVsMatchingParameter {
 		}
 
 		return pvNames;
+	}
+	
+	
+	private interface PVSetForMatch {
+		Iterable<String> getAllPVs ();
+		boolean doesPVExist (String pvName);
+	}
+	
+	private static class ArchivedPVSet implements PVSetForMatch {
+		private final ConfigService configService;
+		
+		public ArchivedPVSet (ConfigService configService) {
+			this.configService = configService;
+		}
+		
+		public Iterable<String> getAllPVs () {
+			return configService.getAllPVs();
+		}
+		
+		public boolean doesPVExist (String pvName) {
+			ApplianceInfo info = configService.getApplianceForPV(pvName);
+			return (info != null);
+		}
+	}
+	
+	private static class SetPVSetForMatch implements PVSetForMatch {
+		private final Set<String> pvSet;
+		
+		public SetPVSetForMatch (Set<String> pvSet) {
+			this.pvSet = pvSet;
+		}
+		
+		public Iterable<String> getAllPVs () {
+			return pvSet;
+		}
+		
+		public boolean doesPVExist (String pvName) {
+			return pvSet.contains(pvName);
+		}
 	}
 }
