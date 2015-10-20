@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -54,10 +56,15 @@ public class StaticContentServlet extends HttpServlet {
 	
 	private ConfigService configService = null;
 	private String staticContentBasePath = "ui";
+	/**
+	 * List of paths for which we have to do template replacement
+	 */
+	private Set<String> templateReplacementPaths = new HashSet<String>();
 	
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		this.configService = (ConfigService) config.getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
+		templateReplacementPaths.add("viewer/index.html");
 	}
 
 	@Override
@@ -373,7 +380,7 @@ public class StaticContentServlet extends HttpServlet {
 					logger.debug("Found " + fullPathToResource + " on the file system here - " + pathOnDisk);
 					this.length = f.length();
 					this.lastModified = f.lastModified();
-					if(decodedPath.equals("viewer/index.html")) { 
+					if(templateReplacementPaths.contains(decodedPath)) { 
 						templateReplace(decodedPath, new FileInputStream(f));
 					} else { 
 						this.content = new BufferedInputStream(new FileInputStream(f));
@@ -389,7 +396,7 @@ public class StaticContentServlet extends HttpServlet {
 				URLConnection connection = pathURL.openConnection();
 				this.length = connection.getContentLengthLong();
 				this.lastModified = connection.getDate();
-				if(decodedPath.equals("viewer/index.html")) { 
+				if(templateReplacementPaths.contains(decodedPath)) { 
 					templateReplace(decodedPath, connection.getInputStream());
 				} else { 
 					this.content = new BufferedInputStream(connection.getInputStream());
@@ -428,7 +435,7 @@ public class StaticContentServlet extends HttpServlet {
 								if(bos.size() != this.length) {
 									throw new IOException("ZipEntry for " + potentialPathWithinZip + " in zip file " + zipFileURL.toString() + " says the content length is " + this.length + " but we could only read " + bos.size() + " bytes");
 								}
-								if(decodedPath.equals("viewer/index.html")) { 
+								if(templateReplacementPaths.contains(decodedPath)) { 
 									templateReplace(decodedPath, new ByteArrayInputStream(bos.toByteArray()));
 								} else { 
 									this.content = new BufferedInputStream(new ByteArrayInputStream(bos.toByteArray()));
@@ -445,18 +452,25 @@ public class StaticContentServlet extends HttpServlet {
 			}
 		}
 
-
+		
 		public void templateReplace(String decodedPath, InputStream is) throws IOException {
 			logger.debug("Template replacement for " + decodedPath.toString());
 			
-			HashMap<String, String> templateReplacementsForViewer = new HashMap<String, String>();
-			templateReplacementsForViewer.put("client_retrieval_url_base", 
-					"<script>\n" 
-			+ "window.global_options.retrieval_url_base = '" + configService.getMyApplianceInfo().getDataRetrievalURL() +  "';\n" 
-			+ "</script>");
-			ByteArrayInputStream replacedContent = SyncStaticContentHeadersFooters.templateReplaceChunks(is, templateReplacementsForViewer);
-			this.content = new BufferedInputStream(replacedContent);
-			this.length = replacedContent.available();
+			switch(decodedPath) { 
+			case "viewer/index.html": { 
+				HashMap<String, String> templateReplacementsForViewer = new HashMap<String, String>();
+				templateReplacementsForViewer.put("client_retrieval_url_base", 
+						"<script>\n" 
+				+ "window.global_options.retrieval_url_base = '" + configService.getMyApplianceInfo().getDataRetrievalURL() +  "';\n" 
+				+ "</script>");
+				ByteArrayInputStream replacedContent = SyncStaticContentHeadersFooters.templateReplaceChunks(is, templateReplacementsForViewer);
+				this.content = new BufferedInputStream(replacedContent);
+				this.length = replacedContent.available();
+				return;
+			}
+			default:
+				logger.error("Template replacement for " + decodedPath.toString() + " that has been registered in error?");
+			}
 		}
 
 		
