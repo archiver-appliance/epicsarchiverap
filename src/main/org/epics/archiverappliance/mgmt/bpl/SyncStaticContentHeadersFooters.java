@@ -107,8 +107,10 @@ public class SyncStaticContentHeadersFooters {
 	 * @throws IOException
 	 */
 	public static LinkedList<TextChunk> breakFileIntoChunks(File file) throws IOException {
+		String startOfChunkIndicator = "<!-- @begin(";
+		String endOfChunkIndicator = "<!-- @end(";
 		FileInputStream fis = new FileInputStream(file);
-		return breakFileIntoChunks(fis);
+		return breakFileIntoChunks(fis, startOfChunkIndicator, endOfChunkIndicator);
 	}
 	
 	
@@ -120,14 +122,14 @@ public class SyncStaticContentHeadersFooters {
 	 * @return
 	 * @throws IOException
 	 */
-	public static LinkedList<TextChunk> breakFileIntoChunks(InputStream is) throws IOException {
+	public static LinkedList<TextChunk> breakFileIntoChunks(InputStream is, String startOfChunkIndicator, String endOfChunkIndicator) throws IOException {
 		LinkedList<TextChunk> textChunks = new LinkedList<TextChunk>();
 		String currentChunkType = REGULAR_TEXT;
 		StringBuffer currentTextChunk = new StringBuffer();
 		try(LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is))) {
 			String line = lineReader.readLine();
 			while(line != null) {
-				if(line.contains("<!-- @begin(")) {
+				if(line.contains(startOfChunkIndicator)) {
 					if(currentTextChunk.length() > 0) { 
 						textChunks.add(new TextChunk(currentChunkType, currentTextChunk.toString()));
 						currentTextChunk = new StringBuffer();
@@ -136,18 +138,20 @@ public class SyncStaticContentHeadersFooters {
 
 					currentTextChunk.append(line);
 					currentTextChunk.append("\n");
-					int startOfChunkType = line.indexOf("<!-- @begin(") + "<!-- @begin(".length();
+					int startOfChunkType = line.indexOf(startOfChunkIndicator) + startOfChunkIndicator.length();
 					int endOfChunkType =  line.indexOf(')', startOfChunkType);
 					currentChunkType = line.substring(startOfChunkType, endOfChunkType);					
-				} else if(line.contains("<!-- @end(")) {
-					currentTextChunk.append(line);
-					currentTextChunk.append("\n");
-					textChunks.add(new TextChunk(currentChunkType, currentTextChunk.toString()));
-					currentTextChunk = new StringBuffer();
-					currentChunkType = REGULAR_TEXT;
 				} else {
-					currentTextChunk.append(line);
-					currentTextChunk.append("\n");
+					if(line.contains(endOfChunkIndicator)) {
+						currentTextChunk.append(line);
+						currentTextChunk.append("\n");
+						textChunks.add(new TextChunk(currentChunkType, currentTextChunk.toString()));
+						currentTextChunk = new StringBuffer();
+						currentChunkType = REGULAR_TEXT;
+					} else {
+						currentTextChunk.append(line);
+						currentTextChunk.append("\n");
+					}
 				}
 				line = lineReader.readLine();
 			}
@@ -159,15 +163,37 @@ public class SyncStaticContentHeadersFooters {
 	
 	
 	/**
-	 * Breaks the inputstream is into chunks and replaces the templates with the content in templateReplacements.
+	 * Breaks the HTML inputstream is into chunks and replaces the templates with the content in templateReplacements.
 	 * The inputstream is is closed after this operation.
 	 * @param is
 	 * @param templateReplacements
 	 * @return
 	 * @throws IOException
 	 */
-	public static ByteArrayInputStream templateReplaceChunks(InputStream is, HashMap<String, String> templateReplacements) throws IOException { 
-		LinkedList<TextChunk> destTextChunks = SyncStaticContentHeadersFooters.breakFileIntoChunks(is);
+	public static ByteArrayInputStream templateReplaceChunksHTML(InputStream is, HashMap<String, String> templateReplacements) throws IOException { 
+		String startOfChunkIndicator = "<!-- @begin(";
+		String endOfChunkIndicator = "<!-- @end(";
+		String closingText = ") -->";
+		return templateReplaceChunks(is, templateReplacements, startOfChunkIndicator, endOfChunkIndicator, closingText);
+	}
+	
+	/**
+	 * Breaks the Javascript inputstream is into chunks and replaces the templates with the content in templateReplacements.
+	 * The inputstream is is closed after this operation.
+	 * @param is
+	 * @param templateReplacements
+	 * @return
+	 * @throws IOException
+	 */
+	public static ByteArrayInputStream templateReplaceChunksJavascript(InputStream is, HashMap<String, String> templateReplacements) throws IOException { 
+		String startOfChunkIndicator = "// @begin(";
+		String endOfChunkIndicator = "// @end(";
+		String closingText = ")";
+		return templateReplaceChunks(is, templateReplacements, startOfChunkIndicator, endOfChunkIndicator, closingText);
+	}
+	
+	private static ByteArrayInputStream templateReplaceChunks(InputStream is, HashMap<String, String> templateReplacements, String startOfChunkIndicator, String endOfChunkIndicator, String closingText) throws IOException { 
+		LinkedList<TextChunk> destTextChunks = SyncStaticContentHeadersFooters.breakFileIntoChunks(is, startOfChunkIndicator, endOfChunkIndicator);
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		try(PrintWriter out = new PrintWriter(new OutputStreamWriter(bos))) {
 			for(TextChunk destTextChunk : destTextChunks) {
@@ -178,9 +204,9 @@ public class SyncStaticContentHeadersFooters {
 					if(srcChunk == null) {
 						out.print(destTextChunk.textChunk);
 					} else {
-						out.println("<!-- @begin(" + destTextChunk.typeOfChunk + ") -->");
+						out.println(startOfChunkIndicator + destTextChunk.typeOfChunk + closingText);
 						out.println(srcChunk);
-						out.println("<!-- @end(" + destTextChunk.typeOfChunk + ") -->");
+						out.println(endOfChunkIndicator + destTextChunk.typeOfChunk + closingText);
 					}
 				}
 			}

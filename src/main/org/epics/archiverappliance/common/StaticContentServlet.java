@@ -463,7 +463,7 @@ public class StaticContentServlet extends HttpServlet {
 						"<script>\n" 
 				+ "window.global_options.retrieval_url_base = '" + configService.getMyApplianceInfo().getDataRetrievalURL() +  "';\n" 
 				+ "</script>");
-				ByteArrayInputStream replacedContent = SyncStaticContentHeadersFooters.templateReplaceChunks(is, templateReplacementsForViewer);
+				ByteArrayInputStream replacedContent = SyncStaticContentHeadersFooters.templateReplaceChunksHTML(is, templateReplacementsForViewer);
 				this.content = new BufferedInputStream(replacedContent);
 				this.length = replacedContent.available();
 				return;
