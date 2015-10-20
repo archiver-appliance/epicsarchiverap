@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
@@ -40,11 +41,13 @@ public class MgmtRuntimeState {
 	private ConcurrentSkipListSet<WAR_FILE> componentsThatHaveCompletedStartup = new ConcurrentSkipListSet<WAR_FILE>();
 	/**
 	 * Throttle the archive PV workflow to this many PV's at a time. 
-	 * This seems to control the resource consumption during archive requests well; please let us know if you want this to be configurable.
+	 * This seems to control the resource consumption during archive requests well
 	 * Since we are throttling the workflow; we can have this many invalid archive PV requests in the system.
 	 * Use the abortArchivingPV BPL to clean up requests for PVs that will never connect.
 	 */
-	private static final int ARCHIVE_PV_WORKFLOW_BATCH_SIZE = 1000;
+	private static final int DEFAULT_ARCHIVE_PV_WORKFLOW_BATCH_SIZE = 1000;
+	
+	private int archivePVWorkflowBatchSize = DEFAULT_ARCHIVE_PV_WORKFLOW_BATCH_SIZE;
 
 	/**
 	 * Initiate archive PV workflow for PV.
@@ -97,6 +100,11 @@ public class MgmtRuntimeState {
 			}
 		});
 		configService.getEventBus().register(this);
+		Properties installationProperties = configService.getInstallationProperties();
+		String batchSizeName = "org.epics.archiverappliance.mgmt.MgmtRuntimeState.archivePVWorkflowBatchSize";
+		if(installationProperties.containsKey(batchSizeName)) { 
+			this.archivePVWorkflowBatchSize = Integer.parseInt(installationProperties.getProperty(batchSizeName));
+		}
 	}
 	
 	public void finishedPVWorkflow(String pvName) throws IOException {
@@ -221,7 +229,7 @@ public class MgmtRuntimeState {
 					}
 				});
 				int totRequests = archivePVStates.size();
-				int maxRequestsToProcess = Math.min(ARCHIVE_PV_WORKFLOW_BATCH_SIZE, totRequests);
+				int maxRequestsToProcess = Math.min(archivePVWorkflowBatchSize, totRequests);
 				int pvCount = 0;
 				while(pvCount < maxRequestsToProcess) { 
 					ArchivePVState runWorkFlowForPV = archivePVStates.pop();
@@ -248,5 +256,16 @@ public class MgmtRuntimeState {
 	 */
 	public boolean isPVInWorkflow(String pvName) { 
 		return this.currentPVRequests.containsKey(pvName);
+	}
+
+
+	/**
+	 * Get the batch size for PV archive requests workflow.
+ 	 * We throttle the archive PV workflow to this many PV's at a time to conserve resources and prevent CA storms.
+ 	 * This can be configured using a property in archappl.properties. 
+	 * @return
+	 */
+	public int getArchivePVWorkflowBatchSize() {
+		return archivePVWorkflowBatchSize;
 	}
 }
