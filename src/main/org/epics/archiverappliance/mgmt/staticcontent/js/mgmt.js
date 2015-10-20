@@ -86,6 +86,11 @@ function archivePVs() {
 	});
 }
 
+
+// @begin(minimumSamplingPeriod)
+var minimumSamplingPeriod = 0.1;
+// @end(minimumSamplingPeriod)
+
 // Archive the list of PVs as typed in the #archstatpVNames textarea but first popup a dialog that asks for archiving details.
 function archivePVsWithDetails() {
 	if(!validatePVNames()) {
@@ -125,12 +130,12 @@ function archivePVsWithDetails() {
 		
 		var patternForFloat = /^[0-9]+(.[0-9]+)?$/;
 		if(!patternForFloat.test(samplingPeriod)) {
-			alert("The sampling period should be between 0.1 and 86400");
+			alert("The sampling period should be between " + minimumSamplingPeriod + " and 86400");
 			return;
 		}
 		var samplingPeriodFl = parseFloat(samplingPeriod);
-		if(samplingPeriodFl < 0.1 || samplingPeriodFl > 86400 || samplingPeriodFl == 0) {
-			alert("The sampling period should be a non-zero number between 0.1 and 86400");
+		if(samplingPeriodFl < minimumSamplingPeriod || samplingPeriodFl > 86400 || samplingPeriodFl == 0) {
+			alert("The sampling period should be a non-zero number between " + minimumSamplingPeriod + " and 86400");
 			return;
 		}
 		
@@ -312,6 +317,9 @@ function getPVDetails() {
 	});
 }
 
+// @begin(archivePVWorkflowBatchSize)
+var archivePVWorkflowBatchSize = 1000;
+// @end(archivePVWorkflowBatchSize)
 
 //Get a report on the PV's that never connected since the start of the archiver
 function getNeverConnectedPVsReport() {
@@ -326,9 +334,9 @@ function getNeverConnectedPVsReport() {
 			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Abort request', 'srcFunction' : function(dataobject) { return '<a onclick="abortArchiveRequest(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }}
 			 ]);
 	$("#reporttablediv").on("dataloaded", function( event) {
-		if($("#reporttablediv_table").data("data").length > 990) { 
+		if($("#reporttablediv_table").data("data").length >= archivePVWorkflowBatchSize) { 
 			$("#report_warnings").text("There seem to be many unfulfilled archive PV request's in this facility. " 
-					+ "Note that we have recently introduced throttling of archivePV requests and if we have more than 1000 PV's that are invalid, " 
+					+ "Note that we have recently introduced throttling of archivePV requests and if we have more than " + archivePVWorkflowBatchSize + " PV's that are invalid, " 
 					+ "the archive PV's requests  that were issued later will never be fulfilled. " 
 					+ "You should consider aborting some of these requests for PV's that are not connecting and are stuck in the METAINFO_REQUESTED state.");
 		} else { 

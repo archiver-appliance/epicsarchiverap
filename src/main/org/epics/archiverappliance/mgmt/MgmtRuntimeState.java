@@ -104,6 +104,7 @@ public class MgmtRuntimeState {
 		String batchSizeName = "org.epics.archiverappliance.mgmt.MgmtRuntimeState.archivePVWorkflowBatchSize";
 		if(installationProperties.containsKey(batchSizeName)) { 
 			this.archivePVWorkflowBatchSize = Integer.parseInt(installationProperties.getProperty(batchSizeName));
+			configlogger.info("Setting the archive PV workflow batch size to " + this.archivePVWorkflowBatchSize);
 		}
 	}
 	

@@ -65,6 +65,7 @@ public class StaticContentServlet extends HttpServlet {
 	public void init(ServletConfig config) throws ServletException {
 		this.configService = (ConfigService) config.getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
 		templateReplacementPaths.add("viewer/index.html");
+		templateReplacementPaths.add("js/mgmt.js");
 	}
 
 	@Override
@@ -467,6 +468,19 @@ public class StaticContentServlet extends HttpServlet {
 				this.content = new BufferedInputStream(replacedContent);
 				this.length = replacedContent.available();
 				return;
+			}
+			case "js/mgmt.js": { 
+				HashMap<String, String> templateReplacementsForViewer = new HashMap<String, String>();
+				templateReplacementsForViewer.put("archivePVWorkflowBatchSize", 
+						"var archivePVWorkflowBatchSize = " + configService.getMgmtRuntimeState().getArchivePVWorkflowBatchSize() +  ";\n");
+				templateReplacementsForViewer.put("minimumSamplingPeriod", 
+						"var minimumSamplingPeriod = " + configService.getInstallationProperties().getProperty("org.epics.archiverappliance.mgmt.bpl.ArchivePVAction.minimumSamplingPeriod", "0.1") +  ";\n");
+				ByteArrayInputStream replacedContent = SyncStaticContentHeadersFooters.templateReplaceChunksJavascript(is, templateReplacementsForViewer);
+				
+
+				this.content = new BufferedInputStream(replacedContent);
+				this.length = replacedContent.available();
+				break;
 			}
 			default:
 				logger.error("Template replacement for " + decodedPath.toString() + " that has been registered in error?");
