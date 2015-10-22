@@ -160,6 +160,11 @@ public class ArchivePVState {
 					if(userSpec.isSkipCapacityPlanning()) { 
 						logger.info("Skipping capacity planning for pv " + pvName + ". Assigning to myself.");
 						applianceInfoForPV = configService.getMyApplianceInfo();
+					} else if (thePolicy.getAppliance() != null) {
+						// Hopefully the poicy is configured correctly and we get a valid appliance
+						applianceInfoForPV = configService.getAppliance(thePolicy.getAppliance());
+						assert(applianceInfoForPV != null);
+						logger.info("Assigning pv " + pvName + " to appliance " + thePolicy.getAppliance() + " based on policy " + thePolicy.getPolicyName());
 					} else { 
 						if(isField) {
 							String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);

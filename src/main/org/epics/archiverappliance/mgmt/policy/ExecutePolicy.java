@@ -33,6 +33,7 @@ import org.python.util.PythonInterpreter;
  * <li><code>policyName</code> -- The name of the policy that was used for this PV.</li>
  * <li><code>dataStores</code> -- An array of StoragePlugin URL's that can be parsed by {@link StoragePluginURLParser StoragePluginURLParser}. These form the stages of data storage for this PV.</li>
  * <li><code>archiveFields</code> -- A optional array of fields that will be archived as part of archiving the .VAL field for this PV.</li>
+ * <li><code>appliance</code> -- Optional; assign this PV to this appliance. This is a string and is the identity of the appliance you want to assign this PV to.</li>
  * </ol>
  * @author mshankar
  *
@@ -89,6 +90,10 @@ public class ExecutePolicy implements AutoCloseable {
 			logger.debug("No additional fields will be archived for PV " + pvName);
 		}
 		policyConfig.setArchiveFields(archiveFields.toArray(new String[0]));
+		
+		if(policy.containsKey("appliance")) { 
+			policyConfig.setAppliance((String) policy.get("appliance"));
+		}
 		
 		if(logger.isDebugEnabled()) logger.debug("For pv" + pvName + "using policy " + policyConfig.generateStringRepresentation());
 		

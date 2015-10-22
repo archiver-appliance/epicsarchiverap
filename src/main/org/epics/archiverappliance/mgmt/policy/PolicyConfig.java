@@ -1,11 +1,7 @@
 package org.epics.archiverappliance.mgmt.policy;
 
-import java.util.LinkedList;
-
-import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 /**
  * A PolicyConfig object is typically the right hand side of a policy.
@@ -15,7 +11,6 @@ import org.json.simple.JSONValue;
  *
  */
 public class PolicyConfig {
-	private static Logger logger = Logger.getLogger(PolicyConfig.class.getName());
 	public enum SamplingMethod { SCAN, MONITOR, DONT_ARCHIVE };
 
 	public static final float DEFAULT_MONITOR_SAMPLING_PERIOD = 1.0f;
@@ -25,6 +20,7 @@ public class PolicyConfig {
 	private String[] dataStores;
 	private String policyName;
 	private String[] archiveFields;
+	private String appliance;
 
 	public SamplingMethod getSamplingMethod() {
 		return samplingMethod;
@@ -38,28 +34,6 @@ public class PolicyConfig {
 		return dataStores;
 	}
 	
-	/**
-	 * Parse a string (JSON) representation of this policy into this policy object
-	 * @param policyString
-	 * @throws Exception
-	 */
-	public void parsePolicyRepresentation(String policyString) {
-		// Lots of assumptions about object types.
-		// If at some point in time, we determine we need more rigorous code, we should convert to using a real parser.
-		JSONObject parsedObj = (JSONObject) JSONValue.parse(policyString);
-		this.samplingMethod = SamplingMethod.valueOf((String)parsedObj.get("samplingMethod"));
-		this.samplingPeriod = Float.parseFloat((String)parsedObj.get("samplingPeriod"));
-		
-		JSONArray parsedStores = (JSONArray) parsedObj.get("dataStores");
-		LinkedList<String> parsedStoresList = new LinkedList<String>();
-		for(Object parsedStore : parsedStores) { 
-			parsedStoresList.add((String)parsedStore);
-		}
-		dataStores = parsedStoresList.toArray(new String[0]);
-		
-		if(logger.isDebugEnabled()) logger.debug("Policy object initialized from string " + this.generateStringRepresentation());
-	}
-	
 	// We need this SuppressWarnings here as JSON is too dynamic.
 	@SuppressWarnings("unchecked")
 	public String generateStringRepresentation() {
@@ -70,6 +44,9 @@ public class PolicyConfig {
 		JSONArray stores = new JSONArray();
 		for(String store : dataStores) stores.add(store);
 		stringRep.put("dataStores", stores);
+		if(this.appliance != null) { 
+			stringRep.put("appliance", appliance); 
+		}
 		return stringRep.toJSONString();
 	}
 
@@ -102,5 +79,13 @@ public class PolicyConfig {
 
 	public void setArchiveFields(String[] archiveFields) {
 		this.archiveFields = archiveFields;
+	}
+
+	public String getAppliance() {
+		return appliance;
+	}
+
+	public void setAppliance(String appliance) {
+		this.appliance = appliance;
 	}
 }
