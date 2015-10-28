@@ -128,15 +128,29 @@ function archivePVsWithDetails() {
 		var controllingPV  = $("#pvDetailsControllingPV").val();
 		var policySelected = $("#pvDetailsPolicies").val();
 		
-		var patternForFloat = /^[0-9]+(.[0-9]+)?$/;
-		if(!patternForFloat.test(samplingPeriod)) {
-			alert("The sampling period should be between " + minimumSamplingPeriod + " and 86400");
-			return;
+		
+		var samplingPeriodParam='';
+		if(samplingPeriod == null || samplingPeriod == undefined || samplingPeriod.length <= 0) { 
+			// No sampling period period is selected.
+		} else { 
+			var patternForFloat = /^[0-9]+(.[0-9]+)?$/;
+			if(!patternForFloat.test(samplingPeriod)) {
+				alert("The sampling period should be between " + minimumSamplingPeriod + " and 86400");
+				return;
+			}
+			var samplingPeriodFl = parseFloat(samplingPeriod);
+			if(samplingPeriodFl < minimumSamplingPeriod || samplingPeriodFl > 86400 || samplingPeriodFl == 0) {
+				alert("The sampling period should be a non-zero number between " + minimumSamplingPeriod + " and 86400");
+				return;
+			}
+			samplingPeriodParam = "&samplingperiod="+samplingPeriod;
 		}
-		var samplingPeriodFl = parseFloat(samplingPeriod);
-		if(samplingPeriodFl < minimumSamplingPeriod || samplingPeriodFl > 86400 || samplingPeriodFl == 0) {
-			alert("The sampling period should be a non-zero number between " + minimumSamplingPeriod + " and 86400");
-			return;
+		
+		var samplingMethodParam = '';
+		if(samplingMethod == null || samplingMethod == undefined || samplingMethod.length <= 0) {
+			
+		} else { 
+			samplingMethodParam = "&samplingmethod="+samplingMethod;
 		}
 		
 		var controllingPVParam = '';
@@ -151,6 +165,7 @@ function archivePVsWithDetails() {
 			}			
 		}
 		
+		var policyParam = '';
 		if(policySelected == null || policySelected == undefined || policySelected.length <= 0) { 
 			
 		} else {
@@ -171,7 +186,7 @@ function archivePVsWithDetails() {
 		$.ajax({
 			url: '../bpl/archivePV',
 			dataType: 'json',
-			data: pvQuery + "&samplingperiod="+samplingPeriod+"&samplingmethod="+samplingMethod+controllingPVParam+policyParam,
+			data: pvQuery + samplingPeriodParam+samplingMethodParam+controllingPVParam+policyParam,
 			type: HTTPMethod,
 			success: function() {
 				checkPVStatus();

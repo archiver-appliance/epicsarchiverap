@@ -306,6 +306,11 @@ public class ArchivePVAction implements BPLAction {
 					logger.debug("Adding alias " + alias + " to user params of " + actualPVName + "(3)");
 					userSpecifiedSamplingParams.addAlias(alias);
 				}
+				
+				if(policyName != null) { 
+					logger.debug("Overriding the policy to " + policyName + " for pv " + pvName + " for a default period/method");
+					userSpecifiedSamplingParams.setPolicyName(policyName);
+				}
 
 				configService.addToArchiveRequests(actualPVName, userSpecifiedSamplingParams);
 			}
