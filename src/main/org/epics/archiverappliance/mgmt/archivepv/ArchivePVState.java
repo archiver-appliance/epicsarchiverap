@@ -114,6 +114,7 @@ public class ArchivePVState {
 					typeInfo.setCreationTime(TimeUtils.now());
 					typeInfo.setControllingPV(userSpec.getControllingPV());
 					typeInfo.setUsePVAccess(userSpec.isUsePVAccess());
+					typeInfo.setPolicyName(thePolicy.getPolicyName());
 					
 					String aliasFieldName = "NAME";
 					if(typeInfo.hasExtraField(aliasFieldName)) {
