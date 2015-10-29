@@ -41,6 +41,7 @@ public class CapacityPlanningBPL {
          */
         private static float percentageLimitation=80;
         private static Logger configlogger = Logger.getLogger("config." + CapacityPlanningBPL.class.getName());
+        private static final String SKIP_CAPACITY_PLANNING_PROPERTY = "org.epics.archiverappliance.mgmt.archivepv.SkipCapacityPlanning";
  
    /***
     * get the appliance for this pv.
@@ -53,7 +54,11 @@ public class CapacityPlanningBPL {
     * in this case, this method will return the ApplianceInfo of the local  appliance
     */
         public static ApplianceInfo pickApplianceForPV(String pvName, ConfigService configService,PVTypeInfo pvTypeInfo) throws IOException {
-             
+                boolean skipCapacityPlanning = Boolean.parseBoolean(configService.getInstallationProperties().getProperty(SKIP_CAPACITY_PLANNING_PROPERTY, "false"));
+                if (skipCapacityPlanning) {
+                        return configService.getMyApplianceInfo();
+                }
+                
                 try{
                 String [] dataStores=pvTypeInfo.getDataStores();
              
