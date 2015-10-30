@@ -82,7 +82,7 @@ This is the EPICS archiver appliance management console for my site/beamline/pro
 Then run <code>SyncStaticContentHeadersFooters</code> using <code>/tmp/master_template.html</code> as the master template like so
 <pre>
 <code>
-java -cp ${TOMCAT_HOME}/webapps/mgmt/WEB-INF/classes:${TOMCAT_VERSION_FOLDER}/webapps/mgmt/WEB-INF/lib/log4j-1.2.17.jar \
+java -cp ${TOMCAT_HOME}/webapps/mgmt/WEB-INF/classes:${TOMCAT_HOME}/webapps/mgmt/WEB-INF/lib/log4j-1.2.17.jar \
   org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters \
   /tmp/master_template.html \
   ${TOMCAT_HOME}/webapps/mgmt/ui
