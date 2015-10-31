@@ -18,8 +18,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
-
 /**
  * Small utility to sync the headers and footers from index.html to the other html files.
  * Typically called from the build script on demand.
@@ -29,7 +27,6 @@ import org.apache.log4j.Logger;
  *
  */
 public class SyncStaticContentHeadersFooters {
-	private static final Logger logger = Logger.getLogger(SyncStaticContentHeadersFooters.class.getName());
 
 	public static void main(String[] args) throws IOException {
 		if(args.length < 2) {
@@ -205,10 +202,8 @@ public class SyncStaticContentHeadersFooters {
 				} else {
 					String srcChunk = templateReplacements.get(destTextChunk.typeOfChunk);
 					if(srcChunk == null) {
-						logger.debug("No replacement text found for template chunk " + destTextChunk.textChunk);
 						out.print(destTextChunk.textChunk);
 					} else {
-						logger.debug("Replacing template chunk " + destTextChunk.typeOfChunk);
 						out.println(startOfChunkIndicator + destTextChunk.typeOfChunk + closingText);
 						out.println(srcChunk);
 						out.println(endOfChunkIndicator + destTextChunk.typeOfChunk + closingText);
