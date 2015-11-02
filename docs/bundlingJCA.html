@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - Bundling JCA</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - Bundling JCA</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <section>
 <h3>Bundling JCA</h3>
@@ -42,52 +48,48 @@ Bear in mind, this is mostly intended for developers; however, this should give 
 
 <ol>
 <li>To build 32 bit binaries on 64 bit boxes, we need to install the 32 bit version of the C libraries. On Redhat, this is accomplished by
-<code>
-<pre>yum -y install glibc-devel.i686</pre>
-</code>
+<code>yum -y install glibc-devel.i686</code>
 To build 64 bit binaries on 32 bit Redhat, you'd probably need the reverse.
-<code>
-<pre>yum -y install glibc-devel.x86_64</pre>
-</code>
+<code>yum -y install glibc-devel.x86_64</code>
 In addition, we may need to add links to the appropriate versions of <code>readline</code> and <code>ncurses</code>. 
 These packages typically exist on the system but for some reason, Redhat does not link the 32 bit versions on 64 bit Linux.
-<code>
 <pre>
+<code>
 ln -s /lib/libncurses.so.5.7 /lib/libncurses.so
 ln -s /lib/libreadline.so.6 /lib/libreadline.so
-</pre>
 </code>
+</pre>
 </li>
 <li>Download the latest build stable version of EPICS and untar it into a folder called base. You should have a folder like so
-<code>
 <pre>
+<code>
 [mshankar@cdlx27 BundleJCA]$ ls -ltrd base/base-3.14.12.2
 drwxr-xr-x 7 mshankar cd 4096 Nov 19 11:19 base/base-3.14.12.2/
 [mshankar@cdlx27 BundleJCA]$ 
-</pre>
 </code>
+</pre>
 </li>
 <li>Edit <code>configure/CONFIG_SITE</code> and change the <code>CROSS_COMPILER_TARGET_ARCHS</code> to include <code>linux-x86_64-debug linux-x86-debug</code> like so
-<code>
 <pre>
+<code>
 # override 
 #
 CROSS_COMPILER_TARGET_ARCHS=linux-x86_64-debug linux-x86-debug
-</pre>
 </code>
+</pre>
 Also, turn on the generation of static binaries.
-<code>
 <pre>
+<code>
 #  Build client objects statically ?
 #        must be either YES or NO
 #
 STATIC_BUILD=YES
-</pre>
 </code>
+</pre>
 </li>
 <li>Now run <code>make</code> and <code>make install</code>. This should make and install the required files.
-<code>
 <pre>
+<code>
 [mshankar@cdlx27 base-3.14.12.2]$ ls -l lib/linux-x86-debug/libca.so lib/linux-x86-debug/libCom.so lib/linux-x86_64-debug/libca.so lib/linux-x86_64-debug/libCom.so bin/linux-x86-debug/caRepeater bin/linux-x86_64-debug/caRepeater 
 -r-xr-xr-x 1 mshankar cd  5268 Nov 19 14:08 bin/linux-x86-debug/caRepeater*
 -r-xr-xr-x 1 mshankar cd 14942 Nov 19 14:07 bin/linux-x86_64-debug/caRepeater*
@@ -95,12 +97,12 @@ lrwxrwxrwx 1 mshankar cd    14 Nov 19 14:07 lib/linux-x86-debug/libCom.so -> lib
 lrwxrwxrwx 1 mshankar cd    13 Nov 19 14:08 lib/linux-x86-debug/libca.so -> libca.so.3.14
 lrwxrwxrwx 1 mshankar cd    14 Nov 19 14:07 lib/linux-x86_64-debug/libCom.so -> libCom.so.3.14
 lrwxrwxrwx 1 mshankar cd    13 Nov 19 14:07 lib/linux-x86_64-debug/libca.so -> libca.so.3.14
-</pre>
 </code>
+</pre>
 </li>
 <li>Create the folder for the extensions and download the latest version of JCA.
-<code>
 <pre>
+<code>
 mkdir extensions
 cd extensions/
 mkdir extensions-3.14.12
@@ -109,109 +111,109 @@ mkdir src
 cd src/
 hg clone "http://epics-jca.hg.sourceforge.net/hgweb/epics-jca/jca"
 cd jca
-</pre>
 </code>
+</pre>
 </li>
 <li>
 Determine the tags in the repository and switch to a known tag using 
-<code>
 <pre>
+<code>
 hg tags
 hg checkout JCA_20120614_2_3_6
-</pre>
 </code>
+</pre>
 </li>
 <li>
 First, let's build the 64 bit versions of the JCA JNI files.
 As we are generating the <code>.so</code>'s with debug information, we create and edit a new build.properties file for <code>linux-x86_64-debug</code>.
-<code>
 <pre>
+<code>
 cp config/build.linux-x86_64.properties config/build.linux-x86_64-debug.properties
-</pre>
 </code>
+</pre>
 Edit the newly created <code>config/build.linux-x86_64-debug.properties</code> and add a <code>-G</code> to the <code>g++</code> compile command like so...
-<code>
 <pre>
+<code>
 jni.objs.cmd.args=-c <span class="diff"> -G </span> -fPIC -D_POSIX_C_SOURCE=199506L -D_POSIX_THREADS \
-</pre>
 </code>
+</pre>
 Similarly, we add a -G to the library command and also replace <code>linux-x86_64</code> with <code>linux-x86_64-debug</code>
-<code>
 <pre>
+<code>
 jni.lib.cmd.args=-shared <span class="diff"> -G </span> -fPIC \
     -L${epics.base}/lib/<span class="diff">linux-x86_64-debug</span> -lca -lCom -lpthread -lreadline -lncurses -lm -lrt \
     -Wl,-rpath,. \
     -Wl,-rpath,${epics.base}/lib/<span class="diff">linux-x86_64-debug</span> \
     -o ${@target} ${@src}
-</pre>
 </code>
+</pre>
 </li>
 <li>
 Change <code>build.xml</code> to manually control the architecture.
 The JCA ant tasks use the <code>targetarch</code> ant task to determine the architecture.
 To manually control the architecture, edit <code>build.xml</code>, comment out the <code>targetarch</code> task like so
-<code>
 <pre>
-    &lt;!-- set the property arch to the correct value --&rt;
+<code>
+    &lt;!-- set the property arch to the correct value --&gt;
     <span class="diff">&lt;!-- targetarch name="arch"/ --&gt;</span>
-</pre>
 </code>
+</pre>
 and add a environment variable at the top of build.xml like so
-<code>
 <pre>
+<code>
   &lt;property environment="env"/&gt;
   <span class="diff">&lt;property name="arch" value="linux-x86_64-debug"/&gt;</span>
-</pre>
 </code>
+</pre>
 </li>
 <li>
 We point to the base we generated in the previous steps and also change the <code>LD_LIBRARY_PATH</code> to use this version of base.
-<code>
 <pre>
+<code>
 export EPICS_BASE_RELEASE=/scratch/Work/temp/BundleJCA/base/base-3.14.12.2
 export EPICS_EXTENSIONS=/scratch/Work/temp/BundleJCA/extensions/extensions-3.14.12
 export LD_LIBRARY_PATH=/opt/local/jdk_latest/jre/lib/i386:/opt/local/lib:/scratch/Work/temp/BundleJCA/base/base-3.14.12.2/lib/linux-x86_64-debug
-</pre>
 </code>
+</pre>
 </li>
 <li>
 We then compile.
-<code>
 <pre>
+<code>
 ant
 ant install
-</pre>
 </code>
+</pre>
 If all goes well, we should have a <code>jca.jar</code> and a <code>libjca.so</code>.
-<code>
 <pre>
+<code>
 [mshankar@cdlx27 jca]$ ls -ltr ../../lib/linux-x86_64-debug/libjca.so ../../javalib/jca.jar 
 -rw-r--r-- 1 mshankar cd  39768 Nov 20 15:04 ../../lib/linux-x86_64-debug/libjca.so
 -rw-r--r-- 1 mshankar cd 240620 Nov 20 15:04 ../../javalib/jca.jar
-</pre>
 </code>
+</pre>
 </li>
 <li>
 We change the architecture in <code>build.xml</code> to <code>linux-x86-debug</code> and then repeat.
 In addition to adding the <span class="diff"> -G </span> argument, we'll also need to add a <span class="diff"> -m32 </span> argument to cater to 32 bit architectures.
-<code>
 <pre>
+<code>
 cp config/build.linux-x86.properties config/build.linux-x86-debug.properties
 vim config/build.linux-x86-debug.properties
 vim build.xml
 export LD_LIBRARY_PATH=/opt/local/jdk_latest/jre/lib/i386:/opt/local/lib:/scratch/Work/temp/BundleJCA/base/base-3.14.12.2/lib/linux-x86_64
 ant
 ant install
-</pre>
 </code>
+</pre>
 If all goes well, we should have a <code>jca.jar</code> and a <code>libjca.so</code>.
-<code>
 <pre>
+<code>
 [mshankar@cdlx27 jca]$ ls -ltr ../../lib/linux-x86-debug/libjca.so ../../javalib/jca.jar
 -rw-r--r-- 1 mshankar cd  38973 Nov 20 16:02 ../../lib/linux-x86-debug/libjca.so
 -rw-r--r-- 1 mshankar cd 240631 Nov 20 16:02 ../../javalib/jca.jar
-</pre>
 </code>
+</pre>
 </li>
 <li>After copying the <code>.so</code> files and <code>caRepeater</code> to the appropriate folder in the EPICS archiver appliance source respository, delete the folders used to build the JCA <code>.so</code>'s.
 This is to make sure any RPATH's in the <code>.so</code> will not be accidentally honored during any testing and only the embedded <code>.so</code>'s are picked up.
@@ -220,8 +222,10 @@ This is to make sure any RPATH's in the <code>.so</code> will not be accidentall
 
 </section>
 
-</article>
-
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+
 </body>
 </html>

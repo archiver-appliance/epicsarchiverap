@@ -1,44 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - The .pb file format and the .pbraw binary protocol</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - The .pb file format and the .pbraw binary protocol</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <section>
 <h3>The <code>.pb</code> file format</h3>
 <div>
 The <a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a> in the EPICS archiver appliance uses Google's <a href="https://developers.google.com/protocol-buffers">ProtocolBuffers</a> as the serialization mechanism. 
-The PB definitions mapping EPICS DBR types to PB messages can be found in <a href="EPICSEvent.proto"><code>EPICSEvent.proto</code></a>.
+The PB definitions mapping EPICS DBR types to PB messages can be found in <a href="EPICSEvent.proto">EPICSEvent.proto</a>.
 PB files contain serialized PB messages; one per sample; a sample per line. 
 The first line in a PB file is a header (<code>PayloadInfo</code> PB message) that contains some basic information like the PV name, its DBR type and so on.
 <figure>
@@ -90,7 +96,7 @@ The main difference is that PB files contain only one chunk (header+samples) whi
 Chunks are separated by empty lines (<code>\n</code> characters) similar to how HTTP separates its headers from the body.
 While streaming data over the PB/HTTP protocol, the server also uses <a href="http://en.wikipedia.org/wiki/Chunked_transfer_encoding">HTTP chunks</a> to transfer the data across.
 There is no strict formula on how many chunks there will per data retrieval request; the server chunks data based on data source/partition/other parameters.
-The client library for the <a href="https://github.com/slacmshankar/epicsarchiverap_pbrawclient/"><code>PB/HTTP</code></a> protocol handles the multiple chunks in a seamless fashion and presents the data to the caller as a single event stream.   
+Both <a href="https://github.com/slacmshankar/epicsarchiverap_pbrawclient/">pbrawclient</a> and <a href="https://github.com/epicsdeb/carchivetools">carchivetools</a> handle the multiple chunks in a seamless fashion and present the data to the caller as a single event stream.   
 <figure>
 <img src="images/pbhttp.png"/>
 </figure> 
@@ -98,8 +104,10 @@ The client library for the <a href="https://github.com/slacmshankar/epicsarchive
 
 
 
-</article>
-
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+
 </body>
 </html>

@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - Details</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - Details</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <div id="intro">
 This is an implementation of an archiver for <a href="http://www.aps.anl.gov/epics/index.php">EPICS</a> control systems that aims to archive millions of PVs.
@@ -78,7 +84,7 @@ These are the prerequisites for the EPICS archiver appliance.
 <ul>
 <li>A recent version of Linux, definitely 64 bit Linux for production systems. If using RedHat, we should aim for RedHat 6.1.</li>
 <li>Sun Java JDK 1.8 - definitely the 64 bit version for production systems. We need the JDK, <b>not</b> the JRE.</li>
-<li>A recent version of Tomcat 7.x; preferably <code>apache-tomcat-7.0.22</code> or later.</li>
+<li>A recent version of Tomcat 7.x; preferably <code>apache-tomcat-7.0.61</code> or later.</li>
 <li>The management UI works best with a recent version of Firefox or Chrome.</li>
 <li>By default, the EPICS archiver appliance uses a bundled version of <a href="http://epics-jca.sourceforge.net/caj/">CAJ</a>.</li>
 </ul>
@@ -91,7 +97,7 @@ We hope to add Postgres support soon.
 </ul>
 
 In terms of hardware, for production systems, we'd need a reasonably powerful server box with lots of memory for each appliance. 
-For example, we plan to use 24 core machines with at least 32GB of memory and a SSD/flash drive for medium term storage. 
+For example, we use 24 core machines with 128GB of memory and 15K SAS drives for medium term storage. 
 
 </section>
 
@@ -109,7 +115,7 @@ Using Java <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/packa
 <ol>
 <li>A file per chunk resulting in a file per PV per time partition.</li>
 <li>A zip file entry in a <code>.zip</code> file per chunk resulting in a <code>.zip</code> file per PV.</li>
-<li>This can be extended to use other storage technologies for which a NIO2 provider is available (for example, a database BLOB per chunk or a key/value pair per chunk in any key/value store).</li>
+<li>This can be extended to use other storage technologies for which a NIO2 provider is available (for example, <a href="https://github.com/Upplication/Amazon-S3-FileSystem-NIO2">Amazon S3</a>, a database BLOB per chunk or a key/value pair per chunk in any key/value store).</li>
 </ol>
 <div class="noteafterlist">By default, the PlainPBStoragePlugin maps PV names to keys using a simple algorithm that relies on the presence of a good PV naming convention. To use your own mapping scheme, see the <a href="customization.html#PVNamesToKeys">Key Mapping</a> section in the customization guide.</div>    
 </li>
@@ -124,7 +130,7 @@ For production systems, it is recommended that each module be deployed in a sepa
 A sample storage configuration is outlined below where we'd use
 <ol>
 <li>Ramdisk for the short term store - in this storage stage, we'd store data at a granularity of an hour.</li>
-<li>A SSD for the medium term store - in this storage stage, we'd store data at a granularity of a day.</li>
+<li>SSD/SAS drives for the medium term store - in this storage stage, we'd store data at a granularity of a day.</li>
 <li>A NAS/SAN for the long term store - in this storage stage, we'd store data at a granularity of a year.</li>
 </ol> 
 <figure>
@@ -154,7 +160,7 @@ There is no necessity for the appliances to share any storage; so both of these 
 <section>
 <h3>Policies</h3>
 All of the various configurations can get quite tricky for end users to navigate. 
-Rather than expose all of this variation to the end users and to provide a simple interface to end users, the archiver appliance uses <a href="api/org/epics/archiverappliance/mgmt/policy/package-summary.html">policies</a></code>.
+Rather than expose all of this variation to the end users and to provide a simple interface to end users, the archiver appliance uses <a href="api/org/epics/archiverappliance/mgmt/policy/package-summary.html">policies</a>.
 Policies are Python scripts that make these decisions on behalf of the users. 
 Policies are site-specific and identical across all appliances in the cluster.
 When a user requests a new PV to be archived, the archiver appliance samples the PV to determine event rate, storage rate and other parameters.
@@ -190,7 +196,7 @@ However, both data retrieval and business requests can be dispatched to any rand
 <figcaption>Appliance 1 proxies data retrieval request for PV being archived by appliance 2.</figcaption>
 </figure> 
 In addition, users do not need to allocate PVs to appliances when requesting for new PVs be archived.
-The appliances maintain a small set of metrics during their operation and use this in addition to the measured event and storage rates to do <a href="api/org/epics/archiverappliance/mgmt/archivepv/CapacityPlanningBPL.html">Capacity Planning</a>/load balancing. 
+The appliances maintain a small set of metrics during their operation and use this in addition to the measured event and storage rates to do an automated <a href="api/org/epics/archiverappliance/mgmt/archivepv/CapacityPlanningBPL.html">Capacity Planning</a>/load balancing.
 </section>
 
 <section id="scripting">
@@ -228,7 +234,10 @@ Click <a href="api/mgmt_scriptables.html" target="_blank">here</a> for a list of
 </figure> 
 
 </section>
-</article>
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+
 </body>
 </html>
