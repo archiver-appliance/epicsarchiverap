@@ -35,7 +35,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 	int skippedEvents = 0;
 	int comparedEvents = 0;
 	OutputStream os = null;
-	long epochSecondsOfLastEventInPreviousStream = 0;
+	private Timestamp timestampOfLastEvent;
 	boolean amIDeduping = false;
 	boolean haveIpushedTheFirstEvent = false;
 	Event firstEvent = null;
@@ -129,26 +129,25 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 							totalEvents++;
 							mimeresponse.consumeEvent(e);
 							totalEvents++;
-							epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
+							timestampOfLastEvent = e.getEventTimeStamp();
 							continue;
 						}
 					}
 					
 					if(amIDeduping) {
 						comparedEvents++;
-						long currentEpochSeconds = e.getEpochSeconds(); 
-						if(currentEpochSeconds <= epochSecondsOfLastEventInPreviousStream) {
+						if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
 							skippedEvents++;
 							continue;
 						} else {
 							amIDeduping = false;
 							mimeresponse.consumeEvent(e);
-							epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
+							timestampOfLastEvent = e.getEventTimeStamp();
 							totalEvents++;
 						}
 					} else {
 						mimeresponse.consumeEvent(e);
-						epochSecondsOfLastEventInPreviousStream = e.getEpochSeconds();
+						timestampOfLastEvent = e.getEventTimeStamp();
 						totalEvents++;
 					}
 				} catch(InvalidProtocolBufferException|PBParseException ex) { 
@@ -185,7 +184,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 		totalEvents = 0;
 		skippedEvents = 0;
 		comparedEvents = 0;
-		epochSecondsOfLastEventInPreviousStream = 0;
+		timestampOfLastEvent = new Timestamp(Long.MIN_VALUE);
 		amIDeduping = false;
 		firstEvent = null;
 		haveIpushedTheFirstEvent = false;

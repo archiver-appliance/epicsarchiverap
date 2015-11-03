@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - Install Guide</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - Install Guide</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <div id="intro">
 <p>If you want to simply test the system and quickly get going, please see the <a href="quickstart.html">Quickstart</a> section.</p>
@@ -59,7 +65,7 @@ This install script accommodates installations with a &quot;standard&quot; set o
 In addition to the <a href="details.html#SystemRequirements">System requirements</a>, the <code>install_scripts/single_machine_install.sh</code> will ask for 
 <ol>
 <li>Location of the Tomcat distribution.</li>
-<li>Location of the MySQL client jar.</li>
+<li>Location of the MySQL client jar - usually a file with a name like <code>mysql-connector-java-5.1.21-bin.jar</code></li>
 <li>A MySQL connection string that looks like so <code>--user=archappl --password=archappl --database=archappl</code> that can be used with the MySQL client like so <code>mysql ${MYSQL_CONNECTION_STRING} -e "SHOW DATABASES"</code>.
 This implies that the MySQL schema has already been created using something like
 <pre>
@@ -111,7 +117,7 @@ In addition to installing the Sun Java 8 JDK, EPICS (see <a href="details.html#S
 <h3>Create an <code>appliances.xml</code></h3>
 The <code>appliances.xml</code> is a file that lists all the appliances in a cluster of archiver appliance.
 While it is not necessary to point to the same physical file, the contents are expected to be identical across all appliances in the cluster.
-The details of the file are outlined in the <a href="api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES"><code>ConfigService</code></a> javadoc.
+The details of the file are outlined in the <a href="api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES">ConfigService</a> javadoc.
 A sample  <code>appliances.xml</code> with two appliances looks like 
 <figure>
 <img src="images/appliancesxml.png"/>
@@ -392,24 +398,28 @@ The remaining steps are those that will be executed on deployment of new release
 <section>
 <h3>Deploy the WAR files onto their respective containers</h3>
 Deploying/upgrading a WAR file in a Tomcat container is very easy. 
-Each container has a <code>webapps</code> folder; all we have to do is to copy the (newer) WAR into this folder and Tomcat will expand the WAR file and deploy the WAR file on startup. 
+Each container has a <code>webapps</code> folder; all we have to do is to copy the (newer) WAR into this folder and Tomcat (should) will expand the WAR file and deploy the WAR file on startup. 
 The deployment/upgrade steps are
 <ol>
 <li>Stop all four Tomcat containers.</li>
 <li>Remove the older WAR file and expanded WAR file from the <code>webapps</code> folder (if present).</li>
 <li>Copy the newer WAR file into the <code>webapps</code> folder.</li>
+<li>Optionally expand the WAR file after copying it over to the <code>webapps</code> folder
+<ul>
+<li>This lets you replace individual files in the expanded WAR file (for example, images, policies etc) giving you one more way to do site specific deployments.</li>
+</ul>
+</li>
 <li>Start all four Tomcat containers.</li>
 </ol>
 If <code>DEPLOY_DIR</code> is the parent folder of the individual Tomcat containers and <code>WARSRC_DIR</code> is the location where the WAR files are present, then the deploy steps (steps 2 and 3 in the list above) look something like
 <pre>
 <code>
-pushd ${DEPLOY_DIR}/mgmt/webapps && rm -rf mgmt*; cp ${WARSRC_DIR}/mgmt.war .; popd; 
-pushd ${DEPLOY_DIR}/engine/webapps && rm -rf engine*; cp ${WARSRC_DIR}/engine.war .; popd; 
-pushd ${DEPLOY_DIR}/etl/webapps && rm -rf etl*; cp ${WARSRC_DIR}/etl.war .; popd; 
-pushd ${DEPLOY_DIR}/retrieval/webapps && rm -rf retrieval*; cp ${WARSRC_DIR}/retrieval.war .; popd; 
+pushd ${DEPLOY_DIR}/mgmt/webapps &amp;&amp; rm -rf mgmt*; cp ${WARSRC_DIR}/mgmt.war .; mkdir mgmt; cd mgmt; jar xf ../mgmt.war; popd; 
+pushd ${DEPLOY_DIR}/engine/webapps &amp;&amp; rm -rf engine*; cp ${WARSRC_DIR}/engine.war .; mkdir engine; cd engine; jar xf ../engine.war; popd; 
+pushd ${DEPLOY_DIR}/etl/webapps &amp;&amp; rm -rf etl*; cp ${WARSRC_DIR}/etl.war .; mkdir etl; cd etl; jar xf ../etl.war; popd; 
+pushd ${DEPLOY_DIR}/retrieval/webapps &amp;&amp; rm -rf retrieval*; cp ${WARSRC_DIR}/retrieval.war .; mkdir retrieval; cd retrieval; jar xf ../retrieval.war; popd;
 </code>
 </pre>
-One can optionally expand the WAR file after copying it over to the <code>webapps</code> folder; this lets you replace individual files in the expanded WAR file (for example, images, policies etc) giving you one more way to do site specific deployments. 
 </section>
 
 <section>
@@ -515,22 +525,13 @@ The details outlined here are guidelines on how to provision an appliance using 
 If you generate scripts for industry standard provisioning software and are willing to share them, please add them to the repositorty and contact the collaboration; we'll be happy to modify these documents to accomodate the same.
 </section>
 
-<section id="jcacajswitch">
-<h3>Using JCA or CAJ</h3>
-The archiver appliance can be configured to use either JCA or CAJ by setting a property in your <code>archappl.properties</code>.
-Please set the property <code>org.epics.archiverappliance.engine.epics.JCAConfigGen.useCAJ</code> to <code>true</code> if you want to use CAJ and to <code>false</code> if you want to use JCA.
-<figure>
-<img src="images/JCACAJ.png"/>
-</figure> 
-You can determine/confirm the context being used by looking in the engine's logs. For example, if you are using CAJ, you should see the CAJContext being used like so. 
-<figure>
-<img src="images/CAJContext.png"/>
-</figure> 
-</section>
 
-
-</article>
 
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
 </body>
 </html>
