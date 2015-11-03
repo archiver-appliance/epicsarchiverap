@@ -48,7 +48,7 @@ The PB definitions mapping EPICS DBR types to PB messages can be found in <a hre
 PB files contain serialized PB messages; one per sample; a sample per line. 
 The first line in a PB file is a header (<code>PayloadInfo</code> PB message) that contains some basic information like the PV name, its DBR type and so on.
 <figure>
-<img src="images/pbfile.png"/>
+<img class="img-responsive" src="images/pbfile.png"/>
 </figure> 
 As serialized PB messages are binary data; after serialization, newline characters are escaped to maintain a "sample per line" constraint.
 <ol>
@@ -98,7 +98,7 @@ While streaming data over the PB/HTTP protocol, the server also uses <a href="ht
 There is no strict formula on how many chunks there will per data retrieval request; the server chunks data based on data source/partition/other parameters.
 Both <a href="https://github.com/slacmshankar/epicsarchiverap_pbrawclient/">pbrawclient</a> and <a href="https://github.com/epicsdeb/carchivetools">carchivetools</a> handle the multiple chunks in a seamless fashion and present the data to the caller as a single event stream.   
 <figure>
-<img src="images/pbhttp.png"/>
+<img class="img-responsive" src="images/pbhttp.png"/>
 </figure> 
 </section>
 

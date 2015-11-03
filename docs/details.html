@@ -134,7 +134,7 @@ A sample storage configuration is outlined below where we'd use
 <li>A NAS/SAN for the long term store - in this storage stage, we'd store data at a granularity of a year.</li>
 </ol> 
 <figure>
-<img src="images/applarch.png"/>
+<img class="img-responsive" src="images/applarch.png"/>
 <figcaption>Architecture of a single appliance</figcaption>
 </figure>
 <div>
@@ -146,11 +146,11 @@ For example, if you have a powerful enough NAS/SAN, you could write straight to 
 The long term store is shown outside the appliance as an example of a commonly deployed configuration.
 There is no necessity for the appliances to share any storage; so both of these configurations are possible.
 <figure>
-<img src="images/clusterinto1lts.png" alt="Multiple appliances into one long term store"/>
+<img class="img-responsive" src="images/clusterinto1lts.png" alt="Multiple appliances into one long term store"/>
 <figcaption>Multiple appliances sending data into one long term store</figcaption> 
 </figure>
 <figure>
-<img src="images/clusterintodifflts.png" alt="Multiple appliances into different long term stores"/>
+<img class="img-responsive" src="images/clusterintodifflts.png" alt="Multiple appliances into different long term stores"/>
 <figcaption>Multiple appliances sending data into different long term stores</figcaption> 
 </figure>
 </div>
@@ -192,7 +192,7 @@ However, both data retrieval and business requests can be dispatched to any rand
 </p>
 
 <figure>
-<img src="images/proxyrequest.png"/>
+<img class="img-responsive" src="images/proxyrequest.png"/>
 <figcaption>Appliance 1 proxies data retrieval request for PV being archived by appliance 2.</figcaption>
 </figure> 
 In addition, users do not need to allocate PVs to appliances when requesting for new PVs be archived.
@@ -205,7 +205,7 @@ The archiver appliance comes with a web interface that has support for various b
 The web interface communicates with the server principally using JSON/HTTP. 
 The same web service calls are also available for use from external scripting tools like Python. 
 <figure>
-<img src="images/pythonscript.png"/>
+<img class="img-responsive" src="images/pythonscript.png"/>
 <figcaption>A sample python script that prints out all the PVs in the cluster of appliances.</figcaption>
 </figure> 
 Click <a href="api/mgmt_scriptables.html" target="_blank">here</a> for a list of business logic accesible thru scripting.
@@ -214,22 +214,22 @@ Click <a href="api/mgmt_scriptables.html" target="_blank">here</a> for a list of
 <section>
 <h3>Screenshots</h3>
 <figure>
-<img src="images/homepage.png"/>
+<img class="img-responsive" src="images/homepage.png"/>
 <figcaption>A screenshot of the home page.</figcaption>
 </figure> 
 
 <figure>
-<img src="images/reportspage.png"/>
+<img class="img-responsive" src="images/reportspage.png"/>
 <figcaption>We offer a wide variety of reports.</figcaption>
 </figure> 
 
 <figure>
-<img src="images/metricspage.png"/>
+<img class="img-responsive" src="images/metricspage.png"/>
 <figcaption>Metrics maintained by the appliances.</figcaption>
 </figure> 
 
 <figure>
-<img src="images/appliancespage.png"/>
+<img class="img-responsive" src="images/appliancespage.png"/>
 <figcaption>The appliances page offers a quick view of some JVM parameters.</figcaption>
 </figure> 
 
