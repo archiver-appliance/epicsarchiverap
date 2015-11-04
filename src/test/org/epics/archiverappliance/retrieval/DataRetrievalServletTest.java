@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
