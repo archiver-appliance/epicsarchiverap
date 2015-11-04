@@ -91,7 +91,9 @@ public class DataRetrievalServletTest {
 		long next = -1;
 		try(BasicContext context = new BasicContext(); EventStream stream = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
 			int totalEvents = 0;
+			// Goes through the stream
 			for(Event e : stream) {
+				System.out.println(e.getRawForm());
 				long actualSeconds = e.getEpochSeconds();
 				long desired = starttimeinseconds + next++;
 				assertTrue("Expecting " 

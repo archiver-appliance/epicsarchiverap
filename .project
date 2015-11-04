@@ -3,6 +3,7 @@
 	<name>epicsarchiverap</name>
 	<comment></comment>
 	<projects>
+		<project>epicsarchiverap-code</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
