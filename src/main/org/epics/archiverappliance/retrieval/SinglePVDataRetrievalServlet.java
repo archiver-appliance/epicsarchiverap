@@ -91,10 +91,10 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 @SuppressWarnings("serial")
-public class DataRetrievalServlet  extends HttpServlet {
+public class SinglePVDataRetrievalServlet  extends HttpServlet {
 	public static final int SERIAL_PARALLEL_MEMORY_CUTOFF_MB = 60;
 	private static final String ARCH_APPL_PING_PV = "ArchApplPingPV";
-	private static Logger logger = Logger.getLogger(DataRetrievalServlet.class.getName());
+	private static Logger logger = Logger.getLogger(SinglePVDataRetrievalServlet.class.getName());
 	static class MimeMappingInfo {
 		Class<? extends MimeResponse> mimeresponseClass;
 		String contentType;
