@@ -4,7 +4,7 @@
         <servlet-class>org.epics.archiverappliance.common.StaticContentServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>DataRetrievalServlet</servlet-name>
+        <servlet-name>SinglePVDataRetrievalServlet</servlet-name>
         <servlet-class>org.epics.archiverappliance.retrieval.SinglePVDataRetrievalServlet</servlet-class>
     </servlet>
     <servlet>
