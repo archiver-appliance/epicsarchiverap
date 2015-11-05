@@ -511,7 +511,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		// Gets the list of PVs specified by the `pv` parameter
 		// String arrays might be inefficient for retrieval. In any case, they are sorted, which is essential later on.
-		String[] pvNames = req.getParameterValues("pv");
+		List<String> pvNames = Arrays.asList(req.getParameterValues("pv"));
 		
 		if (!req.getPathInfo().split(".")[1].equals(".json")) {
 			String msg = "Cannot process request as currently we only support JSON MIME type.";
@@ -593,6 +593,12 @@ public class DataRetrievalServlet  extends HttpServlet {
 				resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 				return;
 			}
+		}
+		
+		if(pvNames.toString().matches("^.*" + ARCH_APPL_PING_PV + ".*$")) {
+			logger.debug("Processing ping PV - this is used to validate the connection with the client.");
+			processPingPV(req, resp);
+			return;
 		}
 		
 		for (String pvName : pvNames) if (pvName.endsWith(".VAL")) { 
@@ -682,93 +688,94 @@ public class DataRetrievalServlet  extends HttpServlet {
 		// Get a post processor for each PV specified in pvNames
 		// If PV in the form <pp>(<pv>), process it
 		String postProcessorUserArg = req.getParameter("pp");
-		String[] postProcessorUserArgs = new String[pvNames.length];
-		PostProcessor[] postProcessors = new PostProcessor[pvNames.length];
-		for (int i = 0; i < pvNames.length; i++) {
+		List<String> postProcessorUserArgs = new ArrayList<>(pvNames.size());
+		List<PostProcessor> postProcessors = new ArrayList<>(pvNames.size());
+		for (int i = 0; i < pvNames.size(); i++) {
 			if (postProcessorUserArg == null)
-				postProcessorUserArgs[i] = "";
+				postProcessorUserArgs.set(i, "");
 			else
-				postProcessorUserArgs[i] = postProcessorUserArg;
+				postProcessorUserArgs.set(i, postProcessorUserArg);
 			
-			if (pvNames[i].contains("(")) {
-				if(!pvNames[i].contains(")")) {
-					logger.error("Unbalanced paran " + pvNames[i]);
+			if (pvNames.get(i).contains("(")) {
+				if(!pvNames.get(i).contains(")")) {
+					logger.error("Unbalanced paran " + pvNames.get(i));
 					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 					return;
 				}
-				String[] components = pvNames[i].split("[(,)]");
-				postProcessorUserArgs[i] = components[0];
-				pvNames[i] = components[1];
+				String[] components = pvNames.get(i).split("[(,)]");
+				postProcessorUserArgs.set(i, components[0]);
+				pvNames.set(i, components[1]);
 				if(components.length > 2) {
 					for(int j = 2; j < components.length; j++) {
-						postProcessorUserArgs[i] = postProcessorUserArgs[i] + "_" + components[j];
+						postProcessorUserArgs.set(i, postProcessorUserArgs.get(i) + "_" + components[j]);
 					}
 				}
-				logger.info("After parsing the function call syntax pvName is " + pvNames[i] + " and postProcessorUserArg is " + postProcessorUserArg);
+				logger.info("After parsing the function call syntax pvName is " + pvNames.get(i) + " and postProcessorUserArg is " + postProcessorUserArg);
 			}
-			postProcessors[i] = PostProcessors.findPostProcessor(postProcessorUserArg);
+			postProcessors.set(i, PostProcessors.findPostProcessor(postProcessorUserArg));
 		}
 
 		
 		// --------------- NEXT PART ------------------
 
 		
-		PVTypeInfo[] typeInfos  = new PVTypeInfo[pvNames.length];
-		for (int i = 0; i < pvNames.length; i++) {
-			typeInfos[i] = PVNames.determineAppropriatePVTypeInfo(pvNames[i], configService);
+		List<PVTypeInfo> typeInfos  = new ArrayList<PVTypeInfo>(pvNames.size());
+		for (int i = 0; i < pvNames.size(); i++) {
+			typeInfos.set(i, PVNames.determineAppropriatePVTypeInfo(pvNames.get(i), configService));
 		}
 		pmansProfiler.mark("After PVTypeInfo");
 		
-		for (int i = 0; i < pvNames.length; i++) if(typeInfos[i] == null && RetrievalState.includeExternalServers(req)) {
-			logger.debug("Checking to see if pv " + pvNames[i] + " is served by a external Archiver Server");
-			typeInfos[i] = checkIfPVisServedByExternalServer(pvNames[i], start, req, resp, useChunkedEncoding);
+		for (int i = 0; i < pvNames.size(); i++)
+			if(typeInfos.get(i) == null && RetrievalState.includeExternalServers(req)) {
+			logger.debug("Checking to see if pv " + pvNames.get(i) + " is served by a external Archiver Server");
+			typeInfos.set(i, checkIfPVisServedByExternalServer(pvNames.get(i), start, req, resp, useChunkedEncoding));
 		}
 		
 		
-		for (int i = 0; i < pvNames.length; i++) if(typeInfos[i] == null) {
+		for (int i = 0; i < pvNames.size(); i++) if(typeInfos.get(i) == null) {
 			// TODO Only needed if we're forwarding the request to another server.
 			if(resp.isCommitted()) { 
-				logger.debug("Proxied the data thru an external server for PV " + pvNames[i]);
+				logger.debug("Proxied the data thru an external server for PV " + pvNames.get(i));
 				return;
 			}
 			
 			if(retiredPVTemplate != null) {
 				PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
 				if(templateTypeInfo != null) { 
-					typeInfos[i] = new PVTypeInfo(pvNames[i], templateTypeInfo);
-					typeInfos[i].setPaused(true);
-					typeInfos[i].setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+					typeInfos.set(i, new PVTypeInfo(pvNames.get(i), templateTypeInfo));
+					typeInfos.get(i).setPaused(true);
+					typeInfos.get(i).setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
 					// Somehow tell the code downstream that this is a fake typeInfos.
-					typeInfos[i].setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
-					logger.debug("Using a template PV for " + pvNames[i] + " Need to determine the actual DBR type.");
-					setActualDBRTypeFromData(pvNames[i], typeInfos[i], configService);
+					typeInfos.get(i).setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
+					logger.debug("Using a template PV for " + pvNames.get(i) + " Need to determine the actual DBR type.");
+					setActualDBRTypeFromData(pvNames.get(i), typeInfos.get(i), configService);
 				}
 			}
 			
-			if (typeInfos[i] == null) { 
-				logger.error("Unable to find typeinfo for pv " + pvNames[i]);
+			if (typeInfos.get(i) == null) { 
+				logger.error("Unable to find typeinfo for pv " + pvNames.get(i));
 				resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 				return;
 			}
 			
-			if (postProcessors[i] == null) {
+			if (postProcessors.get(i) == null) {
 				if(useReduced) {
 					String defaultPPClassName = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.retrieval.DefaultUseReducedPostProcessor", FirstSamplePP.class.getName());
 					logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
 					try {
-						postProcessors[i] = (PostProcessor) Class.forName(defaultPPClassName).newInstance();
+						postProcessors.set(i, (PostProcessor) Class.forName(defaultPPClassName).newInstance());
 					} catch(Exception ex) {
 						logger.error("Exception constructing new instance of post processor " + defaultPPClassName, ex);
-						postProcessors[i] = null;
+						postProcessors.set(i, null);
 					}
 				}
 			}
 	
-			if (postProcessors[i] == null) {
+			if (postProcessors.get(i) == null) {
 				logger.debug("Using the default raw preprocessor");
-				postProcessors[i] = new DefaultRawPostProcessor();
+				postProcessors.set(i, new DefaultRawPostProcessor());
 			}
 		}
 		
@@ -777,24 +784,24 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		
 		// Get the appliances for each of the PVs
-		ApplianceInfo[] applianceForPVs = new ApplianceInfo[pvNames.length];
-		for (int i = 0; i < pvNames.length; i++) {
-			applianceForPVs[i] = configService.getApplianceForPV(pvNames[i]);
-			if(applianceForPVs[i] == null) {
+		List<ApplianceInfo> applianceForPVs = new ArrayList<ApplianceInfo>(pvNames.size());
+		for (int i = 0; i < pvNames.size(); i++) {
+			applianceForPVs.set(i, configService.getApplianceForPV(pvNames.get(i)));
+			if(applianceForPVs.get(i) == null) {
 				// TypeInfo cannot be null here...
-				assert(typeInfos[i] != null);
-				applianceForPVs[i] = configService.getAppliance(typeInfos[i].getApplianceIdentity());
+				assert(typeInfos.get(i) != null);
+				applianceForPVs.set(i, configService.getAppliance(typeInfos.get(i).getApplianceIdentity()));
 			}
 		}
 		
 		// Retrieving the external appliances if the current appliance has not got the PV assigned to it
 		// TODO Find PVs that are in other appliances, group them together, send requests for those PVs, and then pass it back
 		Map<String, ArrayList<String>> applianceToPVs = new HashMap<String, ArrayList<String>>();
-		for (int i = 0; i < pvNames.length; i++) {
-			if (!applianceForPVs[i].equals(configService.getMyApplianceInfo())) {
-				ArrayList<String> appliancePVs = applianceToPVs.get(applianceForPVs[i].getMgmtURL());
-				appliancePVs.add(pvNames[i]);
-				applianceToPVs.put(applianceForPVs[i].getRetrievalURL(), appliancePVs);
+		for (int i = 0; i < pvNames.size(); i++) {
+			if (!applianceForPVs.get(i).equals(configService.getMyApplianceInfo())) {
+				ArrayList<String> appliancePVs = applianceToPVs.get(applianceForPVs.get(i).getMgmtURL());
+				appliancePVs.add(pvNames.get(i));
+				applianceToPVs.put(applianceForPVs.get(i).getRetrievalURL(), appliancePVs);
 			}
 		}
 		
@@ -830,26 +837,26 @@ public class DataRetrievalServlet  extends HttpServlet {
 	
 		
 		// Setting post processor for PVs, taking into account whether there is a field in the PV name
-		String[] pvNamesFromRequests = new String[pvNames.length];
-		for (int i = 0; i < pvNames.length; i++) {
-			String pvName = pvNames[i];
-			pvNamesFromRequests[i] = pvName;
-			PVTypeInfo typeInfo = typeInfos[i];
-			postProcessorUserArg = postProcessorUserArgs[i];
+		List<String> pvNamesFromRequests = new ArrayList<String>(pvNames.size());
+		for (int i = 0; i < pvNames.size(); i++) {
+			String pvName = pvNames.get(i);
+			pvNamesFromRequests.set(i, pvName);
+			PVTypeInfo typeInfo = typeInfos.get(i);
+			postProcessorUserArg = postProcessorUserArgs.get(i);
 			
 			// If a field is specified in a PV name, it will create a post processor for that
 			String fieldName = PVNames.getFieldName(pvName);
 			if(fieldName != null && !fieldName.equals("") && !pvName.equals(typeInfo.getPvName())) {
 				logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName() 
 						+ " as that determines the name of the stream. Also using ExtraFieldsPostProcessor.");
-				pvNames[i] = typeInfo.getPvName();
-				postProcessors[i] = new ExtraFieldsPostProcessor(fieldName);
+				pvNames.set(i, typeInfo.getPvName());
+				postProcessors.set(i, new ExtraFieldsPostProcessor(fieldName));
 			}
 		
 			try {
 				// Postprocessors get their mandatory arguments from the request.
 				// If user does not pass in the expected request, throw an exception.
-				postProcessors[i].initialize(postProcessorUserArg, pvName);
+				postProcessors.get(i).initialize(postProcessorUserArg, pvName);
 			} catch (Exception ex) {
 				logger.error("Postprocessor threw an exception during initialization for " + pvName, ex);
 				resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
@@ -872,14 +879,14 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		List<List<Future<EventStream>>> listOfEventStreamFuturesLists = null;
 		List<HashMap<String, String>> engineMetadatas = null;
-		for (int i = 0; i < pvNames.length; i++) {
+		for (int i = 0; i < pvNames.size(); i++) {
 			// This is to prevent too much searching. Might save on speed.
 			// IF, however, at any point any of these values are mutated, we should ensure we do not mutate the clones, but the originals.
-			String pvName = pvNames[i];
-			String pvNameFromRequest = pvNamesFromRequests[i];
-			PVTypeInfo typeInfo = typeInfos[i];
-			PostProcessor postProcessor = postProcessors[i];
-			ApplianceInfo applianceForPV = applianceForPVs[i];
+			String pvName = pvNames.get(i);
+			String pvNameFromRequest = pvNamesFromRequests.get(i);
+			PVTypeInfo typeInfo = typeInfos.get(i);
+			PostProcessor postProcessor = postProcessors.get(i);
+			ApplianceInfo applianceForPV = applianceForPVs.get(i);
 			
 			try(BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest);
 					RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, req, postProcessor)) {
@@ -910,12 +917,12 @@ public class DataRetrievalServlet  extends HttpServlet {
 		String currentlyProcessingPV = null;
 		
 		try {
-			for (int i = 0; i < pvNames.length; i++) {
+			for (int i = 0; i < pvNames.size(); i++) {
 			List<Future<EventStream>> eventStreamFutures = listOfEventStreamFuturesLists.get(i);
-			String pvName = pvNames[i];
-			PVTypeInfo typeInfo = typeInfos[i];
+			String pvName = pvNames.get(i);
+			PVTypeInfo typeInfo = typeInfos.get(i);
 			HashMap<String, String> engineMetadata = engineMetadatas.get(i);
-			PostProcessor postProcessor = postProcessors[i];
+			PostProcessor postProcessor = postProcessors.get(i);
 			
 			logger.debug("Done with the RetrievalResults; moving onto the individual event stream from each source for " + StringUtils.join(pvNames, ", "));
 			pmansProfiler.mark("After retrieval results");
