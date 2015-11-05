@@ -4,12 +4,8 @@
         <servlet-class>org.epics.archiverappliance.common.StaticContentServlet</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>SinglePVDataRetrievalServlet</servlet-name>
-        <servlet-class>org.epics.archiverappliance.retrieval.SinglePVDataRetrievalServlet</servlet-class>
-    </servlet>
-    <servlet>
-    	<servlet-name>MultiPVDataRetrievalServlet</servlet-name>
-    	<servlet-class>org.epics.archiverappliance.retrieval.MultiPVDataRetrievalServlet</servlet-class>
+        <servlet-name>DataRetrievalServlet</servlet-name>
+        <servlet-class>org.epics.archiverappliance.retrieval.DataRetrievalServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>PingServlet</servlet-name>
@@ -28,12 +24,8 @@
         <url-pattern>/ping</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>SinglePVDataRetrievalServlet</servlet-name>
-        <url-pattern>/data/getData*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-    	<servlet-name>MultiPVDataRetrievalServlet</servlet-name>
-    	<url-pattern>/data/getDataForPVs*</url-pattern>
+        <servlet-name>DataRetrievalServlet</servlet-name>
+        <url-pattern>/data/*</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>BPLServlet</servlet-name>
