@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -82,6 +83,8 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadExecutorServic
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
+
+import com.kenai.jffi.Array;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
@@ -126,17 +129,22 @@ public class DataRetrievalServlet  extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		
-		String requestName = req.getPathInfo().split("/")[-1].split(".")[0];
+		String[] pathnameSplit = req.getPathInfo().split("/");
+		String requestName = (pathnameSplit[pathnameSplit.length - 1].split("\\."))[0];
 		
 		if (requestName.equals("getData")) {
+			logger.info("User requesting data for single PV");
 			doGetSinglePV(req, resp);
 		} else if (requestName.equals("getDataForPVs")) {
+			logger.info("User requesting data for multiple PVs");
 			doGetMultiPV(req, resp);
 		} else {
 			String msg = "\"" + requestName + "\" is not a valid API method.";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 		}
+		
+		return;
 		
 	}
 	
@@ -192,8 +200,9 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		
 		if(pvName == null) {
+			String msg = "PV name is null.";
 			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 			return;
 		}
 
@@ -218,9 +227,10 @@ public class DataRetrievalServlet  extends HttpServlet {
 				try { 
 					end = TimeUtils.convertFromDateTimeStringWithOffset(endTimeStr);
 				} catch(IllegalArgumentException ex2) { 
-					logger.warn("Cannot parse time " + endTimeStr, ex2);
+					String msg = "Cannot parse time" + endTimeStr;
+					logger.warn(msg, ex2);
 					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return;
 				}
 			}
@@ -235,16 +245,18 @@ public class DataRetrievalServlet  extends HttpServlet {
 				try { 
 					start = TimeUtils.convertFromDateTimeStringWithOffset(startTimeStr);
 				} catch(IllegalArgumentException ex2) { 
-					logger.warn("Cannot parse time " + startTimeStr, ex2);
+					String msg = "Cannot parse time " + startTimeStr;
+					logger.warn(msg, ex2);
 					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return;
 				}
 			}
 		}
 		
 		if(end.before(start)) {
-			logger.error("For request, end " + end.toString() + " is before start " + start.toString() + " for pv " + pvName);
+			String msg = "For request, end " + end.toString() + " is before start " + start.toString() + " for pv " + pvName;
+			logger.error(msg);
 			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
@@ -512,15 +524,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 		// Gets the list of PVs specified by the `pv` parameter
 		// String arrays might be inefficient for retrieval. In any case, they are sorted, which is essential later on.
 		List<String> pvNames = Arrays.asList(req.getParameterValues("pv"));
-		
-		if (!req.getPathInfo().split(".")[1].equals(".json")) {
-			String msg = "Cannot process request as currently we only support JSON MIME type.";
-			logger.error(msg);
-			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-			resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
-			return;
-		}
-		
 	
 		// Ensuring that the AA has finished starting up before requests are accepted.
 		if(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE) { 
@@ -531,10 +534,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 			resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
 			return;
 		}
-		
-		
-		// --------------- NEXT PART ------------------
-		
 		
 		// Getting various fields from arguments
 		String startTimeStr = req.getParameter("from"); 
@@ -549,14 +548,17 @@ public class DataRetrievalServlet  extends HttpServlet {
 				useReduced = false;
 			}
 		}
-
-		
-		// --------------- NEXT PART ------------------
-		
 		
 		// Getting MIME type
 		String extension = req.getPathInfo().split("\\.")[1];
 		logger.info("Mime is " + extension);
+		
+		if (!extension.equals("json")) {
+			String msg = "Mime type " + extension + " is not supported. Please use \"json\".";
+			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+			return;
+		}
 		
 		boolean useChunkedEncoding = true;
 		String doNotChunkStr = req.getParameter("donotchunk");
@@ -576,10 +578,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 		// So, we support a template PV that lays out the data sources.
 		// During retrieval, you can pass in the PV as a template and we'll clone this and make a temporary copy.
 		String retiredPVTemplate = req.getParameter("retiredPVTemplate");
-		
-
-		// --------------- NEXT PART ------------------
-		
 		
 		// Goes through given PVs and returns bad request error.
 		int nullPVs = 0;
@@ -606,10 +604,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 			pvName = pvName.substring(0, len-4);
 			logger.info("Removing .VAL from pvName for request giving " + pvName);
 		}
-		
-		
-		// --------------- NEXT PART ------------------
-		
 
 		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
 		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 1);
@@ -620,9 +614,10 @@ public class DataRetrievalServlet  extends HttpServlet {
 				try { 
 					end = TimeUtils.convertFromDateTimeStringWithOffset(endTimeStr);
 				} catch(IllegalArgumentException ex2) { 
-					logger.warn("Cannot parse time " + endTimeStr, ex2);
+					String msg = "Cannot parse time " + endTimeStr;
+					logger.warn(msg, ex2);
 					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return;
 				}
 			}
@@ -637,26 +632,25 @@ public class DataRetrievalServlet  extends HttpServlet {
 				try { 
 					start = TimeUtils.convertFromDateTimeStringWithOffset(startTimeStr);
 				} catch(IllegalArgumentException ex2) { 
-					logger.warn("Cannot parse time " + startTimeStr, ex2);
+					String msg = "Cannot parse time " + startTimeStr;
+					logger.warn(msg, ex2);
 					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return;
 				}
 			}
 		}
 		
 		if(end.before(start)) {
-			logger.error("For request, end " + end.toString() + " is before start " + start.toString() + " for pvs " + StringUtils.join(pvNames, ", "));
+			String msg = "For request, end " + end.toString() + " is before start " + start.toString() 
+					+ " for pvs " + StringUtils.join(pvNames, ", ");
+			logger.error(msg);
 			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 			return;
 		}
 		
 		LinkedList<TimeSpan> requestTimes = new LinkedList<TimeSpan>();
-		
-		
-		// --------------- NEXT PART ------------------
-		
 		
 		// We can specify a list of time stamp pairs using the optional timeranges parameter
 		String timeRangesStr = req.getParameter("timeranges");
@@ -666,8 +660,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 				// Cannot parse the time ranges properly; we so abort the request.
 				String msg = "The specified time ranges could not be processed appropriately. Aborting.";
 				logger.info(msg);
-				resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
-				resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+				resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+				resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 				return;
 			}
 			
@@ -681,26 +675,20 @@ public class DataRetrievalServlet  extends HttpServlet {
 
 		assert(requestTimes.size() > 0);
 		
-		
-		// --------------- NEXT PART ------------------
-		
-		
 		// Get a post processor for each PV specified in pvNames
 		// If PV in the form <pp>(<pv>), process it
 		String postProcessorUserArg = req.getParameter("pp");
 		List<String> postProcessorUserArgs = new ArrayList<>(pvNames.size());
 		List<PostProcessor> postProcessors = new ArrayList<>(pvNames.size());
 		for (int i = 0; i < pvNames.size(); i++) {
-			if (postProcessorUserArg == null)
-				postProcessorUserArgs.set(i, "");
-			else
-				postProcessorUserArgs.set(i, postProcessorUserArg);
+			postProcessorUserArgs.add(postProcessorUserArg);
 			
 			if (pvNames.get(i).contains("(")) {
 				if(!pvNames.get(i).contains(")")) {
-					logger.error("Unbalanced paran " + pvNames.get(i));
+					String msg = "Unbalanced paren " + pvNames.get(i);
+					logger.error(msg);
 					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 					return;
 				}
 				String[] components = pvNames.get(i).split("[(,)]");
@@ -713,16 +701,12 @@ public class DataRetrievalServlet  extends HttpServlet {
 				}
 				logger.info("After parsing the function call syntax pvName is " + pvNames.get(i) + " and postProcessorUserArg is " + postProcessorUserArg);
 			}
-			postProcessors.set(i, PostProcessors.findPostProcessor(postProcessorUserArg));
+			postProcessors.add(PostProcessors.findPostProcessor(postProcessorUserArg));
 		}
-
-		
-		// --------------- NEXT PART ------------------
-
 		
 		List<PVTypeInfo> typeInfos  = new ArrayList<PVTypeInfo>(pvNames.size());
 		for (int i = 0; i < pvNames.size(); i++) {
-			typeInfos.set(i, PVNames.determineAppropriatePVTypeInfo(pvNames.get(i), configService));
+			typeInfos.add(PVNames.determineAppropriatePVTypeInfo(pvNames.get(i), configService));
 		}
 		pmansProfiler.mark("After PVTypeInfo");
 		
@@ -732,37 +716,41 @@ public class DataRetrievalServlet  extends HttpServlet {
 			typeInfos.set(i, checkIfPVisServedByExternalServer(pvNames.get(i), start, req, resp, useChunkedEncoding));
 		}
 		
-		
-		for (int i = 0; i < pvNames.size(); i++) if(typeInfos.get(i) == null) {
-			// TODO Only needed if we're forwarding the request to another server.
-			if(resp.isCommitted()) { 
-				logger.debug("Proxied the data thru an external server for PV " + pvNames.get(i));
-				return;
-			}
-			
-			if(retiredPVTemplate != null) {
-				PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
-				if(templateTypeInfo != null) { 
-					typeInfos.set(i, new PVTypeInfo(pvNames.get(i), templateTypeInfo));
-					typeInfos.get(i).setPaused(true);
-					typeInfos.get(i).setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
-					// Somehow tell the code downstream that this is a fake typeInfos.
-					typeInfos.get(i).setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
-					logger.debug("Using a template PV for " + pvNames.get(i) + " Need to determine the actual DBR type.");
-					setActualDBRTypeFromData(pvNames.get(i), typeInfos.get(i), configService);
+		for (int i = 0; i < pvNames.size(); i++) {
+			if(typeInfos.get(i) == null) {
+				// TODO Only needed if we're forwarding the request to another server.
+				if(resp.isCommitted()) { 
+					logger.debug("Proxied the data thru an external server for PV " + pvNames.get(i));
+					return;
+				}
+				
+				if(retiredPVTemplate != null) {
+					PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
+					if(templateTypeInfo != null) { 
+						typeInfos.set(i, new PVTypeInfo(pvNames.get(i), templateTypeInfo));
+						typeInfos.get(i).setPaused(true);
+						typeInfos.get(i).setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+						// Somehow tell the code downstream that this is a fake typeInfos.
+						typeInfos.get(i).setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
+						logger.debug("Using a template PV for " + pvNames.get(i) + " Need to determine the actual DBR type.");
+						setActualDBRTypeFromData(pvNames.get(i), typeInfos.get(i), configService);
+					}
 				}
 			}
-			
-			if (typeInfos.get(i) == null) { 
-				logger.error("Unable to find typeinfo for pv " + pvNames.get(i));
+				
+			if (typeInfos.get(i) == null) {
+				String msg = "Unable to find typeinfo for pv " + pvNames.get(i);
+				logger.error(msg);
 				resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
 				return;
 			}
 			
 			if (postProcessors.get(i) == null) {
 				if(useReduced) {
-					String defaultPPClassName = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.retrieval.DefaultUseReducedPostProcessor", FirstSamplePP.class.getName());
+					String defaultPPClassName = configService.getInstallationProperties()
+							.getProperty("org.epics.archiverappliance.retrieval.DefaultUseReducedPostProcessor",
+									FirstSamplePP.class.getName());
 					logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
 					try {
 						postProcessors.set(i, (PostProcessor) Class.forName(defaultPPClassName).newInstance());
@@ -779,14 +767,10 @@ public class DataRetrievalServlet  extends HttpServlet {
 			}
 		}
 		
-		
-		// --------------- NEXT PART ------------------
-		
-		
 		// Get the appliances for each of the PVs
 		List<ApplianceInfo> applianceForPVs = new ArrayList<ApplianceInfo>(pvNames.size());
 		for (int i = 0; i < pvNames.size(); i++) {
-			applianceForPVs.set(i, configService.getApplianceForPV(pvNames.get(i)));
+			applianceForPVs.add(configService.getApplianceForPV(pvNames.get(i)));
 			if(applianceForPVs.get(i) == null) {
 				// TypeInfo cannot be null here...
 				assert(typeInfos.get(i) != null);
@@ -832,23 +816,20 @@ public class DataRetrievalServlet  extends HttpServlet {
 
 		pmansProfiler.mark("After Appliance Info");
 		
-		
-		// --------------- NEXT PART ------------------
-	
-		
 		// Setting post processor for PVs, taking into account whether there is a field in the PV name
 		List<String> pvNamesFromRequests = new ArrayList<String>(pvNames.size());
 		for (int i = 0; i < pvNames.size(); i++) {
 			String pvName = pvNames.get(i);
-			pvNamesFromRequests.set(i, pvName);
+			pvNamesFromRequests.add(pvName);
 			PVTypeInfo typeInfo = typeInfos.get(i);
 			postProcessorUserArg = postProcessorUserArgs.get(i);
 			
 			// If a field is specified in a PV name, it will create a post processor for that
 			String fieldName = PVNames.getFieldName(pvName);
 			if(fieldName != null && !fieldName.equals("") && !pvName.equals(typeInfo.getPvName())) {
-				logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName() 
-						+ " as that determines the name of the stream. Also using ExtraFieldsPostProcessor.");
+				logger.debug("We reset the pvName " + pvName + " to one from the typeinfo "
+						+ typeInfo.getPvName() + " as that determines the name of the stream. "
+								+ "Also using ExtraFieldsPostProcessor.");
 				pvNames.set(i, typeInfo.getPvName());
 				postProcessors.set(i, new ExtraFieldsPostProcessor(fieldName));
 			}
@@ -858,14 +839,24 @@ public class DataRetrievalServlet  extends HttpServlet {
 				// If user does not pass in the expected request, throw an exception.
 				postProcessors.get(i).initialize(postProcessorUserArg, pvName);
 			} catch (Exception ex) {
-				logger.error("Postprocessor threw an exception during initialization for " + pvName, ex);
+				String msg = "Postprocessor threw an exception during initialization for " + pvName;
+				logger.error(msg, ex);
 				resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
 				return;
 			}
 		}
 		
-		// Create this outside since it isn't dependent upon any particular PV
+		/*
+		 * MergeDedupConsumer is what writes PB data in its respective format to the HTML response.
+		 * The response, after the MergeDedupConsumer is created, contains the following:
+		 * 
+		 * 1) The content type for the response.
+		 * 2) Any additional headers for the particular MIME response.
+		 * 
+		 * Additionally, the MergeDedupConsumer instance holds a reference to the output stream
+		 * that is used to write to the HTML response. It is stored under the name `os`.
+		 */
 		MergeDedupConsumer mergeDedupCountingConsumer;
 		try {
 			mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension, useChunkedEncoding);
@@ -876,137 +867,45 @@ public class DataRetrievalServlet  extends HttpServlet {
 			resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
 			return;
 		}
-		
-		List<List<Future<EventStream>>> listOfEventStreamFuturesLists = null;
-		List<HashMap<String, String>> engineMetadatas = null;
-		for (int i = 0; i < pvNames.size(); i++) {
-			// This is to prevent too much searching. Might save on speed.
-			// IF, however, at any point any of these values are mutated, we should ensure we do not mutate the clones, but the originals.
-			String pvName = pvNames.get(i);
-			String pvNameFromRequest = pvNamesFromRequests.get(i);
-			PVTypeInfo typeInfo = typeInfos.get(i);
-			PostProcessor postProcessor = postProcessors.get(i);
-			ApplianceInfo applianceForPV = applianceForPVs.get(i);
-			
-			try(BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest);
-					RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, req, postProcessor)) {
+
+		/* 
+		 * BasicContext contains the PV name and the expected return type. Used to access PB files.
+		 * RetrievalExecutorResult contains a thread service class and the time spans Presumably, the 
+		 * thread service is what retrieves the data, and the BasicContext is the context in which it 
+		 * works.
+		 */
+		List<List<Future<EventStream>>> listOfEventStreamFuturesLists = new ArrayList<List<Future<EventStream>>>();
+		List<HashMap<String, String>> engineMetadatas = new ArrayList<HashMap<String, String>>();
+		try {
+			List<BasicContext> retrievalContexts = new ArrayList<BasicContext>(pvNames.size());
+			List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvNames.size());
+			for (int i = 0; i < pvNames.size(); i++) {
 				if(fetchLatestMetadata) {
 					// Make a call to the engine to fetch the latest metadata.
-					engineMetadatas.add(fetchLatestMedataFromEngine(pvName, applianceForPV));
+					engineMetadatas.add(fetchLatestMedataFromEngine(pvNames.get(i), applianceForPVs.get(i)));
 				}
-				
-				// Gets the data source for a PV (the pbraw URLs) and produces a thread that is executable in the future
-				// If only one time period has been specified (e.g., start and end), then there will only be one 'Future'
-				LinkedList<Future<RetrievalResult>> retrievalResultFutures = resolveAllDataSources(pvName, typeInfo, postProcessor, 
-						applianceForPV, retrievalContext, executorResult, req, resp);
-				pmansProfiler.mark("After data source resolution");
-	
-				List<Future<EventStream>> eventStreamFutures = getEventStreamFuturesFromRetrievalResults(executorResult, retrievalResultFutures);
-				listOfEventStreamFuturesLists.add(eventStreamFutures);
-			} catch(Exception ex) {
-				if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
-					// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
-					logger.debug("Exception when retrieving data ", ex);
-				} else { 
-					logger.error("Exception when retrieving data " + "-->" + ex.toString(), ex);
-				}
+				retrievalContexts.add(new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i)));
+				executorResults.add(determineExecutorForPostProcessing(pvNames.get(i), typeInfos.get(i), requestTimes, req, postProcessors.get(i)));
 			}
-		}
-		
-		long s1 = System.currentTimeMillis();
-		String currentlyProcessingPV = null;
-		
-		try {
+			
+			/*
+			 * There are as many Future objects in the eventStreamFutures List as there are periods over 
+			 * which to fetch data. Retrieval of data happen here in parallel.
+			 */
+			List<LinkedList<Future<RetrievalResult>>> listOfRetrievalResultFuturesLists = new ArrayList<LinkedList<Future<RetrievalResult>>>();
 			for (int i = 0; i < pvNames.size(); i++) {
-			List<Future<EventStream>> eventStreamFutures = listOfEventStreamFuturesLists.get(i);
-			String pvName = pvNames.get(i);
-			PVTypeInfo typeInfo = typeInfos.get(i);
-			HashMap<String, String> engineMetadata = engineMetadatas.get(i);
-			PostProcessor postProcessor = postProcessors.get(i);
-			
-			logger.debug("Done with the RetrievalResults; moving onto the individual event stream from each source for " + StringUtils.join(pvNames, ", "));
-			pmansProfiler.mark("After retrieval results");
-			for(Future<EventStream> future : eventStreamFutures) {
-				EventStreamDesc sourceDesc = null;
-				try (EventStream eventStream = future.get()) {
-					sourceDesc = null; // Reset it for each loop iteration.
-					sourceDesc = eventStream.getDescription();
-					if(sourceDesc == null) {
-						logger.warn("Skipping event stream without a desc for pv " + pvName);
-						continue;
-					}
-
-					logger.debug("Processing event stream for pv " + pvName + " from source " + ((eventStream.getDescription() != null) ? eventStream.getDescription().getSource() : " unknown"));
-
-
-					try {
-						mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
-					} catch(MismatchedDBRTypeException mex) {
-						logger.error(mex.getMessage(), mex);
-						continue;
-					} 
-
-					if(currentlyProcessingPV == null || !currentlyProcessingPV.equals(pvName)) {
-						logger.debug("Switching to new PV " + pvName + " In some mime responses we insert special headers at the beginning of the response. Calling the hook for that");
-						currentlyProcessingPV = pvName;
-						mergeDedupCountingConsumer.processingPV(currentlyProcessingPV, start, end, (eventStream != null) ? sourceDesc : null);
-					}
-
-
-					try {
-						// If the postProcessor does not have a consolidated event stream, we send each eventstream across as we encounter it.
-						// Else we send the consolidatedEventStream down below.
-						if(!(postProcessor instanceof PostProcessorWithConsolidatedEventStream)) { 
-							mergeDedupCountingConsumer.consumeEventStream(eventStream);
-							resp.flushBuffer();
-						}
-					} catch(Exception ex) {
-						if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
-							// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
-							logger.debug("Exception when consuming and flushing data from " + sourceDesc.getSource(), ex);
-						} else { 
-							logger.error("Exception when consuming and flushing data from " + sourceDesc.getSource() + "-->" + ex.toString(), ex);
-						}
-					}
-					pmansProfiler.mark("After event stream " + eventStream.getDescription().getSource());
-				} catch(Exception ex) { 
-					if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
-						// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
-						logger.debug("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A"), ex);
-					} else { 
-						logger.error("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A") + "-->" + ex.toString(), ex);
-					}
-				}
+				listOfRetrievalResultFuturesLists.add(resolveAllDataSources(pvNames.get(i), typeInfos.get(i), postProcessors.get(i), 
+						applianceForPVs.get(i), retrievalContexts.get(i), executorResults.get(i), req, resp));
 			}
-				
-			if(postProcessor instanceof PostProcessorWithConsolidatedEventStream) { 
-				try(EventStream eventStream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream()) {
-					EventStreamDesc sourceDesc = eventStream.getDescription();
-					if(sourceDesc == null) {
-						logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor " + postProcessor.getExtension());
-					} else { 
-						mergeDedupCountingConsumer.consumeEventStream(eventStream);
-						resp.flushBuffer();
-					}
-				}
-			}
-	
-			// If the postProcessor needs to send final data across, give it a chance now...
-			if(postProcessor instanceof AfterAllStreams) {
-				EventStream finalEventStream = ((AfterAllStreams)postProcessor).anyFinalData();
-				if(finalEventStream != null) { 
-					mergeDedupCountingConsumer.consumeEventStream(finalEventStream);
-					resp.flushBuffer();
-				}
+			pmansProfiler.mark("After data source resolution");
+
+			for (int i = 0; i < pvNames.size(); i++) {
+				// Data is retrieved here
+				List<Future<EventStream>> eventStreamFutures = getEventStreamFuturesFromRetrievalResults(executorResults.get(i),
+						listOfRetrievalResultFuturesLists.get(i));
+				listOfEventStreamFuturesLists.add(eventStreamFutures);
 			}
 			
-			pmansProfiler.mark("After writing all eventstreams to response");
-
-			long s2 = System.currentTimeMillis();
-			logger.info("For the complete request, found a total of " + mergeDedupCountingConsumer.totalEventsForAllPVs + " in " + (s2-s1) + "(ms)" 
-					+ " skipping " + mergeDedupCountingConsumer.skippedEventsForAllPVs + " events"
-					+ " deduping involved " + mergeDedupCountingConsumer.comparedEventsForAllPVs + " compares.");
-			}
 		} catch(Exception ex) {
 			if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
 				// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
@@ -1015,6 +914,144 @@ public class DataRetrievalServlet  extends HttpServlet {
 				logger.error("Exception when retrieving data " + "-->" + ex.toString(), ex);
 			}
 		}
+		
+		System.out.println("Managed to get past the retrieval part.");
+		
+		long s1 = System.currentTimeMillis();
+		String currentlyProcessingPV = null;
+		
+		/*
+		 * The following try bracket goes through each of the streams in the list of event stream futures.
+		 * 
+		 * It is intended that the process goes through one PV at a time.
+		 */
+		try {
+			for (int i = 0; i < pvNames.size(); i++) {
+				List<Future<EventStream>> eventStreamFutures = listOfEventStreamFuturesLists.get(i);
+				String pvName = pvNames.get(i);
+				PVTypeInfo typeInfo = typeInfos.get(i);
+				HashMap<String, String> engineMetadata = fetchLatestMetadata ? engineMetadatas.get(i) : null;
+				PostProcessor postProcessor = postProcessors.get(i);
+				
+				logger.debug("Done with the RetrievalResults; moving onto the individual event stream "
+						+ "from each source for " + StringUtils.join(pvNames, ", "));
+				pmansProfiler.mark("After retrieval results");
+				for(Future<EventStream> future : eventStreamFutures) {
+					EventStreamDesc sourceDesc = null;
+					
+					// Gets the result of a data retrieval
+					try (EventStream eventStream = future.get()) {
+						sourceDesc = null; // Reset it for each loop iteration.
+						sourceDesc = eventStream.getDescription();
+						if(sourceDesc == null) {
+							logger.warn("Skipping event stream without a desc for pv " + pvName);
+							continue;
+						}
+	
+						logger.debug("Processing event stream for pv " + pvName + " from source "
+								+ ((eventStream.getDescription() != null) ? eventStream.getDescription().getSource() : " unknown"));
+	
+
+						try {
+							mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
+						} catch(MismatchedDBRTypeException mex) {
+							logger.error(mex.getMessage(), mex);
+							continue;
+						} 
+	
+						if(currentlyProcessingPV == null || !currentlyProcessingPV.equals(pvName)) {
+							logger.debug("Switching to new PV " + pvName + " In some mime responses we insert "
+									+ "special headers at the beginning of the response. Calling the hook for "
+									+ "that");
+							System.out.println("Switching to new PV " + pvName + " In some mime responses we "
+									+ "insert special headers at the beginning of the response. Calling the "
+									+ "hook for that");
+							currentlyProcessingPV = pvName;
+							/*
+							 * Goes through the PB data stream over a period of time. The relevant MIME response
+							 * actually deal with the processing of the PV. `start` and `end` refer to the very
+							 * beginning and very end of the time period being retrieved over, regardless of
+							 * whether it is divided up or not.
+							 */
+							mergeDedupCountingConsumer.processingPV(currentlyProcessingPV, start, end, (eventStream != null) ? sourceDesc : null);
+						}
+	
+	
+						try {
+							// If the postProcessor does not have a consolidated event stream, we send each eventstream across as we encounter it.
+							// Else we send the consolidatedEventStream down below.
+							if(!(postProcessor instanceof PostProcessorWithConsolidatedEventStream)) {
+								/*
+								 * The eventStream object contains all the data over the current period.
+								 */
+								System.out.println("IN HERE");
+								mergeDedupCountingConsumer.consumeEventStream(eventStream);
+								resp.flushBuffer();
+								System.out.println("AND OUT AGAIN");
+							}
+						} catch(Exception ex) {
+							System.out.println("WOOPS");
+							ex.printStackTrace();
+							if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+								// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
+								logger.debug("Exception when consuming and flushing data from " + sourceDesc.getSource(), ex);
+							} else { 
+								logger.error("Exception when consuming and flushing data from " + sourceDesc.getSource() + "-->" + ex.toString(), ex);
+							}
+						}
+						pmansProfiler.mark("After event stream " + eventStream.getDescription().getSource());
+					} catch(Exception ex) { 
+						System.out.println("WOOPSIE");
+						ex.printStackTrace();
+						if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+							// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
+							logger.debug("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A"), ex);
+						} else { 
+							logger.error("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A") + "-->" + ex.toString(), ex);
+						}
+					}
+				}
+					
+				if(postProcessor instanceof PostProcessorWithConsolidatedEventStream) { 
+					try(EventStream eventStream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream()) {
+						EventStreamDesc sourceDesc = eventStream.getDescription();
+						if(sourceDesc == null) {
+							logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor " + postProcessor.getExtension());
+						} else { 
+							mergeDedupCountingConsumer.consumeEventStream(eventStream);
+							resp.flushBuffer();
+						}
+					}
+				}
+		
+				// If the postProcessor needs to send final data across, give it a chance now...
+				if(postProcessor instanceof AfterAllStreams) {
+					EventStream finalEventStream = ((AfterAllStreams)postProcessor).anyFinalData();
+					if(finalEventStream != null) { 
+						mergeDedupCountingConsumer.consumeEventStream(finalEventStream);
+						resp.flushBuffer();
+					}
+				}
+				
+				pmansProfiler.mark("After writing all eventstreams to response");
+			}
+		} catch(Exception ex) {
+			
+			System.out.println("Aaaaaaand it's gone!");
+			ex.printStackTrace();
+			
+			if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+				// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
+				logger.debug("Exception when retrieving data ", ex);
+			} else { 
+				logger.error("Exception when retrieving data " + "-->" + ex.toString(), ex);
+			}
+		}
+		
+		long s2 = System.currentTimeMillis();
+		logger.info("For the complete request, found a total of " + mergeDedupCountingConsumer.totalEventsForAllPVs + " in " + (s2-s1) + "(ms)" 
+				+ " skipping " + mergeDedupCountingConsumer.skippedEventsForAllPVs + " events"
+				+ " deduping involved " + mergeDedupCountingConsumer.comparedEventsForAllPVs + " compares.");
 
 		pmansProfiler.mark("After all closes and flushing all buffers");
 			
@@ -1036,7 +1073,9 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 */
 	private List<Future<EventStream>> getEventStreamFuturesFromRetrievalResults(RetrievalExecutorResult executorResult, LinkedList<Future<RetrievalResult>> retrievalResultFutures)
 			throws InterruptedException, ExecutionException {
+		// List containing the result
 		List<Future<EventStream>> eventStreamFutures = new LinkedList<Future<EventStream>>();
+		
 		// Loop thru the retrievalResultFutures one by one in sequence; get all the event streams from the plugins and consolidate them into a sequence of eventStream futures.
 		for(Future<RetrievalResult> retrievalResultFuture : retrievalResultFutures) {
 			// This call blocks until the future is complete.
@@ -1046,6 +1085,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 				logger.debug("Skipping as we have not data from " + retrievalresult.getRetrievalRequest().getDescription() + " for pv " + retrievalresult.getRetrievalRequest().getPvName());
 				continue;
 			}
+			
+			// Process the data retrieval calls.
 			List<Callable<EventStream>> callables = retrievalresult.getResultStreams();
 			for(Callable<EventStream> wrappedCallable : callables) {
 				Future<EventStream> submit = executorResult.executorService.submit(wrappedCallable);
@@ -1074,13 +1115,21 @@ public class DataRetrievalServlet  extends HttpServlet {
 			PostProcessor postProcessor, ApplianceInfo applianceForPV, 
 			BasicContext retrievalContext, RetrievalExecutorResult executorResult, 
 			HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		
 		LinkedList<Future<RetrievalResult>> retrievalResultFutures = new LinkedList<Future<RetrievalResult>>();
+		
+		/*
+		 * Gets the object responsible for resolving data sources (e.g., where data is stored
+		 * for this appliance.
+		 */
 		DataSourceResolution datasourceresolver = new DataSourceResolution(configService);
+		
 		for(TimeSpan timespan : executorResult.requestTimespans) { 
 			// Resolve data sources for the given PV and the given time frames
 			LinkedList<UnitOfRetrieval> unitsofretrieval = datasourceresolver.resolveDataSources(pvName, timespan.getStartTime(), timespan.getEndTime(), typeInfo, retrievalContext, postProcessor, req, resp, applianceForPV);
 			// Submit the units of retrieval to the executor service. This will give us a bunch of Futures.
 			for(UnitOfRetrieval unitofretrieval : unitsofretrieval) {
+				// unitofretrieval implements a call() method as it extends Callable<?>
 				retrievalResultFutures.add(executorResult.executorService.submit(unitofretrieval));
 			}
 		}
