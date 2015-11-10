@@ -40,7 +40,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -83,8 +82,6 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadExecutorServic
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
-
-import com.kenai.jffi.Array;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
@@ -915,8 +912,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 			}
 		}
 		
-		System.out.println("Managed to get past the retrieval part.");
-		
 		long s1 = System.currentTimeMillis();
 		String currentlyProcessingPV = null;
 		
@@ -963,9 +958,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 							logger.debug("Switching to new PV " + pvName + " In some mime responses we insert "
 									+ "special headers at the beginning of the response. Calling the hook for "
 									+ "that");
-							System.out.println("Switching to new PV " + pvName + " In some mime responses we "
-									+ "insert special headers at the beginning of the response. Calling the "
-									+ "hook for that");
 							currentlyProcessingPV = pvName;
 							/*
 							 * Goes through the PB data stream over a period of time. The relevant MIME response
@@ -984,14 +976,10 @@ public class DataRetrievalServlet  extends HttpServlet {
 								/*
 								 * The eventStream object contains all the data over the current period.
 								 */
-								System.out.println("IN HERE");
 								mergeDedupCountingConsumer.consumeEventStream(eventStream);
 								resp.flushBuffer();
-								System.out.println("AND OUT AGAIN");
 							}
 						} catch(Exception ex) {
-							System.out.println("WOOPS");
-							ex.printStackTrace();
 							if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
 								// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
 								logger.debug("Exception when consuming and flushing data from " + sourceDesc.getSource(), ex);
@@ -1000,9 +988,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 							}
 						}
 						pmansProfiler.mark("After event stream " + eventStream.getDescription().getSource());
-					} catch(Exception ex) { 
-						System.out.println("WOOPSIE");
-						ex.printStackTrace();
+					} catch(Exception ex) {
 						if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
 							// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
 							logger.debug("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A"), ex);
@@ -1036,10 +1022,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 				pmansProfiler.mark("After writing all eventstreams to response");
 			}
 		} catch(Exception ex) {
-			
-			System.out.println("Aaaaaaand it's gone!");
-			ex.printStackTrace();
-			
 			if(ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
 				// We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
 				logger.debug("Exception when retrieving data ", ex);
@@ -1059,6 +1041,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 		if(pmansProfiler.totalTimeMS() > 5000) { 
 			logger.error("Retrieval time for " + StringUtils.join(pvNames, ", ") + " from " + startTimeStr + " to " + endTimeStr + ": " + pmansProfiler.toString());
 		}
+		
+		mergeDedupCountingConsumer.close();
 	}
 
 
