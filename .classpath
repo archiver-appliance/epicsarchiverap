@@ -32,6 +32,10 @@
 	<classpathentry exported="true" kind="lib" path="lib/test/pbrawclient-0.0.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/caj-1.1.16.jar" sourcepath="lib/sources/caj-1.1.16-sources.jar"/>
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.3.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.6.jar"/>
+	<classpathentry exported="true" kind="lib" path="log4j.properties"/>
+	<classpathentry exported="true" kind="lib" path="log4j.properties.debug"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
