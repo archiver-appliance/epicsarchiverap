@@ -550,8 +550,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 		String extension = req.getPathInfo().split("\\.")[1];
 		logger.info("Mime is " + extension);
 		
-		if (!extension.equals("json")) {
-			String msg = "Mime type " + extension + " is not supported. Please use \"json\".";
+		if (!extension.equals("json") || !extension.equals("raw") || !extension.equals("jplot")) {
+			String msg = "Mime type " + extension + " is not supported. Please use \"json\", \"jplot\" or \"raw\".";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 			return;
@@ -775,36 +775,39 @@ public class DataRetrievalServlet  extends HttpServlet {
 			}
 		}
 		
-		// Retrieving the external appliances if the current appliance has not got the PV assigned to it
-		// TODO Find PVs that are in other appliances, group them together, send requests for those PVs, and then pass it back
-		Map<String, ArrayList<String>> applianceToPVs = new HashMap<String, ArrayList<String>>();
+		/*
+		 * Retrieving the external appliances if the current appliance has not got the PV assigned to it, and
+		 * storing the associated information of the PVs in that appliance.
+		 */
+		Map<String, ArrayList<PVInfoForClusterRetrieval>> applianceToPVs = new HashMap<String, ArrayList<PVInfoForClusterRetrieval>>();
 		for (int i = 0; i < pvNames.size(); i++) {
 			if (!applianceForPVs.get(i).equals(configService.getMyApplianceInfo())) {
-				ArrayList<String> appliancePVs = applianceToPVs.get(applianceForPVs.get(i).getMgmtURL());
-				appliancePVs.add(pvNames.get(i));
+				
+				ArrayList<PVInfoForClusterRetrieval> appliancePVs = 
+						applianceToPVs.get(applianceForPVs.get(i).getMgmtURL());
+				appliancePVs = (appliancePVs == null) ? new ArrayList<>() : appliancePVs;
+				PVInfoForClusterRetrieval pvInfoForRetrieval = new PVInfoForClusterRetrieval(pvNames.get(i), typeInfos.get(i), 
+						postProcessors.get(i), applianceForPVs.get(i));
+				appliancePVs.add(pvInfoForRetrieval);
 				applianceToPVs.put(applianceForPVs.get(i).getRetrievalURL(), appliancePVs);
 			}
 		}
-		
+
+		List<List<Future<EventStream>>> listOfEventStreamFuturesLists = new ArrayList<List<Future<EventStream>>>();
 		Set<String> retrievalURLs = applianceToPVs.keySet();
-		// TODO For storing the responses to external server calls when a method is sorted
-		// Only happens if 
-		//Map<String, JsonObject> externalResponses = new HashMap<String, JsonObject>();
 		if (retrievalURLs.size() > 0) {
 			// Get list of PVs and redirect them to appropriate appliance to be retrieved.
 			String retrievalURL;
-			String[] pvList;
-			ArrayList<String> pvArrayList;
+			ArrayList<PVInfoForClusterRetrieval> pvInfos;
 			while (!((retrievalURL = retrievalURLs.iterator().next()) != null)) {
 				// Get array list of PVs for appliance
-				pvArrayList = applianceToPVs.get(retrievalURL);
-				pvList = new String[pvArrayList.size()];
-				// Convert to array
-				pvList = pvArrayList.toArray(pvList);
+				pvInfos = applianceToPVs.get(retrievalURL);
 				try {
-					// TODO Overload the function
-					proxyRetrievalRequest(req, resp, pvList[0], useChunkedEncoding, retrievalURL  + "/../data" );
-				} catch (IOException ex) {
+					List<List<Future<EventStream>>> resultFromForeignAppliances
+						= retrieveEventStreamFromForeignAppliance(req, resp, pvInfos, requestTimes, 
+								useChunkedEncoding, retrievalURL + "/../data/getDataForPVs.raw", start, end);
+					listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
+				} catch (Exception ex) {
 					logger.error("Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
 					return;
 				}
@@ -871,7 +874,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 		 * thread service is what retrieves the data, and the BasicContext is the context in which it 
 		 * works.
 		 */
-		List<List<Future<EventStream>>> listOfEventStreamFuturesLists = new ArrayList<List<Future<EventStream>>>();
 		List<HashMap<String, String>> engineMetadatas = new ArrayList<HashMap<String, String>>();
 		try {
 			List<BasicContext> retrievalContexts = new ArrayList<BasicContext>(pvNames.size());
@@ -997,6 +999,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 						}
 					}
 				}
+				
+				// TODO Go through data from other appliances here
 					
 				if(postProcessor instanceof PostProcessorWithConsolidatedEventStream) { 
 					try(EventStream eventStream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream()) {
@@ -1431,7 +1435,53 @@ public class DataRetrievalServlet  extends HttpServlet {
 		}
 	}
 	
-	
+	/**
+	 * If multiple pvs are hosted on another appliance, a retrieval request is made to that appliance and
+	 * the event stream is returned.
+	 * @param req
+	 * @param resp
+	 * @param requestTimes 
+	 * @param pvInfo
+	 * @param useChunkedEncoding
+	 * @param dataRetrievalURLForPV
+	 * @param start
+	 * @param end
+	 * @throws IOException
+	 * @throws ExecutionException 
+	 * @throws InterruptedException 
+	 */
+	private List<List<Future<EventStream>>> retrieveEventStreamFromForeignAppliance(
+			HttpServletRequest req, HttpServletResponse resp,
+			ArrayList<PVInfoForClusterRetrieval> pvInfos, LinkedList<TimeSpan> requestTimes,
+			boolean useChunkedEncoding, String dataRetrievalURLForPV,
+			Timestamp start, Timestamp end) 
+					throws IOException, InterruptedException, ExecutionException {
+		
+		// Get the executors for the PVs in other clusters
+		List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvInfos.size());
+		for (int i = 0; i < pvInfos.size(); i++) {
+			PVInfoForClusterRetrieval pvInfo = pvInfos.get(i);
+			executorResults.add(determineExecutorForPostProcessing(pvInfo.getPVName(), 
+					pvInfo.getTypeInfo(), requestTimes, req, pvInfo.getPostProcessor()));
+		}
+		
+		// Get list of lists of futures of retrieval results. Basically, this is setting up the data sources for retrieval.
+		List<LinkedList<Future<RetrievalResult>>> listOfRetrievalResultsFutures = new ArrayList<LinkedList<Future<RetrievalResult>>>();
+		for (int i = 0; i < pvInfos.size(); i++) {
+			PVInfoForClusterRetrieval pvInfo = pvInfos.get(i);
+			listOfRetrievalResultsFutures.add(resolveAllDataSources(pvInfo.getPVName(), pvInfo.getTypeInfo(), pvInfo.getPostProcessor(), 
+					pvInfo.getApplianceInfo(), new BasicContext(), executorResults.get(i), req, resp));
+		}
+		
+		// Now the data is being retrieved, producing a list of lists of futures of event streams.
+		List<List<Future<EventStream>>> listOfEventStreamFutures = new ArrayList<List<Future<EventStream>>>();
+		for (int i = 0; i < pvInfos.size(); i++) {
+			listOfEventStreamFutures.add(getEventStreamFuturesFromRetrievalResults(executorResults.get(i), listOfRetrievalResultsFutures.get(i)));
+		}
+		
+		return listOfEventStreamFutures;
+	}
+
 	/**
 	 * Parse the timeranges parameter and generate a list of TimeSpans.
 	 * @param resp
