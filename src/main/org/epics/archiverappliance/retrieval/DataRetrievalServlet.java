@@ -125,18 +125,35 @@ public class DataRetrievalServlet  extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		/* 
+		 * Commas are not legal characters for process variable names, therefore the user can separate the specified
+		 * PVs using commas. The user can also specify multiple PVs using the `pv` argument multiple times. We will
+		 * assume in this code that there is a mix and match of both.
+		 * 
+		 * To determine whether or not we use single PV retrieval or multi-pv retrieval, we will count how many PVs
+		 * have been specified in the request and go from there.
+		 */
 		
-		String[] pathnameSplit = req.getPathInfo().split("/");
-		String requestName = (pathnameSplit[pathnameSplit.length - 1].split("\\."))[0];
+		// Retrieving the strings specified by the PV argument
+		String[] pvNameStrings = req.getParameterValues("pv");
 		
-		if (requestName.equals("getData")) {
+		// Going through the argument strings and splitting the PV 
+		List<String> pvNames = new ArrayList<>();
+		for (String pvName : pvNameStrings) {
+			String[] pvNamesSplit = pvName.split(",");
+			for (String pvNameFromSplit : pvNamesSplit) {
+				pvNames.add(pvNameFromSplit);
+			}
+		}
+		
+		if (pvNames.size() == 1) {
 			logger.info("User requesting data for single PV");
-			doGetSinglePV(req, resp);
-		} else if (requestName.equals("getDataForPVs")) {
+			doGetSinglePV(req, resp, pvNames.get(0));
+		} else if (pvNames.size() > 1) {
 			logger.info("User requesting data for multiple PVs");
 			doGetMultiPV(req, resp);
 		} else {
-			String msg = "\"" + requestName + "\" is not a valid API method.";
+			String msg = "No PVs were specified.";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 		}
@@ -145,10 +162,9 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 	}
 	
-	private void doGetSinglePV(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+	private void doGetSinglePV(HttpServletRequest req, HttpServletResponse resp, String pvName) throws ServletException, IOException {
 		
 		PoorMansProfiler pmansProfiler = new PoorMansProfiler();
-		String pvName = req.getParameter("pv");
 		
 		if(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE) { 
 			String msg = "Cannot process data retrieval requests for PV " + pvName + " until the appliance has completely started up.";
@@ -550,7 +566,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		String extension = req.getPathInfo().split("\\.")[1];
 		logger.info("Mime is " + extension);
 		
-		if (!extension.equals("json") || !extension.equals("raw") || !extension.equals("jplot")) {
+		if (!extension.equals("json") && !extension.equals("raw") && !extension.equals("jplot")) {
 			String msg = "Mime type " + extension + " is not supported. Please use \"json\", \"jplot\" or \"raw\".";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
