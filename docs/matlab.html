@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - Matlab Integration</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - Matlab Integration</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <section>
 <h3>Retrieving data using Matlab</h3>
@@ -70,25 +76,29 @@ data
 
 Here's a screenshot of this sample code being executed in a Matlab environment.
 <figure>
-<img src="images/matlab1.png"/>
+<img class="img-responsive" src="images/matlab1.png"/>
 </figure> 
 </section>
 <div>
 The <code>.mat</code> response contains two objects, a header and a data object.
 <ul>
  <li>The header object is indexed by the string <code>header</code> and is a MLStructure with fields containing some provenance information.</li>
- <li>The data object is indexed by the string <code>data</code> and is a MLStructure with these fields.</li>
+ <li>The data object is indexed by the string <code>data</code> and is a MLStructure with these fields.
  <ol>
  <li><code>epochSeconds</code> - contains Java epoch seconds as a 1x1 uint64 array. The times are in UTC; so any conversion to local time needs to happen at the client.</li>
  <li><code>values</code> - contains the values for the samples. All scalars come as a 1x1 double array. Waveforms come as a 1x<i>elementcount</i> double array where <i>elementcount</i> is the EPICS element count of the waveform.</li>
  <li><code>nanos</code> - contains the nano second value of the EPICS record processing timestamp as a 1x1 uint64 array. Some installations embed the beam code/pulse id into this field.</li>
  <li><code>isDST</code> - contains booleans that indicate if the time indicated by <code>epochSeconds</code> was in daylight savings time in the timezone of the server.</li>
  </ol>
+ </li>
  </ul>
 </div>
 
-</article>
-
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
 </body>
 </html>

@@ -1,45 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance -- Quickstart</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
-
-<style type="text/css">
-img.imageshowingstep {
-  max-width: 75%; 
-}
-</style>
+<title>EPICS Archiver Appliance -- Quickstart</title>
 
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
+
 <h3>Quickstart Guide</h3>
 <div id="intro">
 The steps outlined here should get you started quickly with evaluating and testing a new archiver appliance. 
@@ -58,20 +59,20 @@ To simplify matters, we are not persisting configuration and therefore there are
 Here are the steps to get started quickly.
 <ol>
 <li>Make sure you have a recent version of Sun Java 1.8 from Oracle by running <code>java -version</code>. You should see something like so
-<img class="imageshowingstep" src="images/javaversion.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/javaversion.png"/>
 </li>
 <li>Download the installation package to a Linux machine into a brand new folder. This should give you a tar.gz file like <code>archappl_vx.x.x.tar.gz</code>.</li>
 <li>Download a recent version of Tomcat 7.x. into the same folder. You should now have two files in this folder like so
-<img class="imageshowingstep" src="images/targzs.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/targzs.png"/>
 </li>
 <li>Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar into 4 WAR files and a bash script like so
-<img class="imageshowingstep" src="images/expandedtargz.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/expandedtargz.png"/>
 </li>
 <li>Run the script like so
-<img class="imageshowingstep" src="images/runqascript.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/runqascript.png"/>
 </li>
-<li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <code>All components in this appliance have started up. We should be ready to start accepting UI requests</code> like so
-<img class="imageshowingstep" src="images/readyforUIrequests.png"/>
+<li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <samp>All components in this appliance have started up. We should be ready to start accepting UI requests</samp> like so
+<img class="img-responsive" class="imageshowingstep" src="images/readyforUIrequests.png"/>
 </li>
 <li>Open a browser to <code>http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code> and you should see the home screen for your archiver appliance.</li>
 <li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away. 
@@ -104,7 +105,11 @@ Simply follow the rules in the README of the first repo and the other two repos 
 
 
 
-</article>
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
 </body>
 </html>

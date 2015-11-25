@@ -1,39 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - User guide</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - User guide</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
-The EPICS archiver appliance offers a web UI for typical configuration tasks. This UI works best with a recent version of Firefox or Chrome.
+<div class="container">
+
+The EPICS Archiver Appliance offers a web UI for typical configuration tasks. This UI works best with a recent version of Firefox or Chrome.
 
 <section id="ArchivePV">
 <h3>Adding a PV to be archived.</h3>
@@ -41,14 +48,14 @@ To add a PV to the archiver,
 <ol>
 <li>Go to the home page of the archiver appliance.
 <figure>
-<img src="images/archive_pv.png"/>
+<img class="img-responsive" src="images/archive_pv.png"/>
 </figure>
 </li> 
 <li>Enter any number of PV's in the text area (one per line) and click on the <code>Archive</code> button.</li>
 <li>If you wish to specify the sampling period, then click on the <code>Archive (specify sampling period)</code> button instead.</li>
-<li>When adding a new PV to the cluster, the archiver appliance measures various parameters about the PV. This takes about 4-5 minutes during which the PV is in an <code>Initial sampling</code> state.</li> 
-<li>Once the PV's characteristics have been measured, the archiver appliance assigns the PV to an appliance in the cluster and the PV is in a <code>Being archived</code> state.</li> 
-<li>If the archiver appliance is not able to connect to a PV, the PV stays in the <code>Initial sampling</code> state until it is able to connect.</li> 
+<li>When adding a new PV to the cluster, the archiver appliance measures various parameters about the PV. This takes about 4-5 minutes during which the PV is in an <samp>Initial sampling</samp> state.</li> 
+<li>Once the PV's characteristics have been measured, the appliance assigns the PV to an appliance in the cluster and the PV transitions to a <samp>Being archived</samp> state.</li> 
+<li>If the archiver appliance is not able to connect to a PV, the PV stays in the <samp>Initial sampling</samp> state until it is able to connect.</li> 
 <li>You an request a PV to be archived before it is available on the network. The request to archive the PV is stored in the persistent configuration until the archiver appliance can connect.
 Once the archiver appliance is able to connect to the PV, it continues on the normal workflow (where various parameters about the PV are measured etc).</li> 
 <li>Using <code>Archive (specify sampling period)</code>, you can additionally specify
@@ -69,7 +76,7 @@ To check the status of a PV.
 <li>Enter any number of PV's in the text area (one per line) and click on the <code>Check Status</code> button</li>
 <li>You can also enter <a href="http://en.wikipedia.org/wiki/Glob_%28programming%29">GLOB</a> expressions like <code>XCOR*</code> and the archiver appliance will then display the status of all PV's that match the GLOB expression.
 <figure>
-<img src="images/check_status_glob.png"/>
+<img class="img-responsive" src="images/check_status_glob.png"/>
 </figure>
 Note that the number of matched PV's can be quite large; for now, no attempt is made to restrict the number of entries in this particular request. This may change in the future based on user feedback.
 </li>
@@ -79,8 +86,9 @@ Note that the number of matched PV's can be quite large; for now, no attempt is 
 </section>
 
 <section id="retrieval">
-<h3>Retrieving data using Archive Viewer and Matlab</h3>
+<h3>Retrieving data using CS-Studio, Archive Viewer and Matlab</h3>
 <ol>
+<li>To retrieve data using the CS-Studio, see the <a href="csstudio.html">CS-Studio</a> section.</li>
 <li>To retrieve data using the Archive Viewer, see the <a href="archiveviewer.html">Archive Viewer</a> section.</li>
 <li>To retrieve data using Matlab, see the <a href="matlab.html">Matlab</a> section.</li>
 </ol>
@@ -93,7 +101,7 @@ The EPICS Archiver Appliance supports data retrieval in multiple formats/MIME ty
 <li><a href="http://www.json.org/">JSON</a> - A generic JSON format that can be easily loaded into most browsers using Javascript.</li>
 <li>CSV - Can be used for importing into Excel and other spreadsheets.</li>
 <li>MAT - This is the file format used for interoperating with Matlab.</li>
-<li>RAW - This is a binary format used by the Archive Viewer and is based on the <a href="pb_pbraw.html"><code>PB/HTTP</code></a> protocol.</li>
+<li>RAW - This is a binary format used by the Archive Viewer and is based on the <a href="pb_pbraw.html">PB/HTTP</a> protocol.</li>
 <li>TXT - A simple text format that is often helpful for debugging.</li>
 <li><a href="http://www.w3.org/Graphics/SVG/">SVG</a> - A XML format that can also be used as a SVG element in tools that support this format.</li>
 </ol>
@@ -144,7 +152,7 @@ show()
 </pre>
 
 <figure>
-<img src="images/chaco_plot.png"/>
+<img class="img-responsive" src="images/chaco_plot.png"/>
 </figure>
 
 </section>
@@ -158,7 +166,7 @@ To retrieve data within Matlab, please see the <a href="matlab.html">Matlab</a> 
 </p>
 <p>
 To process the data during data retrieval, specify the operator during the call to <code>getData</code>.
-For example, to get the <code>mean</code> of the PV, <code>test:pv:123</code>, ask for <code>http://archiver.slac.stanford.edu/retrieval/data/getData.json?pv=mean(test%3Apv%3A123)</code>.
+For example, to get the <code>mean</code> of the PV <code>test:pv:123</code>, ask for <code>http://archiver.slac.stanford.edu/retrieval/data/getData.json?pv=mean(test%3Apv%3A123)</code>.
 This mechanism should work within the ArchiveViewer as well.
 That is, if you plot <code>mean(test:pv:123)</code> in the ArchiveViewer, the EPICS archiver appliance applies the <code>mean</code> operator to the data for PV <code>test:pv:123</code> before returning it to the client.
 To plot <code>test:pv:123</code> with the <code>mean_3600</code> operator in the ArchiveViewer, plot <code>mean_3600(test:pv:123)</code>.
@@ -200,7 +208,7 @@ Samples belonging to the same bin are gathered together and sent thru various st
 <td>mean</td>
 <td>Returns the average value of a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getMean()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMean()">SummaryStatistics.getMean()</a>
 </td>
 </tr>
 
@@ -208,7 +216,7 @@ and is <code>SummaryStatistics.getMean()</code>
 <td>min</td>
 <td>Returns the minimum value in a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getMin()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMin()">SummaryStatistics.getMin()</a>
 </td>
 </tr>
 
@@ -216,7 +224,7 @@ and is <code>SummaryStatistics.getMin()</code>
 <td>max</td>
 <td>Returns the maximum value in a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getMax()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMax()">SummaryStatistics.getMax()</a>
 </td>
 </tr>
 
@@ -224,7 +232,7 @@ and is <code>SummaryStatistics.getMax()</code>
 <td>count</td>
 <td>Returns the number of samples in a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getN()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getN()">SummaryStatistics.getN()</a>
 </td>
 </tr>
 
@@ -244,7 +252,7 @@ and is <code>SummaryStatistics.getN()</code>
 <td>median</td>
 <td>Returns the median value of a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
-and is <code>DescriptiveStatistics.getPercentile(50)</code>
+and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getPercentile(double)">DescriptiveStatistics.getPercentile(50)</a>
 </td>
 </tr>
 
@@ -252,7 +260,7 @@ and is <code>DescriptiveStatistics.getPercentile(50)</code>
 <td>std</td>
 <td>Returns the standard deviation of a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getStandardDeviation()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getStandardDeviation()">SummaryStatistics.getStandardDeviation()</a>
 </td>
 </tr>
 
@@ -260,7 +268,7 @@ and is <code>SummaryStatistics.getStandardDeviation()</code>
 <td>jitter</td>
 <td>Returns the jitter (the standard deviation divided by the mean) of a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getStandardDeviation()/SummaryStatistics.getMean()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getStandardDeviation()">SummaryStatistics.getStandardDeviation()</a>/<a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMean()">SummaryStatistics.getMean()</a>
 </td>
 </tr>
 
@@ -270,7 +278,7 @@ and is <code>SummaryStatistics.getStandardDeviation()/SummaryStatistics.getMean(
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>.
 It takes two arguments, the binning interval and the number of standard deviations (by default, 3.0).
 It filters the data and returns only those values which satisfy
-<code>Math.abs(val - SummaryStatistics.getMean()) &lt;= numDeviations*SummaryStatistics.getStandardDeviation()</code>
+<samp>Math.abs(val - SummaryStatistics.getMean()) &lt;= numDeviations*SummaryStatistics.getStandardDeviation()</samp>
 </td>
 </tr>
 
@@ -284,14 +292,14 @@ It filters the data and returns only those values which satisfy
 <td>variance</td>
 <td>Returns the variance of a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getVariance()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getVariance()">SummaryStatistics.getVariance()</a>
 </td>
 </tr>
 <tr>
 <td>popvariance</td>
 <td>Returns the population variance of a bin. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
-and is <code>SummaryStatistics.getPopulationVariance()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getPopulationVariance()">SummaryStatistics.getPopulationVariance()</a>
 </td>
 </tr>
 
@@ -300,14 +308,14 @@ and is <code>SummaryStatistics.getPopulationVariance()</code>
 <td>kurtosis</td>
 <td>Returns the kurtosis of a bin - Kurtosis is a measure of the peakedness. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
-and is <code>DescriptiveStatistics.getKurtosis()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getKurtosis()">DescriptiveStatistics.getKurtosis()</a>
 </td>
 </tr>
 <tr>
 <td>skewness</td>
 <td>Returns the skewness of a bin - Skewness is a measure of the asymmetry. 
 This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
-and is <code>DescriptiveStatistics.getSkewness()</code>
+and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getSkewness()">DescriptiveStatistics.getSkewness()</a>
 </td>
 </tr>
 
@@ -371,7 +379,7 @@ The EPICS Archiver Appliance supports limited integration with existing Channel 
 <ul>
 <li>To import ChannelArchiver <code>XML</code> configuration files, click on the <code>Choose Files</code> button, select any number of ChannelArchiver <code>XML</code> configuration files and press <code>Upload</code>.
 <figure>
-<img src="images/importCAConfig.png"/>
+<img class="img-responsive" src="images/importCAConfig.png"/>
 </figure>
 The <code>DTD</code> for the ChannelArchiver <code>XML</code> file can be found in the ChannelArchiver documentation or in the ChannelArchiver source distribution. 
 </li>
@@ -381,8 +389,11 @@ The EPICS Archiver Appliance uses the <code>archiver.names</code> method to dete
 </ul>
 </section>
 
-</article>
-
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
 </body>
 </html>

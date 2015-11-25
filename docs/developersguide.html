@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - Developers Guide</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - Developers Guide</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <section>
 <h3>Prerequisites</h3>
@@ -40,7 +46,7 @@ Please see the <a href="details.html#SystemRequirements">details</a> page for pr
 An installation of Tomcat is required to build successfully; this is located using the environment variable <code>TOMCAT_HOME</code>.
 Use something like
 <figure>
-<img src="images/tomcathome.png"/>
+<img class="img-responsive" src="images/tomcathome.png"/>
 </figure> 
 By default, Tomcat sets up a HTTP listener on port 8080.
 You can change this in the Tomcat server.xml to avoid collision with other folks running Tomcat.
@@ -52,6 +58,14 @@ For example, here I have changed this to 17665.
                redirectPort="8443" /&gt;
 </code>
 </pre>
+
+To run the unit tests, please make a copy of your Tomcat configuration (preferably pristine) into a new folder called <code>conf_original.</code> 
+The unit tests that use Tomcat copy the conf_original folder to generate new configurations for each test.  
+<pre>
+<code>cd ${TOMCAT_HOME}
+cp -R conf conf_original</code>
+</pre>
+
 </section>
 
 <section>
@@ -62,14 +76,14 @@ We use <a href="http://ant.apache.org/">Apache Ant</a> for building.
 If you have a Eclipse workspace called <code>workspace</code> and the EPICS archiver appliance code checked out into a folder called <code>epicsarchiverap</code>, 
 then the build script is run by calling ant from within <code>workspace/epicsarchiverap</code>.
 <figure>
-<img src="images/build_ant.png"/>
+<img class="img-responsive" src="images/build_ant.png"/>
 <figcaption>Using ant to initiate a build.</figcaption>
 </figure> 
 
 
 The default target builds the install package and the various wars and places them into the parent folder.
 <figure>
-<img src="images/built_wars.png"/>
+<img class="img-responsive" src="images/built_wars.png"/>
 </figure> 
 </section>
 
@@ -82,10 +96,10 @@ It is often more convenient to deploy all the WAR's into the same tomcat contain
 One can use something like
 <pre>
 <code>
-pushd ${TOMCAT_HOME}/webapps && rm -rf retrieval* && popd && cp ../retrieval.war ${TOMCAT_HOME}/webapps
-pushd ${TOMCAT_HOME}/webapps && rm -rf engine* && popd && cp ../engine.war ${TOMCAT_HOME}/webapps
-pushd ${TOMCAT_HOME}/webapps && rm -rf etl* && popd && cp ../etl.war ${TOMCAT_HOME}/webapps
-pushd ${TOMCAT_HOME}/webapps && rm -rf mgmt* && popd && cp ../mgmt.war ${TOMCAT_HOME}/webapps
+pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf retrieval* &amp;&amp; popd &amp;&amp; cp ../retrieval.war ${TOMCAT_HOME}/webapps
+pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf engine* &amp;&amp; popd &amp;&amp; cp ../engine.war ${TOMCAT_HOME}/webapps
+pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf etl* &amp;&amp; popd &amp;&amp; cp ../etl.war ${TOMCAT_HOME}/webapps
+pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf mgmt* &amp;&amp; popd &amp;&amp; cp ../mgmt.war ${TOMCAT_HOME}/webapps
 </code>
 </pre>
 to deploy all the same webapps on the same Tomcat instance.
@@ -124,7 +138,14 @@ export ARCHAPPL_MEDIUM_TERM_FOLDER=/arch/mts/ArchiverStore
 export ARCHAPPL_LONG_TERM_FOLDER=/arch/lts/ArchiverStore
 </code>
 </pre>
-Then, run <code>ant test</code> from within <code>epicsarchiverap</code>. 
+Also, please make a copy of your Tomcat configuration (preferably pristine) into a new folder called <code>conf_original.</code> 
+The unit tests that use Tomcat copy the conf_original folder to generate new configurations for each test.  
+<pre>
+<code>cd ${TOMCAT_HOME}
+cp -R conf conf_original</code>
+</pre>
+
+Run <code>ant test</code> from within <code>epicsarchiverap</code>. 
 To run a particular unit test, run 
 <pre><code>ant; ant -Dtest=DBRTypeTest singletest</code></pre>
 where DBRTypeTest is the classname of the test.
@@ -136,7 +157,7 @@ To run a particular unit test with <code>DEBUG</code> logging turned on, run
 
 <section>
 <h3>Side projects</h3>
-The sources for the <a href="archiveviewer.html">Archive Viewer</a> integration and the client library for the <a href="pb_pbraw.html"><code>PB/HTTP</code></a> protocol are in separate projects in the same repository.
+The sources for the <a href="archiveviewer.html">Archive Viewer</a> integration and the client library for the <a href="pb_pbraw.html">PB/HTTP</a> protocol are in separate projects in the same repository.
 <ol>
 <li><a href="https://github.com/slacmshankar/epicsarchiverap_pbrawclient/">PB/HTTP</a></li>
 <li><a href="https://github.com/slacmshankar/epicsarchiverap_archiveviewer/">Archive Viewer</a></li>
@@ -183,8 +204,11 @@ From a very high level
 </section>
 
 
-</article>
-
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
 </body>
 </html>

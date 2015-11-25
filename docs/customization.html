@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="ISO-8859-1">
-<title>EPICS Archiver Appliance - Customization</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>EPICS Archiver Appliance - Customization</title>
 </head>
 <body>
 <!-- Header starts here -->
-<h1 id="title"><span><a href="index.html">EPICS Archiver Appliance</a></span><img src="images/Icon_Mathematical_Plot.png"/></h1>
-<div id="wrap">
-<div id="topbar">
-Last published on {publish_date}.
-</div>
-<aside id="leftnav">
-<div id="leftnavtitle"><span>EPICS Archiver Appliance</span></div>
-<ol>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-<li><a href="details.html">Details</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-<li><a href="quickstart.html">Quickstart</a></li>
-<li><a href="installguide.html">Installation</a></li>
-<li><a href="userguide.html">User Guide</a></li>
-<li><a href="customization.html">Customize</a></li>
-<li><a href="developersguide.html">Developers</a></li>
-<li><a href="admin.html">Admin</a></li>
-<li><a href="api/index.html">Javadoc</a></li>
-<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-<li><a href="faq.html">FAQ</a></li>
-<li><a href="license.html">License</a></li>
-</ol>
-</aside>
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
 <!-- Header ends here -->
 
-<article id="rightcontent">
+<div class="container">
 
 <div id="intro">
 It is unlikely that the features of the archiver appliance match your requirements exactly over a period of time.
@@ -59,11 +65,11 @@ The archiver appliance offers you the ability to customize the WAR files generat
 <li>The <code>src/sitespecific</code> folder contains materials specific to your site.
 You can use the environment variable <code>ARCHAPPL_SITEID</code> to control which set of sitespecific files are included in the generated WARS.
 <ol>
-<li>When you set this environment variable, you should see a message <code>Building the archiver appliance for the site <i>YourSite</i></code></li>
+<li>When you set this environment variable, you should see a message <samp>Building the archiver appliance for the site <var>YourSite</var></samp></li>
 <li>If this variable is not set, by default, we use the material in the <code>tests</code> site.</li>
 <li>The quickstart package <code>archappl_vx.x.x.tar.gz</code> available in the Downloads  is also built to the <code>tests</code> site.</li>
 <li>The files in the <code>src/sitespecific/<i>YourSite</i>/classpathfiles</code> are added to the <code>WEB-INF/classes</code> of the generated WAR files and should be accessible in the code using <code>servletContext.getResourceAsStream("/WEB-INF/classes/&lt;&lt;fileName&gt;&gt;")</code></li>
-<li>The <code>policies.py</code> for your site is discovered this way
+<li>If you do not set the <code>ARCHAPPL_POLICIES</code> environment variable, the <code>policies.py</code> for your site is discovered this way
 <ol>
 <li>You can generate WAR with <code>policies.py</code> specific to your site by setting the <code>ARCHAPPL_SITEID</code>.</li>
 <li>Or you can unpack the WAR files within the container and override the default <code>policies.py</code> with your own during deployment.</li>
@@ -73,7 +79,7 @@ You can use the environment variable <code>ARCHAPPL_SITEID</code> to control whi
 <li>There is also a site specific properties file called <code>archappl.properties</code> that is discovered in a similar fashion. The properties in this file are used to control some of the other customizations of the archiver appliance.</li>
 </ol>
 <figure>
-<img src="images/archappl_siteid.png"/>
+<img class="img-responsive" src="images/archappl_siteid.png"/>
 <figcaption>Using the ARCHAPPL_SITEID to customize the contents of the generated WAR files.</figcaption>
 </figure>
 </li>
@@ -96,22 +102,22 @@ For simple site specific content changes like replacing the images or the contac
 As outlined in the <a href="details.html">details</a> page, the archiver appliance support a wide variety of configurations. 
 Not only that, we also support configuration on a per PV basis. 
 We avoid exposing all of this complexity to the end user (the one who is requesting PVs to be archived) by using policies to provide intelligent defaults.
-Policies are contained in a python/jython script called <code>policies.py</code> that is typically located in the <code>WEB-INF/classes</code> of the <code>mgmt</code> webapp.
+Policies are contained in a python/jython script called <code>policies.py</code> that is typically located in the <code>WEB-INF/classes</code> of the <code>mgmt</code> webapp or by using the environment variable <code>ARCHAPPL_POLICIES</code>.
 </p>
 
-<p>
-At a very high level, when users request PVs to be archived, the <code>mgmt+engine</code> webapps sample the PV to determine event rate, storage rate and other parameters.
+<div>
+At a very high level, when users request PVs to be archived, the mgmt &amp; engine webapps sample the PV to determine event rate, storage rate and other parameters.
 In addition, various fields of the PV like <code>.NAME</code>, <code>.ADEL</code>, <code>.MDEL</code>, <code>.RTYP</code> etc are also determined.
 All of these parameters are passed to the <code>policies.py</code> python script as a dictionary argument to a method in <code>policies.py</code> called <code>determinePolicy</code>; see the <a href="api/org/epics/archiverappliance/mgmt/policy/ExecutePolicy.html">javadoc</a> for more details.
 This method is expected to use all of this information to make decisions on various archiving parameters including storage locations, storage technologies used etc and return these decisions as another dictionary.
 For example, the resulting dictionary contains a field called <code>dataStores</code> which is an array of <a href="api/org/epics/archiverappliance/StoragePlugin.html">StoragePlugin</a> URL's that can be parsed by the <a href="api/org/epics/archiverappliance/config/StoragePluginURLParser.html">StoragePluginURLParser</a>.
 This is converted into a sequence of StoragePlugin's that is used like so
 <ol>
-<li>The <code>engine</code> webapp writes data into the first StoragePlugin in the sequence, i.e. <code>dataStores[0]</code></li>
-<li>The <code>ETL</code> webapp schedules data transfers from one StoragePlugin to the next in the sequence according to their <a href="api/org/epics/archiverappliance/common/PartitionGranularity.html">PartitionGranularity's</a></code></li>
-<li>When servicing a data retrieval request, the <code>retrieval</code> webapp retrieves data from all of the datastores and then combines them using a <code>merge/dedup</code> operator.</li>
+<li>The engine webapp writes data into the first StoragePlugin in the sequence, i.e. <code>dataStores[0]</code></li>
+<li>The ETL webapp schedules data transfers from one StoragePlugin to the next in the sequence according to their <a href="api/org/epics/archiverappliance/common/PartitionGranularity.html">PartitionGranularity</a>'s</li>
+<li>When servicing a data retrieval request, the retrieval webapp retrieves data from all of the datastores and then combines them using a merge/dedup operator.</li>
 </ol>
-</p>
+</div>
 
 <p>
 Optionally, as part of a policy, we can also archive fields in addition to the VAL field. 
@@ -129,7 +135,7 @@ In addition to the <code>determinePolicy</code> method, there are a few more met
 
 <section id="archappl_properties">
 <h3>Site specific properties</h3>
-There is a site specific properties file called <code>archappl.properties</code> that is typically present in <code>WEB-INF/classes</code> of all the webapps.
+There is a site specific properties file called <code>archappl.properties</code> that is typically present in <code>WEB-INF/classes</code> of all the webapps or as the environment variable <code>ARCHAPPL_PROPERTIES_FILENAME</code>.
 This contains various configuration elements that are common to all machines in the cluster and probably common to all deployments of the archiver appliance in your infrastructure.
 One of the advantages of having your site specific properties checked into the source repository is that as the system evolves and we add new configuration elements, default values for these new configuration elements can be added to <code>archappl.properties</code> of all the sites.
 The configuration elements present here are configuration decisions that are made during the initial scoping of your archiving project; so, please do look at these configuration elements and make choices appropriate to your installation.
@@ -164,29 +170,29 @@ To save your configuration in a different location, create an implementation of 
 <section id="StoragePlugins">
 <h3>Storage Plugins</h3>
 The starting point for using an alternate storage technology is to create implementations of the <a href="api/org/epics/archiverappliance/StoragePlugin.html">StoragePlugin</a> interface and register them in <a href="api/org/epics/archiverappliance/config/StoragePluginURLParser.html">StoragePluginURLParser</a>.
-In addition to the  <code>StoragePlugin</code> interface, additional optional interfaces facilitate additional functionality
+In addition to the StoragePlugin interface, additional optional interfaces facilitate additional functionality
 <ol>
-<li><a href="api/org/epics/archiverappliance/etl/ETLSource.html">ETLSource</a> -- The lets a <code>StoragePlugin</code> act as a source of data in the ETL process.</li>
-<li><a href="api/org/epics/archiverappliance/etl/ETLDest.html">ETLDest</a> -- The lets a <code>StoragePlugin</code> act as a destination of data in the ETL process.</li>
-<li><a href="api/org/epics/archiverappliance/etl/StorageMetrics.html">StorageMetrics</a> -- The lets a <code>StoragePlugin</code> provide metrics that are displayed in the UI and participate in capacity planning.</li>
+<li><a href="api/org/epics/archiverappliance/etl/ETLSource.html">ETLSource</a> -- The lets a StoragePlugin act as a source of data in the ETL process.</li>
+<li><a href="api/org/epics/archiverappliance/etl/ETLDest.html">ETLDest</a> -- The lets a StoragePlugin act as a destination of data in the ETL process.</li>
+<li><a href="api/org/epics/archiverappliance/etl/StorageMetrics.html">StorageMetrics</a> -- The lets a StoragePlugin provide metrics that are displayed in the UI and participate in capacity planning.</li>
 </ol>
-Writing a new <code>StoragePlugin</code> does take some effort but with this separation, you should be able to support a wide variety of storage technologies. For more details, please see the Javadoc.
+Writing a new StoragePlugin does take some effort but with this separation, you should be able to support a wide variety of storage technologies. For more details, please see the Javadoc.
 </section>
 
 <section id="NIO2">
 <h3>NIO2</h3>
-The <code>StoragePlugin</code>, <a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a> can be viewed as a chunking storage plugin. 
+The <a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a> can be viewed as a chunking <a href="api/org/epics/archiverappliance/StoragePlugin.html">StoragePlugin</a>. 
 It chunks data into <span title="Time instant t &harr; Chunk key">clean</span>, well-defined time-partitions (instead of individual samples) and various business processes in the archiver appliance understand these time-partitions and deal with them efficiently.
 Each chunk has a well defined <a href="key_mapping">key</a> and one can choose to store a chunk in any storage provider that provides block storage.
-The <code>PlainPBStoragePlugin</code> uses Java <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html">NIO2</a> as the storage API.
-Java <code>NIO2</code> has a <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/io/fsp/filesystemprovider.html">documented mechanism</a> for developing custom file system providers.
-Using custom <code>NIO2</code> file system providers, one can store the chunks generated by the <code>PlainPBStoragePlugin</code> using storage technologies like
+The PlainPBStoragePlugin uses Java <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html">NIO2</a> as the storage API.
+Java NIO2 has a <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/io/fsp/filesystemprovider.html">documented mechanism</a> for developing custom file system providers.
+Using custom NIO2 file system providers, one can store the chunks generated by the PlainPBStoragePlugin using storage technologies like
 <ol>
 <li>Database BLOBS</li>
 <li>Any key/value store (for example, SciDB)</li>
 <li>Other technologies that may be more appropriate</li>
 </ol>
-To add custom <code>NIO2</code> file system providers for use in the archiver appliance, please look at the JavaDoc for our version of Java's <a href="api/org/epics/archiverappliance/utils/nio/ArchPaths.html"><code>Paths</code></a>.  
+To add custom NIO2 file system providers for use in the archiver appliance, please look at the JavaDoc for our version of Java's <a href="api/org/epics/archiverappliance/utils/nio/ArchPaths.html">Paths</a>.  
 </section>
 
 <section id="TypeSystems">
@@ -201,11 +207,14 @@ Please contact the collaboration if you'd want to consider using alternate seria
 <h3>ConfigService</h3>
 All of the configuration in the archiver appliance is handled thru implementations of the <a href="api/org/epics/archiverappliance/config/ConfigService.html">ConfigService</a> interface.
 Each webapp has one instance of this interface and this instance is dependency injected into the classes that need it.
-If all else fails, you can create your implementation of the <code>ConfigService</code> and register it in the servlet context <a href="api/org/epics/archiverappliance/config/ArchServletContextListener.html">listener</a>.
+If all else fails, you can create your implementation of the ConfigService and register it in the servlet context <a href="api/org/epics/archiverappliance/config/ArchServletContextListener.html">listener</a>.
 </section>
 
-</article>
-
 </div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
 </body>
 </html>
