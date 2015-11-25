@@ -120,7 +120,7 @@ While it is not necessary to point to the same physical file, the contents are e
 The details of the file are outlined in the <a href="api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES">ConfigService</a> javadoc.
 A sample  <code>appliances.xml</code> with two appliances looks like 
 <figure>
-<img src="images/appliancesxml.png"/>
+<img class="img-responsive" src="images/appliancesxml.png"/>
 <figcaption>The <code>appliances.xml</code> lists all the appliances in the cluster.</figcaption>
 </figure> 
 
@@ -168,7 +168,7 @@ There are two URL's for the <code>retrieval</code> webapp.
 In this case, we are pointing all clients to a single load-balancer on <code>archiver.slac.stanford.edu</code> on port 80.
 One can use the <a href="http://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html">mod_proxy_balancer</a> of Apache to load-balance among any of the appliances in the cluster.
 <figure>
-<img src="images/ApacheasLB.png"/>
+<img class="img-responsive" src="images/ApacheasLB.png"/>
 <figcaption>Using Apache HTTP on <code>archiver</code> to load balance data retrieval between <code>appliance0</code> and <code>appliance1</code>.</figcaption>
 </figure> 
 <ul>
@@ -221,7 +221,7 @@ Many of the following steps require a <code>TOMCAT_HOME</code> to be set.
 <li>By default, the connector port for the HTTP connector is set to 8080. 
 Change this to the port used by the <code>mgmt</code> webapp for this appliance, in this example, 17665.
 <figure>
-<img src="images/tomcathttpconnector.png"/>
+<img class="img-responsive" src="images/tomcathttpconnector.png"/>
 <figcaption>Change 8080 to the port used by the <code>mgmt</code> webapp for this appliance.</figcaption>
 </figure> 
 </li>
@@ -260,7 +260,7 @@ log4j.appender.A1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 Once you have built this, copy the <code>jsvc</code> binary to the Tomcat <code>bin</code> folder for convenience.
 Note, it's not required that you use <code>Apache Commons Daemon</code> especially, if you are already using system monitoring and management tools like <a href="http://www.nagios.org/">Nagios</a> or <a href="http://www.hyperic.com/">Hyperic</a>.
 <figure>
-<img src="images/buildingjsvc.png"/>
+<img class="img-responsive" src="images/buildingjsvc.png"/>
 <figcaption>Building Apache Commons Daemon.</figcaption>
 </figure> 
 </li>
@@ -301,7 +301,7 @@ There should be at least these tables
 In addition to the log4j.properties file, you should have a <code>mysql-connector-java-XXX.jar</code> as show here.
 
 <figure>
-<img src="images/tomcatlib1.png"/>
+<img class="img-responsive" src="images/tomcatlib1.png"/>
 <figcaption>Tomcat lib after copying over MySQL jar</figcaption>
 </figure> 
 </li>
@@ -340,7 +340,7 @@ Of course, please do make changes appropriate to your installation.
 The only parameter that is fixed is the name of the pool and this needs to be <code>jdbc/archappl</code>.
 All other parameters are left to your discretion.
 <figure>
-<img src="images/connpool.png"/>
+<img class="img-responsive" src="images/connpool.png"/>
 </figure>
 <ul>
 <li>Note for Debian/Ubuntu users: The Tomcat packages shipped with Debian/Ubuntu do not include the Tomcat JDBC Connection Pool. Download it from the web and drop the <code>tomcat-jdbc.jar</code> file into <code>/usr/share/tomcat7/lib</code>.</li>
@@ -358,7 +358,7 @@ However, if you are using the default <code>policies.py</code> that ships with t
 A useful way to do this is to create a folder called <code>/arch</code> and then create soft links in this folder to the actual physical location.
 For example,
 <figure>
-<img src="images/slasharch.png"/>
+<img class="img-responsive" src="images/slasharch.png"/>
 <figcaption><code>/arch</code> showing soft links to actual storage locations.</figcaption>
 </figure> 
 We then set environment variables in the startup script that point to the locations within <code>/arch</code>.
@@ -388,7 +388,7 @@ Note, this must match the <code>identity</code> element of this appliance as it 
 </ol>
 and then run the <code>deployMultipleTomcats.py</code> script passing in one argument that identifies the parent folder of the individual Tomcat containers.
 <figure>
-<img src="images/deployMultiple.png"/>
+<img class="img-responsive" src="images/deployMultiple.png"/>
 <figcaption>Using the <code>deployMultipleTomcats.py</code> script to create individual containers for each WAR file.</figcaption>
 </figure> 
 This is the last of the steps that are install specific; that is, you'll execute these only on installation of a new appliance.

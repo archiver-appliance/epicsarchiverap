@@ -46,6 +46,7 @@ public class PBFileInfo {
 		try(LineByteStream lis = new LineByteStream(path)) {
 			byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
 			info = PayloadInfo.parseFrom(payloadLine);
+			logger.debug("PayloadInfo PVName: " + info.getPvname() + " is of type " + info.getType().name() + " and data is for the year " + info.getYear());
 			positionOfFirstSample = lis.getCurrentPosition();
 			// This is not strictly correct; but this will be adjusted below.
 			positionOfLastSample = Files.size(path);
@@ -145,14 +146,14 @@ public class PBFileInfo {
 
 		int tries = 0;
 		// Potential infinite loop here; we'll try about 1000 times
-		while(lastEvent == null && tries < 1000) {
+		while(lastEvent == null && lastLine != null && tries < 1000) {
 			try { 
 				lastEvent = (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(lastLine));
 				lastEvent.getEventTimeStamp();
 				positionOfLastSample = posn;
 				return;
 			} catch(PBParseException ex) {
-				logger.warn(path.toString() + " seems to have some data corruption at the end of the file; moving onto the previous line");
+				logger.warn(path.toString() + " seems to have some data corruption at the end of the file; moving onto the previous line", ex);
 				lastEvent = null;
 				lis.seekToBeforePreviousLine(posn-2);
 				posn = lis.getCurrentPosition();

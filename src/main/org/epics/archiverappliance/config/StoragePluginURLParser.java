@@ -79,6 +79,10 @@ public class StoragePluginURLParser {
 			case "pb" : {
 				return parsePlainPBStoragePlugin(srcURIStr, configService);
 			}
+			case "blackhole" : {
+				logger.warn("The blackhole plugin cannot serve as an ETL source; so it has to be the last plugin in the list of data stores.");
+				return null;
+			}
 			default : { 
 				logger.error("Unsupported plugin " + pluginIdentifier + ". Did you forget to register this?");
 			}

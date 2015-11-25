@@ -1181,6 +1181,28 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 */
 	private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Timestamp start, HttpServletRequest req, HttpServletResponse resp, boolean useChunkedEncoding) throws IOException {
 		PVTypeInfo typeInfo = null;
+		// See if external EPICS archiver appliances have this PV.
+		Map<String, String> externalServers = configService.getExternalArchiverDataServers();
+		if(externalServers != null) { 
+			for(String serverUrl : externalServers.keySet()) { 
+				String index = externalServers.get(serverUrl);
+				if(index.equals("pbraw")) { 
+					logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv " + pvName);
+					JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8"), false);
+					if(areWeArchivingPVObj != null) {
+						@SuppressWarnings("unchecked")
+						Map<String, String> areWeArchivingPV = (Map<String, String>) areWeArchivingPVObj;
+						if(areWeArchivingPV.containsKey("status") && Boolean.parseBoolean(areWeArchivingPV.get("status"))) {
+							logger.info("Proxying data retrieval for pv " + pvName + " to " + serverUrl);
+							proxyRetrievalRequest(req, resp, pvName, useChunkedEncoding, serverUrl  + "/data" );
+						}
+						return null;
+					}
+				}
+			}
+		}
+
+		
 		List<ChannelArchiverDataServerPVInfo> caServers = configService.getChannelArchiverDataServers(pvName);
 		if(caServers != null && !caServers.isEmpty()) {
 			try(BasicContext context = new BasicContext()) {
@@ -1208,29 +1230,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 					}
 				}
 			}
-			logger.error("Unable to determine typeinfo from CA for pv " + pvName);
+			logger.warn("Unable to determine typeinfo from CA for pv " + pvName);
 			return typeInfo;
-		}
-		
-		// See if external EPICS archiver appliances have this PV.
-		Map<String, String> externalServers = configService.getExternalArchiverDataServers();
-		if(externalServers != null) { 
-			for(String serverUrl : externalServers.keySet()) { 
-				String index = externalServers.get(serverUrl);
-				if(index.equals("pbraw")) { 
-					logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv " + pvName);
-					JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8"), false);
-					if(areWeArchivingPVObj != null) {
-						@SuppressWarnings("unchecked")
-						Map<String, String> areWeArchivingPV = (Map<String, String>) areWeArchivingPVObj;
-						if(areWeArchivingPV.containsKey("status") && Boolean.parseBoolean(areWeArchivingPV.get("status"))) {
-							logger.info("Proxying data retrieval for pv " + pvName + " to " + serverUrl);
-							proxyRetrievalRequest(req, resp, pvName, useChunkedEncoding, serverUrl  + "/data" );
-						}
-						return null;
-					}
-				}
-			}
 		}
 		
 		logger.debug("Cannot find the PV anywhere " + pvName);

@@ -7,12 +7,6 @@
 <link type="text/css" href="docs.css" rel="Stylesheet" />	
 <title>EPICS Archiver Appliance -- Quickstart</title>
 
-<style type="text/css">
-img.imageshowingstep {
-  max-width: 75%; 
-}
-</style>
-
 </head>
 <body>
 <!-- Header starts here -->
@@ -65,20 +59,20 @@ To simplify matters, we are not persisting configuration and therefore there are
 Here are the steps to get started quickly.
 <ol>
 <li>Make sure you have a recent version of Sun Java 1.8 from Oracle by running <code>java -version</code>. You should see something like so
-<img class="imageshowingstep" src="images/javaversion.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/javaversion.png"/>
 </li>
 <li>Download the installation package to a Linux machine into a brand new folder. This should give you a tar.gz file like <code>archappl_vx.x.x.tar.gz</code>.</li>
 <li>Download a recent version of Tomcat 7.x. into the same folder. You should now have two files in this folder like so
-<img class="imageshowingstep" src="images/targzs.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/targzs.png"/>
 </li>
 <li>Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar into 4 WAR files and a bash script like so
-<img class="imageshowingstep" src="images/expandedtargz.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/expandedtargz.png"/>
 </li>
 <li>Run the script like so
-<img class="imageshowingstep" src="images/runqascript.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/runqascript.png"/>
 </li>
 <li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <samp>All components in this appliance have started up. We should be ready to start accepting UI requests</samp> like so
-<img class="imageshowingstep" src="images/readyforUIrequests.png"/>
+<img class="img-responsive" class="imageshowingstep" src="images/readyforUIrequests.png"/>
 </li>
 <li>Open a browser to <code>http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code> and you should see the home screen for your archiver appliance.</li>
 <li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away. 
