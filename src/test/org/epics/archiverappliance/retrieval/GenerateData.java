@@ -97,5 +97,7 @@ public class GenerateData {
 			}
 		}
 		logger.info("Done generating data for pv " + pvName + " using plugin " + plugin.getDescription() + " between " + TimeUtils.convertToHumanReadableString(start) + " and " + TimeUtils.convertToHumanReadableString(end));
+		
+		System.exit(0);
 	}
 }
