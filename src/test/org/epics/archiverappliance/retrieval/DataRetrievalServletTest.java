@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -32,7 +31,6 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
@@ -44,11 +42,16 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class DataRetrievalServletTest {
+	
 	private static Logger logger = Logger.getLogger(DataRetrievalServletTest.class.getName());
 	private ConfigService configService;
 	PBCommonSetup pbSetup = new PBCommonSetup();
 	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
 	TomcatSetup tomcatSetup = new TomcatSetup();
+
+	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
+	short year = (short) 2011;
+	
 	@Before
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
@@ -62,9 +65,6 @@ public class DataRetrievalServletTest {
 
 		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYearInSeconds(year), new ArchPaths(), configService.getPVNameToKeyConverter()));
 	}
-
-	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
-	short year = (short) 2011;
 	
 	
 	/**
@@ -92,7 +92,9 @@ public class DataRetrievalServletTest {
 		long next = -1;
 		try(BasicContext context = new BasicContext(); EventStream stream = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
 			int totalEvents = 0;
+			// Goes through the stream
 			for(Event e : stream) {
+				System.out.println(e.getRawForm());
 				long actualSeconds = e.getEpochSeconds();
 				long desired = starttimeinseconds + next++;
 				assertTrue("Expecting " 

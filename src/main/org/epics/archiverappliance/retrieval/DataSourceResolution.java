@@ -45,6 +45,32 @@ public class DataSourceResolution {
 		
 	}
 
+	/**
+	 * <p>
+	 * Returns a list of units of retrieval. I.e., the storage plugin description, the storage plugin object used to retrieve data,
+	 * the type information for the PV, the PV name, the start and end timestamp, the postprocessor that should be used and the
+	 * context in which the data should be retrieved
+	 * </p>
+	 * <p>
+	 * If the PV name that was specified in the method call is not to be found in the current appliance, the storage plugin object
+	 * stored in the UnitOfRetrieval object will be a PBOverHTTPStoragePlugin object.
+	 * </p>
+	 * @param pvName
+	 * @param start
+	 * @param end
+	 * @param typeInfo
+	 * @param context
+	 * @param postProcessor
+	 * @param req
+	 * @param resp
+	 * @param applianceForPV
+	 * @return
+	 * A LinkedList of UnitOfRetrieval objects that contain the storage plguin description, the storage plugin object used to retrieve data,
+	 * the type information of the PV, the PV name, the start and end timestamp, the postprocessor that should be used and the context in
+	 * which data should be retrieved.
+	 * @throws IOException
+	 * Thrown if there is a syntax error in the URI.
+	 */
 	public LinkedList<UnitOfRetrieval> resolveDataSources(String pvName, Timestamp start, Timestamp end, PVTypeInfo typeInfo, BasicContext context, PostProcessor postProcessor, HttpServletRequest req, HttpServletResponse resp, ApplianceInfo applianceForPV) throws IOException {
 		LinkedList<UnitOfRetrieval> unitsofretrieval = new LinkedList<UnitOfRetrieval>();
 		if(!applianceForPV.equals(configService.getMyApplianceInfo())) {
@@ -86,7 +112,8 @@ public class DataSourceResolution {
 										);
 							}
 							StoragePlugin storagePlugin = dataSource.getStoragePlugin();
-							unitsofretrieval.add(new UnitOfRetrieval(storagePlugin.getDescription(), storagePlugin, typeInfo.getPvName(), pvName, dataSource.getRequestTimeSpan().getStartTime(), dataSource.getRequestTimeSpan().getEndTime(), spannedProcessor.getPostProcessor(), context));							
+							unitsofretrieval.add(new UnitOfRetrieval(storagePlugin.getDescription(), storagePlugin, typeInfo.getPvName(), pvName, 
+									dataSource.getRequestTimeSpan().getStartTime(), dataSource.getRequestTimeSpan().getEndTime(), spannedProcessor.getPostProcessor(), context));							
 						} else { 
 							if(logger.isDebugEnabled()) { 
 								logger.debug("Adding data source " + dataSource.getStoragePlugin().getDescription() 
@@ -96,7 +123,8 @@ public class DataSourceResolution {
 										);
 							}
 							StoragePlugin storagePlugin = dataSource.getStoragePlugin();
-							unitsofretrieval.add(new UnitOfRetrieval(storagePlugin.getDescription(), storagePlugin, typeInfo.getPvName(), pvName, spannedProcessor.getTimeSpan().getStartTime(), spannedProcessor.getTimeSpan().getEndTime(), spannedProcessor.getPostProcessor(), context));
+							unitsofretrieval.add(new UnitOfRetrieval(storagePlugin.getDescription(), storagePlugin, typeInfo.getPvName(), pvName, 
+									spannedProcessor.getTimeSpan().getStartTime(), spannedProcessor.getTimeSpan().getEndTime(), spannedProcessor.getPostProcessor(), context));
 						}
 					} catch(Exception ex) {
 						logger.error("Exception initializing storage plugin", ex);

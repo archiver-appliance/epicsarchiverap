@@ -48,9 +48,24 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 	private boolean skipExternalServers = false;
 
 	@Override
-	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor)  throws IOException {
+	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, 
+			Timestamp endTime, PostProcessor postProcessor)  throws IOException {
 		String getURL = accessURL + "?pv=" + pvName 
 				+ "&from=" + TimeUtils.convertToISO8601String(startTime) 
+				+ "&to=" + TimeUtils.convertToISO8601String(endTime) 
+				+ (postProcessor != null ? "&pp="+postProcessor.getExtension() : "")
+				+ (skipExternalServers ? "skipExternalServers=true" : "");
+		logger.info("URL to fetch data is " + getURL);
+		return getDataBehindURL(getURL, startTime, postProcessor);
+	}
+	
+	public List<Callable<EventStream>> getDataForMultiPVs(BasicContext context, List<String> pvNames, Timestamp startTime,
+			Timestamp endTime, PostProcessor postProcessor) throws IOException {
+		String getURL = accessURL;
+		for (int i = 0; i < pvNames.size(); i++)
+			if (i == 0) getURL += "?pv=" + pvNames.get(i);
+			else 		getURL += "&pv=" + pvNames.get(i);
+		getURL += "&from=" + TimeUtils.convertToISO8601String(startTime) 
 				+ "&to=" + TimeUtils.convertToISO8601String(endTime) 
 				+ (postProcessor != null ? "&pp="+postProcessor.getExtension() : "")
 				+ (skipExternalServers ? "skipExternalServers=true" : "");
