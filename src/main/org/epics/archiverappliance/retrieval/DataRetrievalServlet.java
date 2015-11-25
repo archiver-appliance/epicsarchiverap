@@ -550,7 +550,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		String extension = req.getPathInfo().split("\\.")[1];
 		logger.info("Mime is " + extension);
 		
-		if (!extension.equals("json") || !extension.equals("raw") || !extension.equals("jplot")) {
+		if (!extension.equals("json") && !extension.equals("raw") && !extension.equals("jplot")) {
 			String msg = "Mime type " + extension + " is not supported. Please use \"json\", \"jplot\" or \"raw\".";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
