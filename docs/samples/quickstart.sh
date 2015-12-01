@@ -66,6 +66,10 @@ then
   FQ_HOSTNAME="localhost"
 fi
 
+
+[ -z "`type -p java`" -o -z "`type -p jar`" ] && die "Cannot find the java/jar executables. Please set your PATH correctly."
+
+
 ensuredir "$DATADIR"
 
 cd "$DATADIR"
