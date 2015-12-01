@@ -7,6 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance.config;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
+
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -42,6 +45,17 @@ public class ArchServletContextListener implements ServletContextListener {
 			sce.getServletContext().setAttribute(ConfigService.CONFIG_SERVICE_NAME, configService);
 		} catch (Exception e) {
 			logger.fatal("Exception initializing config service ", e);
+			try { 
+				sce.getServletContext().setAttribute(ConfigService.CONFIG_SERVICE_NAME + ".exception", e.getMessage());
+				ByteArrayOutputStream bos = new ByteArrayOutputStream();
+				PrintWriter stackTraceOut = new PrintWriter(bos, true);
+				e.printStackTrace(stackTraceOut);
+				bos.flush();
+				bos.close();
+				sce.getServletContext().setAttribute(ConfigService.CONFIG_SERVICE_NAME + ".stacktrace", bos.toString());
+			} catch(Exception ex) { 
+				logger.warn("Exception setting reason for failure", ex);
+			}
 		}
 	}
 
