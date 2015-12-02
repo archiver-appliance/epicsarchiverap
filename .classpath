@@ -25,8 +25,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/guava-17.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/hazelcast-all-3.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/junit-4.11.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/pvAccessJava-4.0.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/pvDataJava-4.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/selenium-java-2.45.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/commons-exec-1.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/pbrawclient-0.0.4.jar"/>
@@ -35,5 +33,7 @@
 	<classpathentry exported="true" kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-logging-1.1.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="lib/pvAccessJava-4.1.2.jar"/>
+	<classpathentry kind="lib" path="lib/pvDataJava-5.0.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
