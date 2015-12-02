@@ -126,11 +126,18 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 							haveIpushedTheFirstEvent = true;
 							logger.debug("Consuming first and current events " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 							mimeresponse.consumeEvent(firstEvent);
+							timestampOfLastEvent = firstEvent.getEventTimeStamp();
 							totalEvents++;
-							mimeresponse.consumeEvent(e);
-							totalEvents++;
-							timestampOfLastEvent = e.getEventTimeStamp();
-							continue;
+							if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+								logger.debug("After sending first event, current event is not after the first event. Skipping " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+								skippedEvents++;
+								continue;
+							} else { 
+								mimeresponse.consumeEvent(e);
+								totalEvents++;
+								timestampOfLastEvent = e.getEventTimeStamp();
+								continue;
+							}
 						}
 					}
 					
