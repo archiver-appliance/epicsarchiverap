@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.retrieval;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,7 +11,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.file.Files;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -30,7 +30,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
-import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -43,34 +42,34 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
 public class MultiPVClusterRetrievalTest {
 	private static Logger logger = Logger.getLogger(MultiPVClusterRetrievalTest.class.getName());
-	TomcatSetup tomcatSetup = new TomcatSetup();
-	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
-	PBCommonSetup pbSetup = new PBCommonSetup();
-	short year = (short) 2015;
+	private TomcatSetup tomcatSetup = new TomcatSetup();
+	private PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+	short year = (short) TimeUtils.getCurrentYear();
 
-	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
-	String pvName2 = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval2";
+	private String pvName = "MultiPVClusterRetrievalTest:dataretrieval";
+	private String pvName2 = "MultiPVClusterRetrievalTest:dataretrieval2";
+	private String ltsFolder = System.getenv("ARCHAPPL_LONG_TERM_FOLDER");
+	private File ltsPVFolder = new File(ltsFolder + File.separator + "MultiPVClusterRetrievalTest");
 
-	static {
-        System.setProperty("ARCHAPPL_SHORT_TERM_FOLDER", "/scratch/LargeDisk/sts/ArchiverStore");
-        System.setProperty("ARCHAPPL_MEDIUM_TERM_FOLDER", "/scratch/LargeDisk/mts/ArchiverStore");
-        System.setProperty("ARCHAPPL_LONG_TERM_FOLDER", "/scratch/LargeDisk/lts/ArchiverStore");
-    }
-	
 	@Before
 	public void setUp() throws Exception {	
 		tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
+		
+		if(ltsPVFolder.exists()) { 
+			FileUtils.deleteDirectory(ltsPVFolder);
+		}
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
+		if(ltsPVFolder.exists()) { 
+			FileUtils.deleteDirectory(ltsPVFolder);
+		}
 	}
 	
 	/**
@@ -83,19 +82,15 @@ public class MultiPVClusterRetrievalTest {
 		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
 		
 		// Set up pbplugin so that data can be retrieved using the instance
-		pbplugin.initialize("pb://localhost?name=STS&rootFolder=" + System.getProperty("ARCHAPPL_SHORT_TERM_FOLDER") 
-				+ "&partitionGranularity=PARTITION_YEAR&pp=pb", configService);
-		
-		// Delete any data that currently exists
-		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYearInSeconds(year), 
-				new ArchPaths(), configService.getPVNameToKeyConverter()));
-		
+		pbplugin.initialize("pb://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR", configService);
+				
 		// Generate an event stream to populate the PB files
 		SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), year);
 		try(BasicContext context = new BasicContext()) {
 			pbplugin.appendData(context, pvName, simstream);
 			pbplugin.appendData(context, pvName2, simstream);
 		}
+		logger.info("Done generating data for PV in " + ltsPVFolder.getAbsolutePath());
 		
 		// Load a sample PVTypeInfo from a prototype file.
 		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
@@ -117,7 +112,7 @@ public class MultiPVClusterRetrievalTest {
 		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
 		
 		pvTypeInfo1.setPaused(true);
-		pvTypeInfo1.setChunkKey(pvName.substring(2, pvName.length()) + ":");
+		pvTypeInfo1.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
 		pvTypeInfo1.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
 		pvTypeInfo1.setModificationTime(TimeUtils.now());
 		pvTypeInfo1.setApplianceIdentity("appliance0");
@@ -126,7 +121,7 @@ public class MultiPVClusterRetrievalTest {
 		logger.info("Added " + pvName + " to appliance0");
 		
 		pvTypeInfo2.setPaused(true);
-		pvTypeInfo2.setChunkKey(pvName2.substring(2, pvName2.length()) + ":");
+		pvTypeInfo2.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName2));
 		pvTypeInfo2.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
 		pvTypeInfo2.setModificationTime(TimeUtils.now());
 		pvTypeInfo2.setApplianceIdentity("appliance1");
@@ -134,6 +129,7 @@ public class MultiPVClusterRetrievalTest {
 		logger.info("Added " + pvName + " to appliance1");
 		
 		logger.info("Finished loading " + pvName + " and " + pvName2 + " into their appliances.");
+		try { Thread.sleep(5*1000); } catch(Exception ex) {}
 		
 		String startString = "2015-11-17T16:00:00.000Z";
 		String endString = "2015-11-17T16:01:00.000Z";
@@ -189,7 +185,7 @@ public class MultiPVClusterRetrievalTest {
 		Map<String, List<JSONObject>> pvToData = new HashMap<>();
 		int sizeOfResponse = finalResult.size();
 		
-		logger.debug("Size of response: " + sizeOfResponse);
+		logger.info("Size of response: " + sizeOfResponse);
 		
 		logger.debug("First part: " + finalResult.get(0).toString());
 		logger.debug("Second part: " + finalResult.get(1).toString());
