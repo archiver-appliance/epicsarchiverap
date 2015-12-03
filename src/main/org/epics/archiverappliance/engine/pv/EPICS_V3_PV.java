@@ -482,7 +482,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	public String getStateInfo() {
 		StringBuilder buf = new StringBuilder();
 		buf.append(state.toString());
-		if(this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
+		if(this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
 			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
 			int searchTries = cajChannel.getSearchTries();
 			buf.append(" Searches: " + searchTries);

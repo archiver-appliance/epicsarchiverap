@@ -148,7 +148,7 @@ public class CnxLostTest {
 			 WebElement resumeArchivingButn = driver.findElement(By.id("pvDetailsResumeArchiving"));
 			 logger.info("Clicking on the button to resume archiving the PV");
 			 resumeArchivingButn.click();
-			 Thread.sleep(10*1000);
+			 Thread.sleep(20*1000);
 			 WebElement pvDetailsTable = driver.findElement(By.id("pvDetailsTable"));
 			 List<WebElement> pvDetailsTableRows = pvDetailsTable.findElements(By.cssSelector("tbody tr"));
 			 for(WebElement pvDetailsTableRow : pvDetailsTableRows) {
