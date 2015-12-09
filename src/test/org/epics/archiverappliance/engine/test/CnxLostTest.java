@@ -109,9 +109,9 @@ public class CnxLostTest {
 		 // UnitTestNoNamingConvention:inactive1 is SCAN passive without autosave so it should have an invalid timestamp.
 		 // We caput something to generate a valid timestamp..
 		 siocSetup.caput(pvNameToArchive, "1.0");
-		 Thread.sleep(1*1000);
+		 Thread.sleep(60*1000);
 		 siocSetup.caput(pvNameToArchive, "2.0");
-		 Thread.sleep(1*1000);
+		 Thread.sleep(60*1000);
 		 
 		 checkRetrieval(pvNameToArchive, new ExpectedEventType[] { 
 			new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1),
@@ -121,11 +121,11 @@ public class CnxLostTest {
 		 logger.info("We are now archiving the PV; let's go into the details page; pause and resume");
 		 driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvNameToArchive);
 		 { 
-			 Thread.sleep(2*1000);
+			 Thread.sleep(20*1000);
 			 WebElement pauseArchivingButn = driver.findElement(By.id("pvDetailsPauseArchiving"));
 			 logger.info("Clicking on the button to pause archiving the PV");
 			 pauseArchivingButn.click();
-			 Thread.sleep(10*1000);
+			 Thread.sleep(20*1000);
 			 WebElement pvDetailsTable = driver.findElement(By.id("pvDetailsTable"));
 			 List<WebElement> pvDetailsTableRows = pvDetailsTable.findElements(By.cssSelector("tbody tr"));
 			 for(WebElement pvDetailsTableRow : pvDetailsTableRows) {
@@ -140,11 +140,11 @@ public class CnxLostTest {
 			 }
 		 }
 		 siocSetup.caput(pvNameToArchive, "3.0"); // We are paused; so we should miss this event
-		 Thread.sleep(1*1000);
+		 Thread.sleep(60*1000);
 		 siocSetup.caput(pvNameToArchive, "4.0");
-		 Thread.sleep(1*1000);
+		 Thread.sleep(60*1000);
 		 { 
-			 Thread.sleep(2*1000);
+			 Thread.sleep(20*1000);
 			 WebElement resumeArchivingButn = driver.findElement(By.id("pvDetailsResumeArchiving"));
 			 logger.info("Clicking on the button to resume archiving the PV");
 			 resumeArchivingButn.click();
@@ -170,16 +170,16 @@ public class CnxLostTest {
 		 });
 
 		 siocSetup.stopSIOC();
-		 Thread.sleep(10*1000);
+		 Thread.sleep(20*1000);
 		 
 		 siocSetup = new SIOCSetup();
 		 siocSetup.startSIOCWithDefaultDB();
-		 Thread.sleep(10*1000);
+		 Thread.sleep(20*1000);
 
 		 siocSetup.caput(pvNameToArchive, "5.0");
-		 Thread.sleep(1*1000);
+		 Thread.sleep(60*1000);
 		 siocSetup.caput(pvNameToArchive, "6.0");
-		 Thread.sleep(1*1000);
+		 Thread.sleep(60*1000);
 
 		 checkRetrieval(pvNameToArchive, new ExpectedEventType[] { 
 			new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1),
