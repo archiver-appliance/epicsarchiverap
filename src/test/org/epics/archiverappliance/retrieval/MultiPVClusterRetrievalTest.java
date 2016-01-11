@@ -130,9 +130,9 @@ public class MultiPVClusterRetrievalTest {
 		
 		logger.info("Finished loading " + pvName + " and " + pvName2 + " into their appliances.");
 		try { Thread.sleep(5*1000); } catch(Exception ex) {}
-		
-		String startString = "2015-11-17T16:00:00.000Z";
-		String endString = "2015-11-17T16:01:00.000Z";
+		short currentYear = TimeUtils.getCurrentYear();
+		String startString = currentYear + "-11-17T16:00:00.000Z";
+		String endString = currentYear + "-11-17T16:01:00.000Z";
 		
 		Timestamp start = TimeUtils.convertFromISO8601String(startString);
 		Timestamp end = TimeUtils.convertFromISO8601String(endString);
