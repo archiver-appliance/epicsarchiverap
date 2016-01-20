@@ -34,6 +34,12 @@ public class SearchForPVsRegex implements BPLAction {
 				matchingPVNames.add(pvName);
 			}
 		}
+		for(String pvName : configService.getAllAliases()) {
+			Matcher matcher = pattern.matcher(pvName);
+			if(matcher.matches()) {
+				matchingPVNames.add(pvName);
+			}
+		}
 		resp.setContentType("text/plain");
 		try(PrintWriter out = resp.getWriter()) {
 			for(String pvName : matchingPVNames) {

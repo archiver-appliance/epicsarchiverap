@@ -58,6 +58,14 @@ public class PVsMatchingParameter {
 							}
 						}
 					}
+					for(String pvName : configService.getAllAliases()) {
+						if(matcher.accept((new File(pvName)))) {
+							pvNames.add(pvName);
+							if(limit != -1 && pvNames.size() >= limit) { 
+								return pvNames;
+							}
+						}
+					}
 				} else {
 					ApplianceInfo info = configService.getApplianceForPV(pv);
 					if(info != null) { 
@@ -80,6 +88,14 @@ public class PVsMatchingParameter {
 				String regex = req.getParameter("regex");
 				Pattern pattern = Pattern.compile(regex);
 				for(String pvName : configService.getAllPVs()) {
+					if(pattern.matcher(pvName).matches()) { 
+						pvNames.add(pvName);
+						if(limit != -1 && pvNames.size() >= limit) { 
+							return pvNames;
+						}
+					}
+				}
+				for(String pvName : configService.getAllAliases()) {
 					if(pattern.matcher(pvName).matches()) { 
 						pvNames.add(pvName);
 						if(limit != -1 && pvNames.size() >= limit) { 
