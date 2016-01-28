@@ -121,6 +121,10 @@ fi
 
 echo "Using ${ARCHAPPL_PERSISTENCE_LAYER} as the persistence layer"
 
+# Tell the appliance that we are deploying all the components in one VM.
+# This reduces the thread count and other parameters in an effort to optimize memory.
+export ARCHAPPL_ALL_APPS_ON_ONE_JVM="true"
+
 if [ -d quickstart_tomcat ]
 then
     echo "Found an older quickstart_tomcat folder. Stopping any existing instances."

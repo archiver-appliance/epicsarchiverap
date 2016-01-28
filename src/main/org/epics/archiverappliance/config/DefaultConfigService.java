@@ -428,13 +428,14 @@ public class DefaultConfigService implements ConfigService {
 
 		HazelcastInstance hzinstance = null;
 		
-		logger.debug("Trying to control the thread counts from Hz");
 		// Set the thread count to control how may threads this library spawns.
-		// For now we have turned this off
-//		Properties hzThreadCounts = new Properties();
-//		hzThreadCounts.put("hazelcast.clientengine.thread.count", "2");
-//		hzThreadCounts.put("hazelcast.operation.generic.thread.count", "2");
-//		hzThreadCounts.put("hazelcast.operation.thread.count", "2");
+		Properties hzThreadCounts = new Properties();
+		if(System.getenv().containsKey("ARCHAPPL_ALL_APPS_ON_ONE_JVM")) { 
+			logger.info("Reducing the generic clustering thread counts.");
+			hzThreadCounts.put("hazelcast.clientengine.thread.count", "2");
+			hzThreadCounts.put("hazelcast.operation.generic.thread.count", "2");
+			hzThreadCounts.put("hazelcast.operation.thread.count", "2");
+		}
 		
 		if(this.warFile == WAR_FILE.MGMT) {
 			// The management webapps are the head honchos in the cluster. We set them up differently
@@ -478,7 +479,10 @@ public class DefaultConfigService implements ConfigService {
 
 			config.setInstanceName(myIdentity);
 			
-			// config.getProperties().putAll(hzThreadCounts);
+			if(!hzThreadCounts.isEmpty()) {
+				logger.info("Reducing the generic clustering thread counts.");
+				config.getProperties().putAll(hzThreadCounts);
+			}
 			
 			try {
 				String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
@@ -543,7 +547,10 @@ public class DefaultConfigService implements ConfigService {
 				clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
 				clientConfig.setProperty("hazelcast.logging.type", "log4j");
 				
-				// clientConfig.getProperties().putAll(hzThreadCounts);
+				if(!hzThreadCounts.isEmpty()) {
+					logger.info("Reducing the generic clustering thread counts.");
+					clientConfig.getProperties().putAll(hzThreadCounts);
+				}
 				
 				if(!clusterLogger.isDebugEnabled()) {
 					// The client code logs some SEVERE exceptions on shutdown when deploying on the same Tomcat container.
