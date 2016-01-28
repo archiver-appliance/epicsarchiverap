@@ -23,7 +23,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/httpcore-4.3.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/joda-time-2.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/guava-17.0.jar"/>
-	<classpathentry exported="true" kind="lib" path="lib/hazelcast-all-3.3.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/junit-4.11.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/selenium-java-2.45.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/test/commons-exec-1.3.jar"/>
@@ -35,5 +34,6 @@
 	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="lib" path="lib/pvAccessJava-4.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/pvDataJava-5.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/hazelcast-all-3.6.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

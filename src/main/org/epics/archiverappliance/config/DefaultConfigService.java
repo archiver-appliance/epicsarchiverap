@@ -86,18 +86,19 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Cluster;
 import com.hazelcast.core.EntryEvent;
-import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.ITopic;
-import com.hazelcast.core.MapEvent;
 import com.hazelcast.core.Member;
 import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.core.Message;
 import com.hazelcast.core.MessageListener;
+import com.hazelcast.map.listener.EntryAddedListener;
+import com.hazelcast.map.listener.EntryRemovedListener;
+import com.hazelcast.map.listener.EntryUpdatedListener;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBTypeSystem;
 
@@ -427,6 +428,13 @@ public class DefaultConfigService implements ConfigService {
 
 		HazelcastInstance hzinstance = null;
 		
+		logger.debug("Trying to control the thread counts from Hz");
+		// Set the thread count to control how may threads this library spawns.
+		// For now we have turned this off
+//		Properties hzThreadCounts = new Properties();
+//		hzThreadCounts.put("hazelcast.clientengine.thread.count", "2");
+//		hzThreadCounts.put("hazelcast.operation.generic.thread.count", "2");
+//		hzThreadCounts.put("hazelcast.operation.thread.count", "2");
 		
 		if(this.warFile == WAR_FILE.MGMT) {
 			// The management webapps are the head honchos in the cluster. We set them up differently
@@ -469,6 +477,9 @@ public class DefaultConfigService implements ConfigService {
 			}
 
 			config.setInstanceName(myIdentity);
+			
+			// config.getProperties().putAll(hzThreadCounts);
+			
 			try {
 				String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
 				String myHostName = myAddrParts[0];
@@ -531,6 +542,9 @@ public class DefaultConfigService implements ConfigService {
 				configlogger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress() + ":" + myClusterPort);
 				clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
 				clientConfig.setProperty("hazelcast.logging.type", "log4j");
+				
+				// clientConfig.getProperties().putAll(hzThreadCounts);
+				
 				if(!clusterLogger.isDebugEnabled()) {
 					// The client code logs some SEVERE exceptions on shutdown when deploying on the same Tomcat container.
 					// These exceptions are confusing; ideally, we would not have to set the log levels like so.
@@ -569,38 +583,21 @@ public class DefaultConfigService implements ConfigService {
 			String localInetPort = getMemberKey(cluster.getLocalMember());
 			clusterInet2ApplianceIdentity.put(localInetPort, myIdentity);
 			logger.debug("Adding myself " + myIdentity + " as having inetport " + localInetPort);
-			hzinstance.getMap("clusterInet2ApplianceIdentity").addEntryListener(new EntryListener<Object, Object>() {
-				@Override
-				public void entryUpdated(EntryEvent<Object, Object> event) {
-				}
-				
-				@Override
-				public void entryRemoved(EntryEvent<Object, Object> event) {
-					String appliden = (String) event.getValue();
-					appliancesInCluster.remove(appliden);
-					logger.info("Removing appliance " + appliden + " from the list of active appliancesas inetport " + ((String) event.getKey()));
-				}
-				
-				@Override
-				public void entryEvicted(EntryEvent<Object, Object> event) {
-				}
-				
+			hzinstance.getMap("clusterInet2ApplianceIdentity").addEntryListener(new EntryAddedListener<Object, Object>() {
 				@Override
 				public void entryAdded(EntryEvent<Object, Object> event) {
 					String appliden = (String) event.getValue();
 					appliancesInCluster.add(appliden);
 					logger.info("Adding appliance " + appliden + " to the list of active appliances as inetport " + ((String) event.getKey()));
 				}
-
+			}, true);
+			hzinstance.getMap("clusterInet2ApplianceIdentity").addEntryListener(new EntryRemovedListener<Object, Object>() {
 				@Override
-				public void mapCleared(MapEvent arg0) {
-					logger.debug("Ignoring mapClearedEvent");
-				}
-
-				@Override
-				public void mapEvicted(MapEvent arg0) {
-					logger.debug("Ignoring mapEvictedEvent");
-				}
+				public void entryRemoved(EntryEvent<Object, Object> event) {
+					String appliden = (String) event.getValue();
+					appliancesInCluster.remove(appliden);
+					logger.info("Removing appliance " + appliden + " from the list of active appliancesas inetport " + ((String) event.getKey()));
+				}				
 			}, true);
 			
 			logger.debug("Establishing a cluster membership listener to detect when appliances drop off the cluster");
@@ -720,43 +717,7 @@ public class DefaultConfigService implements ConfigService {
 		
 		// Register for changes to the typeinfo map.
 		logger.info("Registering for changes to typeinfos");
-		hzinstance.getMap("typeinfo").addEntryListener(new EntryListener<Object, Object>() {
-
-			@Override
-			public void entryUpdated(EntryEvent<Object, Object> entryEvent) {
-				PVTypeInfo typeInfo =(PVTypeInfo) entryEvent.getValue();
-				String pvName = typeInfo.getPvName();
-				eventBus.post(new PVTypeInfoEvent(pvName, typeInfo, ChangeType.TYPEINFO_MODIFIED));
-				logger.debug("Received entryUpdated for pvTypeInfo");
-				if(persistanceLayer != null) { 
-					try { 
-						persistanceLayer.putTypeInfo(pvName, typeInfo);
-					} catch(Exception ex) { 
-						logger.error("Exception persisting pvTypeInfo for pv " + pvName, ex);
-					}
-				}
-			}
-
-			@Override
-			public void entryRemoved(EntryEvent<Object, Object> entryEvent) {
-				PVTypeInfo typeInfo =(PVTypeInfo) entryEvent.getOldValue();
-				String pvName = typeInfo.getPvName();
-				logger.info("Received entryRemoved for pvTypeInfo " + pvName);
-				eventBus.post(new PVTypeInfoEvent(pvName, typeInfo, ChangeType.TYPEINFO_DELETED));
-				if(persistanceLayer != null) { 
-					try { 
-						persistanceLayer.deleteTypeInfo(pvName);
-					} catch(Exception ex) { 
-						logger.error("Exception deleting pvTypeInfo for pv " + pvName, ex);
-					}
-				}
-			}
-
-			@Override
-			public void entryEvicted(EntryEvent<Object, Object> entryEvent) {
-				logger.debug("Not processing the evicted event");
-			}
-
+		hzinstance.getMap("typeinfo").addEntryListener(new EntryAddedListener<Object, Object>() {
 			@Override
 			public void entryAdded(EntryEvent<Object, Object> entryEvent) {
 				logger.debug("Received entryAdded for pvTypeInfo");
@@ -771,18 +732,39 @@ public class DefaultConfigService implements ConfigService {
 					}
 				}
 			}
-
+		}, true);
+		hzinstance.getMap("typeinfo").addEntryListener(new EntryRemovedListener<Object, Object>() {
 			@Override
-			public void mapCleared(MapEvent arg0) {
-				logger.debug("Ignoring mapClearedEvent");
-			}
-
-			@Override
-			public void mapEvicted(MapEvent arg0) {
-				logger.debug("Ignoring mapEvictedEvent");
+			public void entryRemoved(EntryEvent<Object, Object> entryEvent) {
+				PVTypeInfo typeInfo =(PVTypeInfo) entryEvent.getOldValue();
+				String pvName = typeInfo.getPvName();
+				logger.info("Received entryRemoved for pvTypeInfo " + pvName);
+				eventBus.post(new PVTypeInfoEvent(pvName, typeInfo, ChangeType.TYPEINFO_DELETED));
+				if(persistanceLayer != null) { 
+					try { 
+						persistanceLayer.deleteTypeInfo(pvName);
+					} catch(Exception ex) { 
+						logger.error("Exception deleting pvTypeInfo for pv " + pvName, ex);
+					}
+				}
 			}
 		}, true);
-		
+		hzinstance.getMap("typeinfo").addEntryListener(new EntryUpdatedListener<Object, Object>() {
+			@Override
+			public void entryUpdated(EntryEvent<Object, Object> entryEvent) {
+				PVTypeInfo typeInfo =(PVTypeInfo) entryEvent.getValue();
+				String pvName = typeInfo.getPvName();
+				eventBus.post(new PVTypeInfoEvent(pvName, typeInfo, ChangeType.TYPEINFO_MODIFIED));
+				logger.debug("Received entryUpdated for pvTypeInfo");
+				if(persistanceLayer != null) { 
+					try { 
+						persistanceLayer.putTypeInfo(pvName, typeInfo);
+					} catch(Exception ex) { 
+						logger.error("Exception persisting pvTypeInfo for pv " + pvName, ex);
+					}
+				}
+			}
+		}, true);
 		
 		eventBus.register(this);
 		
@@ -1850,27 +1832,7 @@ public class DefaultConfigService implements ConfigService {
 	
 	
 	private void registerForNewExternalServers(IMap<Object, Object> dataServerMap) throws ConfigException {
-		dataServerMap.addEntryListener(new EntryListener<Object, Object>() {
-			
-			@Override
-			public void entryUpdated(EntryEvent<Object, Object> arg0) {
-			}
-			
-			@Override
-			public void entryRemoved(EntryEvent<Object, Object> arg0) {
-				String url = (String) arg0.getKey();
-				String archivesCSV = (String) arg0.getValue();
-				try { 
-					removeExternalArchiverDataServer(url, archivesCSV);
-				} catch(Exception ex) { 
-					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
-				}
-			}
-			
-			@Override
-			public void entryEvicted(EntryEvent<Object, Object> arg0) {
-			}
-			
+		dataServerMap.addEntryListener(new EntryAddedListener<Object, Object>() {
 			@Override
 			public void entryAdded(EntryEvent<Object, Object> arg0) {
 				String url = (String) arg0.getKey();
@@ -1881,17 +1843,17 @@ public class DefaultConfigService implements ConfigService {
 					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
 				}
 			}
-
+		}, true);
+		dataServerMap.addEntryListener(new EntryRemovedListener<Object, Object>() {
 			@Override
-			public void mapCleared(MapEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
-			public void mapEvicted(MapEvent arg0) {
-				// TODO Auto-generated method stub
-				
+			public void entryRemoved(EntryEvent<Object, Object> arg0) {
+				String url = (String) arg0.getKey();
+				String archivesCSV = (String) arg0.getValue();
+				try { 
+					removeExternalArchiverDataServer(url, archivesCSV);
+				} catch(Exception ex) { 
+					logger.error("Exception syncing external data server " + url + archivesCSV, ex);
+				}
 			}
 		}, true);
 	}
