@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -24,4 +25,9 @@ public interface SampleValue {
 	public String toJSONString();
 	@SuppressWarnings("rawtypes")
 	public List getValues();
+	/**
+	 * Return the value as a ByteBuffer that is ready to read.
+	 * @return
+	 */
+	public ByteBuffer getValueAsBytes();
 }

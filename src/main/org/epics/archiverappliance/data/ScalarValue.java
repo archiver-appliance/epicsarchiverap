@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -72,5 +73,10 @@ public class ScalarValue<T extends Number> implements SampleValue {
 	@Override
 	public String toJSONString() {
 		return value.toString();
+	}
+
+	@Override
+	public ByteBuffer getValueAsBytes() {
+		throw new UnsupportedOperationException();
 	}
 }

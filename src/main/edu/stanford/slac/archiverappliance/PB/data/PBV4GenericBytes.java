@@ -13,7 +13,8 @@ import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
-import org.epics.archiverappliance.data.ScalarStringSampleValue;
+import org.epics.pvaccess.impl.remote.IntrospectionRegistry;
+import org.epics.pvaccess.impl.remote.SerializationHelper;
 import org.epics.pvdata.pv.Field;
 import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.SerializableControl;
@@ -43,10 +44,11 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	public PBV4GenericBytes(DBRTimeEvent ev) {
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
 		year = yst.getYear();
+		ByteString byteString = ByteString.copyFrom(ev.getSampleValue().getValueAsBytes());
 		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
 				.setNano(yst.getNanos())
-				.setVal(ByteString.copyFromUtf8(ev.getSampleValue().toString()));
+				.setVal(byteString);
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
 		if(ev.hasFieldValues()) {
@@ -73,13 +75,15 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		int status = alarmPVStructure.getIntField("status").get();
 
 		ByteBuffer buf = ByteBuffer.allocate(10*1024);
-		v4Data.serialize(buf, new DummySerializationControl(buf));
+		SerializationHelper.serializeStructureFull(buf, new DummySerializationControl(), v4Data);
+		buf.flip();
+		ByteString byteString = ByteString.copyFrom(buf); 
 
 		year = yst.getYear();
 		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
 				.setNano(yst.getNanos())
-				.setVal(ByteString.copyFrom(buf.array()));
+				.setVal(byteString);
 		if(severity != 0) builder.setSeverity(severity);
 		if(status != 0) builder.setStatus(status);
 		dbevent = builder.build();
@@ -124,7 +128,43 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	@Override
 	public SampleValue getSampleValue() {
 		unmarshallEventIfNull();
-		return new ScalarStringSampleValue(dbevent.getVal().toStringUtf8());
+		return new SampleValue() {
+			@Override
+			public String toJSONString() {
+				throw new UnsupportedOperationException();
+			}
+			
+			@SuppressWarnings("rawtypes")
+			@Override
+			public List getValues() {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public ByteBuffer getValueAsBytes() {
+				return dbevent.getVal().asReadOnlyByteBuffer();
+			}
+			
+			@Override
+			public Number getValue(int index) {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public Number getValue() {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public String getStringValue(int index) {
+				throw new UnsupportedOperationException();
+			}
+			
+			@Override
+			public int getElementCount() {
+				return 1;
+			}
+		};
 	}
 
 	@Override
@@ -265,8 +305,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
      *
      */
     class DummySerializationControl implements SerializableControl {
-        
-        public DummySerializationControl(ByteBuffer buf) { 
+    	protected final IntrospectionRegistry outgoingIR = new IntrospectionRegistry();
+
+        public DummySerializationControl() { 
                 
         }
 
@@ -275,7 +316,8 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         }
 
         @Override
-        public void cachedSerialize(Field arg0, ByteBuffer arg1) {
+        public void cachedSerialize(Field field, ByteBuffer buffer) {
+        	outgoingIR.serialize(field, buffer, this);
         }
 
         @Override
@@ -286,6 +328,6 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         public void flushSerializeBuffer() {
         } 
         
-}
+    }
 
 }

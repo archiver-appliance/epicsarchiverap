@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.json.simple.JSONValue;
@@ -72,6 +73,18 @@ public class ScalarStringSampleValue implements SampleValue {
 	@Override
 	public String toJSONString() {
 		return "\"" + JSONValue.escape(value) + "\"";
+	}
+
+	@Override
+	public ByteBuffer getValueAsBytes() {
+		if(value != null) { 
+			byte[] bytes = value.getBytes();
+			ByteBuffer buf = ByteBuffer.allocate(value.length() + 1);
+			buf.put(bytes);
+			buf.flip();
+			return buf;
+		}
+		return null;
 	}
 
 }

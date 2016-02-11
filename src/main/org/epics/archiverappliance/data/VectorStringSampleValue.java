@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.data;
 
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 import org.json.simple.JSONValue;
@@ -92,5 +93,10 @@ public class VectorStringSampleValue implements SampleValue {
 		}
 		buf.append(']');
 		return buf.toString();
+	}
+
+	@Override
+	public ByteBuffer getValueAsBytes() {
+		throw new UnsupportedOperationException();
 	}
 }

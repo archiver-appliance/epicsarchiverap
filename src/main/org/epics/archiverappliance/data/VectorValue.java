@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.data;
 
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 /**
@@ -93,5 +94,10 @@ public class VectorValue <T extends Number> implements SampleValue {
 		}
 		buf.append(']');
 		return buf.toString();
+	}
+
+	@Override
+	public ByteBuffer getValueAsBytes() {
+		throw new UnsupportedOperationException();
 	}
 }
