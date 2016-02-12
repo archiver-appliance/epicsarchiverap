@@ -124,7 +124,8 @@ public class DBRTypeTest {
 
 					SampleValue val = ev.getSampleValue();
 					SampleValue eexpectedval = valuegenerator.getSampleValue(dbrType, secondsintoyear);
-					System.out.println("val is of type " + val.getClass().getName() + " and eexpectedval is of type " + eexpectedval.getClass().getName());
+					logger.debug("val is of type " + val.getClass().getName() + " and eexpectedval is of type " + eexpectedval.getClass().getName());
+					
 					if(!eexpectedval.equals(val)) {
 						fail("Value mismatch found at " + secondsintoyear + " when testing " + dbrType.toString() 
 								+ ". Expecting " + eexpectedval.toString()  
@@ -151,6 +152,11 @@ public class DBRTypeTest {
 	@Test
 	public void testCSVEvents() {
 		for(ArchDBRTypes dbrType : ArchDBRTypes.values()) {
+			if(dbrType == ArchDBRTypes.DBR_V4_GENERIC_BYTES) {
+				// There is no sense is checking for CSV for DBR_V4_GENERIC_BYTES; this is a bytebuf anyways.
+				logger.info("Skipping checking CSV conversion for V4 generic type");
+				continue;
+			}
 			logger.info("Testing CSV events for DBR_type: " + dbrType.name());
 			BoundaryConditionsSimulationValueGenerator valuegenerator = new BoundaryConditionsSimulationValueGenerator();
 			for(int secondsintoyear= 0; secondsintoyear < valuegenerator.getNumberOfSamples(dbrType); secondsintoyear++) {

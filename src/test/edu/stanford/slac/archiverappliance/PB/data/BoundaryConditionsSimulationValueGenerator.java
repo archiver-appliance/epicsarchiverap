@@ -7,6 +7,20 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+
+import org.apache.commons.lang3.ArrayUtils;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.ByteBufSampleValue;
+import org.epics.archiverappliance.data.SampleValue;
+import org.epics.archiverappliance.data.ScalarStringSampleValue;
+import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.data.VectorStringSampleValue;
+import org.epics.archiverappliance.data.VectorValue;
+import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
+
 import gov.aps.jca.dbr.DBR;
 import gov.aps.jca.dbr.DBR_TIME_Byte;
 import gov.aps.jca.dbr.DBR_TIME_Double;
@@ -15,18 +29,6 @@ import gov.aps.jca.dbr.DBR_TIME_Float;
 import gov.aps.jca.dbr.DBR_TIME_Int;
 import gov.aps.jca.dbr.DBR_TIME_Short;
 import gov.aps.jca.dbr.DBR_TIME_String;
-
-import java.util.Collections;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.data.SampleValue;
-import org.epics.archiverappliance.data.ScalarStringSampleValue;
-import org.epics.archiverappliance.data.ScalarValue;
-import org.epics.archiverappliance.data.VectorStringSampleValue;
-import org.epics.archiverappliance.data.VectorValue;
-import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
 
 /**
  * Generates a sample value based on secondsintoyear for each DBR_type. 
@@ -116,7 +118,10 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
 			return new VectorValue<Double>(Collections.nCopies(secondsIntoYear, Math.sin(secondsIntoYear*Math.PI/3600)));
 		case DBR_V4_GENERIC_BYTES:
 			// Varying number of copies of a typical value
-			return new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
+			ByteBuffer buf = ByteBuffer.allocate(1024*10);
+			buf.put(Integer.toString(secondsIntoYear).getBytes());
+			buf.flip();
+			return new ByteBufSampleValue(buf);
 		default: 
 			throw new RuntimeException("We seemed to have missed a DBR type when generating sample data");
 		}

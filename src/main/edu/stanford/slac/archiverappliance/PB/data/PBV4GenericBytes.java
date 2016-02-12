@@ -11,6 +11,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.ByteBufSampleValue;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.pvaccess.impl.remote.IntrospectionRegistry;
@@ -128,43 +129,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	@Override
 	public SampleValue getSampleValue() {
 		unmarshallEventIfNull();
-		return new SampleValue() {
-			@Override
-			public String toJSONString() {
-				throw new UnsupportedOperationException();
-			}
-			
-			@SuppressWarnings("rawtypes")
-			@Override
-			public List getValues() {
-				throw new UnsupportedOperationException();
-			}
-			
-			@Override
-			public ByteBuffer getValueAsBytes() {
-				return dbevent.getVal().asReadOnlyByteBuffer();
-			}
-			
-			@Override
-			public Number getValue(int index) {
-				throw new UnsupportedOperationException();
-			}
-			
-			@Override
-			public Number getValue() {
-				throw new UnsupportedOperationException();
-			}
-			
-			@Override
-			public String getStringValue(int index) {
-				throw new UnsupportedOperationException();
-			}
-			
-			@Override
-			public int getElementCount() {
-				return 1;
-			}
-		};
+		return new ByteBufSampleValue(dbevent.getVal().asReadOnlyByteBuffer());
 	}
 
 	@Override
