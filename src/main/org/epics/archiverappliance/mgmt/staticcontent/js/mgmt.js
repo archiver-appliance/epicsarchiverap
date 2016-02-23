@@ -166,10 +166,10 @@ function archivePVsWithDetails() {
 		}
 		
 		var policyParam = '';
-		if(policySelected == null || policySelected == undefined || policySelected.length <= 0) { 
+		if(policySelected == null || policySelected == undefined || policySelected.trim().length <= 0) { 
 			
 		} else {
-			policyParam = "&policy="+encodeURIComponent(policySelected);
+			policyParam = "&policy="+encodeURIComponent(policySelected.trim());
 		}
 		
 		$("#pvDetailsParams").hide();
