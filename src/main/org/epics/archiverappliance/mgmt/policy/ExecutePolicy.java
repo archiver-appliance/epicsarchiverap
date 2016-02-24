@@ -31,6 +31,7 @@ import org.python.util.PythonInterpreter;
  * <li><code>samplingPeriod</code> -- The sampling period to use for this PV.</li>
  * <li><code>samplingMethod</code> -- The {@link SamplingMethod sampling method} to use for this PV.</li>
  * <li><code>policyName</code> -- The name of the policy that was used for this PV.</li>
+ * <li><code>controlPV</code> -- Another PV that can be used to conditionally archive this PV.</li>
  * <li><code>dataStores</code> -- An array of StoragePlugin URL's that can be parsed by {@link StoragePluginURLParser StoragePluginURLParser}. These form the stages of data storage for this PV.</li>
  * <li><code>archiveFields</code> -- A optional array of fields that will be archived as part of archiving the .VAL field for this PV.</li>
  * <li><code>appliance</code> -- Optional; assign this PV to this appliance. This is a string and is the identity of the appliance you want to assign this PV to.</li>
@@ -74,6 +75,11 @@ public class ExecutePolicy implements AutoCloseable {
 		policyConfig.setSamplingMethod(SamplingMethod.valueOf(samplingMethod));
 		String policyName = (String) policy.get("policyName");
 		policyConfig.setPolicyName(policyName);
+		if(policy.containsKey("controlPV")) { 
+			policyConfig.setControlPV((String)policy.get("controlPV"));
+			logger.debug("Conditionally archiving PV using " + policyConfig.getControlPV());
+		}
+		
 		LinkedList<String> dataStores = new LinkedList<String>(); 
 		for(Object dataStore : (PyList) policy.get("dataStores")) {
 			dataStores.add((String)dataStore);

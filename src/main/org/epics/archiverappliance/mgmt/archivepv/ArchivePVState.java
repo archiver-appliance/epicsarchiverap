@@ -98,10 +98,15 @@ public class ArchivePVState {
 
 					SamplingMethod theSamplingMethod = thePolicy.getSamplingMethod();
 					float theSamplingPeriod = thePolicy.getSamplingPeriod();
+					String controllingPV = thePolicy.getControlPV();
 					if(userSpec.isUserOverrideParams()) {
 						theSamplingMethod = userSpec.userSpecifedsamplingMethod;
 						theSamplingPeriod = userSpec.getUserSpecifedSamplingPeriod();
 						logger.debug("Overriding sampling period  to " + theSamplingPeriod + " and using " + theSamplingMethod);
+						if(userSpec.getControllingPV() != null) { 
+							controllingPV = userSpec.getControllingPV();
+							logger.debug("Overriding controlling PV to " + controllingPV + " from the userspec");
+						}
 					}
 					
 					boolean isField = PVNames.isField(pvName);
@@ -112,7 +117,7 @@ public class ArchivePVState {
 					typeInfo.setSamplingPeriod(theSamplingPeriod);
 					typeInfo.setDataStores(thePolicy.getDataStores());
 					typeInfo.setCreationTime(TimeUtils.now());
-					typeInfo.setControllingPV(userSpec.getControllingPV());
+					typeInfo.setControllingPV(controllingPV);
 					typeInfo.setUsePVAccess(userSpec.isUsePVAccess());
 					typeInfo.setPolicyName(thePolicy.getPolicyName());
 					

@@ -1475,6 +1475,9 @@ public class DefaultConfigService implements ConfigService {
 				logger.debug("Passing user override of policy " + userSpecParams.getPolicyName() + " as the dict entry policyName");
 				pvInfo.put("policyName", userSpecParams.getPolicyName());
 			}
+			if(userSpecParams.getControllingPV() != null) { 
+				pvInfo.put("controlPV", userSpecParams.getControllingPV());
+			}
 
 			
 			HashMap<String,String> otherMetaInfo = metaInfo.getOtherMetaInfo();

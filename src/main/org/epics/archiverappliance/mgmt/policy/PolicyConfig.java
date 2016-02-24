@@ -21,6 +21,7 @@ public class PolicyConfig {
 	private String policyName;
 	private String[] archiveFields;
 	private String appliance;
+	private String controlPV;
 
 	public SamplingMethod getSamplingMethod() {
 		return samplingMethod;
@@ -41,6 +42,7 @@ public class PolicyConfig {
 		stringRep.put("samplingMethod", samplingMethod.toString());
 		stringRep.put("samplingPeriod", Float.toString(samplingPeriod));
 		stringRep.put("policyName", policyName);
+		stringRep.put("controlPV", controlPV);
 		JSONArray stores = new JSONArray();
 		for(String store : dataStores) stores.add(store);
 		stringRep.put("dataStores", stores);
@@ -87,5 +89,13 @@ public class PolicyConfig {
 
 	public void setAppliance(String appliance) {
 		this.appliance = appliance;
+	}
+
+	public String getControlPV() {
+		return controlPV;
+	}
+
+	public void setControlPV(String controlPV) {
+		this.controlPV = controlPV;
 	}
 }
