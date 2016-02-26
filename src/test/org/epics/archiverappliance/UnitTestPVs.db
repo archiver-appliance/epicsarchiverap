@@ -39,6 +39,7 @@ record(ai, "UnitTestNoNamingConvention:sine") {
   field(LOW , "-0.7")
   field(LSV , "MAJOR")
   field(EGU, "apples")
+  field(DESC, "Something:with:a:colon")
 }
 
 record(calcout, "UnitTestNoNamingConvention:cosine:calc") {
@@ -180121,9 +180122,6 @@ record(ai, "UnitTestNoNamingConvention:inactive2") {
   field(LOW , "-0.7")
   field(LSV , "MAJOR")
 }
-
-
-
 
 
 
