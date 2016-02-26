@@ -144,6 +144,22 @@ public class PVNames {
 	
 	
 	/**
+	 * Transfer any fields from the source name to the dest name
+	 * Transferring ABC:123 onto DEF:456 should give DEF:456
+	 * Transferring ABC:123.DESC onto DEF:456 should give DEF:456.DESC
+	 * @param srcName
+	 * @param destName
+	 * @return
+	 */
+	public static String transferField(String srcName, String destName) { 
+		if(isField(srcName)) { 
+			return normalizePVNameWithField(destName, getFieldName(srcName));
+		} else { 
+			return destName;
+		}
+	}
+	
+	/**
 	 * A standard process for dealing with aliases, standard fields and the like.
 	 * @param pvName
 	 * @param configService

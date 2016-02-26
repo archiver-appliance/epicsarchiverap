@@ -94,11 +94,12 @@ public class MetaGet implements Runnable {
 			pvList.put("main", pv);
 			pv.start();
 
-			PV pv2 = PVFactory.createPV(pvName + ".NAME", configservice, jcaCommandThreadId, usePVAccess);
+			
+			PV pv2 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME"), configservice, jcaCommandThreadId, usePVAccess);
 			pvList.put("NAME", pv2);
 			pv2.start();
 			
-			PV pv3 = PVFactory.createPV(pvName + ".NAME$", configservice, jcaCommandThreadId, usePVAccess);
+			PV pv3 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME$"), configservice, jcaCommandThreadId, usePVAccess);
 			pvList.put("NAME$", pv3);
 			pv3.start();
 			
@@ -187,9 +188,10 @@ public class MetaGet implements Runnable {
 	private void parseAliasInfo(SampleValue tempvalue, MetaInfo mainMeta) {
 		if (tempvalue instanceof ScalarValue<?>) {
 			// We have a number for a NAME????
-			mainMeta.setAliasName("" + ((ScalarValue<?>) tempvalue).getValue().doubleValue());
+			logger.error("We have a number as the NAME field for pv " + pvName);
+			mainMeta.setAliasName(PVNames.transferField(pvName, "" + ((ScalarValue<?>) tempvalue).getValue().doubleValue()));
 		} else if (tempvalue instanceof ScalarStringSampleValue) {
-			String tempName = ((ScalarStringSampleValue) tempvalue).toString();
+			String tempName = PVNames.transferField(pvName, ((ScalarStringSampleValue) tempvalue).toString());
 			mainMeta.setAliasName(tempName);
 			mainMeta.addOtherMetaInfo("NAME", tempName);
 		} else if (tempvalue instanceof VectorValue<?>) {
@@ -210,6 +212,7 @@ public class MetaGet implements Runnable {
 				namebuf[i] = byteValue;
 			}
 			if(nameDollar != null) { 
+				nameDollar = PVNames.transferField(pvName, nameDollar);
 				mainMeta.setAliasName(nameDollar);
 				mainMeta.addOtherMetaInfo("NAME", nameDollar);
 			} else { 
@@ -217,7 +220,7 @@ public class MetaGet implements Runnable {
 			}
 		} else if (tempvalue instanceof VectorStringSampleValue) {
 			// We have an array of strings? for a NAME????
-			String tempName = ((VectorStringSampleValue) tempvalue).toString();
+			String tempName = PVNames.transferField(pvName, ((VectorStringSampleValue) tempvalue).toString());
 			if (!pvName.equals(tempName))
 				mainMeta.setAliasName(tempName);
 		}
