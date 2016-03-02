@@ -49,21 +49,8 @@ public class AbortArchiveRequest implements BPLAction {
 		// String pvNameFromRequest = pvName;
 		String realName = configService.getRealNameForAlias(pvName);
 		if(realName != null) pvName = realName;
-
-		if(configService.getTypeInfoForPV(pvName) != null) { 
-			HashMap<String, Object> infoValues = new HashMap<String, Object>();
-			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			infoValues.put("status", "no");
-			infoValues.put("validation", "The PV " + pvName + " is already being archived and has some data. Please delete the PV instead.");
-			try (PrintWriter out = resp.getWriter()) {
-				out.println(JSONValue.toJSONString(infoValues));
-			}
-			return;
-		}
 		
 		logger.info("Aborting archiving requests for the PV " + pvName);
-		
-		
 		LinkedList<String> abortPVURLs = new LinkedList<String>();
 		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
 			abortPVURLs.add(info.getEngineURL() + "/abortArchivingPVForThisAppliance?pv=" + URLEncoder.encode(pvName, "UTF-8"));
