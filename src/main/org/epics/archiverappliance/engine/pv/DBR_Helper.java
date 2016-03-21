@@ -128,5 +128,16 @@ public class DBR_Helper
 		 return notEqual0;
 		}
    
+    public static DBRType getControlType(final DBRType type)
+    {
+		if (type.isDOUBLE() || type.isFLOAT())
+			return DBRType.CTRL_DOUBLE;
+		else if (type.isENUM())
+			return DBRType.LABELS_ENUM;
+		else if (type.isINT())
+			return DBRType.CTRL_INT;
+		else
+			return DBRType.CTRL_SHORT;
+    }
     
 }

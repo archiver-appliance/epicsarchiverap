@@ -15,6 +15,7 @@ package org.epics.archiverappliance.engine.model;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +30,7 @@ import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
+import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVFactory;
@@ -224,7 +226,7 @@ abstract public class ArchiveChannel {
 		this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype,this.pvMetrics);
 		this.JCACommandThreadID =  commandThreadID;
 
-		this.pv = PVFactory.createPV(name, configservice, false, archdbrtype, commandThreadID, usePVAccess);
+		this.pv = PVFactory.createPV(name, configservice, false, archdbrtype, commandThreadID, usePVAccess, false);
 
 		pv.addListener(new PVListener() {
 			@Override
@@ -287,22 +289,56 @@ abstract public class ArchiveChannel {
 	 * @param metaFields
 	 * @param configservice
 	 * @param usePVAccess
+	 * @param useDBEProperties
 	 * @throws IOException
 	 */
+	static HashSet<String> fieldsAvailableFromDBRControl = new HashSet<String>();
+	static { 
+		fieldsAvailableFromDBRControl.addAll(Arrays.asList(new String[] {"PREC", "EGU", "HOPR", "LOPR", "HIHI", "HIGH", "LOW", "LOLO", "DRVH", "DRVL" }));  
+	}
 	public void initializeMetaFieldPVS(final String[] metaFields, final ConfigService configservice, final boolean usePVAccess, final boolean useDBEProperties) throws IOException {
-		if(metaFields != null && metaFields.length > 0) { 
-			HashSet<String> runtTimeFieldsCopy = new HashSet<String>(configservice.getRuntimeFields());
-			for (String fieldName : metaFields) {
-				logger.debug("Adding monitor for meta field " + fieldName);
-				this.addMetaField(fieldName, configservice, false, usePVAccess);
-				runtTimeFieldsCopy.remove(fieldName);
-			}
-
-			for(String runtimeField : runtTimeFieldsCopy) { 
-				logger.debug("Adding monitor for runtime field " + runtimeField);
-				this.addMetaField(runtimeField, configservice, true, usePVAccess);
+		HashSet<String> runtTimeFieldsCopy = new HashSet<String>();;
+		HashSet<String> nonDBEPropertiesFields = new HashSet<String>();
+		HashSet<String> DBEPropertiesFields = new HashSet<String>();
+		if(metaFields != null && metaFields.length > 0) {
+			for(String metaField : metaFields) { 
+				if(useDBEProperties && fieldsAvailableFromDBRControl.contains(metaField)) {
+					DBEPropertiesFields.add(metaField);
+				} else { 
+					nonDBEPropertiesFields.add(metaField);
+				}
 			}
 		}
+		
+		if(!configservice.getRuntimeFields().isEmpty()) { 
+			for(String metaField : configservice.getRuntimeFields()) { 
+				if(useDBEProperties && fieldsAvailableFromDBRControl.contains(metaField)) {
+					DBEPropertiesFields.add(metaField);
+				} else if (nonDBEPropertiesFields.contains(metaField)) { 
+					
+				} else { 
+					runtTimeFieldsCopy.add(metaField);
+				}
+			}
+		}
+		
+		
+		if(!DBEPropertiesFields.isEmpty()) { 
+			logger.debug("Adding a DBE_PROPERTY monitor for pv " + name);
+			this.addMetaField(name, configservice, false, usePVAccess, true);
+		}
+		
+		for (String fieldName : nonDBEPropertiesFields) {
+			logger.debug("Adding non DBE_PROPERTY monitor for meta field " + fieldName);
+			this.addMetaField(fieldName, configservice, false, usePVAccess, false);
+			runtTimeFieldsCopy.remove(fieldName);
+		}
+
+		for(String runtimeField : runtTimeFieldsCopy) { 
+			logger.debug("Adding non DBE_PROPERTY monitor for runtime field " + runtimeField);
+			this.addMetaField(runtimeField, configservice, true, usePVAccess, false);
+		}
+
 	}
 
 	
@@ -322,18 +358,25 @@ abstract public class ArchiveChannel {
 	 * @param usePVAccess
 	 * @throws IOException
 	 */
-	private void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess) throws IOException {
+	private void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess, boolean useDBEProperties) throws IOException {
 		if(this.pv == null) throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
 		// This tells the main PV to create the hashmaps for the metafield storage
 		this.pv.markPVHasMetafields(true);
-		final String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
+		
+		String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
 		ArchDBRTypes metaFieldDBRType = this.pv.getArchDBRTypes();
 		if(metaFieldOverrideTypes.containsKey(fieldName)) { 
 			metaFieldDBRType = metaFieldOverrideTypes.get(fieldName);
 		}
-		logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType " + metaFieldDBRType.toString());
-		
-		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, usePVAccess);
+
+		if(useDBEProperties) {
+			// For a DBE_PROPERTIES, we use the name of the PV as the name of the channel
+			((EPICS_V3_PV)this.pv).setDBEroperties();
+			return;
+		}
+
+		logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType " + metaFieldDBRType.toString() + " DBE_PROPERTIES is " + useDBEProperties);
+		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, usePVAccess, useDBEProperties);
 		metaPV.setMetaFieldParentPV(this.pv, isRuntimeOnly);
 		this.metaPVs.put(fieldName, metaPV);
 	}

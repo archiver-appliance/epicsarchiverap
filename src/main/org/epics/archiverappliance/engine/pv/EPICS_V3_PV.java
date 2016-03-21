@@ -7,20 +7,6 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
-import gov.aps.jca.CAException;
-import gov.aps.jca.Channel;
-import gov.aps.jca.Channel.ConnectionState;
-import gov.aps.jca.Monitor;
-import gov.aps.jca.dbr.DBR;
-import gov.aps.jca.dbr.DBRType;
-import gov.aps.jca.dbr.DBR_String;
-import gov.aps.jca.event.ConnectionEvent;
-import gov.aps.jca.event.ConnectionListener;
-import gov.aps.jca.event.GetEvent;
-import gov.aps.jca.event.GetListener;
-import gov.aps.jca.event.MonitorEvent;
-import gov.aps.jca.event.MonitorListener;
-
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -40,6 +26,23 @@ import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 
 import com.cosylab.epics.caj.CAJChannel;
+
+import gov.aps.jca.CAException;
+import gov.aps.jca.Channel;
+import gov.aps.jca.Channel.ConnectionState;
+import gov.aps.jca.Monitor;
+import gov.aps.jca.dbr.DBR;
+import gov.aps.jca.dbr.DBRType;
+import gov.aps.jca.dbr.DBR_CTRL_Double;
+import gov.aps.jca.dbr.DBR_CTRL_Int;
+import gov.aps.jca.dbr.DBR_LABELS_Enum;
+import gov.aps.jca.dbr.DBR_String;
+import gov.aps.jca.event.ConnectionEvent;
+import gov.aps.jca.event.ConnectionListener;
+import gov.aps.jca.event.GetEvent;
+import gov.aps.jca.event.GetListener;
+import gov.aps.jca.event.MonitorEvent;
+import gov.aps.jca.event.MonitorListener;
 
 /**
  * EPICS ChannelAccess implementation of the PV interface.
@@ -91,6 +94,11 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	/** Store the value for this only in the runtime and not into the stores...*/
 	private boolean isruntimeFieldField = false;
 	
+	/**
+	 * Establish the monitor using a DBE_PROPERTY mask. DBE_PROPERTY events are also processed a little differently.
+	 */
+	private boolean isDBEProperties = false;
+	
 	private PVConnectionState state = PVConnectionState.Idle;
 	
 	/**
@@ -107,7 +115,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		ARCHIVE(2 | 4),
 
 		/** Listen to changes in alarm state */
-		ALARM(4);
+		ALARM(4),
+		
+		/** Listen to changes in property  */
+		PROPERTY(8);
 
 		final private int mask;
 
@@ -136,6 +147,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * <code>this</code> on change
 	 */
 	private Monitor subscription = null;
+	
+	private Monitor dbePropertiesSubscription = null;
 	
 	/**
 	 * isConnected? <code>true</code> if we are currently connected (based on
@@ -262,9 +275,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 *  @param configservice  The config service used by this pv
 	 *  @param isControlPV true if this is a pv controlling other pvs      
 	 */
-	EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId) {
+	EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean isDBEProperties) {
 		this(name, false, configservice, jcaCommandThreadId);
 		this.archDBRType = archDBRTypes;
+		this.isDBEProperties = isDBEProperties;
 		if(archDBRTypes != null) { 
 			this.con = configservice.getArchiverTypeSystem().getJCADBRConstructor(archDBRType);
 		}
@@ -417,14 +431,25 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				// So even with N PVs for the same channel, it's
 				// only one subscription on the network instead of
 				// N subscriptions.
-				final DBRType type = DBR_Helper.getTimeType(plain,
-						channel.getFieldType());
+				final DBRType type = DBR_Helper.getTimeType(plain, channel.getFieldType());
 				state = PVConnectionState.Subscribing;
 				totalMetaInfo.setStartTime(System.currentTimeMillis());
 				// isnotTimestampDBR
 				if (this.name.endsWith(".RTYP")) {
 					subscription = channel.addMonitor(MonitorMask.ARCHIVE.getMask(), this);
 				} else {
+					if(this.isDBEProperties && dbePropertiesSubscription == null) { 
+						logger.debug("Adding a DBE_PROPERTIES monitor for " + this.name);
+						dbePropertiesSubscription = channel.addMonitor(DBR_Helper.getControlType(channel.getFieldType()),
+								channel.getElementCount(), MonitorMask.PROPERTY.getMask(), new MonitorListener() {
+									
+									@Override
+									public void monitorChanged(MonitorEvent monitorEvent) {
+										logger.debug("Got a DBE_PROPERTIES event for " + name);
+										processDBEPropertiesMonitorEvent(monitorEvent);
+									}
+								});
+					} 
 					subscription = channel.addMonitor(type,
 							channel.getElementCount(), MonitorMask.ARCHIVE.getMask(), this);
 				}
@@ -895,5 +920,44 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		}
 		
 		return retVal;
+	}
+	
+	public void setDBEroperties() { 
+		this.isDBEProperties = true;
+	}
+	
+	private void addUpdateChangedDBEPropertyMetaField(String fieldName, String value) { 
+		String currentValue = this.allarchiveFieldsData.get(fieldName);
+		if(currentValue != null && value != null && !currentValue.equals(value)) { 
+			this.changedarchiveFieldsData.put(fieldName, value);
+		}
+		this.allarchiveFieldsData.put(fieldName, value);
+	}
+	
+	private void processDBEPropertiesMonitorEvent(MonitorEvent monitorEvent) {
+		DBR dbr = monitorEvent.getDBR();
+		if (dbr.isLABELS()) {
+			logger.debug("Updating DBE_PROPERTIES labels for ENUM pv " + name);
+			final DBR_LABELS_Enum labels = (DBR_LABELS_Enum)dbr;
+			addUpdateChangedDBEPropertyMetaField("LABELS", String.join(",", labels.getLabels()));
+		} else if (dbr instanceof DBR_CTRL_Double || dbr instanceof DBR_CTRL_Int) {
+			logger.debug("Updating DBE_PROPERTIES metafields for DBR_CTRL_Double for pv " + name);
+			final DBR_CTRL_Double ctrl = (DBR_CTRL_Double)dbr;
+			// fieldsAvailableFromDBRControl = new String[] {"PREC", "EGU", "HOPR", "LOPR", "HIHI", "HIGH", "LOW", "LOLO", "DRVH", "DRVL" };  
+			addUpdateChangedDBEPropertyMetaField("PREC", Short.toString(ctrl.getPrecision()));
+			addUpdateChangedDBEPropertyMetaField("EGU", ctrl.getUnits());
+			addUpdateChangedDBEPropertyMetaField("HOPR", ctrl.getUpperDispLimit().toString());
+			addUpdateChangedDBEPropertyMetaField("LOPR", ctrl.getLowerDispLimit().toString());
+
+			addUpdateChangedDBEPropertyMetaField("HIHI", ctrl.getUpperAlarmLimit().toString());
+			addUpdateChangedDBEPropertyMetaField("HIGH", ctrl.getUpperWarningLimit().toString());
+			addUpdateChangedDBEPropertyMetaField("LOW", ctrl.getLowerWarningLimit().toString());
+			addUpdateChangedDBEPropertyMetaField("LOLO", ctrl.getLowerAlarmLimit().toString());
+
+			addUpdateChangedDBEPropertyMetaField("DRVH", ctrl.getUpperCtrlLimit().toString());
+			addUpdateChangedDBEPropertyMetaField("DRVL", ctrl.getLowerCtrlLimit().toString());
+		} else {
+			logger.error("In applyBasicInfo, cannot determine dbr type for " + (dbr != null ? dbr.getClass().getName() : "Null DBR"));
+		}
 	}
 }

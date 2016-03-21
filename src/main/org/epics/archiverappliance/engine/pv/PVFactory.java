@@ -30,20 +30,20 @@ public class PVFactory {
 	 * @param usePVAccess
 	 * @return
 	 */
-	public static PV createPV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean usePVAccess) {
+	public static PV createPV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean usePVAccess, boolean useDBEProperties) {
 		if(usePVAccess) { 
 			return new EPICS_V4_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId);			
 		} else { 
-			return new EPICS_V3_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId);
+			return new EPICS_V3_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId, useDBEProperties);
 		}
 	}
-
+	
 	public static ControllingPV createControllingPV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean usePVAccess) {
 //		if(usePVAccess) {
 //			// TODO Make EPICS_V4_PV implement controlling PV.
 //			// return new EPICS_V4_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId);
 //		} else { 
-		return new EPICS_V3_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId);
+		return new EPICS_V3_PV(name, configservice, isControlPV, archDBRTypes, jcaCommandThreadId, false);
 //		}
 	}
 }
