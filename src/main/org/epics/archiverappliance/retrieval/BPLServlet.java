@@ -20,6 +20,7 @@ import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsAction;
 import org.epics.archiverappliance.retrieval.bpl.AreWeArchivingPV;
 import org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration;
 import org.epics.archiverappliance.retrieval.bpl.GetMatchingPVs;
@@ -58,6 +59,7 @@ public class BPLServlet extends HttpServlet {
 	
 	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
 	static {
+		postActions.put("/archivedPVs", ArchivedPVsAction.class);
 		// Uncomment after adding readonly support for the client config.
 		// postActions.put("/putClientConfig", PutClientConfiguration.class);
 	}
