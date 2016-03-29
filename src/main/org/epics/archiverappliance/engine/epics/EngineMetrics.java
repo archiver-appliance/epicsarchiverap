@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
@@ -31,6 +32,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class EngineMetrics implements JSONAware {
+	private static final Logger logger = Logger.getLogger(EngineMetrics.class);
 	private int pvCount;
 	private int connectedPVCount;
 	private int disconnectedPVCount;
@@ -143,25 +145,29 @@ public class EngineMetrics implements JSONAware {
         while(it.hasNext()){
         	Entry<String, ArchiveChannel> tempEntry=it.next();
         	ArchiveChannel channel=tempEntry.getValue();
-        	PVMetrics pvMetrics = channel.getPVMetrics();
         	String pvName = channel.getName();
-        	if(pausedPVs.contains(pvName)) {
-        		// Skipping paused PV.
-        		continue;
+        	try { 
+	        	if(pausedPVs.contains(pvName)) {
+	        		// Skipping paused PV.
+	        		continue;
+	        	}
+
+	        	PVMetrics pvMetrics = channel.getPVMetrics();
+	        	totalChannels++;
+	        	if(pvMetrics==null) {
+					disconnectedChannels++;
+					continue;
+				}
+				if(!pvMetrics.isConnected()) { 
+					disconnectedChannels++;
+				} else { 
+					connectedChannels++;
+				}
+				eventRate += pvMetrics.getEventRate();
+				dataRate += pvMetrics.getStorageRate();
+        	} catch(Exception ex) { 
+        		logger.error("Exception computing engine metrics for PV " + channel.getName(), ex);
         	}
-        	
-        	totalChannels++;
-        	if(pvMetrics==null) {
-				disconnectedChannels++;
-				continue;
-			}
-			if(!pvMetrics.isConnected()) { 
-				disconnectedChannels++;
-			} else { 
-				connectedChannels++;
-			}
-			eventRate += pvMetrics.getEventRate();
-			dataRate += pvMetrics.getStorageRate();
         }
 		engineMetrics.setEventRate(eventRate);
 		engineMetrics.setDataRate(dataRate);
