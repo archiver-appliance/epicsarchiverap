@@ -219,6 +219,14 @@ public interface ConfigService {
 	 */
 	public Iterable<String> getPVsForThisAppliance();
 	
+	
+	/**
+	 * Is this PV archived on this appliance.
+	 * This method also checks aliases and fields.
+	 * @return
+	 */
+	public boolean isBeingArchivedOnThisAppliance(String pvName);
+	
 
 	/**
 	 * Get the pvNames for this appliance matching the given regex.

@@ -209,6 +209,7 @@ public class BPLServlet extends HttpServlet {
 		addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
 		addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
 		addPostAction("/archivedPVs", ArchivedPVsAction.class);
+		addPostAction("/archivedPVsForThisAppliance", ArchivedPVsAction.class);
 		addPostAction("/archivedPVsNotInList", ArchivedPVsNotInListAction.class);
 	}
 	

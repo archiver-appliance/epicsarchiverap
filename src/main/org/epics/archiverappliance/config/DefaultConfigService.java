@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1012,8 +1013,40 @@ public class DefaultConfigService implements ConfigService {
 			return retval;
 		}
 	}
-	
-	
+
+	@Override
+	public boolean isBeingArchivedOnThisAppliance(String pvName) {
+		boolean isField = PVNames.isField(pvName);
+		String plainPVName = PVNames.stripFieldNameFromPVName(pvName);
+		if(this.pvsForThisAppliance.contains(plainPVName)) {  
+			if(isField) {
+				PVTypeInfo typeInfo = this.getTypeInfoForPV(plainPVName);
+				if(typeInfo != null && Arrays.asList(typeInfo.getArchiveFields()).contains(PVNames.getFieldName(pvName))) { 
+					return true;
+				}
+			} else { 
+				return true;
+			}
+		}
+		
+		if(this.aliasNamesToRealNames.containsKey(plainPVName)) { 
+			plainPVName = this.aliasNamesToRealNames.get(plainPVName);
+
+			if(this.pvsForThisAppliance.contains(plainPVName)) {  
+				if(isField) {
+					PVTypeInfo typeInfo = this.getTypeInfoForPV(plainPVName);
+					if(typeInfo != null && Arrays.asList(typeInfo.getArchiveFields()).contains(PVNames.getFieldName(pvName))) { 
+						return true;
+					}
+				} else { 
+					return true;
+				}
+			}
+		}
+
+		
+		return false;
+	}
 	
 	@Override
 	public Set<String> getPVsForApplianceMatchingRegex(String nameToMatch) {
