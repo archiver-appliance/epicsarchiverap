@@ -55,6 +55,12 @@ public class ArchivePVState {
 				case START: {
 					PubSubEvent pubSubEvent = new PubSubEvent("ComputeMetaInfo", myIdentity + "_" + ConfigService.WAR_FILE.ENGINE, pvName);
 					UserSpecifiedSamplingParams userSpec = configService.getUserSpecifiedSamplingParams(pvName);
+					if(userSpec == null) {
+						logger.error("Unable to find user sepcification of archival parameters for pv " + pvName);
+						currentState = ArchivePVStateMachine.ABORTED;
+						return;
+					}
+
 					JSONEncoder<UserSpecifiedSamplingParams> encoder = JSONEncoder.getEncoder(UserSpecifiedSamplingParams.class);
 					pubSubEvent.setEventData(encoder.encode(userSpec).toJSONString());
 					configService.getEventBus().post(pubSubEvent);
