@@ -168,8 +168,13 @@ public class AppendDataStateData {
 				createNewFileAndWriteAHeader(pvName, pvPath, stream);
 			}
 		} else {
-			if(logger.isDebugEnabled()) { logger.debug(desc + ": Appending to existing PB file " + pvPath.toAbsolutePath().toString() + " for PV " + pvName + " for year " + this.currentEventsYear); }
-			updateStateBasedOnExistingFile(pvName, pvPath);
+			if(Files.size(pvPath) <= 0) { 
+				logger.debug("The dest file " + pvPath.toAbsolutePath().toString() + " exists but is 0 bytes long. Writing the header for pv " + pvName);
+				createNewFileAndWriteAHeader(pvName, pvPath, stream);
+			} else { 
+				if(logger.isDebugEnabled()) { logger.debug(desc + ": Appending to existing PB file " + pvPath.toAbsolutePath().toString() + " for PV " + pvName + " for year " + this.currentEventsYear); }
+				updateStateBasedOnExistingFile(pvName, pvPath);
+			}
 		}
 		return pvPath;
 	}
@@ -269,7 +274,9 @@ public class AppendDataStateData {
 	 * @throws IOException
 	 */
 	private void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream) throws IOException {
-		if(Files.exists(pvPath)) throw new IOException("Trying to write a header into a file that exists " + pvPath.toAbsolutePath().toString());
+		if(Files.exists(pvPath) && Files.size(pvPath) > 0) { 
+			throw new IOException("Trying to write a header into a file that exists " + pvPath.toAbsolutePath().toString());
+		}
 		if(logger.isDebugEnabled()) logger.debug(desc + ": Writing new PB file" + pvPath.toAbsolutePath().toString() 
 				+ " for PV " + pvName 
 				+ " for year " + this.currentEventsYear 

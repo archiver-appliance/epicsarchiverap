@@ -580,6 +580,24 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					logger.warn("Path " + path + " does not seem to exist for ETL at time " + TimeUtils.convertToISO8601String(currentTime));
 					continue;
 				}
+				
+				if(Files.size(path) <= 0) { 
+					logger.warn("Path " + path + " is of size zero bytes at time " + TimeUtils.convertToISO8601String(currentTime));
+					
+					long lastModifiedInMillis = Files.getLastModifiedTime(path).toMillis();
+					long currentTimeInMillis = currentTime.getTime();
+					if((currentTimeInMillis - lastModifiedInMillis) > ((this.holdETLForPartions+1) * this.getPartitionGranularity().getApproxSecondsPerChunk()*60)) { 
+						logger.warn("Zero byte file is older than current ETL time by holdETLForPartions; deleting it " + path.toAbsolutePath().toString());
+						try { 
+							Files.delete(path);
+						} catch(Exception ex) { 
+							logger.error("Exception deleting file " + path.toAbsolutePath().toString(), ex);
+						}
+					}
+					
+					continue;
+				}
+				
 				PBFileInfo fileinfo = new PBFileInfo(path);
 				ETLInfo etlInfo = new ETLInfo(pvName, fileinfo.getType(), path.toAbsolutePath().toString(), partitionGranularity, new FileStreamCreator(pvName, path, fileinfo), fileinfo.getFirstEvent(), Files.size(path));
 				if(skipHoldAndGather) {
@@ -587,10 +605,19 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					etlreadystreams.add(etlInfo);					
 				} else {
 					if(fileinfo.getFirstEvent() == null) {
-						//TODO Should we mark this for deletion?
-						//logger.error("We seem to have an empty file " + path.toAbsolutePath().toString() + ". Should we mark this for deletion?");
-						logger.debug("We seem to have an empty file " + path.toAbsolutePath().toString() + ". Should we mark this for deletion?");
+						logger.debug("We seem to have an empty file " + path.toAbsolutePath().toString());
 
+						long lastModifiedInMillis = Files.getLastModifiedTime(path).toMillis();
+						long currentTimeInMillis = currentTime.getTime();
+						if((currentTimeInMillis - lastModifiedInMillis) > ((this.holdETLForPartions+1) * this.getPartitionGranularity().getApproxSecondsPerChunk()*60)) { 
+							logger.warn("Empty file is older than current ETL time by holdETLForPartions; deleting it " + path.toAbsolutePath().toString());
+							try { 
+								Files.delete(path);
+							} catch(Exception ex) { 
+								logger.error("Exception deleting file " + path.toAbsolutePath().toString(), ex);
+							}
+						}
+						
 						continue; 
 					}
 					if(!holdOk) {
@@ -646,7 +673,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(paths != null && paths.length > 0) {
 				for(int i = paths.length-1; i >=0; i--) {
 					if(logger.isDebugEnabled()) logger.debug("Looking for last known event in file " + paths[i].toAbsolutePath().toString());
-					try { 
+					try {
+						if(Files.size(paths[i]) <= 0) { 
+							logger.debug("Ignoring zero byte file " + paths[i].toAbsolutePath().toString());
+							continue;
+						}
 						PBFileInfo fileInfo = new PBFileInfo(paths[i]);
 						if(fileInfo.getLastEvent() != null) return fileInfo.getLastEvent();
 					} catch(Exception ex) { 
