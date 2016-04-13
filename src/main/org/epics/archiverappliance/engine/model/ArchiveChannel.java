@@ -183,8 +183,13 @@ abstract public class ArchiveChannel {
 		this.pvMetrics.setConnected(this.pv.isConnected());
 		this.pvMetrics.setArchving(this.pv.isRunning());
 		// This should hopefully tell us the last timestamp from the IOC just before it is displayed in PVDetails.
-		if(this.pv.getDBRTimeEvent() != null) { 
-			this.pvMetrics.setLastEventFromIOCTimeStamp(this.pv.getDBRTimeEvent().getEventTimeStamp());
+		if(this.pv.getDBRTimeEvent() != null) {
+			try {
+				this.pvMetrics.setLastEventFromIOCTimeStamp(this.pv.getDBRTimeEvent().getEventTimeStamp());
+			} catch(IllegalArgumentException ex) { 
+				logger.warn("Possibly incorrect nanos for last event for PV " + this.name, ex);
+				this.pvMetrics.setLastEventFromIOCTimeStamp(null);
+			}
 		} else { 
 			this.pvMetrics.setLastEventFromIOCTimeStamp(null);
 		}
@@ -620,8 +625,9 @@ abstract public class ArchiveChannel {
 				return false;
 			}
 		} catch(IllegalArgumentException ex) {
-			// If the nanos part of the TS is incorrect, Java throws an IllegalArgumentException. We count that as a sample lost to an incorrect timestamp. 
-			this.pvMetrics.addTimestampWrongEventCount(timeevent.getEventTimeStamp());
+			// If the nanos part of the TS is incorrect, Java throws an IllegalArgumentException. We count that as a sample lost to an incorrect timestamp.
+			Timestamp incorrectTs = TimeUtils.convertFromEpochSeconds(timeevent.getEpochSeconds(), 0);
+			this.pvMetrics.addTimestampWrongEventCount(incorrectTs);
 			return false;
 		}
 
