@@ -32,6 +32,11 @@ public class BasicDispatcher {
 
 	public static void dispatch(HttpServletRequest req, HttpServletResponse resp, ConfigService configService, HashMap<String, Class<? extends BPLAction>> actions) throws IOException {
 		String requestPath = req.getPathInfo();
+		if(requestPath == null || requestPath.equals("")) { 
+			logger.warn("Request path is empty.");
+			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
 		logger.info("Servicing " + requestPath);
 		if(requestPath.equals("/ping")) {
 			resp.setContentType("text/plain");
