@@ -95,7 +95,7 @@ public class WriterRunnable implements Runnable {
 
 /**
  * set the writing period. when the writing period is at least 10 seonds.
- * When write_period<10 , the writing period is 10 seconds actually.
+ * When write_period &lt; 10 , the writing period is 10 seconds actually.
  * @param write_period  the writing period in second
  * @return the actual writing period in second
  */

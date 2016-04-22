@@ -22,7 +22,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent;
  * This is a variant of binary search that searches for an event in a event stream file.
  * We assume a time-sorted PB file separated by unix newlines as outlined in the archiver appliance design doc.
  * We pass in file channel and a function that compares an event line (most likely a PB) to the desired time t1.
- * The fileChannels position is moved to a spot where this constraint is satisfied s1 <= t1 < s2
+ * The fileChannels position is moved to a spot where this constraint is satisfied s1 &le; t1 &lt; s2
  * That is
  * <ol>
  * <li>Search the file for a time t1</li>
@@ -88,11 +88,9 @@ public class FileEventStreamSearch {
 	 * Set the fileChannels position to a point that best satisfies the requirements for getData(t1,...).
 	 * If found (return value is true), the file's position is set such that
 	 * <code>
-	 * <pre>
 	 * 		LineByteStream lis = new LineByteStream(fchannel);
 	 * 		lis.seekToFirstNewLine();
 	 * 		byte[] line = lis.readLine();
-	 * </pre>
 	 * </code>
 	 * starts returning events that satisfy getData's requirements
 	 * @return

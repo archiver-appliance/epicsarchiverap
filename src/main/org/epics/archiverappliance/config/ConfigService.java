@@ -41,7 +41,7 @@ public interface ConfigService {
 	 * This list of appliances is expected to be the same for all appliances in the cluster; so it is perfectly legal to place it in NFS somewhere and point to the same file/location from all appliances in the cluster.
 	 * It is reasonably important that all appliances see the same list of cluster members or we tend to have split-brain effects (<a href="http://en.wikipedia.org/wiki/Split-brain_%28computing%29">See wikipedia</a>).
 	 * The format of the file itself is simple XML like so
-	 * <code><pre>
+	 * <code>
 	 * &lt;appliances&gt;
 	 *   &lt;appliance&gt;
 	 *     &lt;identity&gt;archiver&lt;/identity&gt;
@@ -53,10 +53,10 @@ public interface ConfigService {
 	 *     &lt;data_retrieval_url&gt;http://archiver.slac.stanford.edu:77765/retrieval/&lt;/data_retrieval_url&gt;
 	 *   &lt;/appliance&gt;
 	 * &lt;/appliances&gt;
-	 * </pre></code>
+	 * </pre>
 	 * Note that the appliance identity as defined by the <code>ARCHAPPL_MYIDENTITY</code> has to match the <code>identity</code> element of one of the appliances in the list of appliances as defined by the <code>ARCHAPPL_APPLIANCES</code>.
 	 * Each appliance (which includes the mgmt, engine, etl and retrieval WAR's) must have a unique identity. 
-	 * <br/>
+	 * <br>
 	 * If the <code>ARCHAPPL_APPLIANCES</code> is not set, then we look for a file called <code>appliances.xml</code> in the WEB-INF/classes of the current WAR using WEB-INF/classes/appliances.xml.
 	 * The default build script places the site-specific <code>appliances.xml</code> into WEB-INF/classes/appliances.xml.
 	 */
@@ -79,7 +79,7 @@ public interface ConfigService {
 	 * This is the environment variable that identifies the site (LCLS, LCLSII, slacdev, NSLSII etc) to be used when generating the war files.
 	 * This is primarily a build-time property; the build.xml has various site specific hooks which let you change the appliances.xml, policies, images etc on a per site basis.
 	 * The unit tests use the <code>tests</code> site which is also the default site if this environment variable is not specified.
-	 * Files for a site are stored in the sitespecific/<site> folder. 
+	 * Files for a site are stored in the sitespecific/&lt;site&gt; folder. 
 	 */
 	public static final String ARCHAPPL_SITEID = "ARCHAPPL_SITEID";
 	

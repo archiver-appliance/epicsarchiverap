@@ -8,10 +8,10 @@ import java.util.List;
  * Interface for persisting configuration
  * These are the pieces of configuration - all of these are key/value; keys are strings, values are typically JSON strings or plain strings.
  * <ol>
- * <li>Map<String, PVTypeInfo> typeInfos</li>
- * <li>Map<String, UserSpecifiedSamplingParams> archivePVRequests</li>
- * <li>Map<String, String> externalDataServer</li>
- * <li>Map<String, String> aliasNamesToRealNames</li>
+ * <li>Map&lt;String, PVTypeInfo&gt; typeInfos</li>
+ * <li>Map&lt;String, UserSpecifiedSamplingParams&gt; archivePVRequests</li>
+ * <li>Map&lt;String, String&gt; externalDataServer</li>
+ * <li>Map&lt;String, String&gt; aliasNamesToRealNames</li>
  * </ol>
  * 
  * The APIs typically have one method to get all the keys, one to get a value given a key and a third to change a value given a key.
