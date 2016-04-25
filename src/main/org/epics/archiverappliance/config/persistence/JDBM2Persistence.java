@@ -25,12 +25,10 @@ import org.json.simple.JSONValue;
  * To set the path to the JDBM2 file, use the environment variable ARCHAPPL_PERSISTENCE_LAYER_JDBM2FILENAME.
  * This defaults to <code>./archapplconfig.jdbm2</code>
  * To use this persistence layer, use
- * <code>
  * <pre>
  * export ARCHAPPL_PERSISTENCE_LAYER="org.epics.archiverappliance.config.persistence.JDBM2Persistence"
  * export ARCHAPPL_PERSISTENCE_LAYER_JDBM2FILENAME="/scratch/Archiver/persistence.jdbm2"
  * </pre>
- * </code>
  * @author mshankar
  *
  */

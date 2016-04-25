@@ -65,7 +65,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  * <dl>
  * <dt>name</dt><dd>This serves to identify this plugin; mandatory</dd>
  * <dt>rootFolder</dt><dd>This serves as the rootFolder that is prepended to the path generated for a PV+chunk ; mandatory. 
- * One can use environment variables here; for example, <code>pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR</code> where the value for ${ARCHAPPL_SHORT_TERM_FOLDER} is picked up from the environment/system properties.
+ * One can use environment variables here; for example, <code>pb://localhost?name=STS&amp;rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&amp;partitionGranularity=PARTITION_HOUR</code> where the value for ${ARCHAPPL_SHORT_TERM_FOLDER} is picked up from the environment/system properties.
  * </dd>
  * <dt>partitionGranularity</dt><dd>Defines the time partition granularity for this plugin. For example, if the granularity <code>PARTITION_HOUR</code>, then a new chunk is created for each hour of data. The partitions are clean; that is, they contain data only for that partition. It is possible to predict which chunk contains data for a particular instant in time and which chunks contain data for a particular time period. This is a mandatory field.</dd>
  * <dt>compress</dt><dd>This is an optional field that defines the compression mode. 
@@ -73,21 +73,21 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  * If the zip compression is used, the <code>rootfolder</code> is prepended with <code>{@link org.epics.archiverappliance.utils.nio.ArchPaths#ZIP_PREFIX ZIP_PREFIX}</code>.
  * If this is absent in the <code>rootfolder</code>, the initialization code automatically adds it in.
  * </dd>
- * <dt>hold & gather</dt><dd><code>hold</code> and <code>gather</code> are optional fields that work together to implement high/low watermarks for data transfer.
+ * <dt>hold &amp; gather</dt><dd><code>hold</code> and <code>gather</code> are optional fields that work together to implement high/low watermarks for data transfer.
  * By default, both <code>hold</code> and <code>gather</code> are 0 which leads to data being transferred out of this plugin as soon as the partition boundary is reached.
  * You can <code>hold</code> a certain number of partitions in this store (perhaps because this store is a high performing one). 
  * In this case, ETL does not start until the first event in this store is older than <code>hold</code> partitions.
  * Once ETL begins, you can transfer <code>gather</code> partitions at a time.
- * For example, <code>hold=5&gather=3</code> lets you keep at least <code>5-3=2</code> partitions in this store. ETL kicks in once the oldest event is older than than <code>5</code> partitions and data is moved <code>3</code> partitions at a time. 
+ * For example, <code>hold=5&amp;gather=3</code> lets you keep at least <code>5-3=2</code> partitions in this store. ETL kicks in once the oldest event is older than than <code>5</code> partitions and data is moved <code>3</code> partitions at a time. 
  * </dd>
  * <dt>pp</dt><dd>An optional parameter, this contains a list of {@link org.epics.archiverappliance.retrieval.postprocessors.PostProcessor post processing operators} that are computed and cached during ETL.
  * During retrieval, if an exact match is found, then the data from the cached copy is used (greatly improving retrieval performance). 
  * Otherwise, the post processor is applied and the data is computed at runtime.
- * To specify multiple post processors, use standard URL syntax like so <code>pp=rms&pp=mean_3600</code>
+ * To specify multiple post processors, use standard URL syntax like so <code>pp=rms&amp;pp=mean_3600</code>
  * </dd>
  * <dt>consolidateOnShutdown</dt><dd>This lets you control if ETL should push data to the subsequent store on appserver shutdown. This is useful if you are using a RAMDisk for the short term store.</dd>
  * <dt>reducedata</dt><dd>An optional parameter; use this parameter to reduce the data as you move it into this store. You can use any of the <a href="http://slacmshankar.github.io/epicsarchiver_docs/userguide.html#post_processing">post processors</a> that can be used with the <code>pp</code> argument.
- * For example, if you define the LTS as <code>pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR&reducedata=firstSample_3600</code>, then when moving data into this store, ETL will apply the <code>firstSample_3600</code> operator on the raw data to reduce the data and store only the reduced data.
+ * For example, if you define the LTS as <code>pb://localhost?name=LTS&amp;rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&amp;partitionGranularity=PARTITION_YEAR&amp;reducedata=firstSample_3600</code>, then when moving data into this store, ETL will apply the <code>firstSample_3600</code> operator on the raw data to reduce the data and store only the reduced data.
  * The difference between this parameter and the <code>pp</code> parameter is that in the <code>reducedata</code> case, only the reduced data is stored. The raw data is thrown away.
  * If you specify both the <code>pp</code> and the <code>reducedata</code>, you may get unpredictable results because the raw data is necessary to precompute the caches. 
  * </dd>

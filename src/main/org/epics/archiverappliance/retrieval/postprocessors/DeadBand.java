@@ -22,12 +22,12 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  * Like ADEL, it applies only to scalar numbers.
  * We have some notion of a "last" value that was written out.
  * The very first sample we get we write out and that becomes the "last" value.
- * <code><pre>
+ * <pre>
  * Diff = Math.abs(current value - last value)
- * If Diff >= ADEL
+ * If Diff &ge; ADEL
  *     Write out value
  *     Update last known value
- * </pre></code>
+ * </pre>
  * <ol>
  * <li>If either current value or previous value is NAN/INF, unconditionally write out current value and update last known value</li>
  * <li>Also need to to write out when alarm severity changes (MD)</li>

@@ -18,14 +18,14 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 /**
  * Ignores data that is more than the specified amount of std deviation from the mean.
  * This is still a binned operation; however, it is different from the SummaryStatsPostProcessor as it does not reduce data significantly.
- * <code><pre>
+ * <pre>
 Ignore flier could also be binned:
 -Given vector X as a subset of data, say 300 seconds, N is a real number.
 m = mean(X)
 s = std(X)
-index = index of points there X > (abs(X) + N * s) 
+index = index of points there X &gt; (abs(X) + N * s) 
 i.e. index points to the values that are N standard deviations away from the mean.
-</pre></code>
+</pre>
  * @author mshankar
  *
  */

@@ -24,8 +24,8 @@ import org.python.util.PythonInterpreter;
  * <li><code>storageRate</code> -- The sampled storage in bytes per seconds.</li>
  * <li><code>aliasName</code> -- The value of the .NAME field for aliases</li>
  * <li><code>policyName</code> -- If the user has overridden the policy when requesting archiving, this is the name of the policy</li>
- * All the {@link ConfigService#getExtraFields() extra fields} are use the fieldName as the key (for example, ADEL comes in as .ADEL). 
  * </ol>
+ * All the {@link ConfigService#getExtraFields() extra fields} are use the fieldName as the key (for example, ADEL comes in as .ADEL). 
  * The result of policy execution is a another dictionary with these keys
  * <ol>
  * <li><code>samplingPeriod</code> -- The sampling period to use for this PV.</li>

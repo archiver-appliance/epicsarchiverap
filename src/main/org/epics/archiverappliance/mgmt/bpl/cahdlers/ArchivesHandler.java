@@ -77,8 +77,8 @@ public class ArchivesHandler extends DefaultHandler {
 	 * <ol>
 	 * <li>key - The integer key we use to pass to the rest of the calls</li>
 	 * <li>name - The name of the archives - for example, LCLS_SPARSE</li>
-	 * <li>path - Some internal configuration/li>
-	 * <ol>
+	 * <li>path - Some internal configuration</li>
+	 * </ol>
 	 * @return
 	 */
 	public LinkedList<HashMap<String, String>> getArchives() { 

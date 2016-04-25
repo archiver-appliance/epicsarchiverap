@@ -11,7 +11,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.pvdata.pv.PVStructure;
 
 /**
- * Separate out the JCA/EPICS v4 => PB mapping into a separate class so that clients (read ArchiveViewer) do not have to include the entire JCA/EPICS v4 jars.
+ * Separate out the JCA/EPICS v4 =&gt; PB mapping into a separate class so that clients (read ArchiveViewer) do not have to include the entire JCA/EPICS v4 jars.
  * This relies on its sister class DBR2PBTypeMapping...
  * @author mshankar
  *

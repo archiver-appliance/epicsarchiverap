@@ -250,7 +250,7 @@ public class PVNames {
 	 * Check to see if the pvName has valid characters.
 	 * For certain characters, EPICS will not throw exceptions but generate spurious traffic which is hard to detect.
 	 * From the App dev Guide at http://www.aps.anl.gov/epics/base/R3-14/12-docs/AppDevGuide/node7.html#SECTION007140000000000000000
-	 * Valid characters are a-z A-Z 0-9 _ - + : [ ] < > ;
+	 * Valid characters are a-z A-Z 0-9 _ - + : [ ] &lt; &gt; ;
 	 * We add the '.' character for suporting fieldnames as well.
 	 * And we add the '/' character because some folks at FACET use this.
 	 * And we add the ',' character because some folks at LBL use this.

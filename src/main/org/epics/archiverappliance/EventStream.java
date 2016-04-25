@@ -20,13 +20,11 @@ import java.io.Closeable;
  * So, clients <b>must</b> close the EventStream once they are done with it.
  * We strongly encourage the use of the Java 1.7 try-with-resources for this purpose.
  * <code>
- * <pre>
- * <span style="color:blue;">try</span>(EventStream stream = reader.getDataForPV(...)) {
+ *  <span style="color:blue;">try</span>(EventStream stream = reader.getDataForPV(...)) {
  *   <span style="color:blue;">for</span>(Event event : stream) {
  *   // Do stuff.
  *   }
  * }
- * </pre>
  * </code>
  * </div>
  * <div>
