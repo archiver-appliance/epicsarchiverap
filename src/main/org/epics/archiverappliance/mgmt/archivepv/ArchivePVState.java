@@ -134,8 +134,7 @@ public class ArchivePVState {
 						} else { 
 
 							String realName = typeInfo.lookupExtraField(aliasFieldName);
-							String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
-							if(!realName.equals(pvNameAlone)) {
+							if(!realName.equals(pvName)) {
 								logger.info("PV " + pvName + " is an alias of " + realName);
 								// It is possible that some implementations use the .NAME field for purposes other than the alias.
 								// In this case, we make sure that the real name matches the PV name by checking that it at least has one or more separators.
