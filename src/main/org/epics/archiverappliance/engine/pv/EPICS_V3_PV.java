@@ -579,7 +579,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if (state == PVConnectionState.Connected)
 			return;
 		state = PVConnectionState.Connected;
-		hostName=channel_ref.getChannel().getHostName();
+		hostName=channel.getHostName();
 		totalMetaInfo.setHostName(hostName);
 		for (final PVListener listener : listeners) {
 			listener.pvConnected(this);
