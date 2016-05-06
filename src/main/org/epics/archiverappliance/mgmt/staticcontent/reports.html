@@ -72,6 +72,13 @@
 <div id="reporttablediv">
 </div>
 
+<div id="pvStopArchivingParamsDiv"  title="Are you certain you want to stop archiving the PV?">
+<div id="pvStopArchivingParams">
+<div><input id="pvStopArchivingDeleteData" type="checkbox"/>Do you want to delete any data stored for this PV?</div>
+<div id="pvStopArchivingdiv"><input id="pvStopArchivingOk" type="button" name="Ok" value="Ok"></input></div>
+</div>
+</div>
+
 
 <script type="text/javascript">
 $('#reportoptions').change(function() {
@@ -128,6 +135,7 @@ $('#reportoptions').change(function() {
 $(document).ready(function() {
     // Set up help
 	$("#help").click(function() { window.open('help/userguide.html#Reports'); } );
+	$('#pvStopArchivingParams').hide();
 });
 
 </script>

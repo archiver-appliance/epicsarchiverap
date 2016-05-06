@@ -470,3 +470,23 @@ function setupToolbarActions(reportTable) {
 		getJSONDataAndRefreshTable(reportTable);
 	});
 }
+
+// Delete the data row in the table for which matching function returns true and then refresh the current page.
+// Can be used in reports to delete rows one after the other.
+function deleteRowAndRefresh(reportTable, matchingFunction) { 
+	var dataobjs = reportTable.data('data');
+	for(dindex in dataobjs) { 
+		dataobj = dataobjs[dindex];
+		if(matchingFunction(dataobj)) { 
+			console.log("Found matching row to delete at index " + dindex);
+			dataobjs.splice(dindex, 1);
+			break;
+		}
+	}
+	reportTable.children('tbody').empty();
+	addRowsForData(reportTable);
+	updateToolbarPageNum(reportTable);
+}
+
+
+

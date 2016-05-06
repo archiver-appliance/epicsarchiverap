@@ -557,6 +557,49 @@ function getPVsByDroppedEventsTypeChange(limit) {
 			]);
 }
 
+function showDialogForDeletePausedPV(pvName) { 
+	console.log("Deleting paused PV" + pvName);
+	
+	// $('#pvStopArchivingParamsDiv').attr('title', 'Are you certain you want to stop archiving PV ' + pvName);
+	$("#pvStopArchivingParams").data("pvName", pvName);
+	$('#pvStopArchivingDeleteData').attr('checked',false);
+	$("#pvStopArchivingParams").show();
+	$("#pvStopArchivingParamsDiv").dialog({
+		height: 250,
+		width: 600,
+		modal: true,
+		title: 'Are you certain you want to stop archiving PV ' + pvName
+		});
+}
+
+function deletePausedPV() {
+	var pvName = $("#pvStopArchivingParams").data("pvName");
+	$("#pvStopArchivingParams").removeData("pvName");
+	$("#pvStopArchivingParams").hide();
+	$("#pvStopArchivingParamsDiv").dialog('close');
+
+	var reportTable = $("#reporttablediv_table");
+	deleteRowAndRefresh(reportTable, function(dataObject) { return dataobj.pvName == pvName; } );
+	
+	var deleteData = $('#pvStopArchivingDeleteData').is(':checked');
+	$.ajax({
+		url: '../bpl/deletePV',
+		dataType: 'json',
+		data: 'pv='+encodeURIComponent(pvName)+'&deleteData='+encodeURIComponent(deleteData),
+		success: function(data, textStatus, jqXHR) {
+			if(data.status != null && data.status != undefined && data.status == "ok") {
+				console.log("Successfully deleted data for pv " + pvName);	
+			} else if(data.validation != null && data.validation != undefined){
+				alert(data.validation);
+			} else {
+				alert("deletePV returned something valid but did not have a status field.");
+			}
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error in deletePV for " + pvName + " -- " + textStatus + " -- " + errorThrown);
+		}
+	});	
+}
 
 //Get a report on the PV's that are currently paused
 function getPausedPVsReport() {
@@ -567,8 +610,10 @@ function getPausedPVsReport() {
 			 {'srcAttr' : 'instance', 'label' : 'Appliance'},
 			 {'srcAttr' : 'modificationTime', 'label' : 'Info last modified'},
 			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Details', 'srcFunction' : function(dataobject) { return '<a href="pvdetails.html?pv=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/details.png"></a>'; }},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Delete',  'srcFunction' : function(dataobject) { return '<a onclick="showDialogForDeletePausedPV(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }},
 			 ], 
 			 {'initialSort' : 1});
+	$("#pvStopArchivingOk").click(deletePausedPV);
 }
 
 
