@@ -18,8 +18,8 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-public class ArchiveFieldsTest {
-	private static Logger logger = Logger.getLogger(ArchiveFieldsTest.class.getName());
+public class ArchiveFieldsWorkflowTest {
+	private static Logger logger = Logger.getLogger(ArchiveFieldsWorkflowTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
