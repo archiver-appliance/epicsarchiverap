@@ -33,8 +33,8 @@ public class ArchiveFieldsWorkflowTest {
 
 	@After
 	public void tearDown() throws Exception {
-		tomcatSetup.tearDown();
 		driver.quit();
+		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 	}
 
