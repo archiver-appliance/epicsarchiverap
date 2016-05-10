@@ -58,7 +58,7 @@ public class ArchiveFieldsWorkflowTest {
 		 Thread.sleep(5*60*1000);
 		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
+		 Thread.sleep(17*1000);
 		 for(int i = 0; i < fieldsToArchive.length; i++) { 
 			 int rowWithInfo = i+1;
 			 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(1)"));
