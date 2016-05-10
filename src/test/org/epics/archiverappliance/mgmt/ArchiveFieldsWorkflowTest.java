@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -41,6 +42,7 @@ public class ArchiveFieldsWorkflowTest {
 	@Test
 	public void testArchiveFieldsPV() throws Exception {
 		 driver.get("http://localhost:17665/mgmt/ui/index.html");
+		 ((JavascriptExecutor)driver).executeScript("window.skipAutoRefresh = true;");
 		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
 		 String[] fieldsToArchive = new String[] {
 				 "UnitTestNoNamingConvention:sine", 

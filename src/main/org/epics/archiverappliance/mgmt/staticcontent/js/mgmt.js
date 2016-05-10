@@ -251,7 +251,8 @@ function abortArchiveRequestFromDetails(pvName) {
 }
 
 
-var refreshPVStatus = false;
+var inRefreshPVStatus = false;
+var skipAutoRefresh = false;
 
 // Displays the status of the PVs as typed in the #archstatpVNames textarea in the archstats table.
 function checkPVStatus() {
@@ -269,11 +270,14 @@ function checkPVStatus() {
 	createReportTable(jsonurl, tabledivname,
 			[{'srcAttr' : 'pvName', 'label' : 'PV Name'} , 
 			 {'srcAttr' : 'status', 'label' : 'Status', 'srcFunction' : function(curdata) {
+				 if(skipAutoRefresh) {
+					 return curdata.status;
+				 }
 				 if(curdata.status !== undefined && curdata.status != 'Being archived') { 
-					 if(!refreshPVStatus) { 
-						 refreshPVStatus = true;
+					 if(!inRefreshPVStatus) { 
+						 inRefreshPVStatus = true;
 						 window.setTimeout(function() { 
-							 refreshPVStatus = false;
+							 inRefreshPVStatus = false;
 							 checkPVStatus();
 						 }, 60*1000);
 					 }
