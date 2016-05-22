@@ -46,4 +46,7 @@ These components are included under the DocumentCloud license, a local copy of w
 underscore.js
 unserscore-min.js
 
+This component is included under the jedis license, a local copy of which can be found in the file jedis_license.txt
+jedis-2.7.2.jar
+
 
