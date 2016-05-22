@@ -157,7 +157,7 @@ public class RedisPersistence implements ConfigPersistence {
 		} catch(Exception ex) { 
 			throw new IOException(ex);
 		}
-		logger.error("Cannot find data for key " + recordName + "/" + key + " in redis");
+		logger.debug("Cannot find data for key " + recordName + "/" + key + " in redis");
 		return null;
 	}
 	
