@@ -14832,6 +14832,10 @@ public final class EPICSEvent {
     // optional bool fieldactualchange = 8;
     boolean hasFieldactualchange();
     boolean getFieldactualchange();
+    
+    // optional uint32 userTag = 9;
+    boolean hasUserTag();
+    int getUserTag();
   }
   public static final class V4GenericBytes extends
       com.google.protobuf.GeneratedMessage
@@ -14953,6 +14957,16 @@ public final class EPICSEvent {
       return fieldactualchange_;
     }
     
+    // optional uint32 userTag = 9;
+    public static final int USERTAG_FIELD_NUMBER = 9;
+    private int userTag_;
+    public boolean hasUserTag() {
+      return ((bitField0_ & 0x00000080) == 0x00000080);
+    }
+    public int getUserTag() {
+      return userTag_;
+    }
+    
     private void initFields() {
       secondsintoyear_ = 0;
       nano_ = 0;
@@ -14962,6 +14976,7 @@ public final class EPICSEvent {
       repeatcount_ = 0;
       fieldvalues_ = java.util.Collections.emptyList();
       fieldactualchange_ = false;
+      userTag_ = 0;
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -15017,6 +15032,9 @@ public final class EPICSEvent {
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         output.writeBool(8, fieldactualchange_);
       }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        output.writeUInt32(9, userTag_);
+      }
       getUnknownFields().writeTo(output);
     }
     
@@ -15057,6 +15075,10 @@ public final class EPICSEvent {
       if (((bitField0_ & 0x00000040) == 0x00000040)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBoolSize(8, fieldactualchange_);
+      }
+      if (((bitField0_ & 0x00000080) == 0x00000080)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(9, userTag_);
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -15203,6 +15225,8 @@ public final class EPICSEvent {
         }
         fieldactualchange_ = false;
         bitField0_ = (bitField0_ & ~0x00000080);
+        userTag_ = 0;
+        bitField0_ = (bitField0_ & ~0x00000100);
         return this;
       }
       
@@ -15278,6 +15302,10 @@ public final class EPICSEvent {
           to_bitField0_ |= 0x00000040;
         }
         result.fieldactualchange_ = fieldactualchange_;
+        if (((from_bitField0_ & 0x00000100) == 0x00000100)) {
+          to_bitField0_ |= 0x00000080;
+        }
+        result.userTag_ = userTag_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -15340,6 +15368,9 @@ public final class EPICSEvent {
         }
         if (other.hasFieldactualchange()) {
           setFieldactualchange(other.getFieldactualchange());
+        }
+        if (other.hasUserTag()) {
+          setUserTag(other.getUserTag());
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -15429,6 +15460,11 @@ public final class EPICSEvent {
             case 64: {
               bitField0_ |= 0x00000080;
               fieldactualchange_ = input.readBool();
+              break;
+            }
+            case 72: {
+              bitField0_ |= 0x00000100;
+              userTag_ = input.readUInt32();
               break;
             }
           }
@@ -15769,6 +15805,27 @@ public final class EPICSEvent {
       public Builder clearFieldactualchange() {
         bitField0_ = (bitField0_ & ~0x00000080);
         fieldactualchange_ = false;
+        onChanged();
+        return this;
+      }
+      
+      // optional uint32 userTag = 9;
+      private int userTag_ ;
+      public boolean hasUserTag() {
+        return ((bitField0_ & 0x00000100) == 0x00000100);
+      }
+      public int getUserTag() {
+        return userTag_;
+      }
+      public Builder setUserTag(int value) {
+        bitField0_ |= 0x00000100;
+        userTag_ = value;
+        onChanged();
+        return this;
+      }
+      public Builder clearUserTag() {
+        bitField0_ = (bitField0_ & ~0x00000100);
+        userTag_ = 0;
         onChanged();
         return this;
       }
@@ -17419,29 +17476,29 @@ public final class EPICSEvent {
       "\r\022\017\n\003val\030\003 \003(\001B\002\020\001\022\023\n\010severity\030\004 \001(\005:\0010\022" +
       "\021\n\006status\030\005 \001(\005:\0010\022\023\n\013repeatcount\030\006 \001(\r\022" +
       "&\n\013fieldvalues\030\007 \003(\0132\021.EPICS.FieldValue\022",
-      "\031\n\021fieldactualchange\030\010 \001(\010\"\304\001\n\016V4Generic" +
+      "\031\n\021fieldactualchange\030\010 \001(\010\"\325\001\n\016V4Generic" +
       "Bytes\022\027\n\017secondsintoyear\030\001 \002(\r\022\014\n\004nano\030\002" +
       " \002(\r\022\013\n\003val\030\003 \002(\014\022\023\n\010severity\030\004 \001(\005:\0010\022\021" +
       "\n\006status\030\005 \001(\005:\0010\022\023\n\013repeatcount\030\006 \001(\r\022&" +
       "\n\013fieldvalues\030\007 \003(\0132\021.EPICS.FieldValue\022\031" +
-      "\n\021fieldactualchange\030\010 \001(\010\"\273\002\n\013PayloadInf" +
-      "o\022 \n\004type\030\001 \002(\0162\022.EPICS.PayloadType\022\016\n\006p" +
-      "vname\030\002 \002(\t\022\014\n\004year\030\003 \002(\005\022\024\n\014elementCoun" +
-      "t\030\004 \001(\005\022\020\n\010unused00\030\005 \001(\001\022\020\n\010unused01\030\006 " +
-      "\001(\001\022\020\n\010unused02\030\007 \001(\001\022\020\n\010unused03\030\010 \001(\001\022",
-      "\020\n\010unused04\030\t \001(\001\022\020\n\010unused05\030\n \001(\001\022\020\n\010u" +
-      "nused06\030\013 \001(\001\022\020\n\010unused07\030\014 \001(\001\022\020\n\010unuse" +
-      "d08\030\r \001(\001\022\020\n\010unused09\030\016 \001(\t\022\"\n\007headers\030\017" +
-      " \003(\0132\021.EPICS.FieldValue*\251\002\n\013PayloadType\022" +
-      "\021\n\rSCALAR_STRING\020\000\022\020\n\014SCALAR_SHORT\020\001\022\020\n\014" +
-      "SCALAR_FLOAT\020\002\022\017\n\013SCALAR_ENUM\020\003\022\017\n\013SCALA" +
-      "R_BYTE\020\004\022\016\n\nSCALAR_INT\020\005\022\021\n\rSCALAR_DOUBL" +
-      "E\020\006\022\023\n\017WAVEFORM_STRING\020\007\022\022\n\016WAVEFORM_SHO" +
-      "RT\020\010\022\022\n\016WAVEFORM_FLOAT\020\t\022\021\n\rWAVEFORM_ENU" +
-      "M\020\n\022\021\n\rWAVEFORM_BYTE\020\013\022\020\n\014WAVEFORM_INT\020\014",
-      "\022\023\n\017WAVEFORM_DOUBLE\020\r\022\024\n\020V4_GENERIC_BYTE" +
-      "S\020\016B4\n&edu.stanford.slac.archiverapplian" +
-      "ce.PBB\nEPICSEvent"
+      "\n\021fieldactualchange\030\010 \001(\010\022\017\n\007userTag\030\t \001" +
+      "(\r\"\273\002\n\013PayloadInfo\022 \n\004type\030\001 \002(\0162\022.EPICS" +
+      ".PayloadType\022\016\n\006pvname\030\002 \002(\t\022\014\n\004year\030\003 \002" +
+      "(\005\022\024\n\014elementCount\030\004 \001(\005\022\020\n\010unused00\030\005 \001" +
+      "(\001\022\020\n\010unused01\030\006 \001(\001\022\020\n\010unused02\030\007 \001(\001\022\020",
+      "\n\010unused03\030\010 \001(\001\022\020\n\010unused04\030\t \001(\001\022\020\n\010un" +
+      "used05\030\n \001(\001\022\020\n\010unused06\030\013 \001(\001\022\020\n\010unused" +
+      "07\030\014 \001(\001\022\020\n\010unused08\030\r \001(\001\022\020\n\010unused09\030\016" +
+      " \001(\t\022\"\n\007headers\030\017 \003(\0132\021.EPICS.FieldValue" +
+      "*\251\002\n\013PayloadType\022\021\n\rSCALAR_STRING\020\000\022\020\n\014S" +
+      "CALAR_SHORT\020\001\022\020\n\014SCALAR_FLOAT\020\002\022\017\n\013SCALA" +
+      "R_ENUM\020\003\022\017\n\013SCALAR_BYTE\020\004\022\016\n\nSCALAR_INT\020" +
+      "\005\022\021\n\rSCALAR_DOUBLE\020\006\022\023\n\017WAVEFORM_STRING\020" +
+      "\007\022\022\n\016WAVEFORM_SHORT\020\010\022\022\n\016WAVEFORM_FLOAT\020" +
+      "\t\022\021\n\rWAVEFORM_ENUM\020\n\022\021\n\rWAVEFORM_BYTE\020\013\022",
+      "\020\n\014WAVEFORM_INT\020\014\022\023\n\017WAVEFORM_DOUBLE\020\r\022\024" +
+      "\n\020V4_GENERIC_BYTES\020\016B4\n&edu.stanford.sla" +
+      "c.archiverappliance.PBB\nEPICSEvent"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -17573,7 +17630,7 @@ public final class EPICSEvent {
           internal_static_EPICS_V4GenericBytes_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_EPICS_V4GenericBytes_descriptor,
-              new java.lang.String[] { "Secondsintoyear", "Nano", "Val", "Severity", "Status", "Repeatcount", "Fieldvalues", "Fieldactualchange", },
+              new java.lang.String[] { "Secondsintoyear", "Nano", "Val", "Severity", "Status", "Repeatcount", "Fieldvalues", "Fieldactualchange", "UserTag", },
               edu.stanford.slac.archiverappliance.PB.EPICSEvent.V4GenericBytes.class,
               edu.stanford.slac.archiverappliance.PB.EPICSEvent.V4GenericBytes.Builder.class);
           internal_static_EPICS_PayloadInfo_descriptor =

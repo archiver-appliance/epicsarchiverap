@@ -514,7 +514,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 			return;
 		}
 
-		PVStructure pvRequest = CreateRequest.create().createRequest("field(timeStamp,value,alarm)"); 
+		PVStructure pvRequest = CreateRequest.create().createRequest("field()"); 
 		channel.createChannelGet(this, pvRequest);
 		subscribe();
 	}

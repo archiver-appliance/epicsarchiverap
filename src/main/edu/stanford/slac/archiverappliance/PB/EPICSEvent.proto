@@ -176,6 +176,8 @@ message V4GenericBytes {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 

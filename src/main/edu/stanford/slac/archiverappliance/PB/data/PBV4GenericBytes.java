@@ -68,6 +68,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
 		long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
 		int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
+		int userTag = timeStampPVStructure.getIntField("userTag").get();
 		Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
 
@@ -84,6 +85,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
 				.setNano(yst.getNanos())
+				.setUserTag(userTag)
 				.setVal(byteString);
 		if(severity != 0) builder.setSeverity(severity);
 		if(status != 0) builder.setStatus(status);
