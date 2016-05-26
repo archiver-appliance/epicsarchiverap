@@ -54,13 +54,14 @@ public class UserSpecifiedSamplingParams implements Comparable<UserSpecifiedSamp
 		this.controllingPV = controllingPV;
 	}
 
-	public UserSpecifiedSamplingParams(SamplingMethod userSpecifedsamplingMethod, float userSpecifedSamplingPeriod, String controllingPV, String policyName, boolean skipCapacityPlanning) {
+	public UserSpecifiedSamplingParams(SamplingMethod userSpecifedsamplingMethod, float userSpecifedSamplingPeriod, String controllingPV, String policyName, boolean skipCapacityPlanning, boolean usePVAccess) {
 		this.userSpecifedsamplingMethod = userSpecifedsamplingMethod;
 		this.userSpecifedSamplingPeriod = userSpecifedSamplingPeriod;
 		this.controllingPV = controllingPV;
 		this.policyName = policyName;
 		userOverrideParams = true;
 		this.skipCapacityPlanning = skipCapacityPlanning;
+		this.usePVAccess = usePVAccess;
 	}
 
 	@Override

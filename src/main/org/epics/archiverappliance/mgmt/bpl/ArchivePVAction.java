@@ -276,7 +276,7 @@ public class ArchivePVAction implements BPLAction {
 					overRiddenSamplingPeriod = minumumSamplingPeriod;
 				}
 				logger.debug("Overriding policy params with sampling method " + overriddenSamplingMethod + " and sampling period " + overRiddenSamplingPeriod);
-				UserSpecifiedSamplingParams userSpecifiedSamplingParams = new UserSpecifiedSamplingParams(overridePolicyParams ? overriddenSamplingMethod : SamplingMethod.MONITOR, overRiddenSamplingPeriod, controllingPV, policyName, skipCapacityPlanning);
+				UserSpecifiedSamplingParams userSpecifiedSamplingParams = new UserSpecifiedSamplingParams(overridePolicyParams ? overriddenSamplingMethod : SamplingMethod.MONITOR, overRiddenSamplingPeriod, controllingPV, policyName, skipCapacityPlanning, usePVAccess);
 				if(fieldName != null && !fieldName.equals("") && isStandardFieldName) {
 					userSpecifiedSamplingParams.addArchiveField(fieldName);
 				}

@@ -630,8 +630,10 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 				return ArchDBRTypes.DBR_WAVEFORM_SHORT;
 			case "enum_t":
 				return ArchDBRTypes.DBR_WAVEFORM_ENUM;
+			case "structure":
+				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			default:
-				logger.warn("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
+				logger.error("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
 				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
 		} else {
@@ -650,8 +652,10 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 				return ArchDBRTypes.DBR_SCALAR_SHORT;
 			case "enum_t":
 				return ArchDBRTypes.DBR_SCALAR_ENUM;
+			case "structure":
+				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			default:
-				logger.warn("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
+				logger.error("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId + " for PV " + this.name);
 				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
 		}

@@ -94,24 +94,27 @@ public class MetaGet implements Runnable {
 			pvList.put("main", pv);
 			pv.start();
 
-			
-			PV pv2 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME"), configservice, jcaCommandThreadId, usePVAccess);
-			pvList.put("NAME", pv2);
-			pv2.start();
-			
-			PV pv3 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME$"), configservice, jcaCommandThreadId, usePVAccess);
-			pvList.put("NAME$", pv3);
-			pv3.start();
-			
-			if (metadatafields != null) {
-				for (int i = 0; i < metadatafields.length; i++) {
-					String metaField = metadatafields[i];
-					// We return the fields of the src PV even if we are archiving a field...
-					PV pvTemp = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId, usePVAccess);
-					pvTemp.start();
-					pvList.put(metaField, pvTemp);
+			if(this.usePVAccess) {
+				logger.debug("Skipping getting meta fields for a PVAccess PV " + this.pvName);
+			} else { 
+				PV pv2 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME"), configservice, jcaCommandThreadId, usePVAccess);
+				pvList.put("NAME", pv2);
+				pv2.start();
+				
+				PV pv3 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME$"), configservice, jcaCommandThreadId, usePVAccess);
+				pvList.put("NAME$", pv3);
+				pv3.start();
+				
+				if (metadatafields != null) {
+					for (int i = 0; i < metadatafields.length; i++) {
+						String metaField = metadatafields[i];
+						// We return the fields of the src PV even if we are archiving a field...
+						PV pvTemp = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId, usePVAccess);
+						pvTemp.start();
+						pvList.put(metaField, pvTemp);
+					}
 				}
-			}
+			}			
 		} catch (Exception e) {
 			throw (e);
 		}
@@ -123,52 +126,56 @@ public class MetaGet implements Runnable {
 		try {
 			PV pvMain = pvList.get("main");
 			MetaInfo mainMeta = pvMain.getTotalMetaInfo();
-			// Per Dirk Zimoch, we first check the NAME$.
-			// If that exists, we use it. If not, we use the NAME
-			PV pv_NameDollar = pvList.get("NAME$");
-			DBRTimeEvent nameDollarValue = pv_NameDollar.getDBRTimeEvent();
-			if (nameDollarValue != null && nameDollarValue.getSampleValue() != null) {
-				logger.debug("Using the NAME$ value as the NAME for pv " + pvName);
-				SampleValue sampleValue = nameDollarValue.getSampleValue();
-				parseAliasInfo(sampleValue, mainMeta);
+			if(this.usePVAccess) { 
+				logger.debug(this.pvName + " is a PVAccess PV; so we are pretty much done with the metaget");
 			} else { 
-				logger.debug("Using the NAME value as the NAME for pv " + pvName);
-				PV pv_Name = pvList.get("NAME");
-				DBRTimeEvent nameValue = pv_Name.getDBRTimeEvent();
-				if (nameValue != null && nameValue.getSampleValue() != null) {
-					SampleValue sampleValue = nameValue.getSampleValue();
+				// Per Dirk Zimoch, we first check the NAME$.
+				// If that exists, we use it. If not, we use the NAME
+				PV pv_NameDollar = pvList.get("NAME$");
+				DBRTimeEvent nameDollarValue = pv_NameDollar.getDBRTimeEvent();
+				if (nameDollarValue != null && nameDollarValue.getSampleValue() != null) {
+					logger.debug("Using the NAME$ value as the NAME for pv " + pvName);
+					SampleValue sampleValue = nameDollarValue.getSampleValue();
 					parseAliasInfo(sampleValue, mainMeta);
 				} else { 
-					logger.warn("Either we probably did not have time to determine .NAME for " + MetaGet.this.pvName + " or the field does not exist");
-				}
-			}
-			
-			Enumeration<String> fieldNameList = pvList.keys();
-			while (fieldNameList.hasMoreElements()) {
-				String fieldName = fieldNameList.nextElement();
-				if (fieldName.equals("main") || fieldName.equals("NAME") || fieldName.equals("NAME$")) {
-					// These have already been processed; so do nothing.
-				} else { 
-					if (fieldName.endsWith("RTYP")) {
-						if(pvList.get(fieldName) != null && pvList.get(fieldName).getDBRTimeEvent() != null && pvList.get(fieldName).getDBRTimeEvent().getSampleValue() != null) { 
-							String rtyp = pvList.get(fieldName).getDBRTimeEvent().getSampleValue().toString();
-							mainMeta.addOtherMetaInfo(fieldName, rtyp);
-							logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
-						} else { 
-							logger.debug("Something about RTYP is null for PV " + MetaGet.this.pvName);
-						}
-					} else {
-						DBRTimeEvent valueTemp = pvList.get(fieldName).getDBRTimeEvent();
-						if (valueTemp != null) {
-							SampleValue tempvalue = valueTemp.getSampleValue();
-							parseOtherInfo(tempvalue, mainMeta, fieldName);
-						} else { 
-							logger.warn("Either we probably did not have time to determine " + fieldName + " for " + MetaGet.this.pvName + " or the field does not exist");
-						}
+					logger.debug("Using the NAME value as the NAME for pv " + pvName);
+					PV pv_Name = pvList.get("NAME");
+					DBRTimeEvent nameValue = pv_Name.getDBRTimeEvent();
+					if (nameValue != null && nameValue.getSampleValue() != null) {
+						SampleValue sampleValue = nameValue.getSampleValue();
+						parseAliasInfo(sampleValue, mainMeta);
+					} else { 
+						logger.warn("Either we probably did not have time to determine .NAME for " + MetaGet.this.pvName + " or the field does not exist");
 					}
 				}
-
-				pvList.get(fieldName).stop();
+			
+				Enumeration<String> fieldNameList = pvList.keys();
+				while (fieldNameList.hasMoreElements()) {
+					String fieldName = fieldNameList.nextElement();
+					if (fieldName.equals("main") || fieldName.equals("NAME") || fieldName.equals("NAME$")) {
+						// These have already been processed; so do nothing.
+					} else { 
+						if (fieldName.endsWith("RTYP")) {
+							if(pvList.get(fieldName) != null && pvList.get(fieldName).getDBRTimeEvent() != null && pvList.get(fieldName).getDBRTimeEvent().getSampleValue() != null) { 
+								String rtyp = pvList.get(fieldName).getDBRTimeEvent().getSampleValue().toString();
+								mainMeta.addOtherMetaInfo(fieldName, rtyp);
+								logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
+							} else { 
+								logger.debug("Something about RTYP is null for PV " + MetaGet.this.pvName);
+							}
+						} else {
+							DBRTimeEvent valueTemp = pvList.get(fieldName).getDBRTimeEvent();
+							if (valueTemp != null) {
+								SampleValue tempvalue = valueTemp.getSampleValue();
+								parseOtherInfo(tempvalue, mainMeta, fieldName);
+							} else { 
+								logger.warn("Either we probably did not have time to determine " + fieldName + " for " + MetaGet.this.pvName + " or the field does not exist");
+							}
+						}
+					}
+	
+					pvList.get(fieldName).stop();
+				}
 			}
 			// Make sure we have at least the DBR type here. 
 			if(mainMeta.getArchDBRTypes() == null) { 
