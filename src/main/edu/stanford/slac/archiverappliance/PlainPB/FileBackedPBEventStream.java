@@ -226,7 +226,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 			this.positionBoundaries = false;
 			this.startTime = queryStartTime;
 			this.endTime = queryEndTime;
-		} else if(queryStartEpoch < firstSampleEpoch && queryEndEpoch >= firstSampleEpoch && queryEndEpoch < lastSampleEpoch) { 
+		} else if(queryStartEpoch < firstSampleEpoch && queryEndEpoch >= firstSampleEpoch && queryEndEpoch <= lastSampleEpoch) { 
 			logger.debug("Case 2 - start at the beginning and lookup the end");
 			long endPosition = seekToEndTime(path, dbrtype, queryStartTime, queryEndTime);
 			if(endPosition != -1) { 
@@ -244,7 +244,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 			this.positionBoundaries = true;
 			this.startFilePos = fileInfo.getPositionOfFirstSample() - 1;
 			this.endFilePos = Files.size(path);
-		} else if(queryStartEpoch >= firstSampleEpoch && queryEndEpoch < lastSampleEpoch) { 
+		} else if(queryStartEpoch >= firstSampleEpoch && queryEndEpoch <= lastSampleEpoch) { 
 			logger.debug("Case 4 - Lookup start and end");
 			long endPosition = seekToEndTime(path, dbrtype, queryStartTime, queryEndTime);
 			long startPosition = seekToStartTime(path, dbrtype, queryStartTime, queryEndTime);
@@ -272,7 +272,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 				this.endTime = queryEndTime;
 			}
 		} else if(queryStartEpoch > lastSampleEpoch && queryEndEpoch > lastSampleEpoch) { 
-			logger.debug("Case 6 - we only the last sample");
+			logger.debug("Case 6 - we only need the last sample");
 			this.positionBoundaries = true;
 			this.startFilePos = fileInfo.getPositionOfLastSample() - 1;
 			this.endFilePos = Files.size(path);
