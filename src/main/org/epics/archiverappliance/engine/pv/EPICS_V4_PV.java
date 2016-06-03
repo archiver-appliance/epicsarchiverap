@@ -555,7 +555,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 			try {
 				state = PVConnectionState.Subscribing;
 				totalMetaInfo.setStartTime(System.currentTimeMillis());
-				PVStructure pvRequest = CreateRequest.create().createRequest("field(timeStamp,value,alarm)"); 
+				PVStructure pvRequest = CreateRequest.create().createRequest("field()"); 
 				subscription = channel.createMonitor(this, pvRequest);
 			} catch (final Exception ex) {
 				logger.error("exception when subscribing pv", ex);
