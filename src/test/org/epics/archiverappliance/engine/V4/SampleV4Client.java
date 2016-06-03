@@ -14,7 +14,6 @@ import org.epics.pvdata.misc.BitSet;
 import org.epics.pvdata.monitor.Monitor;
 import org.epics.pvdata.monitor.MonitorElement;
 import org.epics.pvdata.monitor.MonitorRequester;
-import org.epics.pvdata.pv.Field;
 import org.epics.pvdata.pv.MessageType;
 import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.Status;
@@ -30,7 +29,6 @@ public class SampleV4Client implements ChannelRequester, MonitorRequester {
 	private static ChannelProvider channelProvider;
 	
 	private Channel channel;
-	private Monitor subscription;
 	List<String> fieldNames = new LinkedList<String>();
 	
 	public SampleV4Client(String pvName) { 
@@ -70,7 +68,7 @@ public class SampleV4Client implements ChannelRequester, MonitorRequester {
 		if (connectionStatus == ConnectionState.CONNECTED) {
 			logger.info("channelStateChange:connected " + channelChangingState.getChannelName());
 			PVStructure pvRequest = CreateRequest.create().createRequest("field()"); 
-			subscription = channel.createMonitor(this, pvRequest);
+			channel.createMonitor(this, pvRequest);
 		}
 	}
 	
@@ -98,6 +96,9 @@ public class SampleV4Client implements ChannelRequester, MonitorRequester {
 	@Override
 	public void monitorConnect(Status arg0, Monitor channelMonitor, Structure structure) {
 		createFieldIdToNameIndex(fieldNames, structure, "");
+		for(int i = 0; i < fieldNames.size(); i++) {
+			logger.info("Field " + i + " = " + fieldNames.get(i));
+		}
 		channelMonitor.start();
 	}
 
@@ -109,7 +110,7 @@ public class SampleV4Client implements ChannelRequester, MonitorRequester {
 			while (monitorElement != null)  { 
 				try { 
 					logger.info("Obtained monitor event for pv " + channel.getChannelName());
-					PVStructure totalPVStructure = monitorElement.getPVStructure();
+					// PVStructure totalPVStructure = monitorElement.getPVStructure();
 					BitSet changedBits = monitorElement.getChangedBitSet();
 					logger.info("Obtained monitor event for pv " + channel.getChannelName() + " Changed bits: " + changedBits.toString());
 					for (int i = changedBits.nextSetBit(0); i >= 0; i = changedBits.nextSetBit(i+1)) {
