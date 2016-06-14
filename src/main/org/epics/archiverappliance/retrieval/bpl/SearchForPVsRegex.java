@@ -2,9 +2,7 @@ package org.epics.archiverappliance.retrieval.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -17,31 +15,19 @@ public class SearchForPVsRegex implements BPLAction {
 	private static Logger logger = Logger.getLogger(SearchForPVsRegex.class.getName());
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		String regex = req.getParameter("regex");
-		if(regex == null || regex.equals("")) {
+		String nameToMatch = req.getParameter("regex");
+		if(nameToMatch == null || nameToMatch.equals("")) {
 			logger.error("This search needs to be called with a regex argument.");
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
 		
-		logger.debug("Regex for searching for pvnames is " + regex);
+		logger.debug("Regex for searching for pvnames is " + nameToMatch);
 		
-		Pattern pattern = Pattern.compile(regex);
-		LinkedList<String> matchingPVNames = new LinkedList<String>();
-		for(String pvName : configService.getAllPVs()) {
-			Matcher matcher = pattern.matcher(pvName);
-			if(matcher.matches()) {
-				matchingPVNames.add(pvName);
-			}
-		}
-		for(String pvName : configService.getAllAliases()) {
-			Matcher matcher = pattern.matcher(pvName);
-			if(matcher.matches()) {
-				matchingPVNames.add(pvName);
-			}
-		}
 		resp.setContentType("text/plain");
 		try(PrintWriter out = resp.getWriter()) {
+			@SuppressWarnings("unchecked")
+			List<String> matchingPVNames = (List<String>) GetMatchingPVs.getMatchingPVsInCluster(configService, -1, nameToMatch);
 			for(String pvName : matchingPVNames) {
 				out.println(pvName);
 			}

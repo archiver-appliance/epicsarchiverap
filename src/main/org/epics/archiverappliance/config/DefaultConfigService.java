@@ -1271,6 +1271,15 @@ public class DefaultConfigService implements ConfigService {
 		} catch(IOException ex) {
 			logger.error("Exception adding alias name to persistence " + aliasName, ex);
 		}
+		
+		// Add aliases into the trie
+		String[] parts = this.pvName2KeyConverter.breakIntoParts(aliasName);
+		for(String part : parts) { 
+			if(!parts2PVNamesForThisAppliance.containsKey(part)) { 
+				parts2PVNamesForThisAppliance.put(part, new ConcurrentSkipListSet<String>());
+			}
+			parts2PVNamesForThisAppliance.get(part).add(aliasName);
+		}
 	}
 	
 	
@@ -1281,6 +1290,12 @@ public class DefaultConfigService implements ConfigService {
 			persistanceLayer.removeAliasName(aliasName, realName);
 		} catch(IOException ex) {
 			logger.error("Exception removing alias name from persistence " + aliasName, ex);
+		}
+		
+		// Remove the aliasname from the trie
+		String[] parts = this.pvName2KeyConverter.breakIntoParts(aliasName);
+		for(String part : parts) { 
+			parts2PVNamesForThisAppliance.get(part).remove(aliasName);
 		}
 	}
 
@@ -1746,6 +1761,14 @@ public class DefaultConfigService implements ConfigService {
 				String realName = persistanceLayer.getAliasNamesToRealName(pvNameFromPersistence);
 				if(this.pvsForThisAppliance.contains(realName)) {
 					newAliases.put(pvNameFromPersistence, realName);
+					// Add the alias into the trie
+					String[] parts = this.pvName2KeyConverter.breakIntoParts(pvNameFromPersistence);
+					for(String part : parts) { 
+						if(!parts2PVNamesForThisAppliance.containsKey(part)) { 
+							parts2PVNamesForThisAppliance.put(part, new ConcurrentSkipListSet<String>());
+						}
+						parts2PVNamesForThisAppliance.get(part).add(pvNameFromPersistence);
+					}					
 				}
 				// Add in batch sizes of 1000 or so...
 				if(objectCount > 1000) {

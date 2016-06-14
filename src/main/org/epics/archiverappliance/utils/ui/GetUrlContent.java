@@ -74,12 +74,17 @@ public class GetUrlContent {
 		return null;
 	}
 	
+	public static JSONArray getURLContentAsJSONArray(String urlStr) {
+		return getURLContentAsJSONArray(urlStr, true);
+	}
+	
 	/**
 	 * Given a URL, get the contents as a JSON Array
 	 * @param urlStr
+	 * @param logErrors - if false, do not log any exceptions (they are expected)
 	 * @return
 	 */
-	public static JSONArray getURLContentAsJSONArray(String urlStr) {
+	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors) {
 		try {
 			logger.debug("Getting the contents of " + urlStr + " as a JSON array.");
 			JSONParser parser=new JSONParser();
@@ -87,9 +92,9 @@ public class GetUrlContent {
 				return (JSONArray) parser.parse(new InputStreamReader(is));
 			}
 		} catch (IOException ex) {
-			logger.error("Exception getting contents of internal URL " + urlStr, ex);
+			if (logErrors) { logger.error("Exception getting contents of internal URL " + urlStr, ex); }
 		} catch (ParseException pex) {
-			logger.error("Parse exception getting contents of internal URL " + urlStr + " at " + pex.getPosition(), pex);
+			if (logErrors) { logger.error("Parse exception getting contents of internal URL " + urlStr + " at " + pex.getPosition(), pex); }
 		}
 		return null;
 	}

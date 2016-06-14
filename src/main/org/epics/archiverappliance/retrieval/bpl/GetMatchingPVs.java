@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -64,6 +65,25 @@ public class GetMatchingPVs implements BPLAction {
 		}
 		
 		try (PrintWriter out = resp.getWriter()) {
+			JSONArray matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch);
+			out.println(JSONValue.toJSONString(matchingNames));
+		} catch(Exception ex) {
+			logger.error("Exception getting all pvs on appliance " + configService.getMyApplianceInfo().getIdentity(), ex);
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+		}
+	}
+
+
+	/**
+	 * Get a list of PV's being archived in this cluster
+	 * @param configService 
+	 * @param limit - The numbers of PV's you want to limit the response to; 
+	 * @param nameToMatch - A regex specifying the PV name pattern; globs should be converted to regex's 
+	 * @return
+	 * @throws IOException
+	 */
+	public static JSONArray getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch) throws IOException {
+		try { 
 			LinkedList<String> mgmtURLs = getMgmtURLsInCluster(configService);
 			
 			List<String> pvNamesURLs = new LinkedList<String>();
@@ -74,18 +94,27 @@ public class GetMatchingPVs implements BPLAction {
 				pvNamesURLs.add(pvNamesURL);
 				logger.debug("Getting matching PV names using " + pvNamesURL);
 			}
-
 			
+			Map<String, String> externalServers = configService.getExternalArchiverDataServers();
+			if(externalServers != null) { 
+				for(String serverUrl : externalServers.keySet()) { 
+					String index = externalServers.get(serverUrl);
+					if(index.equals("pbraw")) { 
+						logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " for PV's matching " + nameToMatch);
+						pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?regex=" + URLEncoder.encode(nameToMatch, "UTF-8"));
+					}
+				}
+			}
+
 			JSONArray matchingNames = GetUrlContent.combineJSONArrays(pvNamesURLs);
-			out.println(JSONValue.toJSONString(matchingNames));
-		} catch(Exception ex) {
-			logger.error("Exception getting all pvs on appliance " + configService.getMyApplianceInfo().getIdentity(), ex);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			return matchingNames;
+		} catch(Exception ex) { 
+			throw new IOException(ex);
 		}
 	}
 	
 	
-	private LinkedList<String> getMgmtURLsInCluster(ConfigService configService) {
+	private static LinkedList<String> getMgmtURLsInCluster(ConfigService configService) {
 		LinkedList<String> mgmtURLs = new LinkedList<String>();
 		try { 
 			JSONArray appliancesInCluster = GetUrlContent.getURLContentAsJSONArray(configService.getMyApplianceInfo().getMgmtURL() + "/getAppliancesInCluster");
