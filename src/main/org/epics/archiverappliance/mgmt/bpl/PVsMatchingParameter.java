@@ -110,6 +110,12 @@ public class PVsMatchingParameter {
 						return pvNames;
 					}
 				}
+				for(String pvName : configService.getAllAliases()) {
+					pvNames.add(pvName);
+					if(limit != -1 && pvNames.size() >= limit) { 
+						return pvNames;
+					}
+				}
 			}
 		}
 		return pvNames;
