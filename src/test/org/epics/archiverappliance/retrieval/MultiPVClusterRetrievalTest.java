@@ -116,7 +116,7 @@ public class MultiPVClusterRetrievalTest {
 		pvTypeInfo1.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
 		pvTypeInfo1.setModificationTime(TimeUtils.now());
 		pvTypeInfo1.setApplianceIdentity("appliance0");
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true", encoder.encode(pvTypeInfo1));
+		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=false&createnew=true", encoder.encode(pvTypeInfo1));
 
 		logger.info("Added " + pvName + " to appliance0");
 		
@@ -125,7 +125,7 @@ public class MultiPVClusterRetrievalTest {
 		pvTypeInfo2.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
 		pvTypeInfo2.setModificationTime(TimeUtils.now());
 		pvTypeInfo2.setApplianceIdentity("appliance1");
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName2, "UTF-8") + "&override=true", encoder.encode(pvTypeInfo2));
+		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName2, "UTF-8") + "&override=false&createnew=true", encoder.encode(pvTypeInfo2));
 		logger.info("Added " + pvName + " to appliance1");
 		
 		logger.info("Finished loading " + pvName + " and " + pvName2 + " into their appliances.");
