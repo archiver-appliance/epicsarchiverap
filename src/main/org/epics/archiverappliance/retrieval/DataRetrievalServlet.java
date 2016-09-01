@@ -691,7 +691,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 					return;
 				}
 				String[] components = pvNames.get(i).split("[(,)]");
-				postProcessorUserArgs.set(i, components[0]);
+				postProcessorUserArg = components[0];
+				postProcessorUserArgs.set(i, postProcessorUserArg);
 				pvNames.set(i, components[1]);
 				if(components.length > 2) {
 					for(int j = 2; j < components.length; j++) {
