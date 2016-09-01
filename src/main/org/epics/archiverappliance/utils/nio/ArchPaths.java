@@ -3,6 +3,8 @@ package org.epics.archiverappliance.utils.nio;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -31,8 +33,7 @@ public class ArchPaths implements Closeable {
 	public static final String ZIP_PREFIX = "jar:file://";
 	private static Logger logger = Logger.getLogger(ArchPaths.class.getName());
 	private static FileSystemProvider zipFSProvider = getZipFSProvider();
-	private ConcurrentHashMap<String, FileSystem>  fileSystemList = new ConcurrentHashMap<String, FileSystem>();
-	
+	private ConcurrentHashMap<String, FileSystem>  fileSystemList = new ConcurrentHashMap<String, FileSystem>();	
 	/**
 	 * Return a path based on a varargs list of path components.
 	 * Each path component is separated by the file separator.
@@ -151,15 +152,33 @@ public class ArchPaths implements Closeable {
 			}
 			return pathWithinZipFile;
 		} else {
-			// We are dealing with normal file system paths.
-			Path normalFilePath = FileSystems.getDefault().getPath(uriPathOrDefautFilePath);
-			Path parent = normalFilePath.getParent();
-			if (createParent && parent != null && Files.notExists(parent)) {
-				if(logger.isDebugEnabled()) logger.debug("Creating parent folder " + parent.toString());
-				Files.createDirectories(parent);
+			if(uriPathOrDefautFilePath.contains(":") && uriPathOrDefautFilePath.indexOf(":") < uriPathOrDefautFilePath.indexOf("/")) {
+				try { 
+					URI uri = new URI(uriPathOrDefautFilePath);
+					FileSystem fs = FileSystems.newFileSystem(uri, System.getenv(), Thread.currentThread().getContextClassLoader());
+					Path normalFilePath = fs.getPath(uri.getPath());
+					Path parent = normalFilePath.getParent();
+					if (createParent && parent != null && Files.notExists(parent)) {
+						if(logger.isDebugEnabled()) logger.debug("Creating parent folder " + parent.toString());
+						Files.createDirectories(parent);
+					}
+		
+					return normalFilePath;
+				} catch(URISyntaxException ex) { 
+					throw new IOException(ex);
+				}
+				
+			} else { 
+				// We are dealing with normal file system paths.
+				Path normalFilePath = FileSystems.getDefault().getPath(uriPathOrDefautFilePath);
+				Path parent = normalFilePath.getParent();
+				if (createParent && parent != null && Files.notExists(parent)) {
+					if(logger.isDebugEnabled()) logger.debug("Creating parent folder " + parent.toString());
+					Files.createDirectories(parent);
+				}
+	
+				return normalFilePath;
 			}
-
-			return normalFilePath;
 		}
 	}
 	
