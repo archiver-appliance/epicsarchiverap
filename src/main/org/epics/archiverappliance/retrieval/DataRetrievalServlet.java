@@ -68,6 +68,7 @@ import org.epics.archiverappliance.retrieval.mimeresponses.JSONResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.MatlabResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.PBRAWResponse;
+import org.epics.archiverappliance.retrieval.mimeresponses.QWResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.SVGResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.SinglePVCSVResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.TextResponse;
@@ -112,6 +113,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		mimeresponses.put("raw", new MimeMappingInfo(PBRAWResponse.class, "application/x-protobuf"));
 		mimeresponses.put("svg", new MimeMappingInfo(SVGResponse.class, "image/svg+xml"));
 		mimeresponses.put("json", new MimeMappingInfo(JSONResponse.class, "application/json"));
+		mimeresponses.put("qw", new MimeMappingInfo(QWResponse.class, "application/json"));
 		mimeresponses.put("jplot", new MimeMappingInfo(JPlotResponse.class, "application/json"));
 		mimeresponses.put("csv", new MimeMappingInfo(SinglePVCSVResponse.class, "text/csv"));
 		mimeresponses.put("flx", new MimeMappingInfo(FlxXMLResponse.class, "text/xml"));
@@ -550,7 +552,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		String extension = req.getPathInfo().split("\\.")[1];
 		logger.info("Mime is " + extension);
 		
-		if (!extension.equals("json") && !extension.equals("raw") && !extension.equals("jplot")) {
+		if (!extension.equals("json") && !extension.equals("raw") && !extension.equals("jplot") && !extension.equals("qw")) {
 			String msg = "Mime type " + extension + " is not supported. Please use \"json\", \"jplot\" or \"raw\".";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
