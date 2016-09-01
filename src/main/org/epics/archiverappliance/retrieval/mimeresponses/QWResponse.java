@@ -94,7 +94,7 @@ public class QWResponse implements MimeResponse {
 		StringWriter buf = new StringWriter();
 		buf.append("{ \"meta\": { \"name\": \"").append(pv).append("\" ");
 		if(streamDesc != null) {
-			buf.append(", \"waveform\": \"").append(Boolean.toString(remoteDesc.getArchDBRType().isWaveForm())).append("\" ");
+			buf.append(", \"waveform\": ").append(Boolean.toString(remoteDesc.getArchDBRType().isWaveForm())).append(" ");
 			HashMap<String, String> headers = remoteDesc.getHeaders();
 			if(!headers.isEmpty()) { 
 				for(String fieldName : headers.keySet()) {
