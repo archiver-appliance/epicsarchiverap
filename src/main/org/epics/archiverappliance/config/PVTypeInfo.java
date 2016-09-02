@@ -69,43 +69,43 @@ public class PVTypeInfo implements Serializable {
 
 	// Info from the dbr_ctrl structures
 	/**
-	 * <PV Name>.LOLO; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.LOLO; though we get it using the dbr_ctrl structures
 	 */
 	private double lowerAlarmLimit;
 	/**
-	 * <PV Name>.DRVL; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.DRVL; though we get it using the dbr_ctrl structures
 	 */
 	private double lowerCtrlLimit;
 	/**
-	 * <PV Name>.LOPR; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.LOPR; though we get it using the dbr_ctrl structures
 	 */
 	private double lowerDisplayLimit;
 	/**
-	 * <PV Name>.LOW; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.LOW; though we get it using the dbr_ctrl structures
 	 */
 	private double lowerWarningLimit;
 	/**
-	 * <PV Name>.HIHI; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.HIHI; though we get it using the dbr_ctrl structures
 	 */
 	private double upperAlarmLimit;
 	/**
-	 * <PV Name>.DRVH though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.DRVH though we get it using the dbr_ctrl structures
 	 */
 	private double upperCtrlLimit;
 	/**
-	 * <PV Name>.HOPR; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.HOPR; though we get it using the dbr_ctrl structures
 	 */
 	private double upperDisplayLimit;
 	/**
-	 * <PV Name>.HIGH; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.HIGH; though we get it using the dbr_ctrl structures
 	 */
 	private double upperWarningLimit;
 	/**
-	 * <PV Name>.PREC; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.PREC; though we get it using the dbr_ctrl structures
 	 */
 	private double precision;
 	/**
-	 * <PV Name>.EGU; though we get it using the dbr_ctrl structures
+	 * &lt;PV Name&gt;.EGU; though we get it using the dbr_ctrl structures
 	 */
 	private String units;
 	

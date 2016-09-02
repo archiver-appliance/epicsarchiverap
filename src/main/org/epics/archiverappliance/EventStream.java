@@ -19,6 +19,7 @@ import java.io.Closeable;
  * EventStreams are typically backed by objects that consume system resources (like file handles, database connections etc).
  * So, clients <b>must</b> close the EventStream once they are done with it.
  * We strongly encourage the use of the Java 1.7 try-with-resources for this purpose.
+ * <pre>
  * <code>
  *  <span style="color:blue;">try</span>(EventStream stream = reader.getDataForPV(...)) {
  *   <span style="color:blue;">for</span>(Event event : stream) {
@@ -26,6 +27,7 @@ import java.io.Closeable;
  *   }
  * }
  * </code>
+ * </pre>
  * </div>
  * <div>
  * EventStreams are typically backed by streams (InputStreams, XMLStreams, database cursors) etc. 
@@ -35,13 +37,13 @@ import java.io.Closeable;
  * </div>
  * <div style="margin-top: 2.0em;">
  * The use of Iterable&lt;Event&gt; permits us to use syntactic sugar of the form
- * <code>
  * <pre>
+ * <code>
  *   <span style="color:blue;">for</span>(Event event : stream) {
  *   // Do stuff.
  *   }
- * </pre>
  * </code>
+ * </pre>
  * However, Iterable&lt;Event&gt; does not permit us to throw IOExceptions.
  * This is not ideal in that EventStreams are almost always backed by objects doing I/O and therefore can throw IOExceptions at all points. 
  * So, sometimes these are wrapped into subclasses of RuntimeException

@@ -41,7 +41,7 @@ public interface ConfigService {
 	 * This list of appliances is expected to be the same for all appliances in the cluster; so it is perfectly legal to place it in NFS somewhere and point to the same file/location from all appliances in the cluster.
 	 * It is reasonably important that all appliances see the same list of cluster members or we tend to have split-brain effects (<a href="http://en.wikipedia.org/wiki/Split-brain_%28computing%29">See wikipedia</a>).
 	 * The format of the file itself is simple XML like so
-	 * <code>
+	 * <pre>
 	 * &lt;appliances&gt;
 	 *   &lt;appliance&gt;
 	 *     &lt;identity&gt;archiver&lt;/identity&gt;
