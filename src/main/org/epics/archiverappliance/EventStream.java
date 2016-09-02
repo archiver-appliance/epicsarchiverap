@@ -36,11 +36,9 @@ import java.io.Closeable;
  * <div style="margin-top: 2.0em;">
  * The use of Iterable&lt;Event&gt; permits us to use syntactic sugar of the form
  * <code>
- * <pre>
  *   <span style="color:blue;">for</span>(Event event : stream) {
  *   // Do stuff.
  *   }
- * </pre>
  * </code>
  * However, Iterable&lt;Event&gt; does not permit us to throw IOExceptions.
  * This is not ideal in that EventStreams are almost always backed by objects doing I/O and therefore can throw IOExceptions at all points. 
