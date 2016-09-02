@@ -152,7 +152,7 @@ public class ArchPaths implements Closeable {
 			}
 			return pathWithinZipFile;
 		} else {
-			if(uriPathOrDefautFilePath.contains(":") && uriPathOrDefautFilePath.indexOf(":") < uriPathOrDefautFilePath.indexOf("/")) {
+			if(uriPathOrDefautFilePath.contains(":") && uriPathOrDefautFilePath.indexOf(":") < uriPathOrDefautFilePath.indexOf("/") && !uriPathOrDefautFilePath.startsWith("file:///")) {
 				try { 
 					URI uri = new URI(uriPathOrDefautFilePath);
 					FileSystem fs = FileSystems.newFileSystem(uri, System.getenv(), Thread.currentThread().getContextClassLoader());
