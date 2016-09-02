@@ -104,7 +104,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 
 			addValueToBuffer(latestDBRTimeEvent);
 		} catch (Exception e) {
-			logger.error("exception duing run", e);
+			logger.error("exception duing run for pv " + this.getName(), e);
 		}
 	}
 
