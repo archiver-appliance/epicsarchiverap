@@ -33,9 +33,9 @@
 	<classpathentry exported="true" kind="lib" path="lib/commons-lang-2.6.jar"/>
 	<classpathentry kind="lib" path="lib/pvAccessJava-4.1.2.jar" sourcepath="lib/sources/pvAccessJava-4.1.2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/pvDataJava-5.0.2.jar" sourcepath="lib/sources/pvDataJava-5.0.2-sources.jar"/>
-	<classpathentry kind="lib" path="lib/hazelcast-all-3.6.jar"/>
 	<classpathentry kind="lib" path="lib/test/selenium-java-2.53.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool2-2.4.2.jar"/>
 	<classpathentry kind="lib" path="lib/jedis-2.7.2.jar"/>
+	<classpathentry kind="lib" path="lib/hazelcast-all-3.7.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
