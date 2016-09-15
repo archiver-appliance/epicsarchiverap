@@ -13,10 +13,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -27,8 +25,8 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -41,6 +39,12 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
@@ -1391,49 +1395,54 @@ public class DataRetrievalServlet  extends HttpServlet {
 //					resp.addHeader("Transfer-Encoding", "chunked");
 //				}
 
-				// We'll use java.net for now.
-				HttpURLConnection.setFollowRedirects(true);
-				URL url = new URL(redirectURIStr);
-				HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-				if(urlConnection.getResponseCode() == 200) {
-					HashSet<String> proxiedHeaders = new HashSet<String>();
-					proxiedHeaders.addAll(Arrays.asList(MimeResponse.PROXIED_HEADERS));
-					Map<String,List<String>> headers = urlConnection.getHeaderFields();
-					for(String headerName : headers.keySet()) {
-						if(proxiedHeaders.contains(headerName)) {
-							for(String headerValue : headers.get(headerName)) {
-								logger.debug("Adding headerName " + headerName + " and value " + headerValue + " when proxying request");
-								resp.addHeader(headerName, headerValue);
+				CloseableHttpClient httpclient = HttpClients.createDefault();
+				HttpGet getMethod = new HttpGet(redirectURIStr);
+				getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+				try(CloseableHttpResponse response = httpclient.execute(getMethod)) {
+					if(response.getStatusLine().getStatusCode() == 200) {
+						HttpEntity entity = response.getEntity();
+						HashSet<String> proxiedHeaders = new HashSet<String>();
+						proxiedHeaders.addAll(Arrays.asList(MimeResponse.PROXIED_HEADERS));
+						Header[] headers = response.getAllHeaders();
+						for(Header header : headers) {
+							if(proxiedHeaders.contains(header.getName())) {
+								logger.debug("Adding headerName " + header.getName() + " and value " + header.getValue() + " when proxying request");
+								resp.addHeader(header.getName(), header.getValue());
 							}
 						}
-					}
-					
-					try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(urlConnection.getInputStream())) {
-						byte buf[] = new byte[10*1024];
-						int bytesRead = is.read(buf);
-						while(bytesRead > 0) {
-							os.write(buf, 0, bytesRead);
-							resp.flushBuffer();
-							bytesRead = is.read(buf);
-						}
-					}
-				} else {
-					logger.error("Invalid status code " + urlConnection.getResponseCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
-					try (ByteArrayOutputStream os = new ByteArrayOutputStream(); ) { 
-						try(InputStream is = new BufferedInputStream(urlConnection.getErrorStream())) {
-							byte buf[] = new byte[10*1024];
-							int bytesRead = is.read(buf);
-							while(bytesRead > 0) {
-								os.write(buf, 0, bytesRead);
-								bytesRead = is.read(buf);
+	
+						if (entity != null) {
+							logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+							try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(entity.getContent())) {
+								byte buf[] = new byte[10*1024];
+								int bytesRead = is.read(buf);
+								while(bytesRead > 0) {
+									os.write(buf, 0, bytesRead);
+									resp.flushBuffer();
+									bytesRead = is.read(buf);
+								}
 							}
+						} else {
+							throw new IOException("HTTP response did not have an entity associated with it");
 						}
-						resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-						resp.sendError(urlConnection.getResponseCode(), new String(os.toByteArray()));
+					} else {
+						logger.error("Invalid status code " + response.getStatusLine().getStatusCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
+						try (ByteArrayOutputStream os = new ByteArrayOutputStream()) { 
+							try(InputStream is = new BufferedInputStream(response.getEntity().getContent())) {
+								byte buf[] = new byte[10*1024];
+								int bytesRead = is.read(buf);
+								while(bytesRead > 0) {
+									os.write(buf, 0, bytesRead);
+									bytesRead = is.read(buf);
+								}
+							}
+							resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+							resp.sendError(response.getStatusLine().getStatusCode(), new String(os.toByteArray()));
+						}
 					}
 				}
-				return;
 			}
+			return;
 		} catch(URISyntaxException ex) {
 			throw new IOException(ex);
 		}

@@ -235,6 +235,7 @@ public class GetUrlContent {
 		HttpPost postMethod = new HttpPost(url);
 		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
 		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
 		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
 		postMethod.setEntity(archiverValues);
 		if(logger.isDebugEnabled()) {
@@ -266,6 +267,7 @@ public class GetUrlContent {
 		HttpPost postMethod = new HttpPost(url);
 		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
 		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
 		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
 		postMethod.setEntity(archiverValues);
 		if(logger.isDebugEnabled()) {
@@ -297,6 +299,7 @@ public class GetUrlContent {
 		HttpPost postMethod = new HttpPost(url);
 		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
 		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
 		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(object), ContentType.APPLICATION_JSON);
 		postMethod.setEntity(archiverValues);
 		if(logger.isDebugEnabled()) {
@@ -337,6 +340,7 @@ public class GetUrlContent {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		HttpPost postMethod = new HttpPost(url);
 		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_FORM_URLENCODED);
+		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
 		StringEntity archiverValues = new StringEntity(buf.toString(), ContentType.APPLICATION_FORM_URLENCODED);
 		postMethod.setEntity(archiverValues);
 		if(logger.isDebugEnabled()) {
@@ -380,6 +384,7 @@ public class GetUrlContent {
 	private static InputStream getURLContentAsStream(String serverURL) throws IOException {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		HttpGet getMethod = new HttpGet(serverURL);
+		getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
 		getMethod.addHeader(ARCHAPPL_COMPONENT, "true");
 		HttpResponse response = httpclient.execute(getMethod);
 		if(response.getStatusLine().getStatusCode() == 200) {
