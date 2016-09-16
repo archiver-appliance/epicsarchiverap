@@ -15,9 +15,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +25,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
@@ -34,6 +36,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -412,31 +415,52 @@ public class GetUrlContent {
 	 * @throws IOException
 	 */
 	public static void proxyURL(String redirectURIStr, HttpServletResponse resp) throws IOException { 
-		// We'll use java.net for now.
-		HttpURLConnection.setFollowRedirects(true);
-		URL url = new URL(redirectURIStr);
-		HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-		if(urlConnection.getResponseCode() == 200) {
-			try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(urlConnection.getInputStream())) {
-				byte buf[] = new byte[10*1024];
-				int bytesRead = is.read(buf);
-				while(bytesRead > 0) {
-					os.write(buf, 0, bytesRead);
-					bytesRead = is.read(buf);
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+		HttpGet getMethod = new HttpGet(redirectURIStr);
+		getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+		try(CloseableHttpResponse response = httpclient.execute(getMethod)) {
+			if(response.getStatusLine().getStatusCode() == 200) {
+				HttpEntity entity = response.getEntity();
+				
+				HashSet<String> proxiedHeaders = new HashSet<String>();
+				proxiedHeaders.addAll(Arrays.asList(MimeResponse.PROXIED_HEADERS));
+				Header[] headers = response.getAllHeaders();
+				for(Header header : headers) {
+					if(proxiedHeaders.contains(header.getName())) {
+						logger.debug("Adding headerName " + header.getName() + " and value " + header.getValue() + " when proxying request");
+						resp.addHeader(header.getName(), header.getValue());
+					}
 				}
-			}
-		} else {
-			logger.error("Invalid status code " + urlConnection.getResponseCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
-			try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(urlConnection.getErrorStream())) {
-				byte buf[] = new byte[10*1024];
-				int bytesRead = is.read(buf);
-				while(bytesRead > 0) {
-					os.write(buf, 0, bytesRead);
-					bytesRead = is.read(buf);
-				}
-			}
-			resp.sendError(urlConnection.getResponseCode());
-		}
 
+				if (entity != null) {
+					logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+					try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(entity.getContent())) {
+						byte buf[] = new byte[10*1024];
+						int bytesRead = is.read(buf);
+						while(bytesRead > 0) {
+							os.write(buf, 0, bytesRead);
+							resp.flushBuffer();
+							bytesRead = is.read(buf);
+						}
+					}
+				} else {
+					throw new IOException("HTTP response did not have an entity associated with it");
+				}
+			} else {
+				logger.error("Invalid status code " + response.getStatusLine().getStatusCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
+				try (ByteArrayOutputStream os = new ByteArrayOutputStream()) { 
+					try(InputStream is = new BufferedInputStream(response.getEntity().getContent())) {
+						byte buf[] = new byte[10*1024];
+						int bytesRead = is.read(buf);
+						while(bytesRead > 0) {
+							os.write(buf, 0, bytesRead);
+							bytesRead = is.read(buf);
+						}
+					}
+					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+					resp.sendError(response.getStatusLine().getStatusCode(), new String(os.toByteArray()));
+				}
+			}
+		}
 	}
 }
