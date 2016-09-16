@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.utils;
 
 import java.io.File;
+import java.net.URLEncoder;
 import java.sql.Timestamp;
 
 import org.epics.archiverappliance.Event;
@@ -32,18 +33,18 @@ public class CountEventsForURL {
 	 * @param args
 	 */
 	public static void main(String[] args) throws Exception {
+		if(args.length < 4) { 
+			System.err.println("Usage: java edu.stanford.slac.archiverappliance.PB.utils.CountEventsForURL <URL to raw response> <PVName> <Start> <End>");
+			return;
+		}
 		PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
 		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
-		storagePlugin.initialize("http://archiver:15646/retrieval/data/getData.raw", configService);
-
-		// Ask for a days worth of data
-		Timestamp start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
+		String url = args[0];
+		storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode(url, "UTF-8"), configService);
+		String pvName = args[1];
+		Timestamp start = TimeUtils.convertFromISO8601String(args[2]);
+		Timestamp end = TimeUtils.convertFromISO8601String(args[3]);
 		
-		String pvName = "Test";
-		if(args.length > 0) {
-			pvName = args[0];
-		}
 		
 		long s = System.currentTimeMillis();
 		try(BasicContext context = new BasicContext(); EventStream st = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
@@ -59,5 +60,7 @@ public class CountEventsForURL {
 			long e = System.currentTimeMillis();
 			System.out.println("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
 		}
+		
+		configService.shutdownNow();
 	}
 }

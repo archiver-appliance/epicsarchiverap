@@ -7,12 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PBOverHTTP;
 
-import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -21,6 +19,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -75,32 +78,36 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 	
 	private List<Callable<EventStream>> getDataBehindURL(String getURL, Timestamp startTime, PostProcessor postProcessor) {
 		try {
-			// We'll use java.net for now.
-			HttpURLConnection.setFollowRedirects(true);
-			URL url = new URL(getURL);
-			HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-			if(urlConnection.getResponseCode() == 200) {
-				InputStream is = new BufferedInputStream(urlConnection.getInputStream());
-				InputStreamBackedEventStream isStream = new InputStreamBackedEventStream(is, startTime);
-				if(isStream.getDescription() != null) { 
-					isStream.getDescription().setSource(this.getName());
-				} else { 
-					logger.warn("No desc attached to input stream for url " + getURL);
-				}
-				return CallableEventStream.makeOneStreamCallableList(isStream, postProcessor, true);
-			} else {
-				logger.warn("Invalid status code " + urlConnection.getResponseCode() + " when connecting to URL " + getURL);
-				InputStream errorStream = urlConnection.getErrorStream();
-				if(errorStream != null) {
-					ByteArrayOutputStream sbuf = new ByteArrayOutputStream();
-					byte buf[] = new byte[10*1024];
-					int bytesRead = errorStream.read(buf);
-					while(bytesRead > 0) {
-						sbuf.write(buf, 0, bytesRead);
-						bytesRead = errorStream.read(buf);
+			CloseableHttpClient httpclient = HttpClients.createDefault();
+			HttpGet getMethod = new HttpGet(getURL);
+			getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			try(CloseableHttpResponse response = httpclient.execute(getMethod)) {
+				if(response.getStatusLine().getStatusCode() == 200) {
+					HttpEntity entity = response.getEntity();
+					if (entity != null) {
+						logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+						ByteArrayOutputStream bos = new ByteArrayOutputStream();
+						entity.writeTo(bos);
+						bos.close();
+						ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+						InputStreamBackedEventStream isStream = new InputStreamBackedEventStream(bis, startTime);
+						if(isStream.getDescription() != null) { 
+							isStream.getDescription().setSource(this.getName());
+						} else { 
+							logger.warn("No desc attached to input stream for url " + getURL);
+						}
+						return CallableEventStream.makeOneStreamCallableList(isStream, postProcessor, true);
+					} else { 
+						logger.debug("Obtained empty HTTP entity from " + getURL);
 					}
-					logger.warn(sbuf.toString("UTF-8"));
-					errorStream.close();
+				} else {
+					logger.warn("Invalid status code " + response.getStatusLine().getStatusCode()  + " when connecting to URL " + getURL);
+					HttpEntity entity = response.getEntity();
+					if (entity != null) {
+						ByteArrayOutputStream sbuf = new ByteArrayOutputStream();
+						entity.writeTo(sbuf);
+						logger.warn(sbuf.toString("UTF-8"));
+					}
 				}
 			}
 		} catch (FileNotFoundException fex) {

@@ -191,6 +191,11 @@ public class EngineContext {
 					}
 
 					controlingPVList.clear();
+					
+			        if (channelProvider != null) {
+		                org.epics.pvaccess.ClientFactory.stop();
+			        }
+
 
 					scheduler = null;
 					isWriteThreadStarted = false;
