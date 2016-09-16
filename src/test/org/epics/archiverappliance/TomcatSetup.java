@@ -95,6 +95,11 @@ public class TomcatSetup {
 			logger.debug("Cleaning up folder " + cleanupFolder.getAbsolutePath());
 			FileUtils.deleteDirectory(cleanupFolder);
 		}
+		
+		// So many timeouts; if we are running multiple tests in sequence; the Tomcat socket seems to wind up in a TIME_WAIT site for about 2 minutes.
+		// Setting the net.netfilter.nf_conntrack_tcp_timeout_time_wait (using sysctl) seems to hurt other behaviours...
+		// Sigh!
+		try {Thread.sleep(3*60*1000);} catch(Exception ex) {}
 	}
 	
 	
