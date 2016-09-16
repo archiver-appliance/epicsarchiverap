@@ -200,9 +200,6 @@ public class DefaultConfigService implements ConfigService {
 		String contextPath = sce.getContextPath();
 		logger.info("DefaultConfigService was created with a servlet context " + contextPath);
 		
-		// http://stackoverflow.com/questions/4767553/safe-use-of-httpurlconnection
-		System.setProperty("http.keepAlive","false");
-		
 		try { 
 			String pathToVersionTxt = sce.getRealPath("ui/comm/version.txt");
 			logger.debug("The full path to the version.txt is " + pathToVersionTxt);
