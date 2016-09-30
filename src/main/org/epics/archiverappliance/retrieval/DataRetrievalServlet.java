@@ -1618,10 +1618,10 @@ public class DataRetrievalServlet  extends HttpServlet {
                     this.postProcessor = postProcessor; 
                     this.applianceInfo = applianceInfo; 
                      
-                    assert(this.pvName == null); 
-                    assert(this.typeInfo == null); 
-                    assert(this.postProcessor == null); 
-                    assert(this.applianceInfo == null); 
+                    assert(this.pvName != null); 
+                    assert(this.typeInfo != null); 
+                    assert(this.postProcessor != null); 
+                    assert(this.applianceInfo != null); 
             } 
              
             public String getPVName() { 
