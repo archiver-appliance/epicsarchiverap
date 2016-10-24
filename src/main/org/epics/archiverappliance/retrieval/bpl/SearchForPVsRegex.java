@@ -26,7 +26,6 @@ public class SearchForPVsRegex implements BPLAction {
 		
 		resp.setContentType("text/plain");
 		try(PrintWriter out = resp.getWriter()) {
-			@SuppressWarnings("unchecked")
 			List<String> matchingPVNames = (List<String>) GetMatchingPVs.getMatchingPVsInCluster(configService, -1, nameToMatch);
 			for(String pvName : matchingPVNames) {
 				out.println(pvName);

@@ -3,6 +3,7 @@ package org.epics.archiverappliance.retrieval.bpl;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +66,11 @@ public class GetMatchingPVs implements BPLAction {
 		}
 		
 		try (PrintWriter out = resp.getWriter()) {
-			JSONArray matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch);
+			List<String> matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch);
+			if(limit > 0) { 
+				Collections.sort(matchingNames);
+				matchingNames = matchingNames.subList(0, limit);
+			}
 			out.println(JSONValue.toJSONString(matchingNames));
 		} catch(Exception ex) {
 			logger.error("Exception getting all pvs on appliance " + configService.getMyApplianceInfo().getIdentity(), ex);
@@ -82,7 +87,8 @@ public class GetMatchingPVs implements BPLAction {
 	 * @return
 	 * @throws IOException
 	 */
-	public static JSONArray getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch) throws IOException {
+	@SuppressWarnings("unchecked")
+	public static List<String> getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch) throws IOException {
 		try { 
 			LinkedList<String> mgmtURLs = getMgmtURLsInCluster(configService);
 			
@@ -101,13 +107,13 @@ public class GetMatchingPVs implements BPLAction {
 					String index = externalServers.get(serverUrl);
 					if(index.equals("pbraw")) { 
 						logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " for PV's matching " + nameToMatch);
-						pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?regex=" + URLEncoder.encode(nameToMatch, "UTF-8"));
+						pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?regex=" + URLEncoder.encode(nameToMatch, "UTF-8") + "&limit=" + Integer.toString(limit));
 					}
 				}
 			}
 
 			JSONArray matchingNames = GetUrlContent.combineJSONArrays(pvNamesURLs);
-			return matchingNames;
+			return (List<String>) matchingNames;
 		} catch(Exception ex) { 
 			throw new IOException(ex);
 		}
