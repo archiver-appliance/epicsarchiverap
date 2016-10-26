@@ -105,7 +105,11 @@ fi
 
 
 # Set up the storage folders based on the default policy..
-export ARCHAPPL_SHORT_TERM_FOLDER=/dev/shm/quickstart_sts
+# Use ramdisk as the STS unless this has been already set in the environment.
+if [ -z ${ARCHAPPL_SHORT_TERM_FOLDER} ] 
+then
+	export ARCHAPPL_SHORT_TERM_FOLDER=/dev/shm/quickstart_sts
+fi
 
 export ARCHAPPL_MEDIUM_TERM_FOLDER="${DATADIR}/MTS"
 ensuredir "$ARCHAPPL_MEDIUM_TERM_FOLDER"
