@@ -111,12 +111,17 @@ then
 	export ARCHAPPL_SHORT_TERM_FOLDER=/dev/shm/quickstart_sts
 fi
 
-export ARCHAPPL_MEDIUM_TERM_FOLDER="${DATADIR}/MTS"
-ensuredir "$ARCHAPPL_MEDIUM_TERM_FOLDER"
+if [ -z ${ARCHAPPL_MEDIUM_TERM_FOLDER} ] 
+then
+  export ARCHAPPL_MEDIUM_TERM_FOLDER="${DATADIR}/MTS"
+  ensuredir "$ARCHAPPL_MEDIUM_TERM_FOLDER"
+fi
 
-export ARCHAPPL_LONG_TERM_FOLDER="${DATADIR}/LTS"
-ensuredir "$ARCHAPPL_LONG_TERM_FOLDER"
-
+if [ -z ${ARCHAPPL_LONG_TERM_FOLDER} ] 
+then
+  export ARCHAPPL_LONG_TERM_FOLDER="${DATADIR}/LTS"
+  ensuredir "$ARCHAPPL_LONG_TERM_FOLDER"
+fi
 # Use an in memory persistence layer, if one is not defined in the environment
 if [ -z ${ARCHAPPL_PERSISTENCE_LAYER} ] 
 then
