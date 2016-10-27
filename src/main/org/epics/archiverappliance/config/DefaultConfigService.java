@@ -1089,11 +1089,16 @@ public class DefaultConfigService implements ConfigService {
 			return ret;
 		} else { 
 			// The use pattern did not have any fixed elements at all. 
-			// In this case we do brute force matching; should take longer. 
-			logger.debug("Using brute force pattern matching against names");
-			HashSet<String> ret = new HashSet<String>();
+			// In this case we do brute force matching; should take longer.
+			// This is also not optimal but probably don't want yet another list of PV's
 			Pattern pattern = Pattern.compile(nameToMatch);
-			for(String pvName : this.pvsForThisAppliance) { 
+			HashSet<String> allNames = new HashSet<String>();
+			HashSet<String> ret = new HashSet<String>();
+			logger.debug("Using brute force pattern matching against names");
+			for(ConcurrentSkipListSet<String> pvNamesForPart : parts2PVNamesForThisAppliance.values()) { 
+				allNames.addAll(pvNamesForPart);
+			}
+			for(String pvName : allNames) { 
 				if(pattern.matcher(pvName).matches()) { 
 					ret.add(pvName);
 				}
