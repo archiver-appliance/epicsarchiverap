@@ -69,7 +69,9 @@ public class GetMatchingPVs implements BPLAction {
 			List<String> matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch);
 			if(limit > 0) { 
 				Collections.sort(matchingNames);
-				matchingNames = matchingNames.subList(0, limit);
+				if(limit > 0 && matchingNames.size() >= limit) { 
+					matchingNames = matchingNames.subList(0, limit);
+				}
 			}
 			out.println(JSONValue.toJSONString(matchingNames));
 		} catch(Exception ex) {
