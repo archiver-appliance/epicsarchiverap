@@ -101,6 +101,20 @@ And then a separate thread picks the value of the one slot/variable every sampli
 </li>
 
 
+<li>
+<div>How are timezones handled?</div>
+<div>EPICS IOC's use a variation of UTC as their timezone. 
+The EPICS Archiver Appliance also uses UTC for data storage and retrieval; that is, data is received, stored and retrieved as UTC timestamps.
+Conversion to local time zones are to be done at the client/viewer.
+The various viewers handle the transition into and out of daylight savings appropriately. 
+<img src="images/ArchiveViewer_daylight_fall.png"/>
+
+</div>
+</li>
+
+
+
+
 </ol>
 
 </div>
