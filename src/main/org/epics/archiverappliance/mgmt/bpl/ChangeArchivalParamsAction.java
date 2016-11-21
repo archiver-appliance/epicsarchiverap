@@ -82,23 +82,25 @@ public class ChangeArchivalParamsAction implements BPLAction {
 			configService.updateTypeInfoForPV(pvName, typeInfo);
 
 			logger.info("Changing the archival parameters for PV " + pvName + ". Changing sampling period to " + samplingperiodStr + " and sampling method " + samplingMethod.toString());
-
-			String pvStatusURLStr = info.getEngineURL() + "/changeArchivalParameters" 
-					+ "?pv=" + URLEncoder.encode(pvName, "UTF-8") 
-					+ "&samplingperiod=" + URLEncoder.encode(samplingperiodStr, "UTF-8")
-					+ "&samplingmethod=" + URLEncoder.encode(typeInfo.getSamplingMethod().toString(), "UTF-8")
-					+ "&dest=" + URLEncoder.encode(typeInfo.getDataStores()[0], "UTF-8")
-					+ "&usePVAccess=" + Boolean.toString(typeInfo.isUsePVAccess())
-					+ "&useDBEProperties=" + Boolean.toString(typeInfo.isUseDBEProperties());
-			JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(pvStatusURLStr);
-			if(pvStatus != null && !pvStatus.equals("")) {
-				try(PrintWriter out = resp.getWriter()) {
-					out.println(JSONValue.toJSONString(pvStatus));
-				}
-			} else {
-				try(PrintWriter out = resp.getWriter()) {
-					infoValues.put("validation", "Unable to change the archival parameters for " + pvName);
-					out.println(JSONValue.toJSONString(infoValues));
+			
+			if(!typeInfo.isPaused()) { 
+				String pvStatusURLStr = info.getEngineURL() + "/changeArchivalParameters" 
+						+ "?pv=" + URLEncoder.encode(pvName, "UTF-8") 
+						+ "&samplingperiod=" + URLEncoder.encode(samplingperiodStr, "UTF-8")
+						+ "&samplingmethod=" + URLEncoder.encode(typeInfo.getSamplingMethod().toString(), "UTF-8")
+						+ "&dest=" + URLEncoder.encode(typeInfo.getDataStores()[0], "UTF-8")
+						+ "&usePVAccess=" + Boolean.toString(typeInfo.isUsePVAccess())
+						+ "&useDBEProperties=" + Boolean.toString(typeInfo.isUseDBEProperties());
+				JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(pvStatusURLStr);
+				if(pvStatus != null && !pvStatus.equals("")) {
+					try(PrintWriter out = resp.getWriter()) {
+						out.println(JSONValue.toJSONString(pvStatus));
+					}
+				} else {
+					try(PrintWriter out = resp.getWriter()) {
+						infoValues.put("validation", "Unable to change the archival parameters for " + pvName);
+						out.println(JSONValue.toJSONString(infoValues));
+					}
 				}
 			}
 		}		
