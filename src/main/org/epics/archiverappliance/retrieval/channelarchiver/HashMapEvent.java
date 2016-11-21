@@ -111,19 +111,29 @@ public class HashMapEvent implements DBRTimeEvent {
 
 	@Override
 	public SampleValue getSampleValue() {
+		String strValue = (String)values.get(VALUE_FIELD_NAME);
 		switch(type) {
 		case DBR_SCALAR_FLOAT:
 		case DBR_SCALAR_DOUBLE: {
-			return new ScalarValue<Double>(Double.parseDouble((String)values.get(VALUE_FIELD_NAME)));
+			try {
+				return new ScalarValue<Double>(Double.parseDouble(strValue));
+			} catch(NumberFormatException nex) { 
+				if(strValue.equals("nan")) { 
+					// logger.debug("Got a nan from the ChannelArchiver; returning Double.Nan instead");
+					return new ScalarValue<Double>(Double.NaN);
+				} else {
+					throw nex;
+				}
+			}
 		}
 		case DBR_SCALAR_BYTE:
 		case DBR_SCALAR_SHORT:
 		case DBR_SCALAR_ENUM:
 		case DBR_SCALAR_INT: {
-			return new ScalarValue<Integer>(Integer.parseInt((String)values.get(VALUE_FIELD_NAME)));
+			return new ScalarValue<Integer>(Integer.parseInt(strValue));
 		}
 		case DBR_SCALAR_STRING: {
-			return new ScalarStringSampleValue((String)values.get(VALUE_FIELD_NAME));
+			return new ScalarStringSampleValue(strValue);
 		}
 		case DBR_WAVEFORM_FLOAT:
 		case DBR_WAVEFORM_DOUBLE: {
