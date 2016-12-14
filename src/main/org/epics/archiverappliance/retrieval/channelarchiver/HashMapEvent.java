@@ -111,10 +111,10 @@ public class HashMapEvent implements DBRTimeEvent {
 
 	@Override
 	public SampleValue getSampleValue() {
-		String strValue = (String)values.get(VALUE_FIELD_NAME);
 		switch(type) {
 		case DBR_SCALAR_FLOAT:
 		case DBR_SCALAR_DOUBLE: {
+			String strValue = (String)values.get(VALUE_FIELD_NAME);
 			try {
 				return new ScalarValue<Double>(Double.parseDouble(strValue));
 			} catch(NumberFormatException nex) { 
@@ -130,9 +130,11 @@ public class HashMapEvent implements DBRTimeEvent {
 		case DBR_SCALAR_SHORT:
 		case DBR_SCALAR_ENUM:
 		case DBR_SCALAR_INT: {
+			String strValue = (String)values.get(VALUE_FIELD_NAME);
 			return new ScalarValue<Integer>(Integer.parseInt(strValue));
 		}
 		case DBR_SCALAR_STRING: {
+			String strValue = (String)values.get(VALUE_FIELD_NAME);
 			return new ScalarStringSampleValue(strValue);
 		}
 		case DBR_WAVEFORM_FLOAT:
