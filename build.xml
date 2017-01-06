@@ -234,7 +234,7 @@
     </target>
 	
 	<target name="test" depends="wars">
-	  <junit fork="yes" haltonfailure="false" printsummary="on" maxmemory="4096M">
+	  <junit fork="yes" haltonfailure="false" printsummary="on" maxmemory="3584M">
 	    <batchtest fork="yes">
 	      <fileset dir="${test.dir}">
 	         <include name="**/*Test.java" />
