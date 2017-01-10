@@ -1,11 +1,16 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -33,6 +38,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
+	private static Logger logger = Logger.getLogger(PBV4GenericBytes.class.getName());
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.V4GenericBytes dbevent = null;
@@ -64,7 +70,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
-	public PBV4GenericBytes(PVStructure v4Data) {
+	public PBV4GenericBytes(PVStructure v4Data) throws IOException {
 		PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
 		long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
 		int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
@@ -76,10 +82,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		int severity = alarmPVStructure.getIntField("severity").get();
 		int status = alarmPVStructure.getIntField("status").get();
 
-		ByteBuffer buf = ByteBuffer.allocate(10*1024);
-		SerializationHelper.serializeStructureFull(buf, new DummySerializationControl(), v4Data);
-		buf.flip();
-		ByteString byteString = ByteString.copyFrom(buf); 
+		DummySerializationControl serControl = new DummySerializationControl(10*1024);
+		SerializationHelper.serializeStructureFull(serControl.getTheBuffer(), serControl, v4Data);
+		ByteString byteString = serControl.closeAndGetByteString(); 
 
 		year = yst.getYear();
 		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
@@ -273,9 +278,13 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
      */
     class DummySerializationControl implements SerializableControl {
     	protected final IntrospectionRegistry outgoingIR = new IntrospectionRegistry();
+    	private ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    	WritableByteChannel channel = Channels.newChannel(bos);
+    	private ByteBuffer theBuffer;
+    	
 
-        public DummySerializationControl() { 
-                
+        public DummySerializationControl(int bufferSize) { 
+        	theBuffer = ByteBuffer.allocate(bufferSize);
         }
 
         @Override
@@ -293,7 +302,26 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 
         @Override
         public void flushSerializeBuffer() {
-        } 
+        	try { 
+        		theBuffer.flip();
+        		channel.write(theBuffer);
+        		theBuffer.flip();
+        	} catch(IOException ex) { 
+        		logger.error("Error flushing V4 buffer", ex);
+        	}
+        }
+
+		public ByteBuffer getTheBuffer() {
+			return theBuffer;
+		}
+		
+		public ByteString closeAndGetByteString() throws IOException { 
+			flushSerializeBuffer();
+			bos.flush();
+			bos.close();
+			ByteString byteString = ByteString.copyFrom(bos.toByteArray()); 
+			return byteString;
+		}
         
     }
 
