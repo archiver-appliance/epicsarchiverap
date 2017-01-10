@@ -30,7 +30,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 public class LineByteStream implements Closeable {
 	private static Logger logger = Logger.getLogger(LineByteStream.class.getName());
 	public static int MAX_LINE_SIZE = 16 * 1024;
-	public static int MAX_ITERATIONS_TO_DETERMINE_LINE = 1024;
+	public static int MAX_ITERATIONS_TO_DETERMINE_LINE = 16 * 1024;
 	private SeekableByteChannel byteChannel = null;
 	private Path path = null;
 	byte[] buf = null;
