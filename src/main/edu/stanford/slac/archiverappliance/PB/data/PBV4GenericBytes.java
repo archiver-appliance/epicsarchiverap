@@ -82,20 +82,21 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		int severity = alarmPVStructure.getIntField("severity").get();
 		int status = alarmPVStructure.getIntField("status").get();
 
-		DummySerializationControl serControl = new DummySerializationControl(10*1024);
-		SerializationHelper.serializeStructureFull(serControl.getTheBuffer(), serControl, v4Data);
-		ByteString byteString = serControl.closeAndGetByteString(); 
-
-		year = yst.getYear();
-		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
-				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
-				.setUserTag(userTag)
-				.setVal(byteString);
-		if(severity != 0) builder.setSeverity(severity);
-		if(status != 0) builder.setStatus(status);
-		dbevent = builder.build();
-		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+		try(DummySerializationControl serControl = new DummySerializationControl(10*1024)) { 
+			SerializationHelper.serializeStructureFull(serControl.getTheBuffer(), serControl, v4Data);
+			ByteString byteString = serControl.closeAndGetByteString(); 
+	
+			year = yst.getYear();
+			Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
+					.setSecondsintoyear(yst.getSecondsintoyear())
+					.setNano(yst.getNanos())
+					.setUserTag(userTag)
+					.setVal(byteString);
+			if(severity != 0) builder.setSeverity(severity);
+			if(status != 0) builder.setStatus(status);
+			dbevent = builder.build();
+			bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+		}
 	}
 
 
@@ -276,15 +277,17 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
      * @author mshankar
      *
      */
-    class DummySerializationControl implements SerializableControl {
+    class DummySerializationControl implements SerializableControl, AutoCloseable {
     	protected final IntrospectionRegistry outgoingIR = new IntrospectionRegistry();
-    	private ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    	WritableByteChannel channel = Channels.newChannel(bos);
+    	private ByteArrayOutputStream bos;
+    	WritableByteChannel channel;
     	private ByteBuffer theBuffer;
     	
 
         public DummySerializationControl(int bufferSize) { 
         	theBuffer = ByteBuffer.allocate(bufferSize);
+        	bos = new ByteArrayOutputStream();
+        	channel = Channels.newChannel(bos);
         }
 
         @Override
@@ -318,9 +321,18 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		public ByteString closeAndGetByteString() throws IOException { 
 			flushSerializeBuffer();
 			bos.flush();
+			channel.close();
+			channel = null;
 			bos.close();
-			ByteString byteString = ByteString.copyFrom(bos.toByteArray()); 
+			ByteString byteString = ByteString.copyFrom(bos.toByteArray());
+			bos = null;
 			return byteString;
+		}
+
+		@Override
+		public void close() {
+			if(channel != null) { try { channel.close(); channel = null; } catch(Exception ex) {} }
+			if(bos != null) { try { bos.close(); bos = null; } catch(Exception ex) {} }
 		}
         
     }
