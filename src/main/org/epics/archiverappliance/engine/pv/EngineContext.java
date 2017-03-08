@@ -92,6 +92,8 @@ public class EngineContext {
 	private ConfigService configService;
 	private String myIdentity;
 	
+	/** A scheduler for all the SCAN PV's in the archiver. */
+	private ScheduledThreadPoolExecutor scanScheduler;
 	/** A scheduled thread pool executor misc tasks - these tasks can take an unspecified amount of time. */
 	private ScheduledThreadPoolExecutor miscTasksScheduler;
 
@@ -160,6 +162,17 @@ public class EngineContext {
 		this.configService = configService;
 		this.myIdentity = configService.getMyApplianceInfo().getIdentity();
 		this.configService.getEventBus().register(this);
+		
+		
+		// Start the scan thread
+		scanScheduler = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+			@Override
+			public Thread newThread(Runnable r) {
+				Thread ret = new Thread(r, "The SCAN scheduler.");
+				return ret;
+			}
+		});
+
 
 		configService.addShutdownHook(new Runnable() {
 
@@ -172,6 +185,9 @@ public class EngineContext {
 					if (scheduler != null) {
 						scheduler.shutdown();
 					}
+					
+					scanScheduler.shutdown();
+					scanScheduler = null;
 					
 					Iterator<Entry<String, ArchiveChannel>> itChannel = channelList.entrySet().iterator();
 					while (itChannel.hasNext()) {
@@ -362,6 +378,16 @@ public class EngineContext {
 		return scheduler;
 
 	}
+	
+	
+	/**
+	 * Get the scheduler used for SCAN PV's
+	 * @return
+	 */
+	public ScheduledThreadPoolExecutor getScanScheduler() { 
+		return scanScheduler;
+	}
+	
 /**
  * 
  * @return the WriterRunnable for the engines

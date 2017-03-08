@@ -1,10 +1,6 @@
 package org.epics.archiverappliance.engine.test;
 
 import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-
-import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -18,6 +14,8 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import junit.framework.TestCase;
 
 public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 	private static Logger logger = Logger.getLogger(PauseAndResumePVwithMetaFieldTest.class.getName());

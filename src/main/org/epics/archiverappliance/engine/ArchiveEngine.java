@@ -17,7 +17,6 @@ package org.epics.archiverappliance.engine;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -130,7 +129,6 @@ public class ArchiveEngine {
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
 			final Timestamp lastKnownEventTimeStamp, final boolean start, final String controlPVname, final String[] metaFields, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
-		ScheduledThreadPoolExecutor scheduler = engineContext.getScheduler();
 
 		if (!engineContext.isWriteThreadStarted()) {
 			engineContext.startWriteThread(configservice);
@@ -146,7 +144,7 @@ public class ArchiveEngine {
 				channel.start();
 			}
 
-			scheduler.scheduleAtFixedRate((ScannedArchiveChannel) channel, 0,
+			engineContext.getScanScheduler().scheduleAtFixedRate((ScannedArchiveChannel) channel, 0,
 					(long) (samplingPeriod * 1000), TimeUnit.MILLISECONDS);
 
 
