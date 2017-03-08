@@ -36,7 +36,6 @@ import org.junit.Test;
 public class ChannelTest extends TestCase {
 	private static Logger logger = Logger.getLogger(ChannelTest.class.getName());
 	private SIOCSetup ioc = null;
-	private ScheduledThreadPoolExecutor scheduler;
 	private ConfigServiceForTests testConfigService;
 	private WriterTest writer = new WriterTest();
 
@@ -44,10 +43,7 @@ public class ChannelTest extends TestCase {
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
-		scheduler = (ScheduledThreadPoolExecutor) Executors
-				.newScheduledThreadPool(1);
 		testConfigService = new ConfigServiceForTests(new File("./bin"));
-		testConfigService.getEngineContext().setScheduler(scheduler);
 		Thread.sleep(3000);
 	}
 

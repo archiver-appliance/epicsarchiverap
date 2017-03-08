@@ -31,7 +31,6 @@ import org.junit.Test;
 public class PVMetricsTest extends TestCase {
 	private static Logger logger = Logger.getLogger(PVMetricsTest.class.getName());
 	private SIOCSetup ioc = null;
-	private ScheduledThreadPoolExecutor scheduler;
 	private ConfigServiceForTests testConfigService;
 	private WriterTest writer = new WriterTest();
 	
@@ -40,10 +39,7 @@ public class PVMetricsTest extends TestCase {
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
-		scheduler = (ScheduledThreadPoolExecutor) Executors
-				.newScheduledThreadPool(1);
 		testConfigService = new ConfigServiceForTests(new File("./bin"));
-		testConfigService.getEngineContext().setScheduler(scheduler);
 		Thread.sleep(3000);
 	}
 

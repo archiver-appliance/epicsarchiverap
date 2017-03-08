@@ -343,17 +343,6 @@ public class EngineContext {
 	public ConcurrentHashMap<String, ArchiveChannel> getChannelList() {
 		return channelList;
 	}
-/***
- * set the scheduler for the whole engine
- * @param newscheduler the  ScheduledThreadPoolExecutor for the engine
- */
-	public void setScheduler(ScheduledThreadPoolExecutor newscheduler) {
-		if (scheduler == null)
-			scheduler = newscheduler;
-		else {
-			logger.error("scheduler has been initialized and you cannot initialize it again!");
-		}
-	}
 
 /**
  * 
