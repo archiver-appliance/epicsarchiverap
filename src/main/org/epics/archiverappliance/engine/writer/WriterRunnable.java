@@ -135,7 +135,6 @@ public class WriterRunnable implements Runnable {
 		isRunning=true;
 		ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
 				.getEngineContext().getChannelList();
-		buffer.updateStats();
 		String channelNname = buffer.getChannelName();
 		buffer.resetSamples();
 		ArrayListEventStream previousSamples = buffer.getPreviousSamples();
@@ -181,7 +180,6 @@ public class WriterRunnable implements Runnable {
 					.next();
 			SampleBuffer buffer = entry.getValue();
 		
-			buffer.updateStats();
 			String channelNname = buffer.getChannelName();
 			
 			buffer.resetSamples();
