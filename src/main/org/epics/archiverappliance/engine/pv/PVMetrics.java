@@ -634,4 +634,13 @@ public class PVMetrics {
 		}
 		this.previousScanStart = start;
 	}
+
+	public long getScanProcessingTime() {
+		return scanProcessingTime;
+	}
+
+	public long getMaxTimeBetweenScans() {
+		return maxTimeBetweenScans;
+	}
+	
 }
