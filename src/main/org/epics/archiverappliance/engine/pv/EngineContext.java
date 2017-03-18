@@ -163,9 +163,14 @@ public class EngineContext {
 		this.myIdentity = configService.getMyApplianceInfo().getIdentity();
 		this.configService.getEventBus().register(this);
 		
+		String scanThreadCountName = "org.epics.archiverappliance.engine.epics.scanThreadCount";
+		String scanThreadCountStr = configService.getInstallationProperties().getProperty(scanThreadCountName, "1");
+		configlogger.info("Creating " + scanThreadCountStr + " scan threads as specified by " + scanThreadCountName + " in archappl.properties");
+		int scanThreadCount = Integer.parseInt(scanThreadCountStr);
+
 		
 		// Start the scan thread
-		scanScheduler = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
+		scanScheduler = new ScheduledThreadPoolExecutor(scanThreadCount, new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {
 				Thread ret = new Thread(r, "The SCAN scheduler.");
