@@ -65,6 +65,8 @@
   <option value="Top200DrpBf">PVs by dropped events from buffer overflows (200)</option>
   <option value="Top100DrpTyp">PVs by dropped events from type changes (100)</option>
   <option value="Top200DrpTyp">PVs by dropped events from type changes (200)</option>
+  <option value="TopScanBuf200">PVs by SCAN buffer transfer times (200)</option>
+  <option value="TopScanGap200">PVs by max time between SCANs (200)</option>
 </select> 
 <div id="report_warnings"></div>
 </div>
@@ -129,7 +131,11 @@ $('#reportoptions').change(function() {
 		getPVsByDroppedEventsTypeChange(200);
 	} else if(reportName == 'PausedPVs') {
 		getPausedPVsReport();
-	}
+	} else if(reportName == 'TopScanBuf200') {
+		getScanBufReport(200);
+	} else if(reportName == 'TopScanGap200') {
+		getScanGapReport(200);
+	} 
 });
 
 $(document).ready(function() {

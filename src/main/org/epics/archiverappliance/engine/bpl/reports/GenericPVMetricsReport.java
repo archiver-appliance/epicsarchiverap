@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,10 +38,11 @@ import org.json.simple.JSONValue;
  * @author mshankar
  *
  */
-public class GenericPVMetricsReport<T extends Comparable<T>> implements BPLAction {
+public class GenericPVMetricsReport<T extends Number> implements BPLAction {
 	private static final Logger logger = Logger.getLogger(GenericPVMetricsReport.class);
 	private Function<PVMetrics, T> getFn;
 	private final String metricName; 
+	private String applianceName;
 
 	public GenericPVMetricsReport(Function<PVMetrics, T> getFn, String metricName) { 
 		this.getFn = getFn;
@@ -61,6 +63,7 @@ public class GenericPVMetricsReport<T extends Comparable<T>> implements BPLActio
 	}
 	
 	private List<HashMap<String, String>> applyMetric(ConfigService configService, String limitStr) {
+		this.applianceName = configService.getMyApplianceInfo().getIdentity();
 		HashMap<String, T> pvs2Rate = new HashMap<String, T>();
 		EngineContext engineContext = configService.getEngineContext();
 		for(ArchiveChannel channel : engineContext.getChannelList().values()) {
@@ -73,6 +76,12 @@ public class GenericPVMetricsReport<T extends Comparable<T>> implements BPLActio
 
 		List<HashMap<String, String>>  retVal = pvs2Rate.entrySet()
         .stream()
+        .filter(new Predicate<Entry<String, T>>() { // Get rid of entries that have 0
+			@Override
+			public boolean test(Entry<String, T> t) {
+				return t.getValue().doubleValue() > 0;
+			}
+		})
         .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
         .limit(limitNum)
         .map(new Function<Entry<String, T>, HashMap<String, String>>() {
@@ -80,6 +89,7 @@ public class GenericPVMetricsReport<T extends Comparable<T>> implements BPLActio
 			public HashMap<String, String> apply(Entry<String, T> t) {
 				HashMap<String, String> ret = new HashMap<String, String>();
 				ret.put("pvName", t.getKey());
+				ret.put("instance", GenericPVMetricsReport.this.applianceName);
 				ret.put(metricName, t.getValue().toString());
 				return ret;
 			}

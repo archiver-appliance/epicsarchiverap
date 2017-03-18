@@ -16,6 +16,6 @@ import org.epics.archiverappliance.engine.pv.PVMetrics;
  */
 public class ScanMaxTimeReport extends GenericPVMetricsReport<Long> {
 	public ScanMaxTimeReport() { 
-		super(PVMetrics::getScanProcessingTime, "maxTimeBetweenScans");
+		super(PVMetrics::getMaxTimeBetweenScans, "maxTimeBetweenScans");
 	}
 }
