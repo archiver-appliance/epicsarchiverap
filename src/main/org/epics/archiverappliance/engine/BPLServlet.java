@@ -47,6 +47,7 @@ import org.epics.archiverappliance.engine.bpl.reports.LostConnectionsReport;
 import org.epics.archiverappliance.engine.bpl.reports.NeverConnectedPVsAction;
 import org.epics.archiverappliance.engine.bpl.reports.PVDetails;
 import org.epics.archiverappliance.engine.bpl.reports.ScanCopyTimeReport;
+import org.epics.archiverappliance.engine.bpl.reports.ScanMaxTimeReport;
 import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.engine.bpl.reports.WaveformPVsAction;
@@ -91,6 +92,8 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
 		getActions.put("/getArchiveChannelObjectDetails", ArchiveChannelObjectDetailsAction.class);
 		getActions.put("/getPVsByScanCopyTime", ScanCopyTimeReport.class);
+		getActions.put("/getPVsByMaxTimeBetweenScans", ScanMaxTimeReport.class);
+		
 	}
 
 	@Override
