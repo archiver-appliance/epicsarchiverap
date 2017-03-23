@@ -98,9 +98,13 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
  * @return true if they have the same time stamps. Other wise ,false
  */
 	private boolean isMatchingTimeStamp(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) {
-		java.sql.Timestamp time1 = tempEvent1.getEventTimeStamp();
-		java.sql.Timestamp time2 = tempEvent2.getEventTimeStamp();
-		return time1.equals(time2);
+		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) { 
+			Timestamp time1 = tempEvent1.getEventTimeStamp();
+			Timestamp time2 = tempEvent2.getEventTimeStamp();
+			return time1.equals(time2);
+		} else { 
+			return false;
+		}
 	}
 
 }
