@@ -1884,15 +1884,19 @@ public class DefaultConfigService implements ConfigService {
 					this.getExternalArchiverDataServers().put(serverUrl, archivesCSV);
 					String[] archives = archivesCSV.split(",");
 
-					try {
-						for(int i = 0; i < archives.length; i++) {
-							String archive = archives[i];
-							loadExternalArchiverPVs(serverUrl, archive);
+					this.startupExecutor.schedule(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								for(int i = 0; i < archives.length; i++) {
+									String archive = archives[i];
+									loadExternalArchiverPVs(serverUrl, archive);
+								}
+							} catch(Exception ex) {
+								logger.error("Exception adding Channel Archiver archives " + serverUrl + " - " + archivesCSV, ex);
+							}
 						}
-					} catch(Exception ex) {
-						logger.error("Exception adding Channel Archiver archives " + serverUrl + " - " + archivesCSV, ex);
-						throw new IOException(ex);
-					}
+					}, 15, TimeUnit.SECONDS); 
 				}
 			}
 			configlogger.info("Done loading external servers from persistence ");
