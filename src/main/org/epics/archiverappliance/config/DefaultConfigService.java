@@ -695,7 +695,7 @@ public class DefaultConfigService implements ConfigService {
 						configlogger.fatal("Exception starting up the engine channels on startup", t);
 					}
 				}
-			}, 15, TimeUnit.SECONDS); 
+			}, 1, TimeUnit.SECONDS); 
 		} else if(this.warFile == WAR_FILE.ETL) {
 			this.etlPVLookup.postStartup();
 		} else if(this.warFile == WAR_FILE.MGMT) {
