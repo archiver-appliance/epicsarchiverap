@@ -93,6 +93,15 @@ public class PVMetrics {
 	/**how many events were dropped because of the over flow of sample buffer?*/
 	private long sampleBufferFullLostEventCount = 0;
 	
+	/** SCAN related information - this is the number of events/samples we got from the PV. The SCAN thread will not pick all of these up.  */
+	private long scanEventCount = 0;
+	/** The time we took to copy the event from the PV into the buffers. This is the total; divide by the number of events to get the average */
+	private long scanProcessingTime = 0;
+	/** When did the previous SCAN copy start? */
+	private long previousScanStart = 0;
+	/** What's the maximum time we've waited for the SCAN thread to come in and copy values */
+	private long maxTimeBetweenScans = 0;
+	
 	/**
 	 * how many events were dropped because of the incorrect DBR type
 	 */
@@ -463,6 +472,14 @@ public class PVMetrics {
 		this.connectionLossRegainCount = connectionLossRegainCount;
 	}
 
+	public long getScanEventCount() {
+		return scanEventCount;
+	}
+	
+	public void incrementScanEventCount() {
+		scanEventCount++;
+	}
+
   
 	private static void addDetailedStatus(LinkedList<Map<String, String>> statuses, String name, String value) {
 		Map<String, String> obj = new LinkedHashMap<String, String>();
@@ -514,6 +531,13 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "Estimated storage rate (MB/day)", (estimatedStorageRateInBytesPerSec <= 0.0) ? "Not enough info" : twoSignificantDigits.format(estimatedStorageRateInMegaBytesPerDay));
 		double estimatedStorageRateInGigaBytesPerYear = this.getStorageRate() * 60 * 60 * 24 * 365 / (1024 * 1024 * 1024);
 		addDetailedStatus(statuses, "Estimated storage rate (GB/year)", (estimatedStorageRateInBytesPerSec <= 0.0) ? "Not enough info" : twoSignificantDigits.format(estimatedStorageRateInGigaBytesPerYear));
+		if(this.scanEventCount > 0) { 
+			addDetailedStatus(statuses, "SCAN events from the PV", Long.toString(this.scanEventCount));
+			addDetailedStatus(statuses, "Average time for copy data into the buffer (ms)", twoSignificantDigits.format((double)this.scanProcessingTime/this.eventCounts));
+			addDetailedStatus(statuses, "The time the SCAN thread kicked in last", TimeUtils.convertToHumanReadableString(this.previousScanStart/1000));
+			addDetailedStatus(statuses, "Maximum time between the SCAN's (ms)", Long.toString(this.maxTimeBetweenScans));
+		}
+
 		return statuses;
 	}
 
@@ -593,4 +617,30 @@ public class PVMetrics {
 			}
 		}
 	}
+	
+	
+	/** Various metrics about SCAN sampling for this PV. 
+	 * @param start
+	 * @param end
+	 * @param scan_period
+	 */
+	public void setScanProcessingTime(long start, long end, double scan_period) {
+		this.scanProcessingTime += (end - start);
+		if(this.previousScanStart != 0) { 
+			long timeBetweenScans = start - previousScanStart;
+			if(timeBetweenScans > this.maxTimeBetweenScans) { 
+				this.maxTimeBetweenScans = timeBetweenScans;
+			}
+		}
+		this.previousScanStart = start;
+	}
+
+	public long getScanProcessingTime() {
+		return scanProcessingTime;
+	}
+
+	public long getMaxTimeBetweenScans() {
+		return maxTimeBetweenScans;
+	}
+	
 }

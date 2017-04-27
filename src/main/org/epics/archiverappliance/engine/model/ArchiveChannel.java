@@ -489,7 +489,6 @@ abstract public class ArchiveChannel {
 
 	/** Reset counters */
 	public void reset() {
-		buffer.reset();
 		synchronized (this) {
 			received_value_count = 0;
 		}

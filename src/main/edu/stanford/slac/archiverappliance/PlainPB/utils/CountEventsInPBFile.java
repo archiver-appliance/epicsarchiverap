@@ -31,7 +31,7 @@ public class CountEventsInPBFile {
 		for(String fileName : args) {
 			Path path = Paths.get(fileName);
 			PBFileInfo info = new PBFileInfo(path);
-			int i = 1; // Start after the header
+			int i = 0;
 			long start = System.currentTimeMillis();
 			long previousEpochSeconds = 0L;
 			Event firstEvent = null;

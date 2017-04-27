@@ -41,8 +41,10 @@ public class QWResponse implements MimeResponse {
 		} else {
 			out.println(",");
 		}
+		String valJS = evnt.getSampleValue().toJSONString();
+		if(valJS.equals("NaN")) { valJS = "null"; }
 		out.print("{ \"millis\": " + (evnt.getEpochSeconds()*1000 +  evnt.getEventTimeStamp().getNanos()/1000000)
-				+ ", \"val\": " + evnt.getSampleValue().toJSONString()
+				+ ", \"val\": " + valJS
 				+ consumeMetadata(evnt)
 				+ " }");
 	}

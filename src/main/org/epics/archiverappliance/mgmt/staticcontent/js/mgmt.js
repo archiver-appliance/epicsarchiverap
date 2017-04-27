@@ -226,7 +226,7 @@ function quickChartButton(dataobject) {
 		alert("Cannot determine data retrieval URL");
 	}
 	
-	return '<a href="' + dataRetrievalURL + '/ui/viewer/index.html?pv1=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/chart.png"/></a>';
+	return '<a href="' + dataRetrievalURL + '/ui/viewer/archViewer.html?pv=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/chart.png"/></a>';
 }
 
 
@@ -556,6 +556,30 @@ function getPVsByDroppedEventsTypeChange(limit) {
 			[{'srcAttr' : 'pvName', 'label' : 'PV Name'} , 
 			 {'srcAttr' : 'instance', 'label' : 'Instance'},
 			 {'srcAttr' : 'eventsDropped', 'label' : 'Dropped events'},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Details', 'srcFunction' : function(dataobject) { return '<a href="pvdetails.html?pv=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/details.png"></a>'; }},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Quick chart', 'srcFunction' : function(dataobject) { return quickChartButton(dataobject); }}
+			]);
+}
+
+function getScanBufReport(limit) {
+	var jsonurl = '../bpl/getPVsByScanCopyTime?limit=' + limit;
+	var tabledivname = 'reporttablediv';
+	createReportTable(jsonurl, tabledivname,
+			[{'srcAttr' : 'pvName', 'label' : 'PV Name'} , 
+			 {'srcAttr' : 'instance', 'label' : 'Instance'},
+			 {'srcAttr' : 'scanCopy', 'label' : 'Scan Buffer Transfer (ms)'},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Details', 'srcFunction' : function(dataobject) { return '<a href="pvdetails.html?pv=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/details.png"></a>'; }},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Quick chart', 'srcFunction' : function(dataobject) { return quickChartButton(dataobject); }}
+			]);
+}
+
+function getScanGapReport(limit) { 
+	var jsonurl = '../bpl/getPVsByMaxTimeBetweenScans?limit=' + limit;
+	var tabledivname = 'reporttablediv';
+	createReportTable(jsonurl, tabledivname,
+			[{'srcAttr' : 'pvName', 'label' : 'PV Name'} , 
+			 {'srcAttr' : 'instance', 'label' : 'Instance'},
+			 {'srcAttr' : 'maxTimeBetweenScans', 'label' : 'Max time between SCANs (ms)'},
 			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Details', 'srcFunction' : function(dataobject) { return '<a href="pvdetails.html?pv=' + encodeURIComponent(dataobject.pvName) + '" ><img class="imgintable" src="comm/img/details.png"></a>'; }},
 			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Quick chart', 'srcFunction' : function(dataobject) { return quickChartButton(dataobject); }}
 			]);

@@ -8,10 +8,6 @@
 package org.epics.archiverappliance.engine.test;
 
 import java.io.File;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-
-import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -23,6 +19,8 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import junit.framework.TestCase;
 /**
  * test of destroying channels
  * @author Luofeng Li
@@ -31,7 +29,6 @@ import org.junit.Test;
 public class ChannelDestoryTest extends TestCase {
 	private static Logger logger = Logger.getLogger(ChannelDestoryTest.class.getName());
 	private SIOCSetup ioc = null;
-	private ScheduledThreadPoolExecutor scheduler;
 	private ConfigServiceForTests testConfigService;
 	private WriterTest writer = new WriterTest();
 
@@ -39,10 +36,7 @@ public class ChannelDestoryTest extends TestCase {
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
-		scheduler = (ScheduledThreadPoolExecutor) Executors
-				.newScheduledThreadPool(1);
 		testConfigService = new ConfigServiceForTests(new File("./bin"));
-		testConfigService.getEngineContext().setScheduler(scheduler);
 		Thread.sleep(3000);
 	}
 
