@@ -35,7 +35,7 @@ public interface Event {
 	 * Get the epoch seconds and the nanos..
 	 * We use java.sql.Timestamp as the main timestamp class.
 	 * See TimeUtils for more time related utilities.
-	 * @return
+	 * @return The java epoch seconds and the nanos of this event
 	 */
 	public Timestamp getEventTimeStamp();
 
@@ -51,14 +51,14 @@ public interface Event {
 	/**
 	 * Get this event's value. The value for an EPICS sample is a complex thing and can be scalars and vectors of numbers and strings.
 	 * With EPICS v4, this can get even more complicated. 
-	 * @return
+	 * @return The valus of this event
 	 */
 	public SampleValue getSampleValue(); 
 	
 	
 	/**
 	 * Make a clone of this event free from the confines of its containing stream.
-	 * @return
+	 * @return A clone of this event
 	 */
 	public Event makeClone();
 	

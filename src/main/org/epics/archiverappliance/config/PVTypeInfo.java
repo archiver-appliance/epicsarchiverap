@@ -112,8 +112,17 @@ public class PVTypeInfo implements Serializable {
 	
 	// Info pertaining to the archiver...
 	private boolean hasReducedDataSet;
+	/**
+	 * the average event rate in one minute (event count / sec)
+	 */	
 	private float computedEventRate;
+ 	/**
+	 * the average storage rate in in one minute ( bytes / sec)
+	 */
 	private float computedStorageRate;
+	/**
+	 * the storage size / the total event count if the event count &ne; 0
+	 */
 	private int computedBytesPerEvent;
 	private float userSpecifiedEventRate;
 	private Timestamp creationTime;
@@ -302,7 +311,6 @@ public class PVTypeInfo implements Serializable {
 	/**
 	 * Parse a string (JSON) representation of the PVTypeInfo object into this object
 	 * @param typeInfoStr
-	 * @throws Exception
 	 */
 	public void parsePolicyRepresentation(String typeInfoStr) {
 		JSONObject parsedObj = (JSONObject) JSONValue.parse(typeInfoStr);
@@ -530,6 +538,7 @@ public class PVTypeInfo implements Serializable {
 	
 	/**
 	 * Loop thru the stores outlined in this typeinfo and determine the most recent event for this pv
+	 * @param configService
 	 * @return
 	 */
 	public Timestamp determineLastKnownEventFromStores(ConfigService configService) throws IOException {
@@ -553,7 +562,7 @@ public class PVTypeInfo implements Serializable {
 	 * The secondsToBuffer is a system wide property. 
 	 * Use this method to get the proper defaults.
 	 * @param configService
-	 * @return
+	 * @return secondsToBuffer
 	 */
 	public static int getSecondsToBuffer(ConfigService configService) {
 		String secondsToBufferStr = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.config.PVTypeInfo.secondsToBuffer", "10");
@@ -565,7 +574,7 @@ public class PVTypeInfo implements Serializable {
 	/**
 	 * The archiver appliance stores data in chunks that have a well defined key. 
 	 * We record this key in the typeinfo (to accommodate slowly changing key mapping strategies)
-	 * @return
+	 * @return chunkKey
 	 */
 	public String getChunkKey() {
 		return chunkKey;
