@@ -78,11 +78,11 @@ public class PlainPBPathNameUtility {
 		
 		/**
 		 * Determine the chunk start anf end times from the name
-		 * @param pvName - Name of the PV. 
-		 * @param pathName - The name of the file (without the directory part).
-		 * @param pvFinalNameComponent - The substring of the PV that contributes to the file name. For example for a PV ABC:DEF, we convert to rootFolder/ABC/DEF:2012.... This is the DEF part of this pv name.
-		 * @param granularity - Partition granularity of the file.
-		 * @throws IOException
+		 * @param pvName Name of the PV. 
+		 * @param pathName The name of the file (without the directory part).
+		 * @param pvFinalNameComponent The substring of the PV that contributes to the file name. For example for a PV ABC:DEF, we convert to rootFolder/ABC/DEF:2012.... This is the DEF part of this pv name.
+		 * @param granularity Partition granularity of the file.
+		 * @throws IOException &emsp;
 		 */
 		StartEndTimeFromName(String pvName, String pathName, String pvFinalNameComponent, PartitionGranularity granularity) throws IOException {
 			String afterpvname = pathName.substring(pvFinalNameComponent.length());

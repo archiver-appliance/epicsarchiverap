@@ -54,10 +54,12 @@ public class AppendDataStateData {
 	private PVNameToKeyMapping pv2key;
 
 	/**
-	 * @param partitionGranularity - partitionGranularity of the PB plugin.
-	 * @param rootFolder - RootFolder of the PB plugin
-	 * @param desc - Desc for logging purposes
-	 * @param lastKnownTimestamp - This is probably the most important argument here. This is the last known timestamp in this storage. If null, we assume time(0) for the last known timestamp.
+	 * @param partitionGranularity partitionGranularity of the PB plugin.
+	 * @param rootFolder RootFolder of the PB plugin
+	 * @param desc Desc for logging purposes
+	 * @param lastKnownTimestamp This is probably the most important argument here. This is the last known timestamp in this storage. If null, we assume time(0) for the last known timestamp.
+	 * @param compressionMode CompressionMode 
+	 * @param pv2key PVNameToKeyMapping 
 	 *  
 	 */
 	public AppendDataStateData(PartitionGranularity partitionGranularity, String rootFolder, String desc, Timestamp lastKnownTimestamp, CompressionMode compressionMode, PVNameToKeyMapping pv2key) {
@@ -79,12 +81,13 @@ public class AppendDataStateData {
 	 * <li>We make sure timestamp monotonicity is maintained.</li>
 	 * <li>We generate clean partitions.</li>
 	 * </ol>
-	 * @param pvName
-	 * @param stream
-	 * @param extension
-	 * @param extensionToCopyFrom
-	 * @return
-	 * @throws IOException
+	 * @param context  &emsp;
+	 * @param pvName The PV name
+	 * @param stream  &emsp; 
+	 * @param extension   &emsp;
+	 * @param extensionToCopyFrom &emsp;
+	 * @return eventsAppended  &emsp;
+	 * @throws IOException &emsp;
 	 */
 	public int partitionBoundaryAwareAppendData(BasicContext context, String pvName, EventStream stream, String extension, String extensionToCopyFrom) throws IOException {
 		try {
@@ -127,15 +130,15 @@ public class AppendDataStateData {
 
 	/**
 	 * Prepare a new partition.
-	 * @param pvName
-	 * @param stream
-	 * @param context
-	 * @param extension
-	 * @param extensionToCopyFrom
-	 * @param epochSeconds
-	 * @param pvPath
-	 * @return
-	 * @throws IOException
+	 * @param pvName The PV name 
+	 * @param stream &emsp;
+	 * @param context &emsp;
+	 * @param extension &emsp;
+	 * @param extensionToCopyFrom &emsp;
+	 * @param epochSeconds The epoch seconds
+	 * @param pvPath &emsp;
+	 * @return pvPath  &emsp;
+	 * @throws IOException &emsp;
 	 */
 	private Path preparePartition(String pvName, EventStream stream, BasicContext context, String extension, String extensionToCopyFrom, long epochSeconds, Path pvPath) throws IOException {
 		if(pvPath == null) {
@@ -181,13 +184,13 @@ public class AppendDataStateData {
 
 	/**
 	 * Should we switch to a new partition? If so, return the new partition, else return the current partition.
-	 * @param context
-	 * @param pvName
-	 * @param extension
-	 * @param epochSeconds
-	 * @param currentPath
-	 * @return
-	 * @throws IOException
+	 * @param context  &emsp;
+	 * @param pvName The PV name 
+	 * @param extension  &emsp;
+	 * @param epochSeconds  The epoch seconds
+	 * @param currentPath The current partition path
+	 * @return Path the next or current partiton path
+	 * @throws IOException  &emsp;
 	 */
 	private Path shouldISwitchPartitions(BasicContext context, String pvName, String extension, long epochSeconds, Path currentPath) throws IOException {
 		if(epochSeconds >= this.nextPartitionFirstSecond) {
@@ -215,9 +218,8 @@ public class AppendDataStateData {
 
 	/**
 	 * Tell appendData if we should skip this event based on the last known event, current year of the destination file etc...
-	 * @param state
-	 * @param event
-	 * @return
+	 * @param event  &emsp;
+	 * @return Boolean   &emsp;
 	 */
 	private boolean shouldISkipEventBasedOnTimeStamps(Event event) {
 		long epochSeconds = event.getEpochSeconds();
@@ -250,10 +252,9 @@ public class AppendDataStateData {
 	
 	/**
 	 * If we have an existing file, then this loads a PBInfo, validates the PV name and then updates the appendDataState
-	 * @param state
-	 * @param pvName
-	 * @param pvPath
-	 * @throws IOException
+	 * @param pvName The PV name
+	 * @param pvPath The PV path 
+	 * @throws IOException &emsp;
 	 */
 	private void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException {
 		PBFileInfo info = new PBFileInfo(pvPath);
@@ -267,11 +268,10 @@ public class AppendDataStateData {
 	
 	/**
 	 * In cases where we create a new file, this method is used to create an empty file and write out an header.
-	 * @param state
-	 * @param pvName
-	 * @param pvPath
-	 * @param stream
-	 * @throws IOException
+	 * @param pvName The PV name
+	 * @param pvPath The PV path
+	 * @param stream The Event stream
+	 * @throws IOException 	&emsp;
 	 */
 	private void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream) throws IOException {
 		if(Files.exists(pvPath) && Files.size(pvPath) > 0) { 
@@ -296,9 +296,13 @@ public class AppendDataStateData {
 	
 	/**
 	 * Append data in bulk skipping some of the per event checks.
-	 * @param pvName
-	 * @param bulkStream
-	 * @throws IOException
+	 * @param pvName The PV name
+	 * @param context The ETL context
+	 * @param bulkStream The ETL bulk stream
+	 * @param extension  &emsp;
+	 * @param extensionToCopyFrom &emsp;
+	 * @return boolean &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public boolean bulkAppend(String pvName, ETLContext context, ETLBulkStream bulkStream, String extension, String extensionToCopyFrom) throws IOException {
 		Event firstEvent = bulkStream.getFirstEvent(context);

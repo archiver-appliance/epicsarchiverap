@@ -95,6 +95,7 @@ public class FileEventStreamSearch {
 	 * @return  <code>true</code> or <code>false</code>
 	 * @param dbrtype ArchDBRType the enumeration type
 	 * @param secondsIntoYear Search seconds into year
+	 * @throws IOException  &emsp;
 	 * @see edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent
 	 */
 	public boolean seekToTime(ArchDBRTypes dbrtype, int secondsIntoYear) throws IOException {

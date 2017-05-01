@@ -116,8 +116,10 @@ public class PBFileInfo {
 	 * Checks the payload info and makes sure we are using appropriate files.
 	 * This assumes that the lis is positioned at the start and subsequently positions the lis just past the first line.
 	 * So if we need to position the lis elsewhere, the caller needs to do that manually after this call.
-	 * @param lis
-	 * @throws IOException
+	 * @param lis The line bytes stream
+	 * @param pvName  The PV name
+	 * @param type  Enum ArchDBRTypes 
+	 * @throws IOException  &emsp;
 	 */
 	public static void checkPayloadInfo(LineByteStream lis, String pvName, ArchDBRTypes type) throws IOException {
 		byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
