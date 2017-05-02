@@ -35,8 +35,8 @@ public class ETLJob implements Runnable {
 
 	/**
 	 * Mostly used by ETL unit tests.
-	 * @param lookupItem
-	 * @param runAsIfAtTime
+	 * @param lookupItem ETLPVLookupItems 
+	 * @param runAsIfAtTime Timestamp
 	 */
 	public ETLJob(ETLPVLookupItems lookupItem, Timestamp runAsIfAtTime) {
 		this.lookupItem = lookupItem;
@@ -63,7 +63,8 @@ public class ETLJob implements Runnable {
 
 	/**
 	 * Main ETL algorithm.
-	 * @param processingTime - Typically we'd use TimeUtils.now() for this. However, we can also run as if it's a certain time by using this parameter.
+	 * @param processingTime Typically we'd use TimeUtils.now() for this. However, we can also run as if it's a certain time by using this parameter.
+	 * @throws IOException  &emsp;
 	 *
 	 */
 	public void processETL(Timestamp processingTime) throws IOException {
@@ -235,7 +236,7 @@ public class ETLJob implements Runnable {
 	/**
 	 * Was there an exception in the last ETL run for this job
 	 * Mostly used by unit tests.
-	 * @return
+	 * @return exceptionFromLastRun  &emsp;
 	 */
 	public Exception getExceptionFromLastRun() {
 		return exceptionFromLastRun;

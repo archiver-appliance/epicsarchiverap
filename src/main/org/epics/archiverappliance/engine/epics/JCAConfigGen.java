@@ -43,7 +43,9 @@ public class JCAConfigGen {
 	
 	/**
 	 * Use environment vars to generate a JCA config that can be handed off to a JCA DefaultConfigurationBuilder
-	 * @return
+	 * @param configService ConfigService
+	 * @return ByteArrayInputStream  &emsp;
+	 * @throws ConfigException &emsp;
 	 */
 	public static ByteArrayInputStream generateJCAConfig(ConfigService configService) throws ConfigException {
 		String JCACAJContext = "gov.aps.jca.jni.SingleThreadedContext";

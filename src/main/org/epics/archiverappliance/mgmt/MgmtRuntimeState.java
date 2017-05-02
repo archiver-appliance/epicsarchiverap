@@ -51,8 +51,8 @@ public class MgmtRuntimeState {
 
 	/**
 	 * Initiate archive PV workflow for PV.
-	 * @param pvName
-	 * @throws IOException
+	 * @param pvName The name of PV.
+	 * @throws IOException  &emsp;
 	 */
 	public void startPVWorkflow(String pvName) throws IOException {
 		if(!currentPVRequests.containsKey(pvName)) {
@@ -252,8 +252,8 @@ public class MgmtRuntimeState {
 	
 	/**
 	 * Is the specified PV in the mgmt workflow?
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return boolean True or False
 	 */
 	public boolean isPVInWorkflow(String pvName) { 
 		return this.currentPVRequests.containsKey(pvName);
@@ -264,7 +264,7 @@ public class MgmtRuntimeState {
 	 * Get the batch size for PV archive requests workflow.
  	 * We throttle the archive PV workflow to this many PV's at a time to conserve resources and prevent CA storms.
  	 * This can be configured using a property in archappl.properties. 
-	 * @return
+	 * @return archivePVWorkflowBatchSize   &emsp;
 	 */
 	public int getArchivePVWorkflowBatchSize() {
 		return archivePVWorkflowBatchSize;

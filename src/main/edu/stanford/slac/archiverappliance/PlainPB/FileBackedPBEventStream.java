@@ -58,10 +58,10 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	
 	/**
 	 * Used when we want to include data from the entire file. 
-	 * @param pvname
-	 * @param path
-	 * @param type
-	 * @throws IOException
+	 * @param pvname The PV name
+	 * @param path path 
+	 * @param type Enum ArchDBRTypes
+	 * @throws IOException  &emsp;
 	 */
 	public FileBackedPBEventStream(String pvname, Path path, ArchDBRTypes type) throws IOException {
 		this.pvName = pvname;
@@ -74,12 +74,12 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	
 	/**
 	 * Used when we know the file locations of the start and end. Really only used in one utility...
-	 * @param pvname
-	 * @param path
-	 * @param type
-	 * @param startPosition
-	 * @param endPosition
-	 * @throws IOException
+	 * @param pvname The PV name
+	 * @param path Path 
+	 * @param type Enum ArchDBRTypes
+	 * @param startPosition The file location of the start 
+	 * @param endPosition The file location of the end
+	 * @throws IOException  &emsp;
 	 */
 	public FileBackedPBEventStream(String pvname, Path path, ArchDBRTypes type, long startPosition, long endPosition) throws IOException {
 		this.pvName = pvname;
@@ -94,13 +94,13 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	 * Used when we know the start and end times. There are six cases here; see the FileBackedIteratorTest for more details.
 	 * For performance reasons, we want to use the location based iterator as much as possible.
 	 * But in case of issues, we do not want to not return data. So, fall back to a time based iterator
-	 * @param pvname
-	 * @param path
-	 * @param dbrtype
-	 * @param startTime
-	 * @param endTime
-	 * @param skipSearch
-	 * @throws IOException
+	 * @param pvname  The PV name 
+	 * @param path Path 
+	 * @param dbrtype Enum ArchDBRTypes 
+	 * @param startTime The start time
+	 * @param endTime The end time
+	 * @param skipSearch <code>true</code> or <code>false</code>
+	 * @throws IOException  &emsp;
 	 */
 	public FileBackedPBEventStream(String pvname, Path path, ArchDBRTypes dbrtype, Timestamp startTime, Timestamp endTime, boolean skipSearch) throws IOException {
 		this.pvName = pvname;
@@ -199,11 +199,11 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 	
 	/**
 	 * Determine the iterator to be used for this query based on the query start and end times and the first and last sample times.
-	 * @param path
-	 * @param dbrtype
-	 * @param queryStartTime
-	 * @param queryEndTime
-	 * @throws IOException
+	 * @param path Path
+	 * @param dbrtype  Enum ArchDBRTypes
+	 * @param queryStartTime The query start time
+	 * @param queryEndTime The query end time
+	 * @throws IOException  &emsp;
 	 */
 	private void seekToTimes(Path path, ArchDBRTypes dbrtype, Timestamp queryStartTime, Timestamp queryEndTime) throws IOException {
 		readPayLoadInfo();

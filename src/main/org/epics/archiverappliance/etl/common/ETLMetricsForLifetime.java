@@ -102,7 +102,7 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 
 	/**
 	 * Update the time taken for the last ETL job. Note this is an approximation.
-	 * @param lastETLTimeWeSpentInETLInMilliSeconds
+	 * @param lastETLTimeWeSpentInETLInMilliSeconds  &emsp;
 	 */
 	public void updateApproximateGlobalLastETLTime(long lastETLTimeWeSpentInETLInMilliSeconds) {
 		try {
@@ -146,6 +146,7 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 	
 	/**
 	 * Get an estimate of how much time (in percent) over the last week we spent performing ETL for this transition.
+	 * @return time estimated over the last week
 	 */
 	public double getWeeklyETLUsageInPercent() { 
 		long epochSeconds = System.currentTimeMillis()/1000;

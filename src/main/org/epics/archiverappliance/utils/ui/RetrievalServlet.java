@@ -72,8 +72,9 @@ public class RetrievalServlet  extends HttpServlet {
 	
 	/**
 	 * Should only be used by the unit tests for setup...
-	 * @param rootFolder
-	 */
+	 * @param rootFolder  &emsp; 
+	 * @return this  &emsp; 
+	 */  
 	public RetrievalServlet setpbRootFolder(String rootFolder) {
 		pbRootFolder = rootFolder;
 		return this;

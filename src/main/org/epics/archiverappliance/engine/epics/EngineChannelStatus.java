@@ -111,7 +111,7 @@ public class EngineChannelStatus implements JSONAware {
 
 	/**
 	 * Return a RFC4627-compliant JSON version of this POJO.
-	 * @return
+	 * @return String RFC4627-compliant JSON
 	 */
 	@Override
 	public String toJSONString() {

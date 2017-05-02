@@ -31,15 +31,15 @@ public interface MimeResponse extends EventConsumer {
 	/**
 	 * Get extra headers that are to be added to the response.
 	 * For this to work correctly in a clustered environment, you'll need to add the header to the set of proxiedHeaders below 
-	 * @return
+	 * @return HashMap ExtraHeaders
 	 */
 	public HashMap<String, String> getExtraHeaders();
 	/**
 	 * Called when we swich to a new PV. 
-	 * @param pv
-	 * @param start
-	 * @param end
-	 * @param streamDesc - Could be null if we have no data in first store we hit.
+	 * @param pv The name of PV 
+	 * @param start Timestamp
+	 * @param end Timestamp
+	 * @param streamDesc  Could be null if we have no data in first store we hit.
 	 */
 	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc);
 	public void swicthingToStream(EventStream strm);

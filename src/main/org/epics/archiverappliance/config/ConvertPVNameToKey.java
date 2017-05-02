@@ -30,9 +30,8 @@ import org.epics.archiverappliance.config.exception.ConfigException;
  * <li>org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceSeparators - This is a list of characters that separate the components of the PV name. The syntax for this must satisfy Java's {@link String#replaceAll(String, String) replaceAll} regex requirements. So to specify a list containing the ":" and the "-" characters, we have to use <code>[\\:\\-]</code></li>
  * <li>org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator - This is the character used as the terminator of the PV name portion of the key.</li>
  * </ol>
- * </p>
+ * <p>
  * @author mshankar
- *
  */
 public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	private static Logger configlogger = Logger.getLogger("config." + ConvertPVNameToKey.class.getName());
@@ -47,6 +46,7 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	
 	/* (non-Javadoc)
 	 * @see org.epics.archiverappliance.config.PVNameToKeyMapping#convertPVNameToKey(java.lang.String)
+	 * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html">java.util.concurrent.ConcurrentHashMap</a>
 	 */
 	@Override
 	public String convertPVNameToKey(String pvName) {
@@ -94,8 +94,8 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	/**
 	 * One option is to simply override the final element of chunk key generation. 
 	 * To do that, subclass and override this method. (Of course, you still have to register the subclass in archappl.properties).
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return pvName  &emsp;
 	 */
 	protected String generateChunkKey(String pvName) { 
 		return pvName.replaceAll(siteNameSpaceSeparators, File.separator) + terminatorChar;

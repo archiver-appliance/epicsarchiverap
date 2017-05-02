@@ -36,12 +36,12 @@ public class StreamPBIntoOutput {
 	/**
 	 * Push the events in st into the output stream os.
 	 * This is highly simplistic and does not accommodate year transitions, pv transitions and such.
-	 * @param st
-	 * @param os
-	 * @param start - The start time; could be null in which case we begin at the very beginning
-	 * @param end - The end time; could be null in which case we end at the very end
-	 * @return
-	 * @throws IOException
+	 * @param st EventStream 
+	 * @param os OutputStream
+	 * @param start The start time; could be null in which case we begin at the very beginning
+	 * @param end The end time; could be null in which case we end at the very end
+	 * @return totalEvents  &emsp; 
+	 * @throws IOException  &emsp; 
 	 */
 	public static int streamPBIntoOutputStream(EventStream st, OutputStream os, Timestamp start, Timestamp end) throws IOException {
 		long startTimeInEpochSeconds = 0;
@@ -122,7 +122,9 @@ public class StreamPBIntoOutput {
 	
 	/**
 	 * Write a header only - this is sometimes used to communicate the latest copy of the meta-fields (EGU etc) from the engine to the client even if we have no data in the engine.
-	 * @throws IOException
+	 * @param os OutputStream
+	 * @param desc  RemotableEventStreamDesc 
+	 * @throws IOException  &emsp; 
 	 */
 	public static void writeHeaderOnly(OutputStream os, RemotableEventStreamDesc desc) throws IOException { 
 		Builder builder = PayloadInfo.newBuilder()

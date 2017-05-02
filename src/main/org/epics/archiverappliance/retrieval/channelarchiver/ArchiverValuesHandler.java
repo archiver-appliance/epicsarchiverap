@@ -356,10 +356,11 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 	/**
 	 * Create a archive.values handler given an event stream.
 	 * If all goes well, processing should stop after each event (and hence should stop after the first event).
-	 * @param pvName
-	 * @param is
+	 * @param pvName The name of PV 
+	 * @param is  InputStream
+	 * @param source  &emsp; 
 	 * @param expectedDBRType This is the expected DBR type. This can be null in which case we do a best guess.
-	 * @throws IOException
+	 * @throws IOException  &emsp; 
 	 */
 	public ArchiverValuesHandler(String pvName, InputStream is, String source, ArchDBRTypes expectedDBRType) throws IOException {
 		this.pvName = pvName;
@@ -397,7 +398,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 	
 	/**
 	 * Do we have another event?
-	 * @return
+	 * @return boolean True or False
 	 */
 	@Override
 	public boolean hasNext() {
@@ -410,8 +411,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 	
 	/**
 	 * Get the next event
-	 * @return
-	 * @throws IOException
+	 * @return Event get the next event 
 	 */
 	@Override
 	public Event next() {
@@ -508,9 +508,9 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 
 	/**
 	 * Map a header from ChannelArchiver names to EPICS Archiver appliance names.
-	 * @param caName - the channel archiver name
-	 * @param applName - the name used in the appliance
-	 * @param desc
+	 * @param caName the channel archiver name
+	 * @param applName  the name used in the appliance
+	 * @param desc RemotableEventStreamDesc
 	 */
 	private void addMappedHeader(String caName, String applName, RemotableEventStreamDesc desc) { 
 		if(this.metaInformation.containsKey(caName)) { 

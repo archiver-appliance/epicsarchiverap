@@ -157,8 +157,8 @@ public class ArchivePVAction implements BPLAction {
 	
 	/**
 	 * Performance optimization - pass in fieldsArchivedAsPartOfStream as part of archivePV call.
-	 * @param configService
-	 * @return
+	 * @param configService ConfigService
+	 * @return All Fields as stream
 	 */
 	public static List<String> getFieldsAsPartOfStream(ConfigService configService) { 
 		List<String> fieldsArchivedAsPartOfStream = new LinkedList<String>();
@@ -173,16 +173,18 @@ public class ArchivePVAction implements BPLAction {
 
 	/**
 	 * This is the main method for adding PVs into the archiver. All other entry points should eventually call this method.
-	 * @param out
-	 * @param pvName
-	 * @param overridePolicyParams
-	 * @param overRiddenScan
-	 * @param overRiddenSamplingPeriod
-	 * @param controllingPV - The PV used for controlling whether we archive this PV or not in conditional archiving.
-	 * @param policyName - If you want to override the policy on a per PV basis.
-	 * @param alias - Optional, any alias that you'd like to register at the same time.
-	 * @param skipCapacityPlanning - By default false. However, if you want to skip capacity planning and assign to this appliance, set this to true.
-	 * @param configService
+	 * @param out PrintWriter
+	 * @param pvName The name of PV. 
+	 * @param overridePolicyParams True or False
+	 * @param overriddenSamplingMethod  SamplingMethod 
+	 * @param overRiddenSamplingPeriod  &emsp; 
+	 * @param controllingPV The PV used for controlling whether we archive this PV or not in conditional archiving.
+	 * @param policyName  If you want to override the policy on a per PV basis.
+	 * @param alias Optional, any alias that you'd like to register at the same time.
+	 * @param skipCapacityPlanning  By default false. However, if you want to skip capacity planning and assign to this appliance, set this to true.
+	 * @param configService ConfigService
+	 * @param fieldsArchivedAsPartOfStream  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public static void archivePV(PrintWriter out, String pvName, boolean overridePolicyParams, SamplingMethod overriddenSamplingMethod, float overRiddenSamplingPeriod, String controllingPV, String policyName, String alias, boolean skipCapacityPlanning, ConfigService configService, List<String> fieldsArchivedAsPartOfStream) throws IOException {
 		String fieldName = PVNames.getFieldName(pvName);
@@ -386,9 +388,9 @@ public class ArchivePVAction implements BPLAction {
 	/**
 	 * Given a JSON array of archive requests, can we process all these requests on this appliance.
 	 * We can do this if the applianceID is not specified or if the applianceID is this appliance for all requests.
-	 * @param pvArchiveParams
-	 * @param myIdentity
-	 * @return
+	 * @param pvArchiveParams JSONArray 
+	 * @param myIdentity  &emsp;
+	 * @return boolean True or False
 	 */
 	private boolean allRequestsCanBeSampledOnThisAppliance(JSONArray pvArchiveParams, String myIdentity) {
 		for(Object pvArchiveParamObj : pvArchiveParams) {
@@ -405,9 +407,9 @@ public class ArchivePVAction implements BPLAction {
 	/**
 	 * Break down a JSON request for archiving into parts based on appliance and then make the calls to the individual appliances.
 	 * All archive requests that do not have an appliance specified will be sampled on this appliance and go thru capacity planning.
-	 * @param pvArchiveParams
-	 * @param myIdentity
-	 * @param configService
+	 * @param pvArchiveParams JSONArray  
+	 * @param myIdentity emsp
+	 * @param configService ConfigServic
 	 */
 	@SuppressWarnings("unchecked")
 	private void breakDownPVRequestsByAssignedAppliance(JSONArray pvArchiveParams, String myIdentity, ConfigService configService, HttpServletResponse resp) throws IOException {

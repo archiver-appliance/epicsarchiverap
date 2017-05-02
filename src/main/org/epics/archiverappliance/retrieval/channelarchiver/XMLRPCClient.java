@@ -36,11 +36,11 @@ public class XMLRPCClient {
 	private static Logger logger = Logger.getLogger(XMLRPCClient.class.getName());
 	/**
 	 * Internal method to make a XML_RPC post call and call the SAX handler on the returned document.
-	 * @param serverURL
-	 * @param handler
-	 * @param postEntity
-	 * @throws IOException
-	 * @throws SAXException
+	 * @param serverURL The Server URL
+	 * @param handler  DefaultHandler 
+	 * @param postEntity StringEntity 
+	 * @throws IOException  &emsp; 
+	 * @throws SAXException  &emsp; 
 	 */
 	private static void doHTTPPostAndCallSAXHandler(String serverURL, DefaultHandler handler, StringEntity postEntity)  throws IOException, SAXException {
 		logger.debug("Executing doHTTPPostAndCallSAXHandler with the server URL " + serverURL);
@@ -70,10 +70,10 @@ public class XMLRPCClient {
 	
 	/**
 	 * Call archiver.info on the Channel Archiver
-	 * @param serverURL
-	 * @param handler
-	 * @throws IOException
-	 * @throws SAXException
+	 * @param serverURL  The Server URL 
+	 * @param handler  DefaultHandler  
+	 * @throws IOException &emsp; 
+	 * @throws SAXException &emsp; 
 	 */
 	public static void archiverInfo(String serverURL, DefaultHandler handler) throws IOException, SAXException {
 		logger.debug("Getting channel archiver info with URL " + serverURL);
@@ -90,10 +90,10 @@ public class XMLRPCClient {
 	
 	/**
 	 * Call archiver.archives on the Channel Archiver
-	 * @param serverURL
-	 * @param handler
-	 * @throws IOException
-	 * @throws SAXException
+	 * @param serverURL The Server URL 
+	 * @param handler  DefaultHandler  
+	 * @throws IOException  &emsp; 
+	 * @throws SAXException  &emsp; 
 	 */
 	public static void archiverArchives(String serverURL, DefaultHandler handler) throws IOException, SAXException {
 		logger.debug("Getting channel archiver archives with URL " + serverURL);
@@ -110,10 +110,11 @@ public class XMLRPCClient {
 	
 	/**
 	 * Call archiver.names on the Channel Archiver - note this call can take a loooong time.
-	 * @param serverURL
-	 * @param handler
-	 * @throws IOException
-	 * @throws SAXException
+	 * @param serverURL The Server URL 
+	 * @param key  &emsp; 
+	 * @param handler  DefaultHandler  
+	 * @throws IOException  &emsp; 
+	 * @throws SAXException  &emsp; 
 	 */
 	public static void archiverNames(String serverURL, String key, DefaultHandler handler) throws IOException, SAXException {
 		logger.debug("Getting channel archiver archives with URL " + serverURL);

@@ -28,7 +28,9 @@ public class LineByteStreamCreator {
 	
 	/**
 	 * In this case we get a correctly positioned LIS
-	 * @param lis
+	 * @param lis The line bytes stream
+	 * @param pvName the PV name
+	 * @param type  Enum ArchDBRTypes
 	 */
 	public LineByteStreamCreator(LineByteStream lis, String pvName, ArchDBRTypes type) {
 		this.lis = lis;
@@ -39,7 +41,9 @@ public class LineByteStreamCreator {
 	/**
 	 * In this case, we get a whole file 
 	 * We need to position the lis past the header before returning.
-	 * @param f
+	 * @param path Path
+	 * @param pvName The PV name
+	 * @param type  Enum ArchDBRTypes
 	 */
 	public LineByteStreamCreator(Path path, String pvName, ArchDBRTypes type) {
 		this.path = path;

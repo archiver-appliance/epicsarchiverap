@@ -27,7 +27,8 @@ public interface CompareEventLine {
 	 * This is the actual comparison function.
 	 * @param line1 - A full PB line
 	 * @param line2 - A full PB line
-	 * @return
+	 * @return NextStep one of the eumuration of NextStep
+	 * @throws IOException  &emsp;
 	 */
 	public NextStep compare(byte[] line1, byte[] line2) throws IOException;
 }

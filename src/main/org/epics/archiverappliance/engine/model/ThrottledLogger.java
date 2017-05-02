@@ -20,7 +20,7 @@ import org.apache.log4j.Logger;
 public class ThrottledLogger
 {
 	
-	static private final Logger logger = Logger.getLogger(ThrottledLogger.class);
+    static private final Logger logger = Logger.getLogger(ThrottledLogger.class);
     /** Log level */
     final private LogLevel level;
 
@@ -43,7 +43,10 @@ public class ThrottledLogger
         throttle = new Throttle(seconds_between_messages);
     }
 
-    /** Add throttled info message to the plugin log. */
+    /** Add throttled info message to the plugin log. 
+     * @param message  &emsp;
+     * @return boolean True or False
+     */
     @SuppressWarnings("nls")
     public boolean log( final String message)
     {

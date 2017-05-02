@@ -37,7 +37,8 @@ public class SlicePBFile {
 	private static boolean verboseMode = false;
 	
 	/**
-	 * @param args
+	 * @param args &emsp;
+	 * @throws  Exception  &emsp;
 	 */
 	public static void main(String[] args) throws Exception {
 		if(args == null || args.length < 4) { 

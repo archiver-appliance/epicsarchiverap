@@ -56,7 +56,8 @@ public class ByteArray {
 	
 	/**
 	 * Use this for unit tests and the like...
-	 * @return
+	 * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/System.html#arraycopy-java.lang.Object-int-java.lang.Object-int-int-">System.arraycopy</a>
+	 * @return  &emsp;
 	 */
 	public byte[] toBytes() {
 		if(len == 0) return null;
@@ -75,7 +76,7 @@ public class ByteArray {
 	private static final int MAX_BUFFER_SIZE = (LineByteStream.MAX_LINE_SIZE * LineByteStream.MAX_ITERATIONS_TO_DETERMINE_LINE) + 1024;
 	/**
 	 * Increases the size of the array to twice what it is currently subject to a maximum
-	 * @return
+	 * @throws LineTooLongException  &emsp;
 	 */
 	public void doubleBufferSize() throws LineTooLongException {
 		int newSize = data.length * 2;

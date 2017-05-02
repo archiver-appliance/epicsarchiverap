@@ -70,7 +70,7 @@ public class JCACommandThread extends Thread {
 	/**
 	 * Construct, but don't start the thread.
 	 * 
-	 * @param jca_context
+	 * @param configService ConfigService
 	 * @see #start()
 	 */
 	public JCACommandThread(ConfigService configService) {
@@ -152,7 +152,7 @@ public class JCACommandThread extends Thread {
 	/**
 	 * Stop the thread and wait for it to finish
 	 * 
-	 * @throws InterruptedException
+	 * @throws InterruptedException  &emsp;
 	 */
 	public void shutdown() throws InterruptedException {
 
@@ -173,7 +173,7 @@ public class JCACommandThread extends Thread {
 	 * Add a command to the queue. add some cap on the command queue? At least
 	 * for value updates?
 	 * 
-	 * @param command
+	 * @param command Runnable
 	 */
 	public void addCommand(final Runnable command) {
 		synchronized (command_queue) {

@@ -27,7 +27,7 @@ public interface SampleValue {
 	public List getValues();
 	/**
 	 * Return the value as a ByteBuffer that is ready to read.
-	 * @return
+	 * @return ByteBuffer  &emsp;
 	 */
 	public ByteBuffer getValueAsBytes();
 }

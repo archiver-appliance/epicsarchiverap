@@ -56,8 +56,8 @@ public class EPICS2PBTypeMapping {
 	
 	/**
 	 * Get to the constructors that construct DBRTimeEvents from EPICS v3/v4 (JCA DBR etc) types this way.
-	 * @param type
-	 * @return
+	 * @param type ArchDBRTypes
+	 * @return typemap.get(type)
 	 */
 	public static EPICS2PBTypeMapping getPBClassFor(ArchDBRTypes type) {
 		return typemap.get(type);
@@ -65,7 +65,7 @@ public class EPICS2PBTypeMapping {
 
 	/**
 	 * Get a constructor that takes a JCA DBR and spits out a DBRTimeEvent
-	 * @return
+	 * @return JCADBRConstructor
 	 */
 	public Constructor<? extends DBRTimeEvent> getJCADBRConstructor() {
 		return JCADBRConstructor;
@@ -73,7 +73,7 @@ public class EPICS2PBTypeMapping {
 
 	/**
 	 * Get a constructor that takes a Data_EPICSV4 and spits out a DBRTimeEvent
-	 * @return
+	 * @return EPICSV4DBRConstructor
 	 */
 	public Constructor<? extends DBRTimeEvent> getEPICSV4DBRConstructor() {
 		return EPICSV4DBRConstructor;

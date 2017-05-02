@@ -147,7 +147,9 @@ public class LineByteStream implements Closeable {
 	 * While this is optimal to do, it means for raw responses, we'll be redoing some of the work and raw responses are 90% of the requests.
 	 * If in future, we determine that unescaping here is more optimal, this method has an unescape version in version control history.
 	 * Returns the same byte array as the input.
-	 * @param bar
+	 * @param bar ByteArray
+	 * @return bar ByteArray
+	 * @throws IOException  &emsp;
 	 */
 	public ByteArray readLine(ByteArray bar) throws IOException {
 		bar.reset();
@@ -196,6 +198,7 @@ public class LineByteStream implements Closeable {
 	/**
 	 * Seeks to the first new line after the current position in the rndAccFile.
 	 * The file pointer is located just after the first newline.
+	 * @throws IOException &emsp;
 	 */
 	public void seekToFirstNewLine() throws IOException {
 		if(lastReadPointer < 1L) {
@@ -208,7 +211,8 @@ public class LineByteStream implements Closeable {
 	/**
 	 * Seeks and positions the pointer to to the last line in the file.
 	 * The file pointer is located just before the last line so that readLine gets a valid line.
-	 * About the only thing once can do after this is to read a line and stop...
+	 * About the only thing once can do after this is to read a line and stop...	 
+	 * @throws IOException  &emsp;
 	 */
 	public void seekToBeforeLastLine() throws IOException {
 		buf = new byte[MAX_LINE_SIZE];
@@ -240,8 +244,8 @@ public class LineByteStream implements Closeable {
 	 * Seeks and positions the pointer to line previous to the specified position.
 	 * The file pointer is located just so that one can do a readline.
 	 * Note that this method is not efficient at all; so use with care.
-	 * @param posn
-	 * @throws IOException
+	 * @param posn  &emsp;
+	 * @throws IOException &emsp;
 	 */
 	public void seekToBeforePreviousLine(long posn) throws IOException {
 		// This is a variation of seekToBeforeLastLine

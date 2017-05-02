@@ -31,11 +31,11 @@ public class PVsMatchingParameter {
 	}
 	/**
 	 * Given a BPL request, get all the matching PVs
-	 * @param req
-	 * @param configService
-	 * @param includePVSThatDontExist - Some BPL requires us to include PVs that don't exist so that they can give explicit status
-	 * @param defaultLimit - The default value for the limit if the limit is not specified in the request.
-	 * @return
+	 * @param req HttpServletRequest 
+	 * @param configService  ConfigService 
+	 * @param includePVSThatDontExist Some BPL requires us to include PVs that don't exist so that they can give explicit status
+	 * @param defaultLimit The default value for the limit if the limit is not specified in the request.
+	 * @return LinkedList Matching PVs
 	 */
 	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService, boolean includePVSThatDontExist, int defaultLimit) {
 		LinkedList<String> pvNames = new LinkedList<String>();

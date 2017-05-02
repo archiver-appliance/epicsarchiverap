@@ -25,9 +25,9 @@ public class URIUtils {
 	/**
 	 * Parse the query string of a URI (typically used in archiver config strings) and return these as a name value pair hashmap.
 	 * We do not handle multiple values for the same param in this call; we simply replace previous names.
-	 * @param uri
-	 * @return
-	 * @throws Exception
+	 * @param uri URI
+	 * @return HashMap Parse the query string
+	 * @throws IOException  &emsp; 
 	 */
 	public static HashMap<String, String> parseQueryString(URI uri) throws IOException {
 		HashMap<String, String> ret = new HashMap<String, String>();
@@ -43,10 +43,10 @@ public class URIUtils {
 	
 	/**
 	 * If you do expect a param to have multiple values, use this method to get all the possible values for a name.
-	 * @param uri
-	 * @param paramName
-	 * @return
-	 * @throws IOException
+	 * @param uri URI 
+	 * @param paramName  &emsp;  
+	 * @return multiple values of a param
+	 * @throws IOException  &emsp; 
 	 */
 	public static List<String> getMultiValuedParamFromQueryString(URI uri, String paramName) throws IOException {
 		LinkedList<String> ret = new LinkedList<String>();

@@ -20,8 +20,8 @@ public class PVNames {
 	
 	/**
 	 * Remove the .VAL, .HIHI etc portion of a pvName and return the plain pvName
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return String The plain pvName
 	 */
 	public static String stripFieldNameFromPVName(String pvName) {
 		if(pvName == null || pvName.equals("")) { 
@@ -34,8 +34,8 @@ public class PVNames {
 	
 	/**
 	 * Remove the .VAL, .HIHI etc portion of an array of pvNames and return an array of plain pvNames
-	 * @param pvNames
-	 * @return
+	 * @param pvNames The name of PVs.
+	 * @return String An array of plain pvNames
 	 */
 	public static String[] stripFieldNameFromPVNames(String[] pvNames) {
 		if(pvNames == null || pvNames.length == 0) return pvNames;
@@ -62,8 +62,8 @@ public class PVNames {
 	/**
 	 * Remove .VAL from pv names if present.
 	 * Returned value is something that can be used to lookup for PVTypeInfo
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PVs.
+	 * @return String  normalizePVName
 	 */
 	public static String normalizePVName(String pvName) {
 		if(pvName == null || pvName.equals("")) { 
@@ -91,9 +91,9 @@ public class PVNames {
 	 * Gives you something you can use with caget to get the field associated with a PV even if you have a field already.
 	 * normalizePVNameWithField("ABC", "NAME") gives "ABC.NAME"
 	 * normalizePVNameWithField("ABC.HIHI", "NAME") gives "ABC.NAME"
-	 * @param pvName
-	 * @param fieldName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @param fieldName &emsp; 
+	 * @return String normalizePVNameWithField
 	 */
 	public static String normalizePVNameWithField(String pvName, String fieldName) {
 		if(pvName == null || pvName.equals("")) { 
@@ -114,8 +114,8 @@ public class PVNames {
 	
 	/**
 	 * Is this a field?
-	 * @param pvName
-	 * @return
+	 * @param pvName  The name of PV.
+	 * @return boolean True or False
 	 */
 	public static boolean isField(String pvName) {
 		if(pvName == null || pvName.equals("")) { 
@@ -147,9 +147,9 @@ public class PVNames {
 	 * Transfer any fields from the source name to the dest name
 	 * Transferring ABC:123 onto DEF:456 should give DEF:456
 	 * Transferring ABC:123.DESC onto DEF:456 should give DEF:456.DESC
-	 * @param srcName
-	 * @param destName
-	 * @return
+	 * @param srcName The source name
+	 * @param destName The destination name
+	 * @return String transferField
 	 */
 	public static String transferField(String srcName, String destName) { 
 		if(isField(srcName)) { 
@@ -161,9 +161,9 @@ public class PVNames {
 	
 	/**
 	 * A standard process for dealing with aliases, standard fields and the like.
-	 * @param pvName
-	 * @param configService
-	 * @return
+	 * @param pvName The name of PV.
+	 * @param configService ConfigService
+	 * @return PVTypeInfo  &emsp;
 	 */
 	public static PVTypeInfo determineAppropriatePVTypeInfo(String pvName, ConfigService configService) {
 		// First check for the pvName as is
@@ -203,9 +203,9 @@ public class PVNames {
 	
 	/**
 	 * A standard process for dealing with aliases, standard fields and the like; should be similar to determineAppropriatePVTypeInfo
-	 * @param pvName
-	 * @param configService
-	 * @return
+	 * @param pvName The name of PV.
+	 * @param configService ConfigService
+	 * @return ApplianceInfo  &emsp;
 	 */
 	public static ApplianceInfo determineAppropriateApplianceInfo(String pvName, ConfigService configService) {
 		// First check for the pvName as is
@@ -256,8 +256,8 @@ public class PVNames {
 	 * And we add the ',' character because some folks at LBL use this.
 	 * And we add the '#' character because some folks at FRIB use this.
 	 * And we add the '{' and the '}' character because some folks at BNL use this.
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return boolean True or False
 	 */
 	public static boolean isValidPVName(String pvName) {
 		if(pvName == null || pvName.isEmpty()) return false;
@@ -267,8 +267,8 @@ public class PVNames {
 
 	/**
 	 * Does this pvName imply a connection using PVAccess?
-	 * @param pvName
-	 * @return
+	 * @param pvName  The name of PV.
+	 * @return boolean True or False
 	 */
 	public static boolean isEPICSV4PVName(String pvName) { 
 		if(pvName == null || pvName.isEmpty()) return false;
@@ -278,8 +278,8 @@ public class PVNames {
 	
 	/**
 	 * Remove the pva:// prefix from the PV name if present.
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return String  &emsp;
 	 */
 	public static String stripPrefixFromName(String pvName) { 
 		if(pvName == null || pvName.isEmpty()) return pvName;

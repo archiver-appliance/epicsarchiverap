@@ -31,9 +31,9 @@ public class EngineConfigParser extends DefaultHandler {
 	
 	/**
 	 * Main import method. Pass in an input stream (perhaps from an HTTP POST) and get a list of PVConfigs.
-	 * @param configFileName
-	 * @return
-	 * @throws Exception
+	 * @param is InputStream
+	 * @return PVConfig The list of PVconfigs 
+	 * @throws Exception  &emsp;
 	 */
 	public static LinkedList<PVConfig> importEngineConfig(InputStream is) throws Exception {
 		SAXParserFactory sfac = SAXParserFactory.newInstance();

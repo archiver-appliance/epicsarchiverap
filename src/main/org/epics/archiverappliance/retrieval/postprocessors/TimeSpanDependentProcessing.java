@@ -12,8 +12,8 @@ import org.epics.archiverappliance.common.TimeSpan;
 public interface TimeSpanDependentProcessing {
 	/**
 	 * The data source resolution will call this method to give the post processor a chance to implement time span dependent post processing.
-	 * @param timeSpans
-	 * @return
+	 * @param timeSpans  &emsp; 
+	 * @return TimeSpanDependentProcessors List
 	 */
 	public List<TimeSpanDependentProcessor> generateTimeSpanDependentProcessors(List<TimeSpan> timeSpans);
 

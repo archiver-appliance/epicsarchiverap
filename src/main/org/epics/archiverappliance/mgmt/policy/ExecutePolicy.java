@@ -56,10 +56,11 @@ public class ExecutePolicy implements AutoCloseable {
 	}
 
 	/**
-	 * @param pvName
-	 * @param pvInfo
-	 * @return
-	 * @throws IOException
+	 * Compute the policy for a PV
+	 * @param pvName The name of PV.
+	 * @param pvInfo HashMap 
+	 * @return PolicyConfig  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public PolicyConfig computePolicyForPV(String pvName, HashMap<String, Object> pvInfo) throws IOException {
 		PyDictionary pvInfoDict = new PyDictionary();

@@ -7,14 +7,14 @@ public interface PVListener
 {
     /**
      * We issued a connection request to the underlying PV. 
-     * @param pv
+     * @param pv PV
      */
     public void pvConnectionRequestMade(PV pv);
 
 
     /**
      * Notification of a connection being successfully made.
-     * @param pv
+     * @param pv PV
      */
     public void pvConnected(PV pv);
     
@@ -45,8 +45,8 @@ public interface PVListener
     /**
      * Notification of a sample being dropped for some reason from within the PV.
      * Use to maintain counters
-     * @param pv
-     * @param reason
+     * @param pv PV
+     * @param reason DroppedReason
      */
     public void pvDroppedSample(PV pv, DroppedReason reason);
     

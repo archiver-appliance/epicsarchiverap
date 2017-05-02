@@ -34,7 +34,11 @@ public class DBR_Helper
 {
 
 
-    /** @return TIME_... type for this channel. */
+    /** 
+     * @param plain &emsp;
+     * @param type DBRType 
+     * @return DBRType TIME_... type for this channel. 
+    */
     public static DBRType getTimeType(final boolean plain, final DBRType type)
     {
         if (type.isDOUBLE())

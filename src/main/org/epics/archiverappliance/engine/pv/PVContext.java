@@ -114,10 +114,12 @@ public class PVContext {
 	 * 
 	 * @param name
 	 *            Channel name
+	 * @param jcaCommandThreadId The JCA Command thread.
+	 * @param conn_callback  &emsp;
 	 * @return reference to channel
 	 * @throws Exception
 	 *             on error
-	 * @see #releaseChannel(RefCountedChannel)
+	 * @see #releaseChannel
 	 */
 	public synchronized static RefCountedChannel getChannel(final String name, int jcaCommandThreadId, final ConnectionListener conn_callback) throws Exception {
 
@@ -181,10 +183,11 @@ public class PVContext {
 
 	/**
 	 * Add a command to the JCACommandThread.
-	 * @param pvName - The name of the PV that this applies to
-	 * @param jcaCommandThreadId - The JCA Command thread for this PV.
-	 * @param channel_ref - this can be null
-	 * @param command - The runnable that will run in the specified command thread 
+	 * @param pvName The name of the PV that this applies to
+	 * @param jcaCommandThreadId The JCA Command thread for this PV.
+	 * @param channel_ref this can be null
+	 * @param msg  &emsp;
+	 * @param command The runnable that will run in the specified command thread 
 	 */
 	public static void scheduleCommand(String pvName, int jcaCommandThreadId, RefCountedChannel channel_ref, String msg, final Runnable command) {
 		try { 
@@ -217,7 +220,7 @@ public class PVContext {
 	
 	/**
 	 * Return the channel count as this class sees it.
-	 * @return
+	 * @return int channels size
 	 */
 	public static int getChannelCount() { 
 		return channels.size();

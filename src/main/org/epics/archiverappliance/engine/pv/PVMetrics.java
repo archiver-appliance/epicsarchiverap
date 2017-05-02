@@ -148,6 +148,7 @@ public class PVMetrics {
    /**
     * add 1 to the count of the events were dropped because of the wrong time stamp
     * We keep a copy of the last incorrect timestamp we obtained and only increment if the current incorrect timestamp is different.
+    * @param incorrectTimeStamp  &emsp;
     */
 
 	public void addTimestampWrongEventCount(Timestamp incorrectTimeStamp) {
@@ -172,7 +173,7 @@ public class PVMetrics {
 	
 	/**
 	 * If the PV changes DBR_Type, we do not add it to the sample buffer. This keeps track of how many event were lost because of a type change.
-	 * @return
+	 * @return invalidTypeLostEventCount &emsp;
 	 */
 	public long getInvalidTypeLostEventCount() {
 		return invalidTypeLostEventCount;
@@ -270,7 +271,7 @@ public class PVMetrics {
 
 	/**
 	 * update the staorage size
-	 * @param timeevent
+	 * @param timeevent  DBRTimeEvent
 	 */
 	public void addStorageSize(final DBRTimeEvent timeevent) {
 		// int count =timeevent.getSampleValue().getElementCount();
@@ -287,6 +288,7 @@ public class PVMetrics {
  * @param pvName  the name of pv
  * @param controlPVname  the name of pv who controls this pv archived or not
  * @param startEpochSeconds  the starting  time and it is the the number of seconds since 1970/01/01
+ * @param dbrTypes ArchDBRTypes
  */
 	public PVMetrics(String pvName, String controlPVname, long startEpochSeconds, ArchDBRTypes dbrTypes) {
 		this.controlPVname = controlPVname;
@@ -314,7 +316,7 @@ public class PVMetrics {
 
 	/**
 	 * set the archiving status
-	 * @param isArchving
+	 * @param isArchving  &emsp;
 	 */
 	public void setArchving(boolean isArchving) {
 		this.isArchving = isArchving;
@@ -338,7 +340,7 @@ public class PVMetrics {
 
    /**
     * set the element count of this pv
-    * @param elementCount
+    * @param elementCount  &emsp;
     */
 	public void setElementCount(int elementCount) {
 		this.elementCount = elementCount;
@@ -354,7 +356,7 @@ public class PVMetrics {
 
 	/***
 	 * set the archiving mode
-	 * @param isMonitor
+	 * @param isMonitor  &emsp;
 	 */
 	public void setMonitor(boolean isMonitor) {
 		this.isMonitor = isMonitor;
@@ -386,7 +388,7 @@ public class PVMetrics {
 
 	/***
 	 * set the connection status
-	 * @param isConnected
+	 * @param isConnected  &emsp;
 	 */
 	public void setConnected(boolean isConnected) {
 		this.isConnected = isConnected;
@@ -560,6 +562,7 @@ public class PVMetrics {
 	/**
 	 * This is the timestamp of the last event from the IOC regardless of whether the timestamp is accurate or not 
 	 * Note this may not be what's written out into the archive that we used to compare against to enforce monotonically increasing eventstreams
+	 * @return HumanReadableLastEventFromIOCTimeStamp
 	 */
 	public String getLastEventFromIOCTimeStampStr() {
 		if(lastEventFromIOCTimeStamp == null) return "N/A";
@@ -586,7 +589,7 @@ public class PVMetrics {
 	
 	/**
 	 * Add the cnxlostepsecs and cnxregainedepsecs to the specified DBRTimeEvent and then reset local state. 
-	 * @param event
+	 * @param event DBRTimeEvent
 	 */
 	public void addConnectionLostRegainedFields(DBRTimeEvent event) {
 		if(firstDataAfterStartUp) {
@@ -620,9 +623,9 @@ public class PVMetrics {
 	
 	
 	/** Various metrics about SCAN sampling for this PV. 
-	 * @param start
-	 * @param end
-	 * @param scan_period
+	 * @param start  &emsp;
+	 * @param end  &emsp;
+	 * @param scan_period  &emsp;
 	 */
 	public void setScanProcessingTime(long start, long end, double scan_period) {
 		this.scanProcessingTime += (end - start);

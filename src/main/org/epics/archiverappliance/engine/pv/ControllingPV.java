@@ -21,12 +21,11 @@ public interface ControllingPV {
 
     /**
      * Should be the same as the method in PV
-     * @throws Exception
+     * @throws Exception  &emsp; 
      */
     public void start() throws Exception;
     /**
      * Should be the same as the method in PV
-     * @throws Exception
      */
     public void stop();
 

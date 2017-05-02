@@ -193,8 +193,8 @@ public class TimeUtils {
 
 	/**
 	 * In the protocol buffer storage plugin, we send the year as a short
-	 * @param year
-	 * @return
+	 * @param year Year
+	 * @return startOfYearInEpochSeconds  &emsp;
 	 */
 	public static long getStartOfYearInSeconds(short year) {
 		return startOfYearInEpochSeconds[year - START_OF_CACHE_FOR_YEAR_STARTEPOCHSECONDS];
@@ -215,9 +215,9 @@ public class TimeUtils {
 	
 	/**
 	 * Convert Java EPOCH seconds to a seconds into year given the start of the year in EPOCH seconds
-	 * @param epochseconds
-	 * @param startOfYearInSeconds
-	 * @return
+	 * @param epochseconds  &emsp;
+	 * @param startOfYearInSeconds  &emsp;
+	 * @return SecondsIntoYear The difference in Seconds
 	 */
 	public static int getSecondsIntoYear(long epochseconds, long startOfYearInSeconds) {
 		long diffInSecs = epochseconds - startOfYearInSeconds;
@@ -227,9 +227,8 @@ public class TimeUtils {
 
 	/**
 	 * Convert Java EPOCH seconds to a seconds into year
-	 * @param epochseconds
-	 * @param startOfYearInSeconds
-	 * @return
+	 * @param epochseconds  &emsp;
+	 * @return SecondsIntoYear The difference in Seconds
 	 */
 	public static int getSecondsIntoYear(long epochseconds) {
 		long startOfYearInSeconds = getStartOfYearInSeconds(epochseconds);
@@ -240,9 +239,8 @@ public class TimeUtils {
 	
 	/**
 	 * Determine year from java epoch seconds.
-	 * @param epochseconds
-	 * @param startOfYearInSeconds
-	 * @return
+	 * @param epochseconds &emsp;
+	 * @return YearForEpochSeconds &emsp;
 	 */
 	public static short computeYearForEpochSeconds(long epochseconds) {
 		// The JODA DateTime constructor takes millis
@@ -252,7 +250,7 @@ public class TimeUtils {
 	
 	/**
 	 * Get the current year in the UTC timezone
-	 * @return
+	 * @return CurrentYear &emsp;
 	 */
 	public static short getCurrentYear() {
 		DateTime dateTime = new DateTime(DateTimeZone.UTC);
@@ -261,7 +259,7 @@ public class TimeUtils {
 
 	/**
 	 * Gets the current epoch seconds in the UTC timezone
-	 * @return
+	 * @return currentEpochSeconds &emsp;
 	 */
 	public static long getCurrentEpochSeconds() {
 		DateTime dateTime = new DateTime(DateTimeZone.UTC);
@@ -270,7 +268,7 @@ public class TimeUtils {
 	
 	/**
 	 * Gets the current epoch milli seconds in the UTC timezone
-	 * @return
+	 * @return currentEpochMilliSeconds &emsp;
 	 */
 	public static long getCurrentEpochMilliSeconds() {
 		DateTime dateTime = new DateTime(DateTimeZone.UTC);
@@ -279,7 +277,7 @@ public class TimeUtils {
 
 	/**
 	 * Gets "now" as a Timestamp in the UTC timezone
-	 * @return
+	 * @return now A Timestamp in the UTC timezone
 	 */
 	public static Timestamp now() {
 		DateTime dateTime = new DateTime(DateTimeZone.UTC);
@@ -288,7 +286,7 @@ public class TimeUtils {
 	
 	/**
 	 * Gets "now" as a YearSecondTimestamp in the UTC timezone
-	 * @return
+	 * @return now A YearSecondTimestamp in the UTC timezone
 	 */
 	public static YearSecondTimestamp nowYTS() {
 		return convertToYearSecondTimestamp(now());
@@ -338,9 +336,9 @@ public class TimeUtils {
 	/**
 	 * Given a start time and an end time, this method breaks this span into a sequence of spans each of which fits within a year.
 	 * Used where data is partitioned by year....
-	 * @param start
-	 * @param end
-	 * @return
+	 * @param start The start time
+	 * @param end The end time
+	 * @return breakIntoYearlyTimeSpans   &emsp;
 	 */
 	public static List<TimeSpan> breakIntoYearlyTimeSpans(Timestamp start, Timestamp end) {
 		assert(start.getTime() <= end.getTime());
@@ -365,8 +363,9 @@ public class TimeUtils {
 	/**
 	 * Returns a partition name for the given epoch second based on the partition granularity.
 	 * 
-	 * @param epochseconds
-	 * @return
+	 * @param epochSeconds &emsp;
+	 * @param granularity Partition granularity of the file.
+	 * @return PartitionName &emsp;
 	 */
 	public static String getPartitionName(long epochSeconds, PartitionGranularity granularity) {
 		DateTime dateTime = new DateTime(epochSeconds*1000, DateTimeZone.UTC);
@@ -402,9 +401,9 @@ public class TimeUtils {
 	
 	/**
 	 * Given an epoch seconds and a granularity, this method gives you the first second in the next partition as epoch seconds.
-	 * @param epochSeconds
-	 * @param granularity
-	 * @return
+	 * @param epochSeconds &emsp;
+	 * @param granularity Partition granularity of the file.
+	 * @return NextPartitionFirstSecond &emsp;
 	 */
 	public static long getNextPartitionFirstSecond(long epochSeconds, PartitionGranularity granularity) {
 		DateTime dateTime = new DateTime(epochSeconds*1000, DateTimeZone.UTC);
@@ -437,9 +436,9 @@ public class TimeUtils {
 	
 	/**
 	 * Given an epoch seconds and a granularity, this method gives you the last second in the previous partition as epoch seconds.
-	 * @param epochSeconds
-	 * @param granularity
-	 * @return
+	 * @param epochSeconds &emsp;
+	 * @param granularity Partition granularity of the file.
+	 * @return PreviousPartitionLastSecond  &emsp;
 	 */
 	public static long getPreviousPartitionLastSecond(long epochSeconds, PartitionGranularity granularity) {
 		DateTime dateTime = new DateTime(epochSeconds*1000, DateTimeZone.UTC);
@@ -473,9 +472,10 @@ public class TimeUtils {
 	/**
 	 * Event rate rate limiting uses a tenths of a seconds units to cater to monitor intervals of 0.1 seconds, 0.5 seconds etc.. 
 	 * This converts a epochSeconds+nanos to time in terms of tenths of a second.
-	 * @param epochSeconds
-	 * @param nanos
-	 * @return
+	 * @param epochSeconds &emsp;
+	 * @param nanos &emsp;
+	 * @return TenthsOfASecond  &emsp;
+	 * @throws NumberFormatException  &emsp; 
 	 */
 	public static long convertToTenthsOfASecond(long epochSeconds, int nanos) throws NumberFormatException {
 		int tenthsPieceOfNanos = (nanos/(100000000));
@@ -489,8 +489,8 @@ public class TimeUtils {
 	/**
 	 * Whether we are in DST for a particular time in the servers default timezone.
 	 * Mostly used by Matlab.
-	 * @param ts
-	 * @return
+	 * @param ts Timestamp
+	 * @return boolean True or False
 	 */
 	public static boolean isDST(Timestamp ts) { 
 		return !DateTimeZone.getDefault().isStandardOffset(ts.getTime());
@@ -505,10 +505,10 @@ public class TimeUtils {
 	 * The last time span has the end as its end.
 	 * This is sometimes used to try to speed up retrieval when using post processors over a large time span. 
 	 * 
-	 * @param start
-	 * @param end
-	 * @param binSizeInSeconds
-	 * @return
+	 * @param start Timestamp start
+	 * @param end Timestamp end
+	 * @param binSizeInSeconds  &emsp;
+	 * @return TimeSpan The list of smaller time spans according to binSize
 	 */
 	public static List<TimeSpan> breakIntoIntervals(Timestamp start, Timestamp end, long binSizeInSeconds) {
 		assert(start.getTime() <= end.getTime());

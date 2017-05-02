@@ -15,7 +15,7 @@ import java.util.List;
  * An implementation of SampleValue for vector numbers.
  * @author mshankar
  *
- * @param <T>
+ * @param <T>  &emsp;
  */
 public class VectorValue <T extends Number> implements SampleValue {
 	private List<T> values;

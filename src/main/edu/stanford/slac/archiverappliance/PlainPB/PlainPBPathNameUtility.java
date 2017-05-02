@@ -78,11 +78,11 @@ public class PlainPBPathNameUtility {
 		
 		/**
 		 * Determine the chunk start anf end times from the name
-		 * @param pvName - Name of the PV. 
-		 * @param pathName - The name of the file (without the directory part).
-		 * @param pvFinalNameComponent - The substring of the PV that contributes to the file name. For example for a PV ABC:DEF, we convert to rootFolder/ABC/DEF:2012.... This is the DEF part of this pv name.
-		 * @param granularity - Partition granularity of the file.
-		 * @throws IOException
+		 * @param pvName Name of the PV. 
+		 * @param pathName The name of the file (without the directory part).
+		 * @param pvFinalNameComponent The substring of the PV that contributes to the file name. For example for a PV ABC:DEF, we convert to rootFolder/ABC/DEF:2012.... This is the DEF part of this pv name.
+		 * @param granularity Partition granularity of the file.
+		 * @throws IOException &emsp;
 		 */
 		StartEndTimeFromName(String pvName, String pathName, String pvFinalNameComponent, PartitionGranularity granularity) throws IOException {
 			String afterpvname = pathName.substring(pvFinalNameComponent.length());
@@ -172,12 +172,17 @@ public class PlainPBPathNameUtility {
 	 *  [ ] [|] [ ] [|] [ ]
 	 *  </pre>
 	 *  For the chunks that are eliminated, either the end time of the chunk is less than the start time or the start time of the chunk is greater than the end time.
-	 * @param parentFolder
-	 * @param pvName
-	 * @param start
-	 * @param end
-	 * @param granularity
-	 * @return
+	 * @param archPaths The replacement for NIO Paths 
+	 * @param rootFolder The root folder for the plugin.
+	 * @param pvName Name of the PV. 
+	 * @param startts Timestamp start
+	 * @param endts Timestamp end
+	 * @param extension The file extension.
+	 * @param granularity Partition granularity of the file.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key  PVNameToKeyMapping
+	 * @return Path A list of all the paths 
+	 * @throws IOException &emsp;
 	 */
 	public static Path[] getPathsWithData(ArchPaths archPaths, String rootFolder, final String pvName, final Timestamp startts, final Timestamp endts, final String extension, final PartitionGranularity granularity, final CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws IOException {
 		final long reqStartEpochSeconds = TimeUtils.convertToEpochSeconds(startts);
@@ -222,12 +227,16 @@ public class PlainPBPathNameUtility {
 	 * At any particular point in time, we are only writing to one partition, the "current" partition. 
 	 * For ETL, we need to know the partitions that are not being written into; that is, all the previous partitions.
 	 * This is typically everything except the file for the current partition
-	 * @param rootFolder - The root folder for the plugin
-	 * @param pvName - The name of the PV
-	 * @param currentTime - The time that we are running ETL for. To prevent border conditions, caller can add a buffer if needed.
-	 * @param extension - The file extension.
-	 * @param granularity - The granularity of this store.
-	 * @return
+	 * @param archPaths The replacement for NIO Paths 
+	 * @param rootFolder The root folder for the plugin
+	 * @param pvName The name of the PV
+	 * @param currentTime The time that we are running ETL for. To prevent border conditions, caller can add a buffer if needed.
+	 * @param extension The file extension.
+	 * @param granularity The granularity of this store.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key PVNameToKeyMapping
+	 * @return Path A list of all the paths 
+	 * @throws IOException &emsp;
 	 */
 	public static Path[] getPathsBeforeCurrentPartition(ArchPaths archPaths, String rootFolder, final String pvName, final Timestamp currentTime, final String extension, final PartitionGranularity granularity, final CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws IOException {
 		final long reqStartEpochSeconds = 1;
@@ -249,12 +258,15 @@ public class PlainPBPathNameUtility {
 	
 	/**
 	 * This method returns all the paths that could contain data for a PV sorted according to the name (which in our case should translate to time).
-	 * @param rootFolder
-	 * @param pvName
-	 * @param extension
-	 * @param granularity
-	 * @return
-	 * @throws IOException
+	 * @param archPaths The replacement for NIO Paths 
+	 * @param rootFolder The root folder for the plugin
+	 * @param pvName The name of the PV
+	 * @param extension The file extension.
+	 * @param granularity The granularity of this store.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key PVNameToKeyMapping
+	 * @return Path A list of all the paths 
+	 * @throws IOException &emsp;
 	 */
 	public static Path[] getAllPathsForPV(ArchPaths archPaths, String rootFolder, final String pvName, final String extension, final PartitionGranularity granularity, final CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws IOException {
 		ArrayList<Path> retval = new ArrayList<Path>();
@@ -284,12 +296,16 @@ public class PlainPBPathNameUtility {
 	 * The getData contract asks that we return the most recent known sample; even if this sample's timestamp is before the requested start/end time.
 	 * The way we do this is to ask for the file that potentially has most recent data before the start time.  
 	 * We take advantage of the sorting nature of getAllPathsForPV and work our way from the back
-	 * @param rootFolder
-	 * @param pvName
-	 * @param currentTime
-	 * @param extension
-	 * @param granularity
-	 * @return
+	 * @param archPaths The replacement for NIO Paths 
+	 * @param rootFolder The root folder for the plugin
+	 * @param pvName  Name of the PV. 
+	 * @param startts Timestamp start
+	 * @param extension The file extension.
+	 * @param granularity Partition granularity of the file.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key PVNameToKeyMapping
+	 * @return Path A list of all the paths 
+	 * @throws Exception &emsp;
 	 */
 	public static Path getMostRecentPathBeforeTime(ArchPaths archPaths, String rootFolder, final String pvName, final Timestamp startts, final String extension, final PartitionGranularity granularity, final CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws Exception {
 		if(logger.isDebugEnabled()) logger.debug(pvName + ": Looking for most recent file before " + TimeUtils.convertToISO8601String(startts));
@@ -323,12 +339,16 @@ public class PlainPBPathNameUtility {
 	 * The getData contract asks that we return the most recent known sample; even if this sample's timestamp is before the requested start/end time.
 	 * Another way we do this is to return the last event in the partition which ends before the start time.  
 	 * We take advantage of the sorting nature of getAllPathsForPV and work our way from the back
-	 * @param rootFolder
-	 * @param pvName
-	 * @param currentTime
-	 * @param extension
-	 * @param granularity
-	 * @return
+	 * @param archPaths The replacement for NIO Paths 
+	 * @param rootFolder The root folder for the plugin
+	 * @param pvName  Name of the PV. 
+	 * @param startts Timestamp start
+	 * @param extension The file extension.
+	 * @param granularity Partition granularity of the file.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key PVNameToKeyMapping
+	 * @return Path A list of all the paths 
+	 * @throws Exception &emsp;
 	 */
 	public static Path getPreviousPartitionBeforeTime(ArchPaths archPaths, String rootFolder, final String pvName, final Timestamp startts, final String extension, final PartitionGranularity granularity, final CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws Exception {
 		if(logger.isDebugEnabled()) logger.debug(pvName + ": Looking for previous partition before " + TimeUtils.convertToISO8601String(startts));
@@ -360,12 +380,13 @@ public class PlainPBPathNameUtility {
 	
 	/**
 	 * This method returns the path for a given pv for a given time based on the partitionGranularity
-	 * @param rootFolder
-	 * @param pvName
+	 * @param rootFolder The root folder for the plugin
+	 * @param pvName  Name of the PV. 
 	 * @param epochSeconds
-	 * @param extension
-	 * @param partitionGranularity
-	 * @return
+	 * @param extension The file extension.
+	 * @param granularity Partition granularity of the file.
+	 * @return Path A list of all the paths
+	 * @throws IOException &emsp;
 	 */
 	static Path getFileName(String rootFolder, String pvName, long epochSeconds, String extension, PartitionGranularity partitionGranularity, boolean createParentFolder, ArchPaths paths, CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws IOException {
 		String partitionNameComponent = TimeUtils.getPartitionName(epochSeconds, partitionGranularity);
@@ -389,8 +410,9 @@ public class PlainPBPathNameUtility {
 	/**
 	 * A pv is mapped to a path that can span folders.
 	 * This method returns the final name component of the pv -> folder/file mapping so that we can use in searching in the folder.
-	 * @param pvName
-	 * @return
+	 * @param pvName Name of the PV. 
+	 * @param pv2key PVNameToKeyMapping
+	 * @return pvFinalNameComponet  &emsp;
 	 */
 	private static String getFinalNameComponent(String pvName, PVNameToKeyMapping pv2key) {
 		Path pvPathAlone = Paths.get(pv2key.convertPVNameToKey(pvName));
@@ -402,12 +424,14 @@ public class PlainPBPathNameUtility {
 	 * A pv is mapped to a path that can span folders.
 	 * This method returns the parent path of the pv; we search for pv data in this folder.
 	 * 
-	 * @param paths
-	 * @param rootFolder
-	 * @param pvName
-	 * @param extension
-	 * @param granularity
-	 * @param compressionMode
+	 * @param paths ArchPaths - The replacement for NIO Paths 
+	 * @param rootFolder   The root folder for the plugin
+	 * @param pvName Name of the PV. 
+	 * @param granularity Partition granularity of the file.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key PVNameToKeyMapping
+	 * @return Path A list of all the paths
+	 * @throws IOException &emsp;
 	 * @return
 	 */
 	private static Path getParentPath(ArchPaths paths, String rootFolder, final String pvName, final PartitionGranularity granularity, CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws IOException {
@@ -431,11 +455,12 @@ public class PlainPBPathNameUtility {
 	/**
 	 * Determines the times for a chunk simply from the file name.
 	 * Bear in mind there is no guarantee that the file has data in this range. For that, @see PBFileInfo.
-	 * @param pvName
-	 * @param pbFile
-	 * @param partitionGranularity
-	 * @return
-	 * @throws IOException
+	 * @param pvName Name of the PV. 
+	 * @param finalNameComponent The final name component
+	 * @param partitionGranularity Partition granularity of the file.
+	 * @param pv2key PVNameToKeyMapping
+	 * @return fileNameTimes Start and End Time from name
+	 * @throws IOException  &emsp;
 	 */
 	public static StartEndTimeFromName determineTimesFromFileName(String pvName, String finalNameComponent, PartitionGranularity partitionGranularity, PVNameToKeyMapping pv2key) throws IOException {
 		String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
@@ -448,12 +473,15 @@ public class PlainPBPathNameUtility {
 	/**
 	 * Returns a NIO2 directory stream for the PV based on the extension and partition granularity.
 	 * The returned directory stream is not sorted; if you have logic that depends on a certain order, please sort before processing.
-	 * @param rootFolder
-	 * @param pvName
-	 * @param extension
-	 * @param granularity
-	 * @return
-	 * @throws IOException
+	 * @param paths ArchPaths - The replacement for NIO Paths 
+	 * @param rootFolder The root folder for the plugin
+	 * @param pvName Name of the PV. 
+	 * @param extension The file extension.
+	 * @param granularity Partition granularity of the file.
+	 * @param compressionMode Compression Mode
+	 * @param pv2key PVNameToKeyMapping
+	 * @return DirectoryStream  NIO2 directory stream;
+	 * @throws IOException  &emsp;
 	 */
 	private static DirectoryStream<Path> getDirectoryStreamsForPV(ArchPaths paths, String rootFolder, final String pvName, final String extension, final PartitionGranularity granularity, CompressionMode compressionMode, PVNameToKeyMapping pv2key) throws IOException {
 		try {

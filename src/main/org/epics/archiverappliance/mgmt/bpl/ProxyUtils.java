@@ -17,8 +17,8 @@ public class ProxyUtils {
 
 	/**
 	 * Route pathAndQuery to all appliances other than this appliance
-	 * @param configService
-	 * @param pathAndQuery
+	 * @param configService ConfigService
+	 * @param pathAndQuery  &emsp;
 	 */
 	public static void routeURLToOtherAppliances(ConfigService configService, String pathAndQuery) { 
 		ArrayList<String> otherURLs = new ArrayList<String>();

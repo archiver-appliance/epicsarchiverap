@@ -38,7 +38,8 @@ public class PrintFirstAndLastTimes {
 	}
 
 	/**
-	 * @param args
+	 * @param args main function arguments
+	 * @throws Exception &emsp; 
 	 */
 	public static void main(String[] args) throws Exception {
 		

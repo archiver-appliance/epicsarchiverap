@@ -14,26 +14,26 @@ import java.util.HashMap;
 public interface FieldValues {
 	/**
 	 * Not all events have field values. Does this event have any field values?
-	 * @return
+	 * @return true or false
 	 */
 	public boolean hasFieldValues();
 	
 	/**
 	 * Do the field values in this event represent an actual change?
-	 * @return
+	 * @return true or false
 	 */
 	public boolean isActualChange();
 	
 	/**
 	 * Get the fields as a HashMap.
 	 * If we have more than one entry with the same key, one of the entries is returned.
-	 * @return
+	 * @return The fields as a HashMap
 	 */
 	public HashMap<String, String> getFields();
 	
 	/**
-	 * @param fieldName
-	 * @return
+	 * @param fieldName the field name
+	 * @return The field value as a string
 	 */
 	public String getFieldValue(String fieldName);
 	
@@ -43,14 +43,14 @@ public interface FieldValues {
 	public void markAsActualChange();
 	
 	/**
-	 * @param fieldName
-	 * @param fieldValue
+	 * @param fieldName the field name 
+	 * @param fieldValue the field value
 	 */
 	public void addFieldValue(String fieldName, String fieldValue);
 
 	/**
-	 * @param fieldValues
-	 * @param markAsActualChange
+	 * @param fieldValues the field values as HashMap
+	 * @param markAsActualChange true or false
 	 */
 	public void setFieldValues(HashMap<String, String> fieldValues, boolean markAsActualChange);
 }

@@ -11,17 +11,17 @@ public interface SummaryStatsCollector {
 	/**
 	 * Add an event to the collector
 	 * It is quite possible that this is called from multiple threads.
-	 * @param e
+	 * @param e Event
 	 */
 	public void addEvent(Event e);
 	/**
 	 * Have any events been added? If not, we inherit the previous value.
-	 * @return
+	 * @return boolean True or False
 	 */
 	public boolean haveEventsBeenAdded();
 	/**
 	 * Get the statistic
-	 * @return
+	 * @return the statistic
 	 */
 	public double getStat();
 }

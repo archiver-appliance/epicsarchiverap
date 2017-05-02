@@ -23,13 +23,15 @@ public class Average
         average = 0.0;
     }
     
-    /** @return Average value */
+    /** @return average Average value */
     public double get()
     {
         return average;
     }
     
-    /** Update average by including given value */
+    /** Update average by including given value 
+     * @param value  &emsp;
+     */
     public void update(double value)
     {
         // Idea: Jump-start the average by using first sample

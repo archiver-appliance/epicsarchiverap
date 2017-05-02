@@ -161,10 +161,9 @@ public class CapacityPlanningData {
 	
 	/**
 	 * Return the difference between the appliance aggregate info as of "now" and from the time we last fetched the static data.
-	 * @param configService
-	 * @param applianceInfo
-	 * @return
-	 * @throws IOException
+	 * @param configService ConfigService
+	 * @return ApplianceAggregateInfo  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public ApplianceAggregateInfo getApplianceAggregateDifferenceFromLastFetch(ConfigService configService) throws IOException {
 		ApplianceAggregateInfo freshData = configService.getAggregatedApplianceInfo(configService.getAppliance(identity));

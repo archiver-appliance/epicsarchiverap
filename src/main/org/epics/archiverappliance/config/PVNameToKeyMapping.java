@@ -12,15 +12,16 @@ public interface PVNameToKeyMapping {
 	public void initialize(ConfigService configService) throws ConfigException;
 	/**
 	 * Return true if the given pvName contains any site specific separators.
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return boolean True or False
 	 */
 	public boolean containsSiteSeparators(String pvName);
 	public abstract String convertPVNameToKey(String pvName);
 	/**
 	 * Break a PV name into parts separated by the site specific separators
 	 * For examples, ABC:123:DEF gets broken into [ABC, 123, DEF]
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return String Parts separated by separators
 	 */
 	public String[] breakIntoParts(String pvName);
 

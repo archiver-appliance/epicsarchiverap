@@ -79,7 +79,7 @@ public class ArchivesHandler extends DefaultHandler {
 	 * <li>name - The name of the archives - for example, LCLS_SPARSE</li>
 	 * <li>path - Some internal configuration</li>
 	 * </ol>
-	 * @return
+	 * @return structs  &emsp;
 	 */
 	public LinkedList<HashMap<String, String>> getArchives() { 
 		return structs;

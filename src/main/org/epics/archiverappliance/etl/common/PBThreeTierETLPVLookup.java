@@ -181,7 +181,7 @@ public final class PBThreeTierETLPVLookup {
 	
 	/**
 	 * Cancel the ETL jobs for each of the ETL lifetime transitions and also remove from internal structures.
-	 * @param pvName
+	 * @param pvName The name of PV.
 	 */
 	public void deleteETLJobs(String pvName){
 		if(pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
@@ -211,8 +211,8 @@ public final class PBThreeTierETLPVLookup {
 	
 	/**
 	 * Get the internal state for all the ETL lifetime transitions for a pv
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return LinkedList  &emsp;
 	 */
 	public LinkedList<ETLPVLookupItems> getLookupItemsForPV(String pvName) {
 		LinkedList<ETLPVLookupItems> ret = new LinkedList<ETLPVLookupItems>();
@@ -236,9 +236,9 @@ public final class PBThreeTierETLPVLookup {
 
 	/**
 	 * Get the latest (last known) entry from the stores for this PV.
-	 * @param pvName
-	 * @return
-	 * @throws IOException
+	 * @param pvName The name of PV.
+	 * @return Event LatestEventFromDataStores
+	 * @throws IOException  &emsp;
 	 */
 	public Event getLatestEventFromDataStores(String pvName) throws IOException {
 		LinkedList<ETLPVLookupItems> etlEntries = getLookupItemsForPV(pvName);

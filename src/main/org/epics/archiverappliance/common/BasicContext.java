@@ -48,7 +48,7 @@ public class BasicContext implements Closeable {
 	/**
 	 * The PlainPB plugin deals with paths that can be translated into NIO by our implementation of Paths.
 	 * We generate one per context so that things can be closed correctly.
-	 * @return
+	 * @return paths ArchPaths
 	 */
 	public ArchPaths getPaths() {
 		return paths;
@@ -56,7 +56,7 @@ public class BasicContext implements Closeable {
 	
 	/**
 	 * Add a resource that needs to be closed once we finish the unit of work..
-	 * @param resource
+	 * @param resource Closeable resouce
 	 */
 	public void addResource(Closeable resource) {
 		resources.add(resource);
@@ -72,14 +72,14 @@ public class BasicContext implements Closeable {
 	}
 
 	/**
-	 * @return the retrievalExpectedDBRType
+	 * @return retrievalExpectedDBRType ArchDBRTypes
 	 */
 	public ArchDBRTypes getRetrievalExpectedDBRType() {
 		return retrievalExpectedDBRType;
 	}
 
 	/**
-	 * @return the pvNameFromRequest
+	 * @return pvNameFromRequest  &emsp;
 	 */
 	public String getPvNameFromRequest() {
 		return pvNameFromRequest;

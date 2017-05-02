@@ -19,17 +19,17 @@ public interface SimulationValueGenerator {
 	/**
 	 * Get the number of events in the stream; this can be based on the incoming DBR_type.
 	 * If you want the simulation stream decide on the number of samples (perhaps based on the year), return -1 here and an appropriate default is chosen. 
-	 * @param type
-	 * @return
+	 * @param type ArchDBRTypes  
+	 * @return The number of samples 
 	 */
 	public int getNumberOfSamples(ArchDBRTypes type);
 
 	/**
 	 * Get the value at a particular point in time. 
 	 * Many unit tests rely on the value being returned being absolutely reproducible given the time.
-	 * @param type
-	 * @param secondsIntoYear
-	 * @return
+	 * @param type ArchDBRTypes  
+	 * @param secondsIntoYear  &emsp; 
+	 * @return Sample value  &emsp; 
 	 */
 	public SampleValue getSampleValue(ArchDBRTypes type, int secondsIntoYear) ;
 }

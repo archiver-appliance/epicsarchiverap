@@ -45,8 +45,8 @@ public enum JCA2ArchDBRType {
 
 	/**
 	 * Get the equivalent archiver data type given a JCA DBR
-	 * @param d
-	 * @return
+	 * @param d JCA DBR
+	 * @return ArchDBRTypes  &emsp;
 	 */
 	public static ArchDBRTypes valueOf(DBR d) {
 		boolean isVector = (d.getCount() > 1);
@@ -75,8 +75,9 @@ public enum JCA2ArchDBRType {
 	 * Get the equivalent archiver data type given a JCA DBRType.
 	 * Note that in this case, we are not passing in DBR_TIME_DOUBLE etc; we are passing in DBR_DOUBLE and so on.
 	 * So we have an extra step to map from DBR_DOUBLE to DBR_TIME_DOUBLE and then from DBR_TIME_DOUBLE to the appropriate ArchDBRType 
-	 * @param d
-	 * @return
+	 * @param dt The JCA DBRType
+	 * @param elementCount  &emsp;
+	 * @return ArchDBRTypes  &emsp;
 	 */
 	public static ArchDBRTypes resolveFromCAInfo(DBRType dt, int elementCount) {
 		DBRType timedt = raw2timeDBRTypemappings.get(dt);
@@ -92,8 +93,8 @@ public enum JCA2ArchDBRType {
 	
 	/**
 	 * Get the JCA type appropriate for this arch dbr type.
-	 * @param archDBRTypes
-	 * @return
+	 * @param archDBRTypes  ArchDBRTypes 
+	 * @return DBRType The JCA type
 	 */
 	public static DBRType getJCATypeforArchDBRType(ArchDBRTypes archDBRTypes) {
 		return arch2JCA.get(archDBRTypes);
