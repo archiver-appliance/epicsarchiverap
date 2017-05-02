@@ -428,7 +428,10 @@ abstract public class ArchiveChannel {
 		return pv.getStateInfo();
 	}
 
-	/** Start archiving this channel. */
+	/** Start archiving this channel. 
+	 *
+	 * @throws Exception  &emsp;
+	 */
 	public final void start() throws Exception {
 		if (is_running)
 			return;
@@ -445,7 +448,7 @@ abstract public class ArchiveChannel {
 	/**
 	 * Stop archiving this channel
 	 * 
-	 * @throws Exception
+	 * @throws Exception  &emsp;
 	 */
 	public final void stop() throws Exception {
 		if (!is_running)
@@ -499,7 +502,8 @@ abstract public class ArchiveChannel {
 	/**
 	 * Enable or disable groups based on received value
 	 * 
-	 * @throws Exception
+	 * @param temptimeevent DBRTimeEvent
+	 * @throws Exception  &emsp;
 	 */
 	final private void handleEnablement(final DBRTimeEvent temptimeevent) throws Exception {
 		if (enablement == Enablement.Passive)
@@ -526,9 +530,9 @@ abstract public class ArchiveChannel {
 	 * one 'first' sample is archived. Derived class <b>must</b> call
 	 * <code>super()</code>.
 	 * 
-	 * @param value Value received from PV
+	 * @param timeevent DBRTimeEvent
 	 * @return true if the value was already written because it's the first value after startup or error, so there's no need to write that sample again.
-	 * @throws Exception
+	 * @throws Exception  &emsp; 
 	 */
 	protected boolean handleNewValue(final DBRTimeEvent timeevent) throws Exception {
 		synchronized (this) {
@@ -556,7 +560,7 @@ abstract public class ArchiveChannel {
 	/**
 	 * Start the metachannels
 	 * <p>
-	 * @throws Exception
+	 * @throws Exception &emsp; 
 	 */
 	public void startUpMetaChannels() throws Exception {
 		logger.debug("Starting up monitors on the fields for pv " + name);
@@ -584,7 +588,7 @@ abstract public class ArchiveChannel {
 	 * 'disconnected' info sample. Subclasses may override, but must call
 	 * <code>super()</code>.
 	 * 
-	 * @throws Exception
+	 * @throws Exception &emsp; 
 	 */
 	protected void handleDisconnected() throws Exception {
 		synchronized (this) {
@@ -600,9 +604,9 @@ abstract public class ArchiveChannel {
 	 * Add given sample to buffer, performing a back-in-time check, updating the
 	 * sample buffer error state.
 	 * 
-	 * @param value Value to archive
+	 * @param timeevent DBRTimeEvent
 	 * @return <code>false</code> if value failed back-in-time or future check, <code>true</code> if value was added.
-	 * @throws Exception
+	 * @throws Exception &emsp; 
 	 */
 	final protected boolean addValueToBuffer(final DBRTimeEvent timeevent) throws Exception {
 		// TODO See if this is repeated information.
@@ -654,7 +658,8 @@ abstract public class ArchiveChannel {
 	/**
 	 * Update the enablement state in case of change
 	 * 
-	 * @throws Exception
+	 * @param new_enabled_state  &emsp;
+	 * @throws Exception  &emsp;
 	 */
 
 	final private void updateEnabledState(final boolean new_enabled_state) throws Exception {
@@ -685,7 +690,7 @@ abstract public class ArchiveChannel {
 	/**
 	 * Judge whether the time stamp for this time event is too old or far in the future.
 	 * Increment appropriate counters in PVMetrics if this is the case.
-	 * @param timeevent 
+	 * @param timeevent  DBRTimeEvent
 	 * @return true when the time stamp of this timeevent is too old or far in the future. otherwise, false
 	 */
 
@@ -720,8 +725,8 @@ abstract public class ArchiveChannel {
 
 	/**
 	 * Return true if this event has the same timestamp as the last recorded event 
-	 * @param timeevent
-	 * @return
+	 * @param timeevent DBRTimeEvent
+	 * @return boolean True or False
 	 */
 	private boolean isSameTimeStamp(final DBRTimeEvent timeevent) {
 		Timestamp currentEventTimeStamp = timeevent.getEventTimeStamp();
@@ -757,8 +762,8 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Get the archive channel for a particular metachannel.
-	 * @param metaFieldName
-	 * @return
+	 * @param metaFieldName  &emsp;
+	 * @return boolean True or False 
 	 */
 	public boolean isMetaPVConnected(String metaFieldName) {
 		PV metaPV = metaPVs.get(metaFieldName);
@@ -770,7 +775,7 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Get the field names for which we have established channels.
-	 * @return
+	 * @return String the Meta PV names
 	 */
 	public Set<String> getMetaPVNames() {
 		return metaPVs.keySet();
@@ -778,7 +783,7 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Number of field names for which we have established channels.
-	 * @return
+	 * @return int  &emsp;
 	 */
 	public int getMetaChannelCount() { 
 		return metaPVs.size();
@@ -786,7 +791,7 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Get the number of connected field channels
-	 * @return
+	 * @return int  &emsp;
 	 */
 	public int getConnectedMetaChannelCount() { 
 		int connectedMetaFieldCount = 0;
@@ -801,7 +806,7 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Do any of the meta channels in this PV need starting up?
-	 * @return
+	 * @return boolean True or False 
 	 */
 	public boolean metaChannelsNeedStartingUp() {
 		for(PV metaPV : metaPVs.values()) {
@@ -816,7 +821,7 @@ abstract public class ArchiveChannel {
 
 	/**
 	 * Return the amount of time (in seconds) since we asked CAJ/JCA to connect to this channel.
-	 * @return
+	 * @return long  &emsp;
 	 */
 	public long getSecondsElapsedSinceSearchRequest() {
 		if(this.is_running && need_first_sample) { 
@@ -827,7 +832,7 @@ abstract public class ArchiveChannel {
 	}
 
 	/**
-	 * @return the jCACommandThreadID
+	 * @return int the jCACommandThreadID
 	 */
 	public int getJCACommandThreadID() {
 		return JCACommandThreadID;
@@ -843,7 +848,7 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Use this method to do a caget on the metadata..
-	 * @param context
+	 * @param context EngineContext
 	 */
 	public void updateMetadataOnceADay(EngineContext context) { 
 		if(this.pv != null) { 
@@ -862,7 +867,7 @@ abstract public class ArchiveChannel {
 	
 	/**
 	 * Combine the metadata from various sources and return the latest copy.
-	 * @return
+	 * @return HashMap  &emsp;
 	 */
 	public HashMap<String, String> getLatestMetadata() { 
 		HashMap<String, String> retVal = new HashMap<String, String>();

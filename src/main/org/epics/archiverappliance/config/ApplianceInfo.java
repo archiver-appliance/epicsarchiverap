@@ -42,7 +42,7 @@ public class ApplianceInfo implements Serializable {
 
 	/**
 	 * Get the management URL for this appliance
-	 * @return
+	 * @return mgmtURL The management URL
 	 */
 	public String getMgmtURL() {
 		return mgmtURL;
@@ -50,7 +50,7 @@ public class ApplianceInfo implements Serializable {
 
 	/**
 	 * Get the engine URL for this appliance
-	 * @return
+	 * @return engineURL The engine URL
 	 */
 	public String getEngineURL() {
 		return engineURL;
@@ -58,7 +58,7 @@ public class ApplianceInfo implements Serializable {
 	
 	/**
 	 * Get the retrieval URL for this appliance
-	 * @return
+	 * @return retrievalURL The retrieval URL
 	 */
 	public String getRetrievalURL() {
 		return retrievalURL;
@@ -66,7 +66,7 @@ public class ApplianceInfo implements Serializable {
 	
 	/**
 	 * Get the ETL URL for this appliance
-	 * @return
+	 * @return etlURL The ETL URL
 	 */
 	public String getEtlURL() {
 		return etlURL;
@@ -74,7 +74,7 @@ public class ApplianceInfo implements Serializable {
 
 	/**
 	 * The identity of this appliance.
-	 * @return
+	 * @return identify The appliance identity
 	 */
 	public String getIdentity() {
 		return identity;
@@ -94,7 +94,7 @@ public class ApplianceInfo implements Serializable {
 	/**
 	 * Returns the IP:port that is used for clustering.
 	 * For example, this could be localhost:16670 or archiver:17670 etc
-	 * @return
+	 * @return clusterInetPort The IP:port for cluster
 	 */
 	public String getClusterInetPort() {
 		return clusterInetPort;

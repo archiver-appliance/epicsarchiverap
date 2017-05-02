@@ -410,7 +410,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	
 	/**
 	 * Return a URL representation of this plugin suitable for parsing by StoragePluginURLParser
-	 * @return
+	 * @return ret A URL representation
 	 */
 	public String getURLRepresentation() {
 		try {
@@ -724,8 +724,8 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	
 	/**
 	 * Get last known timestamp for append purposes. If last event is not known, we return time(0)
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return Timestamp Last known Timestamp
 	 * @throws IOException
 	 */
 	private Timestamp getLastKnownTimestampForAppend(BasicContext context, String pvName) throws IOException {
@@ -817,7 +817,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 	 * Once this is true, we then include in the ETL list all partitions whose first event is earlier than <i>hold - gather</i> partitions.
 	 * For example, in a PARTITION_DAY, if you want to run ETL once every 7 days, but when you run you want to move 5 days worth of data to the dest, set hold to 7 and gather to 5.
 	 * Hold and gather default to a scenario where we aggressively push data to the destination as soon as it is available.    
-	 * @return
+	 * @return holdETLForPartions &emsp;
 	 */
 	public int getHoldETLForPartions() {
 		return holdETLForPartions;

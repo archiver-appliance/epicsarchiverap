@@ -10,7 +10,7 @@ import java.util.HashMap;
 public interface SummaryStatsCollectorAdditionalColumns extends SummaryStatsCollector {
 	/**
 	 * Get any additional statistics as a map of string &rarr; string
-	 * @return
+	 * @return HashMap additional Statistics 
 	 */
 	public HashMap<String, String> getAdditionalStats();
 }

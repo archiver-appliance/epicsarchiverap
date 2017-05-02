@@ -245,7 +245,8 @@ public class BPLServlet extends HttpServlet {
 	/**
 	 * The main method here is used only to generate documentation for the scripting guide. 
 	 * No other functionality is provided
-	 * @throws IOException
+	 * @param args  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public static void main(String[] args) throws IOException {
 		System.out.println("#Path mappings for mgmt BPLs");

@@ -6,11 +6,11 @@ import org.epics.archiverappliance.config.ConfigService;
 public class PVFactory {
 	/**
 	 * This is the constructor used by the MetaGet's - this is the initial step in adding a PV to the archiver where we determine some facts about the PV for the policies
-	 * @param name
-	 * @param configservice
-	 * @param jcaCommandThreadId
-	 * @param usePVAccess
-	 * @return
+	 * @param name  The PV name. 
+	 * @param configservice  The config service used by this pv 
+	 * @param jcaCommandThreadId The JCA Command thread.
+	 * @param usePVAccess  &emsp;
+	 * @return PV  &emsp;
 	 */
 	public static PV createPV(String name, ConfigService configservice, int jcaCommandThreadId, boolean usePVAccess) { 
 		if(usePVAccess) { 
@@ -22,13 +22,14 @@ public class PVFactory {
 	
 	/**
 	 * This is the constructor used by the ArchiveChannel to create the main PV.
-	 * @param name
-	 * @param configservice
-	 * @param isControlPV
-	 * @param archDBRTypes
-	 * @param jcaCommandThreadId
-	 * @param usePVAccess
-	 * @return
+	 * @param name The PV name.  
+	 * @param configservice The config service used by this pv 
+	 * @param isControlPV  &emsp;
+	 * @param archDBRTypes ArchDBRTypes
+	 * @param jcaCommandThreadId  The JCA Command thread.
+	 * @param usePVAccess Should we use PVAccess to connect to this PV.
+	 * @param useDBEProperties &emsp;
+	 * @return PV &emsp;
 	 */
 	public static PV createPV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean usePVAccess, boolean useDBEProperties) {
 		if(usePVAccess) { 

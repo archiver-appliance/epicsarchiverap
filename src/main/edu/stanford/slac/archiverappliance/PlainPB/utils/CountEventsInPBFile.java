@@ -25,7 +25,8 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 public class CountEventsInPBFile {
 	private static final Logger logger = Logger.getLogger(CountEventsInPBFile.class);
 	/**
-	 * @param args
+	 * @param args &emsp;
+	 * @throws Exception  &emsp;
 	 */
 	public static void main(String[] args) throws Exception {
 		for(String fileName : args) {

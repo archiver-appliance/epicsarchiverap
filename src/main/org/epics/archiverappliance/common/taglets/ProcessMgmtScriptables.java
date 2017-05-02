@@ -20,7 +20,8 @@ import java.util.LinkedList;
 public class ProcessMgmtScriptables {
 
 	/**
-	 * @param args
+	 * @param args  &emsp;
+	 * @throws Exception  &emsp;
 	 */
 	public static void main(String[] args) throws Exception {
 		class BPLParam { 

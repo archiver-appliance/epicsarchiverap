@@ -34,16 +34,21 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 	/**
 	 * @param name
 	 *            Name of the channel (PV)
+	 * @param writer  &emsp;
 	 * @param enablement
 	 *            How channel affects its groups
 	 * @param buffer_capacity
 	 *            Size of sample buffer
-	 * @param last_archived_value
-	 *            Last value from storage, or <code>null</code>.
+	 * @param last_timeestamp   &emsp;
 	 * @param period_estimate
 	 *            Estimated change period [seconds]
 	 * @param delta
 	 *            Value changes &ge; this value will be stored
+	 * @param configservice ConfigService
+	 * @param archdbrtype ArchDBRTypeS
+	 * @param controlPVname &emsp;
+	 * @param commandThreadID &emsp;
+	 * @param usePVAccess  &emsp;
 	 * @throws Exception
 	 *             On error in PV setup
 	 */
@@ -94,8 +99,8 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 	}
 
 	/**
-	 * @param value
-	 *            Value to test
+	 * @param timeevent
+	 *            DBRTimeEvent
 	 * @return <code>true</code> if this value is beyond 'delta' from the last
 	 *         value
 	 */

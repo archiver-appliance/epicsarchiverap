@@ -35,8 +35,8 @@ public class TimeSpan {
 	
 	/**
 	 * True if this timespan completely contains the other timestamp.
-	 * @param other
-	 * @return
+	 * @param other TimeSpan
+	 * @return boolean True or False
 	 */
 	public boolean contains(TimeSpan other) { 
 		return (this.startTime.before(other.startTime) || this.startTime.equals(other.startTime)) &&

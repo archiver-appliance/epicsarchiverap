@@ -33,9 +33,14 @@ public class RetrievalState {
 
 	/**
 	 * Get the data sources for a PV in the order of their lifetime id...
-	 * @param pvName
-	 * @return
-	 * @throws IOException
+	 * @param context BasicContext
+	 * @param pvName The name of PV.
+	 * @param typeInfo  PVTypeInfo
+	 * @param start Timestamp
+	 * @param end Timestamp
+	 * @param req HttpServletRequest
+	 * @return the data source for a PV
+	 * @throws IOException  &emsp; 
 	 */
 	public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) throws IOException {
 		if(typeInfo == null) {
@@ -147,8 +152,8 @@ public class RetrievalState {
 	
 	/**
 	 * To prevent infinite loops and such, we can specify that we do not proxy to external servers for this data retrieval request.
-	 * @param req
-	 * @return
+	 * @param req HttpServletRequest
+	 * @return boolean True or False
 	 */
 	public static boolean includeExternalServers(HttpServletRequest req) {
 		String skipExternalServersStr = req.getParameter("skipExternalServers");

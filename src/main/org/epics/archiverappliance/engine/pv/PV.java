@@ -44,15 +44,19 @@ public interface PV
 
 
     /** Add a new listener.
-     *  @see PVListener
+     * @param listener PVListener
+     * @see PVListener
      */
     public void addListener(PVListener listener);
 
-    /** Remove a listener. */
+    /** Remove a listener. 
+     * @param listener PVListener
+     */
     public void removeListener(PVListener listener);
 
     /** Start the PV: connect, get meta data, subscribe to updates,
      *  invoke {@link PVListener} for incoming values, ...
+     *  @throws Exception  &emsp;
      *  @see #addListener(PVListener)
      *  @see #stop()
      */
@@ -84,20 +88,20 @@ public interface PV
 
     /**
      * get the current DBRTimeEvent
-     * @return DBRTimeEvent
+     * @return DBRTimeEvent  &emsp; 
      */
 	DBRTimeEvent getDBRTimeEvent();
 
    /***
     * get the archive DBR types for this pv
-    * @return ArchDBRTypes
+    * @return ArchDBRTypes  &emsp;
     */
 	ArchDBRTypes getArchDBRTypes();
 
     /***
      * Making this PV as having metafields or not
      * If the PV has metafields, then internal state is created to maintain the latest values of these metafields.
-     * @param hasMetaField
+     * @param hasMetaField  &emsp;
      */
 	void markPVHasMetafields(boolean hasMetaField);
 	
@@ -118,20 +122,20 @@ public interface PV
 	
 	/**
 	 * Combine the metadata from various sources and return the latest copy.
-	 * @return
+	 * @return HashMap   &emsp;
 	 */
 	public HashMap<String, String> getLatestMetadata();
 	
 	/**
 	 * Do a caget and update the metadata that is cached in the PV.
-	 * @throws IllegalStateException
-	 * @throws CAException
+	 * @throws IllegalStateException  &emsp;
+	 * @throws CAException  &emsp;
 	 */
 	public void updateTotalMetaInfo() throws IllegalStateException, CAException;
 
 	/**
 	 * Get the MetaInfo for this PV; used during initial MetaGet phase
-	 * @return
+	 * @return MetaInfo  &emsp; 
 	 */
 	public MetaInfo getTotalMetaInfo();
 	
@@ -139,7 +143,7 @@ public interface PV
 
 	/**
 	 * Get any low level info as a display string; this is typically meant for debugging purposes..
-	 * @return
+	 * @return String Get any low level info
 	 */
 	public String getLowLevelChannelInfo();
     

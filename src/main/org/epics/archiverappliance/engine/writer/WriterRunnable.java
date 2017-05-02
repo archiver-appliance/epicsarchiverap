@@ -47,7 +47,9 @@ public class WriterRunnable implements Runnable {
 		this.configservice = configservice;
 	}
 
-	/** Add a channel's buffer that this thread reads */
+	/** Add a channel's buffer that this thread reads 
+	 * @param channel ArchiveChannel
+	 */
 	public void addChannel(final ArchiveChannel channel) {
 		addSampleBuffer(channel.getName(), channel.getSampleBuffer());
 	}

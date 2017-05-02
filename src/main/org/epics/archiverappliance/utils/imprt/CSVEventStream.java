@@ -33,8 +33,9 @@ public class CSVEventStream implements EventStream {
 	
 	/**
 	 * Create a CSVEventStream backed by a file. As we cannot tell the DBR type from the file alone, we need to specify the DBR type as part of the constructor.
-	 * @param fileName
-	 * @param type
+	 * @param pvName The name of PV.
+	 * @param fileName   &emsp; 
+	 * @param type ArchDBRTypes
 	 */
 	public CSVEventStream(String pvName, String fileName, ArchDBRTypes type) {
 		this.csvFileName = fileName;

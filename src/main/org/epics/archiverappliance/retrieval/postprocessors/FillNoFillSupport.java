@@ -11,7 +11,7 @@ public interface FillNoFillSupport {
 	public void doNotInheritValuesFromPrevioisBins();
 	/**
 	 * For some post processors, we do fill empty bins but with zeroes instead.
-	 * @return
+	 * @return boolean True or False
 	 */
 	public boolean zeroOutEmptyBins();
 }

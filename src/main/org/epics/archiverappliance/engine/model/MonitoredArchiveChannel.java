@@ -28,7 +28,20 @@ public class MonitoredArchiveChannel extends ArchiveChannel {
 	/** Estimated period of change in seconds */
 	final private double period_estimate;
 
-	/** @see ArchiveChannel#ArchiveChannel(String, Writer, Enablement,int,Timestamp,double,ConfigService,ArchDBRTypes,String,boolean) */
+       /** @see ArchiveChannel#ArchiveChannel
+	 * @param name pv's name
+	 * @param writer the writer for this pv
+	 * @param enablement  start or stop archiving this pv when channel is created
+	 * @param buffer_capacity the sample buffer's capacity for this pv
+	 * @param last_archived_timestamp the last time stamp when this pv was archived
+	 * @param period_estimate  &emsp;
+	 * @param configservice the configservice of new archiver
+	 * @param archdbrtype the archiving dbr type
+	 * @param controlPVname the pv's name who control this pv to start archiving or stop archiving
+	 * @param commandThreadID - this is the index into the array of JCA command threads that processes this context.
+	 * @param usePVAccess - Should we use PVAccess to connect to this PV.
+	 * @throws Exception error when creating archive channel for this pv
+	 */
 	public MonitoredArchiveChannel(final String name, final Writer writer,
 			final Enablement enablement, final int buffer_capacity,
 			final Timestamp last_archived_timestamp,

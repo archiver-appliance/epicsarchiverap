@@ -45,7 +45,8 @@ public class ValidateAndFixPBFile {
 	private static Logger logger = Logger.getLogger(ValidateAndFixPBFile.class.getName());
 	
 	/**
-	 * @param args
+	 * @param args  &emsp;
+	 * @throws Exception  &emsp;
 	 */
 	public static void main(String[] args) throws Exception {
 		if(args == null || args.length <= 0) { 

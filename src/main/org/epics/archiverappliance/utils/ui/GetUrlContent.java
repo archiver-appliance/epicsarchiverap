@@ -48,10 +48,7 @@ import org.json.simple.parser.ParseException;
  * @author mshankar
  * 
  */
-/**
- * @author mshankar
- *
- */
+
 public class GetUrlContent {
 	public static final String ARCHAPPL_COMPONENT = "ARCHAPPL_COMPONENT";
 	private static final Logger logger = Logger.getLogger(GetUrlContent.class);
@@ -59,8 +56,8 @@ public class GetUrlContent {
 	/**
 	 * Small utility method for getting the content of an URL as a string
 	 * Returns null in case of an exception.
-	 * @param urlStr
-	 * @return
+	 * @param urlStr URL
+	 * @return URL content 
 	 */
 	public static String getURLContent(String urlStr) {
 		try {
@@ -83,9 +80,9 @@ public class GetUrlContent {
 	
 	/**
 	 * Given a URL, get the contents as a JSON Array
-	 * @param urlStr
-	 * @param logErrors - if false, do not log any exceptions (they are expected)
-	 * @return
+	 * @param urlStr URL
+	 * @param logErrors If false, do not log any exceptions (they are expected)
+	 * @return URL content as JSONArray 
 	 */
 	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors) {
 		try {
@@ -104,8 +101,8 @@ public class GetUrlContent {
 	
 	/**
 	 * Given an URL, get the contents as a JSON Object
-	 * @param urlStr
-	 * @return
+	 * @param urlStr URL 
+	 * @return URL content as a JSON Object
 	 */
 	public static JSONObject getURLContentAsJSONObject(String urlStr) {
 		return getURLContentAsJSONObject(urlStr, true);
@@ -113,9 +110,9 @@ public class GetUrlContent {
 	
 	/**
 	 * Given an URL, get the contents as a JSON Object; control logging.
-	 * @param urlStr
-	 * @param logErrors - if false, do not log any exceptions (they are expected)
-	 * @return
+	 * @param urlStr URL 
+	 * @param logErrors If false, do not log any exceptions (they are expected)
+	 * @return URL content as a JSON Object
 	 */
 	public static JSONObject getURLContentAsJSONObject(String urlStr, boolean logErrors) {
 		try {
@@ -136,8 +133,8 @@ public class GetUrlContent {
 	 * Combine JSON arrays from multiple URL's in sequence and return a JSON Array.
 	 * We need the supress warnings here as JSONArray is a raw collection.
 	 * 
-	 * @param urls
-	 * @return
+	 * @param urlStrs multiple URLs
+	 * @return Combined JSON arrays
 	 */
 	@SuppressWarnings("unchecked")
 	public static JSONArray combineJSONArrays(List<String> urlStrs) {
@@ -167,8 +164,8 @@ public class GetUrlContent {
 	 * Combine JSON arrays of JSON objects from multiple URL's in sequence and sends them to the writer..
 	 * The difference from combineJSONArrays is that inserts a newline after each element.
 	 * 
-	 * @param urls
-	 * @return
+	 * @param urlStrs multiple URLs
+	 * @param out PrintWriter 
 	 */
 	public static void combineJSONArraysAndPrintln(List<String> urlStrs, PrintWriter out) {
 		out.println("[");
@@ -201,7 +198,7 @@ public class GetUrlContent {
 	/**
 	 * A static utilty method to combine JSON objects
 	 * @param dest Details from additionalDetails are added to this. 
-	 * @param additionalDetails
+	 * @param additionalDetails JSONObject
 	 */
 	@SuppressWarnings("unchecked")
 	public static void combineJSONObjects(HashMap<String, String> dest, JSONObject additionalDetails) {
@@ -211,7 +208,7 @@ public class GetUrlContent {
 	/**
 	 * A static utilty method to combine JSON objects
 	 * @param dest Details from additionalDetails are added to this.
-	 * @param additionalDetails
+	 * @param additionalDetails JSONArray
 	 */
 	@SuppressWarnings("unchecked")
 	public static void combineJSONArrays(LinkedList<Map<String, String>> dest, JSONArray additionalDetails) {
@@ -228,10 +225,10 @@ public class GetUrlContent {
 	
 	/**
 	 * Post a JSONArray to a remote server and get the response as a JSON object.
-	 * @param url
-	 * @param array
-	 * @return
-	 * @throws IOException
+	 * @param url URL
+	 * @param array JSONObject Array
+	 * @return JSONObject  &emsp; 
+	 * @throws IOException  &emsp; 
 	 */
 	public static JSONObject postDataAndGetContentAsJSONObject(String url, LinkedList<JSONObject> array) throws IOException {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -260,10 +257,10 @@ public class GetUrlContent {
 	
 	/**
 	 * Post a JSONArray to a remote server and get the response as a JSON object.
-	 * @param url
-	 * @param array
-	 * @return
-	 * @throws IOException
+	 * @param url  URL 
+	 * @param array JSONObject Array 
+	 * @return JSONArray  &emsp; 
+	 * @throws IOException  &emsp; 
 	 */
 	public static JSONArray postDataAndGetContentAsJSONArray(String url, LinkedList<JSONObject> array) throws IOException {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -292,10 +289,10 @@ public class GetUrlContent {
 
 	/**
 	 * Post a JSONObject to a remote server and get the response as a JSON object.
-	 * @param url
-	 * @param object
-	 * @return
-	 * @throws IOException
+	 * @param url URL
+	 * @param object A JSONObject 
+	 * @return JSONObject &emsp;
+	 * @throws IOException  &emsp;  
 	 */
 	public static JSONObject postObjectAndGetContentAsJSONObject(String url, JSONObject object) throws IOException {
 		CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -325,10 +322,11 @@ public class GetUrlContent {
 	
 	/**
 	 * Post a list of strings to the remove server as a CSV and return the results as a array of JSONObjects
-	 * @param url
-	 * @param array
-	 * @return
-	 * @throws IOException
+	 * @param url URL
+	 * @param paramName  &emsp; 
+	 * @param params a list of strings 
+	 * @return JSONArray  &emsp; 
+	 * @throws IOException  &emsp; 
 	 */
 	public static JSONArray postStringListAndGetContentAsJSONArray(String url, String paramName, LinkedList<String> params) throws IOException {
 		StringWriter buf = new StringWriter();
@@ -367,9 +365,8 @@ public class GetUrlContent {
 	
 	/**
 	 * Check if we get a valid response from this URL
-	 * @param urlStr
-	 * @return
-	 * @throws IOException
+	 * @param urlStr URL
+ 	 * @return boolean True or False
 	 */
 	public static boolean checkURL(String urlStr) {
 		try {
@@ -410,9 +407,9 @@ public class GetUrlContent {
 	/**
 	 * Get the contents of a redirect URL and use as reponse for the provided HttpServletResponse.
 	 * If possible, pass in error responses as well.
-	 * @param redirectURIStr
-	 * @param resp
-	 * @throws IOException
+	 * @param redirectURIStr  &emsp;  
+	 * @param resp  HttpServletResponse 
+	 * @throws IOException  &emsp; 
 	 */
 	public static void proxyURL(String redirectURIStr, HttpServletResponse resp) throws IOException { 
 		CloseableHttpClient httpclient = HttpClients.createDefault();

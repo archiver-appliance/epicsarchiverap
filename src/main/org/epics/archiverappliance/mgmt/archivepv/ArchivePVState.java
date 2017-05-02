@@ -261,11 +261,10 @@ public class ArchivePVState {
 	/**
 	 * Start archiving the PV as specified in the PVTypeInfo in configService.
 	 * This method expects to be called after the PVTypeInfo for this PV has been completely determined and has settled in the cache. 
-	 * @param pvName
-	 * @param configService
-	 * @param applianceInfoForPV
-	 * @return
-	 * @throws IOException
+	 * @param pvName The name of PV
+	 * @param configService ConfigService
+	 * @param applianceInfoForPV  ApplianceInfo
+	 * @throws IOException  &emsp;
 	 */
 	public static void startArchivingPV(String pvName, ConfigService configService, ApplianceInfo applianceInfoForPV) throws IOException {
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
@@ -331,8 +330,8 @@ public class ArchivePVState {
 	
 	/**
 	 * Convert a alias workflow into a workflow entry for a real PV and add the alias as a user specified param. 
-	 * @param userSpec
-	 * @param realName
+	 * @param userSpec UserSpecifiedSamplingParams 
+	 * @param realName The real name of PV.
 	 */
 	private void convertAliasToRealWorkflow(UserSpecifiedSamplingParams userSpec, String realName) {
 		try {

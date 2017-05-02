@@ -55,16 +55,17 @@ public class DataSourceResolution {
 	 * If the PV name that was specified in the method call is not to be found in the current appliance, the storage plugin object
 	 * stored in the UnitOfRetrieval object will be a PBOverHTTPStoragePlugin object.
 	 * </p>
-	 * @param pvName
-	 * @param start
-	 * @param end
-	 * @param typeInfo
-	 * @param context
-	 * @param postProcessor
-	 * @param req
-	 * @param resp
-	 * @param applianceForPV
-	 * @return
+	 * @param pvName The name of PV.
+	 * @param start  Timestamp
+	 * @param end Timestamp
+	 * @param typeInfo PVTypeInf 
+	 * @param context BasicContext
+	 * @param postProcessor PostProcessor
+	 * @param req HttpServletRequest
+	 * @param resp HttpServletResponse
+	 * @param applianceForPV ApplianceInfo
+	 * @return UnitOfRetrieval 
+	 * @throws IOException  &emsp; 
 	 * A LinkedList of UnitOfRetrieval objects that contain the storage plguin description, the storage plugin object used to retrieve data,
 	 * the type information of the PV, the PV name, the start and end timestamp, the postprocessor that should be used and the context in
 	 * which data should be retrieved.

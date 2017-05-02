@@ -28,10 +28,6 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadType;
  * @author mshankar
  *
  */
-/**
- * @author mshankar
- *
- */
 public enum ArchDBRTypes {
 	DBR_SCALAR_STRING(0, false, "String", PayloadType.SCALAR_STRING, true),      
 	DBR_SCALAR_SHORT(1, false, "short", PayloadType.SCALAR_SHORT, true),         
@@ -69,9 +65,11 @@ public enum ArchDBRTypes {
 	 * The integerMap is the value from db_access.h.
 	 * We get the archiver specific JCA type from the JCA javadoc.
 	 * JCA subsumes both scalars and vectors into a single type system; we separate them for space reasons.
-	 * @param fromdbaccess_h
-	 * @param d
-	 * @param isWaveform
+	 * @param fromdbaccess_h  &emsp;
+	 * @param isWaveform  &emsp;
+	 * @param primitivename  &emsp;
+	 * @param payloadType  &emsp;
+	 * @param isV3Type   &emsp;
 	 */
 	private ArchDBRTypes(int fromdbaccess_h, boolean isWaveform, String primitivename, PayloadType payloadType, boolean isV3Type) {
 		this.integerMap = fromdbaccess_h;
@@ -87,7 +85,7 @@ public enum ArchDBRTypes {
 
 	/**
 	 * Get a integer assigned to this type as defined in db_access.h 
-	 * @return
+	 * @return integerMap  &emsp;
 	 */
 	public int getIntegerMap() {
 		return integerMap;
@@ -95,7 +93,7 @@ public enum ArchDBRTypes {
 
 	/**
 	 * Is this thing a vector (or in EPICS terms, a waveform).
-	 * @return
+	 * @return isWaveForm True if a waveform
 	 */
 	public boolean isWaveForm() {
 		return isWaveForm;
@@ -103,8 +101,8 @@ public enum ArchDBRTypes {
 
 	/**
 	 * This is used to reverse map from the PB Payloadtype enum into a DBR type
-	 * @param intval
-	 * @return
+	 * @param payloadtype PayloadType
+	 * @return ArchDBRTypes &emsp;
 	 */
 	public static ArchDBRTypes valueOf(PayloadType payloadtype) {
 		return PBTypeReverseMapping.get(payloadtype);

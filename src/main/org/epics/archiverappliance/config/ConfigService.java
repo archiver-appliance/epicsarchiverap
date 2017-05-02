@@ -113,7 +113,8 @@ public interface ConfigService {
 
 	/**
 	 * If you have a null constructor and need a ServletContext, implement this method.
-	 * @param sce
+	 * @param sce ServletContext
+	 * @throws ConfigException  &emsp;
 	 */
 	public void initialize(ServletContext sce) throws ConfigException;
 	
@@ -122,7 +123,7 @@ public interface ConfigService {
 	 * We expect to live within a servlet container. 
 	 * This call returns the full path to the WEB-INF folder of the webapp as it is deployed in the container.
 	 * Is typically a call to the <code>servletContext.getRealPath("WEB-INF/")</code> 
-	 * @return
+	 * @return String WebInfFolder &emsp;
 	 */
 	public String getWebInfFolder(); 
 	
@@ -130,7 +131,7 @@ public interface ConfigService {
 	 * This method is called after the mgmt WAR file has started up and set up the cluster and recovered data from persistence.
 	 * Each appliance's mgmt war is responsible for calling this method on the other components (engine, etl and retrieval) using BPL.
 	 * Until this method is called on all the web apps, the cluster is not considered to have started up.
-	 * @throws ConfigException
+	 * @throws ConfigException  &emsp;
 	 */
 	public void postStartup() throws ConfigException;
 	
@@ -138,7 +139,7 @@ public interface ConfigService {
 
 	/**
 	 * Used for inter-appliance startup checks.
-	 * @return
+	 * @return STARTUP_SEQUENCE  &emsp; 
 	 */
 	public STARTUP_SEQUENCE getStartupState();
 	
@@ -146,6 +147,7 @@ public interface ConfigService {
 	
 	/**
 	 * Have we completed all the startup steps?
+	 * @return boolean True or False
 	 */
 	public boolean isStartupComplete();
 	
@@ -163,51 +165,51 @@ public interface ConfigService {
 	static final String DEFAULT_ARCHAPPL_PROPERTIES_FILENAME = "archappl.properties";
 	/**
 	 * An arbitrary list of name/value pairs can be specified in a file called archappl.properties that is loaded from the classpath. 
-	 * @return
+	 * @return  Properties &emsp;
 	 */
 	public Properties getInstallationProperties();
 	
 	/**
 	 * Get all the appliances in this cluster.
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
-	 * @return
+	 * @return ApplianceInfo &emsp;
 	 */
 	public Iterable<ApplianceInfo> getAppliancesInCluster();
 	
 	
 	/**
 	 * Get the appliance information for this appliance.
-	 * @return
+	 * @return ApplianceInfo  &emsp;
 	 */
 	public ApplianceInfo getMyApplianceInfo();
 	
 	/**
 	 * Given an identity of an appliance, return the appliance info for that appliance
-	 * @param identity
-	 * @return
+	 * @param identity The appliance identify 
+	 * @return ApplianceInfo &emsp;
 	 */
 	public ApplianceInfo getAppliance(String identity);
 	
 	/**
 	 * Get an exhaustive list of all the PVs this cluster of appliances knows about
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
-	 * @return
+	 * @return String AllPVs &emsp;
 	 */
 	public Iterable<String> getAllPVs();
 	
 	/**
 	 * Given a PV, get us the appliance that is responsible for archiving it.
 	 * Note that this may be null as the assignment of PV's to appliances can take some time. 
-	 * @param pvName
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return ApplianceInfo &emsp;
 	 */
 	public ApplianceInfo getApplianceForPV(String pvName);
 	
 	/**
 	 * Get all PVs being archived by this appliance.
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
-	 * @param info
-	 * @return
+	 * @param info ApplianceInfo
+	 * @return string All PVs being archiveed by this appliance
 	 */
 	public Iterable<String> getPVsForAppliance(ApplianceInfo info);
 	
@@ -215,7 +217,7 @@ public interface ConfigService {
 	/**
 	 * Get all the PVs for this appliance.
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
-	 * @return
+	 * @return String All PVs being archiveed for this appliance
 	 */
 	public Iterable<String> getPVsForThisAppliance();
 	
@@ -223,23 +225,25 @@ public interface ConfigService {
 	/**
 	 * Is this PV archived on this appliance.
 	 * This method also checks aliases and fields.
-	 * @return
+	 * @param pvName The name of PV.
+	 * @return boolean True or False
 	 */
 	public boolean isBeingArchivedOnThisAppliance(String pvName);
 	
 
 	/**
 	 * Get the pvNames for this appliance matching the given regex.
-	 * @param nameToMatch
-	 * @return
+	 * @param nameToMatch  &emsp;
+	 * @return string PVsForApplianceMatchingRegex   &emsp;
 	 */
 	public Set<String> getPVsForApplianceMatchingRegex(String nameToMatch);
 
 	
 	/**
 	 * Make changes in the config service to register this PV to an appliance
-	 * @param pvName
-	 * @param applianceInfo
+	 * @param pvName The name of PV. 
+	 * @param applianceInfo ApplianceInfo 
+	 * @throws AlreadyRegisteredException  &emsp;
 	 */
 	public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException;
 
@@ -247,8 +251,8 @@ public interface ConfigService {
 	/**
 	 * Gets information about a PV's type, i.e its DBR type, graphic limits etc.
 	 * This information is assumed to be somewhat static and is expected to come from a cache if possible as it is used in data retrieval.
-	 * @param pvName
-	 * @return
+	 * @param pvName  The name of PV. 
+	 * @return PVTypeInfo  &emsp;
 	 */
 	public PVTypeInfo getTypeInfoForPV(String pvName);
 	
@@ -256,15 +260,15 @@ public interface ConfigService {
 	 * Update the type information about a PV; updating both ther persistent and cached versions of the information. 
 	 * Clients are not expected to call this method a million times a second. 
 	 * In general, this is expected to be called when archiving a PV for the first time, or perhaps when an appserver startups etc...
-	 * @param pvName
-	 * @param typeInfo
+	 * @param pvName The name of PV. 
+	 * @param typeInfo PVTypeInfo
 	 */
 	public void updateTypeInfoForPV(String pvName, PVTypeInfo typeInfo);
 	
 	
 	/**
 	 * Remove the pv from all cached and persisted configuration.
-	 * @param pvName
+	 * @param pvName The name of PV. 
 	 */
 	public void removePVFromCluster(String pvName);
 
@@ -272,36 +276,38 @@ public interface ConfigService {
 	/**
 	 * Facilitates various optimizations for BPL that uses appliance wide information by caching and maintaining this information on a per appliance basis
 	 * 
-	 * @return
+	 * @param applianceInfo ApplianceInfo 
+	 * @return ApplianceAggregateInfo  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public ApplianceAggregateInfo getAggregatedApplianceInfo(ApplianceInfo applianceInfo) throws IOException;
 	
 	/**
 	 * The workflow for requesting a PV to be archived consists of multiple steps
 	 * This method adds a PV to the persisted list of PVs that are currently engaged in this workflow in addition to any user specified overrides
-	 * @param pvName
+	 * @param pvName The name of PV. 
 	 * @param userSpecifiedSamplingParams - Use a null contructor for userSpecifiedSamplingParams if no override specified.
 	 */
 	public void addToArchiveRequests(String pvName, UserSpecifiedSamplingParams userSpecifiedSamplingParams);
 	
 	/**
 	 * Update the archive request (mostly with aliases) if and only if we have this in our persistence.
-	 * @param pvName
-	 * @param userSpecifiedSamplingParams
+	 * @param pvName  The name of PV. 
+	 * @param userSpecifiedSamplingParams  &emsp;
 	 */
 	public void updateArchiveRequest(String pvName, UserSpecifiedSamplingParams userSpecifiedSamplingParams);
 	
 	/**
 	 * Gets a list of PVs that are currently engaged in the archive PV workflow
-	 * @return
+	 * @return String ArchiveRequestsCurrentlyInWorkflow  &emsp;
 	 */
 	public Set<String> getArchiveRequestsCurrentlyInWorkflow();
 	
 	
 	/**
 	 * Is this pv in the archive request workflow. 
-	 * @param pvname
-	 * @return
+	 * @param pvname The name of PV. 
+	 * @return boolean True or False
 	 */
 	public boolean doesPVHaveArchiveRequestInWorkflow(String pvname);
 	
@@ -316,15 +322,15 @@ public interface ConfigService {
 	
 	/**
 	 * Returns any user specified parameters for the archive request. 
-	 * @param pvName
-	 * @return
-	 */
+	 * @param pvName  The name of PV. 
+	 * @return UserSpecifiedSamplingParams  &emsp;
+	 */ 
 	public UserSpecifiedSamplingParams getUserSpecifiedSamplingParams(String pvName);
 	
 	/**
 	 * Mark this pv as having it archive pv request completed and pull this request out of persistent store
 	 * Can be used in the case of aborting a PV archive request as well
-	 * @param pvName
+	 * @param pvName  The name of PV. 
 	 */
 	public void archiveRequestWorkflowCompleted(String pvName);
 	
@@ -332,7 +338,7 @@ public interface ConfigService {
 	/**
 	 * Get a list of extra fields that are obtained when we initially make a request for archiving.
 	 * These are used in the policies to make decisions on how to archive the PV.
-	 * @return
+	 * @return String ExtraFields  &emsp;
 	 */
 	public String[] getExtraFields();
 	
@@ -342,54 +348,55 @@ public interface ConfigService {
 	 * These are used when displaying the PV in visualization tools like the ArchiveViewer as additional information for the PV.
 	 * Some of these could be archived along with the PV but need not be. 
 	 * In this case, the engine simply maintains the latest copy in memory and this is served up when data from the engine in included in the stream.
-	 * @return
+	 * @return String RuntimeFields
 	 */
 	public Set<String> getRuntimeFields();
 
 	
 	/**
 	 * Register an alias
-	 * @param aliasName
-	 * @param realName - This is the name under which the PV will be archived under
+	 * @param aliasName &emsp;
+	 * @param realName This is the name under which the PV will be archived under
 	 */
 	public void addAlias(String aliasName, String realName);
 	
 	
 	/**
 	 * Remove an alias for the specified realname
-	 * @param aliasName
-	 * @param realName - This is the name under which the PV will be archived under
+	 * @param aliasName  &emsp;
+	 * @param realName This is the name under which the PV will be archived under
 	 */
 	public void removeAlias(String aliasName, String realName);
 	
 	
 	/**
 	 * Get all the aliases in the system. This is used for matching during glob requests in the UI.
-	 * @return
+	 * @return String AllAliases &emsp; 
 	 */
 	public List<String> getAllAliases();
 
 	/**
 	 * Gets the .NAME field for a PV if it exists. Otherwise, this returns null
-	 * @param aliasName
-	 * @return
+	 * @param aliasName &emsp;
+	 * @return String RealNameForAlias
 	 */
 	public String getRealNameForAlias(String aliasName);
 	
 	/**
 	 * Return the text of the policy for this installation.
 	 * Gets you an InputStream; remember to close it.
-	 * @return
+	 * @return InputStream  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public InputStream getPolicyText() throws IOException;
 
 	/**
 	 * Given a pvName (for now, we should have a pv details object of some kind soon), determine the policy applicable for archiving this PV.
-	 * @param pvName
-	 * @param metaInfo
-	 * @param userSpecParams
-	 * @return
-	 * @throws IOException
+	 * @param pvName The name of PV.
+	 * @param metaInfo The MetaInfo of PV
+	 * @param userSpecParams UserSpecifiedSamplingParams 
+	 * @return  PolicyConfig  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public PolicyConfig computePolicyForPV(String pvName, MetaInfo metaInfo, UserSpecifiedSamplingParams userSpecParams) throws IOException;
 	
@@ -397,8 +404,8 @@ public interface ConfigService {
 	/**
 	 * Return a map of name to description of all the policies in the system
 	 * This is used to drive a dropdown in the UI.
-	 * @return
-	 * @throws IOException
+	 * @return HashMap  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public HashMap<String, String> getPoliciesInInstallation() throws IOException;
 	
@@ -409,28 +416,28 @@ public interface ConfigService {
 	 * This method lists all these fields.
 	 * Requests for archiving these fields are deferred to and combined with the request for archiving the .VAL.
 	 * We also assume that the data type (double/float) for these fields is the same as the .VAL.  
-	 * @return
-	 * @throws IOException
+	 * @return String  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public List<String> getFieldsArchivedAsPartOfStream() throws IOException;
 	
 	
 	/**
 	 * Returns a TypeSystem object that is used to convert from JCA DBR's to Event's (actually, DBRTimeEvents)
-	 * @return
+	 * @return TypeSystem  &emsp;
 	 */
 	public TypeSystem getArchiverTypeSystem();
 	
 	
 	/**
 	 * Which component is this configservice instance.
-	 * @return
+	 * @return WAR_FILE  &emsp;
 	 */
 	public WAR_FILE getWarFile();
 
 	/**
 	 * Returns the runtime state for the retrieval app
-	 * @return
+	 * @return RetrievalState &emsp;
 	 */
 	public RetrievalState getRetrievalRuntimeState();
 	
@@ -438,33 +445,33 @@ public interface ConfigService {
 	/**
 	 * Return the runtime state for ETL.
 	 * This may eventually be moved to a RunTime class but that would still start from the configservice.
-	 * @return
+	 * @return PBThreeTierETLPVLookup &emsp;
 	 */
 	public PBThreeTierETLPVLookup getETLLookup();
 	
 	
 	/**
 	 * Return the runtime state for the engine. 
-	 * @return
+	 * @return EngineContext &emsp;
 	 */
 	public EngineContext getEngineContext();
 	
 	
 	/**
 	 * Return the runtime state for the mgmt webapp.
-	 * @return
+	 * @return  MgmtRuntimeStat &emsp;
 	 */
 	public MgmtRuntimeState getMgmtRuntimeState();
 	
 	/**
 	 * Is this appliance component shutting down?
-	 * @return
+	 * @return boolean True or False
 	 */
 	public boolean isShuttingDown();
 	
 	/**
 	 * Add an appserver agnostic shutdown hook; for example, to close the CA channels on shutdown
-	 * @param runnable
+	 * @param runnable Runnable
 	 */
 	public void addShutdownHook(Runnable runnable);
 	
@@ -477,7 +484,7 @@ public interface ConfigService {
 	
 	/**
 	 * Get the event bus used for events within this appliance.
-	 * @return
+	 * @return  EventBus &emsp;
 	 */
 	public EventBus getEventBus();
 	
@@ -486,7 +493,7 @@ public interface ConfigService {
 	 * This product has the ability to proxy data from other archiver data servers.
 	 * We currently integrate with Channel Archiver XMLRPC data servers and other EPICS Archiver Appliance clusters. 
 	 * Get a list of external Archiver Data Servers that we know about.
-	 * @return
+	 * @return Map ExternalArchiverDataServers
 	 */
 	public Map<String, String> getExternalArchiverDataServers();
 
@@ -495,6 +502,7 @@ public interface ConfigService {
 	 * Add a external Archiver Data Server into the system.
 	 * @param serverURL - For Channel Archivers, this is the URL to the XML-RPC server. For other EPICS Archiver Appliance clusters, this is the <code>data_retrieval_url</code> of the cluster as defined in the <code>appliances.xml</code>.
 	 * @param archivesCSV - For Channel Archivers, this is a comma separated list of indexes. For other EPICS Archiver Appliance clusters, this is the string <i>pbraw</i>.
+	 * @throws IOException  &emsp;
 	 */
 	public void addExternalArchiverDataServer(String serverURL, String archivesCSV) throws IOException;
 
@@ -503,6 +511,7 @@ public interface ConfigService {
 	 * Note; we may need to restart the entire cluster for this change to take effect.
 	 * @param serverURL - For Channel Archivers, this is the URL to the XML-RPC server. For other EPICS Archiver Appliance clusters, this is the <code>data_retrieval_url</code> of the cluster as defined in the <code>appliances.xml</code>.
 	 * @param archivesCSV - For Channel Archivers, this is a comma separated list of indexes. For other EPICS Archiver Appliance clusters, this is the string <i>pbraw</i>.
+	 * @throws IOException  &emsp;
 	 */
 	public void removeExternalArchiverDataServer(String serverURL, String archivesCSV) throws IOException;
 
@@ -511,7 +520,8 @@ public interface ConfigService {
 	 * The servers are sorted in order of the start seconds. 
 	 * Note: this only applies to Channel Archiver XML RPC servers.
 	 * For proxying external EPICS Archiver Appliance clusters, we do not cache the PV's that are being archived on the external system. 
-	 * @param pvName
+	 * @param pvName The name of PV.
+	 * @return ChannelArchiverDataServerPVInfo  &emsp;
 	 */
 	public List<ChannelArchiverDataServerPVInfo> getChannelArchiverDataServers(String pvName);
 	
@@ -527,7 +537,7 @@ public interface ConfigService {
 	/**
 	 *  Implementation for converting a PV name to something that forms the prefix of a chunk's key.
 	 *  See @see{PVNameToKeyMapping} for more details.
-	 * @return
+	 * @return PVNameToKeyMapping  &emsp;
 	 */
 	public PVNameToKeyMapping getPVNameToKeyConverter();
 	
@@ -536,7 +546,7 @@ public interface ConfigService {
 	
 	/**
 	 * Get a set of PVs that have been paused in this appliance.
-	 * @return
+	 * @return String  &emsp;
 	 */
 	public Set<String> getPausedPVsInThisAppliance();
 	
@@ -549,21 +559,21 @@ public interface ConfigService {
 	 * You can optionally load values for named flags from a file by specifying the ARCHAPPL_NAMEDFLAGS_PROPERTIES_FILE_PROPERTY property in archappl.properties.
 	 * This method gets the value of the specified named flag.
 	 * If the flag has not been defined before in the cluster, this method will return false.  
-	 * @param name
-	 * @return
+	 * @param name  &emsp;
+	 * @return boolean True or False
 	 */
 	public boolean getNamedFlag(String name);
 
 	/**
 	 * Sets the value of the named flag specified by name to the specified value
-	 * @param name
-	 * @param value
+	 * @param name  &emsp;
+	 * @param value   &emsp;
 	 */
 	public void setNamedFlag(String name, boolean value);
 	
 	/**
 	 * Return the names of all the named flags that we know about
-	 * @return
+	 * @return String  &emsp;
 	 */
 	public Set<String> getNamedFlagNames();
 }

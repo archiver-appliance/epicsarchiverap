@@ -66,7 +66,7 @@ public class ApplianceAggregateInfo {
 	
 	/**
 	 * Gets the aggregated total computedStorageRate for this appliance
-	 * @return
+	 * @return totalStorageRate  &emsp;
 	 */
 	public double getTotalStorageRate() {
 		return totalStorageRate;
@@ -74,7 +74,7 @@ public class ApplianceAggregateInfo {
 
 	/**
 	 * Gets the aggregated total computedEventRate for this appliance
-	 * @return
+	 * @return totalEventRate  &emsp;
 	 */
 	public double getTotalEventRate() {
 		return totalEventRate;
@@ -82,7 +82,7 @@ public class ApplianceAggregateInfo {
 
 	/**
 	 * Gets the aggregated pv count for this appliance.
-	 * @return
+	 * @return totalPVCount  &emsp;
 	 */
 	public double getTotalPVCount() {
 		return totalPVCount;
@@ -105,7 +105,7 @@ public class ApplianceAggregateInfo {
 	 * The storage impact is the impact of a PV on the particular store. 
 	 * It is the product of the estimated storage rate and the partition granularity of the source.
 	 * This returns the aggregated impact on the various stores on this appliance indexed by the identity of the store.
-	 * @return
+	 * @return totalStorageImpact 
 	 */
 	public HashMap<String, Long> getTotalStorageImpact() {
 		return totalStorageImpact;
@@ -128,8 +128,8 @@ public class ApplianceAggregateInfo {
 	/**
 	 * This returns a new ApplianceAggregateInfo that is the difference between this info and the other info.
 	 * Used to maintain the delta of ApplianceAggregateInfo's between the periodic fetches of the CapacityPlanningMetricsPerApplianceForPV
-	 * @param other
-	 * @return
+	 * @param other ApplianceAggregateInfo
+	 * @return ApplianceAggregateInfo  &emsp;
 	 */
 	public ApplianceAggregateInfo getDifference(ApplianceAggregateInfo other) {
 		ApplianceAggregateInfo retval = new ApplianceAggregateInfo();

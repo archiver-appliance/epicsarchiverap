@@ -19,7 +19,7 @@ public class Throttle
     private long last;
     
     /** Construct throttle that only allows one event in every time slot.
-     *  @param seconds_between_messages
+     *  @param seconds_between_messages  &emsp;
      */
     public Throttle(final double seconds_between_messages)
     {

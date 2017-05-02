@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * An implementation of SampleValue for scalar numbers.
  * @author mshankar
- * @param <T>
+ * @param <T>  &emsp;
  */
 public class ScalarValue<T extends Number> implements SampleValue {
 	private T value;

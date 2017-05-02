@@ -24,10 +24,10 @@ public class BulkPauseResumeUtils {
 	
 	/**
 	 * Get a list of PVNames based on if this is a POST or GET.
-	 * @param req
-	 * @param configService
-	 * @return
-	 * @throws IOException
+	 * @param req HttpServletRequest 
+	 * @param configService  ConfigService
+	 * @return LinkedList String PV names
+	 * @throws IOException  &emsp;
 	 */
 	public static LinkedList<String> getPVNames(HttpServletRequest req, ConfigService configService) throws IOException {
 		LinkedList<String> pvNames = null;

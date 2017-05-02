@@ -260,8 +260,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	};
    
 	/**
-    * @see PV#addControledPV(String)
-    */
+	 * @param pvName
+	 *            The PV name
+	 */
 	@Override
 	public void addControledPV(String pvName) {
 		controlledPVList.add(pvName);
@@ -272,8 +273,11 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * 
 	 * @param name
 	 *            The PV name.
-	 *  @param configservice  The config service used by this pv
-	 *  @param isControlPV true if this is a pv controlling other pvs      
+	 * @param configservice  The config service used by this pv
+	 * @param isControlPV true if this is a pv controlling other pvs  
+	 * @param archDBRTypes ArchDBRTypes
+	 * @param jcaCommandThreadId The JCA Command thread. 
+	 * @param isDBEProperties  &emsp;
 	 */
 	EPICS_V3_PV(final String name, ConfigService configservice, boolean isControlPV, ArchDBRTypes archDBRTypes, int jcaCommandThreadId, boolean isDBEProperties) {
 		this(name, false, configservice, jcaCommandThreadId);
@@ -293,6 +297,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * @param name
 	 *            The PV name.
 	 * @param  configservice The config service used by this pv
+	 * @param jcaCommandThreadId The JCA Command thread 
 	 */
 	// isControlPV
 	EPICS_V3_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
@@ -309,6 +314,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 *            When <code>true</code>, only the plain value is requested. No
 	 *            time etc. Some PVs only work in plain mode, example:
 	 *            "record.RTYP".
+	 * @param configservice  The config service used by this pv
+	 * @param jcaCommandThreadId  The JCA Command thread 
 	 */
 	private EPICS_V3_PV(final String name, final boolean plain, ConfigService configservice, int jcaCommandThreadId) {
 		this.name = name;
@@ -789,7 +796,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 
 	/**
 	 * update the meta field value in the parent pv.
-	 * @param dbrtimeevent 
+	 * @param dbrtimeevent DBRTimeEvent
 	 */
 	private void updataMetaDataInParentPV(final DBRTimeEvent dbrtimeevent) {
 		if (isarchiveFieldsField) { 
@@ -798,7 +805,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	}
 
 	/**
-	 * @see PV#updataMetaFieldValue(String,String)
+	 * @see PV#updataMetaFieldValue
 	 */
 	@Override
 	public void updataMetaFieldValue(String PVname, String fieldValue) {
@@ -815,7 +822,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	}
 
 	/***
-	 * @See PV#setHasMetaField(boolean)
+	 * @see PV#markPVHasMetafields
 	 */
 	@Override
 	public void markPVHasMetafields(boolean hasMetaField) {
@@ -901,7 +908,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	
 	/**
 	 * Combine the metadata from various sources and return the latest copy.
-	 * @return
+	 * @see PV#getLatestMetadata
 	 */
 	@Override
 	public HashMap<String, String> getLatestMetadata() { 

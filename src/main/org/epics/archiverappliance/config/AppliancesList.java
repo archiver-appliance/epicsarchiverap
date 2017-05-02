@@ -28,7 +28,10 @@ public class AppliancesList {
 	
 	/**
 	 * Parses the appliances.xml file and loads the appliances into the specified appliancesList
-	 * @param appliancesList
+	 * @param servletContext ServletContext
+	 * @return appliancesList &emsp;
+	 * @throws IOException &emsp;
+	 * @throws ConfigException  &emsp;
 	 */
 	public static HashMap<String, ApplianceInfo> loadAppliancesXML(ServletContext servletContext) throws IOException, ConfigException {
 		HashMap<String, ApplianceInfo> appliancesList = new HashMap<String, ApplianceInfo>();
@@ -105,9 +108,11 @@ public class AppliancesList {
 	/**
 	 * Gets the test content of the specified element.
 	 * Not super efficient, but serves the purpose for this usecase.
-	 * @param node
-	 * @param elementName
-	 * @return
+	 * @param node &emsp;
+	 * @param elementName The name of the specified element
+	 * @param applianceNum The number of appliances
+	 * @return ChildNodeTextContent &emsp;
+	 * @throws IOException &emsp;
 	 */
 	private static String getChildNodeTextContent(Node node, String elementName, int applianceNum) throws IOException {
 		NodeList childNodes = node.getChildNodes();

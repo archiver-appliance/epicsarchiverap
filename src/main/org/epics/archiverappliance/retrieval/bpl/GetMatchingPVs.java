@@ -83,11 +83,11 @@ public class GetMatchingPVs implements BPLAction {
 
 	/**
 	 * Get a list of PV's being archived in this cluster
-	 * @param configService 
-	 * @param limit - The numbers of PV's you want to limit the response to; 
-	 * @param nameToMatch - A regex specifying the PV name pattern; globs should be converted to regex's 
-	 * @return
-	 * @throws IOException
+	 * @param configService ConfigService
+	 * @param limit The numbers of PV's you want to limit the response to; 
+	 * @param nameToMatch A regex specifying the PV name pattern; globs should be converted to regex's 
+	 * @return mathcing PVs in the cluster
+	 * @throws IOException  &emsp; 
 	 */
 	@SuppressWarnings("unchecked")
 	public static List<String> getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch) throws IOException {

@@ -100,7 +100,7 @@ public class NamesHandler extends DefaultHandler {
 	
 	/**
 	 * This contains the PVS in this archive.
-	 * @return
+	 * @return channels  &emsp;
 	 */
 	public LinkedList<ChannelDescription> getChannels() { 
 		return channels;

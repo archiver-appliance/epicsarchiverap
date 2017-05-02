@@ -310,7 +310,7 @@ public class PVTypeInfo implements Serializable {
 	
 	/**
 	 * Parse a string (JSON) representation of the PVTypeInfo object into this object
-	 * @param typeInfoStr
+	 * @param typeInfoStr  &emsp;
 	 */
 	public void parsePolicyRepresentation(String typeInfoStr) {
 		JSONObject parsedObj = (JSONObject) JSONValue.parse(typeInfoStr);
@@ -538,8 +538,9 @@ public class PVTypeInfo implements Serializable {
 	
 	/**
 	 * Loop thru the stores outlined in this typeinfo and determine the most recent event for this pv
-	 * @param configService
-	 * @return
+	 * @param configService ConfigService
+	 * @throws IOException  &emsp;
+	 * @return Timestamp  &emsp;
 	 */
 	public Timestamp determineLastKnownEventFromStores(ConfigService configService) throws IOException {
 		try(BasicContext context = new BasicContext()) {
@@ -561,8 +562,8 @@ public class PVTypeInfo implements Serializable {
 	/**
 	 * The secondsToBuffer is a system wide property. 
 	 * Use this method to get the proper defaults.
-	 * @param configService
-	 * @return secondsToBuffer
+	 * @param configService ConfigService
+	 * @return secondsToBuffer  &emsp;
 	 */
 	public static int getSecondsToBuffer(ConfigService configService) {
 		String secondsToBufferStr = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.config.PVTypeInfo.secondsToBuffer", "10");
@@ -574,7 +575,7 @@ public class PVTypeInfo implements Serializable {
 	/**
 	 * The archiver appliance stores data in chunks that have a well defined key. 
 	 * We record this key in the typeinfo (to accommodate slowly changing key mapping strategies)
-	 * @return chunkKey
+	 * @return chunkKey  &emsp; 
 	 */
 	public String getChunkKey() {
 		return chunkKey;
@@ -589,14 +590,14 @@ public class PVTypeInfo implements Serializable {
 	}
 
 	/**
-	 * @return the hostName
+	 * @return hostName  &emsp;
 	 */
 	public String getHostName() {
 		return hostName;
 	}
 
 	/**
-	 * @param hostName the hostName to set
+	 * @param hostName  &emsp;
 	 */
 	public void setHostName(String hostName) {
 		this.hostName = hostName;

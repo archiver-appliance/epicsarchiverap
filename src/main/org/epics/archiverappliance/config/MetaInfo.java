@@ -220,7 +220,7 @@ public class MetaInfo {
 	 * save the basical info from dbr
 	 * @param pvName the name of the PV
 	 * @param dbr EPICS DB record
-	 * @param configService
+	 * @param configService ConfigService
 	 */
 
 	public void applyBasicInfo(String pvName, final DBR dbr, ConfigService configService) {
@@ -279,15 +279,15 @@ public class MetaInfo {
 
 	/**
 	 * set aliaseName
-	 * @param aliaseName 
+	 * @param aliaseName   &emsp;
 	 */
 	public void setAliasName(String aliaseName) {
 		this.aliasName=aliaseName;
 	}
 
 	/**
-	 * get lowerAlarmLimit
-	 * @return lowerAlarmLimit -  &lt;PV Name&gt;.LOLO
+	 * get lowerAlarmLimit 
+	 * @return lowerAlarmLimit  &lt;PV Name&gt;.LOLO
 	 */
 	public double getLowerAlarmLimit() {
 		return lowerAlarmLimit;
@@ -295,7 +295,7 @@ public class MetaInfo {
 
 	/**
 	 * get loweCtrlLimit
-	 * @return loweCtrlLimit
+	 * @return loweCtrlLimit  &lt;PV Name&gt;.DRVL
 	 */
 	public double getLoweCtrlLimit() {
 		return loweCtrlLimit;
@@ -329,7 +329,7 @@ public class MetaInfo {
 
 	/**
 	 * get upperCtrlLimit
-	 * @return upperCtrlLimit
+	 * @return upperCtrlLimit  &lt;PV Name&gt;.DRVH
 	 */
 	public double getUpperCtrlLimit() {
 		return upperCtrlLimit;
@@ -354,7 +354,7 @@ public class MetaInfo {
 
 	/**
 	 * get precision
-	 * @return precision
+	 * @return precision &lt;PV Name&gt;.PREC
 	 */
 	public int getPrecision() {
 		return precision;
@@ -362,7 +362,7 @@ public class MetaInfo {
 
 	/**
 	 * get unit
-	 * @return unit
+	 * @return unit &lt;PV Name&gt;.EGU
 	 */
 	public String getUnit() {
 		return unit;
@@ -378,7 +378,7 @@ public class MetaInfo {
 
 	/**
 	 * get ArchDBRTypes
-	 * @return ArchDBRTypes
+	 * @return ArchDBRTypes  &emsp;
 	 */
 	public ArchDBRTypes getArchDBRTypes() {
 		return archDBRTypes;
@@ -404,7 +404,7 @@ public class MetaInfo {
 
 	/**
 	 * get the element count of the pv's value. 
-	 * @return count
+	 * @return count  &emsp;
 	 */
 	public int getCount() {
 		return count;
@@ -444,7 +444,7 @@ public class MetaInfo {
 
 	/**
 	 * compute the storage rate and the event rate
-	 * @param dbrtimeevent 
+	 * @param dbrtimeevent  DBRTimeEvent
 	 */
 
 	public void computeRate(DBRTimeEvent dbrtimeevent) {
@@ -510,7 +510,7 @@ public class MetaInfo {
 
 	/**
 	 * set the archiving DBRType for this pv
-	 * @param archDBRTypes
+	 * @param archDBRTypes ArchDBRTypes
 	 */
 
 	public void setArchDBRTypes(ArchDBRTypes archDBRTypes) {
@@ -552,8 +552,7 @@ public class MetaInfo {
 
 	/**
 	 * set the lower warning limit
-	 * @param lowerWarningLimit 
-	 *     the lower warning limit
+	 * @param lowerWarningLimit    the lower warning limit
 	 */
 	public void setLowerWarningLimit(double lowerWarningLimit) {
 		this.lowerWarningLimit = lowerWarningLimit;
@@ -593,7 +592,7 @@ public class MetaInfo {
 
 	/**
 	 * set the precision
-	 * @param precision   precision
+	 * @param precision  the precision
 	 */
 	public void setPrecision(int precision) {
 		this.precision = precision;
@@ -609,7 +608,7 @@ public class MetaInfo {
 
 	/**
 	 * set the total event count
-	 * @param eventCount
+	 * @param eventCount  &emsp;
 	 */
 	public void setEventCount(long eventCount) {
 		this.eventCount = eventCount;
@@ -617,7 +616,7 @@ public class MetaInfo {
 
 	/**
 	 * set total storage size of the event until now
-	 * @param storageSize
+	 * @param storageSize  &emsp;
 	 */
 	public void setStorageSize(long storageSize) {
 		this.storageSize = storageSize;
@@ -641,7 +640,7 @@ public class MetaInfo {
 
 	/**
 	 * set the count of pv's value.
-	 * @param count
+	 * @param count  &emsp;
 	 */
 	public void setCount(int count) {
 		this.count = count;
@@ -649,7 +648,7 @@ public class MetaInfo {
 
 	/**
 	 * set this pv to be a vector or not
-	 * @param isVector
+	 * @param isVector  &emsp;
 	 */
 	public void setVector(boolean isVector) {
 		this.isVector = isVector;
@@ -667,8 +666,8 @@ public class MetaInfo {
 	 * If we detect a change in the units or precision, we update the typeInfo in the configservice. 
 	 * This should accommodate changes in EGU and precision.
 	 * However, this should happen rarely or else performance will suffer.
-	 * @param pvName
-	 * @param configService
+	 * @param pvName The name of PV. 
+	 * @param configService ConfigService
 	 */
 	private void updateTypeInfo(String pvName, ConfigService configService) {
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
@@ -699,7 +698,7 @@ public class MetaInfo {
 	
 	/**
 	 * Add the latest metadata values to the dict
-	 * @param retVal
+	 * @param retVal HashMap 
 	 */
 	public void addToDict(HashMap<String, String> retVal) {
 		retVal.put("LOPR", Double.toString(lowerDisplayLimit));

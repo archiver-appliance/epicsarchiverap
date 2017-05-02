@@ -91,10 +91,10 @@ public class JSONEncoder<T> {
 	/**
 	 * Encode the object and add it to this array
 	 * Dealing with JSON generates a lot of suppress warnings from raw types..
-	 * @param obj
-	 * @param arrayOfObjs
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
+	 * @param obj T
+	 * @param arrayOfObjs JSONArray
+	 * @throws IllegalAccessException  &emsp; 
+	 * @throws InvocationTargetException  &emsp; 
 	 */
 	@SuppressWarnings("unchecked")
 	public void encodeAndAdd(T obj, JSONArray arrayOfObjs) throws IllegalAccessException, InvocationTargetException {

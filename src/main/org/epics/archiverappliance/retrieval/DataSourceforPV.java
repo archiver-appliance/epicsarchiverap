@@ -72,7 +72,7 @@ public class DataSourceforPV implements Comparable<DataSourceforPV> {
 	 * Has the data source resolution specified the times for which we are fetching the data?
 	 * Note this is an optional optimization and is most often used when getting data from the ChannelArchiver.
 	 * Most other times, we let this default to the start time and end time of the data retrieval request.
-	 * @return
+	 * @return boolean True or False
 	 */
 	public boolean isOverridingStartAndEndTimes() { 
 		return this.dataStartTime != null && this.dataEndTime != null;

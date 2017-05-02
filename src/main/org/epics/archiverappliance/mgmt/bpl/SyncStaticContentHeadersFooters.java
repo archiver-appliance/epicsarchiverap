@@ -102,9 +102,9 @@ public class SyncStaticContentHeadersFooters {
 	/**
 	 * Break down a file into a list of text chunks each of which is identified by the text string in the @begin(...) if any...
 	 * Regular text chunks come as REGULAR_TEXT chunks
-	 * @param file
-	 * @return
-	 * @throws IOException
+	 * @param file File
+	 * @return LinkedList TextChunk 
+	 * @throws IOException  &emsp;
 	 */
 	public static LinkedList<TextChunk> breakFileIntoChunks(File file) throws IOException {
 		String startOfChunkIndicator = "<!-- @begin(";
@@ -118,9 +118,11 @@ public class SyncStaticContentHeadersFooters {
 	 * Break down a file into a list of text chunks each of which is identified by the text string in the @begin(...) if any...
 	 * Regular text chunks come as REGULAR_TEXT chunks
 	 * This method closes the inputstream is after it is done.
-	 * @param is
-	 * @return
-	 * @throws IOException
+	 * @param is InputStream 
+	 * @param startOfChunkIndicator  &emsp;
+	 * @param endOfChunkIndicator   &emsp;
+	 * @return LinkedList TextChunk 
+	 * @throws IOException &emsp;
 	 */
 	public static LinkedList<TextChunk> breakFileIntoChunks(InputStream is, String startOfChunkIndicator, String endOfChunkIndicator) throws IOException {
 		LinkedList<TextChunk> textChunks = new LinkedList<TextChunk>();
@@ -165,10 +167,10 @@ public class SyncStaticContentHeadersFooters {
 	/**
 	 * Breaks the HTML inputstream is into chunks and replaces the templates with the content in templateReplacements.
 	 * The inputstream is is closed after this operation.
-	 * @param is
-	 * @param templateReplacements
-	 * @return
-	 * @throws IOException
+	 * @param is InputStream 
+	 * @param templateReplacements HashMap
+	 * @return ByteArrayInputStream  &emsp;
+	 * @throws IOException &emsp;
 	 */
 	public static ByteArrayInputStream templateReplaceChunksHTML(InputStream is, HashMap<String, String> templateReplacements) throws IOException { 
 		String startOfChunkIndicator = "<!-- @begin(";
@@ -180,10 +182,10 @@ public class SyncStaticContentHeadersFooters {
 	/**
 	 * Breaks the Javascript inputstream is into chunks and replaces the templates with the content in templateReplacements.
 	 * The inputstream is is closed after this operation.
-	 * @param is
-	 * @param templateReplacements
-	 * @return
-	 * @throws IOException
+	 * @param is InputStream  
+	 * @param templateReplacements  HashMap
+	 * @return ByteArrayInputStream  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public static ByteArrayInputStream templateReplaceChunksJavascript(InputStream is, HashMap<String, String> templateReplacements) throws IOException { 
 		String startOfChunkIndicator = "// @begin(";

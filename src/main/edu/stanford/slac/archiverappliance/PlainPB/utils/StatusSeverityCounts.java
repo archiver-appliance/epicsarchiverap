@@ -55,7 +55,8 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 public class StatusSeverityCounts {
 
 	/**
-	 * @param args
+	 * @param args  &emsp;
+	 * @throws IOException  &emsp;
 	 */
 	public static void main(String[] args) throws IOException {
 		String dirName = args[0];

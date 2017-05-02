@@ -30,9 +30,9 @@ public class SampleBuffer {
 	 * the full channel, to decouple stuff).
 	 */
 	final private String channel_name;
-     /**
-      * current ArrayListEventStream
-      */
+       /**
+	* current ArrayListEventStream
+	*/
 	private ArrayListEventStream currentSamples;
 	/**
 	 * previous ArrayListEventStream
@@ -53,9 +53,9 @@ public class SampleBuffer {
 	 * this is global for all buffers, not per instance!
 	 */
 	private static volatile boolean error = false;
-    /**
-     * the buffer size
-     */
+        /**
+	 * the buffer size
+	 */
 	final private int capacity;
 	/**
 	 * the arch dbr type of the pv who has this sample buffer
@@ -64,7 +64,13 @@ public class SampleBuffer {
 	private short year;
 	private static Logger logger = Logger.getLogger(SampleBuffer.class.getName());
 
-	/** Create sample buffer of given capacity */
+	/** Create sample buffer of given capacity 
+	 *
+	 * @param channel_name  &emsp;
+	 * @param capacity  &emsp;
+	 * @param archdbrtype ArchDBRTypes
+	 * @param pVMetrics PVMetrics 
+	 */
 	public SampleBuffer(final String channel_name, final int capacity,
 			ArchDBRTypes archdbrtype, PVMetrics pVMetrics) {
 		this.channel_name = channel_name;
@@ -154,7 +160,9 @@ public class SampleBuffer {
 		return error;
 	}
 
-	/** Set the error state. */
+	/** Set the error state. 
+	 * @param error  &emsp;
+	 */
 	public static void setErrorState(final boolean error) {
 		SampleBuffer.error = error;
 	}
@@ -162,8 +170,8 @@ public class SampleBuffer {
 	/**
 	 * Add a sample to the queue, maybe dropping older samples
 	 * 
-	 * @return - true if we need to increment the event count.
-	 * @throws Exception
+	 * @param value DBRTimeEvent
+	 * @return boolean true if we need to increment the event count.
 	 */
 	@SuppressWarnings("nls")
 	public boolean add(final DBRTimeEvent value)  {
