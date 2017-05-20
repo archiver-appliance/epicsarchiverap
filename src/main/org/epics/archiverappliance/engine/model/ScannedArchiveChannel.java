@@ -84,8 +84,8 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 
 		if (!isEnabled())
 			return;
+		long start = System.currentTimeMillis();
 		try {
-			long start = System.currentTimeMillis();
 			synchronized (this) { // Have anything?
 				if (latestDBRTimeEvent == null) {
 					return;
@@ -97,10 +97,15 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 				}
 			}
 			addValueToBuffer(latestDBRTimeEvent);
-			long end = System.currentTimeMillis();
-			this.getPVMetrics().setScanProcessingTime(start, end, scan_period);
 		} catch (Exception e) {
 			logger.error("exception duing run for pv " + this.getName(), e);
+		} finally { 
+			try { 
+				long end = System.currentTimeMillis();
+				this.getPVMetrics().setScanProcessingTime(start, end, scan_period);
+			} catch(Exception ex){ 
+				logger.error("Exception updating scan times for " + this.getName(), ex);
+			}
 		}
 	}
 
