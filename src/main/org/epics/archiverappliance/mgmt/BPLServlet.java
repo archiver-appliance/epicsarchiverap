@@ -85,8 +85,6 @@ import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyAddedPVs;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyAddedPVsforThisInstance;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyChangedPVs;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyChangedPVsforThisInstance;
-import org.epics.archiverappliance.mgmt.bpl.reports.ScanCopyTimeReport;
-import org.epics.archiverappliance.mgmt.bpl.reports.ScanMaxTimeReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageReport;
@@ -156,10 +154,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
 		addAction("/getPausedPVsReport", PausedPVsReport.class);
 		addAction("/getPausedPVsForThisAppliance", GetPausedPVsForThisAppliance.class);
-		addAction("/getArchivedWaveforms", WaveformPVsAction.class);
-		addAction("/getPVsByScanCopyTime", ScanCopyTimeReport.class);
-		addAction("/getPVsByMaxTimeBetweenScans", ScanMaxTimeReport.class);
-		
+		addAction("/getArchivedWaveforms", WaveformPVsAction.class);		
 		
 		
 		// Others.
