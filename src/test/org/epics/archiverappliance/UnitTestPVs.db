@@ -180125,4 +180125,30 @@ record(ai, "UnitTestNoNamingConvention:inactive2") {
 
 
 
+record(calc, "ArchUnitTest:counter1Hz") {
+  field(SCAN, "1 second")
+  field(CALC, "A+B")
+  field(INPA, "ArchUnitTest:counter1Hz.VAL NPP")
+  field(INPB, "1")
+  field(ADEL, "0")
+  field(MDEL, "0")
+}
+
+record(calc, "ArchUnitTest:counter10Hz") {
+  field(SCAN, ".1 second")
+  field(CALC, "A+B")
+  field(INPA, "ArchUnitTest:counter10Hz.VAL NPP")
+  field(INPB, "1")
+  field(ADEL, "0")
+  field(MDEL, "0")
+}
+
+record(calc, "ArchUnitTest:counter1By10thHz") {
+  field(SCAN, "10 second")
+  field(CALC, "A+B")
+  field(INPA, "ArchUnitTest:counter1By10thHz.VAL NPP")
+  field(INPB, "1")
+  field(ADEL, "0")
+  field(MDEL, "0")
+}
 
