@@ -180152,3 +180152,7 @@ record(calc, "ArchUnitTest:counter1By10thHz") {
   field(MDEL, "0")
 }
 
+record(ai, "ArchUnitTest:manual") {
+  field(ADEL, "0")
+  field(MDEL, "0")
+}

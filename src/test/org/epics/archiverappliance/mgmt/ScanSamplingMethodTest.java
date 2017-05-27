@@ -8,6 +8,7 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.PVCaPut;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -28,6 +29,7 @@ import org.openqa.selenium.support.ui.Select;
  * Test the SCAN sampling method. These are the test cases
  * <ol>
  * <li>PVs changing at 10Hz/1Hz/0.1Hz; we archive at SCAN/1.0. We should get a sample every second.</li>
+ * <li>Second test is to change a PV rapidly and then stop. Wait a bit and then get the data; we should get the final value that was set and not something that was set earlier. 
  * </ol>
  * @author mshankar
  *
@@ -54,7 +56,7 @@ public class ScanSamplingMethodTest {
 
 	@Test
 	public void testScanPV() throws Exception {
-		String[] pvNames = new String[] {"ArchUnitTest:counter10Hz", "ArchUnitTest:counter1Hz", "ArchUnitTest:counter1By10thHz"};
+		String[] pvNames = new String[] {"ArchUnitTest:counter10Hz", "ArchUnitTest:counter1Hz", "ArchUnitTest:counter1By10thHz", "ArchUnitTest:manual"};
 
 		int port = ConfigServiceForTests.RETRIEVAL_TEST_PORT;
 		driver.get("http://localhost:" + port + "/mgmt/ui/index.html");
@@ -76,10 +78,15 @@ public class ScanSamplingMethodTest {
 		checkIfAllPVsAreArchived(pvNames);
 
 		Thread.sleep(60*1000);
+		double lastValue = rapidlyChangeManualPV(pvNames[3]);
+		Thread.sleep(20*1000);
 
 		testDataRetrieval(pvNames[0], 60, 1100,  false);
 		testDataRetrieval(pvNames[1], 60, 1100,  true);
 		testDataRetrieval(pvNames[2], 8,  10100, true);
+		
+		testLastSampleOfManualPV(pvNames[3], lastValue);
+		
 	}
 
 	private void testDataRetrieval(String pvName, int expectedCount, long expectedGapBetweenSamples, boolean consecutiveValuesExpected) {
@@ -142,4 +149,43 @@ public class ScanSamplingMethodTest {
 		}
 		return false;
 	}
+	
+	private double rapidlyChangeManualPV(String pvName) throws Exception {
+		double lastValue = -1000.0;
+		new PVCaPut().caPut(pvName, 1.0);
+		Thread.sleep(2000);
+		new PVCaPut().caPutValues(pvName, new double[] { 1.1, 1.2, 1.3, lastValue});
+		return lastValue;
+	}
+	
+	
+	private void testLastSampleOfManualPV(String pvName, double lastValue) {
+		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
+		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 10);
+		Timestamp start = TimeUtils.minusHours(end, 10);
+
+		EventStream stream = null;
+		try {
+			stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, start, end, new RetrievalEventProcessor() {
+				@Override
+				public void newPVOnStream(EventStreamDesc desc) {
+					logger.info("Getting data for PV " + desc.getPvName());
+				}
+			});
+
+			// We want to make sure that the last sample we get is what we expect.
+			long eventCount = 0;
+			if(stream != null) {
+				double eventValue = 0.0;
+				for(Event e : stream) {
+					eventValue = e.getSampleValue().getValue().doubleValue();
+				}
+				assertTrue("We expected the last value to be " + lastValue + ". Instead it is " + eventValue, eventValue == lastValue);
+			}
+			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected at least one event", eventCount >= 1);
+		} finally {
+			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
+		}
+	}	
+
 }

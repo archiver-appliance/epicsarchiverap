@@ -97,7 +97,7 @@ public class PVCaPut {
     	for(double value : values) { 
         	channel.put(value);
         	context.pendIO(3.0);
-        	Thread.sleep(1000);
+        	Thread.sleep(100);
     	}
     	channel.destroy();      
     	destroy();

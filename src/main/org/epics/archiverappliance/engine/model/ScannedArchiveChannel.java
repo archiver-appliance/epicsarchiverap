@@ -90,10 +90,12 @@ public class ScannedArchiveChannel extends ArchiveChannel {
 					return true;
 				}
 
-				if(isMoreThanOrEqualsScanPeriod(lastDBRTimeEvent, latestDBRTimeEvent)) { 
-					// logger.debug("Latest event is more than scan periond; recording...");
-					addValueToBuffer(latestDBRTimeEvent);
+				if(isLessThanOrEqualsScanPeriod(lastDBRTimeEvent, latestDBRTimeEvent)) { 
+					// logger.debug("Latest event is less than scan periond; skipping for " + this.getName());
 					return true;
+				} else { 
+					// logger.debug("Latest event is more than scan periond; recording for " + this.getName());
+					addValueToBuffer(latestDBRTimeEvent);
 				}
 				
 			} catch (Exception e) {
@@ -121,17 +123,17 @@ public class ScannedArchiveChannel extends ArchiveChannel {
 	}
 	
 	/**
-	 * Return true if the second event is scanPeriodInMillis more than the first event.
+	 * Return true if the second event is within scanPeriodInMillis of the first event.
 	 * @param tempEvent1
 	 * @param tempEvent2
 	 * @return
 	 */
-	private boolean isMoreThanOrEqualsScanPeriod(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) { 
+	private boolean isLessThanOrEqualsScanPeriod(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) { 
 		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) { 
 			Timestamp time1 = tempEvent1.getEventTimeStamp();
 			Timestamp time2 = tempEvent2.getEventTimeStamp();
 			// logger.debug("Diff = " + (time2.getTime() - time1.getTime()) + " and scanPeriodMillis " + scanPeriodMillis);
-			return (time2.getTime() - time1.getTime()) >= this.scanPeriodMillis;
+			return (time2.getTime() - time1.getTime()) < this.scanPeriodMillis;
 		} else { 
 			return false;
 		}
