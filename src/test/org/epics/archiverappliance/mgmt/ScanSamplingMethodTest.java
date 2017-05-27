@@ -110,18 +110,18 @@ public class ScanSamplingMethodTest {
 				long previousValue = -1;
 				for(Event e : stream) {
 					long currentMillis = e.getEventTimeStamp().getTime();
-					assertTrue("Gap between samples " + (currentMillis - previousEventMillis) + " is more than expected " + expectedGapBetweenSamples, previousEventMillis == -1 || ((currentMillis - previousEventMillis) <= expectedGapBetweenSamples));
+					assertTrue("Gap between samples " + (currentMillis - previousEventMillis) + " is more than expected " + expectedGapBetweenSamples + " for PV " + pvName, previousEventMillis == -1 || ((currentMillis - previousEventMillis) <= expectedGapBetweenSamples));
 					previousEventMillis = currentMillis;
 					eventCount++;
 					if(consecutiveValuesExpected) { 
 						long currentValue = e.getSampleValue().getValue().longValue();
-						assertTrue("We expect not to miss any value. Current " + currentValue + " and previous " + previousValue, 
+						assertTrue("We expect not to miss any value. Current " + currentValue + " and previous " + previousValue + " for pv " + pvName, 
 								previousValue == -1 || (currentValue == (previousValue + 1)));
 						previousValue = currentValue;
 					}
 				}
 			}
-			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected at least " + expectedCount, eventCount >= expectedCount);
+			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected at least " + expectedCount + " for pv " + pvName, eventCount >= expectedCount);
 		} finally {
 			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
 		}
@@ -179,6 +179,7 @@ public class ScanSamplingMethodTest {
 				double eventValue = 0.0;
 				for(Event e : stream) {
 					eventValue = e.getSampleValue().getValue().doubleValue();
+					eventCount++;
 				}
 				assertTrue("We expected the last value to be " + lastValue + ". Instead it is " + eventValue, eventValue == lastValue);
 			}

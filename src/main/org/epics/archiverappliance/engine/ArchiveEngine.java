@@ -17,6 +17,7 @@ package org.epics.archiverappliance.engine;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -142,6 +143,11 @@ public class ArchiveEngine {
 			if (start) {
 				channel.start();
 			}
+
+			engineContext.getScanScheduler().scheduleAtFixedRate((ScannedArchiveChannel) channel, 0,
+					(long) (samplingPeriod * 1000), TimeUnit.MILLISECONDS);
+
+
 
 			channel.initializeMetaFieldPVS(metaFields, configservice, usePVAccess, useDBEProperties);
 		} else if (mode == SamplingMethod.MONITOR) {
@@ -466,6 +472,10 @@ public class ArchiveEngine {
 					// do nothing
 				} else {
 					// different period
+					engineContext.getScanScheduler().remove((ScannedArchiveChannel) channel);
+					engineContext.getScanScheduler().purge();
+					// stop channel and remove id from ChannelList and buffer
+
 					channel.stop();
 					engineContext.getWriteThead().removeChannel(pvName);
 					engineContext.getChannelList().remove(pvName);
@@ -484,6 +494,8 @@ public class ArchiveEngine {
 				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
 			} else {
 				// mode is changed from scan to monitor ,new mode is monitor
+				engineContext.getScanScheduler().remove((ScannedArchiveChannel) channel);
+				engineContext.getScanScheduler().purge();
 				channel.stop();
 				engineContext.getWriteThead().removeChannel(pvName);
 				engineContext.getChannelList().remove(pvName);
@@ -520,6 +532,9 @@ public class ArchiveEngine {
 			engineContext.getChannelList().remove(pvName);
 		} else {
 			// pv is in scan mode
+			// remove the channel in scan mode
+			engineContext.getScanScheduler().remove((ScannedArchiveChannel) channel);
+			engineContext.getScanScheduler().purge();
 			channel.stop();
 			engineContext.getWriteThead().removeChannel(pvName);
 			engineContext.getChannelList().remove(pvName);
