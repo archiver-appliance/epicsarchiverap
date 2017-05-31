@@ -59,7 +59,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 		this.pvMetrics.setSamplingPeriod(scan_period);
 		// this.max_repeats = max_repeats;
 		this.pvMetrics.setMonitor(false);
-		this.scanPeriodMillis = (long) scan_period * 1000;
+		this.scanPeriodMillis = (long) ((scan_period * 0.95) * 1000);
 	}
 
 	/** @return Scan period in seconds */
@@ -95,7 +95,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 						return true;
 					}
 
-					if(isLessThanOrEqualsScanPeriod(lastDBRTimeEvent, latestDBRTimeEvent)) { 
+					if(isLessThanScanPeriod(lastDBRTimeEvent, latestDBRTimeEvent)) { 
 						// logger.debug("Latest event is less than scan periond; skipping for " + this.getName());
 						// We however keep track of the server time when we got a handle event for comparision in the SCAN thread.
 						this.serverTimeForStragglingScanValuesMillis = System.currentTimeMillis();
@@ -133,7 +133,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 						return;
 					}
 
-					if(isLessThanOrEqualsScanPeriod(this.serverTimeForStragglingScanValuesMillis, System.currentTimeMillis())) { 
+					if(isLessThanScanPeriod(this.serverTimeForStragglingScanValuesMillis, System.currentTimeMillis())) { 
 						// logger.debug("Latest event is less than scan period; skipping for " + this.getName());
 						return;
 					} else { 
@@ -173,7 +173,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	 * @param tempEvent2
 	 * @return
 	 */
-	private boolean isLessThanOrEqualsScanPeriod(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) { 
+	private boolean isLessThanScanPeriod(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) { 
 		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) { 
 			Timestamp time1 = tempEvent1.getEventTimeStamp();
 			Timestamp time2 = tempEvent2.getEventTimeStamp();
@@ -190,7 +190,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	 * @param tempEvent2
 	 * @return
 	 */
-	private boolean isLessThanOrEqualsScanPeriod(long ts1, long ts2) {
+	private boolean isLessThanScanPeriod(long ts1, long ts2) {
 		if(ts1 != -1 && ts2 != -1) { 
 			// logger.debug("Diff = " + (ts1 - ts2) + " and scanPeriodMillis " + scanPeriodMillis);
 			return (ts2 - ts1) < this.scanPeriodMillis;
