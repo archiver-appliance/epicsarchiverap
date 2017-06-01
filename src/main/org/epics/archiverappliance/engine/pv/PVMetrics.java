@@ -52,6 +52,8 @@ public class PVMetrics {
 	private boolean isMonitor = false;
 	/**the sample period*/
 	private double samplingPeriod = 0;
+	/** The scan sampling period; including the jitter factor */
+	private long scanPeriodMillis = 0;
 	/**is this pv connected?*/
 	private boolean isConnected = false;
 	/**the time of last event and it is the the number of seconds since 1970/01/01*/
@@ -488,6 +490,7 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "Number of elements per event (from CA)", "" + this.elementCount);
 		addDetailedStatus(statuses, "Is engine using monitors?", this.isMonitor ? "yes" : "no");
 		addDetailedStatus(statuses, "What's the engine's sampling period?", ""+ this.samplingPeriod);
+		addDetailedStatus(statuses, "The SCAN period (ms) after applying the jitter factor", ""+ this.scanPeriodMillis);
 		addDetailedStatus(statuses, "Is this PV currently connected?", this.isConnected ? "yes" : "no");
 		addDetailedStatus(statuses, "Connection state at last connection changed event", this.lastConnectionEventState ? "Connected" : "Not connected");
 		addDetailedStatus(statuses, "When did we receive the last event?", TimeUtils.convertToHumanReadableString(this.secondsOfLastEvent));
@@ -594,5 +597,13 @@ public class PVMetrics {
 				isFirstDataAfterConnection=false;
 			}
 		}
+	}
+
+	public long getScanPeriodMillis() {
+		return scanPeriodMillis;
+	}
+
+	public void setScanPeriodMillis(long scanPeriodMillis) {
+		this.scanPeriodMillis = scanPeriodMillis;
 	}	
 }
