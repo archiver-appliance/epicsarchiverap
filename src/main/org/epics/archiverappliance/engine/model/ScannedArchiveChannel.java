@@ -59,7 +59,8 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 		this.pvMetrics.setSamplingPeriod(scan_period);
 		// this.max_repeats = max_repeats;
 		this.pvMetrics.setMonitor(false);
-		this.scanPeriodMillis = (long) ((scan_period * 0.95) * 1000);
+		double scanJitterFactor = Double.parseDouble((String) configservice.getInstallationProperties().getOrDefault("org.epics.archiverappliance.engine.epics.scanJitterFactor", "0.95"));
+		this.scanPeriodMillis = (long) ((scan_period * scanJitterFactor) * 1000);
 	}
 
 	/** @return Scan period in seconds */
