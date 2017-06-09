@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,8 +29,8 @@ import org.json.simple.JSONValue;
  * Of course, you can use the status call but that makes calls to the engine etc and can be stressful if you are checking several thousand PVs
  * All this does is check the configservice...
  * 
- * @epics.BPLAction - Given a list of PVs, determine those that are not being archived/have pending requests.
- * @epics.BPLActionParam pv - A list of pv names. Send as a CSV using a POST.
+ * @epics.BPLAction - Given a list of PVs, determine those that are not being archived/have pending requests/have aliases.
+ * @epics.BPLActionParam pv - A list of pv names. Send as a CSV using a POST or JSON array.
  * @epics.BPLActionEnd
  * 
  * @author mshankar
@@ -64,7 +65,18 @@ public class UnarchivedPVsAction implements BPLAction {
 				if(typeInfo != null) { 
 					if(Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) continue;
 				}
+				String fieldAliasRealName = configService.getRealNameForAlias(PVNames.stripFieldNameFromPVName(pvName));
+				if(fieldAliasRealName != null) { 
+					typeInfo = configService.getTypeInfoForPV(fieldAliasRealName);
+					if(typeInfo != null) { 
+						if(Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) continue;
+					}
+				}
 			}
+			// Check for pending requests...
+			Set<String> workFlowPVs = configService.getArchiveRequestsCurrentlyInWorkflow();
+			if(workFlowPVs.contains(PVNames.normalizePVName(pvName)) || (aliasRealName != null && workFlowPVs.contains(aliasRealName))) continue;
+			
 			// Think we've tried every possible use cases..
 			unarchivedPVs.add(pvName);
 		}
