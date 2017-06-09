@@ -53,9 +53,6 @@ public class AbortArchiveRequest implements BPLAction {
 		logger.info("Aborting archiving requests for the PV " + pvName);
 		LinkedList<String> abortPVURLs = new LinkedList<String>();
 		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
-			abortPVURLs.add(info.getEngineURL() + "/abortArchivingPVForThisAppliance?pv=" + URLEncoder.encode(pvName, "UTF-8"));
-		}		
-		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
 			abortPVURLs.add(info.getMgmtURL() + "/abortArchivingPVForThisAppliance?pv=" + URLEncoder.encode(pvName, "UTF-8"));
 		}		
 

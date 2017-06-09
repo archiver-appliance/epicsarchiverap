@@ -466,6 +466,16 @@ public class EngineContext {
 				} catch(Exception ex) {
 					logger.error("Exception beginnning archiving pv " + pvName, ex);
 				}
+			} else if(pubSubEvent.getType().equals("AbortComputeMetaInfo")) {
+				String pvName = pubSubEvent.getPvName();
+				try { 
+					logger.warn("AbortComputeMetaInfo called for " + pvName);
+					this.abortComputeMetaInfo(pvName);
+					// PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
+					// configService.getEventBus().post(confirmationEvent);
+				} catch(Exception ex) { 
+					logger.error("Exception aborting metainfo for PV " + pvName, ex);
+				}
 			}
 		} else {
 			logger.debug("Skipping processing event meant for " + pubSubEvent.getDestination());

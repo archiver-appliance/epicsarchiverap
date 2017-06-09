@@ -15,6 +15,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.WAR_FILE;
 import org.epics.archiverappliance.config.MetaInfo;
@@ -48,6 +49,14 @@ public class MgmtRuntimeState {
 	private static final int DEFAULT_ARCHIVE_PV_WORKFLOW_BATCH_SIZE = 1000;
 	
 	private int archivePVWorkflowBatchSize = DEFAULT_ARCHIVE_PV_WORKFLOW_BATCH_SIZE;
+	
+	private static final int DEFAULT_ABORT_ARCHIVE_REQUEST_TIMEOUT_MINS = 24*60;
+	/**
+	 * Abort PV's in the archive PV workflow after this many minutes if the archiver is not able to connect to the PV. 
+	 * The workflow can take a few minutes; so this should be set to a reasonable value (for example, 1 minute would mean that no PV would complete the workflow) 
+	 */
+	private static int abortArchiveWorkflowInMins = DEFAULT_ABORT_ARCHIVE_REQUEST_TIMEOUT_MINS;
+
 
 	/**
 	 * Initiate archive PV workflow for PV.
@@ -74,7 +83,9 @@ public class MgmtRuntimeState {
 			currentPVRequests.remove(pvName);
 			logger.debug("Removing " + pvName + " from config service archive pv requests");
 			configService.archiveRequestWorkflowCompleted(pvName);
-			logger.debug("Aborted pv archiving workflow for " + pvName);
+			logger.debug("Aborted pv archiving workflow for " + pvName + "Publishing event for engine...");
+			PubSubEvent pubSubEvent = new PubSubEvent("AbortComputeMetaInfo", myIdentity + "_" + ConfigService.WAR_FILE.ENGINE, pvName);
+			configService.getEventBus().post(pubSubEvent);
 			return true;
 		}
 	}
@@ -106,6 +117,15 @@ public class MgmtRuntimeState {
 			this.archivePVWorkflowBatchSize = Integer.parseInt(installationProperties.getProperty(batchSizeName));
 			configlogger.info("Setting the archive PV workflow batch size to " + this.archivePVWorkflowBatchSize);
 		}
+		
+		
+		String abortArchiveWorkflowStr = "org.epics.archiverappliance.mgmt.MgmtRuntimeState.abortArchiveRequestInMins";
+		if(installationProperties.containsKey(abortArchiveWorkflowStr)) { 
+			this.abortArchiveWorkflowInMins = Integer.parseInt(installationProperties.getProperty(abortArchiveWorkflowStr));
+			configlogger.info("Setting the abort archive PV workflow timeout (in mins) to " + this.abortArchiveWorkflowInMins);
+		}
+		
+		
 	}
 	
 	public void finishedPVWorkflow(String pvName) throws IOException {
@@ -234,8 +254,21 @@ public class MgmtRuntimeState {
 				int pvCount = 0;
 				while(pvCount < maxRequestsToProcess) { 
 					ArchivePVState runWorkFlowForPV = archivePVStates.pop();
-					logger.debug("Running the next step in the workflow for PV " + runWorkFlowForPV.getPvName());
-					runWorkFlowForPV.nextStep();
+					String pvName = runWorkFlowForPV.getPvName();
+					// It takes a few minutes for the workflow to complete; so you should be setting this to a reasonably high value.
+					if(abortArchiveWorkflowInMins > 0 
+							&& runWorkFlowForPV.getCurrentState() == ArchivePVStateMachine.METAINFO_REQUESTED 
+							&& (TimeUtils.now().getTime() - runWorkFlowForPV.getMetaInfoRequestedSubmitted().getTime()) > abortArchiveWorkflowInMins*60*1000) {
+						logger.warn("Aborting PV after user specified timeout " + pvName);
+						try {
+							abortPVWorkflow(pvName);
+						} catch(Exception ex) { 
+							logger.error("Exception aborting PV after timeout " + pvName, ex);
+						}
+					} else {
+						logger.debug("Running the next step in the workflow for PV " + pvName);
+						runWorkFlowForPV.nextStep();
+					}
 					pvCount++;
 				}
 			}
