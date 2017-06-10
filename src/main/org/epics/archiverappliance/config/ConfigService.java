@@ -152,6 +152,12 @@ public interface ConfigService {
 	public boolean isStartupComplete();
 	
 	/**
+	 * Get an approximate time in epoch seconds when the appserver started up.
+	 * @return
+	 */
+	public long getTimeOfAppserverStartup();
+	
+	/**
 	 * The name/path of the archappl.properties file.
 	 * By default, we look for archappl.properties in the webapp's classpath - this will typically resolve into WEB-INF/classes of the webapp.
 	 * However, you can override this using an environment variable (or java system property) of the same name.

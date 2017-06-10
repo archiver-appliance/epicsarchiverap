@@ -189,6 +189,8 @@ public class DefaultConfigService implements ConfigService {
 
 
 	private ServletContext servletContext;
+	
+	private long appserverStartEpochSeconds = TimeUtils.getCurrentEpochSeconds();
 
 	protected DefaultConfigService() {
 		// Only the unit tests config service uses this constructor.
@@ -1994,4 +1996,10 @@ public class DefaultConfigService implements ConfigService {
 	public Set<String> getNamedFlagNames() {
 		return namedFlags.keySet();
 	}
+
+	@Override
+	public long getTimeOfAppserverStartup() {
+		return this.appserverStartEpochSeconds;
+	}
+	
 }
