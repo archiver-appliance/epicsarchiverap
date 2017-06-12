@@ -153,7 +153,7 @@ public interface ConfigService {
 	
 	/**
 	 * Get an approximate time in epoch seconds when the appserver started up.
-	 * @return
+	 * @return The time this app server started up.
 	 */
 	public long getTimeOfAppserverStartup();
 	
