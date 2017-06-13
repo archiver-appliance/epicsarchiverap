@@ -2001,5 +2001,36 @@ public class DefaultConfigService implements ConfigService {
 	public long getTimeOfAppserverStartup() {
 		return this.appserverStartEpochSeconds;
 	}
+
+	@Override
+	public Set<String> getAllExpandedNames() {
+		Set<String> allNames = new HashSet<String>();
+		Collection<String> allPVs = this.getAllPVs();
+		allNames.addAll(allPVs);
+		// Add fields and the VAL field
+		for(String pvName : allPVs) { 
+			allNames.add(pvName + ".VAL");
+			PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
+			if(typeInfo != null) { 
+				for(String fieldName : typeInfo.getArchiveFields()) { 
+					allNames.add(pvName + "." + fieldName);
+				}
+			}
+		}
+		List<String> allAliases = this.getAllAliases();
+		allNames.addAll(allAliases);
+		for(String pvName : allAliases) { 
+			allNames.add(pvName + ".VAL");
+			PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
+			if(typeInfo != null) { 
+				for(String fieldName : typeInfo.getArchiveFields()) { 
+					allNames.add(pvName + "." + fieldName);
+				}
+			}
+		}
+		allNames.addAll(this.getArchiveRequestsCurrentlyInWorkflow()); 
+		
+		return allNames;
+	}
 	
 }

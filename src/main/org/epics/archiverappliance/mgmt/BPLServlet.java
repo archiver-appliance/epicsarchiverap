@@ -37,6 +37,7 @@ import org.epics.archiverappliance.mgmt.bpl.ConsolidatePBFilesForOnePV;
 import org.epics.archiverappliance.mgmt.bpl.DeletePV;
 import org.epics.archiverappliance.mgmt.bpl.ExportConfig;
 import org.epics.archiverappliance.mgmt.bpl.ExportConfigForThisInstance;
+import org.epics.archiverappliance.mgmt.bpl.GetAllExpandedPVNames;
 import org.epics.archiverappliance.mgmt.bpl.GetAllPVs;
 import org.epics.archiverappliance.mgmt.bpl.GetApplianceInfo;
 import org.epics.archiverappliance.mgmt.bpl.GetAppliancesInCluster;
@@ -107,6 +108,7 @@ public class BPLServlet extends HttpServlet {
 	static {
 		// BPL related to PVs/appliances etc
 		addAction("/getAllPVs", GetAllPVs.class);
+		addAction("/getAllExpandedPVNames", GetAllExpandedPVNames.class);
 		addAction("/getPVStatus", GetPVStatusAction.class);
 		addAction("/getPVTypeInfo", GetPVTypeInfo.class);
 		addAction("/archivePV", ArchivePVAction.class);
