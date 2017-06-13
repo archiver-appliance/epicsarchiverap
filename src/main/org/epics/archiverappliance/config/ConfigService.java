@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.servlet.ServletContext;
 
@@ -208,9 +209,10 @@ public interface ConfigService {
 	/**
 	 * For automated PV submission, IOC engineers could add .VAL, fields, aliases etc.
 	 * This method attempts to return all possible PV's that the archiver could know about.
+	 * This is a lot of names; so we take in a consumer that potentially streams a name out as quickly as possible.
 	 * @return
 	 */
-	public Set<String> getAllExpandedNames();
+	public void getAllExpandedNames(Consumer<String> func);
 	
 	/**
 	 * Given a PV, get us the appliance that is responsible for archiving it.

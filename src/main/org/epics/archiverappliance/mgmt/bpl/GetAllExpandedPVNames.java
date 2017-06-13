@@ -2,8 +2,7 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,11 +27,23 @@ public class GetAllExpandedPVNames implements BPLAction {
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		logger.debug("Getting all expanded pv names for the cluster");
-		Set<String> allExpandedNames = configService.getAllExpandedNames();
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
-			out.println(JSONValue.toJSONString(new ArrayList<String>(allExpandedNames)));
+			out.println("[");
+			JSONValue.writeJSONString("EPICS:Archiver:Appliance", out); // Dummy value
+			configService.getAllExpandedNames(new Consumer<String>() {
+				@Override
+				public void accept(String t) {
+					try { 
+						out.println(",");
+						JSONValue.writeJSONString(t, out);
+					} catch(Exception ex) { 
+						logger.error("Exception writing all names out", ex);
+					}
+				} });
+			out.println();
+			out.println("]");
 		} catch(Exception ex) {
 			logger.error("Exception getting all pvs on appliance " + configService.getMyApplianceInfo().getIdentity(), ex);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

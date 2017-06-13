@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -43,7 +44,13 @@ public class UnarchivedPVsAction implements BPLAction {
 		LinkedList<String> pvNamesFromUser = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
 		Set<String> normalizedPVNames = new HashSet<String>(pvNamesFromUser);
 
-		Set<String> expandedNames = configService.getAllExpandedNames();
+		Set<String> expandedNames = new HashSet<String>(); 
+		configService.getAllExpandedNames(new Consumer<String>(){
+			@Override
+			public void accept(String t) {
+				expandedNames.add(t);
+			} });
+		
 		normalizedPVNames.removeAll(expandedNames);
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);

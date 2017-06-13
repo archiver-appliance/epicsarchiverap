@@ -40,6 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
@@ -2003,34 +2004,34 @@ public class DefaultConfigService implements ConfigService {
 	}
 
 	@Override
-	public Set<String> getAllExpandedNames() {
-		Set<String> allNames = new HashSet<String>();
+	public void getAllExpandedNames(Consumer<String> func) {
 		Collection<String> allPVs = this.getAllPVs();
-		allNames.addAll(allPVs);
 		// Add fields and the VAL field
 		for(String pvName : allPVs) { 
-			allNames.add(pvName + ".VAL");
+			func.accept(pvName);
+			func.accept(pvName + ".VAL");
 			PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
 			if(typeInfo != null) { 
 				for(String fieldName : typeInfo.getArchiveFields()) { 
-					allNames.add(pvName + "." + fieldName);
+					func.accept(pvName + "." + fieldName);
 				}
 			}
 		}
 		List<String> allAliases = this.getAllAliases();
-		allNames.addAll(allAliases);
 		for(String pvName : allAliases) { 
-			allNames.add(pvName + ".VAL");
+			func.accept(pvName);
+			func.accept(pvName + ".VAL");
 			PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
 			if(typeInfo != null) { 
 				for(String fieldName : typeInfo.getArchiveFields()) { 
-					allNames.add(pvName + "." + fieldName);
+					func.accept(pvName + "." + fieldName);
 				}
 			}
 		}
-		allNames.addAll(this.getArchiveRequestsCurrentlyInWorkflow()); 
-		
-		return allNames;
+		for(String pvName : this.getArchiveRequestsCurrentlyInWorkflow()) { 
+			func.accept(pvName);
+			func.accept(pvName + ".VAL");
+		}
 	}
 	
 }
