@@ -210,7 +210,7 @@ public interface ConfigService {
 	 * For automated PV submission, IOC engineers could add .VAL, fields, aliases etc.
 	 * This method attempts to return all possible PV's that the archiver could know about.
 	 * This is a lot of names; so we take in a consumer that potentially streams a name out as quickly as possible.
-	 * @return
+	 * @param func A consumer of pvNames
 	 */
 	public void getAllExpandedNames(Consumer<String> func);
 	

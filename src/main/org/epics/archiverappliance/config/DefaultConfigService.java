@@ -2009,28 +2009,34 @@ public class DefaultConfigService implements ConfigService {
 		// Add fields and the VAL field
 		for(String pvName : allPVs) { 
 			func.accept(pvName);
-			func.accept(pvName + ".VAL");
-			PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
-			if(typeInfo != null) { 
-				for(String fieldName : typeInfo.getArchiveFields()) { 
-					func.accept(pvName + "." + fieldName);
+			if(!PVNames.isField(pvName)) { 
+				func.accept(pvName + ".VAL");
+				PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
+				if(typeInfo != null) { 
+					for(String fieldName : typeInfo.getArchiveFields()) { 
+						func.accept(pvName + "." + fieldName);
+					}
 				}
 			}
 		}
 		List<String> allAliases = this.getAllAliases();
 		for(String pvName : allAliases) { 
 			func.accept(pvName);
-			func.accept(pvName + ".VAL");
-			PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
-			if(typeInfo != null) { 
-				for(String fieldName : typeInfo.getArchiveFields()) { 
-					func.accept(pvName + "." + fieldName);
+			if(!PVNames.isField(pvName)) { 
+				func.accept(pvName + ".VAL");
+				PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
+				if(typeInfo != null) { 
+					for(String fieldName : typeInfo.getArchiveFields()) { 
+						func.accept(pvName + "." + fieldName);
+					}
 				}
 			}
 		}
 		for(String pvName : this.getArchiveRequestsCurrentlyInWorkflow()) { 
 			func.accept(pvName);
-			func.accept(pvName + ".VAL");
+			if(!PVNames.isField(pvName)) { 
+				func.accept(pvName + ".VAL");
+			}
 		}
 	}
 	

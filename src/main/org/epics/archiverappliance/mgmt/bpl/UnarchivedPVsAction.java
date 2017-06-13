@@ -41,8 +41,7 @@ public class UnarchivedPVsAction implements BPLAction {
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		logger.info("Determining PVs that are unarchived ");
-		LinkedList<String> pvNamesFromUser = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
-		Set<String> normalizedPVNames = new HashSet<String>(pvNamesFromUser);
+		Set<String> pvNamesFromUser = new HashSet<String>(PVsMatchingParameter.getPVNamesFromPostBody(req, configService));
 
 		Set<String> expandedNames = new HashSet<String>(); 
 		configService.getAllExpandedNames(new Consumer<String>(){
@@ -51,11 +50,11 @@ public class UnarchivedPVsAction implements BPLAction {
 				expandedNames.add(t);
 			} });
 		
-		normalizedPVNames.removeAll(expandedNames);
+		pvNamesFromUser.removeAll(expandedNames);
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
-			JSONValue.writeJSONString(new LinkedList<String>(normalizedPVNames), out);
+			JSONValue.writeJSONString(new LinkedList<String>(pvNamesFromUser), out);
 		}
 	}
 }
