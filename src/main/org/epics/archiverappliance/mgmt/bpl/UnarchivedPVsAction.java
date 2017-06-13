@@ -9,8 +9,10 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -19,7 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
@@ -42,49 +43,40 @@ public class UnarchivedPVsAction implements BPLAction {
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		logger.info("Determining PVs that are unarchived ");
-		LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
-		LinkedList<String> unarchivedPVs = new LinkedList<String>();
-		for(String pvName : pvNames) {
-			PVTypeInfo typeInfo = null;
-			logger.debug("Check for the name as it came in from the user " + pvName);
-			typeInfo = configService.getTypeInfoForPV(pvName);
-			if(typeInfo != null) continue;
-			logger.debug("Check for the normalized name");
-			typeInfo = configService.getTypeInfoForPV(PVNames.normalizePVName(pvName));
-			if(typeInfo != null) continue;
-			logger.debug("Check for aliases");
-			String aliasRealName = configService.getRealNameForAlias(PVNames.normalizePVName(pvName));
-			if(aliasRealName != null) { 
-				typeInfo = configService.getTypeInfoForPV(aliasRealName);
-				if(typeInfo != null) continue;
-			}
-			logger.debug("Check for fields");
-			String fieldName = PVNames.getFieldName(pvName);
-			if(fieldName != null) { 
-				typeInfo = configService.getTypeInfoForPV(PVNames.stripFieldNameFromPVName(pvName));
-				if(typeInfo != null) { 
-					if(Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) continue;
-				}
-				String fieldAliasRealName = configService.getRealNameForAlias(PVNames.stripFieldNameFromPVName(pvName));
-				if(fieldAliasRealName != null) { 
-					typeInfo = configService.getTypeInfoForPV(fieldAliasRealName);
-					if(typeInfo != null) { 
-						if(Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) continue;
-					}
+		LinkedList<String> pvNamesFromUser = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+		Set<String> normalizedPVNames = new HashSet<String>(pvNamesFromUser);
+
+		Set<String> allNames = new HashSet<String>();
+		Collection<String> allPVs = configService.getAllPVs();
+		allNames.addAll(allPVs);
+		// Add fields and the VAL field
+		for(String pvName : allPVs) { 
+			allNames.add(pvName + ".VAL");
+			PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+			if(typeInfo != null) { 
+				for(String fieldName : typeInfo.getArchiveFields()) { 
+					allNames.add(pvName + "." + fieldName);
 				}
 			}
-			// Check for pending requests...
-			Set<String> workFlowPVs = configService.getArchiveRequestsCurrentlyInWorkflow();
-			if(workFlowPVs.contains(PVNames.normalizePVName(pvName)) || (aliasRealName != null && workFlowPVs.contains(aliasRealName))) continue;
-			
-			// Think we've tried every possible use cases..
-			unarchivedPVs.add(pvName);
 		}
+		List<String> allAliases = configService.getAllAliases();
+		allNames.addAll(allAliases);
+		for(String pvName : allAliases) { 
+			allNames.add(pvName + ".VAL");
+			PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+			if(typeInfo != null) { 
+				for(String fieldName : typeInfo.getArchiveFields()) { 
+					allNames.add(pvName + "." + fieldName);
+				}
+			}
+		}
+		allNames.addAll(configService.getArchiveRequestsCurrentlyInWorkflow()); 
 		
+		normalizedPVNames.removeAll(allNames);
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
-			JSONValue.writeJSONString(unarchivedPVs, out);
+			JSONValue.writeJSONString(new LinkedList<String>(normalizedPVNames), out);
 		}
 	}
 }

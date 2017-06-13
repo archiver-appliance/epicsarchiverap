@@ -9,6 +9,7 @@ package org.epics.archiverappliance.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -201,7 +202,7 @@ public interface ConfigService {
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
 	 * @return String AllPVs &emsp;
 	 */
-	public Iterable<String> getAllPVs();
+	public Collection<String> getAllPVs();
 	
 	/**
 	 * Given a PV, get us the appliance that is responsible for archiving it.
