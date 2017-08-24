@@ -242,16 +242,23 @@ public class MetaGet implements Runnable {
 	private void parseOtherInfo(SampleValue tempvalue, MetaInfo mainMeta, String fieldName) {
 		logger.debug("In MetaGet, processing field " + fieldName);
 		if(fieldName.equals("SCAN")) {
-			int enumIndex = ((ScalarValue<?>) tempvalue).getValue().intValue();
-			String[] labels = pvList.get(fieldName).getTotalMetaInfo().getLabel();
-			if(labels != null && enumIndex < labels.length) { 
-				String scanValue = labels[enumIndex];
-				logger.debug("Looked up scan value enum name and it is " + scanValue);
-				mainMeta.addOtherMetaInfo("SCAN", scanValue);
-				return;
-			} else { 
-				logger.warn("SCAN does not seem to be a valid label");
-				mainMeta.addOtherMetaInfo("SCAN", Integer.toString(enumIndex));
+			if(tempvalue instanceof ScalarValue<?>) {
+				int enumIndex = ((ScalarValue<?>) tempvalue).getValue().intValue();
+				String[] labels = pvList.get(fieldName).getTotalMetaInfo().getLabel();
+				if(labels != null && enumIndex < labels.length) { 
+					String scanValue = labels[enumIndex];
+					logger.debug("Looked up scan value enum name and it is " + scanValue);
+					mainMeta.addOtherMetaInfo("SCAN", scanValue);
+					return;
+				} else { 
+					logger.warn("SCAN does not seem to be a valid label");
+					mainMeta.addOtherMetaInfo("SCAN", Integer.toString(enumIndex));
+				}
+			} else if (tempvalue instanceof ScalarStringSampleValue) { 
+				logger.debug("PVs from IOC's hosted on pcaspy send the SCAN as a string");
+				mainMeta.addOtherMetaInfo("SCAN", ((ScalarStringSampleValue) tempvalue).toString());				
+			} else {
+				logger.warn("The SCAN field for this PV is not a enum or a string " + this.pvName);
 			}
 		}
 		
