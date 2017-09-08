@@ -41,6 +41,7 @@ import org.epics.archiverappliance.engine.bpl.reports.DroppedEventsTimestampRepo
 import org.epics.archiverappliance.engine.bpl.reports.DroppedEventsTypeChangeReport;
 import org.epics.archiverappliance.engine.bpl.reports.EventRateReport;
 import org.epics.archiverappliance.engine.bpl.reports.InstanceReportDetails;
+import org.epics.archiverappliance.engine.bpl.reports.LastKnownTimeStampReport;
 import org.epics.archiverappliance.engine.bpl.reports.ListAllChannels;
 import org.epics.archiverappliance.engine.bpl.reports.LostConnectionsReport;
 import org.epics.archiverappliance.engine.bpl.reports.NeverConnectedPVsAction;
@@ -87,6 +88,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getVersion", GetVersion.class);
 		getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
 		getActions.put("/getArchiveChannelObjectDetails", ArchiveChannelObjectDetailsAction.class);
+		getActions.put("/getLastKnownTimeStampReport", LastKnownTimeStampReport.class);
 		
 	}
 

@@ -69,6 +69,7 @@ import org.epics.archiverappliance.mgmt.bpl.UploadChannelArchiverConfigAction;
 import org.epics.archiverappliance.mgmt.bpl.cahdlers.CompareWithChannelArchiver;
 import org.epics.archiverappliance.mgmt.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.mgmt.bpl.reports.ApplianceMetricsDetails;
+import org.epics.archiverappliance.mgmt.bpl.reports.CreationTimeReportForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.reports.CurrentlyDisconnectedPVs;
 import org.epics.archiverappliance.mgmt.bpl.reports.DroppedEventsBufferOverflowReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.DroppedEventsTimestampReport;
@@ -90,6 +91,7 @@ import org.epics.archiverappliance.mgmt.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageReportDetails;
+import org.epics.archiverappliance.mgmt.bpl.reports.TimeSpanReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.WaveformPVsAction;
 import org.epics.archiverappliance.mgmt.policy.GetApplianceProps;
 import org.epics.archiverappliance.mgmt.policy.GetPolicyList;
@@ -156,7 +158,8 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
 		addAction("/getPausedPVsReport", PausedPVsReport.class);
 		addAction("/getPausedPVsForThisAppliance", GetPausedPVsForThisAppliance.class);
-		addAction("/getArchivedWaveforms", WaveformPVsAction.class);		
+		addAction("/getArchivedWaveforms", WaveformPVsAction.class);	
+		addAction("/getTimeSpanReport", TimeSpanReport.class);
 		
 		
 		// Others.
@@ -181,6 +184,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getProcessMetricsDataForAppliance", ProcessMetricsChartData.class);
 		addAction("/refreshPVDataFromChannelArchivers", RefreshPVDataFromChannelArchivers.class);
 		addAction("/getMatchingPVsForThisAppliance", GetMatchingPVsForAppliance.class);
+		addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);		
 	}
 	
 	@Override

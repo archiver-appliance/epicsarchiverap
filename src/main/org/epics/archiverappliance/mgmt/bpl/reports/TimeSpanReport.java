@@ -1,0 +1,75 @@
+/*******************************************************************************
+ * Copyright (c) 2011 The Board of Trustees of the Leland Stanford Junior University
+ * as Operator of the SLAC National Accelerator Laboratory.
+ * Copyright (c) 2011 Brookhaven National Laboratory.
+ * EPICS archiver appliance is distributed subject to a Software License Agreement found
+ * in file LICENSE that is included with this distribution.
+ *******************************************************************************/
+package org.epics.archiverappliance.mgmt.bpl.reports;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.log4j.Logger;
+import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.config.ApplianceInfo;
+import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+
+/**
+ * Archiving time span. 
+ * 
+ * @epics.BPLAction - Archiving time span; when we first added the PV to the system, last known timestamp (if available), paused or not. 
+ * @epics.BPLActionEnd
+ * 
+ * @author mshankar
+ *
+ */
+public class TimeSpanReport implements BPLAction {
+	private static final Logger logger = Logger.getLogger(TimeSpanReport.class);
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
+		logger.info("Getting the time spans for PVs in the cluster");
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		LinkedList<String> lastKnownTimestampsURLs = new LinkedList<String>();
+		LinkedList<String> creationTimeURLs = new LinkedList<String>();
+		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
+			lastKnownTimestampsURLs.add(info.getEngineURL() + "/getLastKnownTimeStampReport");
+			creationTimeURLs.add(info.getMgmtURL() + "/getCreationReportForAppliance");
+		}		
+
+		JSONArray lastKnownTS = GetUrlContent.combineJSONArrays(lastKnownTimestampsURLs);
+		JSONArray creationTimes = GetUrlContent.combineJSONArrays(creationTimeURLs);
+		
+		HashMap<String, JSONObject> ret = new HashMap<String, JSONObject>();
+		try (PrintWriter out = resp.getWriter()) {
+			for(Object crObj : creationTimes) { 
+				JSONObject crHash = (JSONObject) crObj;
+				ret.put((String) crHash.get("pvName"), crHash);
+			}
+
+			for(Object lsObj : lastKnownTS) { 
+				JSONObject lsHash = (JSONObject) lsObj;
+				String pvName = (String) lsHash.get("pvName");
+				if(ret.containsKey(pvName)) { 
+					ret.get(pvName).putAll(lsHash);
+				} else { 
+					logger.warn("We have a last known time stamp but no typeinfo for PV " + pvName);
+				}
+			}
+			
+			out.println(JSONValue.toJSONString(ret));
+		}
+	}
+}
