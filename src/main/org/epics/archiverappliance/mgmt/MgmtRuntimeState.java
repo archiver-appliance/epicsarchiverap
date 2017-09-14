@@ -121,7 +121,7 @@ public class MgmtRuntimeState {
 		
 		String abortArchiveWorkflowStr = "org.epics.archiverappliance.mgmt.MgmtRuntimeState.abortArchiveRequestInMins";
 		if(installationProperties.containsKey(abortArchiveWorkflowStr)) { 
-			this.abortArchiveWorkflowInMins = Integer.parseInt(installationProperties.getProperty(abortArchiveWorkflowStr));
+			this.abortArchiveWorkflowInMins = Integer.parseInt(installationProperties.getProperty(abortArchiveWorkflowStr).trim());
 			configlogger.info("Setting the abort archive PV workflow timeout (in mins) to " + this.abortArchiveWorkflowInMins);
 		}
 		
