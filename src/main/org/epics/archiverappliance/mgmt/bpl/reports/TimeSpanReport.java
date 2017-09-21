@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -49,8 +50,11 @@ public class TimeSpanReport implements BPLAction {
 			creationTimeURLs.add(info.getMgmtURL() + "/getCreationReportForAppliance");
 		}		
 
+		PoorMansProfiler pf = new PoorMansProfiler();
 		JSONArray lastKnownTS = GetUrlContent.combineJSONArrays(lastKnownTimestampsURLs);
+		pf.mark("After last known time stamps from the engine");
 		JSONArray creationTimes = GetUrlContent.combineJSONArrays(creationTimeURLs);
+		pf.mark("After creation times from mgmt");
 		
 		HashMap<String, JSONObject> ret = new HashMap<String, JSONObject>();
 		try (PrintWriter out = resp.getWriter()) {
@@ -58,6 +62,7 @@ public class TimeSpanReport implements BPLAction {
 				JSONObject crHash = (JSONObject) crObj;
 				ret.put((String) crHash.get("pvName"), crHash);
 			}
+			pf.mark("After inserting creation times");
 
 			for(Object lsObj : lastKnownTS) { 
 				JSONObject lsHash = (JSONObject) lsObj;
@@ -68,8 +73,11 @@ public class TimeSpanReport implements BPLAction {
 					logger.warn("We have a last known time stamp but no typeinfo for PV " + pvName);
 				}
 			}
+			pf.mark("After inserting last known times");
 			
-			out.println(JSONValue.toJSONString(ret));
+			JSONValue.writeJSONString(ret, out);
+			pf.mark("After sending data");
 		}
+		logger.info(pf.toString());
 	}
 }
