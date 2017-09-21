@@ -9,8 +9,9 @@ package org.epics.archiverappliance.mgmt.bpl.reports;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.TreeMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -56,7 +57,7 @@ public class TimeSpanReport implements BPLAction {
 		JSONArray creationTimes = GetUrlContent.combineJSONArrays(creationTimeURLs);
 		pf.mark("After creation times from mgmt");
 		
-		HashMap<String, JSONObject> ret = new HashMap<String, JSONObject>();
+		Map<String, JSONObject> ret = new TreeMap<String, JSONObject>();
 		try (PrintWriter out = resp.getWriter()) {
 			for(Object crObj : creationTimes) { 
 				JSONObject crHash = (JSONObject) crObj;
