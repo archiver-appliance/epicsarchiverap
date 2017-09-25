@@ -117,7 +117,7 @@ public class ETLJob implements Runnable {
 				List<ETLInfo> movedList = new LinkedList<ETLInfo>();
 				for (ETLInfo infoItem : ETLInfoList) {
 					if(logger.isDebugEnabled()) {
-						logger.debug("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
+						logger.debug("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString() + " and size " + infoItem.getSize());
 					}
 					
 					long checkSzStart = System.currentTimeMillis();
