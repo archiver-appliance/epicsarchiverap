@@ -384,7 +384,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		String pvNameFromRequest = pvName;
 		
 		String fieldName = PVNames.getFieldName(pvName);
-		if(fieldName != null && !fieldName.equals("") && !pvName.equals(typeInfo.getPvName())) {
+		if(fieldName != null && !fieldName.equals("") && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
 			logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName() + " as that determines the name of the stream. Also using ExtraFieldsPostProcessor");
 			pvName = typeInfo.getPvName();
 			postProcessor = new ExtraFieldsPostProcessor(fieldName);
