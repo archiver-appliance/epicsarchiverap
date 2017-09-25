@@ -74,13 +74,17 @@ public class GetPVStatusAction implements BPLAction {
 				if(typeInfoForPV != null) { 
 					pvName = typeInfoForPV.getPvName();
 					addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
-				}
 
-				if(!pvNamesToAskEngineForStatus.containsKey(info.getEngineURL())) { 
-					pvNamesToAskEngineForStatus.put(info.getEngineURL(), new LinkedList<String>());
+					if(!pvNamesToAskEngineForStatus.containsKey(info.getEngineURL())) { 
+						pvNamesToAskEngineForStatus.put(info.getEngineURL(), new LinkedList<String>());
+					}
+					pvNamesToAskEngineForStatus.get(info.getEngineURL()).add(pvName);
+					typeInfosForEngineRequests.put(pvName, typeInfoForPV);
+					
+				} else {
+					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Not being archived\" }");
+					
 				}
-				pvNamesToAskEngineForStatus.get(info.getEngineURL()).add(pvName);
-				typeInfosForEngineRequests.put(pvName, typeInfoForPV);
 			}
 		}
 		
