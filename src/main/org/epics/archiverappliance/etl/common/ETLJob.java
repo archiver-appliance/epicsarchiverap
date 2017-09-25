@@ -172,7 +172,7 @@ public class ETLJob implements Runnable {
 								logger.debug("Successfully appended ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
 							}
 						} else {
-							logger.warn("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
+							logger.warn("Invalid status when processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName + "itemInfo partitionGranularity = " + infoItem.getGranularity().toString());
 						}
 					} catch(IOException ex) {
 						//TODO What do we do in the case of exceptions? Do we remove the source still? Do we stop the engine from recording this PV?
