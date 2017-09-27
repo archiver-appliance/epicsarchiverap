@@ -303,9 +303,13 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 				logger.debug("Type from structure in monitorConnect is " + structureID);
 				
 				Field valueField = structure.getField("value");
-				logger.debug("Value field in monitorConnect is of type " + valueField.getID());
+				if(valueField == null) { 
+					archDBRType = archDBRType.DBR_V4_GENERIC_BYTES;
+				} else {
+					logger.debug("Value field in monitorConnect is of type " + valueField.getID());					
+					archDBRType = this.determineDBRType(structureID, valueField.getID());
+				}
 				
-				archDBRType = this.determineDBRType(structureID, valueField.getID());
 				con = configservice.getArchiverTypeSystem().getV4Constructor(archDBRType);
 				logger.debug("Determined ArchDBRTypes for " + this.name + " as " + archDBRType);
 
