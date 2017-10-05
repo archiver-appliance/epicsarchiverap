@@ -62,29 +62,23 @@ public class GetPVStatusAction implements BPLAction {
 			pvName = PVNames.stripPrefixFromName(pvName);
 			addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
 			
-			ApplianceInfo info = PVNames.determineAppropriateApplianceInfo(pvName, configService);
-			if(info == null) {
-				if(configService.doesPVHaveArchiveRequestInWorkflow(pvName)) {
+			PVTypeInfo typeInfoForPV = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
+			if(typeInfoForPV != null) { 
+				pvName = typeInfoForPV.getPvName();
+				addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
+				ApplianceInfo info = configService.getAppliance(typeInfoForPV.getApplianceIdentity());
+
+				if(!pvNamesToAskEngineForStatus.containsKey(info.getEngineURL())) { 
+					pvNamesToAskEngineForStatus.put(info.getEngineURL(), new LinkedList<String>());
+				}
+				pvNamesToAskEngineForStatus.get(info.getEngineURL()).add(pvName);
+				typeInfosForEngineRequests.put(pvName, typeInfoForPV);					
+			} else {
+				if(PVNames.determineIfPVInWorkflow(pvName, configService)) {
 					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Initial sampling\" }");
 				} else {
 					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Not being archived\" }");
-				}
-			} else {
-				PVTypeInfo typeInfoForPV = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
-				if(typeInfoForPV != null) { 
-					pvName = typeInfoForPV.getPvName();
-					addInverseNameMapping(pvNameFromRequest, pvName, realName2NameFromRequest);
-
-					if(!pvNamesToAskEngineForStatus.containsKey(info.getEngineURL())) { 
-						pvNamesToAskEngineForStatus.put(info.getEngineURL(), new LinkedList<String>());
-					}
-					pvNamesToAskEngineForStatus.get(info.getEngineURL()).add(pvName);
-					typeInfosForEngineRequests.put(pvName, typeInfoForPV);
-					
-				} else {
-					pvStatuses.put(pvNameFromRequest, "{ \"pvName\": \"" + pvNameFromRequest + "\", \"status\": \"Not being archived\" }");
-					
-				}
+				}				
 			}
 		}
 		
@@ -120,11 +114,13 @@ public class GetPVStatusAction implements BPLAction {
 				}
 				for(String pvNameForResult : pvNamesForResult) { 
 					if(pvStatus != null && !pvStatus.isEmpty()) {
+						logger.debug("Found status from engine for " + pvNameToAskEngine);
 						pvStatus.put("appliance", typeInfo.getApplianceIdentity());
 						pvStatus.put("pvName", pvNameForResult);
 						pvStatus.put("pvNameOnly", pvNameToAskEngine);
 						pvStatuses.put(pvNameForResult, pvStatus.toJSONString());
 					} else { 
+						logger.debug("Did not find status from engine for " + pvNameToAskEngine);
 						if(typeInfo != null && typeInfo.isPaused()) { 
 							HashMap<String, String> tempStatus = new HashMap<String, String>();
 							tempStatus.put("appliance", typeInfo.getApplianceIdentity());
@@ -132,15 +128,15 @@ public class GetPVStatusAction implements BPLAction {
 							tempStatus.put("pvNameOnly", pvNameToAskEngine);
 							tempStatus.put("status", "Paused");
 							pvStatuses.put(pvNameForResult, JSONValue.toJSONString(tempStatus));
-						} 
-						else {
+						} else {
+							logger.debug("Did not find status from engine for " + pvNameToAskEngine + " adding default status for " + pvNameForResult);
 							// Here we have a PVTypeInfo but no status from the engine.
 							if(instanceDown) { 
 								// It could mean that the engine component archiving this PV is down.
-								pvStatuses.put(pvNameToAskEngine, "{ \"pvName\": \"" + pvNameForResult + "\", \"status\": \"Appliance Down\" }");
+								pvStatuses.put(pvNameForResult, "{ \"pvName\": \"" + pvNameForResult + "\", \"status\": \"Appliance Down\" }");
 							} else { 
 								// It could be that we are in that transient period between persisting the PVTypeInfo and opening the CA channel.
-								pvStatuses.put(pvNameToAskEngine, "{ \"pvName\": \"" + pvNameForResult + "\", \"status\": \"Appliance assigned\" }");
+								pvStatuses.put(pvNameForResult, "{ \"pvName\": \"" + pvNameForResult + "\", \"status\": \"Appliance assigned\" }");
 							}
 						}
 					}

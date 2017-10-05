@@ -160,86 +160,152 @@ public class PVNames {
 	}
 	
 	/**
-	 * A standard process for dealing with aliases, standard fields and the like.
+	 * A standard process for dealing with aliases, standard fields and the like and getting to the PVTypeInfo.
 	 * @param pvName The name of PV.
 	 * @param configService ConfigService
 	 * @return PVTypeInfo  &emsp;
+	 * 
+	 * Places where we look for the typeinfo.
+	 * <ul>
+	 * <li> If the PV is not a field PV
+	 * <ul>
+	 * <li>Typeinfo for full PV name</li>
+	 * <li>Alias for full PV name + Typeinfo for full PV name</li>
+	 * </ul>
+	 * </li>If the PV is a field PV
+	 * <ul>
+	 * <li>Typeinfo for fieldless PVName + archiveFields</li>
+	 * <li>Typeinfo for full PV name</li>
+	 * <li>Alias for fieldless PVName + Typeinfo for fieldless PVName + archiveFields</li>
+	 * <li>Alias for full PV name + Typeinfo for full PV name</li>
+	 * </ul>
+	 * </ul>
+	 * 
 	 */
 	public static PVTypeInfo determineAppropriatePVTypeInfo(String pvName, ConfigService configService) {
-		// First check for the pvName as is
-		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-		if(typeInfo != null) {
-			logger.debug("Found typeinfo for pvName " + pvName);
-			return typeInfo;
-		}
-		String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
-		String fieldName= PVNames.getFieldName(pvName);
-		// Check for aliases.
-		String realName = configService.getRealNameForAlias(pvNameAlone);
-		if(realName != null) {
-			pvName = realName + (fieldName == null || fieldName.equals("") ? "" : ("." + fieldName));
-			pvNameAlone = realName;
-
-			typeInfo = configService.getTypeInfoForPV(pvName);
-			if(typeInfo != null) {
-				logger.debug("Found typeinfo for " + pvName + " as alias " + realName);
-				return typeInfo;
+		boolean pvDoesNotHaveField = !PVNames.isField(pvName);
+		
+		if(pvDoesNotHaveField) {
+			logger.debug("Looking for typeinfo for fieldless PV name " + pvName);
+			// Typeinfo for full PV name
+			{
+				PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+				if(typeInfo != null) {
+					logger.debug("Found typeinfo for pvName " + pvName);
+					return typeInfo;
+				}
 			}
-		}
-
-		// Check for fields archived as part of PV.
-		if(fieldName != null && !fieldName.equals("")) {
-			typeInfo = configService.getTypeInfoForPV(pvNameAlone);
-			if(typeInfo != null && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
-				logger.debug("Found typeinfo for " + pvName + " for field " + fieldName);
-				return typeInfo;
+			
+			// Alias for full PV name + Typeinfo for full PV name
+			{
+				String realName = configService.getRealNameForAlias(pvName);
+				if(realName != null) { 
+					PVTypeInfo typeInfo = configService.getTypeInfoForPV(realName);
+					if(typeInfo != null) {
+						logger.debug("Found typeinfo for real pvName " + realName + " which is an alias of " + pvName);
+						return typeInfo;
+					}
+				}
 			}
-		}
+		} else { 
+			logger.debug("Looking for typeinfo for PV name with a field " + pvName);
+			String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
+			String fieldName = PVNames.getFieldName(pvName);
+			 // Typeinfo for fieldless PVName + archiveFields
+			{
+				PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvNameAlone);
+				if(typeInfo != null && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
+					logger.debug("Found typeinfo for fieldless pvName " + pvNameAlone + " for archiveField " + fieldName);
+					return typeInfo;
+				}
+			}
+			
+			// Typeinfo for full PV name
+			{
+				PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+				if(typeInfo != null) {
+					logger.debug("Found typeinfo for full pvName with field " + pvName);
+					return typeInfo;
+				}
+			}
+			 
+			// Alias for fieldless PVName + Typeinfo for fieldless PVName + archiveFields
+			{
+				String realName = configService.getRealNameForAlias(pvNameAlone);
+				if(realName != null) { 
+					PVTypeInfo typeInfo = configService.getTypeInfoForPV(PVNames.stripFieldNameFromPVName(realName));
+					if(typeInfo != null && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
+						logger.debug("Found typeinfo for aliased fieldless pvName " + realName + " for archiveField " + fieldName);
+						return typeInfo;
+					}
+				}
+			}
+			
+			// Alias for full PV name + Typeinfo for full PV name
+			{
+				String realName = configService.getRealNameForAlias(pvName);
+				if(realName != null) { 
+					PVTypeInfo typeInfo = configService.getTypeInfoForPV(realName);
+					if(typeInfo != null) {
+						logger.debug("Found typeinfo for real pvName " + realName + " which is an alias of " + pvName);
+						return typeInfo;
+					}
+				}				
+			}
+		} // Ends Looking for typeinfo for PV name with a field " + pvName
 		
 		logger.debug("Did not find typeinfo for pvName " + pvName);
 		return null;
 	}
-	
-	
+
 	/**
-	 * A standard process for dealing with aliases, standard fields and the like; should be similar to determineAppropriatePVTypeInfo
-	 * @param pvName The name of PV.
-	 * @param configService ConfigService
-	 * @return ApplianceInfo  &emsp;
+	 * A standard process for dealing with aliases, standard fields and the like and checking to see if the PV is in the archive workflow.
+	 * @param pvName
+	 * @param configService
+	 * @return True if the PV or its avatars are in the archive workflow.
+	 * It is not possible to state this accurately for all fields.
+	 * For example, for fields that are archived as part of the stream, if the main PV is in the archive workflow, then the field is as well.
+	 * But it is impossible to state this before the PVTypeInfo has been computed.
+	 * So we resort to being pessimistic.
+	 * 
+	 * Places where we look for the typeinfo.
+	 * <ul>
+	 * <li> If the PV is not a field PV
+	 * <ul>
+	 * <li>ArchivePVRequests for full PV name</li>
+	 * <li>Alias for full PV name + ArchivePVRequests for full PV name</li>
+	 * </ul>
+	 * </li>If the PV is a field PV
+	 * <ul>
+	 * <li>ArchivePVRequests for full PVName</li>
+	 * <li>Alias for full PV name + ArchivePVRequests for full PVName</li>
+	 * </ul>
+	 * Note that this translates to the fact that regardless of whether the PV is a field or not, we look in the same places.
+	 * </ul>
 	 */
-	public static ApplianceInfo determineAppropriateApplianceInfo(String pvName, ConfigService configService) {
-		// First check for the pvName as is
-		ApplianceInfo info = configService.getApplianceForPV(pvName);
-		if(info != null) {
-			logger.debug("Found appliance info for pvName " + pvName);
-			return info;
-		}
-		String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
-		String fieldName= PVNames.getFieldName(pvName);
-		// Check for aliases.
-		String realName = configService.getRealNameForAlias(pvNameAlone);
-		if(realName != null) {
-			pvName = realName + (fieldName == null || fieldName.equals("") ? "" : ("." + fieldName));
-			pvNameAlone = realName;
-
-			info = configService.getApplianceForPV(pvName);
-			if(info != null) {
-				logger.debug("Found appliance info for " + pvName + " as alias " + realName);
-				return info;
-			}
-		}
-
-		// Check for fields archived as part of PV.
-		if(fieldName != null && !fieldName.equals("")) {
-			info = configService.getApplianceForPV(pvNameAlone);
-			if(info != null) {
-				logger.debug("Found appliance info for " + pvName + " for field " + fieldName);
-				return info;
+	public static boolean determineIfPVInWorkflow(String pvName, ConfigService configService) {
+		logger.debug("Looking for archiverequests for PV " + pvName);
+		
+		// ArchivePVRequests for full PV name
+		{
+			if(configService.doesPVHaveArchiveRequestInWorkflow(pvName)) {
+				logger.debug("Found PV in archive request workflow " + pvName);
+				return true;
 			}
 		}
 		
-		logger.debug("Did not find appliance info for pvName " + pvName);
-		return null;
+		// Alias for full PV name + ArchivePVRequests for full PV name
+		{
+			String realName = configService.getRealNameForAlias(pvName);
+			if(realName != null) { 
+				if(configService.doesPVHaveArchiveRequestInWorkflow(realName)) {
+					logger.debug("Found aliased PV in archive request workflow " + realName);
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 
 	

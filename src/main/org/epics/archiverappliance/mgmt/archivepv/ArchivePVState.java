@@ -373,6 +373,7 @@ public class ArchivePVState {
 				}
 			} else {
 				logger.debug("We are not archiving the real PV " + realName + " which is the alias for " + pvName + ". Aborting this request and asking to archive " + realName);
+				configService.addAlias(pvName, realName);
 				ByteArrayOutputStream bos = new ByteArrayOutputStream();
 				PrintWriter out = new PrintWriter(bos);
 				ArchivePVAction.archivePV(out, realName, userSpec.isUserOverrideParams(), userSpec.getUserSpecifedsamplingMethod(), userSpec.getUserSpecifedSamplingPeriod(), userSpec.getControllingPV(), userSpec.getPolicyName(), pvName, true, configService, ArchivePVAction.getFieldsAsPartOfStream(configService));
