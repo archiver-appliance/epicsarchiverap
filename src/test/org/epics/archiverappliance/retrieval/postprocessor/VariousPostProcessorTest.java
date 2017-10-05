@@ -93,7 +93,7 @@ public class VariousPostProcessorTest {
 		 
 		 // Change the values for the PV
 		 logger.info("Changing pv " + pvName + " and generating " + sampleValues.length + " values");
-		 new PVCaPut().caPutValues(pvName,sampleValues);
+		 new PVCaPut().caPutValues(pvName,sampleValues, 3000);
 
 		 Thread.sleep(3*1000);
 		 

@@ -154,7 +154,7 @@ public class ScanSamplingMethodTest {
 		double lastValue = -1000.0;
 		new PVCaPut().caPut(pvName, 1.0);
 		Thread.sleep(2000);
-		new PVCaPut().caPutValues(pvName, new double[] { 1.1, 1.2, 1.3, lastValue});
+		new PVCaPut().caPutValues(pvName, new double[] { 1.1, 1.2, 1.3, lastValue}, 100);
 		return lastValue;
 	}
 	

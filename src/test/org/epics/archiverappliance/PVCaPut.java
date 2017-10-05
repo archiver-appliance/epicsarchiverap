@@ -90,14 +90,21 @@ public class PVCaPut {
          destroy();
    }
 
-    public void caPutValues(String pvName,double[] values) throws Exception  {
+    /**
+     * caput values into PV
+     * @param pvName
+     * @param values
+     * @param timebetweenupdates - Sleep for this many mills between updates.
+     * @throws Exception
+     */
+    public void caPutValues(String pvName,double[] values, int timebetweenupdates) throws Exception  {
     	initialize();
     	Channel channel = context.createChannel(pvName);
     	context.pendIO(3.0);
     	for(double value : values) { 
         	channel.put(value);
         	context.pendIO(3.0);
-        	Thread.sleep(100);
+        	Thread.sleep(timebetweenupdates);
     	}
     	channel.destroy();      
     	destroy();
