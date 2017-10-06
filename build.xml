@@ -365,7 +365,7 @@
 		           author="true"
 		           version="true"
 		           use="true"
-		  	       linkoffline="http://docs.oracle.com/javase/8/docs/api http://docs.oracle.com/javase/8/docs/api/package-list">
+		  	       link="http://docs.oracle.com/javase/8/docs/api/">
     	    <classpath>
     	    	<pathelement path="${classes}"/>
     	        <fileset dir="lib/test">
