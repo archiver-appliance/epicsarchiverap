@@ -255,7 +255,7 @@ public class ArchivePVState {
 	}
 
 	public boolean hasNotConnectedSoFar() {
-		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
+		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.START) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
 	}
 
 	/**
