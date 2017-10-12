@@ -78,6 +78,7 @@ import org.epics.archiverappliance.mgmt.bpl.reports.EventRateReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.InstanceReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.InstanceReportDetails;
 import org.epics.archiverappliance.mgmt.bpl.reports.LostConnectionsReport;
+import org.epics.archiverappliance.mgmt.bpl.reports.MetaGetsAction;
 import org.epics.archiverappliance.mgmt.bpl.reports.NeverConnectedPVsAction;
 import org.epics.archiverappliance.mgmt.bpl.reports.NeverConnectedPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.reports.PVDetails;
@@ -140,6 +141,7 @@ public class BPLServlet extends HttpServlet {
 		// BPL related to reports
 		addAction("/getNeverConnectedPVs", NeverConnectedPVsAction.class);
 		addAction("/getNeverConnectedPVsForThisAppliance", NeverConnectedPVsForThisAppliance.class);
+		addAction("/getMetaGets", MetaGetsAction.class);
 		addAction("/getCurrentlyDisconnectedPVs", CurrentlyDisconnectedPVs.class);
 		addAction("/getEventRateReport", EventRateReport.class);
 		addAction("/getStorageRateReport", StorageRateReport.class);

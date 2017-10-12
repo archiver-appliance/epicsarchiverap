@@ -44,7 +44,7 @@ import org.epics.archiverappliance.engine.bpl.reports.InstanceReportDetails;
 import org.epics.archiverappliance.engine.bpl.reports.LastKnownTimeStampReport;
 import org.epics.archiverappliance.engine.bpl.reports.ListAllChannels;
 import org.epics.archiverappliance.engine.bpl.reports.LostConnectionsReport;
-import org.epics.archiverappliance.engine.bpl.reports.NeverConnectedPVsAction;
+import org.epics.archiverappliance.engine.bpl.reports.MetaGetsForThisApplianceAction;
 import org.epics.archiverappliance.engine.bpl.reports.PVDetails;
 import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
@@ -63,7 +63,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getData.raw", GetEngineDataAction.class);
 		getActions.put("/getMetadata", GetLatestMetaDataAction.class);
 		getActions.put("/status", PVStatusAction.class);
-		getActions.put("/getNeverConnectedPVsForThisAppliance", NeverConnectedPVsAction.class);
+		getActions.put("/getMetaGetsForThisAppliance", MetaGetsForThisApplianceAction.class);
 		getActions.put("/getCurrentlyDisconnectedPVsForThisAppliance", CurrentlyDisconnectedPVsAction.class);
 		getActions.put("/getEventRateReport", EventRateReport.class);
 		getActions.put("/getStorageRateReport", StorageRateReport.class);

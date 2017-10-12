@@ -10,7 +10,10 @@ package org.epics.archiverappliance.engine.metadata;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -297,5 +300,31 @@ public class MetaGet implements Runnable {
 	}
 	public boolean isUsePVAccess() {
 		return usePVAccess;
+	}
+	
+	
+	public static List<HashMap<String, String>> getPendingMetaDetails() {
+		List<HashMap<String, String>> ret = new LinkedList<HashMap<String, String>>();
+		for(String pvNm : metaGets.keySet()) {
+			MetaGet mg = metaGets.get(pvNm);
+			HashMap<String, String> st = new HashMap<String, String>();
+			st.put("pvName", pvNm);
+			st.put("isScheduled", Boolean.toString(mg.isScheduled));
+			st.put("usePVAccess", Boolean.toString(mg.usePVAccess));
+			PV pvMain = mg.pvList.get("main");
+			if(pvMain != null) {
+				st.put("internalState", pvMain.getStateInfo()); 
+				MetaInfo mainMeta = pvMain.getTotalMetaInfo();
+				if(mainMeta != null) {
+					st.put("eventsSoFar", Long.toString(mainMeta.getEventCount()));
+					st.put("storageSoFar", Long.toString(mainMeta.getStorageSize()));
+				}
+			} else {
+				st.put("internalState", "Null"); 
+			}
+			ret.add(st);
+		}
+		
+		return ret;
 	}
 }

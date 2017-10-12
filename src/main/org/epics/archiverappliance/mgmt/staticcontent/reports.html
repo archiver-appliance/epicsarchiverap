@@ -43,6 +43,7 @@
 <select id="reportoptions">
   <option value="Blank" selected="selected">Select</option>
   <option value="NeverConnected">PV's that may not exist</option>
+  <option value="MetaGets">PV's that are currently in the METAINFO_REQUESTED</option>
   <option value="CurrentlyDisconnected">Currently disconnected PVs</option>
   <option value="PausedPVs">Paused PVs</option>
   <option value="Top100EvRt">Top 100 PVs by event rate</option>
@@ -87,6 +88,8 @@ $('#reportoptions').change(function() {
 	var reportName = $('#reportoptions').val();
 	if(reportName == 'NeverConnected') {
 		getNeverConnectedPVsReport();
+	} else if(reportName == 'MetaGets') {
+		getMetaGetsReport();
 	} else if(reportName == 'CurrentlyDisconnected') {
 		getCurrentlyDisconnectedPVsReport();
 	} else if(reportName == 'Top100EvRt') {

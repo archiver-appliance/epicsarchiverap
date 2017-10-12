@@ -365,6 +365,20 @@ function getNeverConnectedPVsReport() {
 	});
 }
 
+// Display details for PV's that are in the waiting metainfo.
+function getMetaGetsReport() {
+	var jsonurl = '../bpl/getMetaGets';
+	var tabledivname = 'reporttablediv';
+	createReportTable(jsonurl, tabledivname, 
+			[{'srcAttr' : 'pvName', 'label' : 'PV Name'} , 
+			 {'srcAttr' : 'isScheduled', 'label' : 'Monitoring started?'},
+			 {'srcAttr' : 'usePVAccess', 'label' : 'Using pvAccess'},
+			 {'srcAttr' : 'eventsSoFar', 'label' : 'Events so far'},
+			 {'srcAttr' : 'storageSoFar', 'label' : 'Storage so far'},
+			 {'srcAttr' : 'internalState', 'label' : 'Internal State'}			 
+			 ], 
+			 {'initialSort' : 1});
+}
 
 function abortArchiveRequest(pvName) { 
 	$.ajax({
