@@ -347,7 +347,8 @@ function getNeverConnectedPVsReport() {
 	createReportTable(jsonurl, tabledivname, 
 			[
 			 {'srcAttr' : 'pvName', 'label' : 'PV Name'}, 
-			 {'srcAttr' : 'requestTime', 'label' : 'Time request was made'},
+			 {'srcAttr' : 'requestTime', 'label' : 'Time metainfo request was made'},
+			 {'srcAttr' : 'startOfWorkflow', 'label' : 'Time we started the workflow'}, 
 			 {'srcAttr' : 'currentState', 'label' : 'Current workflow state'},
 			 {'srcAttr' : 'appliance', 'label' : 'Appliance'},
 			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Abort request', 'srcFunction' : function(dataobject) { return '<a onclick="abortArchiveRequest(' + "'" + dataobject.pvName + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }}
