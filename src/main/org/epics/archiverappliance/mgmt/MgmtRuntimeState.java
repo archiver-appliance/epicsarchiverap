@@ -92,7 +92,7 @@ public class MgmtRuntimeState {
 	
 	
 	private static int threadNumber = 1;
-	ScheduledExecutorService archivePVWorkflow = Executors.newScheduledThreadPool(1, new ThreadFactory() {
+	ScheduledExecutorService archivePVWorkflow = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
 		@Override
 		public Thread newThread(Runnable r) {
 			Thread t = new Thread(r);
