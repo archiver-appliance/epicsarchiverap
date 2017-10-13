@@ -122,6 +122,30 @@ where
 <li><code>pv</code> - This identifies the name of the PV for which data is requested.</li>
 <li><code>from</code> - This is the start time of the data in <a href="http://en.wikipedia.org/wiki/ISO_8601">ISO 8601</a> format; specifically <a href="http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()">this</a> format.</li>
 <li><code>to</code> - This is the end time of the data in the same format.</li>
+<li>Optional parameters
+<ul>
+<li><code>fetchLatestMetadata</code> - If <i>true</i>, an extra call is made to the engine as part of the retrieval to get the latest values of the various fields <i>(DESC, HIHI etc)</i>.</li>
+<li><code>retiredPVTemplate</code> - If specified, the archiving information (PVTypeInfo) for the PV specified in this parameter is used as a template for PVs that do not exist in the system.
+This is intended principally for use with legacy PVs (PVs that no longer exist on the LAN and do not have a PVTypeInfo).
+<ol>
+<li>For example, all the data for legacy PV's could be consolidated into yearly partitions and stored on tape.</li> 
+<li>When a user places a request for this data, it could be restored to some standard folder, for example <i>/arch/tape</i>.</li>
+<li>A template PV (probably paused), for example, <code>TEMPLATE:PV</code> is added to the system with one of its stores pointing to <i>/arch/tape</i>.</li>
+<li>For all data retrieval requests, this template PV is specified as the value of the <code>retiredPVTemplate</code> argument.
+For example, 
+<i>http://archiver.slac.stanford.edu/retrieval/data/getData.json?</i><code>pv=LEGACY:PV</code><i>&amp;from=2012-09-27T08%3A00%3A00.000Z&amp;to=2012-09-28T08%3A00%3A00.000Z</i>&amp;<code>retiredPVTemplate=TEMPLATE:PV</code>.
+</li>
+<li>Because the archiver does not find a PVTypeInfo for <code>LEGACY:PV</code>, it uses the PVTypeInfo for <code>TEMPLATE:PV</code> to determine data stores for the <code>LEGACY:PV</code>.</li>
+<li>The data in <i>/arch/tape</i> is used to fulfill the data retrieval request.</li>
+<li>Once the user is done with the data for <code>LEGACY:PV</code>, the data in <i>/arch/tape</i> can be deleted.</li>
+</ol>
+</li>
+<li><code>timeranges</code> - Get data for a sequence of time ranges. Time ranges are specified as a comma-separated list if ISO 8601 strings.</li>
+<li><code>donotchunk</code> - Use this to skip HTTP chunking of the response. This is meant for client that do not understand chunked responses.</li>
+<li><code>ca_count</code> - This is passed on to an external ChannelArchiver as the value of the <i>count</i> parameter in the <i>archiver.values</i> XMLRPC call. The limits the number of samples returned from the ChannelArchiver; id unspecified, this defaults to 100000. If this is too large, you may timeouts from the ChannelArchiver.</li>
+<li><code>ca_how</code>   - This is passed on to an external ChannelArchiver as the value of the <i>how</i>   parameter in the <i>archiver.values</i> XMLRPC call. This defaults to 0; that is, by default, we ask for raw data.</li>
+</ul>
+</li>
 </ol>
 </li>
 </ol>
