@@ -143,7 +143,7 @@ public class RetrievalState {
 
 	private int determineCount(HttpServletRequest req) {
 		String countStr = req.getParameter("ca_count");
-		int count = Integer.MAX_VALUE;
+		int count = 100000;
 		if(countStr != null) {
 			count = Integer.parseInt(countStr);
 		}
