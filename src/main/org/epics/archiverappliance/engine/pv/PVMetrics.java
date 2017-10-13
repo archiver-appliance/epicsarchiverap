@@ -489,7 +489,7 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "Archiver DBR type (from CA)", this.archDBRTypes == null ? "Unkown" : this.archDBRTypes.toString());
 		addDetailedStatus(statuses, "Number of elements per event (from CA)", "" + this.elementCount);
 		addDetailedStatus(statuses, "Is engine using monitors?", this.isMonitor ? "yes" : "no");
-		addDetailedStatus(statuses, "What's the engine's sampling period?", ""+ this.samplingPeriod);
+		addDetailedStatus(statuses, "What's the engine's sampling period?", ""+ (float)this.samplingPeriod);
 		addDetailedStatus(statuses, "The SCAN period (ms) after applying the jitter factor", ""+ this.scanPeriodMillis);
 		addDetailedStatus(statuses, "Is this PV currently connected?", this.isConnected ? "yes" : "no");
 		addDetailedStatus(statuses, "Connection state at last connection changed event", this.lastConnectionEventState ? "Connected" : "Not connected");

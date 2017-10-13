@@ -119,7 +119,7 @@ public class EngineChannelStatus implements JSONAware {
 		obj.put("pvName", pvName);
 		obj.put("status", "Being archived");
 		obj.put("isMonitored", Boolean.toString(isMonitored));
-		obj.put("samplingPeriod", Double.toString(samplingPeriod));
+		obj.put("samplingPeriod", Float.toString((float)samplingPeriod));
 		obj.put("connectionState", Boolean.toString(connectionState));
 		obj.put("lastEvent", TimeUtils.convertToHumanReadableString(epochSecondsOfLastEvent));
 		obj.put("lastRotateLogs", TimeUtils.convertToHumanReadableString(lastRotateLogsEpochSeconds));
