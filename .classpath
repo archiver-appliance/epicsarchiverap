@@ -36,6 +36,6 @@
 	<classpathentry kind="lib" path="lib/hazelcast-all-3.7.1.jar"/>
 	<classpathentry kind="lib" path="lib/epics-pvaccess-5.0.2.jar"/>
 	<classpathentry kind="lib" path="lib/epics-pvdata-6.0.2.jar"/>
-	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.7.jar"/>
+	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

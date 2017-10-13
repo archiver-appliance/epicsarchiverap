@@ -97,7 +97,7 @@ public class DataDrivenPostProcessorTest {
 	
 	private int checkRetrieval(String retrievalPVName, Timestamp start, Timestamp end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
-		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
+		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw?param1=abc123&param2=def456");
 		int eventCount = 0;
 
 		final HashMap<String, String> metaFields = new HashMap<String, String>(); 
