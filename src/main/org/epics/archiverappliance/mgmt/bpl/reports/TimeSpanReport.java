@@ -9,6 +9,7 @@ package org.epics.archiverappliance.mgmt.bpl.reports;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,11 +45,18 @@ public class TimeSpanReport implements BPLAction {
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		logger.info("Getting the time spans for PVs in the cluster");
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		
+		String nameToMatch = null;
+		if(req.getParameter("regex") != null) { 
+			nameToMatch = req.getParameter("regex");
+			logger.debug("Finding PV's for regex " + nameToMatch);
+		}
+
 		LinkedList<String> lastKnownTimestampsURLs = new LinkedList<String>();
 		LinkedList<String> creationTimeURLs = new LinkedList<String>();
 		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
-			lastKnownTimestampsURLs.add(info.getEngineURL() + "/getLastKnownTimeStampReport");
-			creationTimeURLs.add(info.getMgmtURL() + "/getCreationReportForAppliance");
+			lastKnownTimestampsURLs.add(info.getEngineURL() + "/getLastKnownTimeStampReport" + (nameToMatch == null ? "" : "?regex="+URLEncoder.encode(nameToMatch, "UTF-8")));
+			creationTimeURLs.add(info.getMgmtURL() + "/getCreationReportForAppliance" + (nameToMatch == null ? "" : "?regex="+URLEncoder.encode(nameToMatch, "UTF-8")));
 		}		
 
 		PoorMansProfiler pf = new PoorMansProfiler();

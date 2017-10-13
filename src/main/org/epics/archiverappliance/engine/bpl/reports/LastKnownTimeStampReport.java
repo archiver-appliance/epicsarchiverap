@@ -2,6 +2,7 @@ package org.epics.archiverappliance.engine.bpl.reports;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -27,10 +28,21 @@ public class LastKnownTimeStampReport implements BPLAction {
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		logger.info("Generating a last known timestamp report");
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+
+		Pattern pattern = null;
+		if(req.getParameter("regex") != null) { 
+			String nameToMatch = req.getParameter("regex");
+			logger.debug("Finding PV's for regex " + nameToMatch);
+			pattern = Pattern.compile(nameToMatch);
+		}
+
+		
 		try (PrintWriter out = resp.getWriter()) {
 			out.println("[");
 			boolean first = true;
 			for(ArchiveChannel channel : configService.getEngineContext().getChannelList().values()) {
+				if(pattern != null && !pattern.matcher(channel.getName()).matches()) continue;
+				
 				PVMetrics pvMetrics = channel.getPVMetrics();
 				if(first) { first = false; } else { out.println(","); }
 				out.println("{");
