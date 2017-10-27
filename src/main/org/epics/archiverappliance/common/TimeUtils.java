@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -41,6 +42,7 @@ public class TimeUtils {
 	 * This constant contains the offset that must be added to epicstimestamps to generate java timestamps.
 	 */
 	public static final long EPICS_EPOCH_2_JAVA_EPOCH_OFFSET = computeEpicsEpochSecondsOffset(); 
+	public static Logger logger = Logger.getLogger(TimeUtils.class);
 
 	public static java.sql.Timestamp convertFromEpochSeconds(long epochSeconds, int nanos) {
 		Timestamp ts = new Timestamp(epochSeconds*1000);
@@ -59,9 +61,19 @@ public class TimeUtils {
 		return ts;
 	}
 
+	private static final int NSecPerSec = 1000000000;
+	
 	public static java.sql.Timestamp convertFromYearSecondTimestamp(YearSecondTimestamp ysts) {
 		Timestamp ts = new Timestamp((TimeUtils.getStartOfYearInSeconds(ysts.getYear()) + ysts.getSecondsintoyear())*1000);
-		ts.setNanos(ysts.getNanos());
+		try {
+			ts.setNanos(ysts.getNanos());
+		} catch(IllegalArgumentException ex){
+			// Apply the same technique as EPICS base; increment the seconds by the nanos overflow.
+			int absNanos = Math.abs(ysts.getNanos());
+			ts = new Timestamp(ts.getTime() + (((int)(absNanos / NSecPerSec))*1000));
+			ts.setNanos(absNanos % NSecPerSec);
+			logger.error("Invalid nanos " + ysts.getNanos() + " After patching,  timestamp is " + ts.getTime()/1000 + "/" + ts.getNanos());
+		}
 		return ts;
 	}
 	
