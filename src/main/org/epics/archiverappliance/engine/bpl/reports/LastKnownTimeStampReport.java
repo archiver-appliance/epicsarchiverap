@@ -50,7 +50,7 @@ public class LastKnownTimeStampReport implements BPLAction {
 				out.print(channel.getName());
 				out.println("\",");
 				out.print("\"lastEvent\": ");
-				out.print(pvMetrics.getSecondsOfLastEvent());
+				out.print(pvMetrics.getLastEventFromIOCTimeStamp());
 				out.println();
 				out.print("}");
 			}

@@ -547,6 +547,9 @@ public class PVMetrics {
 		return TimeUtils.convertToHumanReadableString(lastEventFromIOCTimeStamp);
 	}
 
+	public long getLastEventFromIOCTimeStamp() {
+		return TimeUtils.convertToEpochSeconds(lastEventFromIOCTimeStamp);
+	}
 
 
 	public void setLastEventFromIOCTimeStamp(Timestamp lastEventFromIOCTimeStamp) {

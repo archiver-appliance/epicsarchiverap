@@ -9,6 +9,7 @@ package org.epics.archiverappliance.mgmt.bpl.reports;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 
@@ -54,7 +56,16 @@ public class CreationTimeReportForAppliance implements BPLAction {
 				out.print(pvName);
 				out.println("\",");
 				out.print("\"creationTS\": ");
-				out.print(configService.getTypeInfoForPV(pvName).getCreationTime().getTime()/1000);
+				// We approx the earliest sample to be the creation time of the PVTypeInfo.
+				long earliestSample = configService.getTypeInfoForPV(pvName).getCreationTime().getTime()/1000;
+				List<ChannelArchiverDataServerPVInfo> externalServerInfos = configService.getChannelArchiverDataServers(pvName);
+				if(externalServerInfos != null && !externalServerInfos.isEmpty()) {
+					for(ChannelArchiverDataServerPVInfo externalServerInfo : externalServerInfos) {
+						earliestSample = Math.min(externalServerInfo.getStartSec(), earliestSample);
+					}
+				}
+				out.print(earliestSample);
+				
 				out.println(",");
 				out.print("\"paused\": ");
 				out.print(pausedPVs.contains(pvName) ? "true" : "false" );
