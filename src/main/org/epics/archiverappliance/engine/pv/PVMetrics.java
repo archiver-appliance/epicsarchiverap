@@ -44,8 +44,10 @@ public class PVMetrics {
 	private String controlPVname;
 	/**the status of archiving*/
 	private boolean isArchving = false;
-	/**the archive dbr type of this pv*/
+	/** The dbr type of this pv. This is what we used when initializing the PV */
 	private ArchDBRTypes archDBRTypes = null;
+	/** If we are dropping samples from type changes; this should reflect the new DBR type from the control system */
+	private ArchDBRTypes newCADBRType = null;
 	/**the element count of this pv's value*/
 	private int elementCount = 0;
 	/**is this pv archived in monitor mode?*/
@@ -160,8 +162,9 @@ public class PVMetrics {
 		sampleBufferFullLostEventCount++;
 	}
 	
-	public void incrementInvalidTypeLostEventCount() {
+	public void incrementInvalidTypeLostEventCount(ArchDBRTypes newCADBRType) {
 		invalidTypeLostEventCount++;
+		this.newCADBRType = newCADBRType;
 	}
 	
 	/**
@@ -288,6 +291,7 @@ public class PVMetrics {
 		this.pvName = pvName;
 		this.lastStartEpochSeconds = startEpochSeconds;
 		this.archDBRTypes = dbrTypes;
+		this.newCADBRType = this.archDBRTypes;
 		this.initialEpochSeconds=System.currentTimeMillis()/1000;
 	}
 
@@ -486,7 +490,8 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "Host name", hostName==null?"":hostName);
 		addDetailedStatus(statuses, "Controlling PV", controlPVname == null ? "" : controlPVname);
 		addDetailedStatus(statuses, "Is engine currently archiving this?",this.isArchving ? "yes" : "no");
-		addDetailedStatus(statuses, "Archiver DBR type (from CA)", this.archDBRTypes == null ? "Unkown" : this.archDBRTypes.toString());
+		addDetailedStatus(statuses, "Archiver DBR type (initial)", this.archDBRTypes == null ? "Unkown" : this.archDBRTypes.toString());
+		addDetailedStatus(statuses, "Archiver DBR type (from CA)", this.newCADBRType == null ? "Unkown" : this.newCADBRType.toString());
 		addDetailedStatus(statuses, "Number of elements per event (from CA)", "" + this.elementCount);
 		addDetailedStatus(statuses, "Is engine using monitors?", this.isMonitor ? "yes" : "no");
 		addDetailedStatus(statuses, "What's the engine's sampling period?", ""+ (float)this.samplingPeriod);

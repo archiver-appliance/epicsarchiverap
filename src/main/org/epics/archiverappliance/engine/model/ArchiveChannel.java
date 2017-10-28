@@ -276,14 +276,8 @@ abstract public class ArchiveChannel {
 			}
 
 			@Override
-			public void pvDroppedSample(PV pv, DroppedReason reason) {
-				switch(reason) { 
-				case TYPE_CHANGE:
-					pvMetrics.incrementInvalidTypeLostEventCount();
-					break;
-				default:
-					logger.warn("Dropping sample for an unaccounted reason for pv" + name + " " + reason);	
-				}
+			public void sampleDroppedTypeChange(PV pv, ArchDBRTypes newCAType) {
+				pvMetrics.incrementInvalidTypeLostEventCount(newCAType);
 			}
 		});
 	}

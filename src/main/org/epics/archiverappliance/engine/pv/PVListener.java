@@ -1,6 +1,8 @@
 
 package org.epics.archiverappliance.engine.pv;
 
+import org.epics.archiverappliance.config.ArchDBRTypes;
+
 /** A listener for PV updates. 
  */
 public interface PVListener
@@ -39,16 +41,13 @@ public interface PVListener
      */
     public void pvValueUpdate(PV pv);
     
-    public enum DroppedReason { 
-    	TYPE_CHANGE  
-    };
     /**
-     * Notification of a sample being dropped for some reason from within the PV.
+     * Notification of a sample being dropped because of a type change
      * Use to maintain counters
      * @param pv PV
-     * @param reason DroppedReason
+     * @param newDBRType The new DBR type from the control system
      */
-    public void pvDroppedSample(PV pv, DroppedReason reason);
+    public void sampleDroppedTypeChange(PV pv, ArchDBRTypes newDBRType);
     
     
 }

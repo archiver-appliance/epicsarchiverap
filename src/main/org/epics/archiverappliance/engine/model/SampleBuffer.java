@@ -178,7 +178,7 @@ public class SampleBuffer {
 		boolean retval = true;
 		
 		if(this.archdbrtype != value.getDBRType()) { 
-			pVMetrics.incrementInvalidTypeLostEventCount();
+			pVMetrics.incrementInvalidTypeLostEventCount(value.getDBRType());
 			return false;
 		}
 		

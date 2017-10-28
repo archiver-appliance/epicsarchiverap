@@ -19,6 +19,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.config.PVNames;
@@ -91,7 +92,7 @@ public class MetaGet implements Runnable {
 				}
 
 				@Override
-				public void pvDroppedSample(PV pv, DroppedReason reason) {
+				public void sampleDroppedTypeChange(PV pv, ArchDBRTypes newDBRtype) {
 				}
 			});
 			pvList.put("main", pv);
