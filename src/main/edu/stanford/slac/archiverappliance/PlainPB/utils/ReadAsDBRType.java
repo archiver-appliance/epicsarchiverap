@@ -10,7 +10,6 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBScalarString;
 import edu.stanford.slac.archiverappliance.PB.data.PBTypeSystem;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 
