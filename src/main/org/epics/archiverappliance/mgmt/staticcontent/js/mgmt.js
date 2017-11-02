@@ -372,10 +372,15 @@ function getMetaGetsReport() {
 	createReportTable(jsonurl, tabledivname, 
 			[{'srcAttr' : 'pvName', 'label' : 'PV Name'} , 
 			 {'srcAttr' : 'isScheduled', 'label' : 'Monitoring started?'},
+			 {'srcAttr' : 'appliance', 'label' : 'Appliance'},
+			 {'srcAttr' : 'scheduleStart', 'label' : 'When?'},
+			 {'srcAttr' : 'timerRemaining', 'label' : 'Remaining'},
+			 {'srcAttr' : 'timerDone', 'label' : 'Timer Done'},
 			 {'srcAttr' : 'usePVAccess', 'label' : 'Using pvAccess'},
 			 {'srcAttr' : 'eventsSoFar', 'label' : 'Events so far'},
 			 {'srcAttr' : 'storageSoFar', 'label' : 'Storage so far'},
-			 {'srcAttr' : 'internalState', 'label' : 'Internal State'}			 
+			 {'srcAttr' : 'internalState', 'label' : 'Internal State'},			 
+			 {'srcAttr' : 'mainMeta', 'sortType' : 'none', 'label' : 'MainMeta'}		 
 			 ], 
 			 {'initialSort' : 1});
 }

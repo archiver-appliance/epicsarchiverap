@@ -21,6 +21,8 @@ import gov.aps.jca.dbr.DBR_LABELS_Enum;
 import gov.aps.jca.dbr.GR;
 import gov.aps.jca.dbr.PRECISION;
 
+import java.io.StringWriter;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
@@ -473,31 +475,33 @@ public class MetaInfo {
 
 	@Override
 	public String toString() {
-		String str="host Name:"+hostName+"\r\n";
-		str=str+"lowerDisplayLimit:"+lowerDisplayLimit+"\r\n";
-		str=str+"upperDisplayLimit:"+upperDisplayLimit+"\r\n";
-		str=str+ "lowerWarningLimit:"+lowerWarningLimit+"\r\n";
-		str=str+ "upperWarningLimit:"+upperWarningLimit+"\r\n";
-		str=str+ "lowerAlarmLimit:"+lowerAlarmLimit+"\r\n";
-		str=str+ "upperAlarmLimit:"+upperAlarmLimit+"\r\n";
-		str=str+ "loweCtrlLimit:"+loweCtrlLimit+"\r\n";
-		str=str+ "upperCtrlLimit:"+upperCtrlLimit+"\r\n";
-		str=str+ "precision:"+precision+"\r\n";
-		str=str+ "unit:"+unit+"\r\n";
-		str=str+ "isVector:"+isVector+"\r\n";
-		str=str+ "count:"+count+"\r\n";
-		str=str+ "storageSize:"+storageSize+"\r\n";
+		DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
+		StringWriter buf = new StringWriter();
+		buf.write("hostName:"+hostName+"\r\n");
+		buf.write("lowerDisplayLimit:"+lowerDisplayLimit+"\r\n");
+		buf.write("upperDisplayLimit:"+upperDisplayLimit+"\r\n");
+		buf.write( "lowerWarningLimit:"+lowerWarningLimit+"\r\n");
+		buf.write( "upperWarningLimit:"+upperWarningLimit+"\r\n");
+		buf.write( "lowerAlarmLimit:"+lowerAlarmLimit+"\r\n");
+		buf.write( "upperAlarmLimit:"+upperAlarmLimit+"\r\n");
+		buf.write( "loweCtrlLimit:"+loweCtrlLimit+"\r\n");
+		buf.write( "upperCtrlLimit:"+upperCtrlLimit+"\r\n");
+		buf.write( "precision:"+precision+"\r\n");
+		buf.write( "unit:"+unit+"\r\n");
+		buf.write( "isVector:"+isVector+"\r\n");
+		buf.write( "count:"+count+"\r\n");
+		buf.write( "storageSize:"+storageSize+"\r\n");
 		//eventCount
-		str=str+ "eventCount:"+eventCount+"\r\n";
-		str=str+ "second:"+second+"\r\n";
-		str=str+ "aliaseName:"+aliasName+"\r\n";
-		str=str+ "EventRate:"+this.getEventRate()+"events/second\r\n";
-		str=str+ "storageRate:"+this.getStorageRate()+"Byte/second\r\n";
-		str=str+ "DBRtype:"+archDBRTypes+"\r\n";
+		buf.write( "eventCount:"+eventCount+"\r\n");
+		buf.write( "second:"+second+"\r\n");
+		buf.write( "aliasName:"+aliasName+"\r\n");
+		buf.write( "eventRate:"+twoSignificantDigits.format(this.getEventRate())+"events/second\r\n");
+		buf.write( "storageRate:"+twoSignificantDigits.format(this.getStorageRate())+"Byte/second\r\n");
+		buf.write( "DBRType:"+archDBRTypes+"\r\n");
 		for(String fieldName : otherMetaInfo.keySet()) {
-			str=str+ fieldName+":"+ otherMetaInfo.get(fieldName)+"\r\n";
+			buf.write( fieldName+":"+ otherMetaInfo.get(fieldName)+"\r\n");
 		}
-		return str;
+		return buf.toString();
 	}
 
 	/**

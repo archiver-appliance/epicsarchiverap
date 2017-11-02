@@ -8,6 +8,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.metadata;
 
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -15,10 +16,12 @@ import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
@@ -49,6 +52,8 @@ public class MetaGet implements Runnable {
 	final private ConfigService configservice;
 	private static final Logger logger = Logger.getLogger(MetaGet.class.getName());
 	private boolean isScheduled = false;
+	private long scheduleStartEpochSecs = -1L;
+	private ScheduledFuture<?> samplingFuture = null;
 
 	public MetaGet(String pvName, ConfigService configservice,
 			String metadatafields[], boolean usePVAccess, MetaCompletedListener metaListener) {
@@ -82,7 +87,8 @@ public class MetaGet implements Runnable {
 					if (!isScheduled) {
 						logger.debug("Starting the timer to measure event and storage rates for about 60 seconds for pv " + MetaGet.this.pvName);
 						ScheduledThreadPoolExecutor scheduler = configservice.getEngineContext().getScheduler();
-						scheduler.schedule(MetaGet.this, 60, TimeUnit.SECONDS);
+						samplingFuture = scheduler.schedule(MetaGet.this, 60, TimeUnit.SECONDS);
+						MetaGet.this.scheduleStartEpochSecs = System.currentTimeMillis()/1000;
 						isScheduled = true;
 					}
 				}
@@ -119,8 +125,9 @@ public class MetaGet implements Runnable {
 					}
 				}
 			}			
-		} catch (Exception e) {
-			throw (e);
+		} catch (Throwable t) {
+			logger.error("Exception when initializing MetaGet " + pvName, t);
+			throw (t);
 		}
 	}
 
@@ -149,7 +156,7 @@ public class MetaGet implements Runnable {
 						SampleValue sampleValue = nameValue.getSampleValue();
 						parseAliasInfo(sampleValue, mainMeta);
 					} else { 
-						logger.warn("Either we probably did not have time to determine .NAME for " + MetaGet.this.pvName + " or the field does not exist");
+						logger.error("Either we probably did not have time to determine .NAME for " + MetaGet.this.pvName + " or the field does not exist");
 					}
 				}
 			
@@ -187,8 +194,8 @@ public class MetaGet implements Runnable {
 			}  
 			metaListener.completed(mainMeta);
 			metaGets.remove(pvName);
-		} catch (Exception ex) {
-			logger.error("Exception when schecule MetaGet " + pvName, ex);
+		} catch (Throwable t) {
+			logger.error("Exception when scheduling MetaGet " + pvName, t);
 		}
 	}
 /**
@@ -304,13 +311,15 @@ public class MetaGet implements Runnable {
 	}
 	
 	
-	public static List<HashMap<String, String>> getPendingMetaDetails() {
+	public static List<HashMap<String, String>> getPendingMetaDetails(String appliance) {
 		List<HashMap<String, String>> ret = new LinkedList<HashMap<String, String>>();
 		for(String pvNm : metaGets.keySet()) {
 			MetaGet mg = metaGets.get(pvNm);
 			HashMap<String, String> st = new HashMap<String, String>();
 			st.put("pvName", pvNm);
+			st.put("appliance", appliance);
 			st.put("isScheduled", Boolean.toString(mg.isScheduled));
+			st.put("scheduleStart", TimeUtils.convertToHumanReadableString(mg.scheduleStartEpochSecs));
 			st.put("usePVAccess", Boolean.toString(mg.usePVAccess));
 			PV pvMain = mg.pvList.get("main");
 			if(pvMain != null) {
@@ -319,9 +328,24 @@ public class MetaGet implements Runnable {
 				if(mainMeta != null) {
 					st.put("eventsSoFar", Long.toString(mainMeta.getEventCount()));
 					st.put("storageSoFar", Long.toString(mainMeta.getStorageSize()));
+					StringWriter buf = new StringWriter();
+					buf.write("<ul><li>");
+					buf.write(mainMeta.toString().replaceAll("\r\n", "</li><li>"));
+					boolean first = true;
+					for(String k : mainMeta.getOtherMetaInfo().keySet()) {
+						if(first) { first = false; } else { buf.write("<li>"); }
+						buf.write(mainMeta.getOtherMetaInfo().get(k));
+						buf.write("</li>");
+					}
+					buf.write("</ul>");
+					st.put("mainMeta", buf.toString());
 				}
 			} else {
 				st.put("internalState", "Null"); 
+			}
+			if(mg.samplingFuture != null) { 
+				st.put("timerRemaining", Long.toString(mg.samplingFuture.getDelay(TimeUnit.SECONDS)));
+				st.put("timerDone", Boolean.toString(mg.samplingFuture.isDone()));
 			}
 			ret.add(st);
 		}

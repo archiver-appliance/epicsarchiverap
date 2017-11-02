@@ -33,7 +33,7 @@ public class MetaGetsForThisApplianceAction implements BPLAction {
 		logger.info("Getting the status of pvs that never connected since the start of this appliance");
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
-			JSONValue.writeJSONString(MetaGet.getPendingMetaDetails(), out);
+			JSONValue.writeJSONString(MetaGet.getPendingMetaDetails(configService.getMyApplianceInfo().getIdentity()), out);
 		}
 	}
 }
