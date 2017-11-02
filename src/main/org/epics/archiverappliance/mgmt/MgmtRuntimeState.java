@@ -163,7 +163,7 @@ public class MgmtRuntimeState {
 		List<NeverConnectedRequestState> neverConnectedRequests = new LinkedList<NeverConnectedRequestState>();
 		for(String pvName : currentPVRequests.keySet()) {
 			ArchivePVState pvState = currentPVRequests.get(pvName);
-			if(pvState != null && pvState.hasNotConnectedSoFar()) {
+			if(pvState != null) {
 				neverConnectedRequests.add(new NeverConnectedRequestState(pvName, pvState.getMetaInfoRequestedSubmitted(), pvState.getCurrentState(), pvState.getStartOfWorkflow()));
 			}
 		}
