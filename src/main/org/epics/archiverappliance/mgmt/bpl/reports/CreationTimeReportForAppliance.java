@@ -9,6 +9,7 @@ package org.epics.archiverappliance.mgmt.bpl.reports;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -21,6 +22,7 @@ import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONObject;
 
 /**
  * Creation time and paused status of all PVs in this appliance 
@@ -51,26 +53,20 @@ public class CreationTimeReportForAppliance implements BPLAction {
 				if(pattern != null && !pattern.matcher(pvName).matches()) continue;
 
 				if(first) { first = false; } else { out.println(","); }
-				out.println("{");
-				out.print("\"pvName\": \"");
-				out.print(pvName);
-				out.println("\",");
-				out.print("\"creationTS\": ");
+				HashMap<String, String> ret = new HashMap<String, String>();
+				ret.put("pvName", pvName);
 				// We approx the earliest sample to be the creation time of the PVTypeInfo.
 				long earliestSample = configService.getTypeInfoForPV(pvName).getCreationTime().getTime()/1000;
 				List<ChannelArchiverDataServerPVInfo> externalServerInfos = configService.getChannelArchiverDataServers(pvName);
 				if(externalServerInfos != null && !externalServerInfos.isEmpty()) {
+					// If we have ChannelArchiver integration, we pick up the timestamp from there...
 					for(ChannelArchiverDataServerPVInfo externalServerInfo : externalServerInfos) {
 						earliestSample = Math.min(externalServerInfo.getStartSec(), earliestSample);
 					}
 				}
-				out.print(earliestSample);
-				
-				out.println(",");
-				out.print("\"paused\": ");
-				out.print(pausedPVs.contains(pvName) ? "true" : "false" );
-				out.println();
-				out.print("}");
+				ret.put("creationTS", Long.toString(earliestSample));				
+				ret.put("paused", pausedPVs.contains(pvName) ? "true" : "false" );
+				JSONObject.writeJSONString(ret, out);
 			}
 			out.println("]");
 		}

@@ -553,7 +553,11 @@ public class PVMetrics {
 	}
 
 	public long getLastEventFromIOCTimeStamp() {
-		return TimeUtils.convertToEpochSeconds(lastEventFromIOCTimeStamp);
+		if(lastEventFromIOCTimeStamp != null) {
+			return TimeUtils.convertToEpochSeconds(lastEventFromIOCTimeStamp);
+		} else { 
+			return -1;
+		}
 	}
 
 

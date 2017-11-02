@@ -2,6 +2,7 @@ package org.epics.archiverappliance.engine.bpl.reports;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,6 +14,7 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONObject;
 
 /**
  * Get the last known timestamp for all PV's.
@@ -45,14 +47,10 @@ public class LastKnownTimeStampReport implements BPLAction {
 				
 				PVMetrics pvMetrics = channel.getPVMetrics();
 				if(first) { first = false; } else { out.println(","); }
-				out.println("{");
-				out.print("\"pvName\": \"");
-				out.print(channel.getName());
-				out.println("\",");
-				out.print("\"lastEvent\": ");
-				out.print(pvMetrics.getLastEventFromIOCTimeStamp());
-				out.println();
-				out.print("}");
+				HashMap<String, String> ret = new HashMap<String, String>();
+				ret.put("pvName", channel.getName());
+				ret.put("lastEvent", Long.toString(pvMetrics.getLastEventFromIOCTimeStamp()));
+				JSONObject.writeJSONString(ret, out);
 			}
 			out.println("]");
 		}
