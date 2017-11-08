@@ -756,5 +756,18 @@ public class EngineContext {
 	public ChannelProvider getChannelProvider() {
 		return channelProvider;
 	}
+	
+	public ScheduledThreadPoolExecutor getMiscTasksScheduler() {
+		return miscTasksScheduler;
+	}
+	
+	/**
+	 * Get the number of tasks pending in the main scheduler. 
+	 * This is the one that powers the write thread.
+	 * @return
+	 */
+	public int getMainSchedulerPendingTasks() { 
+		return scheduler.getQueue().size();
+	}
 
 }

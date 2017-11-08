@@ -86,7 +86,7 @@ public class MetaGet implements Runnable {
 				public void pvConnected(PV pv) {
 					if (!isScheduled) {
 						logger.debug("Starting the timer to measure event and storage rates for about 60 seconds for pv " + MetaGet.this.pvName);
-						ScheduledThreadPoolExecutor scheduler = configservice.getEngineContext().getScheduler();
+						ScheduledThreadPoolExecutor scheduler = configservice.getEngineContext().getMiscTasksScheduler();
 						samplingFuture = scheduler.schedule(MetaGet.this, 60, TimeUnit.SECONDS);
 						MetaGet.this.scheduleStartEpochSecs = System.currentTimeMillis()/1000;
 						isScheduled = true;
