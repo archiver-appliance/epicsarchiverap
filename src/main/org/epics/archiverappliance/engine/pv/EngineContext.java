@@ -766,8 +766,12 @@ public class EngineContext {
 	 * This is the one that powers the write thread.
 	 * @return
 	 */
-	public int getMainSchedulerPendingTasks() { 
-		return scheduler.getQueue().size();
+	public int getMainSchedulerPendingTasks() {
+		if(scheduler != null) { 
+			return scheduler.getQueue().size();
+		} else {
+			return -1;
+		}
 	}
 
 }
