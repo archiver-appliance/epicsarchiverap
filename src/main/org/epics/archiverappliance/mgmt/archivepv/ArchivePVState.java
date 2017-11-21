@@ -22,6 +22,7 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
+import org.python.modules.synchronize;
 
 /**
  * State for the archive PV workflow
@@ -48,7 +49,7 @@ public class ArchivePVState {
 		this.myIdentity = this.configService.getMyApplianceInfo().getIdentity();
 	}
 
-	public void nextStep() {
+	public synchronized void nextStep() {
 		try { 
 			logger.debug("Archive workflow for pv " + pvName + " in state " + currentState);
 				switch(currentState) {
