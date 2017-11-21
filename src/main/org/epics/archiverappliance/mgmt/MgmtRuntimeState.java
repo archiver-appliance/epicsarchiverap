@@ -50,6 +50,10 @@ public class MgmtRuntimeState {
 	
 	private int archivePVWorkflowBatchSize = DEFAULT_ARCHIVE_PV_WORKFLOW_BATCH_SIZE;
 	
+	private static final int DEFAULT_ARCHIVE_PV_WORKFLOW_TICK_SECONDS = 10;
+
+	private int archivePVWorkflowTickSeconds = DEFAULT_ARCHIVE_PV_WORKFLOW_TICK_SECONDS;
+	
 	private static final int DEFAULT_ABORT_ARCHIVE_REQUEST_TIMEOUT_MINS = 24*60;
 	/**
 	 * Abort PV's in the archive PV workflow after this many minutes if the archiver is not able to connect to the PV. 
@@ -116,6 +120,12 @@ public class MgmtRuntimeState {
 		if(installationProperties.containsKey(batchSizeName)) { 
 			this.archivePVWorkflowBatchSize = Integer.parseInt(installationProperties.getProperty(batchSizeName));
 			configlogger.info("Setting the archive PV workflow batch size to " + this.archivePVWorkflowBatchSize);
+		}
+		
+		String batchTickName = "org.epics.archiverappliance.mgmt.MgmtRuntimeState.archivePVWorkflowTickSeconds";
+		if(installationProperties.containsKey(batchTickName)) { 
+			this.archivePVWorkflowTickSeconds = Integer.parseInt(installationProperties.getProperty(batchTickName));
+			configlogger.info("Setting the archive PV workflow tick (seconds) to " + this.archivePVWorkflowTickSeconds);
 		}
 		
 		
@@ -277,7 +287,7 @@ public class MgmtRuntimeState {
 					pvCount++;
 				}
 			}
-		}, initialDelayInSeconds, 10, TimeUnit.SECONDS);
+		}, initialDelayInSeconds, archivePVWorkflowTickSeconds, TimeUnit.SECONDS);
 
 		logger.info("Done starting archive requests");
 	}
