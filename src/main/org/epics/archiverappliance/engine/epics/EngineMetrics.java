@@ -117,6 +117,8 @@ public class EngineMetrics implements JSONAware {
 		addDetailedStatus(details, "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount()));
 		addDetailedStatus(details, "Total number of CAJ channels", Integer.toString(context.getCAJChannelCount()));
 		
+		details.addAll(context.getCAJContextDetails());
+		
 		return JSONValue.toJSONString(details);
 	}
 	

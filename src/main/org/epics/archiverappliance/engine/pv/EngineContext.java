@@ -10,15 +10,15 @@
 
 package org.epics.archiverappliance.engine.pv;
 
-import gov.aps.jca.Channel;
-import gov.aps.jca.Context;
-
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
@@ -52,7 +52,12 @@ import org.epics.pvaccess.client.ChannelProviderRegistryFactory;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import com.cosylab.epics.caj.CAJChannel;
+import com.cosylab.epics.caj.CAJContext;
 import com.google.common.eventbus.Subscribe;
+
+import gov.aps.jca.Channel;
+import gov.aps.jca.Context;
 /***
  * the context for the Archiver Engine
  * @author Luofeng Li
@@ -773,5 +778,35 @@ public class EngineContext {
 			return -1;
 		}
 	}
+	
+	
+	/**
+	 * Return some details on the CAJ contexts for the metrics page.
+	 * @return
+	 */
+	public List<Map<String, String>> getCAJContextDetails() {
+		List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
+		StringJoiner sj = new StringJoiner(",");
 
+		for(Context context : this.context2CommandThreadId) {
+			if(context instanceof CAJContext) {
+				int channelsWithPendingSearchRequests = 0;
+				int totalChannels = 0;
+				CAJContext cajContext = (CAJContext) context;
+				for(Channel channel : cajContext.getChannels()) {
+					CAJChannel cajChannel = (CAJChannel) channel;
+					totalChannels++;
+					if(cajChannel.getTimerId() != null) channelsWithPendingSearchRequests++;
+				}
+				sj.add(channelsWithPendingSearchRequests + "/" + totalChannels);
+			}
+		}
+
+		Map<String, String> obj = new LinkedHashMap<String, String>();
+		obj.put("name", "Channels with pending search requests");
+		obj.put("value", sj.toString());
+		obj.put("source", "engine");
+		ret.add(obj);
+		return ret;
+	}
 }
