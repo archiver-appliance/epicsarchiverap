@@ -18,7 +18,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
@@ -786,25 +785,24 @@ public class EngineContext {
 	 */
 	public List<Map<String, String>> getCAJContextDetails() {
 		List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
-		StringJoiner sj = new StringJoiner(",");
+
+		int channelsWithPendingSearchRequests = 0;
+		int totalChannels = 0;
 
 		for(Context context : this.context2CommandThreadId) {
 			if(context instanceof CAJContext) {
-				int channelsWithPendingSearchRequests = 0;
-				int totalChannels = 0;
 				CAJContext cajContext = (CAJContext) context;
 				for(Channel channel : cajContext.getChannels()) {
 					CAJChannel cajChannel = (CAJChannel) channel;
 					totalChannels++;
 					if(cajChannel.getTimerId() != null) channelsWithPendingSearchRequests++;
 				}
-				sj.add(channelsWithPendingSearchRequests + "/" + totalChannels);
 			}
 		}
 
 		Map<String, String> obj = new LinkedHashMap<String, String>();
 		obj.put("name", "Channels with pending search requests");
-		obj.put("value", sj.toString());
+		obj.put("value", channelsWithPendingSearchRequests + " of " + totalChannels);
 		obj.put("source", "engine");
 		ret.add(obj);
 		return ret;
