@@ -29,31 +29,40 @@ public class CountEventsInPBFile {
 	 * @throws Exception  &emsp;
 	 */
 	public static void main(String[] args) throws Exception {
+	    int totalInvalid = 0;
 		for(String fileName : args) {
 			Path path = Paths.get(fileName);
 			PBFileInfo info = new PBFileInfo(path);
-			int i = 0;
 			long start = System.currentTimeMillis();
 			long previousEpochSeconds = 0L;
 			Event firstEvent = null;
 			Event lastEvent = null;
+			int lineNumber = 0;
+			int validCount = 0;
+			int invalidCount = 0;
 			try (FileBackedPBEventStream strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType()))  {
-				for(Event e : strm) { 
-					long currEpochSeconds = e.getEpochSeconds();
-					if(currEpochSeconds >= previousEpochSeconds) {
-						previousEpochSeconds = currEpochSeconds;
-						if(firstEvent == null) firstEvent = e;
-						lastEvent = e;
-					} else {
-						throw new Exception("Current epoch seconds " + TimeUtils.convertToISO8601String(currEpochSeconds) 
-								+ " is less than previous epoch seconds " + TimeUtils.convertToISO8601String(previousEpochSeconds)
-								+ " at about line " + i
-								);
+				for(Event e : strm) {
+					lineNumber += 1;
+					try {
+						long currEpochSeconds = e.getEpochSeconds();
+						if (currEpochSeconds >= previousEpochSeconds) {
+							previousEpochSeconds = currEpochSeconds;
+							if (firstEvent == null) firstEvent = e;
+							lastEvent = e;
+						} else {
+							throw new Exception("Current epoch seconds " + TimeUtils.convertToISO8601String(currEpochSeconds)
+									+ " is less than previous epoch seconds " + TimeUtils.convertToISO8601String(previousEpochSeconds)
+									+ " at about line " + lineNumber
+							);
+						}
+						validCount++;
+					} catch (Exception ex) {
+					    System.out.println("Event at line " + lineNumber + " is invalid");
+						invalidCount++;
 					}
-					i++;
 				}
 				long end = System.currentTimeMillis();
-				System.out.println("There are " + i + " events " 
+				System.out.println("There are " + validCount + " events "
 						+ "starting from " + TimeUtils.convertToISO8601String(firstEvent.getEpochSeconds()) 
 						+ " to " + TimeUtils.convertToISO8601String(lastEvent.getEpochSeconds()) 
 						+ " in " + fileName 
@@ -61,9 +70,11 @@ public class CountEventsInPBFile {
 						+ " which is of type " + info.getType()
 						+ " with data for the year " + info.getDataYear()
 						+ " - determined this in " + (end - start) + "(ms)");
+				System.out.println("There are " + invalidCount + " invalid events");
+				totalInvalid += invalidCount;
 				strm.close();
 			} catch(Exception ex) {
-				System.out.println("Exception at about line " + i 
+				System.out.println("Exception at about line " + lineNumber
 						+ " when processing file " + path.toAbsolutePath().toString()
 						+ " containing data from " + info.getPVName() 
 						+ " for year " + info.getDataYear() 
@@ -71,5 +82,6 @@ public class CountEventsInPBFile {
 				logger.error(ex.getMessage(), ex);
 			}
 		}
+		System.exit(totalInvalid);
 	}
 }

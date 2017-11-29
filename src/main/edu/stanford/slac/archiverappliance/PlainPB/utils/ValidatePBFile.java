@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -97,7 +98,10 @@ public class ValidatePBFile {
 				argsAfterOptions.add(arg);
 			}
 		}
-		
+
+		// Use AtomicInteger to allow use inside anonymous class
+		final AtomicInteger failures = new AtomicInteger(0);
+
 		for(String fileName : argsAfterOptions) {
 			Path path = Paths.get(fileName);
 			if(Files.isDirectory(path)) { 
@@ -115,7 +119,9 @@ public class ValidatePBFile {
 
 					@Override
 					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						validatePBFile(file, verboseMode);
+						if (!validatePBFile(file, verboseMode)) {
+							failures.incrementAndGet();
+						}
 						return FileVisitResult.CONTINUE;
 					}
 
@@ -129,10 +135,14 @@ public class ValidatePBFile {
 						return FileVisitResult.CONTINUE;
 					}
 				}.init(verboseMode));
-			} else { 
-				validatePBFile(path, verboseMode);
+			} else {
+				if (!validatePBFile(path, verboseMode)) {
+					failures.incrementAndGet();
+				}
 			}
 		}
+		// Return number of failures as exit code.
+		System.exit(failures.get());
 	}
 
 	private static void printHelpMsg() {
