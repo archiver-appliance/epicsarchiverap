@@ -22,7 +22,6 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
-import org.python.modules.synchronize;
 
 /**
  * State for the archive PV workflow
