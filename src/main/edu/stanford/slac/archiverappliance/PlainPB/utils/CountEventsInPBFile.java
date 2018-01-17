@@ -72,7 +72,6 @@ public class CountEventsInPBFile {
 						+ " - determined this in " + (end - start) + "(ms)");
 				System.out.println("There are " + invalidCount + " invalid events");
 				totalInvalid += invalidCount;
-				strm.close();
 			} catch(Exception ex) {
 				System.out.println("Exception at about line " + lineNumber
 						+ " when processing file " + path.toAbsolutePath().toString()
