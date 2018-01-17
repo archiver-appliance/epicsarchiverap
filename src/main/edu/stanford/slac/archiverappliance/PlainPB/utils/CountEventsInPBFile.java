@@ -62,15 +62,23 @@ public class CountEventsInPBFile {
 					}
 				}
 				long end = System.currentTimeMillis();
-				System.out.println("There are " + validCount + " events "
-						+ "starting from " + TimeUtils.convertToISO8601String(firstEvent.getEpochSeconds()) 
-						+ " to " + TimeUtils.convertToISO8601String(lastEvent.getEpochSeconds()) 
-						+ " in " + fileName 
-						+ " for PV " + info.getPVName()
-						+ " which is of type " + info.getType()
-						+ " with data for the year " + info.getDataYear()
-						+ " - determined this in " + (end - start) + "(ms)");
-				System.out.println("There are " + invalidCount + " invalid events");
+				if (firstEvent != null) {
+					System.out.println("There are " + validCount + " events "
+							+ "starting from " + TimeUtils.convertToISO8601String(firstEvent.getEpochSeconds())
+							+ " to " + TimeUtils.convertToISO8601String(lastEvent.getEpochSeconds())
+							+ " in " + fileName
+							+ " for PV " + info.getPVName()
+							+ " which is of type " + info.getType()
+							+ " with data for the year " + info.getDataYear()
+							+ " - determined this in " + (end - start) + "(ms)");
+					System.out.println("There are " + invalidCount + " invalid events");
+				} else {
+					System.out.println("There is a valid header but no events for PV " + info.getPVName()
+							+ " in " +fileName
+							+ " which is of type " + info.getType()
+							+ " with data for the year " + info.getDataYear()
+							+ " - determined this in " + (end - start) + "(ms)");
+				}
 				totalInvalid += invalidCount;
 			} catch(Exception ex) {
 				System.out.println("Exception at about line " + lineNumber
