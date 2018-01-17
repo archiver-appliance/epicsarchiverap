@@ -6,7 +6,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -38,15 +41,35 @@ public class PVsMatchingParameter {
 	 * @return LinkedList Matching PVs
 	 */
 	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService, boolean includePVSThatDontExist, int defaultLimit) {
+		// The assumption taken previously was that each query parameter will have a single value only.
+		// If this assumption is to be changed then the below simplification would have to be removed.
+		Map<String, String> requestParameters = req.getParameterMap().entrySet().stream().collect(Collectors.toMap((entry) -> {
+			return entry.getKey();
+		}, (entry) -> {
+			return entry.getValue()[0];
+		}));
+		return getMatchingPVs(requestParameters, configService, includePVSThatDontExist, defaultLimit);
+	}
+	
+	/**
+	 * Given a BPL request, get all the matching PVs
+	 * @param requestParameters HttpServletRequest parameter map
+	 * @param configService ConfigService
+	 * @param includePVSThatDontExist Some BPL requires us to include PVs that don't exist so that they can give explicit status
+	 * @param defaultLimit The default value for the limit if the limit is not specified in the request.
+	 * @return LinkedList Matching PVs
+	 */
+	public static LinkedList<String> getMatchingPVs(Map<String, String> requestParameters, ConfigService configService, boolean includePVSThatDontExist, int defaultLimit) {
 		LinkedList<String> pvNames = new LinkedList<String>();
 		int limit = defaultLimit;
-		String limitParam = req.getParameter("limit");
+		
+		String limitParam = requestParameters.get("limit");
 		if(limitParam != null) { 
 			limit = Integer.parseInt(limitParam);
 		}
 		
-		if(req.getParameter("pv") != null) { 
-			String[] pvs = req.getParameter("pv").split(",");
+		if(requestParameters.get("pv") != null) { 
+			String[] pvs = requestParameters.get("pv").split(",");
 			for(String pv : pvs) { 
 				if(pv.contains("*") || pv.contains("?")) {
 					WildcardFileFilter matcher = new WildcardFileFilter(pv); 
@@ -84,8 +107,8 @@ public class PVsMatchingParameter {
 				}
 			}
 		} else { 
-			if(req.getParameter("regex") != null) { 
-				String regex = req.getParameter("regex");
+			if(requestParameters.get("regex") != null) { 
+				String regex = requestParameters.get("regex");
 				Pattern pattern = Pattern.compile(regex);
 				for(String pvName : configService.getAllPVs()) {
 					if(pattern.matcher(pvName).matches()) { 

@@ -8,10 +8,15 @@
         <servlet-class>org.epics.archiverappliance.common.StaticContentServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
     </servlet>
-       <servlet>
+    <servlet>
         <servlet-name>BPLServlet</servlet-name>
         <servlet-class>org.epics.archiverappliance.mgmt.BPLServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet>
+        <servlet-name>PVAServlet</servlet-name>
+        <servlet-class>org.epics.archiverappliance.mgmt.pva.PVAServlet</servlet-class>
+        <load-on-startup>3</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>StaticContent</servlet-name>
