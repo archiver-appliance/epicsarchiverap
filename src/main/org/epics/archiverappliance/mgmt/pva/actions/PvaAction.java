@@ -9,7 +9,7 @@ import org.epics.pvdata.pv.PVStructure;
  * @author Kunal Shroff
  *
  */
-public interface PVAAction {
+public interface PvaAction {
 
 	/**
 	 * Name of the action

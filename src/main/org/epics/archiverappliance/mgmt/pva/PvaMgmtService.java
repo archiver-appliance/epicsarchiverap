@@ -5,8 +5,9 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.mgmt.pva.actions.GetAllPVs;
-import org.epics.archiverappliance.mgmt.pva.actions.PVAAction;
+import org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs;
+import org.epics.archiverappliance.mgmt.pva.actions.PvaGetApplianceInfo;
+import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
 import org.epics.nt.NTURI;
 import org.epics.pvaccess.server.rpc.RPCResponseCallback;
 import org.epics.pvaccess.server.rpc.RPCServiceAsync;
@@ -17,9 +18,9 @@ import org.epics.pvdata.pv.PVStructure;
  * @author Kunal Shroff
  *
  */
-public class PVAMgmtService implements RPCServiceAsync {
+public class PvaMgmtService implements RPCServiceAsync {
 
-	private static Logger logger = Logger.getLogger(PVAMgmtService.class.getName());
+	private static Logger logger = Logger.getLogger(PvaMgmtService.class.getName());
 	private final ConfigService configService;
 
 	public static final String PVA_MGMT_SERVICE = "pvaMgmtService";
@@ -27,13 +28,13 @@ public class PVAMgmtService implements RPCServiceAsync {
 	/**
 	 * List of supported operations
 	 */
-	Map<String, PVAAction> actions = new HashMap<String, PVAAction>();
+	Map<String, PvaAction> actions = new HashMap<String, PvaAction>();
 
-	public PVAMgmtService(ConfigService configService) {
+	public PvaMgmtService(ConfigService configService) {
 		this.configService = configService;
-		logger.info("Creating an instance of PVAMgmtService");
-		// TODO find and register all the supported services
-		actions.put(GetAllPVs.GET_ALL_PVS, new GetAllPVs());
+		logger.info("Creating an instance of PvaMgmtService");
+		actions.put(PvaGetAllPVs.NAME, new PvaGetAllPVs());
+		actions.put(PvaGetApplianceInfo.NAME, new PvaGetApplianceInfo());
 	}
 
 	/**
@@ -41,10 +42,7 @@ public class PVAMgmtService implements RPCServiceAsync {
 	 */
 	@Override
 	public void request(PVStructure args, RPCResponseCallback callback) {
-		System.out.println("11111");
 		NTURI uri = NTURI.wrap(args);
-		System.out.println("22222" + uri.toString());
-		System.out.println(uri.getPath().get());
 		actions.get(uri.getPath().get()).request(args, callback, configService);
 	}
 

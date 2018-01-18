@@ -19,20 +19,20 @@ import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.ScalarType;
 
 /**
- * 
- * @author Kunal Shroff
+ * Based on {@link GetAllPVs}
+ * @author Kunal Shroff, mshankar
  *
  */
-public class GetAllPVs implements PVAAction {
-	private static Logger logger = Logger.getLogger(GetAllPVs.class.getName());
-	public static final String GET_ALL_PVS = "getAllPVs";
-	
+public class PvaGetAllPVs implements PvaAction {
+	private static Logger logger = Logger.getLogger(PvaGetAllPVs.class.getName());
+
+	public static final String NAME = "getAllPVs";
+
 	@Override
 	public String getName() {
-		return GET_ALL_PVS;
+		return NAME;
 	}
 
-	
 	@Override
 	public void request(PVStructure args, RPCResponseCallback callback, ConfigService configService) {
 		logger.debug("Getting all pvs for cluster");
@@ -43,13 +43,11 @@ public class GetAllPVs implements PVAAction {
 		if (queryName.contains("limit")) {
 			searchParameters.put("limit", uri.getQueryField(PVString.class, "limit").get());
 		}
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(searchParameters, configService, false, defaultLimit);
-		
-		pvNames.stream().forEach(System.out::println);
+		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(searchParameters, configService, false,
+				defaultLimit);
 		NTScalarArray ntScalarArray = NTScalarArray.createBuilder().value(ScalarType.pvString).create();
 		ntScalarArray.getValue(PVStringArray.class).put(0, pvNames.size(), pvNames.toArray(new String[pvNames.size()]), 0);
 		callback.requestDone(StatusFactory.getStatusCreate().getStatusOK(), ntScalarArray.getPVStructure());
-		System.out.println("request complete");
 	}
 
 }
