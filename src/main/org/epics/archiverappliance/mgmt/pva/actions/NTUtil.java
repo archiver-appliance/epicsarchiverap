@@ -19,7 +19,9 @@ public class NTUtil {
 	@SuppressWarnings("unused")
 	public static String[] extractStringArray(PVStringArray pvStringArray) {
 		StringArrayData data = new StringArrayData();
-		int len = pvStringArray.get(0, pvStringArray.getLength(), data);
+		if(pvStringArray != null) {
+			int len = pvStringArray.get(0, pvStringArray.getLength(), data);
+		}
 		return data.data;
 	}
 
