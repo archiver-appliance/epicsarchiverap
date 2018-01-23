@@ -322,7 +322,13 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 					} else {
 						workingCopyOfEvent.put(lastName, currentValue);
 					}
-					lastName = null;
+					if(dbrType.isWaveForm()) {
+						if(lastTwoNodes.equals("array.data")) {
+							lastName = null;
+						}
+					} else {
+						lastName = null;
+					}
 				}
 			}
 		}

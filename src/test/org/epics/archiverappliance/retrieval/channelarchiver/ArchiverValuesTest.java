@@ -101,6 +101,7 @@ public class ArchiverValuesTest {
 				eventStr.append(event.getEpochSeconds() + "," + event.getSampleValue().toString());
 				logger.debug(eventStr.toString());
 				assertTrue("Invalid event count, we got " + event.getSampleValue().getElementCount(), (event.getSampleValue().getElementCount() > 1));
+				logger.info("We got " + event.getSampleValue().getElementCount() + " events.");
 				eventCount++;
 			}
 
