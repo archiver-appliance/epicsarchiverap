@@ -37,7 +37,7 @@ import org.json.simple.parser.ParseException;
  *   string descriptor archivePVs
  *       
  * Based on {@link ArchivePVAction}
- * @author Kunal Shroff
+ * @author Kunal Shroff, mshankar
  *
  */
 public class PvaArchivePVAction implements PvaAction {
@@ -63,8 +63,10 @@ public class PvaArchivePVAction implements PvaAction {
 				PrintWriter pw = new PrintWriter(result);) {
 			for (int i = 0; i < pvNames.length; i++) {
 				String pvName = pvNames[i];
-				System.out.println("archive pvs " + pvName);
-				String samplingPeriodStr = samplingperiods[i];
+				String samplingPeriodStr = null;
+				if (samplingperiods != null && samplingperiods[i] != null) {
+					samplingPeriodStr = samplingperiods[i];
+				}
 				boolean samplingPeriodSpecified = samplingPeriodStr != null && !samplingPeriodStr.equals("");
 				float samplingPeriod = PolicyConfig.DEFAULT_MONITOR_SAMPLING_PERIOD;
 				if(samplingPeriodSpecified) {
