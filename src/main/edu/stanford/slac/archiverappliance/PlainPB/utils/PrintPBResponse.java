@@ -48,7 +48,7 @@ public class PrintPBResponse {
 						PayloadInfo info = PayloadInfo.parseFrom(LineEscaper.unescapeNewLines(nextLine));
 						ArchDBRTypes dbrType = ArchDBRTypes.valueOf(info.getType());
 						year = (short) info.getYear();
-						System.out.println("Parsing payload info type is " + dbrType + " and data is for year " + year + " for the PV " + info.getPvname());
+						System.out.println("Parsing payload info type is " + dbrType + " and data is for year " + year + " for the PV " + info.getPvname() + " Elementcount is " + info.getElementCount());
 						for(FieldValue fieldValue : info.getHeadersList()) { 
 							System.out.println("\tHeader " + fieldValue.getName() + " ==> " + fieldValue.getVal());
 						}
