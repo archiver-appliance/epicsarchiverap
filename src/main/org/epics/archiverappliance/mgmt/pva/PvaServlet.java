@@ -49,7 +49,6 @@ public class PvaServlet extends GenericServlet {
 				.getAttribute(ConfigService.CONFIG_SERVICE_NAME);
 		logger.info("FFFFFFFFFFFFF "+ZonedDateTime.now(ZoneId.systemDefault()) + PVA_MGMT_SERVICE + " initializing...");
 		server.registerService(PVA_MGMT_SERVICE, new PvaMgmtService(configService));
-		logger.info("GGGGGGGGGGGGGGGG");
 		server.registerService(PVA_PV_MGMT_SERVICE, new PvaPvMgmtService(configService));
 		logger.info("FFFFFFFFFFFFFFF");
 		executorService.execute(() -> {

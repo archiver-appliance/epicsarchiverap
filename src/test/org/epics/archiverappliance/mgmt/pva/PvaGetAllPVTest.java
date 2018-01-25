@@ -41,7 +41,6 @@ public class PvaGetAllPVTest {
 	 */
 	@Test
 	public void addPV() {
-		logger.info("Test");
 		NTURI uri = NTURI.createBuilder().create();
 		uri.getPVStructure().getStringField("scheme").put("pva");
 		uri.getPVStructure().getStringField("path").put(NAME);

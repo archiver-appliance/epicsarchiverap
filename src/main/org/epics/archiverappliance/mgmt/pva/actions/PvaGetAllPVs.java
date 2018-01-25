@@ -43,8 +43,7 @@ public class PvaGetAllPVs implements PvaAction {
 		if (queryName.contains("limit")) {
 			searchParameters.put("limit", uri.getQueryField(PVString.class, "limit").get());
 		}
-		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(searchParameters, configService, false,
-				defaultLimit);
+		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(searchParameters, configService, false, defaultLimit);
 		NTScalarArray ntScalarArray = NTScalarArray.createBuilder().value(ScalarType.pvString).create();
 		ntScalarArray.getValue(PVStringArray.class).put(0, pvNames.size(), pvNames.toArray(new String[pvNames.size()]), 0);
 		callback.requestDone(StatusFactory.getStatusCreate().getStatusOK(), ntScalarArray.getPVStructure());

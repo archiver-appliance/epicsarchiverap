@@ -8,6 +8,7 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetArchivedPVs;
+import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
 import org.epics.nt.NTTable;
 import org.epics.pvaccess.server.rpc.RPCResponseCallback;
 import org.epics.pvaccess.server.rpc.RPCServiceAsync;
@@ -35,6 +36,7 @@ public class PvaPvMgmtService implements RPCServiceAsync {
 		logger.info("Creating an instance of PvaPvMgmtService");
 		actions.put(PvaArchivePVAction.NAME, new PvaArchivePVAction());
 		actions.put(PvaGetArchivedPVs.NAME, new PvaGetArchivedPVs());
+		actions.put(PvaGetPVStatus.NAME, new PvaGetPVStatus());
 		logger.info("Completed cration of PvaPvMgmtService");
 	}
 
