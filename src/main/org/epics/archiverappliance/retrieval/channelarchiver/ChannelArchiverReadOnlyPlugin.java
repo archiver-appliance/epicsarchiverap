@@ -61,7 +61,7 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 	private String description;
 	private String name;
 	private int valuesRequested = Integer.MAX_VALUE;
-	private String howStr = "0";
+	private String howStr = "3";
 	
 	public ChannelArchiverReadOnlyPlugin() {
 		
