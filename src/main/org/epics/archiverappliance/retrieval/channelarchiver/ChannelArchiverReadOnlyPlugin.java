@@ -61,7 +61,7 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 	private String description;
 	private String name;
 	private int valuesRequested = Integer.MAX_VALUE;
-	// private String howStr = "0";
+	private String howStr = "0";
 	
 	public ChannelArchiverReadOnlyPlugin() {
 		
@@ -77,7 +77,7 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 		this.serverURL = serverURL;
 		this.archiveKey = Integer.parseInt(index);
 		this.valuesRequested = valuesRequested;
-		// this.howStr = howStr;
+		this.howStr = howStr;
 		this.setDescription("ChannelArchiverReadOnlyPlugin plugin with serverURL " + serverURL + " and archiveKey " + archiveKey + ((reducedArchiveKey != -1) ? (" and a reducedArchiveKey of " + reducedArchiveKey) : (" and no reducedArchiveKey")));
 	}
 
@@ -93,10 +93,6 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 	
 	private List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, int archiveKey, PostProcessor postProcessor) throws IOException {
 		try {
-			// TODO the only thing that seems to get similar charts in ArchiveViewer for production data is using plot-binning.
-			// This is hardcoded somewhere in the Data server or the ArchiveViewer code....
-			// Need to figure out where it and and how to address it.
-			String howStr = "3";
 			String pvNameForCall = pvName;
 			if(context.getPvNameFromRequest() != null) { 
 				logger.info("Using pvName from request " + context.getPvNameFromRequest() + " when making a call to the ChannelArchiver for pv " + pvName);
