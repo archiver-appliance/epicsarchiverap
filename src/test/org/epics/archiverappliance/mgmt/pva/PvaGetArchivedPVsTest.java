@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.mgmt.pva;
 
-import static org.epics.archiverappliance.mgmt.pva.PvaPvMgmtService.PVA_PV_MGMT_SERVICE;
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 import static org.junit.Assert.assertArrayEquals;
 
@@ -53,7 +53,7 @@ public class PvaGetArchivedPVsTest {
 		
 			logger.info(ZonedDateTime.now(ZoneId.systemDefault())
 					+ " Waiting three mins for the service setup to complete");
-			client = RPCClientFactory.create(PVA_PV_MGMT_SERVICE);
+			client = RPCClientFactory.create(PVA_MGMT_SERVICE);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, e.getMessage(), e);
 		}

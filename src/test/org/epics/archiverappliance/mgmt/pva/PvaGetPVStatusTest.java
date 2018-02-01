@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.mgmt.pva;
 
-import static org.epics.archiverappliance.mgmt.pva.PvaPvMgmtService.PVA_PV_MGMT_SERVICE;
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
@@ -37,8 +37,8 @@ public class PvaGetPVStatusTest {
 
 	private static Logger logger = Logger.getLogger(PvaGetPVStatusTest.class.getName());
 
-//	static TomcatSetup tomcatSetup = new TomcatSetup();
-//	static SIOCSetup siocSetup = new SIOCSetup();
+	static TomcatSetup tomcatSetup = new TomcatSetup();
+	static SIOCSetup siocSetup = new SIOCSetup();
 
 	private static RPCClient client;
 
@@ -46,14 +46,14 @@ public class PvaGetPVStatusTest {
 	public static void setup() {
 		logger.info("Set up for the PvaGetArchivedPVsTest");
 		try {
-//			siocSetup.startSIOCWithDefaultDB();
-//			tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
+			siocSetup.startSIOCWithDefaultDB();
+			tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
 
-//			Thread.sleep(3*60*1000);
+			Thread.sleep(3*60*1000);
 		
 			logger.info(ZonedDateTime.now(ZoneId.systemDefault())
 					+ " Waiting three mins for the service setup to complete");
-			client = RPCClientFactory.create(PVA_PV_MGMT_SERVICE);
+			client = RPCClientFactory.create(PVA_MGMT_SERVICE);
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, e.getMessage(), e);
 		}
@@ -64,8 +64,8 @@ public class PvaGetPVStatusTest {
 		logger.info("Tear Down for the PvaGetArchivedPVsTest");
 		try {
 			client.destroy();
-//			tomcatSetup.tearDown();
-//			siocSetup.stopSIOC();
+			tomcatSetup.tearDown();
+			siocSetup.stopSIOC();
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, e.getMessage(), e);
 		}
@@ -103,8 +103,6 @@ public class PvaGetPVStatusTest {
 			archivePvStatusReqTable.getColumn(PVStringArray.class, "pv").put(0, pvNamesAll.size(), pvNamesAll.toArray(new String[pvNamesAll.size()]), 0);
 			result = client.request(archivePvStatusReqTable.getPVStructure(), 30);
 
-			System.out.println(result.toString());
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

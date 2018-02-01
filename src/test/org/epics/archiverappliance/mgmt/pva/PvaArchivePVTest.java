@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.mgmt.pva;
 
-import static org.epics.archiverappliance.mgmt.pva.PvaPvMgmtService.PVA_PV_MGMT_SERVICE;
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 import static org.junit.Assert.assertArrayEquals;
 
@@ -30,7 +30,7 @@ public class PvaArchivePVTest {
 
 	@BeforeClass
 	public static void setup() {
-		client = RPCClientFactory.create(PVA_PV_MGMT_SERVICE);
+		client = RPCClientFactory.create(PVA_MGMT_SERVICE);
 
 	}
 

@@ -21,7 +21,6 @@ import org.epics.pvaccess.PVAException;
 import org.epics.pvaccess.server.rpc.RPCServer;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.epics.archiverappliance.mgmt.pva.PvaPvMgmtService.PVA_PV_MGMT_SERVICE;
 
 /**
  * A servlet registered with the mgmt web.xml to be initialized with the context
@@ -47,14 +46,10 @@ public class PvaServlet extends GenericServlet {
 		super.init(config);
 		ConfigService configService = (ConfigService) getServletConfig().getServletContext()
 				.getAttribute(ConfigService.CONFIG_SERVICE_NAME);
-		logger.info("FFFFFFFFFFFFF "+ZonedDateTime.now(ZoneId.systemDefault()) + PVA_MGMT_SERVICE + " initializing...");
 		server.registerService(PVA_MGMT_SERVICE, new PvaMgmtService(configService));
-		server.registerService(PVA_PV_MGMT_SERVICE, new PvaPvMgmtService(configService));
-		logger.info("FFFFFFFFFFFFFFF");
 		executorService.execute(() -> {
 			try {
 				logger.info(Thread.currentThread().getName());
-				logger.info("FFFFFFFFFFFFFFF pva services registered and now the server is starting.");
 				server.printInfo();
 				server.run(0);
 			} catch (PVAException e) {
