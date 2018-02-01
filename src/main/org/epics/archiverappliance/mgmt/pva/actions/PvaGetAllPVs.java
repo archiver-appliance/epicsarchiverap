@@ -19,7 +19,39 @@ import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.ScalarType;
 
 /**
+ * Get all the PVs in the cluster. Note this call can return millions of PVs
+ * 
+ * Additional parameters which can be packaged as uri query parameters
+ * pv - An optional argument that can contain a
+ * <a href="http://en.wikipedia.org/wiki/Glob_%28programming%29">GLOB</a>
+ * wildcard. We will return PVs that match this GLOB. For example, if
+ * <code>pv=KLYS*</code>, the server will return all PVs that start with the
+ * string <code>KLYS</code>. If both pv and regex are unspecified, we match
+ * against all PVs.
+ * 
+ * regex - An optional argument that can contain a <a href=
+ * "http://docs.oracle.com/javase/7/docs/api/java/util/regex/Pattern.html">Java
+ * regex</a> wildcard. We will return PVs that match this regex. For example, if
+ * <code>pv=KLYS*</code>, the server will return all PVs that start with the
+ * string <code>KLYS</code>.
+ * 
+ * limit - An optional argument that specifies the number of matched PV's that
+ * are retured. If unspecified, we return 500 PV names. To get all the PV names,
+ * (potentially in the millions), set limit to &ndash;1.
+ * 
+ * example
+ *
+ * request:
+ * epics:nt/NTURI:1.0
+ * 		string scheme pva
+ * 		string path getAllPVs
+ *
+ * response
+ * epics:nt/NTScalarArray:1.0 
+ *     string[] value ["pv1", "pv2", ....]
+ *
  * Based on {@link GetAllPVs}
+ * 
  * @author Kunal Shroff, mshankar
  *
  */

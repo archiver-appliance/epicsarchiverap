@@ -26,13 +26,27 @@ import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.ScalarType;
 
 /**
- * Given a list of PVs, determine those that are being archived.
- * Of course, you can use the status call but that makes calls to the engine etc and can be stressful if you are checking several thousand PVs
- * All this does is check the configservice...
+ * Given a list of PVs, determine those that are being archived. Of course, you
+ * can use the status call but that makes calls to the engine etc and can be
+ * stressful if you are checking several thousand PVs All this does is check the
+ * configservice...
  * 
  * Given a list of PVs, determine those that are being archived.
  * 
+ * example request
+ * epics:nt/NTTable:1.0
+ *         string[] labels [pv]
+ *         structure value
+ *            string[] pv [test_0,test_1,test_10,test_100...]
+ *            
+ * example result:
+ * epics:nt/NTTable:1.0
+ *         string[] labels [pv,status]
+ *         structure value
+ *            string[] pv [test_0,test_1,test_10,test_100...]
+ *            string[] status [Being archived,Initial sampling,Being archived,Being archived,...]
  * Based on {@link ArchivedPVsAction}
+ * 
  * @author mshankar, shroffk
  *
  */

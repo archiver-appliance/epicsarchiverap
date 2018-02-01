@@ -16,7 +16,7 @@
     <servlet>
         <servlet-name>PVAServlet</servlet-name>
         <servlet-class>org.epics.archiverappliance.mgmt.pva.PvaServlet</servlet-class>
-        <load-on-startup>3</load-on-startup>
+        <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
         <servlet-name>StaticContent</servlet-name>

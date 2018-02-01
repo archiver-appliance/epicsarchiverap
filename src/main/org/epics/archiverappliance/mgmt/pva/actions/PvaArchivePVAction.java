@@ -25,9 +25,11 @@ import org.json.simple.parser.ParseException;
 /**
  * Add one or more pvs to the archiver.
  * 
- * The requests for archiving pv's is encoded in an NTTable
+ * The requests for archiving pv's, the request consists of an NTTable with a list of pv's to be archived, optional 
+ * attributes include sampling period and,or samplingmethod
  * 
  * example:
+ * request
  * epics:nt/NTTable:1.0 
  *   string[] labels [pv,samplingperiod,samplingmethod]
  *   structure value
@@ -35,7 +37,14 @@ import org.json.simple.parser.ParseException;
  *       string[] samplingperiod [1.0,2.0]
  *       string[] samplingmethod [SCAN,MONITOR]
  *   string descriptor archivePVs
- *       
+ *
+ * result
+ * epics:nt/NTTable:1.0 
+ *      string[] labels [pvName,status]
+ *           structure value
+ *                  string[] pvName [mshankar:arch:sine,mshankar:arch:cosine]
+ *                  string[] status [Archive request submitted,Archive request submitted]
+ *
  * Based on {@link ArchivePVAction}
  * @author Kunal Shroff, mshankar
  *

@@ -8,25 +8,18 @@
 package org.epics.archiverappliance.mgmt.pva.actions;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
-import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.epics.nt.NTTable;
 import org.epics.nt.NTURI;
 import org.epics.pvaccess.server.rpc.RPCResponseCallback;
@@ -36,16 +29,32 @@ import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.ScalarType;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 /**
  * Get the status of a PV.
  * 
- * @epics.BPLAction - Get the status of a PV.
- * @epics.BPLActionParam pv - The name(s) of the pv for which status is to be determined. If a pv is not being archived, you should get back a simple JSON object with a status string of "Not being archived." You can also pass in GLOB wildcards here and multiple PVs as a comma separated list. If you have more PVs that can fit in a GET, send the pv's as a CSV <code>pv=pv1,pv2,pv3</code> as the body of a POST.
- * @epics.BPLActionEnd
+ * pv - The name(s) of the pv for which status is to be determined.
  * 
- * @author mshankar
+ * example request
+ * epics:nt/NTTable:1.0
+ *         string[] labels [pv]
+ *         structure value
+ *            string[] pv [test_0,test_1,test_10,test_100...]
+ *            
+ * example result:
+ * epics:nt/NTTable:1.0
+ *         string[] labels [pv,status,appliance,connectionState,lastEvent,samplingPeriod,isMonitored,connectionFirstEstablished,connectionLossRegainCount,connectionLastRestablished]
+ *         structure value
+ *            string[] pv [test_0,test_1,test_10,test_100...]
+ *            string[] status [Being archived,Initial sampling,Being archived,Being archived,...]
+ *            string[] connectionState [true,null,true,true,null,true,null,true,null,...]
+ *            string[] lastEvent [Feb/01/2018 13:18:36 -05:00,null,Feb/01/2018 13:18:37 -05:00,Feb/01/2018 13:18:37 -05:00,...]
+ *            string[] samplingPeriod [1.0,null,1.0,1.0,null,1.0,null,...]
+ *            string[] isMonitored [true,null,true,true,null,true,...]
+ *            string[] connectionFirstEstablished [Feb/01/2018 13:17:10 -05:00,null,...]
+ *            string[] connectionLossRegainCount [0,null,0,0,null,0,null,...]
+ *            string[] connectionLastRestablished [Never,null,Never,Never,null,...]
+ * @author mshankar, shroffk
  *
  */
 public class PvaGetPVStatus implements PvaAction {
