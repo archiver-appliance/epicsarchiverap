@@ -20,9 +20,9 @@ import static org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs.NAME;
  * @author Kunal Shroff
  *
  */
-public class PvaGetAllPVTest {
+public class PvaSuiteTstGetAll {
 
-	private static Logger logger = Logger.getLogger(PvaGetAllPVTest.class.getName());
+	private static Logger logger = Logger.getLogger(PvaSuiteTstGetAll.class.getName());
 	private static RPCClient client;
 
 	@BeforeClass

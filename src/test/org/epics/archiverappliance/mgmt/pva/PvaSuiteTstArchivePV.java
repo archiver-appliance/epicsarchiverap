@@ -23,9 +23,9 @@ import org.junit.Test;
  * @author Kunal Shroff
  *
  */
-public class PvaArchivePVTest {
+public class PvaSuiteTstArchivePV {
 
-	private static Logger logger = Logger.getLogger(PvaArchivePVTest.class.getName());
+	private static Logger logger = Logger.getLogger(PvaSuiteTstArchivePV.class.getName());
 	private static RPCClient client;
 
 	@BeforeClass

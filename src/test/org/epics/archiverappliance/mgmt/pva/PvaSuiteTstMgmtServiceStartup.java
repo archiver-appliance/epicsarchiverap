@@ -13,7 +13,7 @@ import org.junit.Test;
  * @author Kunal Shroff
  *
  */
-public class PvaMgmtServiceStartupTest {
+public class PvaSuiteTstMgmtServiceStartup {
 
 	private static RPCClient client;
 

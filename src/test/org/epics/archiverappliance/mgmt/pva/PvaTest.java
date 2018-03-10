@@ -19,7 +19,7 @@ import org.junit.runners.Suite;
  *
  */
 @RunWith(Suite.class)
-@Suite.SuiteClasses({ PvaGetAllPVTest.class, PvaMgmtServiceStartupTest.class, PvaGetApplianceInfoTest.class, PvaArchivePVTest.class })
+@Suite.SuiteClasses({ PvaSuiteTstGetAll.class, PvaSuiteTstMgmtServiceStartup.class, PvaSuiteTstGetApplianceInfo.class, PvaSuiteTstArchivePV.class })
 public class PvaTest {
 
 	private static Logger logger = Logger.getLogger(PvaTest.class.getName());

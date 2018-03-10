@@ -24,9 +24,9 @@ import org.junit.Test;
  * @author Kunal Shroff
  *
  */
-public class PvaGetApplianceInfoTest {
+public class PvaSuiteTstGetApplianceInfo {
 
-	private static Logger logger = Logger.getLogger(PvaGetApplianceInfoTest.class.getName());
+	private static Logger logger = Logger.getLogger(PvaSuiteTstGetApplianceInfo.class.getName());
 	private static RPCClient client;
 
 	@BeforeClass
