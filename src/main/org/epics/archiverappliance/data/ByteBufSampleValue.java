@@ -16,20 +16,33 @@ import org.epics.pvdata.pv.Field;
 import org.epics.pvdata.pv.FloatArrayData;
 import org.epics.pvdata.pv.IntArrayData;
 import org.epics.pvdata.pv.LongArrayData;
+import org.epics.pvdata.pv.PVBoolean;
 import org.epics.pvdata.pv.PVBooleanArray;
+import org.epics.pvdata.pv.PVByte;
 import org.epics.pvdata.pv.PVByteArray;
+import org.epics.pvdata.pv.PVDouble;
 import org.epics.pvdata.pv.PVDoubleArray;
 import org.epics.pvdata.pv.PVField;
+import org.epics.pvdata.pv.PVFloat;
 import org.epics.pvdata.pv.PVFloatArray;
+import org.epics.pvdata.pv.PVInt;
 import org.epics.pvdata.pv.PVIntArray;
+import org.epics.pvdata.pv.PVLong;
 import org.epics.pvdata.pv.PVLongArray;
+import org.epics.pvdata.pv.PVScalar;
 import org.epics.pvdata.pv.PVScalarArray;
+import org.epics.pvdata.pv.PVShort;
 import org.epics.pvdata.pv.PVShortArray;
+import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStringArray;
 import org.epics.pvdata.pv.PVStructure;
+import org.epics.pvdata.pv.PVUByte;
 import org.epics.pvdata.pv.PVUByteArray;
+import org.epics.pvdata.pv.PVUInt;
 import org.epics.pvdata.pv.PVUIntArray;
+import org.epics.pvdata.pv.PVULong;
 import org.epics.pvdata.pv.PVULongArray;
+import org.epics.pvdata.pv.PVUShort;
 import org.epics.pvdata.pv.PVUShortArray;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.ShortArrayData;
@@ -70,16 +83,69 @@ public class ByteBufSampleValue implements SampleValue {
 			String fieldName = fld.getFieldName();
 			Type type = fld.getField().getType();
 			switch(type) {
-			case scalar: { 
-				ret.put(fieldName, fld.toString());
-				continue;
-			}
 			case structure: {
 				PVStructure childStruct = pvStructure.getStructureField(fieldName);
 				assert(childStruct != null);
 				Map<String, Object> childMap = new TreeMap<String, Object>();
 				pvStructure2JSON(childStruct, childMap);
 				ret.put(fieldName, childMap);
+				continue;
+			}
+			case scalar: {
+				PVScalar scalarField = (PVScalar) fld;
+				ScalarType elementType = scalarField.getScalar().getScalarType();
+				switch(elementType) {
+				case pvBoolean: {
+					ret.put(fieldName, ((PVBoolean)scalarField).get());
+				}
+				break;
+				case pvByte: {
+					ret.put(fieldName, ((PVByte)scalarField).get());
+				}
+				break;
+				case pvDouble: {
+					ret.put(fieldName, ((PVDouble)scalarField).get());
+				}
+				break;
+				case pvFloat: {
+					ret.put(fieldName, ((PVFloat)scalarField).get());
+				}
+				break;
+				case pvInt: {
+					ret.put(fieldName, ((PVInt)scalarField).get());
+				}
+				break;
+				case pvLong: {
+					ret.put(fieldName, ((PVLong)scalarField).get());
+				}
+				break;
+				case pvShort: {
+					ret.put(fieldName, ((PVShort)scalarField).get());
+				}
+				break;
+				case pvString: {
+					ret.put(fieldName, ((PVString)scalarField).get());
+				}
+				break;
+				case pvUByte: {
+					ret.put(fieldName, ((PVUByte)scalarField).get());
+				}
+				break;
+				case pvUInt: {
+					ret.put(fieldName, ((PVUInt)scalarField).get());
+				}
+				break;
+				case pvULong: {
+					ret.put(fieldName, ((PVULong)scalarField).get());
+				}
+				break;
+				case pvUShort: {
+					ret.put(fieldName, ((PVUShort)scalarField).get());
+				}
+				break;
+				default:
+					throw new UnsupportedOperationException("New type in PVData? " + elementType);
+				}
 				continue;
 			}
 			case scalarArray: {
