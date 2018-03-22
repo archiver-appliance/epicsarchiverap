@@ -1,16 +1,39 @@
 package org.epics.archiverappliance.data;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.epics.pvaccess.impl.remote.IntrospectionRegistry;
 import org.epics.pvaccess.impl.remote.SerializationHelper;
+import org.epics.pvdata.pv.BooleanArrayData;
+import org.epics.pvdata.pv.ByteArrayData;
 import org.epics.pvdata.pv.DeserializableControl;
+import org.epics.pvdata.pv.DoubleArrayData;
 import org.epics.pvdata.pv.Field;
+import org.epics.pvdata.pv.FloatArrayData;
+import org.epics.pvdata.pv.IntArrayData;
+import org.epics.pvdata.pv.LongArrayData;
+import org.epics.pvdata.pv.PVBooleanArray;
+import org.epics.pvdata.pv.PVByteArray;
+import org.epics.pvdata.pv.PVDoubleArray;
 import org.epics.pvdata.pv.PVField;
+import org.epics.pvdata.pv.PVFloatArray;
+import org.epics.pvdata.pv.PVIntArray;
+import org.epics.pvdata.pv.PVLongArray;
+import org.epics.pvdata.pv.PVScalarArray;
+import org.epics.pvdata.pv.PVShortArray;
+import org.epics.pvdata.pv.PVStringArray;
 import org.epics.pvdata.pv.PVStructure;
+import org.epics.pvdata.pv.PVUByteArray;
+import org.epics.pvdata.pv.PVUIntArray;
+import org.epics.pvdata.pv.PVULongArray;
+import org.epics.pvdata.pv.PVUShortArray;
+import org.epics.pvdata.pv.ScalarType;
+import org.epics.pvdata.pv.ShortArrayData;
+import org.epics.pvdata.pv.StringArrayData;
 import org.epics.pvdata.pv.Type;
 import org.json.simple.JSONValue;
 
@@ -59,7 +82,159 @@ public class ByteBufSampleValue implements SampleValue {
 				ret.put(fieldName, childMap);
 				continue;
 			}
-			case scalarArray:
+			case scalarArray: {
+				PVScalarArray arrayField = (PVScalarArray) fld;
+				ScalarType elementType = arrayField.getScalarArray().getElementType();
+				switch(elementType) {
+				case pvBoolean: {
+						PVBooleanArray pvArray = (PVBooleanArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvBoolean);
+						BooleanArrayData arrayData = new BooleanArrayData();
+						pvArray.get(0, pvArray.getLength(), arrayData);
+						ArrayList<Boolean> vals = new ArrayList<Boolean>();
+						boolean[] data = arrayData.data;
+						for(boolean dataitem : data) { 
+							vals.add(dataitem);
+						}
+						ret.put(fieldName, vals);
+				}
+				break;
+				case pvByte: {
+					PVByteArray pvArray = (PVByteArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvByte);
+					ByteArrayData arrayData = new ByteArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Byte> vals = new ArrayList<Byte>();
+					byte[] data = arrayData.data;
+					for(byte dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvDouble: {
+						PVDoubleArray pvArray = (PVDoubleArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvDouble);
+						DoubleArrayData arrayData = new DoubleArrayData();
+						pvArray.get(0, pvArray.getLength(), arrayData);
+						ArrayList<Double> vals = new ArrayList<Double>();
+						double[] data = arrayData.data;
+						for(double dataitem : data) { 
+							vals.add(dataitem);
+						}
+						ret.put(fieldName, vals);
+				}
+				break;
+				case pvFloat: {
+					PVFloatArray pvArray = (PVFloatArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvFloat);
+					FloatArrayData arrayData = new FloatArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Float> vals = new ArrayList<Float>();
+					float[] data = arrayData.data;
+					for(float dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvInt: {
+					PVIntArray pvArray = (PVIntArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvInt);
+					IntArrayData arrayData = new IntArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Integer> vals = new ArrayList<Integer>();
+					int[] data = arrayData.data;
+					for(int dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvLong: {
+					PVLongArray pvArray = (PVLongArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvLong);
+					LongArrayData arrayData = new LongArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Long> vals = new ArrayList<Long>();
+					long[] data = arrayData.data;
+					for(long dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvShort: {
+					PVShortArray pvArray = (PVShortArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvShort);
+					ShortArrayData arrayData = new ShortArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Short> vals = new ArrayList<Short>();
+					short[] data = arrayData.data;
+					for(short dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvString: {
+					PVStringArray pvArray = (PVStringArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvString);
+					StringArrayData arrayData = new StringArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<String> vals = new ArrayList<String>();
+					String[] data = arrayData.data;
+					for(String dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvUByte: {
+					PVUByteArray pvArray = (PVUByteArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvUByte);
+					ByteArrayData arrayData = new ByteArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Byte> vals = new ArrayList<Byte>();
+					byte[] data = arrayData.data;
+					for(byte dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvUInt: {
+					PVUIntArray pvArray = (PVUIntArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvUInt);
+					IntArrayData arrayData = new IntArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Integer> vals = new ArrayList<Integer>();
+					int[] data = arrayData.data;
+					for(int dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvULong: {
+					PVULongArray pvArray = (PVULongArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvULong);
+					LongArrayData arrayData = new LongArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Long> vals = new ArrayList<Long>();
+					long[] data = arrayData.data;
+					for(long dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				case pvUShort:{
+					PVUShortArray pvArray = (PVUShortArray) pvStructure.getScalarArrayField(fieldName, ScalarType.pvUShort);
+					ShortArrayData arrayData = new ShortArrayData();
+					pvArray.get(0, pvArray.getLength(), arrayData);
+					ArrayList<Short> vals = new ArrayList<Short>();
+					short[] data = arrayData.data;
+					for(short dataitem : data) { 
+						vals.add(dataitem);
+					}
+					ret.put(fieldName, vals);
+				}
+				break;
+				default:
+					throw new UnsupportedOperationException("New type in PVData? " + elementType);
+				}
+				continue;
+			}
 			case structureArray:
 			case union:
 			case unionArray:
