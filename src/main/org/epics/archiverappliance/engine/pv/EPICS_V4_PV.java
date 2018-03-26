@@ -34,8 +34,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	/** Channel name. */
 	private String name = null;
 	
-	private ChannelProvider channelProvider;
-	
 	/**the meta info for this pv*/
 	private MetaInfo totalMetaInfo = new MetaInfo();
 	
@@ -127,7 +125,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	EPICS_V4_PV(final String name, ConfigService configservice, int jcaCommandThreadId) {
 		this.name = name;
 		this.configservice = configservice;
-		this.channelProvider = configservice.getEngineContext().getChannelProvider();
 		this.jcaCommandThreadId = jcaCommandThreadId;
 	}
 	
@@ -475,7 +472,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 					state = PVConnectionState.Connecting;
 					synchronized (this) {
 						if (channel == null) {
-							channel = channelProvider.createChannel(name, EPICS_V4_PV.this, ChannelProvider.PRIORITY_DEFAULT);
+							channel = configservice.getEngineContext().getChannelProvider().createChannel(name, EPICS_V4_PV.this, ChannelProvider.PRIORITY_DEFAULT);
 						}
 
 						if (channel == null)
