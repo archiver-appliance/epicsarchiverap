@@ -15,6 +15,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.EventStreamConsumer;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
@@ -47,10 +48,10 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	int skippedEventsForAllPVs = 0;
 	int comparedEventsForAllPVs = 0;
 	
-	
-	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, PVStructureArray p) {
+	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, PVStructureArray pvStructureArray, PVTypeInfo typeInfo) {
 		this.mimeresponse = mimeresponse;
-		this.mimeresponse.setOutput(p);
+		this.mimeresponse.setOutput(pvStructureArray);
+		this.mimeresponse.setTypeInfo(typeInfo);
 	}
 	
 	
@@ -83,17 +84,6 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 		}
 		logNumbersAndCollectTotal();
 		mimeresponse.close();
-		try { 
-			//os.flush();
-		} catch(Throwable t) { 
-			logger.debug("Exception flushing response", t);
-		}
-		
-		try { 
-			//os.close();
-		} catch(Throwable t) { 
-			logger.debug("Exception closing response", t);
-		}
 	}
 	
 	public void processingPV(String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
@@ -106,10 +96,8 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	
 	private void consumeEventStreamAndOutputToMimeResponse(EventStream strm) throws Exception {
 		try {
-			System.out.println("Consume event strm:  ");
 			int eventsInCurrentStream = 0;
 			for(Event e : strm) {
-				System.out.println("Event in stream: " + e.toString());
 				try {
 					eventsInCurrentStream++;
 					

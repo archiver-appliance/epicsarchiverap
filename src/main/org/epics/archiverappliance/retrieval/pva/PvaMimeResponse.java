@@ -16,6 +16,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
@@ -29,7 +30,11 @@ import org.epics.pvdata.property.PVTimeStamp;
 import org.epics.pvdata.property.PVTimeStampFactory;
 import org.epics.pvdata.property.TimeStamp;
 import org.epics.pvdata.property.TimeStampFactory;
+import org.epics.pvdata.pv.PVByte;
 import org.epics.pvdata.pv.PVDouble;
+import org.epics.pvdata.pv.PVFloat;
+import org.epics.pvdata.pv.PVInt;
+import org.epics.pvdata.pv.PVShort;
 import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.PVStructureArray;
@@ -44,22 +49,66 @@ public class PvaMimeResponse implements MimeResponse {
 	boolean firstPV = true;
 	boolean closePV = false;
 	private PVStructureArray pvStruct;
+	private PVTypeInfo typeInfo;
 
 	@Override
 	public void consumeEvent(Event e) throws Exception {
 		DBRTimeEvent evnt = (DBRTimeEvent) e;
-		
-		NTScalar struct = NTScalar.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp().create();
 
-		// Put the value
-		
-		struct.getValue(PVDouble.class).put(evnt.getSampleValue().getValue().doubleValue());
+		NTScalar struct;
+		switch (typeInfo.getDBRType()) {
+		case DBR_SCALAR_FLOAT: {
+			struct = NTScalar.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp().create();
+			struct.getValue(PVFloat.class).put(evnt.getSampleValue().getValue().floatValue());
+			break;
+		}
+		case DBR_SCALAR_DOUBLE: {
+			struct = NTScalar.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp().create();
+			struct.getValue(PVDouble.class).put(evnt.getSampleValue().getValue().doubleValue());
+			break;
+		}
+		case DBR_SCALAR_BYTE: {
+			struct = NTScalar.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp().create();
+			struct.getValue(PVByte.class).put(evnt.getSampleValue().getValue().byteValue());
+			break;
+		}
+		case DBR_SCALAR_SHORT: {
+			struct = NTScalar.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp().create();
+			struct.getValue(PVShort.class).put(evnt.getSampleValue().getValue().shortValue());
+			break;
+		}
+		case DBR_SCALAR_INT: {
+			struct = NTScalar.createBuilder().value(ScalarType.pvInt).addAlarm().addTimeStamp().create();
+			struct.getValue(PVInt.class).put(evnt.getSampleValue().getValue().intValue());
+			break;
+		}
+		case DBR_SCALAR_STRING: {
+			struct = NTScalar.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().create();
+			struct.getValue(PVString.class).put(evnt.getSampleValue().getValue().toString());
+			break;
+		}
+		case DBR_SCALAR_ENUM: {
+			// Not supported
+		}
+		case DBR_WAVEFORM_FLOAT:
+		case DBR_WAVEFORM_DOUBLE:
+		case DBR_WAVEFORM_ENUM:
+		case DBR_WAVEFORM_SHORT:
+		case DBR_WAVEFORM_BYTE:
+		case DBR_WAVEFORM_INT:
+		case DBR_WAVEFORM_STRING:
+		case DBR_V4_GENERIC_BYTES: {
+
+		}
+		default:
+			throw new UnsupportedOperationException("Unknown DBR type " + typeInfo.getDBRType());
+		}
 
 		// Put the alarm info
 		Alarm alarm = new Alarm();
 		alarm.setSeverity(AlarmSeverity.getSeverity(evnt.getSeverity()));
 		alarm.setStatus(AlarmStatus.getStatus(evnt.getStatus()));
-		
+
 		PVAlarm pvAlarm = PVAlarmFactory.create();
 		pvAlarm.attach(struct.getAlarm());
 		pvAlarm.set(alarm);
@@ -67,7 +116,7 @@ public class PvaMimeResponse implements MimeResponse {
 		// Put time info
 		TimeStamp ts = TimeStampFactory.create();
 		ts.put(TimeUtils.convertToEpochSeconds(evnt.getEventTimeStamp()), evnt.getEventTimeStamp().getNanos());
-		
+
 		PVTimeStamp pvTimeStamp = PVTimeStampFactory.create();
 		pvTimeStamp.attach(struct.getTimeStamp());
 		pvTimeStamp.set(ts);
@@ -82,6 +131,10 @@ public class PvaMimeResponse implements MimeResponse {
 
 	public void setOutput(PVStructureArray pvStruct) {
 		this.pvStruct = pvStruct;
+	}
+
+	public void setTypeInfo(PVTypeInfo typeInfo) {
+		this.typeInfo = typeInfo;
 	}
 
 	public void close() {
@@ -127,4 +180,5 @@ public class PvaMimeResponse implements MimeResponse {
 		ret.put(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		return ret;
 	}
+
 }

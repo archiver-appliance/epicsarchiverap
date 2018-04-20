@@ -1,7 +1,6 @@
 package org.epics.archiverappliance.retrieval.pva;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
@@ -67,6 +66,7 @@ import org.epics.pvdata.pv.PVStructureArray;
 import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.Status.StatusType;
 import org.epics.pvdata.pv.Structure;
+import org.epics.pvdata.pv.StructureArray;
 import org.json.simple.JSONObject;
 
 public class PvaGetPVData implements PvaAction {
@@ -337,15 +337,11 @@ public class PvaGetPVData implements PvaAction {
 		}
 
 		System.out.println("HERE STARTS THE MEAT");
-		FieldCreate fieldCreate = FieldFactory.getFieldCreate();
-		Structure resultStructure = fieldCreate.createStructure("NTComplexTable", new String[] { "labels", "value" },
-				new Field[] { fieldCreate.createScalarArray(ScalarType.pvString), fieldCreate.createStructureArray(
-						NTScalar.createBuilder().value(ScalarType.pvDouble).addAlarm().createStructure()) });
-		PVStructure result = PVDataFactory.getPVDataCreate().createPVStructure(resultStructure);
-
-		PVStructureArray p = result.getStructureArrayField("value");
+		
+		PVStructure resultStructure = createResultPVStructure(typeInfo);
+		
 		try (BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest);
-				PvaMergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(p, useChunkedEncoding);
+				PvaMergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resultStructure.getStructureArrayField("value"), useChunkedEncoding, typeInfo);
 				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo,
 						requestTimes, postProcessor)) {
 			HashMap<String, String> engineMetadata = null;
@@ -393,8 +389,7 @@ public class PvaGetPVData implements PvaAction {
 						logger.info("Switching to new PV " + pvName
 								+ " In some mime responses we insert special headers at the beginning of the response. Calling the hook for that");
 						currentlyProcessingPV = pvName;
-						mergeDedupCountingConsumer.processingPV(currentlyProcessingPV, start, end,
-								(eventStream != null) ? sourceDesc : null);
+						mergeDedupCountingConsumer.processingPV(currentlyProcessingPV, start, end, (eventStream != null) ? sourceDesc : null);
 					}
 
 					try {
@@ -405,7 +400,6 @@ public class PvaGetPVData implements PvaAction {
 							mergeDedupCountingConsumer.consumeEventStream(eventStream);
 							// resp.flushBuffer();
 							System.out.println("FLUSH PostProcessorWithConsolidatedEventStream 1 ");
-							System.out.println(p);
 						}
 					} catch (Exception ex) {
 						if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
@@ -427,8 +421,7 @@ public class PvaGetPVData implements PvaAction {
 					} else {
 						logger.error(
 								"Exception when consuming and flushing data from "
-										+ (sourceDesc != null ? sourceDesc.getSource() : "N/A") + "-->" + ex.toString(),
-								ex);
+										+ (sourceDesc != null ? sourceDesc.getSource() : "N/A") + "-->" + ex.toString(), ex);
 					}
 				}
 			}
@@ -444,7 +437,6 @@ public class PvaGetPVData implements PvaAction {
 						mergeDedupCountingConsumer.consumeEventStream(eventStream);
 						// resp.flushBuffer();
 						System.out.println("FLUSH PostProcessorWithConsolidatedEventStream 2 ");
-						System.out.println(p);
 					}
 				}
 			}
@@ -455,13 +447,12 @@ public class PvaGetPVData implements PvaAction {
 				if (finalEventStream != null) {
 					mergeDedupCountingConsumer.consumeEventStream(finalEventStream);
 					System.out.println("FLUSH AfterAllStreams");
-					System.out.println(p);
 					// resp.flushBuffer();
 				}
 			}
 
-			System.out.println(result.toString());
-			resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), result);
+			System.out.println(resultStructure.toString());
+			resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), resultStructure);
 			System.out.println("After writing all eventstreams to response");
 			pmansProfiler.mark("After writing all eventstreams to response");
 
@@ -486,6 +477,73 @@ public class PvaGetPVData implements PvaAction {
 			logger.error("Retrieval time for " + pvName + " from " + startTimeStr + " to " + endTimeStr
 					+ pmansProfiler.toString());
 		}
+	}
+
+	/**
+	 * Create the PVStructure appropriately setup based on the type info of the pv
+	 * @param typeInfo
+	 * @return
+	 */
+	private PVStructure createResultPVStructure(PVTypeInfo typeInfo) {
+
+		FieldCreate fieldCreate = FieldFactory.getFieldCreate();
+
+		StructureArray valueField;
+		switch (typeInfo.getDBRType()) {
+		case DBR_SCALAR_FLOAT: {
+			valueField = fieldCreate.createStructureArray(
+					NTScalar.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp().createStructure());
+			break;
+		}
+		case DBR_SCALAR_DOUBLE: {
+			System.out.println("double type");
+			valueField = fieldCreate.createStructureArray(
+					NTScalar.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp().createStructure());
+			break;
+		}
+		case DBR_SCALAR_BYTE: {
+			valueField = fieldCreate.createStructureArray(
+					NTScalar.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp().createStructure());
+			break;
+		}
+		case DBR_SCALAR_SHORT: {
+			valueField = fieldCreate.createStructureArray(
+					NTScalar.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp().createStructure());
+			break;
+		}
+		case DBR_SCALAR_ENUM: {
+			// Not supported
+		}
+		case DBR_SCALAR_INT: {
+			valueField = fieldCreate.createStructureArray(
+					NTScalar.createBuilder().value(ScalarType.pvInt).addAlarm().addTimeStamp().createStructure());
+			break;
+		}
+		case DBR_SCALAR_STRING: {
+			valueField = fieldCreate.createStructureArray(
+					NTScalar.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().createStructure());
+			break;
+		}
+		case DBR_WAVEFORM_FLOAT:
+		case DBR_WAVEFORM_DOUBLE:
+		case DBR_WAVEFORM_ENUM:
+		case DBR_WAVEFORM_SHORT:
+		case DBR_WAVEFORM_BYTE:
+		case DBR_WAVEFORM_INT:
+		case DBR_WAVEFORM_STRING:
+		case DBR_V4_GENERIC_BYTES: {
+
+		}
+		default:
+			throw new UnsupportedOperationException("Unknown DBR type " + typeInfo.getDBRType());
+		}
+
+		System.out.println("creating pvstructure for type " + typeInfo.getDBRType());
+		Structure resultStructure = fieldCreate.createStructure("NTComplexTable",
+				new String[] { "labels", "value" },
+				new Field[] { fieldCreate.createScalarArray(ScalarType.pvString), valueField});
+		
+		return PVDataFactory.getPVDataCreate().createPVStructure(resultStructure);
 	}
 
 	/**
@@ -617,7 +675,7 @@ public class PvaGetPVData implements PvaAction {
 	 * @return
 	 * @throws ServletException
 	 */
-	private PvaMergeDedupConsumer createMergeDedupConsumer(PVStructureArray p, boolean useChunkedEncoding)
+	private PvaMergeDedupConsumer createMergeDedupConsumer(PVStructureArray p, boolean useChunkedEncoding, PVTypeInfo typeInfo)
 			throws ServletException {
 		PvaMergeDedupConsumer mergeDedupCountingConsumer = null;
 		try {
@@ -628,7 +686,7 @@ public class PvaGetPVData implements PvaAction {
 					System.out.println(kv);
 				}
 			}
-			mergeDedupCountingConsumer = new PvaMergeDedupConsumer(mimeresponse, p);
+			mergeDedupCountingConsumer = new PvaMergeDedupConsumer(mimeresponse, p, typeInfo);
 		} catch (Exception ex) {
 			throw new ServletException(ex);
 
