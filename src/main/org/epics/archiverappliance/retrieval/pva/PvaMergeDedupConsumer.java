@@ -18,8 +18,6 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.EventStreamConsumer;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
-import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
-import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.PVStructureArray;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -38,7 +36,6 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	int totalEvents = 0;
 	int skippedEvents = 0;
 	int comparedEvents = 0;
-	PVStructureArray p = null;
 	private Timestamp timestampOfLastEvent;
 	boolean amIDeduping = false;
 	boolean haveIpushedTheFirstEvent = false;
@@ -52,9 +49,8 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	
 	
 	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, PVStructureArray p) {
-		this.p = p;
 		this.mimeresponse = mimeresponse;
-		this.mimeresponse.setOutput(this.p);
+		this.mimeresponse.setOutput(p);
 	}
 	
 	
@@ -110,8 +106,10 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	
 	private void consumeEventStreamAndOutputToMimeResponse(EventStream strm) throws Exception {
 		try {
+			System.out.println("Consume event strm:  ");
 			int eventsInCurrentStream = 0;
 			for(Event e : strm) {
+				System.out.println("Event in stream: " + e.toString());
 				try {
 					eventsInCurrentStream++;
 					

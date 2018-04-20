@@ -48,7 +48,7 @@ public class PvaDataRetrievalService implements RPCServiceAsync {
 			}
 		} else {
 			// Unable to handle the request args
-			new IllegalArgumentException(PVA_DATA_SERVICE + " only supports request args of type NTURI or NTTable ");
+			new IllegalArgumentException(PVA_DATA_SERVICE + " only supports request args of type NTURI");
 		}
 	}
 
