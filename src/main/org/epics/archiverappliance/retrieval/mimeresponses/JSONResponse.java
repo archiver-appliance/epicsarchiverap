@@ -79,6 +79,7 @@ public class JSONResponse implements MimeResponse {
 	
 	public void close() {
 		if(closePV) {
+			out.println(); // Add a new line to make sure we have a sample per line for JSON as well (as best as we can anyways)
 			out.println("] }");
 		}
 		out.println(" ]");
