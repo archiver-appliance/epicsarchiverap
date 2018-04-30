@@ -10,7 +10,6 @@ package org.epics.archiverappliance.retrieval.pva;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -26,10 +25,8 @@ import org.epics.nt.HasAlarm;
 import org.epics.nt.HasTimeStamp;
 import org.epics.nt.NTScalar;
 import org.epics.nt.NTScalarArray;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
 import org.epics.pvdata.factory.FieldFactory;
 import org.epics.pvdata.factory.PVDataFactory;
-import org.epics.pvdata.factory.StatusFactory;
 import org.epics.pvdata.property.Alarm;
 import org.epics.pvdata.property.AlarmSeverity;
 import org.epics.pvdata.property.AlarmStatus;
@@ -59,7 +56,6 @@ import org.epics.pvdata.pv.ScalarType;
 import org.epics.pvdata.pv.Structure;
 import org.epics.pvdata.pv.StructureArray;
 
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Doubles;
 import com.google.common.primitives.Floats;
@@ -82,14 +78,6 @@ public class PvaMimeResponse implements MimeResponse {
 	public void consumeEvent(Event e) throws Exception {
 		
 		DBRTimeEvent evnt = (DBRTimeEvent) e;
-
-//		System.out.println("{ \"secs\": " + evnt.getEpochSeconds() 
-//		+ ", \"val\": " + evnt.getSampleValue().toJSONString()
-//		+ ", \"nanos\": " + Integer.toString(evnt.getEventTimeStamp().getNanos())
-//		+ ", \"severity\":" + Integer.toString(evnt.getSeverity())
-//		+ ", \"status\":" + Integer.toString(evnt.getStatus())
-//		+ " }");
-		System.out.println("The stream type is : " + evnt.getDBRType());
 
 		PVStructureArray val = pvStruct.getStructureArrayField("value");
 		switch (typeInfo.getDBRType()) {
@@ -230,12 +218,7 @@ public class PvaMimeResponse implements MimeResponse {
 
 	@Override
 	public void setOutputStream(OutputStream os) {
-		// TODO ???
-	}
-
-	@Deprecated
-	public void setOutput(RPCResponseCallback resp) {
-//		this.resp = resp;
+		// TODO
 	}
 
 	public void setTypeInfo(PVTypeInfo typeInfo) {
@@ -243,8 +226,6 @@ public class PvaMimeResponse implements MimeResponse {
 	}
 
 	public void close() {
-//		resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), pvStruct);
-		System.out.println("................Closing the PVAMime resource....................");
 	}
 
 	@Override
@@ -252,6 +233,9 @@ public class PvaMimeResponse implements MimeResponse {
 		if (firstPV) {
 			firstPV = false;
 		}
+
+		this.pvStruct = createResultPVStructure(this.typeInfo);
+		// Process the stream description to create the appropriate label/s
 		RemotableEventStreamDesc remoteDesc = (RemotableEventStreamDesc) streamDesc;
 		StringWriter buf = new StringWriter();
 		buf.append("{ \"name\": \"").append(pv).append("\" ");
@@ -267,12 +251,9 @@ public class PvaMimeResponse implements MimeResponse {
 			}
 		}
 		buf.append("}");
-		System.out.println(remoteDesc.getPvName());
-		this.pvStruct = createResultPVStructure(this.typeInfo);
-		NTScalar meta = NTScalar.createBuilder().value(ScalarType.pvString).create();
-		meta.getValue(PVString.class).put(buf.toString());
-		// TODO this could populate the label
-		System.out.println(meta);
+
+		PVStringArray labels = (PVStringArray) pvStruct.getScalarArrayField("labels", ScalarType.pvString);
+		labels.put(labels.getLength(), 1, new String[] {buf.toString()}, 0);
 		closePV = true;
 	}
 
@@ -372,11 +353,9 @@ public class PvaMimeResponse implements MimeResponse {
 			throw new UnsupportedOperationException("Unknown DBR type " + typeInfo.getDBRType());
 		}
 
-		System.out.println("creating pvstructure for type " + typeInfo.getDBRType());
 		Structure resultStructure = fieldCreate.createStructure("NTComplexTable",
 				new String[] { "labels", "value" },
 				new Field[] { fieldCreate.createScalarArray(ScalarType.pvString), valueField});
-		
 		return PVDataFactory.getPVDataCreate().createPVStructure(resultStructure);
 	}
 

@@ -55,7 +55,6 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, RPCResponseCallback resp, PVTypeInfo typeInfo) {
 		this.mimeresponse = mimeresponse;
 		this.resp = resp;
-		this.mimeresponse.setOutput(resp);
 		this.mimeresponse.setTypeInfo(typeInfo);
 	}
 	

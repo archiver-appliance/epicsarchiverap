@@ -352,7 +352,6 @@ public class PvaGetPVData implements PvaAction {
 				try (EventStream eventStream = future.get()) {
 					sourceDesc = null; // Reset it for each loop iteration.
 					sourceDesc = eventStream.getDescription();
-					System.out.println("PROCESSING event stream: " + sourceDesc);
 					if (sourceDesc == null) {
 						logger.warn("Skipping event stream without a desc for pv " + pvName);
 						continue;
@@ -383,7 +382,6 @@ public class PvaGetPVData implements PvaAction {
 						if (!(postProcessor instanceof PostProcessorWithConsolidatedEventStream)) {
 							mergeDedupCountingConsumer.consumeEventStream(eventStream);
 							// resp.flushBuffer();
-							System.out.println("FLUSH PostProcessorWithConsolidatedEventStream 1 ");
 						}
 					} catch (Exception ex) {
 						if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
