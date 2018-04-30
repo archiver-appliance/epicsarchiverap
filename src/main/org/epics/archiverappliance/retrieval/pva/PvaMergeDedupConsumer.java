@@ -19,6 +19,8 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.EventStreamConsumer;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
+import org.epics.pvaccess.server.rpc.RPCResponseCallback;
+import org.epics.pvdata.factory.StatusFactory;
 import org.epics.pvdata.pv.PVStructureArray;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -47,10 +49,13 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	int totalEventsForAllPVs = 0;
 	int skippedEventsForAllPVs = 0;
 	int comparedEventsForAllPVs = 0;
+
+	private final RPCResponseCallback resp;
 	
-	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, PVStructureArray pvStructureArray, PVTypeInfo typeInfo) {
+	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, RPCResponseCallback resp, PVTypeInfo typeInfo) {
 		this.mimeresponse = mimeresponse;
-		this.mimeresponse.setOutput(pvStructureArray);
+		this.resp = resp;
+		this.mimeresponse.setOutput(resp);
 		this.mimeresponse.setTypeInfo(typeInfo);
 	}
 	
@@ -86,6 +91,10 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 		mimeresponse.close();
 	}
 	
+	public void send() {
+		resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), this.mimeresponse.getStruct());
+	}
+
 	public void processingPV(String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		logNumbersAndCollectTotal();
 		this.startTimeStamp = start;
