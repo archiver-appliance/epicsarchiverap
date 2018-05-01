@@ -69,8 +69,11 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 		}
 	}
 	
-	@Override
-	public void close() {
+	/**
+	 * Make sure we push any remaining events that are still pending in the consumer.
+	 * We do this when we close/switch to a new PV.
+	 */
+	private void pushRemainingEvents() {
 		if(!haveIpushedTheFirstEvent && firstEvent != null) {
 			try {
 				logger.debug("Pushing the first event as part of the close as it has not been sent yet.");
@@ -81,6 +84,11 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 				logger.error("Unable to even push the first event thru for pv " + pvName, ex);
 			}
 		}
+	}
+	
+	@Override
+	public void close() {
+		pushRemainingEvents();
 		logNumbersAndCollectTotal();
 		mimeresponse.close();
 		try { 
@@ -97,6 +105,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 	}
 	
 	public void processingPV(String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+		pushRemainingEvents();
 		logNumbersAndCollectTotal();
 		this.startTimeStamp = start;
 		mimeresponse.processingPV(PV, start, end, streamDesc);
