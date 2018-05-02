@@ -8,7 +8,6 @@
 package org.epics.archiverappliance.retrieval.pva;
 
 import java.io.OutputStream;
-import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +16,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -37,7 +37,6 @@ import org.epics.pvdata.property.PVTimeStampFactory;
 import org.epics.pvdata.property.TimeStamp;
 import org.epics.pvdata.property.TimeStampFactory;
 import org.epics.pvdata.pv.Field;
-import org.epics.pvdata.pv.FieldCreate;
 import org.epics.pvdata.pv.PVByte;
 import org.epics.pvdata.pv.PVByteArray;
 import org.epics.pvdata.pv.PVDouble;
@@ -52,9 +51,9 @@ import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStringArray;
 import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.PVStructureArray;
+import org.epics.pvdata.pv.PVUnion;
+import org.epics.pvdata.pv.PVUnionArray;
 import org.epics.pvdata.pv.ScalarType;
-import org.epics.pvdata.pv.Structure;
-import org.epics.pvdata.pv.StructureArray;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Doubles;
@@ -70,17 +69,21 @@ import com.google.common.primitives.Shorts;
 public class PvaMimeResponse implements MimeResponse {
 	boolean firstPV = true;
 	boolean closePV = false;
-	
-	private PVTypeInfo typeInfo;
-	private PVStructure pvStruct;
 
+	// private PVStructure pvStruct;
+	private ArchDBRTypes streamDBRType;
+	private PVStructure resultStruct;
+	private PVStructureArray pvValueStruct;
+
+	@SuppressWarnings("unchecked")
 	@Override
 	public void consumeEvent(Event e) throws Exception {
-		
+
 		DBRTimeEvent evnt = (DBRTimeEvent) e;
 
-		PVStructureArray val = pvStruct.getStructureArrayField("value");
-		switch (typeInfo.getDBRType()) {
+		PVStructureArray val = pvValueStruct;
+
+		switch (streamDBRType) {
 		case DBR_SCALAR_FLOAT: {
 			NTScalar struct = NTScalar.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp().create();
 			struct.getValue(PVFloat.class).put(evnt.getSampleValue().getValue().floatValue());
@@ -133,7 +136,8 @@ public class PvaMimeResponse implements MimeResponse {
 			// Not supported
 		}
 		case DBR_WAVEFORM_FLOAT: {
-			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp().create();
+			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp()
+					.create();
 			List<Float> values = evnt.getSampleValue().getValues();
 			struct.getValue(PVFloatArray.class).put(0, values.size(), Floats.toArray(values), 0);
 			addAlarmInfo(struct, evnt);
@@ -142,7 +146,8 @@ public class PvaMimeResponse implements MimeResponse {
 			break;
 		}
 		case DBR_WAVEFORM_DOUBLE: {
-			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp().create();
+			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp()
+					.create();
 			List<Double> values = evnt.getSampleValue().getValues();
 			struct.getValue(PVDoubleArray.class).put(0, values.size(), Doubles.toArray(values), 0);
 			addAlarmInfo(struct, evnt);
@@ -151,7 +156,8 @@ public class PvaMimeResponse implements MimeResponse {
 			break;
 		}
 		case DBR_WAVEFORM_SHORT: {
-			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp().create();
+			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp()
+					.create();
 			List<Short> values = evnt.getSampleValue().getValues();
 			struct.getValue(PVShortArray.class).put(0, values.size(), Shorts.toArray(values), 0);
 			addAlarmInfo(struct, evnt);
@@ -160,7 +166,8 @@ public class PvaMimeResponse implements MimeResponse {
 			break;
 		}
 		case DBR_WAVEFORM_BYTE: {
-			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp().create();
+			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp()
+					.create();
 			List<Byte> values = evnt.getSampleValue().getValues();
 			struct.getValue(PVByteArray.class).put(0, values.size(), Bytes.toArray(values), 0);
 			addAlarmInfo(struct, evnt);
@@ -169,7 +176,8 @@ public class PvaMimeResponse implements MimeResponse {
 			break;
 		}
 		case DBR_WAVEFORM_INT: {
-			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().create();
+			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp()
+					.create();
 			List<Integer> values = evnt.getSampleValue().getValues();
 			struct.getValue(PVIntArray.class).put(0, values.size(), Ints.toArray(values), 0);
 			addAlarmInfo(struct, evnt);
@@ -178,7 +186,8 @@ public class PvaMimeResponse implements MimeResponse {
 			break;
 		}
 		case DBR_WAVEFORM_STRING: {
-			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().create();
+			NTScalarArray struct = NTScalarArray.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp()
+					.create();
 			List<String> values = evnt.getSampleValue().getValues();
 			struct.getValue(PVStringArray.class).put(0, values.size(), values.toArray(new String[values.size()]), 0);
 			addAlarmInfo(struct, evnt);
@@ -191,7 +200,7 @@ public class PvaMimeResponse implements MimeResponse {
 
 		}
 		default:
-			throw new UnsupportedOperationException("Unknown DBR type " + typeInfo.getDBRType());
+			throw new UnsupportedOperationException("Unknown DBR type " + streamDBRType);
 		}
 	}
 
@@ -222,7 +231,7 @@ public class PvaMimeResponse implements MimeResponse {
 	}
 
 	public void setTypeInfo(PVTypeInfo typeInfo) {
-		this.typeInfo = typeInfo;
+		// this.typeInfo = typeInfo;
 	}
 
 	public void close() {
@@ -233,27 +242,21 @@ public class PvaMimeResponse implements MimeResponse {
 		if (firstPV) {
 			firstPV = false;
 		}
-
-		this.pvStruct = createResultPVStructure(this.typeInfo);
-		// Process the stream description to create the appropriate label/s
 		RemotableEventStreamDesc remoteDesc = (RemotableEventStreamDesc) streamDesc;
-		StringWriter buf = new StringWriter();
-		buf.append("{ \"name\": \"").append(pv).append("\" ");
-		if (streamDesc != null) {
-			HashMap<String, String> headers = remoteDesc.getHeaders();
-			if (!headers.isEmpty()) {
-				for (String fieldName : headers.keySet()) {
-					String fieldValue = headers.get(fieldName);
-					if (fieldValue != null && !fieldValue.isEmpty()) {
-						buf.append(", \"" + fieldName + "\": \"").append(fieldValue).append("\" ");
-					}
-				}
-			}
-		}
-		buf.append("}");
+		this.streamDBRType = remoteDesc.getArchDBRType();
 
-		PVStringArray labels = (PVStringArray) pvStruct.getScalarArrayField("labels", ScalarType.pvString);
-		labels.put(labels.getLength(), 1, new String[] {buf.toString()}, 0);
+		// Process the stream description to create the appropriate label/s
+		PVStringArray labels = (PVStringArray) resultStruct.getScalarArrayField("labels", ScalarType.pvString);
+		labels.put(labels.getLength(), 1, new String[] { pv }, 0);
+
+		this.pvValueStruct = createResultPVStructure(remoteDesc.getArchDBRType());
+
+		PVUnionArray value = resultStruct.getUnionArrayField("value");
+		PVUnion val = PVDataFactory.getPVDataCreate()
+				.createPVUnion(FieldFactory.getFieldCreate().createUnion("any", new String[0], new Field[0]));
+		val.set(pvValueStruct);
+		value.put(value.getLength(), 1, new PVUnion[] { val }, 0);
+
 		closePV = true;
 	}
 
@@ -269,99 +272,86 @@ public class PvaMimeResponse implements MimeResponse {
 		ret.put(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		return ret;
 	}
-	
 
 	/**
 	 * Create the PVStructure appropriately setup based on the type info of the pv
-	 * @param typeInfo
+	 * 
+	 * @param archDBRType
 	 * @return
 	 */
-	private PVStructure createResultPVStructure(PVTypeInfo typeInfo) {
+	private PVStructureArray createResultPVStructure(ArchDBRTypes archDBRType) {
 
-		FieldCreate fieldCreate = FieldFactory.getFieldCreate();
-
-		StructureArray valueField;
-		switch (typeInfo.getDBRType()) {
+		System.out.println("TYPE:   " + archDBRType.toString());
+		
+		switch (archDBRType) {
 		case DBR_SCALAR_FLOAT: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalar.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalar.createBuilder().value(ScalarType.pvFloat).addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_SCALAR_DOUBLE: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalar.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalar.createBuilder().value(ScalarType.pvDouble).addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_SCALAR_BYTE: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalar.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalar.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_SCALAR_SHORT: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalar.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalar.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_SCALAR_ENUM: {
 			// Not supported
 		}
 		case DBR_SCALAR_INT: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalar.createBuilder().value(ScalarType.pvInt).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalar.createBuilder().value(ScalarType.pvInt).addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_SCALAR_STRING: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalar.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalar.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_WAVEFORM_FLOAT: {
-			valueField = fieldCreate.createStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvString)
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvFloat)
 					.addAlarm().addTimeStamp().createStructure());
-			break;
 		}
 		case DBR_WAVEFORM_DOUBLE: {
-			valueField = fieldCreate.createStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvDouble)
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvDouble)
 					.addAlarm().addTimeStamp().createStructure());
-			break;
 		}
 		case DBR_WAVEFORM_SHORT: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalarArray.createBuilder().value(ScalarType.pvShort).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvShort)
+					.addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_WAVEFORM_BYTE: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalarArray.createBuilder().value(ScalarType.pvByte).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvByte)
+					.addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_WAVEFORM_INT: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalarArray.createBuilder().value(ScalarType.pvInt).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvInt)
+					.addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_WAVEFORM_STRING: {
-			valueField = fieldCreate.createStructureArray(
-					NTScalarArray.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().createStructure());
-			break;
+			return PVDataFactory.getPVDataCreate()
+					.createPVStructureArray(NTScalarArray.createBuilder().value(ScalarType.pvString)
+					.addAlarm().addTimeStamp().createStructure());
 		}
 		case DBR_WAVEFORM_ENUM:
 		case DBR_V4_GENERIC_BYTES: {
 
 		}
 		default:
-			throw new UnsupportedOperationException("Unknown DBR type " + typeInfo.getDBRType());
+			throw new UnsupportedOperationException("Unknown DBR type " + archDBRType);
 		}
-
-		Structure resultStructure = fieldCreate.createStructure("NTComplexTable",
-				new String[] { "labels", "value" },
-				new Field[] { fieldCreate.createScalarArray(ScalarType.pvString), valueField});
-		return PVDataFactory.getPVDataCreate().createPVStructure(resultStructure);
 	}
 
-	public PVStructure getStruct() {
-		return this.pvStruct;
+	public void setOutputStruct(PVStructure resultStruct) {
+		this.resultStruct = resultStruct;
 	}
-
 
 }

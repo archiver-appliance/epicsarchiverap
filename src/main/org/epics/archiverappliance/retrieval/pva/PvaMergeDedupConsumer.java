@@ -21,7 +21,7 @@ import org.epics.archiverappliance.retrieval.EventStreamConsumer;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
 import org.epics.pvaccess.server.rpc.RPCResponseCallback;
 import org.epics.pvdata.factory.StatusFactory;
-import org.epics.pvdata.pv.PVStructureArray;
+import org.epics.pvdata.pv.PVStructure;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -51,10 +51,14 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	int comparedEventsForAllPVs = 0;
 
 	private final RPCResponseCallback resp;
+
+	private PVStructure resultStruct;
 	
-	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, RPCResponseCallback resp, PVTypeInfo typeInfo) {
+	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, RPCResponseCallback resp, PVStructure resultStruct, PVTypeInfo typeInfo) {
 		this.mimeresponse = mimeresponse;
 		this.resp = resp;
+		this.resultStruct = resultStruct;
+		this.mimeresponse.setOutputStruct(resultStruct);
 		this.mimeresponse.setTypeInfo(typeInfo);
 	}
 	
@@ -91,7 +95,7 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	}
 	
 	public void send() {
-		resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), this.mimeresponse.getStruct());
+		resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), resultStruct);
 	}
 
 	public void processingPV(String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
