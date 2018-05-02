@@ -1071,7 +1071,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		pmansProfiler.mark("After all closes and flushing all buffers");
 			
 		// Till we determine all the if conditions where we log this, we log sparingly..
-		if(pmansProfiler.totalTimeMS() > 5000) { 
+		if(pmansProfiler.totalTimeMS()/pvNames.size() > 5000) { 
 			logger.error("Retrieval time for " + StringUtils.join(pvNames, ", ") + " from " + startTimeStr + " to " + endTimeStr + ": " + pmansProfiler.toString());
 		}
 		
