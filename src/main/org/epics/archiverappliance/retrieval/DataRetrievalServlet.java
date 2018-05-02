@@ -65,6 +65,7 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.etl.ETLDest;
+import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.retrieval.mimeresponses.FlxXMLResponse;
 import org.epics.archiverappliance.retrieval.mimeresponses.JPlotResponse;
@@ -147,8 +148,24 @@ public class DataRetrievalServlet  extends HttpServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
 		}
 		
-		return;
+		return;		
+	}
+	
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		
+		String[] pathnameSplit = req.getPathInfo().split("/");
+		String requestName = (pathnameSplit[pathnameSplit.length - 1].split("\\."))[0];
+		
+		if (requestName.equals("getDataForPVs")) {
+			logger.info("User requesting data for multiple PVs");
+			doGetMultiPV(req, resp);
+		} else {
+			String msg = "\"" + requestName + "\" is not a valid API method.";
+			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+		}
+		return;
 	}
 	
 	private void doGetSinglePV(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -526,7 +543,12 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		// Gets the list of PVs specified by the `pv` parameter
 		// String arrays might be inefficient for retrieval. In any case, they are sorted, which is essential later on.
-		List<String> pvNames = Arrays.asList(req.getParameterValues("pv"));
+		List<String> pvNames = null;
+		if(req.getMethod().equals("POST")) { 
+			pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+		} else { 
+			pvNames = Arrays.asList(req.getParameterValues("pv"));
+		}
 	
 		// Ensuring that the AA has finished starting up before requests are accepted.
 		if(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE) { 
