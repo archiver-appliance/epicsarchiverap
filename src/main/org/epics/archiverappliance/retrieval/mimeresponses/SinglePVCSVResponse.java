@@ -15,6 +15,7 @@ import java.util.HashMap;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.data.DBRTimeEvent;
 
 /**
  * Implementation of a CSV response for a single PV
@@ -28,7 +29,12 @@ public class SinglePVCSVResponse implements MimeResponse {
 
 	@Override
 	public void consumeEvent(Event e) throws Exception {
-		out.println( e.getEpochSeconds() + "," + e.getSampleValue().toString());
+		out.println( e.getEpochSeconds() 
+				+ "," + e.getSampleValue().toString()
+				+ "," + (((DBRTimeEvent)e).getSeverity())
+				+ "," + (((DBRTimeEvent)e).getStatus())
+				+ "," + (((DBRTimeEvent)e).getEventTimeStamp().getNanos())
+				);
 	}
 
 	@Override
