@@ -15,6 +15,11 @@
         <servlet-name>BPLServlet</servlet-name>
         <servlet-class>org.epics.archiverappliance.retrieval.BPLServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>PvaDataRetrievalServlet</servlet-name>
+        <servlet-class>org.epics.archiverappliance.retrieval.pva.PvaDataRetrievalServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
     <servlet-mapping>
         <servlet-name>StaticContent</servlet-name>
         <url-pattern>/ui/*</url-pattern>
