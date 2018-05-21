@@ -31,11 +31,11 @@
 	<classpathentry kind="lib" path="lib/test/selenium-java-2.53.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-pool2-2.4.2.jar"/>
 	<classpathentry kind="lib" path="lib/jedis-2.7.2.jar"/>
-	<classpathentry kind="lib" path="lib/hazelcast-all-3.7.1.jar"/>
 	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.8.jar"/>
 	<classpathentry kind="lib" path="lib/epics-ntypes-0.3.1.jar" sourcepath="lib/sources/epics-ntypes-0.3.1-sources.jar"/>
 	<classpathentry kind="lib" path="lib/epics-pvaccess-5.1.1.jar" sourcepath="lib/sources/epics-pvaccess-5.1.1-sources.jar"/>
 	<classpathentry kind="lib" path="lib/epics-pvdata-6.1.1.jar" sourcepath="lib/sources/epics-pvdata-6.1.1-sources.jar"/>
 	<classpathentry kind="lib" path="lib/jca-2.4.1.jar" sourcepath="lib/sources/jca-2.4.1-sources.jar"/>
+	<classpathentry kind="lib" path="lib/hazelcast-all-3.10.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
