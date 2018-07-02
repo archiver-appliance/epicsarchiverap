@@ -5,4 +5,6 @@ docs/LICENSE
 docs/api/
 stage/
 .DS_Store
+*.swp
+/mts
 
