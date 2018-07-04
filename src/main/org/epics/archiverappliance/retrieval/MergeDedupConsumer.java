@@ -127,7 +127,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 					}
 					
 					if(!haveIpushedTheFirstEvent) { 
-						if(e.getEventTimeStamp().before(this.startTimeStamp)) {
+						if(e.getEventTimeStamp().before(this.startTimeStamp) || e.getEventTimeStamp().equals(this.startTimeStamp)) {
 							logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 							firstEvent = e.makeClone();
 							continue;
