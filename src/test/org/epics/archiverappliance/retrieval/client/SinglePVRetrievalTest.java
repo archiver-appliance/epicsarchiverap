@@ -47,7 +47,7 @@ public class SinglePVRetrievalTest {
 
 	@Test
 	public void testGetDataForSinglePV() throws Exception {
-		testGetOneDaysDataForYear(TimeUtils.getCurrentYear(), 86401);
+		testGetOneDaysDataForYear(TimeUtils.getCurrentYear(), 86400);
 		testGetOneDaysDataForYear(TimeUtils.getCurrentYear() - 1, 0);
 		testGetOneDaysDataForYear(TimeUtils.getCurrentYear() + 1, 1);
 	}
