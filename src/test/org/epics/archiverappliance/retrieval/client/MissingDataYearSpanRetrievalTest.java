@@ -79,8 +79,11 @@ public class MissingDataYearSpanRetrievalTest {
 			short year = 2011;
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
 			for(int day = 0; day < 30; day++) { 
-				strm.add(new SimulationEvent(sep201101secsIntoYear + day*86400, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
-				generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, sep201101secsIntoYear + day*86400, 0)));
+				// Set the nanos to 111000000 so that we don't always get the sample with the same timestamp
+				// This unit test is supposed to test the fact that we get the last known timestamp for various cases.
+				YearSecondTimestamp yts = new YearSecondTimestamp(year, sep201101secsIntoYear + day*86400, 111000000);
+				strm.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
+				generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 			}
 			try(BasicContext context = new BasicContext()) {
 				pbplugin.appendData(context, pvName, strm);
@@ -94,8 +97,9 @@ public class MissingDataYearSpanRetrievalTest {
 			short year = 2012;
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
 			for(int day = 0; day < 30; day++) { 
-				strm.add(new SimulationEvent(jun201201secsIntoYear + day*86400, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
-				generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, jun201201secsIntoYear + day*86400, 0)));
+				YearSecondTimestamp yts = new YearSecondTimestamp(year, jun201201secsIntoYear + day*86400, 111000000);
+				strm.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
+				generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 			}
 			try(BasicContext context = new BasicContext()) {
 				pbplugin.appendData(context, pvName, strm);
@@ -130,16 +134,16 @@ public class MissingDataYearSpanRetrievalTest {
 	@Test
 	public void testMissingDataYearSpan()  throws Exception  {
 		testRetrieval("2011-06-01T00:00:00.000Z", "2011-07-01T00:00:00.000Z", 0, null, -1, "Before all data");
-		testRetrieval("2011-08-10T00:00:00.000Z", "2011-09-15T10:00:00.000Z", 15, "2011-09-01T00:00:00.000Z",  0,  "Aug/10/2011 - Sep/15/2011");
-		testRetrieval("2011-09-10T00:00:00.000Z", "2011-09-15T10:00:00.000Z", 6,  "2011-09-09T00:00:00.000Z",  8,  "Sep/10/2011 - Sep/15/2011");
-		testRetrieval("2011-09-10T00:00:00.000Z", "2011-10-15T10:00:00.000Z", 22, "2011-09-09T00:00:00.000Z",  8,  "Sep/10/2011 - Oct/15/2011");
-		testRetrieval("2011-10-10T00:00:00.000Z", "2011-10-15T10:00:00.000Z", 1,  "2011-09-30T00:00:00.000Z",  29, "Oct/10/2011 - Oct/15/2011");
-		testRetrieval("2011-10-10T00:00:00.000Z", "2012-01-15T10:00:00.000Z", 1,  "2011-09-30T00:00:00.000Z",  29, "Oct/10/2011 - Jan/15/2012");
-		testRetrieval("2012-01-10T00:00:00.000Z", "2012-01-15T10:00:00.000Z", 1,  "2011-09-30T00:00:00.000Z",  29, "Jan/10/2012 - Jan/15/2012");
-		testRetrieval("2012-01-10T00:00:00.000Z", "2012-06-15T10:00:00.000Z", 16, "2011-09-30T00:00:00.000Z",  29, "Jan/10/2012 - Jun/15/2012");
-		testRetrieval("2012-06-10T00:00:00.000Z", "2012-06-15T10:00:00.000Z", 6,  "2012-06-09T00:00:00.000Z",  38, "Jun/10/2012 - Jun/15/2012");
-		testRetrieval("2012-09-10T00:00:00.000Z", "2012-09-15T10:00:00.000Z", 1,  "2012-06-30T00:00:00.000Z",  59, "Sep/10/2012 - Sep/15/2012");
-		testRetrieval("2013-01-10T00:00:00.000Z", "2013-01-15T10:00:00.000Z", 1,  "2012-06-30T00:00:00.000Z",  59, "Jan/10/2013 - Jan/15/2013");
+		testRetrieval("2011-08-10T00:00:00.000Z", "2011-09-15T10:00:00.000Z", 15, "2011-09-01T00:00:00.111Z",  0,  "Aug/10/2011 - Sep/15/2011");
+		testRetrieval("2011-09-10T00:00:00.000Z", "2011-09-15T10:00:00.000Z", 6,  "2011-09-09T00:00:00.111Z",  8,  "Sep/10/2011 - Sep/15/2011");
+		testRetrieval("2011-09-10T00:00:00.000Z", "2011-10-15T10:00:00.000Z", 22, "2011-09-09T00:00:00.111Z",  8,  "Sep/10/2011 - Oct/15/2011");
+		testRetrieval("2011-10-10T00:00:00.000Z", "2011-10-15T10:00:00.000Z", 1,  "2011-09-30T00:00:00.111Z",  29, "Oct/10/2011 - Oct/15/2011");
+		testRetrieval("2011-10-10T00:00:00.000Z", "2012-01-15T10:00:00.000Z", 1,  "2011-09-30T00:00:00.111Z",  29, "Oct/10/2011 - Jan/15/2012");
+		testRetrieval("2012-01-10T00:00:00.000Z", "2012-01-15T10:00:00.000Z", 1,  "2011-09-30T00:00:00.111Z",  29, "Jan/10/2012 - Jan/15/2012");
+		testRetrieval("2012-01-10T00:00:00.000Z", "2012-06-15T10:00:00.000Z", 16, "2011-09-30T00:00:00.111Z",  29, "Jan/10/2012 - Jun/15/2012");
+		testRetrieval("2012-06-10T00:00:00.000Z", "2012-06-15T10:00:00.000Z", 6,  "2012-06-09T00:00:00.111Z",  38, "Jun/10/2012 - Jun/15/2012");
+		testRetrieval("2012-09-10T00:00:00.000Z", "2012-09-15T10:00:00.000Z", 1,  "2012-06-30T00:00:00.111Z",  59, "Sep/10/2012 - Sep/15/2012");
+		testRetrieval("2013-01-10T00:00:00.000Z", "2013-01-15T10:00:00.000Z", 1,  "2012-06-30T00:00:00.111Z",  59, "Jan/10/2013 - Jan/15/2013");
 		
 //		logger.info("Try now...");
 //		try { Thread.sleep(300*1000); } catch(Throwable t) {} 
