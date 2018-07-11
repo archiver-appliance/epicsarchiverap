@@ -1,9 +1,6 @@
 package org.epics.archiverappliance.mgmt.pva;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.*;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -21,7 +18,6 @@ import org.epics.nt.NTTable;
 import org.epics.pvaccess.client.rpc.RPCClient;
 import org.epics.pvaccess.client.rpc.RPCClientFactory;
 import org.epics.pvdata.pv.PVStringArray;
-import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.ScalarType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -93,7 +89,7 @@ public class PvaGetPVStatusTest {
 			NTTable archivePvStatusReqTable = NTTable.createBuilder().addDescriptor().addColumn("pv", ScalarType.pvString).create();
 			archivePvStatusReqTable.getDescriptor().put(PvaArchivePVAction.NAME);
 			archivePvStatusReqTable.getColumn(PVStringArray.class, "pv").put(0, pvNamesEven.size(), pvNamesEven.toArray(new String[pvNamesEven.size()]), 0);
-			PVStructure result = client.request(archivePvStatusReqTable.getPVStructure(), 30);
+			client.request(archivePvStatusReqTable.getPVStructure(), 30);
 			
 			Thread.sleep(2*60*1000);
 			
@@ -101,7 +97,7 @@ public class PvaGetPVStatusTest {
 			archivePvStatusReqTable = NTTable.createBuilder().addDescriptor().addColumn("pv", ScalarType.pvString).create();
 			archivePvStatusReqTable.getDescriptor().put(PvaGetPVStatus.NAME);
 			archivePvStatusReqTable.getColumn(PVStringArray.class, "pv").put(0, pvNamesAll.size(), pvNamesAll.toArray(new String[pvNamesAll.size()]), 0);
-			result = client.request(archivePvStatusReqTable.getPVStructure(), 30);
+			client.request(archivePvStatusReqTable.getPVStructure(), 30);
 
 		} catch (Exception e) {
 			e.printStackTrace();

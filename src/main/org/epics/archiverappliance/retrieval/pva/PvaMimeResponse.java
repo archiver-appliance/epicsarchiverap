@@ -17,7 +17,6 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
@@ -204,7 +203,7 @@ public class PvaMimeResponse implements MimeResponse {
 		}
 		case DBR_WAVEFORM_ENUM:
 		case DBR_V4_GENERIC_BYTES: {
-
+			throw new UnsupportedOperationException("Unsupported DBR type " + streamDBRType);
 		}
 		default:
 			throw new UnsupportedOperationException("Unknown DBR type " + streamDBRType);
@@ -329,7 +328,7 @@ public class PvaMimeResponse implements MimeResponse {
 		}
 		case DBR_WAVEFORM_ENUM:
 		case DBR_V4_GENERIC_BYTES: {
-
+			throw new UnsupportedOperationException("Unsupported DBR type " + streamDBRType);
 		}
 		default:
 			throw new UnsupportedOperationException("Unknown DBR type " + archDBRType);

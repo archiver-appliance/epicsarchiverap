@@ -32,7 +32,6 @@ import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
-import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.STARTUP_SEQUENCE;
 import org.epics.archiverappliance.config.PVNames;
@@ -55,8 +54,6 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithCon
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadExecutorService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
-import org.epics.nt.NTScalar;
-import org.epics.nt.NTScalarArray;
 import org.epics.nt.NTURI;
 import org.epics.pvaccess.server.rpc.RPCResponseCallback;
 import org.epics.pvdata.factory.FieldFactory;
@@ -66,11 +63,9 @@ import org.epics.pvdata.pv.Field;
 import org.epics.pvdata.pv.FieldCreate;
 import org.epics.pvdata.pv.PVString;
 import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.PVStructureArray;
 import org.epics.pvdata.pv.ScalarType;
-import org.epics.pvdata.pv.Structure;
-import org.epics.pvdata.pv.StructureArray;
 import org.epics.pvdata.pv.Status.StatusType;
+import org.epics.pvdata.pv.Structure;
 import org.json.simple.JSONObject;
 
 public class PvaGetPVData implements PvaAction {
