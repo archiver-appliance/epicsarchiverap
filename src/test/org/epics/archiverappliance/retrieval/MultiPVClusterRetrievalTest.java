@@ -136,15 +136,15 @@ public class MultiPVClusterRetrievalTest {
 		
 		Timestamp start = TimeUtils.convertFromISO8601String(startString);
 		Timestamp end = TimeUtils.convertFromISO8601String(endString);
+		Timestamp pluginstart = TimeUtils.convertFromEpochMillis(start.getTime() + 1000);
 		
 		Map<String, List<JSONObject>> pvToData = retrieveJsonResults(startString, endString);
 		
-		logger.info("Received response from server; now retrieving data using PBStoragePlugin");
+		logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + TimeUtils.convertToISO8601String(start) + " End: " + TimeUtils.convertToISO8601String(end));
 		
 		try (BasicContext context = new BasicContext(); 
-				EventStream pv1ResultsStream = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, start, end));
-				EventStream pv2ResultsStream = new CurrentThreadWorkerEventStream(pvName2, pbplugin.getDataForPV(context, pvName2, start, end))) {
-			
+				EventStream pv1ResultsStream = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, pluginstart, end));
+				EventStream pv2ResultsStream = new CurrentThreadWorkerEventStream(pvName2, pbplugin.getDataForPV(context, pvName2, pluginstart, end))) {
 			compareDataAndTimestamps(pvName, pvToData.get(pvName), pv1ResultsStream);
 			compareDataAndTimestamps(pvName2, pvToData.get(pvName2), pv2ResultsStream);
 		}
@@ -213,6 +213,7 @@ public class MultiPVClusterRetrievalTest {
 	}
 
 	private void compareDataAndTimestamps(String pvName, List<JSONObject> pvJsonData, EventStream pv1ResultsStream) throws NoSuchElementException {
+		logger.info("Comparing data for pv " + pvName);
 		int counter = 0;
 		try {
 			for (Event pluginEvent : pv1ResultsStream) {
@@ -232,8 +233,8 @@ public class MultiPVClusterRetrievalTest {
 				String pluginNanosPart = Integer.toString(pluginEvent.getEventTimeStamp().getNanos());
 				String pluginTimestamp = pluginSecondsPart + ("000000000" + pluginNanosPart).substring(pluginNanosPart.length());
 				
-				assertTrue("JSON value, " + jsonValue + ", and plugin event value, " + pluginValue + ", are unequal.", jsonValue == pluginValue);
 				assertTrue("JSON timestamp, " + jsonTimestamp + ", and plugin event timestamp, " + pluginTimestamp + ", are unequal.", jsonTimestamp.equals(pluginTimestamp));
+				assertTrue("JSON value, " + jsonValue + ", and plugin event value, " + pluginValue + ", are unequal.", jsonValue == pluginValue);
 			}
 		} catch (IndexOutOfBoundsException e) {
 			throw new IndexOutOfBoundsException("The data obtained from JSON and the plugin class for PV " + pvName + " are unequal in length.");
