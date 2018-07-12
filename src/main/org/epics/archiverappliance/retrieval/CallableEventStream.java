@@ -36,7 +36,7 @@ public class CallableEventStream implements Callable<EventStream> {
 	
 	public static List<Callable<EventStream>> makeOneStreamCallableList(EventStream st, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
 		List<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
-		if(wrapWithPostProcessor) {
+		if(wrapWithPostProcessor && postProcessor != null) {
 			ret.add(postProcessor.wrap(new CallableEventStream(st)));
 		} else { 
 			ret.add(new CallableEventStream(st));

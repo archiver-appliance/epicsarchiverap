@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -332,7 +333,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		if(typeInfo == null && RetrievalState.includeExternalServers(req)) {
 			logger.debug("Checking to see if pv " + pvName + " is served by a external Archiver Server");
-			typeInfo = checkIfPVisServedByExternalServer(pvName, start, req, resp, useChunkedEncoding);
+			typeInfo = checkIfPVisServedByExternalServer(pvName, start, end, req, resp, useChunkedEncoding);
 		}
 		
 		
@@ -739,17 +740,11 @@ public class DataRetrievalServlet  extends HttpServlet {
 		for (int i = 0; i < pvNames.size(); i++)
 			if(typeInfos.get(i) == null && RetrievalState.includeExternalServers(req)) {
 			logger.debug("Checking to see if pv " + pvNames.get(i) + " is served by a external Archiver Server");
-			typeInfos.set(i, checkIfPVisServedByExternalServer(pvNames.get(i), start, req, resp, useChunkedEncoding));
+			typeInfos.set(i, checkIfPVisServedByExternalServer(pvNames.get(i), start, end, req, resp, useChunkedEncoding));
 		}
 		
 		for (int i = 0; i < pvNames.size(); i++) {
 			if(typeInfos.get(i) == null) {
-				// TODO Only needed if we're forwarding the request to another server.
-				if(resp.isCommitted()) { 
-					logger.debug("Proxied the data thru an external server for PV " + pvNames.get(i));
-					return;
-				}
-				
 				if(retiredPVTemplate != null) {
 					PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
 					if(templateTypeInfo != null) { 
@@ -1208,7 +1203,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 	 * @return
 	 * @throws IOException
 	 */
-	private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Timestamp start, HttpServletRequest req, HttpServletResponse resp, boolean useChunkedEncoding) throws IOException {
+	private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Timestamp start, Timestamp end, HttpServletRequest req, HttpServletResponse resp, boolean useChunkedEncoding) throws IOException {
 		PVTypeInfo typeInfo = null;
 		// See if external EPICS archiver appliances have this PV.
 		Map<String, String> externalServers = configService.getExternalArchiverDataServers();
@@ -1223,7 +1218,41 @@ public class DataRetrievalServlet  extends HttpServlet {
 						Map<String, String> areWeArchivingPV = (Map<String, String>) areWeArchivingPVObj;
 						if(areWeArchivingPV.containsKey("status") && Boolean.parseBoolean(areWeArchivingPV.get("status"))) {
 							logger.info("Proxying data retrieval for pv " + pvName + " to " + serverUrl);
-							proxyRetrievalRequest(req, resp, pvName, useChunkedEncoding, serverUrl  + "/data" );
+							try(BasicContext context = new BasicContext()) {
+								StoragePlugin hplg = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + serverUrl + "/data/getData.raw&name=ext", configService);
+								logger.debug(hplg.getDescription());
+								List<Callable<EventStream>> callables = hplg.getDataForPV(context, pvName, TimeUtils.minusHours(end, 1), end, null);
+								if(callables == null || callables.isEmpty()) {
+									logger.info("No data from remote server " + serverUrl + " for pv " + pvName);
+								} else {
+									for(Callable<EventStream> callable : callables){
+										try(EventStream strm = callable.call()) {
+											if(strm != null) {
+												Iterator<Event> it = strm.iterator();
+												if(it.hasNext()) {
+													Event e = it.next();
+													ArchDBRTypes dbrType = strm.getDescription().getArchDBRType();
+													typeInfo = new PVTypeInfo(pvName, dbrType, !dbrType.isWaveForm(), e.getSampleValue().getElementCount());
+													typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+													// Somehow tell the code downstream that this is a fake typeInfo.
+													typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
+													typeInfo.setDataStores(new String[] {"pbraw://localhost?rawURL=" + serverUrl + "/data/getData.raw"} );
+													logger.debug("Done creating a temporary typeinfo for pv " + pvName);
+													return typeInfo;
+												}
+											} else {
+												logger.info("Empty stream from remote server" + serverUrl + " for pv " + pvName);
+											}
+										} catch(Exception ex) {
+											logger.error("Exception trying to determine typeinfo for pv " + pvName + " from external server " + serverUrl, ex);
+											typeInfo = null;
+										}
+									}
+								}
+							} catch(Exception ex) {
+								logger.error("Exception trying to determine typeinfo for pv " + pvName + " from external server " + serverUrl, ex);
+								typeInfo = null;
+							}
 						}
 						return null;
 					}

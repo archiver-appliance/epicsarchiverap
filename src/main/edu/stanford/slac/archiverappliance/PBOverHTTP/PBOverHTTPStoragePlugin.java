@@ -195,7 +195,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 	
 	@Override
 	public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
-		throw new UnsupportedOperationException();
+		return null;
 	}
 
 
