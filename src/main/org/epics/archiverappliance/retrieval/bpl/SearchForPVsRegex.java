@@ -21,13 +21,12 @@ public class SearchForPVsRegex implements BPLAction {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
+		
 		logger.debug("Regex for searching for pvnames is " + nameToMatch);
-
-		String originatingAppliance = req.getParameter("originatingAppliance");
 		
 		resp.setContentType("text/plain");
 		try(PrintWriter out = resp.getWriter()) {
-			List<String> matchingPVNames = (List<String>) GetMatchingPVs.getMatchingPVsInCluster(configService, -1, nameToMatch, originatingAppliance);
+			List<String> matchingPVNames = (List<String>) GetMatchingPVs.getMatchingPVsInCluster(configService, -1, nameToMatch);
 			for(String pvName : matchingPVNames) {
 				out.println(pvName);
 			}

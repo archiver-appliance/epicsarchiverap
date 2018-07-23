@@ -65,10 +65,8 @@ public class GetMatchingPVs implements BPLAction {
 			return;
 		}
 		
-		String originatingAppliance = req.getParameter("originatingAppliance");
-		
 		try (PrintWriter out = resp.getWriter()) {
-			List<String> matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch, originatingAppliance);
+			List<String> matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch);
 			if(limit > 0) { 
 				Collections.sort(matchingNames);
 				if(limit > 0 && matchingNames.size() >= limit) { 
@@ -88,24 +86,13 @@ public class GetMatchingPVs implements BPLAction {
 	 * @param configService ConfigService
 	 * @param limit The numbers of PV's you want to limit the response to; 
 	 * @param nameToMatch A regex specifying the PV name pattern; globs should be converted to regex's 
-	 * @param originatingAppliance The appliance identity of the originating appliance; this is used to break circular proxies during searches.  
 	 * @return mathcing PVs in the cluster
 	 * @throws IOException  &emsp; 
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<String> getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch, String originatingAppliance) throws IOException {
-		List<JSONObject> applianceInfos = getAppliancesInCluster(configService);
-		if(originatingAppliance != null) {
-			for(JSONObject applianceInfo : applianceInfos) {
-				if(applianceInfo.get("identity").equals(originatingAppliance)) {
-					logger.debug("Breaking circular search request. Skipping request originating from one of the appliances in this cluster " + originatingAppliance);
-					return new LinkedList<String>();
-				}
-			}
-		}
-		
+	public static List<String> getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch) throws IOException {
 		try { 
-			LinkedList<String> mgmtURLs = getMgmtURLsInCluster(applianceInfos);
+			LinkedList<String> mgmtURLs = getMgmtURLsInCluster(configService);
 			
 			List<String> pvNamesURLs = new LinkedList<String>();
 			for(String mgmtURL : mgmtURLs) { 
@@ -122,7 +109,7 @@ public class GetMatchingPVs implements BPLAction {
 					String index = externalServers.get(serverUrl);
 					if(index.equals("pbraw")) { 
 						logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " for PV's matching " + nameToMatch);
-						pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?regex=" + URLEncoder.encode(nameToMatch, "UTF-8") + "&limit=" + Integer.toString(limit) + "&originatingAppliance=" + ((originatingAppliance == null) ? configService.getMyApplianceInfo().getIdentity() : originatingAppliance));
+						pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?regex=" + URLEncoder.encode(nameToMatch, "UTF-8") + "&limit=" + Integer.toString(limit));
 					}
 				}
 			}
@@ -133,22 +120,12 @@ public class GetMatchingPVs implements BPLAction {
 			throw new IOException(ex);
 		}
 	}
-
-	@SuppressWarnings("unchecked")
-	private static List<JSONObject> getAppliancesInCluster(ConfigService configService) {
-		try { 
-			JSONArray appliancesInCluster = GetUrlContent.getURLContentAsJSONArray(configService.getMyApplianceInfo().getMgmtURL() + "/getAppliancesInCluster");
-			return (List<JSONObject>) appliancesInCluster;
-		} catch(Throwable t) { 
-			logger.error("Exception determining the appliances in the cluster", t);
-			return null;
-		}
-	}
-
 	
-	private static LinkedList<String> getMgmtURLsInCluster(List<JSONObject> appliancesInCluster) {
+	
+	private static LinkedList<String> getMgmtURLsInCluster(ConfigService configService) {
 		LinkedList<String> mgmtURLs = new LinkedList<String>();
 		try { 
+			JSONArray appliancesInCluster = GetUrlContent.getURLContentAsJSONArray(configService.getMyApplianceInfo().getMgmtURL() + "/getAppliancesInCluster");
 			for(Object object : appliancesInCluster) { 
 				mgmtURLs.add((String)((JSONObject)object).get("mgmtURL"));
 			}
