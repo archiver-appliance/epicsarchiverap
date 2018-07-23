@@ -66,7 +66,7 @@ public class GetMatchingPVs implements BPLAction {
 		}
 		
 		try (PrintWriter out = resp.getWriter()) {
-			List<String> matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch);
+			List<String> matchingNames = getMatchingPVsInCluster(configService, limit, nameToMatch, includeExternalServers(req));
 			if(limit > 0) { 
 				Collections.sort(matchingNames);
 				if(limit > 0 && matchingNames.size() >= limit) { 
@@ -86,11 +86,12 @@ public class GetMatchingPVs implements BPLAction {
 	 * @param configService ConfigService
 	 * @param limit The numbers of PV's you want to limit the response to; 
 	 * @param nameToMatch A regex specifying the PV name pattern; globs should be converted to regex's 
+	 * @param includeExternalServers - Do you want to include external servers 
 	 * @return mathcing PVs in the cluster
 	 * @throws IOException  &emsp; 
 	 */
 	@SuppressWarnings("unchecked")
-	public static List<String> getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch) throws IOException {
+	public static List<String> getMatchingPVsInCluster(ConfigService configService, int limit, String nameToMatch, boolean includeExternalServers) throws IOException {
 		try { 
 			LinkedList<String> mgmtURLs = getMgmtURLsInCluster(configService);
 			
@@ -103,16 +104,20 @@ public class GetMatchingPVs implements BPLAction {
 				logger.debug("Getting matching PV names using " + pvNamesURL);
 			}
 			
-			Map<String, String> externalServers = configService.getExternalArchiverDataServers();
-			if(externalServers != null) { 
-				for(String serverUrl : externalServers.keySet()) { 
-					String index = externalServers.get(serverUrl);
-					if(index.equals("pbraw")) { 
-						logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " for PV's matching " + nameToMatch);
-						pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?regex=" + URLEncoder.encode(nameToMatch, "UTF-8") + "&limit=" + Integer.toString(limit));
+			if(includeExternalServers) {
+				Map<String, String> externalServers = configService.getExternalArchiverDataServers();
+				if(externalServers != null) { 
+					for(String serverUrl : externalServers.keySet()) { 
+						String index = externalServers.get(serverUrl);
+						if(index.equals("pbraw")) { 
+							logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " for PV's matching " + nameToMatch);
+							pvNamesURLs.add(serverUrl + "/bpl/getMatchingPVs?skipExternalServers=true&regex=" + URLEncoder.encode(nameToMatch, "UTF-8") + "&limit=" + Integer.toString(limit));
+						}
 					}
 				}
-			}
+			} else {
+				logger.debug("Skipping external servers to prevent circular calls for matching PVs");
+			}			
 
 			JSONArray matchingNames = GetUrlContent.combineJSONArrays(pvNamesURLs);
 			return (List<String>) matchingNames;
@@ -135,5 +140,27 @@ public class GetMatchingPVs implements BPLAction {
 			logger.error("Exception determining the appliances in the cluster", t);
 			return null;
 		}
+	}
+	
+	/**
+	 * To prevent infinite loops and such, we can specify that we do not proxy to external servers for this data retrieval request.
+	 * @param req HttpServletRequest
+	 * @return boolean True or False
+	 */
+	public static boolean includeExternalServers(HttpServletRequest req) {
+		String skipExternalServersStr = req.getParameter("skipExternalServers");
+		if(skipExternalServersStr != null) { 
+			try { 
+				boolean skipExternalServers = Boolean.parseBoolean(skipExternalServersStr);
+				if(skipExternalServers) {
+					// We want to skip external servers; so we tell the caller not to include external servers.
+					return false;
+				}
+			} catch(Exception ex) { 
+				logger.error("Exception parsing external servers inclusion str" + skipExternalServersStr, ex);
+			}
+		}
+		// By default, we want to include external servers.
+		return true;
 	}
 }
