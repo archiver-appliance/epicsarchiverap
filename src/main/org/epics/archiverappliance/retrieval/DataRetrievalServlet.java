@@ -424,8 +424,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, req, postProcessor)
 				) {
 			HashMap<String, String> engineMetadata = null;
-			if(fetchLatestMetadata) { 
-				// Make a call to the engine to fetch the latest metadata.
+			if(fetchLatestMetadata  && typeInfo.getSamplingMethod() != SamplingMethod.DONT_ARCHIVE) { 
+				// Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and the like by checking the sampling method.
 				engineMetadata = fetchLatestMedataFromEngine(pvName, applianceForPV);
 			}
 			
@@ -903,8 +903,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 			List<BasicContext> retrievalContexts = new ArrayList<BasicContext>(pvNames.size());
 			List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvNames.size());
 			for (int i = 0; i < pvNames.size(); i++) {
-				if(fetchLatestMetadata) {
-					// Make a call to the engine to fetch the latest metadata.
+				if(fetchLatestMetadata && typeInfos.get(i).getSamplingMethod() != SamplingMethod.DONT_ARCHIVE) {
+					// Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and the like by checking the sampling method.
 					engineMetadatas.add(fetchLatestMedataFromEngine(pvNames.get(i), applianceForPVs.get(i)));
 				}
 				retrievalContexts.add(new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i)));
