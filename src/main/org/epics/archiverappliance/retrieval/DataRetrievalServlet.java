@@ -1254,7 +1254,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 								typeInfo = null;
 							}
 						}
-						return null;
 					}
 				}
 			}
