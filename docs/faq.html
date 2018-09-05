@@ -113,6 +113,27 @@ For example, in this case, there are two <code>01:00</code> blocks on the x-axis
 </li>
 
 
+<li>
+<div>How are EPICS aliases supported?</div>
+<div>
+<p>
+When adding a PV with an alias to the archiver, the archiver uses the <code>NAME/NAME$</code> fields of the PV to determine the <i>real</i> name.
+The PV is then archived under the <i>real</i> name and an entry is added to the <code>PVAliases</code>code> table with the alias name. 
+Data retrieval and management are then supported under both names. 
+</p>
+<p>
+For aliased PV's, the PVDetails of the PV should an a line indicating that this PV is an alias for the <i>real</i> PV.
+</p>
+<p>
+Also, in the mgmt webapp's arch.log, there should be an entry indicating this like so 
+<code>
+Aborting archive request for pv ABC:DEF:ALIAS Reason: Aborting this pv ABC:DEF:ALIAS (which is an alias) and using the real name ABC:DEF:REAL instead.
+</code>
+</p>
+
+</div>
+</li>
+
 
 
 </ol>
