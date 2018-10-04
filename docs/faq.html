@@ -88,7 +88,7 @@ The capacity is computed using something like so (see <code>ArchiveEngine.java:a
 <pre>
 <code>int buffer_capacity = ((int) Math.round(Math.max((write_period/pvSamplingPeriod)*sampleBufferCapacityAdjustment, 1.0))) + 1;</code>
 </pre> 
-For example, if the <code>write_period</code> is 10 seconds, and the <code>pvSamplingPeriod</code> is 1 second, we would allocate <code>10/10 + 1 = 11</code> samples for the default <code>sampleBufferCapacityAdjustment</code>.
+For example, if the <code>write_period</code> is 10 seconds, and the <code>pvSamplingPeriod</code> is 1 second, we would allocate <code>10/1 + 1 = 11</code> samples for the default <code>sampleBufferCapacityAdjustment</code>.
 Thus, in the case where the PV is changing at a rate greater than 1Hz, you should expect 11 samples, a gap where we run out of space and throw away samples, then 11 samples when we switch buffers and so on. 
 </li>
 <li>
