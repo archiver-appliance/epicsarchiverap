@@ -29,6 +29,7 @@ import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServerArchives;
 import org.epics.archiverappliance.mgmt.bpl.AggregatedApplianceInfo;
 import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsAction;
+import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsForThisApplianceAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsNotInListAction;
 import org.epics.archiverappliance.mgmt.bpl.ChangeArchivalParamsAction;
 import org.epics.archiverappliance.mgmt.bpl.ChangeTypeForPV;
@@ -218,7 +219,7 @@ public class BPLServlet extends HttpServlet {
 		addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
 		addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
 		addPostAction("/archivedPVs", ArchivedPVsAction.class);
-		addPostAction("/archivedPVsForThisAppliance", ArchivedPVsAction.class);
+		addPostAction("/archivedPVsForThisAppliance", ArchivedPVsForThisApplianceAction.class);
 		addPostAction("/archivedPVsNotInList", ArchivedPVsNotInListAction.class);
 	}
 	
