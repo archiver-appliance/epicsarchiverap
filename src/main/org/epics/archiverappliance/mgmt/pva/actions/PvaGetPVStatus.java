@@ -144,7 +144,7 @@ public class PvaGetPVStatus implements PvaAction {
 			JSONArray engineStatuses = null;
 			boolean instanceDown = false;
 			try { 
-				engineStatuses = GetUrlContent.postStringListAndGetContentAsJSONArray(engineURL + "/status", "pv", pvNamesToAskEngine);
+				engineStatuses = GetUrlContent.postStringListAndGetJSON(engineURL + "/status", "pv", pvNamesToAskEngine);
 			} catch(IOException ex) { 
 				instanceDown = true;
 				logger.warn("Exception getting status from engine " + engineURL, ex);

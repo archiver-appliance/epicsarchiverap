@@ -92,7 +92,7 @@ public class BulkPauseResumeUtils {
 			if(askingToPausePV) { 
 				String ETLPauseURL = applianceInfo.getEtlURL() + bplUrl; 
 				logger.info("Bulk pause/resume ETL using URL " + ETLPauseURL + " for " + pvsByAppliance.get(appliance).size() + " pvs");
-				JSONArray etlResponse = GetUrlContent.postStringListAndGetContentAsJSONArray(ETLPauseURL, "pv", pvsByAppliance.get(appliance));
+				JSONArray etlResponse = GetUrlContent.postStringListAndGetJSON(ETLPauseURL, "pv", pvsByAppliance.get(appliance));
 				for(Object statusObj : etlResponse) { 
 					@SuppressWarnings("unchecked")
 					HashMap<String, String> response = (HashMap<String, String>) statusObj;
@@ -112,7 +112,7 @@ public class BulkPauseResumeUtils {
 
 			String enginePauseURL = applianceInfo.getEngineURL() + bplUrl;
 			logger.info("Bulk pause/resume engine using URL " + enginePauseURL  + " for " + pvsByAppliance.get(appliance).size() + " pvs");
-			JSONArray engineResponse = GetUrlContent.postStringListAndGetContentAsJSONArray(enginePauseURL, "pv", pvsByAppliance.get(appliance));			
+			JSONArray engineResponse = GetUrlContent.postStringListAndGetJSON(enginePauseURL, "pv", pvsByAppliance.get(appliance));			
 			for(Object statusObj : engineResponse) { 
 				@SuppressWarnings("unchecked")
 				HashMap<String, String> response = (HashMap<String, String>) statusObj;

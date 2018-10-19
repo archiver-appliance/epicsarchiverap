@@ -328,7 +328,7 @@ public class GetUrlContent {
 	 * @return JSONArray  &emsp; 
 	 * @throws IOException  &emsp; 
 	 */
-	public static JSONArray postStringListAndGetContentAsJSONArray(String url, String paramName, LinkedList<String> params) throws IOException {
+	public static <T> T postStringListAndGetJSON(String url, String paramName, LinkedList<String> params) throws IOException {
 		StringWriter buf = new StringWriter();
 		buf.append(paramName);
 		buf.append("=");
@@ -353,7 +353,8 @@ public class GetUrlContent {
 			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
 			// ArchiverValuesHandler takes over the burden of closing the input stream.
 			try(InputStream is = entity.getContent()) {
-				JSONArray retval = (JSONArray) JSONValue.parse(new InputStreamReader(is));
+				@SuppressWarnings("unchecked")
+				T retval = (T) JSONValue.parse(new InputStreamReader(is));
 				return retval;
 			}
 		} else {

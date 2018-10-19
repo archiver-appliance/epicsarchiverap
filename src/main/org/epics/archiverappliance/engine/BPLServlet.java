@@ -26,6 +26,7 @@ import org.epics.archiverappliance.engine.bpl.ArchiveChannelObjectDetailsAction;
 import org.epics.archiverappliance.engine.bpl.ChangeArchivalParamsAction;
 import org.epics.archiverappliance.engine.bpl.CleanUpAnyImmortalChannels;
 import org.epics.archiverappliance.engine.bpl.DeletePV;
+import org.epics.archiverappliance.engine.bpl.GetDataAtTimeEngine;
 import org.epics.archiverappliance.engine.bpl.GetEngineDataAction;
 import org.epics.archiverappliance.engine.bpl.GetLatestMetaDataAction;
 import org.epics.archiverappliance.engine.bpl.PVStatusAction;
@@ -104,6 +105,7 @@ public class BPLServlet extends HttpServlet {
 		postActions.put("/status", PVStatusAction.class);
 		postActions.put("/pauseArchivingPV", PauseArchivingPV.class);
 		postActions.put("/resumeArchivingPV", ResumeArchivingPV.class);
+		postActions.put("/getDataAtTime", GetDataAtTimeEngine.class);
 	}
 	
 	@Override

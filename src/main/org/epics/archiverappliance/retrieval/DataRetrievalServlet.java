@@ -161,6 +161,20 @@ public class DataRetrievalServlet  extends HttpServlet {
 		if (requestName.equals("getDataForPVs")) {
 			logger.info("User requesting data for multiple PVs");
 			doGetMultiPV(req, resp);
+		} else if (requestName.equals("getDataAtTime")) {
+			try {
+				GetDataAtTime.getDataAtTime(req, resp, configService);
+				return;
+			} catch(ExecutionException | InterruptedException ex) {
+				throw new IOException(ex);
+			}
+		} else if (requestName.equals("getDataAtTimeForAppliance")) {
+			try {
+				GetDataAtTime.getDataAtTimeForAppliance(req, resp, configService);
+				return;
+			} catch(ExecutionException | InterruptedException ex) {
+				throw new IOException(ex);
+			}
 		} else {
 			String msg = "\"" + requestName + "\" is not a valid API method.";
 			resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
