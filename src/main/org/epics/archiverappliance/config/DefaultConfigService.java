@@ -936,13 +936,15 @@ public class DefaultConfigService implements ConfigService {
 		ArrayList<ApplianceInfo> sortedAppliances = new ArrayList<ApplianceInfo>();
 		for(ApplianceInfo info : appliances.values()) {
 			if(this.getWarFile() == WAR_FILE.MGMT) {
-				if(!appliancesInCluster.contains(info.getIdentity())) {
+				if(appliancesInCluster.contains(info.getIdentity())) {
 					sortedAppliances.add(info);
 				} else {
 					logger.debug("Skipping appliance that is in the persistence but not in the cluster" + info.getIdentity());
 				}
 			} else {
-				sortedAppliances.add(info); // For non-mgmt apps, we add all the appliances into this call. 
+				// For non-mgmt apps, we add all the appliances into this call.
+				// This is because, the non-mgmt webapps are Hz clients; they do not receive the instance change events. So, appliancesInCluster is always empty.
+				sortedAppliances.add(info); 
 			}
 		}
 		
