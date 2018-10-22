@@ -935,14 +935,10 @@ public class DefaultConfigService implements ConfigService {
 	public Collection<ApplianceInfo> getAppliancesInCluster() {
 		ArrayList<ApplianceInfo> sortedAppliances = new ArrayList<ApplianceInfo>();
 		for(ApplianceInfo info : appliances.values()) {
-			if(this.getWarFile() == WAR_FILE.MGMT) {
-				if(!appliancesInCluster.contains(info.getIdentity())) {
-					sortedAppliances.add(info);
-				} else {
-					logger.debug("Skipping appliance that is in the persistence but not in the cluster" + info.getIdentity());
-				}
+			if(appliancesInCluster.contains(info.getIdentity())) {
+				sortedAppliances.add(info);
 			} else {
-				sortedAppliances.add(info); // For non-mgmt apps, we add all the appliances into this call. 
+				logger.debug("Skipping appliance that is in the persistence but not in the cluster" + info.getIdentity());
 			}
 		}
 		
