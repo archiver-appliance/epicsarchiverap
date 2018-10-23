@@ -1027,27 +1027,38 @@ public class DefaultConfigService implements ConfigService {
 	public boolean isBeingArchivedOnThisAppliance(String pvName) {
 		boolean isField = PVNames.isField(pvName);
 		String plainPVName = PVNames.stripFieldNameFromPVName(pvName);
-		if(this.pvsForThisAppliance.contains(plainPVName)) {  
-			if(isField) {
-				PVTypeInfo typeInfo = this.getTypeInfoForPV(plainPVName);
-				if(typeInfo != null && Arrays.asList(typeInfo.getArchiveFields()).contains(PVNames.getFieldName(pvName))) { 
-					return true;
-				}
-			} else { 
+		String fieldName = PVNames.getFieldName(pvName);
+		if(isField) {
+			// If this is a field, we have two possibilities. 
+			// Either the plainPVname is being archived and the field is an extra field
+			// Or the whole pv (with the field) is being archived.
+			if(this.pvsForThisAppliance.contains(pvName) 
+					|| (this.pvsForThisAppliance.contains(plainPVName) && Arrays.asList(this.getTypeInfoForPV(plainPVName).getArchiveFields()).contains(fieldName))) {
+				return true;
+			}
+			
+		} else {
+			if(this.pvsForThisAppliance.contains(plainPVName)) {
 				return true;
 			}
 		}
 		
+		if(this.aliasNamesToRealNames.containsKey(pvName) && this.pvsForThisAppliance.contains(this.aliasNamesToRealNames.get(pvName))) {
+			return true;
+		}
+		
+		
 		if(this.aliasNamesToRealNames.containsKey(plainPVName)) { 
 			plainPVName = this.aliasNamesToRealNames.get(plainPVName);
 
-			if(this.pvsForThisAppliance.contains(plainPVName)) {  
-				if(isField) {
-					PVTypeInfo typeInfo = this.getTypeInfoForPV(plainPVName);
-					if(typeInfo != null && Arrays.asList(typeInfo.getArchiveFields()).contains(PVNames.getFieldName(pvName))) { 
-						return true;
-					}
-				} else { 
+			if(isField) {
+				if(this.pvsForThisAppliance.contains(PVNames.transferField(pvName, plainPVName)) 
+						|| (this.pvsForThisAppliance.contains(plainPVName) && Arrays.asList(this.getTypeInfoForPV(plainPVName).getArchiveFields()).contains(fieldName))) {
+					return true;
+				}
+				
+			} else {
+				if(this.pvsForThisAppliance.contains(plainPVName)) {
 					return true;
 				}
 			}

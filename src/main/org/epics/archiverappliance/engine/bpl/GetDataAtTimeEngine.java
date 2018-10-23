@@ -10,16 +10,20 @@ package org.epics.archiverappliance.engine.bpl;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVNames;
+import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
@@ -38,6 +42,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class GetDataAtTimeEngine implements BPLAction {
+	private static final Logger logger = Logger.getLogger(GetDataAtTimeEngine.class);
 	
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,
@@ -53,32 +58,26 @@ public class GetDataAtTimeEngine implements BPLAction {
 		EngineContext engineContext = configService.getEngineContext();
 		HashMap<String, HashMap<String, Object>> values = new HashMap<String, HashMap<String, Object>>();
 		for(String pvName : pvNames) {
+			String nameFromUser = pvName;
+			String fieldName = PVNames.getFieldName(pvName);
+			boolean fieldIsEmbeddedInStream = false;
+			
+			PVTypeInfo rootTypeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
+			if(rootTypeInfo == null) continue;
+			pvName = rootTypeInfo.getPvName();
+			
+			if(fieldName != null && Arrays.asList(rootTypeInfo.getArchiveFields()).contains(fieldName)) {
+				fieldIsEmbeddedInStream = true;
+			}
+			
 			if(engineContext.getChannelList().containsKey(pvName)){
 				ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
 				ArrayListEventStream st = archiveChannel.getPVData();
-				DBRTimeEvent potentialEvent = null, dEv = null;
+				DBRTimeEvent potentialEvent = null;
 				for(Event ev : st) {
-					dEv = (DBRTimeEvent) ev;
-					if(dEv.getEventTimeStamp().before(atTime) || dEv.getEventTimeStamp().equals(atTime)) {
-						if(potentialEvent != null) {
-							if(dEv.getEventTimeStamp().after(potentialEvent.getEventTimeStamp())) {
-								potentialEvent = dEv;								
-							}
-						} else {
-							potentialEvent = dEv;
-						}
-					}
+					potentialEvent = evaluatePotentialEvent(atTime, (DBRTimeEvent) ev, potentialEvent, fieldIsEmbeddedInStream, fieldName);
 				}
-				dEv = archiveChannel.getLastArchivedValue();
-				if(dEv != null && (dEv.getEventTimeStamp().before(atTime) || dEv.getEventTimeStamp().equals(atTime))) {
-					if(potentialEvent != null) {
-						if(dEv.getEventTimeStamp().after(potentialEvent.getEventTimeStamp())) {
-							potentialEvent = dEv;								
-						}
-					} else {
-						potentialEvent = dEv;
-					}
-				}
+				potentialEvent = evaluatePotentialEvent(atTime, archiveChannel.getLastArchivedValue(), potentialEvent, fieldIsEmbeddedInStream, fieldName);
 				
 				if(potentialEvent != null) {
 					HashMap<String, Object> evnt = new HashMap<String, Object>();
@@ -86,9 +85,13 @@ public class GetDataAtTimeEngine implements BPLAction {
 					evnt.put("nanos", potentialEvent.getEventTimeStamp().getNanos());
 					evnt.put("severity", potentialEvent.getSeverity());
 					evnt.put("status", potentialEvent.getStatus());
-					evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
-					values.put(pvName, evnt);
-				}
+					if(fieldIsEmbeddedInStream) {
+						evnt.put("val", JSONValue.parse(potentialEvent.getFields().get(fieldName)));
+					} else {
+						evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
+					}
+					values.put(nameFromUser, evnt);
+				}				
 			}
 		}
 		
@@ -97,5 +100,40 @@ public class GetDataAtTimeEngine implements BPLAction {
 		try(PrintWriter out = resp.getWriter()) {
 			JSONObject.writeJSONString(values, out);
 		}
-	}	
+	}
+	
+	/**
+	 * Evaluate a new event from an event stream to see if it is applicable as a source of data for getDataForTime.
+	 * We mostly want to find the latest event before or at the requested timestamp.
+	 * @param atTime
+	 * @param newEventToConsider
+	 * @param alreadyExistingEvent
+	 * @param fieldIsEmbeddedInStream
+	 * @param fieldName
+	 * @return
+	 */
+	private static DBRTimeEvent evaluatePotentialEvent(Timestamp atTime, DBRTimeEvent newEventToConsider, DBRTimeEvent alreadyExistingEvent, boolean fieldIsEmbeddedInStream, String fieldName) {
+		if(newEventToConsider.getEventTimeStamp().before(atTime) || newEventToConsider.getEventTimeStamp().equals(atTime)) {
+			if(alreadyExistingEvent != null) {
+				if(newEventToConsider.getEventTimeStamp().after(alreadyExistingEvent.getEventTimeStamp())) {
+					if(fieldIsEmbeddedInStream) {
+						if(newEventToConsider.hasFieldValues() && newEventToConsider.getFieldValue(fieldName) != null) {
+							return newEventToConsider;
+						}
+					} else {
+						return newEventToConsider;
+					}
+				}
+			} else {
+				if(fieldIsEmbeddedInStream) {
+					if(newEventToConsider.hasFieldValues() && newEventToConsider.getFieldValue(fieldName) != null) {
+						return newEventToConsider;
+					}
+				} else {
+					return newEventToConsider;
+				}
+			}
+		}
+		return alreadyExistingEvent;
+	}
 }

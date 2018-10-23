@@ -3,6 +3,7 @@ package org.epics.archiverappliance.retrieval;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -25,11 +26,14 @@ import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
+import org.epics.archiverappliance.retrieval.postprocessors.ExtraFieldsPostProcessor;
+import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
@@ -250,18 +254,31 @@ public class GetDataAtTime {
 	 * @return
 	 */
 	private static PVWithData getDataAtTimeForPVFromStores(String pvName, Timestamp atTime, ConfigService configService) {
-		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+		String nameFromUser = pvName;
+		Timestamp startTime = atTime;
+		String fieldName = PVNames.getFieldName(pvName);
+		
+		PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
 		if(typeInfo == null) return null;
 		if(!typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) return null;
+
+		pvName = typeInfo.getPvName();
+		PostProcessor postProcessor = new DefaultRawPostProcessor();
+		if(fieldName != null && Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
+			startTime = TimeUtils.minusDays(atTime, 1); // We typically write out embedded fields once a day; so go back a day to catch any changes if present.
+			postProcessor = new ExtraFieldsPostProcessor(fieldName);
+		}
+
 		
-		// There is a separata bulk call for the engine; so we can skip the engine. 
+		
+		// There is a separate bulk call for the engine; so we can skip the engine. 
 		// Go thru the stores in order...
 		try {
 			DBRTimeEvent potentialEvent = null, dEv = null;
 			for(String store : typeInfo.getDataStores()) {
 				StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
 				try(BasicContext context = new BasicContext()) {
-					List<Callable<EventStream>> streams = storagePlugin.getDataForPV(context, pvName, atTime, atTime, new DefaultRawPostProcessor());
+					List<Callable<EventStream>> streams = storagePlugin.getDataForPV(context, pvName, startTime, atTime, postProcessor);
 					if(streams != null) {
 						for(Callable<EventStream> stcl : streams) {
 							EventStream stream = stcl.call();
@@ -270,7 +287,7 @@ public class GetDataAtTime {
 								if(dEv.getEventTimeStamp().before(atTime) || dEv.getEventTimeStamp().equals(atTime)) {
 									if(potentialEvent != null) {
 										if(dEv.getEventTimeStamp().after(potentialEvent.getEventTimeStamp())) {
-											potentialEvent = dEv;								
+											potentialEvent = (DBRTimeEvent) dEv.makeClone();							
 										}
 									} else {
 										potentialEvent = dEv;
@@ -283,7 +300,7 @@ public class GetDataAtTime {
 										evnt.put("severity", potentialEvent.getSeverity());
 										evnt.put("status", potentialEvent.getStatus());
 										evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
-										return new PVWithData(pvName, evnt);
+										return new PVWithData(nameFromUser, evnt);
 									}
 								}
 							}
@@ -300,7 +317,7 @@ public class GetDataAtTime {
 				evnt.put("severity", potentialEvent.getSeverity());
 				evnt.put("status", potentialEvent.getStatus());
 				evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
-				return new PVWithData(pvName, evnt);
+				return new PVWithData(nameFromUser, evnt);
 			}
 		} catch(Exception ex) {
 			logger.error("Getting data at time for PV " + pvName, ex);
