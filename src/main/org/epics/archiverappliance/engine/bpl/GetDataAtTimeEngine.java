@@ -113,7 +113,7 @@ public class GetDataAtTimeEngine implements BPLAction {
 	 * @return
 	 */
 	private static DBRTimeEvent evaluatePotentialEvent(Timestamp atTime, DBRTimeEvent newEventToConsider, DBRTimeEvent alreadyExistingEvent, boolean fieldIsEmbeddedInStream, String fieldName) {
-		if(newEventToConsider.getEventTimeStamp().before(atTime) || newEventToConsider.getEventTimeStamp().equals(atTime)) {
+		if(newEventToConsider != null && newEventToConsider.getEventTimeStamp().before(atTime) || newEventToConsider.getEventTimeStamp().equals(atTime)) {
 			if(alreadyExistingEvent != null) {
 				if(newEventToConsider.getEventTimeStamp().after(alreadyExistingEvent.getEventTimeStamp())) {
 					if(fieldIsEmbeddedInStream) {

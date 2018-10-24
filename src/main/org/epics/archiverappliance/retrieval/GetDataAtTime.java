@@ -71,7 +71,8 @@ public class GetDataAtTime {
 		try {
 			if(gatherer.remainingPVs.size() <= 0) return gatherer;
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(gatherer.applianceInfo.getEngineURL() + "/getDataAtTime?at="+TimeUtils.convertToISO8601String(atTime), "pv", gatherer.remainingPVs);
-			logger.debug("Done calling engine for appliance " + gatherer.applianceInfo.getIdentity() + " and got PV count " + resp.size());
+			if(resp == null) return gatherer;
+			logger.debug("Done calling engine for appliance " + gatherer.applianceInfo.getIdentity() + " and got PV count " + ((resp != null) ? resp.size() : 0));
 			for(String pvName : resp.keySet()) {
 				if(!gatherer.pvValues.containsKey(pvName)) {
 					gatherer.pvValues.put(pvName, resp.get(pvName));
@@ -88,7 +89,8 @@ public class GetDataAtTime {
 		try {
 			if(gatherer.remainingPVs.size() <= 0) return gatherer;
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(gatherer.applianceInfo.getRetrievalURL() + "/../data/getDataAtTimeForAppliance?at="+TimeUtils.convertToISO8601String(atTime), "pv", gatherer.remainingPVs);
-			logger.debug("Done calling retrieval for appliance " + gatherer.applianceInfo.getIdentity() + " and got PV count " + resp.size());
+			if(resp == null) return gatherer;
+			logger.debug("Done calling retrieval for appliance " + gatherer.applianceInfo.getIdentity() + " and got PV count " + ((resp != null) ? resp.size() : 0));
 			for(String pvName : resp.keySet()) {
 				if(!gatherer.pvValues.containsKey(pvName)) {
 					gatherer.pvValues.put(pvName, resp.get(pvName));
@@ -105,7 +107,8 @@ public class GetDataAtTime {
 		try {
 			if(remainingPVs.size() <= 0) { return null; } ;
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(applianceRetrievalURL + "?at="+TimeUtils.convertToISO8601String(atTime)+"&includeProxies=false", "pv", remainingPVs);
-			logger.debug("Done calling remote appliance at " + applianceRetrievalURL + " and got PV count " + resp.size());
+			if(resp == null) return null;
+			logger.debug("Done calling remote appliance at " + applianceRetrievalURL + " and got PV count " +  + ((resp != null) ? resp.size() : 0));
 			return resp;
 		} catch (Throwable t) {
 			logger.error("Exception getting data from the remote appliance " + applianceRetrievalURL, t);
