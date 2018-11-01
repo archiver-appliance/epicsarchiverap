@@ -42,6 +42,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
 
@@ -84,6 +85,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
+import com.hazelcast.client.config.XmlClientConfigBuilder;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Cluster;
@@ -533,7 +535,14 @@ public class DefaultConfigService implements ConfigService {
 			// All other webapps are "native" clients.
 			try { 
 				configlogger.debug("Initializing a non-mgmt webapp's clustering");
-				ClientConfig clientConfig = new ClientConfig();
+				/*
+				 * Loads the client config using the following resolution mechanism:
+				 *   1. first it checks if a system property 'hazelcast.client.config' is set. If it exist and it begins with 'classpath:', then a classpath resource is loaded. Else it will assume it is a file reference
+				 *   2. it checks if a hazelcast-client.xml is available in the working dir
+				 *   3. it checks if a hazelcast-client.xml is available on the classpath
+				 *   4. it loads the hazelcast-client-default.xml
+				 */
+				ClientConfig clientConfig = new XmlClientConfigBuilder().build();
 				clientConfig.getGroupConfig().setName("archappl");
 				clientConfig.getGroupConfig().setPassword("archappl");
 				clientConfig.setExecutorPoolSize(4);
@@ -562,6 +571,12 @@ public class DefaultConfigService implements ConfigService {
 					Logger.getLogger("com.hazelcast.client.spi.impl.ClusterListenerThread").setLevel(Level.OFF);
 					Logger.getLogger("com.hazelcast.client.spi.ClientPartitionService").setLevel(Level.OFF);
 				}
+				configlogger.info("client network config conn attempt limit: " + clientConfig.getNetworkConfig().getConnectionAttemptLimit());
+				configlogger.info("client network config conn attempt period: " + clientConfig.getNetworkConfig().getConnectionAttemptPeriod());
+				configlogger.info("client network config conn timeout: " + clientConfig.getNetworkConfig().getConnectionTimeout());
+				configlogger.info("client network config addresses: " + clientConfig.getNetworkConfig().getAddresses().stream().map(Object::toString).collect(Collectors.joining(",")));
+				configlogger.info("client network config is redo: " + clientConfig.getNetworkConfig().isRedoOperation());
+				configlogger.info("client config properties: " + clientConfig.getProperties().toString());
 				hzinstance = HazelcastClient.newHazelcastClient(clientConfig);
 			} catch(Exception ex) {
 				throw new ConfigException("Exception adding client to cluster", ex);
