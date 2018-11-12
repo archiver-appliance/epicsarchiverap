@@ -548,7 +548,7 @@ public class EngineContext {
 							if(applianceInfo.getIdentity().equals(configService.getMyApplianceInfo().getIdentity())) { 
 								// We do not check for ourself...
 							} else { 
-								String connectedPVCountURL = applianceInfo.getEngineURL() + "/ConnectedPVCountForAppliance";
+								String connectedPVCountURL = applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
 								try { 
 									JSONObject connectedPVCount = GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
 									int applianceTotalPVCount = Integer.parseInt((String) connectedPVCount.get("total"));
