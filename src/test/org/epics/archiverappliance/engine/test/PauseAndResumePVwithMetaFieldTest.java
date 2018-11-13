@@ -71,6 +71,10 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			assertTrue("the channel for " + pvName
 					+ " should be created but it is not",
 					archiveChannel != null);
+			// Clear the sample buffers and then wait for part of the engine write thread period.
+			archiveChannel.getSampleBuffer().getCurrentSamples().clear();
+			Thread.sleep(5*1000);
+			
 			boolean hasData = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
 			assertTrue("the channel for " + pvName
