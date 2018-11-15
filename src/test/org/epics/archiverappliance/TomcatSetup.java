@@ -224,6 +224,7 @@ public class TomcatSetup {
 		overrideEnvWithSystemProperty(environment, "ARCHAPPL_SHORT_TERM_FOLDER");
 		overrideEnvWithSystemProperty(environment, "ARCHAPPL_MEDIUM_TERM_FOLDER");
 		overrideEnvWithSystemProperty(environment, "ARCHAPPL_LONG_TERM_FOLDER");
+		overrideEnvWithSystemProperty(environment, "ARCHAPPL_POLICIES");
 
 		if(logger.isDebugEnabled()) { 
 			for(String key : environment.keySet()) { 

@@ -180156,3 +180156,23 @@ record(ai, "ArchUnitTest:manual") {
   field(ADEL, "0")
   field(MDEL, "0")
 }
+
+record(calcout, "ArchUnitTest:fieldtst:cnt") {
+  field(SCAN, "1 second")
+  field(CALC, "A#C ? A+B : C")
+  field(INPA, "ArchUnitTest:fieldtst:cnt.VAL NPP")
+  field(INPB, "0.5")
+  field(INPC, "4.0")
+  field(OCAL, "A")
+  field(DOPT, "Use OCAL")
+  field(OOPT, "On Change")
+  field(OUT , "ArchUnitTest:fieldtst.C PP")
+}
+
+record(calc, "ArchUnitTest:fieldtst") {
+  alias("ArchUnitTest:fieldtstalias")
+  field(MDEL, "0.0")
+  field(ADEL, "0.0")
+}
+
+
