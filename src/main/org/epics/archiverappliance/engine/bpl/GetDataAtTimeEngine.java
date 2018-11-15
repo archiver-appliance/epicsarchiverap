@@ -77,7 +77,9 @@ public class GetDataAtTimeEngine implements BPLAction {
 				for(Event ev : st) {
 					potentialEvent = evaluatePotentialEvent(atTime, (DBRTimeEvent) ev, potentialEvent, fieldIsEmbeddedInStream, fieldName);
 				}
-				potentialEvent = evaluatePotentialEvent(atTime, archiveChannel.getLastArchivedValue(), potentialEvent, fieldIsEmbeddedInStream, fieldName);
+				if(archiveChannel.getLastArchivedValue() != null) {
+					potentialEvent = evaluatePotentialEvent(atTime, archiveChannel.getLastArchivedValue(), potentialEvent, fieldIsEmbeddedInStream, fieldName);
+				}
 				
 				if(potentialEvent != null) {
 					HashMap<String, Object> evnt = new HashMap<String, Object>();
