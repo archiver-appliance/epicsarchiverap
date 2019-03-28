@@ -36,6 +36,7 @@ public class ValidatePBFile {
 	
 	public static boolean validatePBFile(Path path, boolean verboseMode) throws IOException {
 		PBFileInfo info = new PBFileInfo(path);
+		logger.info("File " + path.getFileName().toString() + " is for PV " + info.getPVName() + " of type " + info.getType() + " for year " + info.getDataYear());
 		long previousEpochSeconds = Long.MIN_VALUE;
 		long eventnum = 0;
 		try(FileBackedPBEventStream strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType()))  {
