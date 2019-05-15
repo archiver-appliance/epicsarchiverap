@@ -37,7 +37,7 @@ public class ReadAsDBRType {
 		Constructor<? extends DBRTimeEvent> cons = typeSys.getUnmarshallingFromByteArrayConstructor(archDBRType);
 		try(LineByteStream lis = new LineByteStream(Paths.get(path))) {
 			lis.readLine(bar);
-			while(lis.readLine(bar) != null) { 
+			while(lis.readLine(bar) != null && !bar.isEmpty()) { 
 				DBRTimeEvent event = cons.newInstance(year, bar);
 				System.out.println(TimeUtils.convertToHumanReadableString(event.getEpochSeconds()) + " ==> " + event.getSampleValue().toString());
 			}
