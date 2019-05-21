@@ -43,7 +43,7 @@ public class StorageRateReport implements BPLAction {
 			this.pvName = pvName;
 			this.storageRate = storageRate;
 		}
-	};
+	}
 	
 
 	@Override

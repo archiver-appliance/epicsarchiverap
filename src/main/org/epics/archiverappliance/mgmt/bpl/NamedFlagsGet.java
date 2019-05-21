@@ -36,7 +36,7 @@ public class NamedFlagsGet implements BPLAction {
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
 			HashMap<String, Object> ret = new HashMap<String, Object>();
-			ret.put(name, new Boolean(namedValue));
+			ret.put(name, Boolean.valueOf(namedValue));
 			out.println(JSONObject.toJSONString(ret));
 		} catch(Exception ex) {
 			logger.error("Exception getting named value for name " + name, ex);

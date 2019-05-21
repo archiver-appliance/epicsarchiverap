@@ -9761,7 +9761,7 @@ public final class EPICSEvent {
     private void initFields() {
       secondsintoyear_ = 0;
       nano_ = 0;
-      val_ = java.util.Collections.emptyList();;
+      val_ = java.util.Collections.emptyList();
       severity_ = 0;
       status_ = 0;
       repeatcount_ = 0;
@@ -10002,7 +10002,7 @@ public final class EPICSEvent {
         bitField0_ = (bitField0_ & ~0x00000001);
         nano_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         severity_ = 0;
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -10308,7 +10308,7 @@ public final class EPICSEvent {
       }
       
       // repeated sint32 val = 3 [packed = true];
-      private java.util.List<java.lang.Integer> val_ = java.util.Collections.emptyList();;
+      private java.util.List<java.lang.Integer> val_ = java.util.Collections.emptyList();
       private void ensureValIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           val_ = new java.util.ArrayList<java.lang.Integer>(val_);
@@ -10346,7 +10346,7 @@ public final class EPICSEvent {
         return this;
       }
       public Builder clearVal() {
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
@@ -10803,7 +10803,7 @@ public final class EPICSEvent {
     private void initFields() {
       secondsintoyear_ = 0;
       nano_ = 0;
-      val_ = java.util.Collections.emptyList();;
+      val_ = java.util.Collections.emptyList();
       severity_ = 0;
       status_ = 0;
       repeatcount_ = 0;
@@ -11041,7 +11041,7 @@ public final class EPICSEvent {
         bitField0_ = (bitField0_ & ~0x00000001);
         nano_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         severity_ = 0;
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -11347,7 +11347,7 @@ public final class EPICSEvent {
       }
       
       // repeated sfixed32 val = 3 [packed = true];
-      private java.util.List<java.lang.Integer> val_ = java.util.Collections.emptyList();;
+      private java.util.List<java.lang.Integer> val_ = java.util.Collections.emptyList();
       private void ensureValIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           val_ = new java.util.ArrayList<java.lang.Integer>(val_);
@@ -11385,7 +11385,7 @@ public final class EPICSEvent {
         return this;
       }
       public Builder clearVal() {
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
@@ -11842,7 +11842,7 @@ public final class EPICSEvent {
     private void initFields() {
       secondsintoyear_ = 0;
       nano_ = 0;
-      val_ = java.util.Collections.emptyList();;
+      val_ = java.util.Collections.emptyList();
       severity_ = 0;
       status_ = 0;
       repeatcount_ = 0;
@@ -12083,7 +12083,7 @@ public final class EPICSEvent {
         bitField0_ = (bitField0_ & ~0x00000001);
         nano_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         severity_ = 0;
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -12389,7 +12389,7 @@ public final class EPICSEvent {
       }
       
       // repeated sint32 val = 3 [packed = true];
-      private java.util.List<java.lang.Integer> val_ = java.util.Collections.emptyList();;
+      private java.util.List<java.lang.Integer> val_ = java.util.Collections.emptyList();
       private void ensureValIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           val_ = new java.util.ArrayList<java.lang.Integer>(val_);
@@ -12427,7 +12427,7 @@ public final class EPICSEvent {
         return this;
       }
       public Builder clearVal() {
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
@@ -12884,7 +12884,7 @@ public final class EPICSEvent {
     private void initFields() {
       secondsintoyear_ = 0;
       nano_ = 0;
-      val_ = java.util.Collections.emptyList();;
+      val_ = java.util.Collections.emptyList();
       severity_ = 0;
       status_ = 0;
       repeatcount_ = 0;
@@ -13122,7 +13122,7 @@ public final class EPICSEvent {
         bitField0_ = (bitField0_ & ~0x00000001);
         nano_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         severity_ = 0;
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -13428,7 +13428,7 @@ public final class EPICSEvent {
       }
       
       // repeated float val = 3 [packed = true];
-      private java.util.List<java.lang.Float> val_ = java.util.Collections.emptyList();;
+      private java.util.List<java.lang.Float> val_ = java.util.Collections.emptyList();
       private void ensureValIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           val_ = new java.util.ArrayList<java.lang.Float>(val_);
@@ -13466,7 +13466,7 @@ public final class EPICSEvent {
         return this;
       }
       public Builder clearVal() {
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;
@@ -13923,7 +13923,7 @@ public final class EPICSEvent {
     private void initFields() {
       secondsintoyear_ = 0;
       nano_ = 0;
-      val_ = java.util.Collections.emptyList();;
+      val_ = java.util.Collections.emptyList();
       severity_ = 0;
       status_ = 0;
       repeatcount_ = 0;
@@ -14161,7 +14161,7 @@ public final class EPICSEvent {
         bitField0_ = (bitField0_ & ~0x00000001);
         nano_ = 0;
         bitField0_ = (bitField0_ & ~0x00000002);
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         severity_ = 0;
         bitField0_ = (bitField0_ & ~0x00000008);
@@ -14467,7 +14467,7 @@ public final class EPICSEvent {
       }
       
       // repeated double val = 3 [packed = true];
-      private java.util.List<java.lang.Double> val_ = java.util.Collections.emptyList();;
+      private java.util.List<java.lang.Double> val_ = java.util.Collections.emptyList();
       private void ensureValIsMutable() {
         if (!((bitField0_ & 0x00000004) == 0x00000004)) {
           val_ = new java.util.ArrayList<java.lang.Double>(val_);
@@ -14505,7 +14505,7 @@ public final class EPICSEvent {
         return this;
       }
       public Builder clearVal() {
-        val_ = java.util.Collections.emptyList();;
+        val_ = java.util.Collections.emptyList();
         bitField0_ = (bitField0_ & ~0x00000004);
         onChanged();
         return this;

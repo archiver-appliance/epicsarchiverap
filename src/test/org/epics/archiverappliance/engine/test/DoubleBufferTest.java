@@ -41,7 +41,7 @@ public class DoubleBufferTest {
 	public void tearDown() throws Exception {
 	}
 
-	enum StoredState { ALL_STORED, SOME_LOSS, MAYBE_SOME_LOSS};
+	enum StoredState { ALL_STORED, SOME_LOSS, MAYBE_SOME_LOSS}
 	
 	@Test
 	public void testDoubleBuffering() throws Exception { 

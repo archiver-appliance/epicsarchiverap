@@ -105,7 +105,7 @@ public class GetDataAtTime {
 	
 	private static HashMap<String, HashMap<String, Object>>  getDataFromRemoteArchApplicance(String applianceRetrievalURL, LinkedList<String> remainingPVs, Timestamp atTime) {
 		try {
-			if(remainingPVs.size() <= 0) { return null; } ;
+			if(remainingPVs.size() <= 0) { return null; } 
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(applianceRetrievalURL + "?at="+TimeUtils.convertToISO8601String(atTime)+"&includeProxies=false", "pv", remainingPVs);
 			if(resp == null) return null;
 			logger.debug("Done calling remote appliance at " + applianceRetrievalURL + " and got PV count " +  + ((resp != null) ? resp.size() : 0));

@@ -57,22 +57,22 @@ public class CSVEvent implements DBRTimeEvent {
 			sampleValue = new ScalarStringSampleValue(valueStr);
 			break;
 		case DBR_SCALAR_SHORT:
-			sampleValue = new ScalarValue<Short>(new Short(valueStr));
+			sampleValue = new ScalarValue<Short>(Short.valueOf(valueStr));
 			break;
 		case DBR_SCALAR_FLOAT:
-			sampleValue = new ScalarValue<Float>(new Float(valueStr));
+			sampleValue = new ScalarValue<Float>(Float.valueOf(valueStr));
 			break;       
 		case DBR_SCALAR_ENUM:
-			sampleValue = new ScalarValue<Short>(new Short(valueStr));
+			sampleValue = new ScalarValue<Short>(Short.valueOf(valueStr));
 			break;
 		case DBR_SCALAR_BYTE:
-			sampleValue = new ScalarValue<Byte>(new Byte(valueStr));
+			sampleValue = new ScalarValue<Byte>(Byte.valueOf(valueStr));
 			break;
 		case DBR_SCALAR_INT:
-			sampleValue = new ScalarValue<Integer>(new Integer(valueStr));
+			sampleValue = new ScalarValue<Integer>(Integer.valueOf(valueStr));
 			break;
 		case DBR_SCALAR_DOUBLE:
-			sampleValue = new ScalarValue<Double>(new Double(valueStr));
+			sampleValue = new ScalarValue<Double>(Double.valueOf(valueStr));
 			break;
 		case DBR_WAVEFORM_STRING:
 			if(valueStr.equals("")) {
@@ -88,7 +88,7 @@ public class CSVEvent implements DBRTimeEvent {
 			} else {
 				ArrayList<Short> vals = new ArrayList<Short>(vectorValueStr.length);
 				for(String val : vectorValueStr) {
-					vals.add(new Short(val));
+					vals.add(Short.valueOf(val));
 				}
 				sampleValue = new VectorValue<Short>(vals);				
 			}
@@ -101,7 +101,7 @@ public class CSVEvent implements DBRTimeEvent {
 			} else {
 				ArrayList<Float> vals = new ArrayList<Float>(vectorValueStr.length);
 				for(String val : vectorValueStr) {
-					vals.add(new Float(val));
+					vals.add(Float.valueOf(val));
 				}
 				sampleValue = new VectorValue<Float>(vals);
 			}
@@ -114,7 +114,7 @@ public class CSVEvent implements DBRTimeEvent {
 			} else {
 				ArrayList<Short> vals = new ArrayList<Short>(vectorValueStr.length);
 				for(String val : vectorValueStr) {
-					vals.add(new Short(val));
+					vals.add(Short.valueOf(val));
 				}
 				sampleValue = new VectorValue<Short>(vals);
 			}
@@ -127,7 +127,7 @@ public class CSVEvent implements DBRTimeEvent {
 			} else {
 				ArrayList<Byte> vals = new ArrayList<Byte>(vectorValueStr.length);
 				for(String val : vectorValueStr) {
-					vals.add(new Byte(val));
+					vals.add(Byte.valueOf(val));
 				}
 				sampleValue = new VectorValue<Byte>(vals);
 			}
@@ -140,7 +140,7 @@ public class CSVEvent implements DBRTimeEvent {
 			} else {
 				ArrayList<Integer> vals = new ArrayList<Integer>(vectorValueStr.length);
 				for(String val : vectorValueStr) {
-					vals.add(new Integer(val));
+					vals.add(Integer.valueOf(val));
 				}
 				sampleValue = new VectorValue<Integer>(vals);
 			}
@@ -153,7 +153,7 @@ public class CSVEvent implements DBRTimeEvent {
 			} else {
 				ArrayList<Double> vals = new ArrayList<Double>(vectorValueStr.length);
 				for(String val : vectorValueStr) {
-					vals.add(new Double(val));
+					vals.add(Double.valueOf(val));
 				}
 				sampleValue = new VectorValue<Double>(vals);
 			}

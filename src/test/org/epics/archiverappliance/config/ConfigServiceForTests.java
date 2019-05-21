@@ -199,8 +199,8 @@ public class ConfigServiceForTests extends DefaultConfigService {
 				namingConventionType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 			}
 			PVTypeInfo typeInfo = new PVTypeInfo(pvName, namingConventionType, !namingConventionType.isWaveForm(), 1);
-			typeInfo.setUpperDisplayLimit(new Double(1.0));
-			typeInfo.setLowerDisplayLimit(new Double(-1.0));
+			typeInfo.setUpperDisplayLimit(Double.valueOf(1.0));
+			typeInfo.setLowerDisplayLimit(Double.valueOf(-1.0));
 			typeInfo.setHasReducedDataSet(true);
 			typeInfo.setComputedEventRate(1.0f);
 			typeInfo.setComputedStorageRate(12.0f);

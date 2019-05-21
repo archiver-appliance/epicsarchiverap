@@ -296,6 +296,7 @@
 	  	  <enable/>
 	  	</assertions>
 	  	<jvmarg value="${log4jprops}"/>
+	  	<jvmarg value="-Dwebdriver.gecko.driver=./lib/test/geckodriver-v0.24.0-linux64/geckodriver"/>
 	  	<env key="ARCHAPPL_SHORT_TERM_FOLDER" path="./sts"/>
 	  	<env key="ARCHAPPL_MEDIUM_TERM_FOLDER" path="./mts"/>
 	  	<env key="ARCHAPPL_LONG_TERM_FOLDER" path="./lts"/>
@@ -365,7 +366,7 @@
 		           author="true"
 		           version="true"
 		           use="true"
-		  	       link="http://docs.oracle.com/javase/8/docs/api/">
+		  	       link="https://docs.oracle.com/en/java/javase/12/docs/api/">
     	    <classpath>
     	    	<pathelement path="${classes}"/>
     	        <fileset dir="lib/test">

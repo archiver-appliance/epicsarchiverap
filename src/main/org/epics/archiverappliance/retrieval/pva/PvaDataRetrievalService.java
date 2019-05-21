@@ -44,11 +44,11 @@ public class PvaDataRetrievalService implements RPCServiceAsync {
 			if (actions.get(uri.getPath().get()) != null) {
 				actions.get(uri.getPath().get()).request(args, callback, configService);
 			} else {
-				new UnsupportedOperationException("The requested operation is not supported " + uri.getPath().get());
+				throw new UnsupportedOperationException("The requested operation is not supported " + uri.getPath().get());
 			}
 		} else {
 			// Unable to handle the request args
-			new IllegalArgumentException(PVA_DATA_SERVICE + " only supports request args of type NTURI");
+			throw new IllegalArgumentException(PVA_DATA_SERVICE + " only supports request args of type NTURI");
 		}
 	}
 

@@ -301,7 +301,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
 			if(endfound) {
 				endPosition = bsend.getFoundPosition();
 				
-				DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(this.type);;
+				DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
 				Constructor<? extends DBRTimeEvent> unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
 				ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
 				try(LineByteStream lis = new LineByteStream(path, endPosition)) {

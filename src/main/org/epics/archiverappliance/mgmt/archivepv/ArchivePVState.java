@@ -31,7 +31,7 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
  */
 public class ArchivePVState {
 	private static Logger logger = Logger.getLogger(ArchivePVState.class.getName());
-	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED, FINISHED};
+	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED, FINISHED}
 
 	private ArchivePVStateMachine currentState = ArchivePVStateMachine.START;
 	private String pvName;

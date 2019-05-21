@@ -150,7 +150,7 @@ public class DefaultConfigService implements ConfigService {
 	protected LinkedList<Runnable> shutdownHooks = new LinkedList<Runnable>();
 	protected PBThreeTierETLPVLookup etlPVLookup = null;
 	protected RetrievalState retrievalState = null;
-	protected MgmtRuntimeState mgmtRuntime = null;;
+	protected MgmtRuntimeState mgmtRuntime = null;
 	protected EngineContext engineContext = null;
 	protected ConcurrentSkipListSet<String> appliancesInCluster = new ConcurrentSkipListSet<String>();
 	// Runtime state ends here 
@@ -330,7 +330,7 @@ public class DefaultConfigService implements ConfigService {
 		} else { 
 			try { 
 				logger.info("Using " + pvName2KeyMappingClass + " as the name to key mapping class");
-				pvName2KeyConverter = (PVNameToKeyMapping) Class.forName(pvName2KeyMappingClass).newInstance();
+				pvName2KeyConverter = (PVNameToKeyMapping) Class.forName(pvName2KeyMappingClass).getConstructor().newInstance();
 				pvName2KeyConverter.initialize(this);
 			} catch(Exception ex) { 
 				logger.fatal("Cannot initialize pv name to key mapping class " + pvName2KeyMappingClass, ex);
@@ -1889,7 +1889,7 @@ public class DefaultConfigService implements ConfigService {
 		} else {
 			try { 
 				logger.info("Using persistence provided by class " + persistenceFromEnv);
-				persistanceLayer = (ConfigPersistence) getClass().getClassLoader().loadClass(persistenceFromEnv).newInstance();
+				persistanceLayer = (ConfigPersistence) getClass().getClassLoader().loadClass(persistenceFromEnv).getConstructor().newInstance();
 			} catch(Exception ex) {
 				throw new ConfigException("Exception initializing persistence layer using " + persistenceFromEnv, ex);
 			}

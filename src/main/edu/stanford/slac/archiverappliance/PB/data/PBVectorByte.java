@@ -95,7 +95,7 @@ public class PBVectorByte implements DBRTimeEvent, PartionedTime {
 		if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
 		dbevent = builder.build();
-		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));;
+		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
 	public PBVectorByte(PVStructure v4Data) {
@@ -165,7 +165,7 @@ public class PBVectorByte implements DBRTimeEvent, PartionedTime {
 		byte[] bytes = dbevent.getVal().toByteArray();
 		ArrayList<Byte> ret = new ArrayList<Byte>(bytes.length);
 		for(byte b : bytes) {
-			ret.add(new Byte(b));
+			ret.add(Byte.valueOf(b));
 		}
 		return new VectorValue<Byte>(ret);
 	}

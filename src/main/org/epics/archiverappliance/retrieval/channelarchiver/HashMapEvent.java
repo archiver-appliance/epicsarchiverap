@@ -219,12 +219,12 @@ public class HashMapEvent implements DBRTimeEvent {
 	
 	@Override
 	public void setStatus(int status) {
-		values.put(STAT_FIELD_NAME, new Integer(status).toString());
+		values.put(STAT_FIELD_NAME, Integer.valueOf(status).toString());
 	}
 	
 	@Override
 	public void setSeverity(int severity) {
-		values.put(SEVR_FIELD_NAME, new Integer(severity).toString());
+		values.put(SEVR_FIELD_NAME, Integer.valueOf(severity).toString());
 	}
 
 }

@@ -33,7 +33,7 @@ public class SilentPVReport implements BPLAction {
 			this.pvName = pvName;
 			this.epochSecondsOflastKnownEvent = epochSecondsOflastKnownEvent;
 		}
-	};
+	}
 	
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {

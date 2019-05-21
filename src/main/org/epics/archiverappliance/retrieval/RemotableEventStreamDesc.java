@@ -69,7 +69,7 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
 			this.headers.put("EGU", info.getUnits());
 		}
 		if(!this.headers.containsKey("PREC")) { 
-			this.headers.put("PREC", new Integer((int)info.getPrecision().intValue()).toString());
+			this.headers.put("PREC", Integer.valueOf((int)info.getPrecision().intValue()).toString());
 		}
 
 		// There are cases when we use operators where the DBR type of the PVTypeInfo is not the same as the DBR type of the event stream

@@ -67,7 +67,7 @@ public class GenerateLargeVectorData {
 				YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(currentSeconds);
 				List<Double> vals = new ArrayList<Double>(80000);
 				for(int k = 0; k < 80000; k++) { 
-					vals.add(new Double(k));
+					vals.add(Double.valueOf(k));
 				}
 				instream.add(new SimulationEvent(yts.getSecondsintoyear(), yts.getYear(), ArchDBRTypes.DBR_WAVEFORM_DOUBLE, new VectorValue<Double>(vals)));
 				currentSeconds += 60;

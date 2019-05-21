@@ -189,4 +189,4 @@ class CountFiles implements FileVisitor<Path> {
 	public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
 		return FileVisitResult.CONTINUE;
 	}
-};
+}

@@ -83,7 +83,7 @@ public class PBVectorDouble implements DBRTimeEvent, PartionedTime {
 		if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
 		dbevent = builder.build();
-		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));;
+		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
 	public PBVectorDouble(PVStructure v4Data) {

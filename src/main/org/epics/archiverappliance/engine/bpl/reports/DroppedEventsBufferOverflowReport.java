@@ -31,7 +31,7 @@ public class DroppedEventsBufferOverflowReport implements BPLAction {
 			this.pvName = pvName;
 			this.droppedEvents = droppedEvents;
 		}
-	};
+	}
 	
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,

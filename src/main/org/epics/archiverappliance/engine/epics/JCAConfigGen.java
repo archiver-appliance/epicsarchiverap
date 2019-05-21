@@ -9,18 +9,8 @@ package org.epics.archiverappliance.engine.epics;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Field;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFilePermissions;
-import java.util.Arrays;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
@@ -55,55 +45,8 @@ public class JCAConfigGen {
 				&& Boolean.parseBoolean((String) props.get(JCA_CONFIG_GEN_USE_CAJ))) { 
 			JCACAJContext = "com.cosylab.epics.caj.CAJContext";
 		} else {
-			try {
-				String targetArch= JNITargetArch.getTargetArch();
-				String webInfFolder = configService.getWebInfFolder();
-				String jniPath = webInfFolder + "/lib/native/" + targetArch;
-				configlogger.info("Adding " + jniPath + " to the library path using the classloader's usr_paths");
-				final Field usrPathsField = ClassLoader.class.getDeclaredField("usr_paths");
-				boolean previousValueOfAccessible = usrPathsField.isAccessible();
-				usrPathsField.setAccessible(true);
-				final String[] paths = (String[])usrPathsField.get(null);
-				final String[] newPaths = Arrays.copyOf(paths, paths.length + 1);
-				newPaths[newPaths.length-1] = jniPath;
-				usrPathsField.set(null, newPaths);
-				configlogger.debug("Setting the " + "gov.aps.jca.jni.epics." + targetArch + ".library.path and the gov.aps.jca.jni.epics." + targetArch + ".caRepeater.path to " + jniPath);
-				System.getProperties().put("gov.aps.jca.jni.epics." + targetArch + ".library.path", jniPath);
-				System.getProperties().put("gov.aps.jca.jni.epics." + targetArch + ".caRepeater.path", jniPath);
-				configlogger.debug("Trying to make caRepeater in location " + System.getProperty("gov.aps.jca.jni.epics." + targetArch + ".caRepeater.path") + "an executable");
-				Files.walkFileTree(Paths.get(jniPath), new FileVisitor<Path>() {
-
-					@Override
-					public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						if(file.endsWith("caRepeater")) { 
-							try { 
-								Files.setPosixFilePermissions(file, PosixFilePermissions.fromString("rwxr-x---"));
-							} catch(Exception ex) { 
-								configlogger.warn("Cannot set permission for caRepeater " + file, ex);
-							}
-						}
-						return FileVisitResult.CONTINUE;
-					}
-
-					@Override
-					public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-						return FileVisitResult.CONTINUE;
-					}
-				});
-				usrPathsField.setAccessible(previousValueOfAccessible);
-			} catch(Exception ex) { 
-				throw new ConfigException("Exception adding JNI library to usr_paths", ex);
-			}
+			configlogger.fatal("We no longer support the native version of JCA in the EPICS archiver appliance. Please use CAJ instead.");
+			throw new ConfigException("We no longer support the native version of JCA in the EPICS archiver appliance. Please use CAJ instead.");
 		}
 		
 		

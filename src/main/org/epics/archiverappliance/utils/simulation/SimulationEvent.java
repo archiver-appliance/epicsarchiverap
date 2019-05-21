@@ -40,7 +40,7 @@ public class SimulationEvent implements DBRTimeEvent {
 		this.yearofdata = yearofdata;
 		this.type = type;
 		this.mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
-		this.sampleValue = valueGenerator.getSampleValue(this.type, secondsIntoYear);;
+		this.sampleValue = valueGenerator.getSampleValue(this.type, secondsIntoYear);
 	}
 	
 	public SimulationEvent(int secondsIntoYear, short yearofdata, ArchDBRTypes type, SampleValue sampleValue) {

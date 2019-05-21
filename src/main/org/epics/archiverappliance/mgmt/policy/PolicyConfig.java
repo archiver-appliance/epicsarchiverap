@@ -11,7 +11,7 @@ import org.json.simple.JSONObject;
  *
  */
 public class PolicyConfig {
-	public enum SamplingMethod { SCAN, MONITOR, DONT_ARCHIVE };
+	public enum SamplingMethod { SCAN, MONITOR, DONT_ARCHIVE }
 
 	public static final float DEFAULT_MONITOR_SAMPLING_PERIOD = 1.0f;
 	

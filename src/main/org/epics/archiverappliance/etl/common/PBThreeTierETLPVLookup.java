@@ -138,7 +138,7 @@ public final class PBThreeTierETLPVLookup {
 					if(etlLifeTimeThreadPoolExecutors.size() < (etllifetimeid+1)) { 
 						configlogger.info("Adding ETL schedulers and metrics for lifetimeid " + etllifetimeid);
 						etlLifeTimeThreadPoolExecutors.add(new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(etllifetimeid)));
-						lifetimeId2PVName2LookupItem.put(new Integer(etllifetimeid), new ConcurrentHashMap<String, ETLPVLookupItems>());
+						lifetimeId2PVName2LookupItem.put(Integer.valueOf(etllifetimeid), new ConcurrentHashMap<String, ETLPVLookupItems>());
 						applianceMetrics.add(new ETLMetricsForLifetime(etllifetimeid));
 					}
 					

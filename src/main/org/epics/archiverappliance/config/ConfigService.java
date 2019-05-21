@@ -137,7 +137,7 @@ public interface ConfigService {
 	 */
 	public void postStartup() throws ConfigException;
 	
-	public enum STARTUP_SEQUENCE { ZEROTH_STATE, READY_TO_JOIN_APPLIANCE, POST_STARTUP_RUNNING, STARTUP_COMPLETE}; 
+	public enum STARTUP_SEQUENCE { ZEROTH_STATE, READY_TO_JOIN_APPLIANCE, POST_STARTUP_RUNNING, STARTUP_COMPLETE} 
 
 	/**
 	 * Used for inter-appliance startup checks.

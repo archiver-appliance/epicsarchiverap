@@ -49,7 +49,7 @@ public class ApplianceAggregateInfo {
 							String identity = stMetrics.getName();
 							double storageImpact = etlDest.getPartitionGranularity().getApproxSecondsPerChunk()*typeInfo.getComputedStorageRate();
 							if(!totalStorageImpact.containsKey(identity)) {
-								totalStorageImpact.put(identity, new Long(0));
+								totalStorageImpact.put(identity, Long.valueOf(0));
 							}
 
 							long currentStorageImpact = totalStorageImpact.get(identity);
@@ -142,7 +142,7 @@ public class ApplianceAggregateInfo {
 			if(other.totalStorageImpact.containsKey(key)) {
 				si = si - other.totalStorageImpact.get(key);
 			}
-			retval.totalStorageImpact.put(key, new Long(si));
+			retval.totalStorageImpact.put(key, Long.valueOf(si));
 		}
 		return retval;
 	}

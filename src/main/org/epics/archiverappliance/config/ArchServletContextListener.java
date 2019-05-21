@@ -38,7 +38,7 @@ public class ArchServletContextListener implements ServletContextListener {
 				configService = new DefaultConfigService();
 			} else {
 				configlogger.info("Using " + configServiceImplClassName + " as the config service implementation");
-				configService = (ConfigService) Class.forName(configServiceImplClassName).newInstance();
+				configService = (ConfigService) Class.forName(configServiceImplClassName).getConstructor().newInstance();
 			}
 
 			configService.initialize(sce.getServletContext());			

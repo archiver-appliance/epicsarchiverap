@@ -86,6 +86,7 @@ public class MatlabResponse implements MimeResponse {
 		// Not much to do here for now.
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public void close() {
 		try { 

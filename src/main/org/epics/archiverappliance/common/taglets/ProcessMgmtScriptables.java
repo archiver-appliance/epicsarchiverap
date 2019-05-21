@@ -31,7 +31,7 @@ public class ProcessMgmtScriptables {
 				this.paramName = lines.get(0);
 				this.paramDesc = lines.get(1);
 			}
-		};
+		}
 		
 		class BPLActionDetail { 
 			String path;
@@ -44,7 +44,7 @@ public class ProcessMgmtScriptables {
 				this.actiondesc = lines.get(2);
 			}
 			
-		};
+		}
 		
 //		@StartMethod
 //		/getPVStatus

@@ -274,13 +274,13 @@ public class MetaGet implements Runnable {
 		}
 		
 		if (tempvalue instanceof ScalarValue<?>) {
-			mainMeta.addOtherMetaInfo(fieldName, new Double(
+			mainMeta.addOtherMetaInfo(fieldName, Double.valueOf(
 					((ScalarValue<?>) tempvalue).getValue().doubleValue()));
 		} else if (tempvalue instanceof ScalarStringSampleValue) {
 			mainMeta.addOtherMetaInfo(fieldName,
 					((ScalarStringSampleValue) tempvalue).toString());
 		} else if (tempvalue instanceof VectorValue<?>) {
-			mainMeta.addOtherMetaInfo(fieldName, new Double(
+			mainMeta.addOtherMetaInfo(fieldName, Double.valueOf(
 					((VectorValue<?>) tempvalue).getValue().doubleValue()));
 		} else if (tempvalue instanceof VectorStringSampleValue) {
 			mainMeta.addOtherMetaInfo(fieldName,

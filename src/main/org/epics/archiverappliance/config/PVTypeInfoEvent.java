@@ -6,7 +6,7 @@ package org.epics.archiverappliance.config;
  *
  */
 public class PVTypeInfoEvent {
-	public enum ChangeType { TYPEINFO_ADDED, TYPEINFO_MODIFIED, TYPEINFO_DELETED};
+	public enum ChangeType { TYPEINFO_ADDED, TYPEINFO_MODIFIED, TYPEINFO_DELETED}
 	private String pvName;
 	private PVTypeInfo typeInfo;
 	private ChangeType changeType;

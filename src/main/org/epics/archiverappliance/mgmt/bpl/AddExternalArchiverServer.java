@@ -42,7 +42,7 @@ public class AddExternalArchiverServer implements BPLAction {
 	enum ExternalServerType { 
 		CA_XMLRPC,
 		ARCHAPPL_PBRAW
-	};
+	}
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,ConfigService configService) throws IOException {

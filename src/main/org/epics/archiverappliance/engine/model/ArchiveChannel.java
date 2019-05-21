@@ -296,7 +296,7 @@ abstract public class ArchiveChannel {
 		fieldsAvailableFromDBRControl.addAll(Arrays.asList(new String[] {"PREC", "EGU", "HOPR", "LOPR", "HIHI", "HIGH", "LOW", "LOLO", "DRVH", "DRVL" }));  
 	}
 	public void initializeMetaFieldPVS(final String[] metaFields, final ConfigService configservice, final boolean usePVAccess, final boolean useDBEProperties) throws IOException {
-		HashSet<String> runtTimeFieldsCopy = new HashSet<String>();;
+		HashSet<String> runtTimeFieldsCopy = new HashSet<String>();
 		HashSet<String> nonDBEPropertiesFields = new HashSet<String>();
 		HashSet<String> DBEPropertiesFields = new HashSet<String>();
 		if(metaFields != null && metaFields.length > 0) {

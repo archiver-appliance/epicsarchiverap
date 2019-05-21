@@ -54,19 +54,19 @@ public class PvaMgmtService implements RPCServiceAsync {
 			if (actions.get(uri.getPath().get()) != null) {
 				actions.get(uri.getPath().get()).request(args, callback, configService);
 			} else {
-				new UnsupportedOperationException("The requested operation is not supported " + uri.getPath().get());
+				throw new UnsupportedOperationException("The requested operation is not supported " + uri.getPath().get());
 			}
 		} else if (NTTable.isCompatible(args)) {
 			NTTable ntTable = NTTable.wrap(args);
 			if (actions.get(ntTable.getDescriptor().get()) != null) {
 				actions.get(ntTable.getDescriptor().get()).request(args, callback, configService);
 			} else {
-				new UnsupportedOperationException(
+				throw new UnsupportedOperationException(
 						"The requested operation is not supported " + ntTable.getDescriptor().get());
 			}
 		} else {
 			// Unable to handle the request args
-			new IllegalArgumentException(PVA_MGMT_SERVICE + " only supports request args of type NTURI or NTTable ");
+			throw new IllegalArgumentException(PVA_MGMT_SERVICE + " only supports request args of type NTURI or NTTable ");
 		}
 	}
 

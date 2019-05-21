@@ -119,16 +119,16 @@ public class YearSpanRetrievalTest {
 				previousEpochSeconds = actualSeconds;
 				
 				YearSecondTimestamp actualYST = TimeUtils.convertToYearSecondTimestamp(actualSeconds);
-				YearCount ycount = counts.get(new Short(actualYST.getYear()));
+				YearCount ycount = counts.get(Short.valueOf(actualYST.getYear()));
 				if(ycount == null) {
 					ycount = new YearCount();
-					counts.put(new Short(actualYST.getYear()), ycount);
+					counts.put(Short.valueOf(actualYST.getYear()), ycount);
 				}
 				ycount.count++;
 			}
 			
-			assertTrue(counts.get(new Short((short)2011)).count > 20000);
-			assertTrue(counts.get(new Short((short)2012)).count > 20000);
+			assertTrue(counts.get(Short.valueOf((short)2011)).count > 20000);
+			assertTrue(counts.get(Short.valueOf((short)2012)).count > 20000);
 		} finally {
 			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
 		}

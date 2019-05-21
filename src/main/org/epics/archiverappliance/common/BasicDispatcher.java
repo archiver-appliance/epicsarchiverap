@@ -95,7 +95,7 @@ public class BasicDispatcher {
 		
 		BPLAction action;
 		try {
-			action = actionClass.newInstance();
+			action = actionClass.getConstructor().newInstance();
 			action.execute(req, resp, configService);
 		} catch(Exception e) {
 			logger.error(e.getMessage(), e);

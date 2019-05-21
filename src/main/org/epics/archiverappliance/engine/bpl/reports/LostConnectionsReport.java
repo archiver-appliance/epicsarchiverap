@@ -34,7 +34,7 @@ public class LostConnectionsReport implements BPLAction {
 			this.connectionLossRegainCount = connectionDropCount;
 			this.currentlyConnected = currentlyConnected;
 		}
-	};
+	}
 	
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {

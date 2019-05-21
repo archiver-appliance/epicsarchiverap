@@ -163,8 +163,8 @@ public class DBRTypeTest {
 				try {
 					SampleValue generatedVal = valuegenerator.getSampleValue(dbrType, secondsintoyear);
 					String[] line = new String[5];
-					line[0] = new Long(TimeUtils.getStartOfCurrentYearInSeconds() + secondsintoyear).toString();
-					line[1] = new Integer(secondsintoyear).toString(); // nanos
+					line[0] = Long.valueOf(TimeUtils.getStartOfCurrentYearInSeconds() + secondsintoyear).toString();
+					line[1] = Integer.valueOf(secondsintoyear).toString(); // nanos
 					line[2] = CSVEvent.toString(generatedVal, dbrType);
 					line[3] = "0"; // Status
 					line[4] = "0"; // Severity

@@ -35,6 +35,7 @@ public class SampleV4Client implements ChannelRequester, MonitorRequester {
         channel = channelProvider.createChannel(pvName, this, ChannelProvider.PRIORITY_DEFAULT);
 	}
 
+	@SuppressWarnings("unused")
 	public static void main(String[] args) {
         org.epics.pvaccess.ClientFactory.start();
         logger.info("Registered the pvAccess client factory.");

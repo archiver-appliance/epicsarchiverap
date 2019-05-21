@@ -72,7 +72,7 @@ public class CapacityPlanningBPL {
                         {
                         	 int partitionSecond=tempETLSource.getPartitionGranularity().getApproxSecondsPerChunk();
                               String identifyTmep88= ((StorageMetrics)tempDest).getName();
-                              dataStoresAddingpv.put(identifyTmep88, new Integer(partitionSecond));
+                              dataStoresAddingpv.put(identifyTmep88, Integer.valueOf(partitionSecond));
                               if(isDebug) logger.error(identifyTmep88+"is added into dataStoresAddingpv");
                                
                         }       
@@ -378,11 +378,11 @@ public class CapacityPlanningBPL {
                                         Double TempValue=averagePercentageETL.get(identifypvAdding66);
                                         if(TempValue==null)
                                         {
-                                        	 averagePercentageETL.put(identifypvAdding66,new Double(tempETLMetrics33.estimateETLtimePercentageAfterPVadded));
+                                        	 averagePercentageETL.put(identifypvAdding66, Double.valueOf(tempETLMetrics33.estimateETLtimePercentageAfterPVadded));
                                         	 if(isDebug) logger.error(identifypvAdding66+" is null ");
                                         }else
                                         {
-                                        	 averagePercentageETL.put(identifypvAdding66,new Double(TempValue+tempETLMetrics33.estimateETLtimePercentageAfterPVadded));
+                                        	 averagePercentageETL.put(identifypvAdding66, Double.valueOf(TempValue+tempETLMetrics33.estimateETLtimePercentageAfterPVadded));
                                         	 if(isDebug) logger.error(identifypvAdding66+" is added ");
                                         }
 
@@ -410,7 +410,7 @@ public class CapacityPlanningBPL {
  
                          String identifypvAdding6666=entryTemp99666.getKey();
                          Double tempPercentageETL=entryTemp99666.getValue();
-                         averagePercentageETL.put(identifypvAdding6666, new Double(tempPercentageETL/availableAppliancesNum));
+                         averagePercentageETL.put(identifypvAdding6666, Double.valueOf(tempPercentageETL/availableAppliancesNum));
                          allNormalizationFactor.add(new NormalizationFactor(identifypvAdding6666,tempPercentageETL.floatValue()) );
                          
                         }

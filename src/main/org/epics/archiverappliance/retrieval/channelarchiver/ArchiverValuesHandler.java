@@ -88,7 +88,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
 				}
 			}			
 		}
-	};
+	}
 	
 	/**
 	 * The PV for which we are processing data

@@ -14,7 +14,7 @@ import org.apache.log4j.Logger;
 public class PostProcessors {
 	private static Logger logger = Logger.getLogger(PostProcessors.class.getName());
 	
-	private enum InheritValuesFromPreviousBins {DO_NOT_INHERIT, INHERIT};
+	private enum InheritValuesFromPreviousBins {DO_NOT_INHERIT, INHERIT}
 	private static class PostProcessorImplementation {
 		
 		public PostProcessorImplementation(String key, Class<? extends PostProcessor> clazz) {
@@ -37,7 +37,7 @@ public class PostProcessors {
 	
 	private static void registerPostProcessor(String identity, Class<? extends PostProcessor> clazz) { 
 		try {
-			PostProcessor implementationInstance = clazz.newInstance();
+			PostProcessor implementationInstance = clazz.getConstructor().newInstance();
 			if(implementationInstance instanceof FillNoFillSupport) {
 				logger.debug("Registering the no fill variant of post processor " + identity);
 				postprocessors.add(new PostProcessorImplementation(identity + "Sample", clazz, InheritValuesFromPreviousBins.DO_NOT_INHERIT));
@@ -86,7 +86,7 @@ public class PostProcessors {
 				for(PostProcessorImplementation implementation : postprocessors) {
 					if(postProcessorUserArg.startsWith(implementation.key)) {
 						logger.debug("Found postprocessor for " + postProcessorUserArg);
-						PostProcessor implementationInstance = implementation.clazz.newInstance();
+						PostProcessor implementationInstance = implementation.clazz.getConstructor().newInstance();
 						if(implementation.inheritValuesFromPreviousBins == InheritValuesFromPreviousBins.DO_NOT_INHERIT 
 								&& implementationInstance instanceof FillNoFillSupport) { 
 							logger.debug("Turning off inheriting values from previous bins for empty bins");

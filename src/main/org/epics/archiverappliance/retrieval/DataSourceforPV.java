@@ -59,7 +59,7 @@ public class DataSourceforPV implements Comparable<DataSourceforPV> {
 
 	@Override
 	public int hashCode() {
-		return new Integer(this.lifetimeId).hashCode();
+		return Integer.valueOf(this.lifetimeId).hashCode();
 	}
 
 	@Override

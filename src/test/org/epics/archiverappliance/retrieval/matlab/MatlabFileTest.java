@@ -120,6 +120,7 @@ public class MatlabFileTest {
 	}
 
 
+	@SuppressWarnings("unused")
 	@Test
 	public void testGenerateMatlabFile() throws Exception {
 		short currentYear = TimeUtils.getCurrentYear();

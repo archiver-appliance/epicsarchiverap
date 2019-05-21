@@ -93,7 +93,7 @@ public class ETLPVLookupItems {
 	}
 	@Override
 	public int hashCode() {
-		return this.pvName.hashCode() + new Integer(this.lifetimeorder).hashCode();
+		return this.pvName.hashCode() + Integer.valueOf(this.lifetimeorder).hashCode();
 	}
 
 	public long getTotalTimeWeSpentInETLInMilliSeconds() {

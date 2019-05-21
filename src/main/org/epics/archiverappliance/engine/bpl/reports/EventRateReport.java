@@ -41,7 +41,7 @@ public class EventRateReport implements BPLAction {
 			this.pvName = pvName;
 			this.eventRate = eventRate;
 		}
-	};
+	}
 	
 	private static final Logger logger = Logger.getLogger(EventRateReport.class);
 	@Override

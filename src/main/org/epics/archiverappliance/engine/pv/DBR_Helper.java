@@ -20,7 +20,7 @@ import gov.aps.jca.dbr.DBR_TIME_Enum;
 
 
 
-;
+
 
 
 /** Helper for dealing with DBR.. types.

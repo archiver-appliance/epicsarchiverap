@@ -293,7 +293,7 @@ public class PvaGetPVData implements PvaAction {
 						FirstSamplePP.class.getName());
 				logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
 				try {
-					postProcessor = (PostProcessor) Class.forName(defaultPPClassName).newInstance();
+					postProcessor = (PostProcessor) Class.forName(defaultPPClassName).getConstructor().newInstance();
 				} catch (Exception ex) {
 					logger.error("Exception constructing new instance of post processor " + defaultPPClassName, ex);
 					postProcessor = null;
@@ -700,7 +700,7 @@ public class PvaGetPVData implements PvaAction {
 							FirstSamplePP.class.getName());
 					logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
 					try {
-						postProcessors.set(i, (PostProcessor) Class.forName(defaultPPClassName).newInstance());
+						postProcessors.set(i, (PostProcessor) Class.forName(defaultPPClassName).getConstructor().newInstance());
 					} catch (Exception ex) {
 						logger.error("Exception constructing new instance of post processor " + defaultPPClassName, ex);
 						postProcessors.set(i, null);
@@ -1169,7 +1169,7 @@ public class PvaGetPVData implements PvaAction {
 			PVTypeInfo typeInfo) throws ServletException {
 		PvaMergeDedupConsumer mergeDedupCountingConsumer = null;
 		try {
-			PvaMimeResponse mimeresponse = PvaMimeResponse.class.newInstance();
+			PvaMimeResponse mimeresponse = PvaMimeResponse.class.getConstructor().newInstance();
 			HashMap<String, String> extraHeaders = mimeresponse.getExtraHeaders();
 			logger.info(extraHeaders);
 			mergeDedupCountingConsumer = new PvaMergeDedupConsumer(mimeresponse, resp, result, typeInfo);

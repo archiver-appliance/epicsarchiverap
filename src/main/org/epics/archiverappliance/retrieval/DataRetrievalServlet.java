@@ -385,7 +385,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 				String defaultPPClassName = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.retrieval.DefaultUseReducedPostProcessor", FirstSamplePP.class.getName());
 				logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
 				try {
-					postProcessor = (PostProcessor) Class.forName(defaultPPClassName).newInstance();
+					postProcessor = (PostProcessor) Class.forName(defaultPPClassName).getConstructor().newInstance();
 				} catch(Exception ex) {
 					logger.error("Exception constructing new instance of post processor " + defaultPPClassName, ex);
 					postProcessor = null;
@@ -788,7 +788,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 									FirstSamplePP.class.getName());
 					logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
 					try {
-						postProcessors.set(i, (PostProcessor) Class.forName(defaultPPClassName).newInstance());
+						postProcessors.set(i, (PostProcessor) Class.forName(defaultPPClassName).getConstructor().newInstance());
 					} catch(Exception ex) {
 						logger.error("Exception constructing new instance of post processor " + defaultPPClassName, ex);
 						postProcessors.set(i, null);
@@ -1187,7 +1187,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 //					resp.addHeader("Transfer-Encoding", "chunked");
 //				}
 				logger.info("Using " + mimemappinginfo.mimeresponseClass.getName() + " as the mime response sending " + ctype);
-				MimeResponse mimeresponse = (MimeResponse) mimemappinginfo.mimeresponseClass.newInstance();
+				MimeResponse mimeresponse = (MimeResponse) mimemappinginfo.mimeresponseClass.getConstructor().newInstance();
 				HashMap<String, String> extraHeaders = mimeresponse.getExtraHeaders();
 				if(extraHeaders != null) { 
 					for(Entry<String, String> kv : extraHeaders.entrySet()) { 

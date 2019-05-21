@@ -29,8 +29,8 @@ public class PolicyExecutionTest {
 		DefaultConfigService configService = new ConfigServiceForTests(new File("./src/sitespecific/tests/classpathfiles"));
 		try(InputStream is = configService.getPolicyText()) {
 			HashMap<String, Object> pvInfo = new HashMap<String, Object>();
-			pvInfo.put("eventRate", new Float(1.0));
-			pvInfo.put("storageRate", new Float(1.0));
+			pvInfo.put("eventRate", Float.valueOf(1.0f));
+			pvInfo.put("storageRate", Float.valueOf(1.0f));
 			pvInfo.put("RTYP", "ai");
 			try(ExecutePolicy executePolicy = new ExecutePolicy(configService)) { 
 				PolicyConfig policyConfig = executePolicy.computePolicyForPV("test", pvInfo);
@@ -46,8 +46,8 @@ public class PolicyExecutionTest {
 		for(int i = 0; i < 10000; i++) { 
 			try(InputStream is = configService.getPolicyText()) {
 				HashMap<String, Object> pvInfo = new HashMap<String, Object>();
-				pvInfo.put("eventRate", new Float(1.0));
-				pvInfo.put("storageRate", new Float(1.0));
+				pvInfo.put("eventRate", Float.valueOf(1.0f));
+				pvInfo.put("storageRate", Float.valueOf(1.0f));
 				pvInfo.put("RTYP", "ai");
 				try(ExecutePolicy executePolicy = new ExecutePolicy(configService)) { 
 					PolicyConfig policyConfig = executePolicy.computePolicyForPV("test" + i, pvInfo);

@@ -324,15 +324,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		PVContext.setConfigservice(configservice);
 	}
 	
-	/** Use finalize as last resort for cleanup, but give warnings. */
-	@Override
-	protected void finalize() throws Throwable {
-		super.finalize();
-		if (channel_ref != null) {
-			stop();
-		}
-	}
-	
 	/** @return Returns the name. */
 	@Override
 	public String getName() {

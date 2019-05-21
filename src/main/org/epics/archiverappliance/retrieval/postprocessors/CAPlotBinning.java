@@ -71,7 +71,7 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 				return 0;
 			}
 		}
-	}; 
+	} 
 	
 	private static Logger logger = Logger.getLogger(CAPlotBinning.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
