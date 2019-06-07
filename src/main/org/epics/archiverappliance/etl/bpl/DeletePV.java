@@ -79,7 +79,7 @@ public class DeletePV implements BPLAction {
 								etlSource.markForDeletion(info, context);
 							}
 						} catch(Exception ex) {
-							logger.debug("Exception deleting data for PV " + pvName, ex);
+							logger.error("Exception deleting data for PV " + pvName, ex);
 						}
 					}
 				}
