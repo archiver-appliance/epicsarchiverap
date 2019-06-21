@@ -790,6 +790,8 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
     private void updateCurrentFieldValues(String rootName, PVStructure pvStructure) {
     	for(PVField pvField: pvStructure.getPVFields()) {
+    		String fieldName = pvField.getFieldName();
+    		if(fieldName.equals("value")) continue;
             switch(pvField.getField().getType()) {
             case scalar:
             	this.currentFieldValues.put(makeFullFieldName(rootName , pvField.getFieldName()), getScalarField(pvField));
