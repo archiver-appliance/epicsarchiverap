@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -299,10 +300,20 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	public String getRequesterName() {
 		return this.getClass().getName() + "\tchannelName:" + this.name;
 	}
+	
+	private static HashMap<MessageType, Level> lvl2lvl = getPVAccessMessageType2Log4jLevels();
+	private static HashMap<MessageType, Level> getPVAccessMessageType2Log4jLevels() { 
+		HashMap<MessageType, Level> ret = new HashMap<MessageType, Level>();
+		ret.put(MessageType.info, Level.INFO);
+		ret.put(MessageType.warning, Level.WARN);
+		ret.put(MessageType.error, Level.ERROR);
+		ret.put(MessageType.fatalError, Level.FATAL);
+		return ret;
+	}
 
 	@Override
-	public void message(String arg0, MessageType arg1) {
-		logger.info(arg1);
+	public void message(String message, MessageType mtype) {
+		logger.log(lvl2lvl.get(mtype), message);
 	}
 
 	@Override
