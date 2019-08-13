@@ -411,7 +411,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 		    			return;
 		    		}
 		    		
-		    		
 		    		if(!this.changedFieldValuesForThisEvent.isEmpty()) {
 		    			for(String key: this.changedFieldValuesForThisEvent.keySet()) {
 		    				String value = this.changedFieldValuesForThisEvent.get(key);
@@ -810,18 +809,18 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
             	this.currentFieldValues.put(makeFullFieldName(rootName , pvField.getFieldName()), getScalarField(pvField));
             	break;
             case scalarArray:
-    			throw new UnsupportedOperationException();
+    			break;
             case structure:
             	updateCurrentFieldValues(makeFullFieldName(rootName, pvField.getFieldName()), ((PVStructure)pvField));
                 break;
             case structureArray:
-    			throw new UnsupportedOperationException();
+    			break;
             case union:
-    			throw new UnsupportedOperationException();
+    			break;
             case unionArray:
-    			throw new UnsupportedOperationException();
+    			break;
             default:
-    			throw new UnsupportedOperationException();
+    			break;
             }
     	}
     }
