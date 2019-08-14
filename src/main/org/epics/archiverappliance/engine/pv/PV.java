@@ -146,5 +146,10 @@ public interface PV
 	 * @return String Get any low level info
 	 */
 	public String getLowLevelChannelInfo();
+	
+	/**
+	 * This method is called each time the ArchiveChannel has written changed a DBRTimeEvent into the buffers.
+	 */
+	public void sampleWrittenIntoStores();
     
 }

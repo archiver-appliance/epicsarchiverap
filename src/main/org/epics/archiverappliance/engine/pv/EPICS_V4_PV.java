@@ -435,8 +435,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 
 					fireValueUpdate();
-
-					this.changedFieldValuesForThisEvent.clear();
 										
 				} catch (Exception e) {
 					logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);
@@ -857,4 +855,9 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
     		}
     	}
     }
+
+	@Override
+	public void sampleWrittenIntoStores() {
+		this.changedFieldValuesForThisEvent.clear();
+	}
 }

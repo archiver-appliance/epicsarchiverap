@@ -954,4 +954,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			logger.error("In applyBasicInfo, cannot determine dbr type for " + (dbr != null ? dbr.getClass().getName() : "Null DBR"));
 		}
 	}
+
+	@Override
+	public void sampleWrittenIntoStores() {
+		
+	}
 }

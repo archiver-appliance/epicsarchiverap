@@ -639,6 +639,7 @@ abstract public class ArchiveChannel {
 		if(incrementEventCounts) {
 			this.pvMetrics.addEventCounts();
 			this.pvMetrics.addStorageSize(timeevent);
+			this.pv.sampleWrittenIntoStores();
 		}
 
 		if (SampleBuffer.isInErrorState())
