@@ -390,7 +390,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 		    			
 		    			String fName = bit2fieldNames.get(i);
 		    			// We filter => map => filter => compare => save
-						if(fName.equals("") || fName.startsWith("value") || fName.startsWith("timeStamp.") || fName.startsWith("alarm.")) {
+						if(fName.equals("") || fName.startsWith("value.") || fName.startsWith("timeStamp.") || fName.startsWith("alarm.")) {
 		    				// logger.fine("Filtering out field that is already stored with event " + fName);
 		    			} else {
 		    				logger.debug("Field " + fName + " has changed");
