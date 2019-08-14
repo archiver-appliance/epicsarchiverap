@@ -285,8 +285,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 	@Override
 	public void updateTotalMetaInfo() throws IllegalStateException {
-		// TODO cleanup this interface and implements this.
-		throw new UnsupportedOperationException();
+		// We should not need to do anyting here as we should get updates on any field change for PVAccess and we do not need to do an explicit get. 
 	}
 
 	@Override
