@@ -268,7 +268,7 @@
 	  </junit>
 	</target>
 	
-	<target name="singletest" depends="compile" description="Runs the test you specify on the command line with -Dtest=. For example, ant -Dtest=DBRTypeTest singletest">
+	<target name="singletest" depends="wars" description="Runs the test you specify on the command line with -Dtest=. For example, ant -Dtest=DBRTypeTest singletest">
 	  <junit fork="yes" haltonfailure="yes" printsummary="on" showoutput="yes" maxmemory="4096M">
 	    <batchtest fork="yes">
 	      <fileset dir="${test.dir}">
