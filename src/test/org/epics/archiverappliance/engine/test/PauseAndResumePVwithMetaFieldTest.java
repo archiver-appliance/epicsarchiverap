@@ -129,10 +129,6 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 					tempPVMetrics3.isConnected());
 			archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
-			boolean hasData3 = archiveChannel.getSampleBuffer()
-					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should have data but it don't", hasData3);
 
 			// check meta field
 			for (String metaFieldTemp : metaFields) {
