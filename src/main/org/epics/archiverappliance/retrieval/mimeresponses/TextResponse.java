@@ -15,6 +15,7 @@ import java.util.HashMap;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
@@ -47,7 +48,7 @@ public class TextResponse implements MimeResponse, ExceptionCommunicator {
 	}
 
 	@Override
-	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		out.println("Beginning data for " + pv);
 	}
 	

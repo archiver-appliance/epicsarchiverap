@@ -15,6 +15,7 @@ import java.util.HashMap;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 
 /**
  * Test response of action script+XML with large data sets
@@ -47,7 +48,7 @@ public class FlxXMLResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 	}
 	
 	public void swicthingToStream(EventStream strm) {

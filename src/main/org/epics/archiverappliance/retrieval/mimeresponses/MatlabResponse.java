@@ -12,6 +12,7 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.SampleValue;
@@ -72,7 +73,7 @@ public class MatlabResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		headerStruct.setField("source", new MLChar("source", "Archiver appliance"));
 		headerStruct.setField("pvName", new MLChar("pvName", pv));
 		headerStruct.setField("from", new MLChar("from", TimeUtils.convertToISO8601String(start)));

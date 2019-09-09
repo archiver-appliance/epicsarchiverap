@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
@@ -97,10 +98,10 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 		resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), resultStruct);
 	}
 
-	public void processingPV(String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		logNumbersAndCollectTotal();
 		this.startTimeStamp = start;
-		mimeresponse.processingPV(PV, start, end, streamDesc);
+		mimeresponse.processingPV(retrievalContext, PV, start, end, streamDesc);
 		pvName = PV;
 		resetForNextPV();
 	}

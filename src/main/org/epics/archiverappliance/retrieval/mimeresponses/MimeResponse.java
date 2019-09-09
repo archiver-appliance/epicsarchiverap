@@ -13,6 +13,7 @@ import java.util.HashMap;
 
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.retrieval.EventConsumer;
 
 /**
@@ -41,7 +42,7 @@ public interface MimeResponse extends EventConsumer {
 	 * @param end Timestamp
 	 * @param streamDesc  Could be null if we have no data in first store we hit.
 	 */
-	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc);
+	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc);
 	public void swicthingToStream(EventStream strm);
 	public void close();
 	

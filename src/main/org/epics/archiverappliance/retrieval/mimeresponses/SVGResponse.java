@@ -15,6 +15,7 @@ import java.util.HashMap;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 
 /**
  * @author mshankar
@@ -44,7 +45,7 @@ public class SVGResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		viewboxX = start.getTime()/1000;
 		viewboxW = (end.getTime()/1000) - viewboxX;
 		double minY = -1.0;

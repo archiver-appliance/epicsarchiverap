@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.json.simple.JSONValue;
@@ -85,7 +86,7 @@ public class QWResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		if(firstPV) {
 			firstPV = false;
 		} else {
@@ -94,7 +95,7 @@ public class QWResponse implements MimeResponse {
 		}
 		RemotableEventStreamDesc remoteDesc = (RemotableEventStreamDesc) streamDesc;
 		StringWriter buf = new StringWriter();
-		buf.append("{ \"meta\": { \"name\": \"").append(pv).append("\" ");
+		buf.append("{ \"meta\": { \"name\": \"").append(retrievalContext.getPvNameFromRequest()).append("\" ");
 		if(streamDesc != null) {
 			buf.append(", \"waveform\": ").append(Boolean.toString(remoteDesc.getArchDBRType().isWaveForm())).append(" ");
 			HashMap<String, String> headers = remoteDesc.getHeaders();
