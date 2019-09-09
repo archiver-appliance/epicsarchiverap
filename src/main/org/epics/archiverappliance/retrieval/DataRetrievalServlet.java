@@ -247,12 +247,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 			return;
 		}
 		
-		if(pvName.endsWith(".VAL")) { 
-			int len = pvName.length();
-			pvName = pvName.substring(0, len-4);
-			logger.info("Removing .VAL from pvName for request giving " + pvName);
-		}
-
 		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
 		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 1);
 		if(endTimeStr != null) {
@@ -340,7 +334,12 @@ public class DataRetrievalServlet  extends HttpServlet {
 		}
 		
 		PostProcessor postProcessor = PostProcessors.findPostProcessor(postProcessorUserArg);
-
+		
+		if(pvName.endsWith(".VAL")) { 
+			int len = pvName.length();
+			pvName = pvName.substring(0, len-4);
+			logger.info("Removing .VAL from pvName for request giving " + pvName);
+		}
 
 		PVTypeInfo typeInfo  = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
 		pmansProfiler.mark("After PVTypeInfo");
@@ -639,12 +638,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 			return;
 		}
 		
-		for (String pvName : pvNames) if (pvName.endsWith(".VAL")) { 
-			int len = pvName.length();
-			pvName = pvName.substring(0, len-4);
-			logger.info("Removing .VAL from pvName for request giving " + pvName);
-		}
-
 		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
 		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 1);
 		if(endTimeStr != null) {
@@ -743,6 +736,14 @@ public class DataRetrievalServlet  extends HttpServlet {
 				logger.info("After parsing the function call syntax pvName is " + pvNames.get(i) + " and postProcessorUserArg is " + postProcessorUserArg);
 			}
 			postProcessors.add(PostProcessors.findPostProcessor(postProcessorUserArg));
+		}
+		
+		for (int i = 0; i < pvNames.size(); i++) {
+			if (pvNames.get(i).endsWith(".VAL")) { 
+				int len = pvNames.get(i).length();
+				pvNames.set(i, pvNames.get(i).substring(0, len-4));
+				logger.info("Removing .VAL from pvName for request giving " + pvNames.get(i));
+			}
 		}
 		
 		List<PVTypeInfo> typeInfos  = new ArrayList<PVTypeInfo>(pvNames.size());
