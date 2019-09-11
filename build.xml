@@ -262,6 +262,7 @@
 	  	  <enable/>
 	  	</assertions>
 	  	<jvmarg value="-Dlog4j.configuration=log4j.properties"/>
+	  	<jvmarg value="-Dwebdriver.gecko.driver=./lib/test/geckodriver-v0.24.0-linux64/geckodriver"/>
 	  	<env key="ARCHAPPL_SHORT_TERM_FOLDER" path="./sts"/>
 	  	<env key="ARCHAPPL_MEDIUM_TERM_FOLDER" path="./mts"/>
 	  	<env key="ARCHAPPL_LONG_TERM_FOLDER" path="./lts"/>
@@ -331,6 +332,7 @@
 	  	  <enable/>
 	  	</assertions>
 	  	<jvmarg value="${log4jprops}"/>
+	  	<jvmarg value="-Dwebdriver.gecko.driver=./lib/test/geckodriver-v0.24.0-linux64/geckodriver"/>
 	  	<jvmarg value="-Xdebug"/>
 	  	<jvmarg value="-Xrunjdwp:transport=dt_socket,address=17667,server=y,suspend=y"/>
 	  </junit>
