@@ -235,9 +235,8 @@ public class MgmtRuntimeState {
 	
 	
 	private void startArchivePVRequests() { 
-		logger.info("Starting archive requests ");
-
 		int initialDelayInSeconds = configService.getInitialDelayBeforeStartingArchiveRequestWorkflow();
+		configlogger.info("Starting archive requests after an initial delay (in s) of " + initialDelayInSeconds);
 		
 		for(String pvNameFromPersistence : configService.getArchiveRequestsCurrentlyInWorkflow()) {
 			try { 
@@ -252,8 +251,8 @@ public class MgmtRuntimeState {
 			
 			@Override
 			public void run() {
-				logger.info("Running the archive PV workflow");
 				LinkedList<ArchivePVState> archivePVStates = new LinkedList<ArchivePVState>(currentPVRequests.values());
+				logger.info("Running the archive PV workflow with " + archivePVStates.size() + " requests pending");
 				Collections.sort(archivePVStates, new Comparator<ArchivePVState>() {
 					@Override
 					public int compare(ArchivePVState state0, ArchivePVState state1) {
@@ -272,7 +271,7 @@ public class MgmtRuntimeState {
 					String pvName = runWorkFlowForPV.getPvName();
 					// It takes a few minutes for the workflow to complete; so you should be setting this to a reasonably high value.
 					if(abortArchiveWorkflowInMins > 0 
-							&& runWorkFlowForPV.getCurrentState() == ArchivePVStateMachine.METAINFO_REQUESTED 
+							&& runWorkFlowForPV.getCurrentState() == ArchivePVStateMachine.METAINFO_GATHERING 
 							&& (TimeUtils.now().getTime() - runWorkFlowForPV.getMetaInfoRequestedSubmitted().getTime()) > abortArchiveWorkflowInMins*60*1000) {
 						logger.warn("Aborting PV after user specified timeout " + pvName);
 						try {

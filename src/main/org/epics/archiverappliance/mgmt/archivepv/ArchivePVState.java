@@ -31,7 +31,7 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
  */
 public class ArchivePVState {
 	private static Logger logger = Logger.getLogger(ArchivePVState.class.getName());
-	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED, FINISHED}
+	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_GATHERING, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED, FINISHED}
 
 	private ArchivePVStateMachine currentState = ArchivePVStateMachine.START;
 	private String pvName;
@@ -72,10 +72,15 @@ public class ArchivePVState {
 					JSONEncoder<UserSpecifiedSamplingParams> encoder = JSONEncoder.getEncoder(UserSpecifiedSamplingParams.class);
 					pubSubEvent.setEventData(encoder.encode(userSpec).toJSONString());
 					configService.getEventBus().post(pubSubEvent);
+					currentState = ArchivePVStateMachine.METAINFO_REQUESTED;
 					return;	
 				}
 				case METAINFO_REQUESTED: {
-					logger.debug("Metainfo has been requested for " + pvName);
+					logger.debug("A request to gather metainfo has been published for the PV " + pvName);
+					return;
+				}
+				case METAINFO_GATHERING: {
+					logger.debug("Metainfo has been requested and is being gathered for " + pvName);
 					return;
 				}
 				case METAINFO_OBTAINED: {
@@ -271,7 +276,7 @@ public class ArchivePVState {
 	}
 
 	public boolean hasNotConnectedSoFar() {
-		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.START) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
+		return this.currentState.equals(ArchivePVState.ArchivePVStateMachine.START) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_REQUESTED) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.METAINFO_GATHERING) || this.currentState.equals(ArchivePVState.ArchivePVStateMachine.ABORTED);
 	}
 
 	/**
@@ -301,7 +306,7 @@ public class ArchivePVState {
 	
 	public void metaInfoRequestAcknowledged() { 
 		metaInfoRequestedSubmitted = TimeUtils.now();
-		this.currentState = ArchivePVStateMachine.METAINFO_REQUESTED;
+		this.currentState = ArchivePVStateMachine.METAINFO_GATHERING;
 	}
 	
 	public void metaInfoObtained(MetaInfo metaInfo) { 
