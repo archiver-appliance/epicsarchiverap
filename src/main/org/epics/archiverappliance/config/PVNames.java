@@ -311,7 +311,7 @@ public class PVNames {
 	
 	
 	
-	private static Pattern validPVName = Pattern.compile("[a-zA-Z0-9\\_\\-\\+\\:\\[\\]\\<\\>\\;\\.\\/\\,\\#\\{\\}]+");
+	private static Pattern validPVName = Pattern.compile("[a-zA-Z0-9\\_\\-\\+\\:\\[\\]\\<\\>\\;\\.\\/\\,\\#\\{\\}\\^]+");
 	/**
 	 * Check to see if the pvName has valid characters.
 	 * For certain characters, EPICS will not throw exceptions but generate spurious traffic which is hard to detect.
@@ -322,6 +322,7 @@ public class PVNames {
 	 * And we add the ',' character because some folks at LBL use this.
 	 * And we add the '#' character because some folks at FRIB use this.
 	 * And we add the '{' and the '}' character because some folks at BNL use this.
+	 * And we add the '^' character because some folks at LNL use this.
 	 * @param pvName The name of PV.
 	 * @return boolean True or False
 	 */
