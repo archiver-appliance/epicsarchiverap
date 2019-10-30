@@ -39,7 +39,6 @@ public class PVNameRegexTest {
 		pvName = "archappl:ar!h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
 		pvName = "archappl:ar$h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
 		pvName = "archappl:ar%h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
-		pvName = "archappl:ar^h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
 		pvName = "archappl:ar*h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
 		pvName = "archappl:ar\\h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
 		pvName = "archappl:ar|h:sine"; assertTrue("Invalid pvName is deemed valid " + pvName, !PVNames.isValidPVName(pvName));
