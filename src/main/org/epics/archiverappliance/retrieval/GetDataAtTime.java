@@ -284,26 +284,27 @@ public class GetDataAtTime {
 					List<Callable<EventStream>> streams = storagePlugin.getDataForPV(context, pvName, startTime, atTime, postProcessor);
 					if(streams != null) {
 						for(Callable<EventStream> stcl : streams) {
-							EventStream stream = stcl.call();
-							for(Event e : stream) {
-								dEv = (DBRTimeEvent) e;
-								if(dEv.getEventTimeStamp().before(atTime) || dEv.getEventTimeStamp().equals(atTime)) {
-									if(potentialEvent != null) {
-										if(dEv.getEventTimeStamp().after(potentialEvent.getEventTimeStamp())) {
-											potentialEvent = (DBRTimeEvent) dEv.makeClone();							
+							try(EventStream stream = stcl.call()) {
+								for(Event e : stream) {
+									dEv = (DBRTimeEvent) e;
+									if(dEv.getEventTimeStamp().before(atTime) || dEv.getEventTimeStamp().equals(atTime)) {
+										if(potentialEvent != null) {
+											if(dEv.getEventTimeStamp().after(potentialEvent.getEventTimeStamp())) {
+												potentialEvent = (DBRTimeEvent) dEv.makeClone();							
+											}
+										} else {
+											potentialEvent = dEv;
 										}
 									} else {
-										potentialEvent = dEv;
-									}
-								} else {
-									if(potentialEvent != null) {
-										HashMap<String, Object> evnt = new HashMap<String, Object>();
-										evnt.put("secs", potentialEvent.getEpochSeconds());
-										evnt.put("nanos", potentialEvent.getEventTimeStamp().getNanos());
-										evnt.put("severity", potentialEvent.getSeverity());
-										evnt.put("status", potentialEvent.getStatus());
-										evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
-										return new PVWithData(nameFromUser, evnt);
+										if(potentialEvent != null) {
+											HashMap<String, Object> evnt = new HashMap<String, Object>();
+											evnt.put("secs", potentialEvent.getEpochSeconds());
+											evnt.put("nanos", potentialEvent.getEventTimeStamp().getNanos());
+											evnt.put("severity", potentialEvent.getSeverity());
+											evnt.put("status", potentialEvent.getStatus());
+											evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
+											return new PVWithData(nameFromUser, evnt);
+										}
 									}
 								}
 							}
