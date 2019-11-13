@@ -44,10 +44,28 @@
 <h3>Prerequisites</h3>
 Please see the <a href="details.html#SystemRequirements">details</a> page for prerequisites to build and test the EPICS Archiver Appliance.
 An installation of Tomcat is required to build successfully; this is located using the environment variable <code>TOMCAT_HOME</code>.
-Use something like
-<figure>
-<img class="img-responsive" src="images/tomcathome.png"/>
-</figure> 
+Use something like <pre class="bash_output"><code>[ epicsarchiverap ]$ echo $TOMCAT_HOME
+/opt/local/tomcat/latest
+[ epicsarchiverap ]$ ls -l $TOMCAT_HOME/
+drwxr-x---   3 mshankar cd  4096 Oct 29 18:25 bin
+-rw-r-----   1 mshankar cd 19182 May  3  2019 BUILDING.txt
+drwx------   3 mshankar cd   254 Jul 29 14:41 conf
+drwx------   2 mshankar cd   238 May 22 15:43 conf_from_install
+drwxr-xr-x+  2 mshankar cd   238 May 22 15:44 conf_original
+-rw-r-----   1 mshankar cd  5407 May  3  2019 CONTRIBUTING.md
+drwxr-x---   2 mshankar cd  4096 Sep 17 18:13 lib
+-rw-r-----   1 mshankar cd 57092 May  3  2019 LICENSE
+drwxr-x---   2 mshankar cd   193 Nov 11 16:58 logs
+-rw-r-----   1 mshankar cd  2333 May  3  2019 NOTICE
+-rw-r-----   1 mshankar cd  3255 May  3  2019 README.md
+-rw-r-----   1 mshankar cd  6852 May  3  2019 RELEASE-NOTES
+-rw-r-----   1 mshankar cd 16262 May  3  2019 RUNNING.txt
+drwxr-x---   2 mshankar cd    30 Sep 17 18:19 temp
+drwxr-x---  11 mshankar cd   205 Nov 11 16:58 webapps
+drwxr-x---   3 mshankar cd    22 May 22 15:55 work
+[ epicsarchiverap ]$</code></pre> 
+
+
 By default, Tomcat sets up a HTTP listener on port 8080.
 You can change this in the Tomcat server.xml to avoid collision with other folks running Tomcat.
 For example, here I have changed this to 17665.
@@ -75,18 +93,24 @@ We use Eclipse as the IDE; the Mars version of Eclipse has the support for .
 We use <a href="http://ant.apache.org/">Apache Ant</a> for building. 
 If you have a Eclipse workspace called <code>workspace</code> and the EPICS archiver appliance code checked out into a folder called <code>epicsarchiverap</code>, 
 then the build script is run by calling ant from within <code>workspace/epicsarchiverap</code>.
-<figure>
-<img class="img-responsive" src="images/build_ant.png"/>
-<figcaption>Using ant to initiate a build.</figcaption>
-</figure> 
+<pre class="bash_output"><code>[ epicsarchiverap ]$ ant
+Buildfile: /workspace/epicsarchiverap/build.xml
+     [echo] Building the archiver appliance for the site tests
+...
+wars:
+      [tar] Building tar: /workspace/archappl_v0.0.1_SNAPSHOT_13-November-2019T14-48-26.tar.gz
 
+BUILD SUCCESSFUL
+Total time: 21 seconds
+[ epicsarchiverap ]$ 
+</code></pre>
 
 The default target builds the install package and the various wars and places them into the parent folder.
-<figure>
-<img class="img-responsive" src="images/built_wars.png"/>
-</figure> 
-</section>
-
+<pre class="bash_output"><code>
+[ epicsarchiverap ]$ ls -ltra ../archappl_*.tar.gz
+-rw-r--r-- 1 mshankar cd 154000860 Nov 13 14:48 ../archappl_v0.0.1_SNAPSHOT_13-November-2019T14-48-26.tar.gz
+[ epicsarchiverap ]$ 
+</code></pre>
 
 <section>
 <h3>Deploying</h3>

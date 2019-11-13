@@ -83,10 +83,10 @@ Here are the main features.
 These are the prerequisites for the EPICS archiver appliance.
 <ul>
 <li>A recent version of Linux, definitely 64 bit Linux for production systems. If using RedHat, we should aim for RedHat 6.1.</li>
-<li>JDK 1.12 - definitely the 64 bit version for production systems. We need the JDK, <b>not</b> the JRE.</li>
+<li>JDK 1.12+ - definitely the 64 bit version for production systems. We need the JDK, <b>not</b> the JRE.</li>
 <li>A recent version of Tomcat 9.x; preferably <code>apache-tomcat-9.0.20</code> or later.</li>
 <li>The management UI works best with a recent version of Firefox or Chrome.</li>
-<li>By default, the EPICS archiver appliance uses a bundled version of <a href="https://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22org.epics%22%20AND%20a%3A%22caj%22">CAJ</a>.</li>
+<li>By default, the EPICS archiver appliance uses a bundled versions of the Java CA and PVA libraries from <a href="https://github.com/epics-base/epicsCoreJava">EPICS base</a>.</li>
 </ul>
 
 Optionally, we'd need
@@ -201,13 +201,16 @@ The appliances maintain a small set of metrics during their operation and use th
 
 <section id="scripting">
 <h3>Scripting</h3>
-The archiver appliance comes with a web interface that has support for various business processes. 
-The web interface communicates with the server principally using JSON/HTTP. 
-The same web service calls are also available for use from external scripting tools like Python. 
-<figure>
-<img class="img-responsive" src="images/pythonscript.png"/>
-<figcaption>A sample python script that prints out all the PVs in the cluster of appliances.</figcaption>
-</figure> 
+The archiver appliance comes with a web UI that has support for various business processes like adding PV's to the archivers etc. 
+The web UI communicates with the server principally using JSON/HTTP web service calls. 
+The same web service calls are also available for use from external scripting tools like Python.
+<pre class="bash_output"><code>#!/usr/bin/env python
+
+import requests
+
+resp = requests.get("http://archappl.slac.stanford.edu/mgmt/bpl/getAllPVs?pv=VPIO:IN20:111:VRA*")
+print("\n".join(resp.json()))</code></pre>
+ 
 Click <a href="api/mgmt_scriptables.html" target="_blank">here</a> for a list of business logic accesible thru scripting.
 </section>
 

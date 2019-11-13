@@ -25,6 +25,23 @@ img.imageshowingstep {
 	margin-bottom: 0.25em;
 }
 
+pre.bash_output {
+	background: black;
+	color: cyan;
+	font-family: monospace;
+}
+
+span.rm_txt {
+	text-decoration: line-through;
+	font-style: italic;
+	color: red;
+}
+
+span.add_txt {
+	font-weight: bold; 	
+	color: orange;
+}
+
 div.noteafterlist { 
 	margin-top: 0.5em;
 }

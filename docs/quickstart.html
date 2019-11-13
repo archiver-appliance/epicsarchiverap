@@ -59,20 +59,50 @@ To simplify matters, we are not persisting configuration and therefore there are
 Here are the steps to get started quickly.
 <ol>
 <li>Make sure you have a recent version of JDK 1.12 by running <code>java -version</code>. You should see something like so
-<img class="img-responsive" class="imageshowingstep" src="images/javaversion.png"/>
+<pre class="bash_output"><code>[ quickstart_test ]$ java -version 
+openjdk version "12.0.1" 2019-04-16
+OpenJDK Runtime Environment (build 12.0.1+12)
+OpenJDK 64-Bit Server VM (build 12.0.1+12, mixed mode, sharing)
+[ quickstart_test ]$ </code></pre>
 </li>
 <li>Download the installation package to a Linux machine into a brand new folder. This should give you a tar.gz file like <code>archappl_vx.x.x.tar.gz</code>.</li>
-<li>Download a recent version of Tomcat 7.x. into the same folder. You should now have two files in this folder like so
-<img class="img-responsive" class="imageshowingstep" src="images/targzs.png"/>
+<li>Download a recent version of Tomcat 9.x. into the same folder. You should now have two files in this folder like so
+<pre class="bash_output"><code>[ quickstart_test ]$ ls -l
+total 160996
+-rw-r--r-- 1 mshankar cd  10851264 Nov 13 08:08 apache-tomcat-9.0.20.tar.gz
+-rw-r--r-- 1 mshankar cd 154003400 Nov 13 08:08 archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz
+[ quickstart_test ]$ </code></pre>
 </li>
 <li>Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar into 4 WAR files and a bash script like so
-<img class="img-responsive" class="imageshowingstep" src="images/expandedtargz.png"/>
+<pre class="bash_output"><code>[ quickstart_test ]$ tar zxf archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz 
+[ quickstart_test ]$ ls -l
+total 312440
+-rw-r--r-- 1 mshankar cd     11358 Sep  9 16:03 Apache_2.0_License.txt
+-rw-r--r-- 1 mshankar cd  10851264 Nov 13 08:08 apache-tomcat-9.0.20.tar.gz
+-rw-r--r-- 1 mshankar cd 154003400 Nov 13 08:08 archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz
+-rw-r--r-- 1 mshankar cd  37665101 Nov 12 21:10 engine.war
+-rw-r--r-- 1 mshankar cd  36181760 Nov 12 21:10 etl.war
+drwxr-xr-x 2 mshankar cd       148 Nov 13 08:10 install_scripts
+-rw-r--r-- 1 mshankar cd      3520 Sep  9 16:03 LICENSE
+-rw-r--r-- 1 mshankar cd  43139397 Nov 12 21:10 mgmt.war
+-rw-r--r-- 1 mshankar cd      2009 Sep  9 16:03 NOTICE
+-rwxr-xr-x 1 mshankar cd      8862 Sep  9 16:03 quickstart.sh
+-rw-r--r-- 1 mshankar cd       141 Nov 12 21:10 RELEASE_NOTES
+-rw-r--r-- 1 mshankar cd  38045560 Nov 12 21:10 retrieval.war
+drwxr-xr-x 3 mshankar cd        46 Nov 13 08:10 sample_site_specific_content
+[ quickstart_test ]$ </code></pre>
 </li>
 <li>Run the script like so
-<img class="img-responsive" class="imageshowingstep" src="images/runqascript.png"/>
+<pre class="bash_output"><code>[ quickstart_test ]$ ./quickstart.sh apache-tomcat-9.0.20.tar.gz 
+
+</code></pre>
 </li>
-<li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <samp>All components in this appliance have started up. We should be ready to start accepting UI requests</samp> like so
-<img class="img-responsive" class="imageshowingstep" src="images/readyforUIrequests.png"/>
+<li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <samp> All components in this appliance have started up. We should be ready to start accepting UI requests</samp> like so
+<pre class="bash_output"><code>... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp ENGINE
+... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp ETL
+... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp RETRIEVAL
+... INFO  config.org.epics.archiverappliance.mgmt.MgmtRuntimeState  - All components in this appliance have started up. We should be ready to start accepting UI requests
+</code></pre>
 </li>
 <li>Open a browser to <code>http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code> and you should see the home screen for your archiver appliance.</li>
 <li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away. 

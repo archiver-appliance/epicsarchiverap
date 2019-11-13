@@ -32,10 +32,11 @@ fi
 
 export PATH=${JAVA_HOME}/bin:${PATH}
 
-java -version 2>&1 | grep 'version "1.8'
+java -version 2>&1 | grep --regexp 'version \"[1-9][2-9]'; echo $?
 if (( ( $? != 0 ) ))
 then
-  echo "Cannot find the string 1.8 in java -version. Please set JAVA_HOME to point to a 1.8 JDK"
+  java -version
+  echo "This seems to be a older JDK. Please point your JAVA_HOME to a 1.12+ JDK for best results."
   exit 1
 fi
 
