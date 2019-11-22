@@ -82,18 +82,34 @@ Log levels are typically controlled using a <code>log4j.properties</code> file i
 <div>What's the difference between SCAN and MONITOR?</div>
 <div>These are minor variations of the similar concepts in the ChannelArchiver and other archivers. Both SCAN and MONITOR use camonitors.
 <ul>
-<li>
-For MONITOR, we estimate the amount of storage needed using the sampling period and fill it up.
-The capacity is computed using something like so (see <code>ArchiveEngine.java:addChannel</code>)
+<li>For MONITOR, we estimate the number of samples based the PV's sampling period, allocate a buffer to accommodate this many samples and fill it up.
+The buffer's capacity is computed using something like so (see <code>ArchiveEngine.java:addChannel</code>)
 <pre>
 <code>int buffer_capacity = ((int) Math.round(Math.max((write_period/pvSamplingPeriod)*sampleBufferCapacityAdjustment, 1.0))) + 1;</code>
 </pre> 
+<ul><li>pvSamplingPeriod is the sampling_period from the PV's PVTypeInfo</li><li>write_period is the engine's write period from archappl.properties ( where it's called secondsToBuffer ) ; this defaults to 10 seconds.</li><li>sampleBufferCapacityAdjustment is a system-wide adjustment for the buffer side and is set in archappl.properties.</li></ul>
 For example, if the <code>write_period</code> is 10 seconds, and the <code>pvSamplingPeriod</code> is 1 second, we would allocate <code>10/1 + 1 = 11</code> samples for the default <code>sampleBufferCapacityAdjustment</code>.
-Thus, in the case where the PV is changing at a rate greater than 1Hz, you should expect 11 samples, a gap where we run out of space and throw away samples, then 11 samples when we switch buffers and so on. 
+Thus, in the case where the PV is changing at a rate greater than 1Hz, you should expect 11 samples, a gap where we run out of space and throw away samples, then 11 samples when we switch buffers and so on.
+For example, here's a 10Hz PV being MONITOR'ed at 1 second.<pre><code>Nov/22/2019 08:30:06 -08:00	-0.6954973468157408	0	0	717169462
+... Buffer switch drop samples here
+Nov/22/2019 08:30:15 -08:00	0.13051475393574385	0	0	717195856
+Nov/22/2019 08:30:15 -08:00	0.1404225266840449	0	0	816931850
+Nov/22/2019 08:30:15 -08:00	0.15031625729669593	0	0	917194635
+Nov/22/2019 08:30:16 -08:00	0.1601949564088804	0	0	17161946
+Nov/22/2019 08:30:16 -08:00	0.17005763615891936	0	0	117100329
+Nov/22/2019 08:30:16 -08:00	0.17990331028705667	0	0	217167979
+Nov/22/2019 08:30:16 -08:00	0.1897309942340842	0	0	317064449
+Nov/22/2019 08:30:16 -08:00	0.19953970523979697	0	0	416941153
+Nov/22/2019 08:30:16 -08:00	0.2093284624412683	0	0	516970909
+Nov/22/2019 08:30:16 -08:00	0.21909628697093528	0	0	617021076
+Nov/22/2019 08:30:16 -08:00	0.22884220205448483	0	0	717085134
+.... Buffer switch drop samples here
+Nov/22/2019 08:30:25 -08:00	0.9047907734809058	1	4	717192286</code></pre>
+ 
 </li>
 <li>
 For SCAN, the engine updates one slot/variable at whatever rate is sent from the IOC. 
-And then a separate thread picks the value of the one slot/variable every sampling period and writes it out.
+And then a separate thread periodically picks the value of this one slot/variable every <code>pvSamplingPeriod</code> seconds and writes it out to the buffers.
 </li>
 </ul>
 
