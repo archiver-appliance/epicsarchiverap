@@ -59,7 +59,7 @@ public class ApplianceMetricsDetails implements BPLAction {
 				GetUrlContent.combineJSONArrays(result, engineStatusVars);
 			}
 			
-			logger.debug("Asking ETL using " + info.getEngineURL() + applianceDetailsURLSnippet);
+			logger.debug("Asking ETL using " + info.getEtlURL() + applianceDetailsURLSnippet);
 			JSONArray etlStatusVars = GetUrlContent.getURLContentAsJSONArray(info.getEtlURL() + applianceDetailsURLSnippet );
 			if(etlStatusVars == null) {
 				logger.warn("No status vars from ETL using URL " + info.getEtlURL() + applianceDetailsURLSnippet);
