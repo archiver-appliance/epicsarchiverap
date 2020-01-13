@@ -441,7 +441,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 					if(this.isDBEProperties && dbePropertiesSubscription == null) { 
 						logger.debug("Adding a DBE_PROPERTIES monitor for " + this.name);
 						dbePropertiesSubscription = channel.addMonitor(DBR_Helper.getControlType(channel.getFieldType()),
-								channel.getElementCount(), MonitorMask.PROPERTY.getMask(), new MonitorListener() {
+								1, MonitorMask.PROPERTY.getMask(), new MonitorListener() {
 									
 									@Override
 									public void monitorChanged(MonitorEvent monitorEvent) {
