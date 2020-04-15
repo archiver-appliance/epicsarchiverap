@@ -134,7 +134,7 @@ public class RetrievalState {
 				// We try to parse the how to make sure it is an int.
 				Integer.parseInt(caHowStr);
 			}
-			
+			howStr = caHowStr;
 		} catch(Exception ex) {
 			logger.warn("Exception parsing ca_how", ex);
 		}
