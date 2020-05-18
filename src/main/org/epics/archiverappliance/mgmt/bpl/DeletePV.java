@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -77,6 +78,10 @@ public class DeletePV implements BPLAction {
 			}
 			return;
 		}
+		
+		HashMap<String, String> pvStatus = new HashMap<String, String>();
+		
+		pvStatus.put("Engine start", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
 
 		String engineDeletePVURL = info.getEngineURL() + "/deletePV" 
 				+ "?pv=" + URLEncoder.encode(pvName, "UTF-8")
@@ -92,19 +97,27 @@ public class DeletePV implements BPLAction {
 			return;
 		}
 
+		pvStatus.put("Engine end", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
+
 		logger.info("Stopping archiving for PV " + pvName + (deleteData ? " and also deleting existing data" : " but keeping existing data"));
 
+		pvStatus.put("ETL start", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
 		String etlDeletePVURL = info.getEtlURL() + "/deletePV" 
 				+ "?pv=" + URLEncoder.encode(pvName, "UTF-8")
 				+ "&deleteData=" + Boolean.toString(deleteData); 
 		logger.info("Stopping archiving pv in ETL using URL " + etlDeletePVURL);
 
-		JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(etlDeletePVURL);
+		JSONObject etlStatus = GetUrlContent.getURLContentAsJSONObject(etlDeletePVURL);
+		pvStatus.put("ETL end", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
+		GetUrlContent.combineJSONObjects(pvStatus, etlStatus);
 		if(pvStatus != null && !pvStatus.equals("")) {
 			logger.debug("Removing pv " + pvName + " from the cluster");
+			pvStatus.put("Start removing PV from cluster", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
 			configService.removePVFromCluster(pvName);
+			pvStatus.put("Done removing PV from cluster", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
 			
 			logger.debug("Removing aliases for pv " + pvName + " from the cluster");
+			pvStatus.put("Start removing aliases from cluster", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
 			List<String> aliases = configService.getAllAliases();
 			for(String alias : aliases) { 
 				String realNameForAlias = configService.getRealNameForAlias(alias);
@@ -113,6 +126,7 @@ public class DeletePV implements BPLAction {
 					configService.removeAlias(alias, realNameForAlias);
 				}
 			}
+			pvStatus.put("Done removing aliases from cluster", TimeUtils.convertToHumanReadableString(System.currentTimeMillis()/1000));
 
 			
 			try(PrintWriter out = resp.getWriter()) {
