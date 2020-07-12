@@ -37,8 +37,10 @@
 	<classpathentry kind="lib" path="lib/test/selenium-client-combined-3.141.59.jar"/>
 	<classpathentry kind="lib" path="lib/guava-27.1-jre.jar"/>
 	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.9.jar"/>
-	<classpathentry kind="lib" path="lib/epics-pvaccess-5.1.3.jar"/>
-	<classpathentry kind="lib" path="lib/epics-pvdata-6.1.3.jar"/>
-	<classpathentry kind="lib" path="lib/jca-2.4.3.jar"/>
+	<classpathentry kind="lib" path="lib/epics-ntypes-0.3.5.jar"/>
+	<classpathentry kind="lib" path="lib/epics-pvaccess-5.1.5.jar"/>
+	<classpathentry kind="lib" path="lib/epics-pvdata-6.1.5.jar"/>
+	<classpathentry kind="lib" path="lib/epics-util-1.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/jca-2.4.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
