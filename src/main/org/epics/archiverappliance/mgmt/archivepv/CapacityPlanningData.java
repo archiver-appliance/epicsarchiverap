@@ -42,7 +42,7 @@ public class CapacityPlanningData {
 	
 	private ApplianceAggregateInfo applianceAggregateInfoAsOfLastFetch;
 	private String identity;
-	private boolean isAvailible=true;
+	private boolean isAvailable=true;
 	private static CPStaticData cachedCPStaticData = null;
 	
 	
@@ -185,13 +185,13 @@ public class CapacityPlanningData {
 	}
 
 
-	public boolean isAvailible() {
-		return isAvailible;
+	public boolean isAvailable() {
+		return isAvailable;
 	}
 
 
-	public void setAvailible(boolean isAvailible) {
-		this.isAvailible = isAvailible;
+	public void setAvailable(boolean isAvailable) {
+		this.isAvailable = isAvailable;
 	}
 	
 	
