@@ -27,6 +27,7 @@ import org.epics.archiverappliance.mgmt.bpl.AddAliasAction;
 import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServer;
 import org.epics.archiverappliance.mgmt.bpl.AddExternalArchiverServerArchives;
 import org.epics.archiverappliance.mgmt.bpl.AggregatedApplianceInfo;
+import org.epics.archiverappliance.mgmt.bpl.AppendAndAliasPV;
 import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsForThisApplianceAction;
@@ -129,6 +130,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getAppliancesInCluster", GetAppliancesInCluster.class);
 		addAction("/renamePV", RenamePVAction.class);
 		addAction("/reshardPV", ReshardPV.class);
+		addAction("/appendAndAliasPV", AppendAndAliasPV.class);
 		addAction("/addAlias", AddAliasAction.class);
 		addAction("/removeAlias", RemoveAliasAction.class);
 		addAction("/skipAliasCheck", SkipAliasCheckAction.class);
