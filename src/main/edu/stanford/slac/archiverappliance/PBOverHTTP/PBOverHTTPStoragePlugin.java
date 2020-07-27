@@ -57,7 +57,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 				+ "&from=" + TimeUtils.convertToISO8601String(startTime) 
 				+ "&to=" + TimeUtils.convertToISO8601String(endTime) 
 				+ (postProcessor != null ? "&pp="+postProcessor.getExtension() : "")
-				+ (skipExternalServers ? "skipExternalServers=true" : "");
+				+ (skipExternalServers ? "&skipExternalServers=true" : "");
 		logger.info("URL to fetch data is " + getURL);
 		return getDataBehindURL(getURL, startTime, postProcessor);
 	}
@@ -71,7 +71,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 		getURL += "&from=" + TimeUtils.convertToISO8601String(startTime) 
 				+ "&to=" + TimeUtils.convertToISO8601String(endTime) 
 				+ (postProcessor != null ? "&pp="+postProcessor.getExtension() : "")
-				+ (skipExternalServers ? "skipExternalServers=true" : "");
+				+ (skipExternalServers ? "&skipExternalServers=true" : "");
 		logger.info("URL to fetch data is " + getURL);
 		return getDataBehindURL(getURL, startTime, postProcessor);
 	}
