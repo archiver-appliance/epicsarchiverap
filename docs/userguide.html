@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />	
+<link type="text/css" href="docs.css" rel="Stylesheet" />
 <title>EPICS Archiver Appliance - User guide</title>
 </head>
 <body>
@@ -44,30 +44,31 @@ The EPICS Archiver Appliance offers a web UI for typical configuration tasks. Th
 
 <section id="ArchivePV">
 <h3>Adding a PV to be archived.</h3>
-To add a PV to the archiver, 
+To add a PV to the archiver,
 <ol>
 <li>Go to the home page of the archiver appliance.
 <figure>
 <img class="img-responsive" src="images/archive_pv.png"/>
 </figure>
-</li> 
+</li>
 <li>Enter any number of PV's in the text area (one per line) and click on the <code>Archive</code> button.</li>
 <li>If you wish to specify the sampling period, then click on the <code>Archive (specify sampling period)</code> button instead.</li>
-<li>When adding a new PV to the cluster, the archiver appliance measures various parameters about the PV. This takes about 4-5 minutes during which the PV is in an <samp>Initial sampling</samp> state.</li> 
-<li>Once the PV's characteristics have been measured, the appliance assigns the PV to an appliance in the cluster and the PV transitions to a <samp>Being archived</samp> state.</li> 
-<li>If the archiver appliance is not able to connect to a PV, the PV stays in the <samp>Initial sampling</samp> state until it is able to connect.</li> 
+<li>When adding a new PV to the cluster, the archiver appliance measures various parameters about the PV. This takes about 4-5 minutes during which the PV is in an <samp>Initial sampling</samp> state.</li>
+<li>Once the PV's characteristics have been measured, the appliance assigns the PV to an appliance in the cluster and the PV transitions to a <samp>Being archived</samp> state.</li>
+<li>If the archiver appliance is not able to connect to a PV, the PV stays in the <samp>Initial sampling</samp> state until it is able to connect.</li>
 <li>You an request a PV to be archived before it is available on the network. The request to archive the PV is stored in the persistent configuration until the archiver appliance can connect.
-Once the archiver appliance is able to connect to the PV, it continues on the normal workflow (where various parameters about the PV are measured etc).</li> 
+Once the archiver appliance is able to connect to the PV, it continues on the normal workflow (where various parameters about the PV are measured etc).</li>
 <li>Using <code>Archive (specify sampling period)</code>, you can additionally specify
 <ol>
 <li>Archival method: Whether the archiver will use CA monitors/scan threads to sample at the specified sampling period.</li>
 <li>Conditional archiving PV: The archiving for this PV is performed only when the conditional archiving PV's <code>.VAL</code> field is non-zero.</li>
-<li>Policy: The archiver appliance uses policies set up the administrator to configure how the PV is to be archived. 
-You can override this by choosing a policy yourself. 
+<li>Policy: The archiver appliance uses policies set up the administrator to configure how the PV is to be archived.
+You can override this by choosing a policy yourself.
 This lets your system administrator set up a set of policies and lets the user choose manually from among those policies.
 </li>
 </ol>
 </li>
+<li>To add a PVAccess PV, use the <code>pva://</code> prefix. For example, <code>pva://BMAD:SYS:CU_HXR:DESIGN:TWISS</code> connects to the PV <code>BMAD:SYS:CU_HXR:DESIGN:TWISS</code> over PVAccess</li>
 </ol>
 
 <div>
@@ -80,7 +81,7 @@ To check the status of a PV.
 </figure>
 Note that the number of matched PV's can be quite large; for now, no attempt is made to restrict the number of entries in this particular request. This may change in the future based on user feedback.
 </li>
-</ol> 
+</ol>
 </div>
 
 </section>
@@ -107,7 +108,7 @@ The EPICS Archiver Appliance supports data retrieval in multiple formats/MIME ty
 </ol>
 
 <div>
-In general, getting data into a tool necessitates construction of a data retrieval URL as the first step. 
+In general, getting data into a tool necessitates construction of a data retrieval URL as the first step.
 A data retrieval URL looks something like so
 <div class="url_formula">
 <span id="part1">http://archiver.slac.stanford.edu/retrieval</span><span id="part2">/data/getData</span><span id="part3">.json</span>?<span id="part4">pv=VPIO%3AIN20%3A111%3AVRAW&amp;from=2012-09-27T08%3A00%3A00.000Z&amp;to=2012-09-28T08%3A00%3A00.000Z</span>
@@ -128,11 +129,11 @@ where
 <li><code>retiredPVTemplate</code> - If specified, the archiving information (PVTypeInfo) for the PV specified in this parameter is used as a template for PVs that do not exist in the system.
 This is intended principally for use with legacy PVs (PVs that no longer exist on the LAN and do not have a PVTypeInfo).
 <ol>
-<li>For example, all the data for legacy PV's could be consolidated into yearly partitions and stored on tape.</li> 
+<li>For example, all the data for legacy PV's could be consolidated into yearly partitions and stored on tape.</li>
 <li>When a user places a request for this data, it could be restored to some standard folder, for example <i>/arch/tape</i>.</li>
 <li>A template PV (probably paused), for example, <code>TEMPLATE:PV</code> is added to the system with one of its stores pointing to <i>/arch/tape</i>.</li>
 <li>For all data retrieval requests, this template PV is specified as the value of the <code>retiredPVTemplate</code> argument.
-For example, 
+For example,
 <i>http://archiver.slac.stanford.edu/retrieval/data/getData.json?</i><code>pv=LEGACY:PV</code><i>&amp;from=2012-09-27T08%3A00%3A00.000Z&amp;to=2012-09-28T08%3A00%3A00.000Z</i>&amp;<code>retiredPVTemplate=TEMPLATE:PV</code>.
 </li>
 <li>Because the archiver does not find a PVTypeInfo for <code>LEGACY:PV</code>, it uses the PVTypeInfo for <code>TEMPLATE:PV</code> to determine data stores for the <code>LEGACY:PV</code>.</li>
@@ -184,8 +185,8 @@ show()
 <section>
 <h3 id="post_processing">Processing of data</h3>
 <p>
-The EPICS archiver appliance has limited support for performing some processing on the data during data retrieval. 
-For most scientific data processing purposes, a tool such as Matlab is a much better fit. 
+The EPICS archiver appliance has limited support for performing some processing on the data during data retrieval.
+For most scientific data processing purposes, a tool such as Matlab is a much better fit.
 To retrieve data within Matlab, please see the <a href="matlab.html">Matlab</a> section.
 </p>
 <p>
@@ -199,7 +200,7 @@ To plot <code>test:pv:123</code> with the <code>mean_3600</code> operator in the
 The EPICS archiver appliance uses <a href="http://commons.apache.org/proper/commons-math/">Apache Commons Math</a> for its data processing.
 Many operators bin the data into bins whose sizes are specified as part of the operator itself.
 For example, the <code>mean_3600</code> operator bins the data into bins that are 3600 seconds wide.
-The default binning interval is 900 seconds (15 minutes). 
+The default binning interval is 900 seconds (15 minutes).
 The binning is done using the <a href="http://en.wikipedia.org/wiki/Euclidean_division">integer division</a> operator.
 Two samples belong to the same bin if the quotient of the sample's epoch seconds after integer division by the binning interval is the same.
 For example, in the case of <code>mean_3600</code>, two samples <code>S1</code> and <code>S2</code> belong to the same bin if
@@ -230,7 +231,7 @@ Samples belonging to the same bin are gathered together and sent thru various st
 
 <tr>
 <td>mean</td>
-<td>Returns the average value of a bin. 
+<td>Returns the average value of a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMean()">SummaryStatistics.getMean()</a>
 </td>
@@ -238,7 +239,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>min</td>
-<td>Returns the minimum value in a bin. 
+<td>Returns the minimum value in a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMin()">SummaryStatistics.getMin()</a>
 </td>
@@ -246,7 +247,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>max</td>
-<td>Returns the maximum value in a bin. 
+<td>Returns the maximum value in a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMax()">SummaryStatistics.getMax()</a>
 </td>
@@ -254,7 +255,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>count</td>
-<td>Returns the number of samples in a bin. 
+<td>Returns the number of samples in a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getN()">SummaryStatistics.getN()</a>
 </td>
@@ -274,7 +275,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>median</td>
-<td>Returns the median value of a bin. 
+<td>Returns the median value of a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getPercentile(double)">DescriptiveStatistics.getPercentile(50)</a>
 </td>
@@ -282,7 +283,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache
 
 <tr>
 <td>std</td>
-<td>Returns the standard deviation of a bin. 
+<td>Returns the standard deviation of a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getStandardDeviation()">SummaryStatistics.getStandardDeviation()</a>
 </td>
@@ -290,7 +291,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>jitter</td>
-<td>Returns the jitter (the standard deviation divided by the mean) of a bin. 
+<td>Returns the jitter (the standard deviation divided by the mean) of a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getStandardDeviation()">SummaryStatistics.getStandardDeviation()</a>/<a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getMean()">SummaryStatistics.getMean()</a>
 </td>
@@ -298,7 +299,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>ignoreflyers</td>
-<td>Ignores data that is more than the specified amount of std deviation from the mean in the bin. 
+<td>Ignores data that is more than the specified amount of std deviation from the mean in the bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>.
 It takes two arguments, the binning interval and the number of standard deviations (by default, 3.0).
 It filters the data and returns only those values which satisfy
@@ -308,20 +309,20 @@ It filters the data and returns only those values which satisfy
 
 <tr>
 <td>flyers</td>
-<td>Opposite of ignoreflyers - only returns data that is more than the specified amount of std deviation from the mean in the bin. 
+<td>Opposite of ignoreflyers - only returns data that is more than the specified amount of std deviation from the mean in the bin.
 </td>
 </tr>
 
 <tr>
 <td>variance</td>
-<td>Returns the variance of a bin. 
+<td>Returns the variance of a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getVariance()">SummaryStatistics.getVariance()</a>
 </td>
 </tr>
 <tr>
 <td>popvariance</td>
-<td>Returns the population variance of a bin. 
+<td>Returns the population variance of a bin.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html">SummaryStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/org/apache/commons/math3/stat/descriptive/SummaryStatistics.html#getPopulationVariance()">SummaryStatistics.getPopulationVariance()</a>
 </td>
@@ -330,14 +331,14 @@ and is <a href="http://commons.apache.org/proper/commons-math/javadocs/api-3.0/o
 
 <tr>
 <td>kurtosis</td>
-<td>Returns the kurtosis of a bin - Kurtosis is a measure of the peakedness. 
+<td>Returns the kurtosis of a bin - Kurtosis is a measure of the peakedness.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getKurtosis()">DescriptiveStatistics.getKurtosis()</a>
 </td>
 </tr>
 <tr>
 <td>skewness</td>
-<td>Returns the skewness of a bin - Skewness is a measure of the asymmetry. 
+<td>Returns the skewness of a bin - Skewness is a measure of the asymmetry.
 This is computed using <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html">DescriptiveStatistics</a>
 and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getSkewness()">DescriptiveStatistics.getSkewness()</a>
 </td>
@@ -347,7 +348,7 @@ and is <a href="http://commons.apache.org/proper/commons-math/apidocs/org/apache
 
 </tbody>
 </table>
-  
+
 </section>
 
 
@@ -361,11 +362,11 @@ where
 <ol>
 <li><code>at</code> - This specifies the point in time in ISO8601 format.</li>
 <li><code>includeProxies</code> - Optional; set this to true if you want to fetch data from external archiver appliances as part of this call.
-This defaults to false, so, by default, we do not proxy external appliances for this API call. 
+This defaults to false, so, by default, we do not proxy external appliances for this API call.
 As of now, we also do not support Channel Archiver integration for this API call.
 </li>
 </ol>
-    
+
 The response is a JSON dict of dicts with the name of the PV as the key. For example, here's a call asking for the value of a few PV's as of <code>2018-10-22T10:40:00.000-07:00</code>
 <pre><code>
 $ curl -H "Content-Type: application/json"  -XPOST -s "http://localhost:17665/retrieval/data/getDataAtTime?at=2018-10-22T10:40:00.000-07:00&amp;includeProxies=true" -d '["VPIO:IN20:111:VRAW", "ROOM:LI30:1:OUTSIDE_TEMP", "YAGS:UND1:1005:Y_BM_CTR", "A_nonexistent_pv" ]'
@@ -420,13 +421,13 @@ Some reports that are currently available are
   </li>
   <li><span class="reportitle">PVs by dropped events from buffer overflows</span> - The EPICS archiver appliance discards events when the sampling buffers (as estimated from the sampling period) become full. These reports contain the PVs sorted by the number of events dropped because the sampling buffers were full.</li>
 </ul>
- 
+
 </section>
 
 <section id="Metrics">
 <h3>Metrics</h3>
 The EPICS Archiver Appliance maintains a wide variety of metrics to facilitate in capacity planning and load balancing.
-These metrics can be viewed in the Metrics page; a small subset of these metrics can be viewed across the cluster. 
+These metrics can be viewed in the Metrics page; a small subset of these metrics can be viewed across the cluster.
 To view more details about the metrics on a particular appliance, click on that appliance in the list view.
 </section>
 
@@ -450,7 +451,7 @@ The EPICS Archiver Appliance supports limited integration with existing Channel 
 <figure>
 <img class="img-responsive" src="images/importCAConfig.png"/>
 </figure>
-The <code>DTD</code> for the ChannelArchiver <code>XML</code> file can be found in the ChannelArchiver documentation or in the ChannelArchiver source distribution. 
+The <code>DTD</code> for the ChannelArchiver <code>XML</code> file can be found in the ChannelArchiver documentation or in the ChannelArchiver source distribution.
 </li>
 <li>To proxy data from existing ChannelArchiver <code>XML-RPC</code> data servers, add the URL to the <code>XML-RPC</code> data server using the <code>Add</code> button.
 The EPICS Archiver Appliance uses the <code>archiver.names</code> method to determine the PVs that are hosted by the ChannelArchiver <code>XML-RPC</code> data server and adds this server as a data source for these PVs.

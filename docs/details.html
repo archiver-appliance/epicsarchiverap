@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />	
+<link type="text/css" href="docs.css" rel="Stylesheet" />
 <title>EPICS Archiver Appliance - Details</title>
 </head>
 <body>
@@ -73,6 +73,7 @@ Here are the main features.
 </ul>
 </li>
 <li>Support for EPICS aliases.</li>
+<li>Support for EPICS 7/PVAccess/Structured data.</li>
 <li>Support for retrieval of data using <a href="csstudio.html">CS-Studio</a>, the <a href="archiveviewer.html">ArchiveViewer</a> and Matlab.</li>
 <li>Limited integration with existing Channel Archiver data sources.</li>
 </ul>
@@ -96,8 +97,8 @@ We hope to add Postgres support soon.
 </li>
 </ul>
 
-In terms of hardware, for production systems, we'd need a reasonably powerful server box with lots of memory for each appliance. 
-For example, we use 24 core machines with 128GB of memory and 15K SAS drives for medium term storage. 
+In terms of hardware, for production systems, we'd need a reasonably powerful server box with lots of memory for each appliance.
+For example, we use 24 core machines with 128GB of memory and 15K SAS drives for medium term storage.
 
 </section>
 
@@ -110,14 +111,14 @@ Out of the box, the following storage technologies/plugins are supported.
 <li><span class="definitionterm"><a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a></span>
 <span class="definition">This plugin serializes samples using Google's <a href="https://developers.google.com/protocol-buffers">ProtocolBuffers</a> and stores data in chunks.
 Each chunk has a well defined key and stores data for one PV for a well defined time duration (for example, a month).
-Using Java <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html">NIO2</a>, one can store each chunk in 
+Using Java <a href="http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html">NIO2</a>, one can store each chunk in
 </span>
 <ol>
 <li>A file per chunk resulting in a file per PV per time partition.</li>
 <li>A zip file entry in a <code>.zip</code> file per chunk resulting in a <code>.zip</code> file per PV.</li>
 <li>This can be extended to use other storage technologies for which a NIO2 provider is available (for example, <a href="https://github.com/Upplication/Amazon-S3-FileSystem-NIO2">Amazon S3</a>, a database BLOB per chunk or a key/value pair per chunk in any key/value store).</li>
 </ol>
-<div class="noteafterlist">By default, the PlainPBStoragePlugin maps PV names to keys using a simple algorithm that relies on the presence of a good PV naming convention. To use your own mapping scheme, see the <a href="customization.html#PVNamesToKeys">Key Mapping</a> section in the customization guide.</div>    
+<div class="noteafterlist">By default, the PlainPBStoragePlugin maps PV names to keys using a simple algorithm that relies on the presence of a good PV naming convention. To use your own mapping scheme, see the <a href="customization.html#PVNamesToKeys">Key Mapping</a> section in the customization guide.</div>
 </li>
 </ul>
 To add support for other storage technologies - see the <a href="customization.html#key_mapping">customization guide</a> for details.
@@ -132,7 +133,7 @@ A sample storage configuration is outlined below where we'd use
 <li>Ramdisk for the short term store - in this storage stage, we'd store data at a granularity of an hour.</li>
 <li>SSD/SAS drives for the medium term store - in this storage stage, we'd store data at a granularity of a day.</li>
 <li>A NAS/SAN for the long term store - in this storage stage, we'd store data at a granularity of a year.</li>
-</ol> 
+</ol>
 <figure>
 <img class="img-responsive" src="images/applarch.png"/>
 <figcaption>Architecture of a single appliance</figcaption>
@@ -147,11 +148,11 @@ The long term store is shown outside the appliance as an example of a commonly d
 There is no necessity for the appliances to share any storage; so both of these configurations are possible.
 <figure>
 <img class="img-responsive" src="images/clusterinto1lts.png" alt="Multiple appliances into one long term store"/>
-<figcaption>Multiple appliances sending data into one long term store</figcaption> 
+<figcaption>Multiple appliances sending data into one long term store</figcaption>
 </figure>
 <figure>
 <img class="img-responsive" src="images/clusterintodifflts.png" alt="Multiple appliances into different long term stores"/>
-<figcaption>Multiple appliances sending data into different long term stores</figcaption> 
+<figcaption>Multiple appliances sending data into different long term stores</figcaption>
 </figure>
 </div>
 
@@ -159,9 +160,9 @@ There is no necessity for the appliances to share any storage; so both of these 
 
 <section>
 <h3>Policies</h3>
-All of the various configurations can get quite tricky for end users to navigate. 
+All of the various configurations can get quite tricky for end users to navigate.
 Rather than expose all of this variation to the end users and to provide a simple interface to end users, the archiver appliance uses <a href="api/org/epics/archiverappliance/mgmt/policy/package-summary.html">policies</a>.
-Policies are Python scripts that make these decisions on behalf of the users. 
+Policies are Python scripts that make these decisions on behalf of the users.
 Policies are site-specific and identical across all appliances in the cluster.
 When a user requests a new PV to be archived, the archiver appliance samples the PV to determine event rate, storage rate and other parameters.
 In addition, various fields of the PV like .NAME, .ADEL, .MDEL, .RTYP etc are also obtained.
@@ -194,15 +195,15 @@ However, both data retrieval and business requests can be dispatched to any rand
 <figure>
 <img class="img-responsive" src="images/proxyrequest.png"/>
 <figcaption>Appliance 1 proxies data retrieval request for PV being archived by appliance 2.</figcaption>
-</figure> 
+</figure>
 In addition, users do not need to allocate PVs to appliances when requesting for new PVs be archived.
 The appliances maintain a small set of metrics during their operation and use this in addition to the measured event and storage rates to do an automated <a href="api/org/epics/archiverappliance/mgmt/archivepv/CapacityPlanningBPL.html">Capacity Planning</a>/load balancing.
 </section>
 
 <section id="scripting">
 <h3>Scripting</h3>
-The archiver appliance comes with a web UI that has support for various business processes like adding PV's to the archivers etc. 
-The web UI communicates with the server principally using JSON/HTTP web service calls. 
+The archiver appliance comes with a web UI that has support for various business processes like adding PV's to the archivers etc.
+The web UI communicates with the server principally using JSON/HTTP web service calls.
 The same web service calls are also available for use from external scripting tools like Python.
 <pre class="bash_output"><code>#!/usr/bin/env python
 
@@ -210,31 +211,43 @@ import requests
 
 resp = requests.get("http://archappl.slac.stanford.edu/mgmt/bpl/getAllPVs?pv=VPIO:IN20:111:VRA*")
 print("\n".join(resp.json()))</code></pre>
- 
+
 Click <a href="api/mgmt_scriptables.html" target="_blank">here</a> for a list of business logic accesible thru scripting.
 </section>
+
+<section>
+<h3>EPICS 7</h3>
+The archiver appliance has built in support for EPICS 7 and archiving PV's over PVAccess.
+NTScalars and NTScalarArrays are stored as their channel access counterparts.
+For example, <code>PVDouble</code>'s will be stored as <code>DBR_SCALAR_DOUBLE</code>'s.
+This makes it possible to use standard archive viewers to view NTScalars and NTScalarArrays archived thru PVAccess.
+Other PVData types are stored as a bunch of bits using PVAccess serialization.
+While this is probably not the most efficient, it does allow for archiving of arbitrary structured data.
+There is support for retrieving of structured data using the <code>RAW</code> and <code>JSON</code> formats.
+</section>
+
 
 <section>
 <h3>Screenshots</h3>
 <figure>
 <img class="img-responsive" src="images/homepage.png"/>
 <figcaption>A screenshot of the home page.</figcaption>
-</figure> 
+</figure>
 
 <figure>
 <img class="img-responsive" src="images/reportspage.png"/>
 <figcaption>We offer a wide variety of reports.</figcaption>
-</figure> 
+</figure>
 
 <figure>
 <img class="img-responsive" src="images/metricspage.png"/>
 <figcaption>Metrics maintained by the appliances.</figcaption>
-</figure> 
+</figure>
 
 <figure>
 <img class="img-responsive" src="images/appliancespage.png"/>
 <figcaption>The appliances page offers a quick view of some JVM parameters.</figcaption>
-</figure> 
+</figure>
 
 </section>
 </div>
