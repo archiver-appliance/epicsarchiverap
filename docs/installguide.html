@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />	
+<link type="text/css" href="docs.css" rel="Stylesheet" />
 <title>EPICS Archiver Appliance - Install Guide</title>
 </head>
 <body>
@@ -45,7 +45,7 @@
 
 <section>
 <h3>Customize preexisting VM's</h3>
-A simple way to get an installation going is to clone and customize Martin's repos for your installation. 
+A simple way to get an installation going is to clone and customize Martin's repos for your installation.
 These consist of three repos that are needed to set up the Archiver Appliance  environment.
 <ol>
 <li><a href="https://github.com/mark0n/vagrant_archiver_appliance">vagrant_archiver_appliance</a></li>
@@ -59,16 +59,16 @@ Simply follow the rules in the README of the first repo and the other two repos 
 
 <section id="site_specific_installs">
 <h3>Site specific installs</h3>
-Han maintains a set of scripts for <a href="https://github.com/jeonghanlee/epicsarchiverap-sites">site specific installs</a>.
+Han maintains a set of scripts for <a href="https://github.com/jeonghanlee/epicsarchiverap-env">site specific installs</a>.
 This is an excellent starting off point for folks who wish to build their own deployment bundles.
-This is tested against CentOS; but should be easily extensible for other distributions.
+This is tested against Debian/CentOS; but should be easily extensible for other distributions.
 </section>
 
 <section id="single_machine_install">
 <h3>Using an install script</h3>
 If you plan to have only one machine in the cluster, you can consider using the <code>install_scripts/single_machine_install.sh</code> install script that comes with the installation bundle.
 This install script accommodates installations with a &quot;standard&quot; set of parameters and installs the EPICS archiver appliance on one machine.
-In addition to the <a href="details.html#SystemRequirements">System requirements</a>, the <code>install_scripts/single_machine_install.sh</code> will ask for 
+In addition to the <a href="details.html#SystemRequirements">System requirements</a>, the <code>install_scripts/single_machine_install.sh</code> will ask for
 <ol>
 <li>Location of the Tomcat distribution.</li>
 <li>Location of the MySQL client jar - usually a file with a name like <code>mysql-connector-java-5.1.21-bin.jar</code></li>
@@ -79,7 +79,7 @@ This implies that the MySQL schema has already been created using something like
 mysql --user=root --password=*****
 CREATE DATABASE archappl;
 GRANT ALL ON archappl.* TO 'archappl' identified by 'archappl';
-</code> 
+</code>
 </pre>
 </li>
 </ol>
@@ -124,7 +124,7 @@ In addition to installing the JDK, EPICS (see <a href="details.html#SystemRequir
 The <code>appliances.xml</code> is a file that lists all the appliances in a cluster of archiver appliance.
 While it is not necessary to point to the same physical file, the contents are expected to be identical across all appliances in the cluster.
 The details of the file are outlined in the <a href="api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES">ConfigService</a> javadoc.
-A sample  <code>appliances.xml</code> with two appliances looks like 
+A sample  <code>appliances.xml</code> with two appliances looks like
 <pre class="bash_output"><code>&lt;appliances&gt;
    &lt;appliance&gt;
      &lt;identity&gt;appliance0&lt;/identity&gt;
@@ -156,15 +156,15 @@ export ARCHAPPL_APPLIANCES=/nfs/epics/archiver/production_appliances.xml
 to set the location of the <code>appliances.xml</code> file.
 </li>
 <li>
-The <code>appliances.xml</code> has one <code>&lt;appliance&gt;</code> section per appliance. 
-You can have more entries than you have appliances; that is, if you plan to eventually deploy a cluster of 10 machines but only have a budget for 2, you can go ahead and add entries for the other machines. 
+The <code>appliances.xml</code> has one <code>&lt;appliance&gt;</code> section per appliance.
+You can have more entries than you have appliances; that is, if you plan to eventually deploy a cluster of 10 machines but only have a budget for 2, you can go ahead and add entries for the other machines.
 The cluster should start up even if one or more appliances are missing.
 </li>
 <li>
-The <code>identity</code> for each appliance is unique to each appliance. 
+The <code>identity</code> for each appliance is unique to each appliance.
 For example, the string <code>appliance0</code> serves to uniquely identify the archiver appliance on the machine <code>archappl0.slac.stanford.edu</code>.
 </li>
-<li>The <code>cluster_inetport</code> is the <code>TCPIP address:port</code> combination that is used for inter-appliance communication. 
+<li>The <code>cluster_inetport</code> is the <code>TCPIP address:port</code> combination that is used for inter-appliance communication.
 There is a check made to ensure that the hostname portion of the <code>cluster_inetport</code> is either <code>localhost</code> or the same as that obtained from a call to <code>InetAddress.getLocalHost().getCanonicalHostName()</code> which typically returns the fully qualified domain name (FQDN).
 The intent here is to prevent multiple appliances starting up with the same appliance identity (a situation that could potentially lead to data loss).
 <ol>
@@ -192,10 +192,10 @@ One can use the <a href="http://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer
 <figure>
 <img class="img-responsive" src="images/ApacheasLB.png"/>
 <figcaption>Using Apache HTTP on <code>archiver</code> to load balance data retrieval between <code>appliance0</code> and <code>appliance1</code>.</figcaption>
-</figure> 
+</figure>
 <ul>
 <li>Note there are also other load-balancing solutions available that load-balance the HTTP protocol that may be more appropriate for your installation.</li>
-<li>Also, note that Apache+Tomcat can also use a binary protocol called <code>AJP</code> for load-balancing between Apache and Tomcat. 
+<li>Also, note that Apache+Tomcat can also use a binary protocol called <code>AJP</code> for load-balancing between Apache and Tomcat.
 For this software, we should use simple HTTP; this workflow does not entail the additional complexity of the <code>AJP</code> protocol.
 </li>
 </ul>
@@ -209,7 +209,7 @@ For this software, we should use simple HTTP; this workflow does not entail the 
 
 <section id="policies_py">
 <h3>Create your policies file</h3>
-The EPICS archiver appliance ships with a sample <a href="customization.html#Policies"><code>policies.py</code></a> (from the <code>tests</code> site) that creates a three stage storage environment. These are 
+The EPICS archiver appliance ships with a sample <a href="customization.html#Policies"><code>policies.py</code></a> (from the <code>tests</code> site) that creates a three stage storage environment. These are
 <ol>
 <li><b>STS</b> - A datastore that uses the <a href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html">PlainPBStoragePlugin</a> to store data in a folder specified by the environment variable <code>ARCHAPPL_SHORT_TERM_FOLDER</code> at the granularity of an hour.
 </li>
@@ -233,19 +233,19 @@ In this case, you do not need to specify the <code>ARCHAPPL_POLICIES</code> envi
 
 <section>
 <h3>Installing Tomcat and setting up Apache Commons Daemon</h3>
-Installing Tomcat consists of 
+Installing Tomcat consists of
 <ol>
 <li>Untar'ing the Tomcat distribution. It is best to set the environment variable <code>TOMCAT_HOME</code> to the location where the Tomcat distribution is expanded.
 Many of the following steps require a <code>TOMCAT_HOME</code> to be set.
 </li>
 <li>Editing the <code>conf/server.xml</code> file to change the ports to better suit your installation.
 <ol>
-<li>By default, the connector port for the HTTP connector is set to 8080. 
+<li>By default, the connector port for the HTTP connector is set to 8080.
 Change this to the port used by the <code>mgmt</code> webapp for this appliance, in this example, 17665.
 <pre class="bash_output"><code>&lt;Connector connectionTimeout="20000" port="<span class="rm_txt">8080</span><span class="add_txt">17665</span>" protocol="HTTP/1.1" redirectPort="8443"/&gt;</code></pre>
 </li>
 <li>
-Remove/comment out the sections for the AJP connector. 
+Remove/comment out the sections for the AJP connector.
 </li>
 <li>
 At the end, there should be two ports active in the <code>conf/server.xml</code> file, one for the HTTP connector and the other for the <code>SHUTDOWN</code> command.
@@ -253,7 +253,7 @@ At the end, there should be two ports active in the <code>conf/server.xml</code>
 </ol>
 </li>
 <li>Setting the appropriate log4j configuration level by creating/editing the <code>lib/log4j.properties</code>.
-Here's a sample that logs exceptions and errors with one exception - log messages logged to the <code>config</code> namespace are logged at INFO level. 
+Here's a sample that logs exceptions and errors with one exception - log messages logged to the <code>config</code> namespace are logged at INFO level.
 <pre>
 <code>
 # Set root logger level and its only appender to A1.
@@ -279,10 +279,10 @@ log4j.appender.A1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
 Once you have built this, copy the <code>jsvc</code> binary to the Tomcat <code>bin</code> folder for convenience.
 Note, it's not required that you use <code>Apache Commons Daemon</code> especially, if you are already using system monitoring and management tools like <a href="http://www.nagios.org/">Nagios</a> or <a href="http://www.hyperic.com/">Hyperic</a>.
 
-<pre class="bash_output"><code>[ bin ]$ tar zxf commons-daemon-native.tar.gz 
+<pre class="bash_output"><code>[ bin ]$ tar zxf commons-daemon-native.tar.gz
 [ bin ]$ cd commons-daemon-1.1.0-native-src
 [ commons-daemon-1.1.0-native-src ]$ cd unix/
-[ unix ]$ ./configure 
+[ unix ]$ ./configure
 *** Current host ***
 checking build system type... x86_64-pc-linux-gnu
 ...
@@ -299,7 +299,7 @@ checking build system type... x86_64-pc-linux-gnu
 <h3>Installing MySQL</h3>
 The version of MySQL that is available from your distribution is acceptable; though this is completely untuned. Please look at the more than excellent chapters on MySQL optimization at the MySQL web site to tune your MySQL instance.
 In addition to various parameters, even something as simple as setting <code>innodb_flush_log_at_trx_commit=0</code> (assuming you are ok with this) will go a long way in improving performace (especially when importing channel archiver configuration files etc).
-Each appliance has its own installation of MySQL. In each appliance,   
+Each appliance has its own installation of MySQL. In each appliance,
 <ul>
 <li>
 Make sure MySQL is set to start on powerup (using <code>chkconfig</code>)
@@ -313,7 +313,7 @@ GRANT ALL ON archappl.* TO 'archappl'@localhost IDENTIFIED BY '&lt;password&gt;'
 </pre>
 </li>
 <li>
-The archiver appliance ships with DDL, for MySQL, this is a file called <code>archappl_mysql.sql</code> that is included as part of the <code>mgmt</code> WAR file. 
+The archiver appliance ships with DDL, for MySQL, this is a file called <code>archappl_mysql.sql</code> that is included as part of the <code>mgmt</code> WAR file.
 Execute this script in you newly created schema.
 Confirm that the tables have been created using a <code>SHOW TABLES</code> command.
 There should be at least these tables
@@ -322,7 +322,7 @@ There should be at least these tables
 <li><code>PVAliases</code> - This table stores EPICS alias mappings</li>
 <li><code>ExternalDataServers</code> - This table stores information about external data servers.</li>
 <li><code>ArchivePVRequests</code> - This table stores archive requests that are still pending.</li>
-</ol> 
+</ol>
 </li>
 <li>Download and install the <a href="http://dev.mysql.com/downloads/connector/j/">MySQL Connector/J</a> jar file into your Tomcat's <code>lib</code> folder.
 In addition to the log4j.properties file, you should have a <code>mysql-connector-java-XXX.jar</code> as show here.
@@ -333,7 +333,7 @@ In addition to the log4j.properties file, you should have a <code>mysql-connecto
 </code></pre>
 </li>
 <li>
-Add a connection pool in Tomcat named <code>jdbc/archappl</code>.  
+Add a connection pool in Tomcat named <code>jdbc/archappl</code>.
 You can use the Tomcat management UI or directly add an entry in <code>conf/context.xml</code> like so
 <pre class="bash_output"><code>
 &lt;Resource   name="jdbc/archappl"
@@ -341,28 +341,28 @@ You can use the Tomcat management UI or directly add an entry in <code>conf/cont
       type="javax.sql.DataSource"
       factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
       username="archappl"
-      password="XXXXXXX" 
+      password="XXXXXXX"
       testWhileIdle="true"
       testOnBorrow="true"
       testOnReturn="false"
       validationQuery="SELECT 1"
       validationInterval="30000"
       timeBetweenEvictionRunsMillis="30000"
-      maxActive="10" 
-      minIdle="2" 
-      maxWait="10000" 
+      maxActive="10"
+      minIdle="2"
+      maxWait="10000"
       initialSize="2"
       removeAbandonedTimeout="60"
       removeAbandoned="true"
       logAbandoned="true"
-      minEvictableIdleTimeMillis="30000" 
+      minEvictableIdleTimeMillis="30000"
       jmxEnabled="true"
       driverClassName="com.mysql.jdbc.Driver"
       url="jdbc:mysql://localhost:3306/archappl"
  /&gt;
 </code>
 </pre>
-Of course, please do make changes appropriate to your installation. 
+Of course, please do make changes appropriate to your installation.
 The only parameter that is fixed is the name of the pool and this needs to be <code>jdbc/archappl</code>.
 All other parameters are left to your discretion.
 <ul>
@@ -376,7 +376,7 @@ All other parameters are left to your discretion.
 
 <section>
 <h3>Setting up storage</h3>
-This is specific to the needs of your <code>policies.py</code>. 
+This is specific to the needs of your <code>policies.py</code>.
 However, if you are using the default <code>policies.py</code> that ships with the box or a variant thereof, you'll need to set up three stages of storage.
 A useful way to do this is to create a folder called <code>/arch</code> and then create soft links in this folder to the actual physical location.
 For example,
@@ -406,7 +406,7 @@ To run this script, set the following environment variables
 <ol>
 <li><code>TOMCAT_HOME</code> - This is the Tomcat installation that you prepared in the previous steps.</li>
 <li><code>ARCHAPPL_APPLIANCES</code> - This points to the <code>appliances.xml</code> that you created in the previous steps.</li>
-<li><code>ARCHAPPL_MYIDENTITY</code> - This is the identity of the current appliance, for example <code>appliance0</code>. 
+<li><code>ARCHAPPL_MYIDENTITY</code> - This is the identity of the current appliance, for example <code>appliance0</code>.
 If this is not set, the system will default to using the machine's hostname as determined by making a call to <code>InetAddress.getLocalHost().getCanonicalHostName()</code>.
 However, this makes <code>ARCHAPPL_MYIDENTITY</code> a physical entity and not a logical entity; so, if you can, use a logical name for this entry.
 Note, this must match the <code>identity</code> element of this appliance as it is defined in the <code><code>appliances.xml</code></code>.
@@ -414,13 +414,13 @@ Note, this must match the <code>identity</code> element of this appliance as it 
 </ol>
 and then run the <code>deployMultipleTomcats.py</code> script passing in one argument that identifies the parent folder of the individual Tomcat containers.
 <pre class="bash_output"><code>[ single_machine_install ]$ export TOMCAT_HOME=/arch/single_machine_install/tomcats/apache-tomcat-9.0.20
-[ single_machine_install ]$ export ARCHAPPL_APPLIANCES=/arch/single_machine_install/sample_appliances.xml 
+[ single_machine_install ]$ export ARCHAPPL_APPLIANCES=/arch/single_machine_install/sample_appliances.xml
 [ single_machine_install ]$ export ARCHAPPL_MYIDENTITY=appliance0
-[ single_machine_install ]$ ./install_scripts/deployMultipleTomcats.py /arch/single_machine_install/tomcats 
+[ single_machine_install ]$ ./install_scripts/deployMultipleTomcats.py /arch/single_machine_install/tomcats
 Using
-	tomcat installation at /arch/single_machine_install/tomcats/apache-tomcat-9.0.20 
-	to generate deployments for appliance appliance0 
-	using configuration info from /arch/single_machine_install/sample_appliances.xml 
+	tomcat installation at /arch/single_machine_install/tomcats/apache-tomcat-9.0.20
+	to generate deployments for appliance appliance0
+	using configuration info from /arch/single_machine_install/sample_appliances.xml
 	into folder /arch/single_machine_install/tomcats
 The start/stop port is the standard Tomcat start/stop port. Changing it to something else random - 16000
 The stop/start ports for the new instance will being at  16001
@@ -440,8 +440,8 @@ The remaining steps are those that will be executed on deployment of new release
 
 <section>
 <h3>Deploy the WAR files onto their respective containers</h3>
-Deploying/upgrading a WAR file in a Tomcat container is very easy. 
-Each container has a <code>webapps</code> folder; all we have to do is to copy the (newer) WAR into this folder and Tomcat (should) will expand the WAR file and deploy the WAR file on startup. 
+Deploying/upgrading a WAR file in a Tomcat container is very easy.
+Each container has a <code>webapps</code> folder; all we have to do is to copy the (newer) WAR into this folder and Tomcat (should) will expand the WAR file and deploy the WAR file on startup.
 The deployment/upgrade steps are
 <ol>
 <li>Stop all four Tomcat containers.</li>
@@ -457,9 +457,9 @@ The deployment/upgrade steps are
 If <code>DEPLOY_DIR</code> is the parent folder of the individual Tomcat containers and <code>WARSRC_DIR</code> is the location where the WAR files are present, then the deploy steps (steps 2 and 3 in the list above) look something like
 <pre>
 <code>
-pushd ${DEPLOY_DIR}/mgmt/webapps &amp;&amp; rm -rf mgmt*; cp ${WARSRC_DIR}/mgmt.war .; mkdir mgmt; cd mgmt; jar xf ../mgmt.war; popd; 
-pushd ${DEPLOY_DIR}/engine/webapps &amp;&amp; rm -rf engine*; cp ${WARSRC_DIR}/engine.war .; mkdir engine; cd engine; jar xf ../engine.war; popd; 
-pushd ${DEPLOY_DIR}/etl/webapps &amp;&amp; rm -rf etl*; cp ${WARSRC_DIR}/etl.war .; mkdir etl; cd etl; jar xf ../etl.war; popd; 
+pushd ${DEPLOY_DIR}/mgmt/webapps &amp;&amp; rm -rf mgmt*; cp ${WARSRC_DIR}/mgmt.war .; mkdir mgmt; cd mgmt; jar xf ../mgmt.war; popd;
+pushd ${DEPLOY_DIR}/engine/webapps &amp;&amp; rm -rf engine*; cp ${WARSRC_DIR}/engine.war .; mkdir engine; cd engine; jar xf ../engine.war; popd;
+pushd ${DEPLOY_DIR}/etl/webapps &amp;&amp; rm -rf etl*; cp ${WARSRC_DIR}/etl.war .; mkdir etl; cd etl; jar xf ../etl.war; popd;
 pushd ${DEPLOY_DIR}/retrieval/webapps &amp;&amp; rm -rf retrieval*; cp ${WARSRC_DIR}/retrieval.war .; mkdir retrieval; cd retrieval; jar xf ../retrieval.war; popd;
 </code>
 </pre>
@@ -470,13 +470,13 @@ pushd ${DEPLOY_DIR}/retrieval/webapps &amp;&amp; rm -rf retrieval*; cp ${WARSRC_
 Running multiple Tomcats on a single machine using the same install requires two enviromnent variables
 <ol>
 <li><code>CATALINA_HOME</code> - This is the install folder for Tomcat that is common to all Tomcat instances; in our case this is <code>$TOMCAT_HOME</code></li>
-<li><code>CATALINA_BASE</code> - This is the deploy folder for Tomcat that is specific to each Tomcat instance; in our case this is 
+<li><code>CATALINA_BASE</code> - This is the deploy folder for Tomcat that is specific to each Tomcat instance; in our case this is
 <ul><li><code>${DEPLOY_DIR}/mgmt</code></li><li><code>${DEPLOY_DIR}/etl</code></li><li><code>${DEPLOY_DIR}/engine</code></li><li><code>${DEPLOY_DIR}/retrieval</code></li></ul></li>
 </ol>
 If you are using Apache Commons Daemon, then two bash functions for stopping and starting Tomcat instance look something like
 <pre>
 <code>
-function startTomcatAtLocation() { 
+function startTomcatAtLocation() {
     if [ -z "$1" ]; then echo "startTomcatAtLocation called without any arguments"; exit 1; fi
     export CATALINA_HOME=${TOMCAT_HOME}
     export CATALINA_BASE=$1
@@ -496,7 +496,7 @@ function startTomcatAtLocation() {
      popd
 }
 
-function stopTomcatAtLocation() { 
+function stopTomcatAtLocation() {
     if [ -z "$1" ]; then echo "stopTomcatAtLocation called without any arguments"; exit 1; fi
     export CATALINA_HOME=${TOMCAT_HOME}
     export CATALINA_BASE=$1
@@ -513,7 +513,7 @@ function stopTomcatAtLocation() {
         -errfile ${CATALINA_BASE}/logs/catalina.err \
         -pidfile ${CATALINA_BASE}/pid \
         -stop \
-        org.apache.catalina.startup.Bootstrap 
+        org.apache.catalina.startup.Bootstrap
      popd
 }
 </code>
@@ -527,9 +527,9 @@ stopTomcatAtLocation ${DEPLOY_DIR}/retrieval
 stopTomcatAtLocation ${DEPLOY_DIR}/etl
 stopTomcatAtLocation ${DEPLOY_DIR}/mgmt
 </code>
-</pre> 
+</pre>
 
-and 
+and
 
 <pre>
 <code>
@@ -539,7 +539,7 @@ startTomcatAtLocation ${DEPLOY_DIR}/etl
 startTomcatAtLocation ${DEPLOY_DIR}/retrieval
 
 </code>
-</pre> 
+</pre>
 
 Remember to set all the appropriate environment variables from the previous steps
 <ol>
@@ -563,7 +563,7 @@ A sample startup script using these elements is available <a href="samples/sampl
 
 <section>
 <h3>Other containers</h3>
-It is possible to deploy the 4 WAR files of the archiver appliance on other servlet containers or to use other industry standard provisioning software to provision an appliance. 
+It is possible to deploy the 4 WAR files of the archiver appliance on other servlet containers or to use other industry standard provisioning software to provision an appliance.
 The details outlined here are guidelines on how to provision an appliance using Tomcat as a servlet container.
 If you generate scripts for industry standard provisioning software and are willing to share them, please add them to the repositorty and contact the collaboration; we'll be happy to modify these documents to accomodate the same.
 </section>
