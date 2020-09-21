@@ -47,7 +47,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		this.bar = bar;
 		this.year = year;
 	}
-	
+
 	public PBV4GenericBytes(DBRTimeEvent ev) {
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
 		year = yst.getYear();
@@ -82,10 +82,10 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		int severity = alarmPVStructure.getIntField("severity").get();
 		int status = alarmPVStructure.getIntField("status").get();
 
-		try(DummySerializationControl serControl = new DummySerializationControl(10*1024)) { 
+		try(DummySerializationControl serControl = new DummySerializationControl(4*1024*1024)) {
 			SerializationHelper.serializeStructureFull(serControl.getTheBuffer(), serControl, v4Data);
-			ByteString byteString = serControl.closeAndGetByteString(); 
-	
+			ByteString byteString = serControl.closeAndGetByteString();
+
 			year = yst.getYear();
 			Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
 					.setSecondsintoyear(yst.getSecondsintoyear())
@@ -105,18 +105,18 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		return new PBV4GenericBytes(this);
 	}
 
-	
+
 	@Override
 	public Timestamp getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
 	}
-	
+
 	@Override
 	public short getYear() {
 		return year;
 	}
-	
+
 	@Override
 	public int getSecondsIntoYear() {
 		unmarshallEventIfNull();
@@ -157,7 +157,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		unmarshallEventIfNull();
 		return dbevent.getRepeatcount();
 	}
-	
+
 	@Override
 	public void setRepeatCount(int repeatCount) {
 		unmarshallEventIfNull();
@@ -169,27 +169,27 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	@Override
 	public void setStatus(int status) {
 		unmarshallEventIfNull();
-		if(status != 0) { 
+		if(status != 0) {
 			dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).setStatus(status).build();
-		} else { 
+		} else {
 			dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).build();
 		}
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 		return;
 	}
-	
+
 	@Override
 	public void setSeverity(int severity) {
 		unmarshallEventIfNull();
-		if(severity != 0) { 
+		if(severity != 0) {
 			dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).setSeverity(severity).build();
-		} else { 
+		} else {
 			dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).build();
 		}
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 		return;
 	}
-	
+
 	private void unmarshallEventIfNull() {
 		try {
 			if(dbevent == null) {
@@ -265,13 +265,13 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).addAllFieldvalues(fieldValuesList).setFieldactualchange(markAsActualChange).build();
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 		return;
-	}	
+	}
 
 	@Override
 	public ArchDBRTypes getDBRType() {
 		return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 	}
-	
+
     /**
      * Sample from Matej to allow us to reuse the serialization that comes as part of PVAccess.
      * @author mshankar
@@ -282,9 +282,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     	private ByteArrayOutputStream bos;
     	WritableByteChannel channel;
     	private ByteBuffer theBuffer;
-    	
 
-        public DummySerializationControl(int bufferSize) { 
+
+        public DummySerializationControl(int bufferSize) {
         	theBuffer = ByteBuffer.allocate(bufferSize);
         	bos = new ByteArrayOutputStream();
         	channel = Channels.newChannel(bos);
@@ -305,11 +305,11 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 
         @Override
         public void flushSerializeBuffer() {
-        	try { 
+        	try {
         		theBuffer.flip();
         		channel.write(theBuffer);
         		theBuffer.flip();
-        	} catch(IOException ex) { 
+        	} catch(IOException ex) {
         		logger.error("Error flushing V4 buffer", ex);
         	}
         }
@@ -317,8 +317,8 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		public ByteBuffer getTheBuffer() {
 			return theBuffer;
 		}
-		
-		public ByteString closeAndGetByteString() throws IOException { 
+
+		public ByteString closeAndGetByteString() throws IOException {
 			flushSerializeBuffer();
 			bos.flush();
 			channel.close();
@@ -334,7 +334,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 			if(channel != null) { try { channel.close(); channel = null; } catch(Exception ex) {} }
 			if(bos != null) { try { bos.close(); bos = null; } catch(Exception ex) {} }
 		}
-        
+
     }
 
 }
