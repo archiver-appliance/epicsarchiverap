@@ -7,6 +7,9 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -506,12 +509,16 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	@Override
 	public String getStateInfo() {
 		StringBuilder buf = new StringBuilder();
-		buf.append(state.toString());
+		buf.append("<ul>");
+		buf.append("<li>PV State: " + state.toString() + "</li>");
 		if(this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
 			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
-			int searchTries = cajChannel.getSearchTries();
-			buf.append(" Searches: " + searchTries);
+			buf.append("<li>Searches: " + cajChannel.getSearchTries() + "</li>");
+			buf.append("<li>CliID: " + cajChannel.getChannelID() + "</li>");
+			buf.append("<li>SrvID: " + cajChannel.getServerChannelID() + "</li>");
+			buf.append("<li>Conn: " + cajChannel.getConnectionState().getName() + "</li>");
 		}
+		buf.append("</ul>");
 		return buf.toString();
 	}
 	

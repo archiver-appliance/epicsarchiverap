@@ -41,6 +41,6 @@
 	<classpathentry kind="lib" path="lib/epics-pvaccess-5.1.5.jar"/>
 	<classpathentry kind="lib" path="lib/epics-pvdata-6.1.5.jar"/>
 	<classpathentry kind="lib" path="lib/epics-util-1.0.3.jar"/>
-	<classpathentry kind="lib" path="lib/jca-2.4.5.jar"/>
+	<classpathentry kind="lib" path="lib/jca-2.4.5.jar" sourcepath="lib/sources/jca-2.4.1-sources.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
