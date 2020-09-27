@@ -87,9 +87,9 @@ public class EngineContext {
 
 	
 	/**the total time consumed by the writer*/
-	private double totalTimeConsumedByWritter;
+	private double totalTimeConsumedByWriter;
 	/**the total times of writer executed*/
-	private long countOfWrittingByWritter = 0;
+	private long countOfWrittingByWriter = 0;
 	/**the list of pvs controlling other pvs*/
 	private ConcurrentHashMap<String, ControllingPV> controlingPVList = new ConcurrentHashMap<String, ControllingPV>();
 	
@@ -128,22 +128,22 @@ public class EngineContext {
 	}
         /**
 	 * set the time consumed by writer to write the sample buffer once
-	 * @param secondsConsumedByWritter  the time in second consumed by writer to write the sample buffer once
+	 * @param secondsConsumedByWriter  the time in second consumed by writer to write the sample buffer once
 	 *  
 	 */
-	public void setSecondsConsumedByWritter(double secondsConsumedByWritter) {
-		countOfWrittingByWritter++;
-		totalTimeConsumedByWritter = totalTimeConsumedByWritter
-				+ secondsConsumedByWritter;
+	public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
+		countOfWrittingByWriter++;
+		totalTimeConsumedByWriter = totalTimeConsumedByWriter
+				+ secondsConsumedByWriter;
 	}
         /**
 	 * 
 	 * @return the average time in second consumed by writer
 	 */
-        public double getAverageSecondsConsumedByWritter() {
-		if (countOfWrittingByWritter == 0)
+        public double getAverageSecondsConsumedByWriter() {
+		if (countOfWrittingByWriter == 0)
 			return 0;
-		return totalTimeConsumedByWritter / (double) countOfWrittingByWritter;
+		return totalTimeConsumedByWriter / (double) countOfWrittingByWriter;
 	}
 
         /**

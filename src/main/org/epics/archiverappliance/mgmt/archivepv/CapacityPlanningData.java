@@ -34,7 +34,7 @@ public class CapacityPlanningData {
 	private float engineWriteThreadUsage; 
 	private float secondsConsumedByWriter;
 	private float currentTotalStorageRate;
-	private float  percentageTimeForWritterAfterPVadded=0;
+	private float  percentageTimeForWriterAfterPVadded=0;
 	/**
 	 * ETL metrics for all the stores in this appliance that support the storage API.
 	 */
@@ -90,7 +90,7 @@ public class CapacityPlanningData {
 			String engineURL = applianceInfo.getEngineURL() + "/getApplianceMetrics";
 			JSONObject engineMetrics = GetUrlContent.getURLContentAsJSONObject(engineURL);
 			DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
-			String secondsConsumedByWriterStr = (String) engineMetrics.get("secondsConsumedByWritter");
+			String secondsConsumedByWriterStr = (String) engineMetrics.get("secondsConsumedByWriter");
 			secondsConsumedByWriter=twoSignificantDigits.parse(secondsConsumedByWriterStr).floatValue();
 			String currentTotalStorageRateStr = (String) engineMetrics.get("dataRate");
 			if(currentTotalStorageRateStr != null) {
@@ -170,13 +170,13 @@ public class CapacityPlanningData {
 		return freshData.getDifference(applianceAggregateInfoAsOfLastFetch);
 	}
 
-	public float getPercentageTimeForWritter() {
-		return percentageTimeForWritterAfterPVadded;
+	public float getPercentageTimeForWriter() {
+		return percentageTimeForWriterAfterPVadded;
 	}
 
 
-	public void setPercentageTimeForWritter(float percentageTimeForWritterAfterPVadded) {
-		this.percentageTimeForWritterAfterPVadded = percentageTimeForWritterAfterPVadded;
+	public void setPercentageTimeForWriter(float percentageTimeForWriterAfterPVadded) {
+		this.percentageTimeForWriterAfterPVadded = percentageTimeForWriterAfterPVadded;
 	}
 
 
