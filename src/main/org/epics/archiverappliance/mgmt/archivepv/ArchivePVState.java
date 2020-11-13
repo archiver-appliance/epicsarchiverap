@@ -437,4 +437,13 @@ public class ArchivePVState {
 	public Timestamp getMetaInfoRequestedSubmitted() {
 		return metaInfoRequestedSubmitted;
 	}
+
+	public String getAbortReason() {
+		return abortReason;
+	}
+
+	public void setAbortReason(String abortReason) {
+		this.abortReason = abortReason;
+	}
+	
 }
