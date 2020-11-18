@@ -4,45 +4,34 @@
 import os
 import sys
 import argparse
-import time
-import urllib
-import urllib2
-import json
 import datetime
 import time
-
-def getNeverConnectedPVs(bplURL):
-    '''Get a list of PVs that never connected at all'''
-    url = bplURL + '/getNeverConnectedPVs'
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    neverConnectedPVs = json.loads(the_page)
-    return neverConnectedPVs
-
-def abortArchivingPV(bplURL, pv):
-    '''Aborts the request for archiving a PV'''
-    values = url_values = urllib.urlencode({'pv' : pv})
-    url = bplURL + '/abortArchivingPV?' + values
-    print "Aborting request for pv", pv, "using url", url
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    abortResponse = json.loads(the_page)
-    return abortResponse
-    
-
+import json
+import requests
+import pytz
+from dateutil.parser import parse as dateutilparse
+from dateutil.tz import tzlocal
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("url", help="This is the URL to the mgmt bpl interface of the appliance cluster. For example, http://arch.slac.stanford.edu/mgmt/bpl")    
+    parser.add_argument("url", help="This is the URL to the mgmt bpl interface of the appliance cluster. For example, http://arch.slac.stanford.edu/mgmt/bpl")
+    parser.add_argument("-o", "--older", help="Abort those PV's whose workflow started more that this many days ago. To abort all PV's, specify 0.", default=7, type=int)
     args = parser.parse_args()
     if not args.url.endswith('bpl'):
-        print "The URL needs to point to the mgmt bpl; for example, http://arch.slac.stanford.edu/mgmt/bpl. ", args.url
+        print("The URL needs to point to the mgmt bpl; for example, http://arch.slac.stanford.edu/mgmt/bpl. ", args.url)
         sys.exit(1)
-    neverConnectedPVs = getNeverConnectedPVs(args.url)
-    print len(neverConnectedPVs), "PVs have never connected"
+    neverConnectedPVs = requests.get(args.url + '/getNeverConnectedPVs').json()
     for neverConnectedPV in neverConnectedPVs:
-        abortResponse = abortArchivingPV(args.url, neverConnectedPV['pvName'])
-        print abortResponse
-        time.sleep(1)
+        abort = False
+        if args.older == 0:
+            abort = True
+        elif "startOfWorkflow" in neverConnectedPV:
+            startOfWorkflow = dateutilparse(neverConnectedPV["startOfWorkflow"])
+            if (datetime.datetime.now(tzlocal()) - startOfWorkflow).total_seconds() >= (args.older*86400):
+                abort = True
+
+        if abort:
+            print("Aborting PV %s " % neverConnectedPV['pvName'])
+            aresp = requests.get(args.url + '/abortArchivingPV', params={"pv": neverConnectedPV['pvName']})
+            aresp.raise_for_status()
+            time.sleep(0.25)
