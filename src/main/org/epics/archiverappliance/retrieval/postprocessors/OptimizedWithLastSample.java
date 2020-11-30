@@ -34,6 +34,9 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  * will be returned. If there are more samples than requested, the samples will be collected into bins.
  * Mean, std, min, max and count of each bin is calculated and returned as a single sample. 
  *
+ * This differs from the <code>Optimized</code> post processor in that if a bin is empty, instead of
+ * repeating the last bin with samples, the bin uses the last value of the last recorded sample instead
+ * (as mean, min and max; stddev is zero and number of samples is also zero).
  */
 public class OptimizedWithLastSample implements PostProcessor, PostProcessorWithConsolidatedEventStream, FillNoFillSupport {
 
