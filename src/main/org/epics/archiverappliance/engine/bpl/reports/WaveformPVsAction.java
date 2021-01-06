@@ -58,6 +58,7 @@ public class WaveformPVsAction implements BPLAction {
 					pvStatus.put("samplingmethod", samplingMethod.toString());
 					pvStatus.put("samplingperiod", Double.toString(pvMetrics.getSamplingPeriod()));
 					pvStatus.put("elementCount", Integer.toString(pvMetrics.getElementCount()));
+					pvStatus.put("dbrtype", pvMetrics.getArchDBRTypes().toString());
 				}
 			}
 			out.println(JSONValue.toJSONString(result));
