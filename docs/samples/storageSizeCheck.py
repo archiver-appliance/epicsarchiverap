@@ -8,6 +8,7 @@ import json
 import datetime
 import time
 import operator
+import emailHandler
 
 def getPVsWithEstimatedStorageGreaterThan(bplURL, limitInGbPerYear, limit):
     """
@@ -26,5 +27,11 @@ if __name__ == "__main__":
     parser.add_argument("--limit", help="Limit the number of entries in the report.", type=int, default=100)
     args = parser.parse_args()
     bplURL = args.url + "/" if not args.url.endswith("/") else args.url
+    emailMsg = "PVs with estimated storage greater than {1}GB/year in {0}\n".format(bplURL, args.maxsize)
+    sendEmail = False
     for (pv, gbperyear)  in getPVsWithEstimatedStorageGreaterThan(bplURL, args.maxsize, args.limit):
-        print("PV: {} Size(GB/year): {}".format(pv, gbperyear))
+        emailMsg = emailMsg + "PV: {} Size(GB/year): {}\n".format(pv, gbperyear)
+        sendEmail = True
+    if sendEmail:
+        print("Sending email...")
+        emailHandler.sendEmail("PVs with excessive storage rate in " + args.url, emailMsg, [])
