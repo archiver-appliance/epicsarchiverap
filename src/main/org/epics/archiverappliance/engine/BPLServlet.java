@@ -48,6 +48,7 @@ import org.epics.archiverappliance.engine.bpl.reports.LostConnectionsReport;
 import org.epics.archiverappliance.engine.bpl.reports.MetaGetsForThisApplianceAction;
 import org.epics.archiverappliance.engine.bpl.reports.PVDetails;
 import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
+import org.epics.archiverappliance.engine.bpl.reports.SlowChangingPVsWithDroppedEvents;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.engine.bpl.reports.WaveformPVsAction;
 
@@ -79,6 +80,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getPVsByDroppedEventsTimestamp",DroppedEventsTimestampReport.class);
 		getActions.put("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
 		getActions.put("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
+		getActions.put("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
 		getActions.put("/pauseArchivingPV", PauseArchivingPV.class);
 		getActions.put("/resumeArchivingPV", ResumeArchivingPV.class);
 		getActions.put("/deletePV", DeletePV.class);

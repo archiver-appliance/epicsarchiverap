@@ -229,7 +229,7 @@ public class PVMetrics {
 			lastStartEpochSeconds = System.currentTimeMillis() / 1000;
 		}
 	}
-
+	
    /**
     * 
     * @return  the average event rate in count/second
@@ -617,5 +617,11 @@ public class PVMetrics {
 
 	public void setScanPeriodMillis(long scanPeriodMillis) {
 		this.scanPeriodMillis = scanPeriodMillis;
+	}
+
+	public long getEventCounts() {
+		return eventCounts;
 	}	
+	
+	
 }

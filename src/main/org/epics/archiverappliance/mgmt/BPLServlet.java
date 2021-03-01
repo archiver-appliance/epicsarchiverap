@@ -91,6 +91,7 @@ import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyAddedPVsforThisInsta
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyChangedPVs;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyChangedPVsforThisInstance;
 import org.epics.archiverappliance.mgmt.bpl.reports.SilentPVReport;
+import org.epics.archiverappliance.mgmt.bpl.reports.SlowChangingPVsWithDroppedEvents;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.StorageReportDetails;
@@ -161,6 +162,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getPVsByDroppedEventsTimestamp",DroppedEventsTimestampReport.class);
 		addAction("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
 		addAction("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
+		addAction("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
 		addAction("/getPausedPVsReport", PausedPVsReport.class);
 		addAction("/getPausedPVsForThisAppliance", GetPausedPVsForThisAppliance.class);
 		addAction("/getArchivedWaveforms", WaveformPVsAction.class);	
