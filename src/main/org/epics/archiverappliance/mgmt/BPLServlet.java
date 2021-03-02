@@ -39,6 +39,7 @@ import org.epics.archiverappliance.mgmt.bpl.ConsolidatePBFilesForOnePV;
 import org.epics.archiverappliance.mgmt.bpl.DeletePV;
 import org.epics.archiverappliance.mgmt.bpl.ExportConfig;
 import org.epics.archiverappliance.mgmt.bpl.ExportConfigForThisInstance;
+import org.epics.archiverappliance.mgmt.bpl.GetAllAliasesAction;
 import org.epics.archiverappliance.mgmt.bpl.GetAllExpandedPVNames;
 import org.epics.archiverappliance.mgmt.bpl.GetAllPVs;
 import org.epics.archiverappliance.mgmt.bpl.GetApplianceInfo;
@@ -134,6 +135,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/appendAndAliasPV", AppendAndAliasPV.class);
 		addAction("/addAlias", AddAliasAction.class);
 		addAction("/removeAlias", RemoveAliasAction.class);
+		addAction("/getAllAliases", GetAllAliasesAction.class);
 		addAction("/skipAliasCheck", SkipAliasCheckAction.class);
 		addAction("/changeTypeForPV", ChangeTypeForPV.class);
 		addAction("/getVersions", GetVersions.class);
