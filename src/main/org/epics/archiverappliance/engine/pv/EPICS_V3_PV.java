@@ -233,14 +233,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	}
 
 	/***
-	 * @see PV#getDBRTimeEvent()
-	 */
-	@Override
-	public DBRTimeEvent getDBRTimeEvent() {
-		return dbrtimeevent;
-	}
-
-	/***
     *get  the meta info for this pv 
     * @return MetaInfo 
     */
@@ -346,8 +338,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	@Override
 	public void addListener(final PVListener listener) {
 		listeners.add(listener);
-		if (running && isConnected())
-			listener.pvValueUpdate(this);
 	}
 	
 	/** {@inheritDoc} */
@@ -629,6 +619,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	@Override
 	public void monitorChanged(final MonitorEvent ev) {
 		this.lastMonitorSecs = TimeUtils.getCurrentEpochSeconds();
+		this.dbrtimeevent = null; // Now that this is private; we should be able to set this to null on each monitor event
 
 		// This runs in a CA thread.
 
@@ -725,7 +716,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				}
 				// //////////////////////////////
 			}
-			fireValueUpdate();
+			fireValueUpdate(dbrtimeevent);
 		} catch (final Exception ex) {
 			logger.error("exception in monitor changed for pv " + this.name, ex);
 			this.transientErrorCount++;
@@ -734,9 +725,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 
 	
 	/** Notify all listeners. */
-	private void fireValueUpdate() {
+	private void fireValueUpdate(DBRTimeEvent ev) {
 		for (final PVListener listener : listeners) {
-			listener.pvValueUpdate(this);
+			listener.pvValueUpdate(this, ev);
 		}
 	}
 	
@@ -888,9 +879,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		AddDetail ad = new AddDetail(statuses);
 		ad.addKV("PV connection state machine state", state.toString());
 		ad.addKV("Last monitor received at", TimeUtils.convertToHumanReadableString(this.lastMonitorSecs));
-		ad.addKV("A previous monitor had a valid DBR?", Boolean.toString(this.dbrtimeevent != null));
+		ad.addKV("Last monitor had a valid DBR?", Boolean.toString(this.dbrtimeevent != null));
 		if(this.dbrtimeevent != null) {
-			ad.addKV("Most recent monitor event timestamp", TimeUtils.convertToHumanReadableString(this.dbrtimeevent.getEventTimeStamp()));			
+			ad.addKV("Last monitor event timestamp", TimeUtils.convertToHumanReadableString(this.dbrtimeevent.getEventTimeStamp()));			
 		}
 		ad.addKV("Various transient errors", Long.toString(transientErrorCount));
 		

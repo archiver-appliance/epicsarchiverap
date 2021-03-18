@@ -184,17 +184,6 @@ abstract public class ArchiveChannel {
 	public PVMetrics getPVMetrics() {
 		this.pvMetrics.setConnected(this.pv.isConnected());
 		this.pvMetrics.setArchving(this.pv.isRunning());
-		// This should hopefully tell us the last timestamp from the IOC just before it is displayed in PVDetails.
-		if(this.pv.getDBRTimeEvent() != null) {
-			try {
-				this.pvMetrics.setLastEventFromIOCTimeStamp(this.pv.getDBRTimeEvent().getEventTimeStamp());
-			} catch(IllegalArgumentException ex) { 
-				logger.warn("Possibly incorrect nanos for last event for PV " + this.name, ex);
-				this.pvMetrics.setLastEventFromIOCTimeStamp(null);
-			}
-		} else { 
-			this.pvMetrics.setLastEventFromIOCTimeStamp(null);
-		}
 		return pvMetrics;
 	}
 
@@ -237,12 +226,10 @@ abstract public class ArchiveChannel {
 
 		pv.addListener(new PVListener() {
 			@Override
-			public void pvValueUpdate(final PV pv) {
+			public void pvValueUpdate(final PV pv, final DBRTimeEvent temptimeevent) {
 				// PV already suppresses updates after 'stop', but check anyway
 				if (is_running) {
 					try {
-						final DBRTimeEvent temptimeevent = pv.getDBRTimeEvent();
-
 						if (enablement != Enablement.Passive)
 							handleEnablement(temptimeevent);
 

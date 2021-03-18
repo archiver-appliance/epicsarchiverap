@@ -79,12 +79,6 @@ public interface PV
      */
     public boolean isConnected();
     
-    /**
-     * get the current DBRTimeEvent
-     * @return DBRTimeEvent  &emsp; 
-     */
-	DBRTimeEvent getDBRTimeEvent();
-
    /***
     * get the archive DBR types for this pv
     * @return ArchDBRTypes  &emsp;

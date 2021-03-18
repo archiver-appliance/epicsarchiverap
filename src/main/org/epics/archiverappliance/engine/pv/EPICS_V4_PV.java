@@ -178,9 +178,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	@Override
 	public void addListener(PVListener listener) {
 		listeners.add(listener);
-		if (running && isConnected()) { 
-			listener.pvValueUpdate(this);
-		}
 	}
 
 	@Override
@@ -198,9 +195,9 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 
 	/** Notify all listeners. */
-	private void fireValueUpdate() {
+	private void fireValueUpdate(DBRTimeEvent ev) {
 		for (final PVListener listener : listeners) {
-			listener.pvValueUpdate(this);
+			listener.pvValueUpdate(this, ev);
 		}
 	}
 
@@ -237,11 +234,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	@Override
 	public boolean isConnected() {
 		return connected;
-	}
-
-	@Override
-	public DBRTimeEvent getDBRTimeEvent() {
-		return this.dbrtimeevent;
 	}
 
 	@Override
@@ -429,7 +421,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 
 
-					fireValueUpdate();
+					fireValueUpdate(dbrtimeevent);
 										
 				} catch (Exception e) {
 					logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);

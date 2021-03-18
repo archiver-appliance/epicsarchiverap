@@ -2,6 +2,7 @@
 package org.epics.archiverappliance.engine.pv;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.DBRTimeEvent;
 
 /** A listener for PV updates. 
  */
@@ -39,7 +40,7 @@ public interface PVListener
      *  
      *  @param pv The PV which has a new value
      */
-    public void pvValueUpdate(PV pv);
+    public void pvValueUpdate(PV pv, DBRTimeEvent ev);
     
     /**
      * Notification of a sample being dropped because of a type change

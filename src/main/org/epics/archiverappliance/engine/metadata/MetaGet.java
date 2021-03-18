@@ -49,6 +49,7 @@ public class MetaGet implements Runnable {
 	private boolean usePVAccess = false;
 	private MetaCompletedListener metaListener;
 	private Hashtable<String, PV> pvList = new Hashtable<String, PV>();
+	private ConcurrentHashMap<String, DBRTimeEvent> fieldValues = new ConcurrentHashMap<String, DBRTimeEvent>();
 
 	final private ConfigService configservice;
 	private static final Logger logger = Logger.getLogger(MetaGet.class.getName());
@@ -76,7 +77,7 @@ public class MetaGet implements Runnable {
 			PV pv = PVFactory.createPV(pvName, configservice, jcaCommandThreadId, usePVAccess);
 			pv.addListener(new PVListener() {
 				@Override
-				public void pvValueUpdate(PV pv) {
+				public void pvValueUpdate(PV pv, DBRTimeEvent ev) {
 				}
 
 				@Override
@@ -104,28 +105,58 @@ public class MetaGet implements Runnable {
 			});
 			pvList.put("main", pv);
 			pv.start();
+			
+			class FieldListener implements PVListener {
+				private String fieldName;
+				
+				public FieldListener(String fieldName) {
+					this.fieldName = fieldName;
+				}
+				
+				@Override
+				public void pvConnectionRequestMade(PV pv) {
+				}
+
+				@Override
+				public void pvConnected(PV pv) {
+				}
+
+				@Override
+				public void pvDisconnected(PV pv) {
+				}
+
+				@Override
+				public void pvValueUpdate(PV pv, DBRTimeEvent ev) {
+					logger.debug("Got value for " + this.fieldName + " for pv " + pvName + " with timestamp " + TimeUtils.convertToHumanReadableString(ev.getEventTimeStamp()));
+					fieldValues.put(this.fieldName, ev);
+				}
+
+				@Override
+				public void sampleDroppedTypeChange(PV pv, ArchDBRTypes newDBRType) {
+				}
+				
+				public void genFieldPV() throws Exception {
+					PV pv = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, fieldName), configservice, jcaCommandThreadId, usePVAccess);
+					pv.addListener(this);
+					pvList.put(fieldName, pv);
+					pv.start();					
+				}
+				
+			}
 
 			if(this.usePVAccess) {
 				logger.debug("Skipping getting meta fields for a PVAccess PV " + this.pvName);
-			} else { 
-				PV pv2 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME"), configservice, jcaCommandThreadId, usePVAccess);
-				pvList.put("NAME", pv2);
-				pv2.start();
-				
-				PV pv3 = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, "NAME$"), configservice, jcaCommandThreadId, usePVAccess);
-				pvList.put("NAME$", pv3);
-				pv3.start();
-				
+			} else {
+				new FieldListener("NAME").genFieldPV();
+				new FieldListener("NAME$").genFieldPV();
 				if (metadatafields != null) {
 					for (int i = 0; i < metadatafields.length; i++) {
 						String metaField = metadatafields[i];
 						// We return the fields of the src PV even if we are archiving a field...
-						PV pvTemp = PVFactory.createPV(PVNames.normalizePVNameWithField(pvName, metaField), configservice, jcaCommandThreadId, usePVAccess);
-						pvTemp.start();
-						pvList.put(metaField, pvTemp);
+						new FieldListener(metaField).genFieldPV();
 					}
 				}
-			}			
+			}
 		} catch (Throwable t) {
 			logger.error("Exception when initializing MetaGet " + pvName, t);
 			throw (t);
@@ -143,16 +174,14 @@ public class MetaGet implements Runnable {
 			} else { 
 				// Per Dirk Zimoch, we first check the NAME$.
 				// If that exists, we use it. If not, we use the NAME
-				PV pv_NameDollar = pvList.get("NAME$");
-				DBRTimeEvent nameDollarValue = pv_NameDollar.getDBRTimeEvent();
+				DBRTimeEvent nameDollarValue = fieldValues.get("NAME$");
 				if (nameDollarValue != null && nameDollarValue.getSampleValue() != null) {
 					logger.debug("Using the NAME$ value as the NAME for pv " + pvName);
 					SampleValue sampleValue = nameDollarValue.getSampleValue();
 					parseAliasInfo(sampleValue, mainMeta);
 				} else { 
 					logger.debug("Using the NAME value as the NAME for pv " + pvName);
-					PV pv_Name = pvList.get("NAME");
-					DBRTimeEvent nameValue = pv_Name.getDBRTimeEvent();
+					DBRTimeEvent nameValue = fieldValues.get("NAME");
 					if (nameValue != null && nameValue.getSampleValue() != null) {
 						SampleValue sampleValue = nameValue.getSampleValue();
 						parseAliasInfo(sampleValue, mainMeta);
@@ -168,15 +197,15 @@ public class MetaGet implements Runnable {
 						// These have already been processed; so do nothing.
 					} else { 
 						if (fieldName.endsWith("RTYP")) {
-							if(pvList.get(fieldName) != null && pvList.get(fieldName).getDBRTimeEvent() != null && pvList.get(fieldName).getDBRTimeEvent().getSampleValue() != null) { 
-								String rtyp = pvList.get(fieldName).getDBRTimeEvent().getSampleValue().toString();
+							if(pvList.get(fieldName) != null && fieldValues.get(fieldName) != null && fieldValues.get(fieldName).getSampleValue() != null) { 
+								String rtyp = fieldValues.get(fieldName).getSampleValue().toString();
 								mainMeta.addOtherMetaInfo(fieldName, rtyp);
 								logger.info("The RTYP for the PV " + MetaGet.this.pvName + " is " + rtyp);
 							} else { 
 								logger.debug("Something about RTYP is null for PV " + MetaGet.this.pvName);
 							}
 						} else {
-							DBRTimeEvent valueTemp = pvList.get(fieldName).getDBRTimeEvent();
+							DBRTimeEvent valueTemp = fieldValues.get(fieldName);
 							if (valueTemp != null) {
 								SampleValue tempvalue = valueTemp.getSampleValue();
 								parseOtherInfo(tempvalue, mainMeta, fieldName);
