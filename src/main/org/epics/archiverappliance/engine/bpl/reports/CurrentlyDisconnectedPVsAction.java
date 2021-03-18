@@ -47,8 +47,6 @@ public class CurrentlyDisconnectedPVsAction implements BPLAction {
 					String hostName = channel.getHostName();
 					pvStatus.put("hostName", hostName != null ? hostName : "N/A");
 					pvStatus.put("commandThreadID", Integer.toString(channel.getJCACommandThreadID()));
-					String internalState = channel.getInternalState();
-					pvStatus.put("internalState", internalState != null ? internalState : "N/A");
 				}
 			}
 			out.println(JSONValue.toJSONString(result));

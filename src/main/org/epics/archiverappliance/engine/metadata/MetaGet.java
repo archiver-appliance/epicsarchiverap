@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -311,8 +312,8 @@ public class MetaGet implements Runnable {
 	}
 	
 	
-	public static List<HashMap<String, String>> getPendingMetaDetails(String appliance) {
-		List<HashMap<String, String>> ret = new LinkedList<HashMap<String, String>>();
+	public static List<Map<String, String>> getPendingMetaDetails(String appliance) {
+		List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
 		for(String pvNm : metaGets.keySet()) {
 			MetaGet mg = metaGets.get(pvNm);
 			HashMap<String, String> st = new HashMap<String, String>();
@@ -323,7 +324,7 @@ public class MetaGet implements Runnable {
 			st.put("usePVAccess", Boolean.toString(mg.usePVAccess));
 			PV pvMain = mg.pvList.get("main");
 			if(pvMain != null) {
-				st.put("internalState", pvMain.getStateInfo()); 
+				pvMain.getLowLevelChannelInfo(ret); 
 				MetaInfo mainMeta = pvMain.getTotalMetaInfo();
 				if(mainMeta != null) {
 					st.put("eventsSoFar", Long.toString(mainMeta.getEventCount()));

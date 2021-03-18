@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -239,11 +240,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	}
 
 	@Override
-	public String getStateInfo() {
-		return state.toString();
-	}
-
-	@Override
 	public DBRTimeEvent getDBRTimeEvent() {
 		return this.dbrtimeevent;
 	}
@@ -294,8 +290,8 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 	}
 
 	@Override
-	public String getLowLevelChannelInfo() {
-		return null;
+	public void getLowLevelChannelInfo(List<Map<String, String>> statuses) {
+		return;
 	}
 	
 	@Override
@@ -331,7 +327,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 				
 				Field valueField = structure.getField("value");
 				if(valueField == null) { 
-					archDBRType = archDBRType.DBR_V4_GENERIC_BYTES;
+					archDBRType = ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 				} else {
 					logger.debug("Value field in monitorConnect is of type " + valueField.getID());					
 					archDBRType = this.determineDBRType(structureID, valueField.getID());

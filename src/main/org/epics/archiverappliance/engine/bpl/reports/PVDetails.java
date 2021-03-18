@@ -76,10 +76,7 @@ public class PVDetails implements BPLAction {
 			PVMetrics metrics = ArchiveEngine.getMetricsforPV(pvName, configService);
 			if(metrics != null){
 				LinkedList<Map<String, String>> statuses = metrics.getDetailedStatus();
-				String lowLevelStateInfo = ArchiveEngine.getLowLevelStateInfo(pvName, configService);
-				if(lowLevelStateInfo != null) {
-					addDetailedStatus(statuses, "The low level status from the JCA/CAJ channel object", lowLevelStateInfo);
-				}
+				ArchiveEngine.getLowLevelStateInfo(pvName, configService, statuses);
 				
 				if(dbrType.isV3Type()) { 
 					ArchiveChannel channel = configService.getEngineContext().getChannelList().get(pvName);
@@ -90,7 +87,6 @@ public class PVDetails implements BPLAction {
 						addDetailedStatus(statuses, "Connected channels for the extra fields", "" + connectedMetaFieldCount);
 						addDetailedStatus(statuses, "Sample buffer capacity", "" + channel.getSampleBuffer().getCapacity());
 						addDetailedStatus(statuses, "Time elapsed since search request (s)", "" + channel.getSecondsElapsedSinceSearchRequest());
-						addDetailedStatus(statuses, "PVs Internal State", channel.getInternalState());
 					}
 				}
 				

@@ -7,13 +7,15 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
-import gov.aps.jca.CAException;
-
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import gov.aps.jca.CAException;
 
 
 
@@ -77,15 +79,6 @@ public interface PV
      */
     public boolean isConnected();
     
-    /** Internal state information on the PV.
-     *  <p>
-     *  Especially when <code>isConnected()</code> is <code>false</code>,
-     *  this information might help to diagnose the problem:
-     *  Did the PV never connect?
-     *  Was it once connected, but some error occurred?
-     *  @return Some human readable state info */
-    public String getStateInfo();
-
     /**
      * get the current DBRTimeEvent
      * @return DBRTimeEvent  &emsp; 
@@ -142,10 +135,10 @@ public interface PV
 	public  String getHostName();
 
 	/**
-	 * Get any low level info as a display string; this is typically meant for debugging purposes..
-	 * @return String Get any low level info
+	 * Get any low level info as a displayable list; this is typically meant for debugging purposes..
+	 * Add these to as key value pairs to the statuses
 	 */
-	public String getLowLevelChannelInfo();
+	public void getLowLevelChannelInfo(List<Map<String, String>> statuses);
 	
 	/**
 	 * This method is called each time the ArchiveChannel has written changed a DBRTimeEvent into the buffers.

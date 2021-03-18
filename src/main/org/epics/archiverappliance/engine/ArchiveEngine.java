@@ -16,6 +16,8 @@ package org.epics.archiverappliance.engine;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -410,15 +412,15 @@ public class ArchiveEngine {
 	 * Return info from CAJ
 	 * @param pvName The name of PV.
 	 * @param configservice  ConfigService
-	 * @return String LowLevelStateInfo
+	 * @param statuses  Add a list of key value pairs to the status
 	 * @throws Exception  &emsp;
 	 */
-	public static String getLowLevelStateInfo(String pvName, ConfigService configservice) throws Exception { 
+	public static void getLowLevelStateInfo(String pvName, ConfigService configservice, LinkedList<Map<String, String>> statuses) throws Exception { 
 		EngineContext engineContext = configservice.getEngineContext();
 		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
 		if (channel == null)
-			return null;
-		return channel.getLowLevelChannelStateInfo();
+			return;
+		channel.getLowLevelChannelStateInfo(statuses);
 	}
 
 

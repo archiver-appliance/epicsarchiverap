@@ -18,6 +18,8 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -417,11 +419,6 @@ abstract public class ArchiveChannel {
 		return pv.isConnected();
 	}
 
-	/** @return Human-readable info on internal state of PV */
-	public String getInternalState() {
-		return pv.getStateInfo();
-	}
-
 	/** Start archiving this channel. 
 	 *
 	 * @throws Exception  &emsp;
@@ -751,8 +748,8 @@ abstract public class ArchiveChannel {
 	}
 
 
-	public String getLowLevelChannelStateInfo() { 
-		return this.pv.getLowLevelChannelInfo();
+	public void getLowLevelChannelStateInfo(List<Map<String, String>> statuses) { 
+		this.pv.getLowLevelChannelInfo(statuses);
 	}
 	
 	/**

@@ -7,12 +7,11 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -195,6 +194,16 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 
 	/**Does this pv have one meta field archived?*/
 	private boolean hasMetaField = false;
+	
+	/**
+	 * The server time when we last received a monitor event.
+	 */
+	private long lastMonitorSecs = 0;
+	
+	/**
+	 * Misc bucket for catching various transient errors that we are aware of. Probably not all that useful.
+	 */
+	private long transientErrorCount = 0;
 
 	/**
 	 * the ioc host name where this pv is 
@@ -504,24 +513,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		return connected;
 	}
 	
-	
-	/** {@inheritDoc} */
-	@Override
-	public String getStateInfo() {
-		StringBuilder buf = new StringBuilder();
-		buf.append("<ul>");
-		buf.append("<li>PV State: " + state.toString() + "</li>");
-		if(this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
-			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
-			buf.append("<li>Searches: " + cajChannel.getSearchTries() + "</li>");
-			buf.append("<li>CliID: " + cajChannel.getChannelID() + "</li>");
-			buf.append("<li>SrvID: " + cajChannel.getServerChannelID() + "</li>");
-			buf.append("<li>Conn: " + cajChannel.getConnectionState().getName() + "</li>");
-		}
-		buf.append("</ul>");
-		return buf.toString();
-	}
-	
 	/** {@inheritDoc} */
 	@Override
 	public void stop() {
@@ -637,16 +628,23 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	/** MonitorListener interface. */
 	@Override
 	public void monitorChanged(final MonitorEvent ev) {
-		// final Logger log = Activator.getLogger();
+		this.lastMonitorSecs = TimeUtils.getCurrentEpochSeconds();
+
 		// This runs in a CA thread.
-		// Ignore values that arrive after stop()
+
 		if (!running) {
+			logger.error("Ignoring monitor events that arrive after stop for " + this.name);
+			this.transientErrorCount++;
 			return;
 		}
 		if (subscription == null) {
+			logger.error("Ignoring monitor events that arrive after we clean up the subscription for " + this.name);
+			this.transientErrorCount++;
 			return;
 		}
 		if (ev.getStatus() == null || !ev.getStatus().isSuccessful()) {
+			logger.error("Ignoring monitor events that have an invalid CA status for " + this.name);
+			this.transientErrorCount++;
 			return;
 		}
 		if (controlledPVList != null) {
@@ -658,6 +656,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 						"exception in monitor changed function when updatinng controlled pvs' enablement for " + this.name,
 						e);
 			}
+			logger.warn("This " + this.name + " is a PV that controls other PV's.");
 			return;
 		}
 		state = PVConnectionState.GotMonitor;
@@ -667,6 +666,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			try {
 				DBR dbr = ev.getDBR();
 				if (dbr == null) {
+					logger.error("Ignoring monitor events that does not have a valid DBR for " + this.name);
 					return;
 				}
 				if (this.name.endsWith(".RTYP")) {
@@ -695,6 +695,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				logger.error(
 						"exception in monitor changed function when converting DBR to dbrtimeevent for pv " + this.name,
 						e);
+				this.transientErrorCount++;
 			}
 			
 			updataMetaDataInParentPV(dbrtimeevent);
@@ -727,6 +728,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			fireValueUpdate();
 		} catch (final Exception ex) {
 			logger.error("exception in monitor changed for pv " + this.name, ex);
+			this.transientErrorCount++;
 		}
 	}
 
@@ -857,9 +859,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		dbrtimeevent.setFieldValues(tempHashMap, false);
 		archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
 	}
-
+	
 	@Override
-	public String getLowLevelChannelInfo() {
+	public void getLowLevelChannelInfo(List<Map<String, String>> statuses) {
 		// Commented out when using JCA. This seems to work in CAJ but not in JCA.
 /*		if(channel_ref != null) { 
 			ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -867,8 +869,56 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			channel_ref.getChannel().printInfo(out);
 			out.close();
 			return os.toString();
+		}		
+*/
+		class AddDetail {
+			private List<Map<String, String>> statuses;
+			AddDetail(List<Map<String, String>> statuses) {
+				this.statuses = statuses;
+			}
+			void addKV(String k, String v) {
+				HashMap<String, String> h = new HashMap<String, String>();
+				h.put("name", k);
+				h.put("value", v == null ? "N/A" : v);
+				h.put("source", "CA");
+				this.statuses.add(h);
+			}
 		}
-*/		return null;
+		
+		AddDetail ad = new AddDetail(statuses);
+		ad.addKV("PV connection state machine state", state.toString());
+		ad.addKV("Last monitor received at", TimeUtils.convertToHumanReadableString(this.lastMonitorSecs));
+		ad.addKV("A previous monitor had a valid DBR?", Boolean.toString(this.dbrtimeevent != null));
+		if(this.dbrtimeevent != null) {
+			ad.addKV("Most recent monitor event timestamp", TimeUtils.convertToHumanReadableString(this.dbrtimeevent.getEventTimeStamp()));			
+		}
+		ad.addKV("Various transient errors", Long.toString(transientErrorCount));
+		
+		ad.addKV("Do we have a CA channel?", Boolean.toString(this.channel_ref != null && this.channel_ref.getChannel() != null));
+		ad.addKV("Do we have a subscription?", Boolean.toString(this.subscription != null));		
+		if(this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
+			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
+			ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));			
+			ad.addKV("CAJ channel ID", Integer.toString(cajChannel.getChannelID()));
+			ad.addKV("CAJ server channel ID", Integer.toString(cajChannel.getServerChannelID()));
+			ad.addKV("CAJ connection state", cajChannel.getConnectionState().getName());
+		}		
+		ad.addKV("Daily metadata last saved at", TimeUtils.convertToHumanReadableString(archiveFieldsSavedAtEpSec));
+		ad.addKV("Do we use DBE_Properties?", Boolean.toString(isDBEProperties));		
+		ad.addKV("Do we have a DBE Properties subscription?", Boolean.toString(this.dbePropertiesSubscription != null));
+		ad.addKV("The internal connected bool", Boolean.toString(this.connected));
+		ad.addKV("The internal running bool", Boolean.toString(this.running));
+		ad.addKV("Do we have a valid DBR Type constructor", Boolean.toString(con != null));
+		ad.addKV("The CAJ command thread id", Integer.toString(jcaCommandThreadId));
+		ad.addKV("Any other PV's being controlled?", Boolean.toString(this.controlledPVList != null));
+		if(this.controlledPVList != null) {
+			ad.addKV("Number of other PV's being controlled", Integer.toString(this.controlledPVList.size()));
+			ad.addKV("Status of controlled PVs", Boolean.toString(this.enableAllPV));
+		}
+		ad.addKV("Has metafields?", Boolean.toString(this.hasMetaField));
+		ad.addKV("Hostname of PV from CA", this.hostName);
+		
+		return;
 	}
 	
 	
@@ -879,7 +929,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			public void getCompleted(final GetEvent event) {
 				// This runs in a CA thread
 				if (event.getStatus().isSuccessful()) {
-					state = PVConnectionState.GotMetaData;
 					final DBR dbr = event.getDBR();
 					logger.debug("Updating metadata (EGU/PREC etc) for pv " + EPICS_V3_PV.this.name);
 					totalMetaInfo.applyBasicInfo(EPICS_V3_PV.this.name, dbr, EPICS_V3_PV.this.configservice);
@@ -892,7 +941,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			if(channel_ref.getChannel().getConnectionState() == ConnectionState.CONNECTED) { 
 				DBRType type = channel_ref.getChannel().getFieldType();
 				if (!(plain || type.isSTRING())) {
-					state = PVConnectionState.GettingMetadata;
 					if (type.isDOUBLE() || type.isFLOAT())
 						type = DBRType.CTRL_DOUBLE;
 					else if (type.isENUM())
