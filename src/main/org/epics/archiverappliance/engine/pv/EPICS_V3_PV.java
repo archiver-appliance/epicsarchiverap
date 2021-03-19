@@ -663,6 +663,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 				if (this.name.endsWith(".RTYP")) {
 					String rtypName = (((DBR_String) dbr).getStringValue())[0];
 					dbrtimeevent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_STRING, TimeUtils.now(), new ScalarStringSampleValue(rtypName), 0, 0);
+					fireValueUpdate(dbrtimeevent);
 					return;
 				}
 				// dbr.printInfo();
