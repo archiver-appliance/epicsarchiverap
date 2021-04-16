@@ -159,7 +159,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
         if (numEvents > allEvents.size()) {
             return customStatsConsolidatedEventStream();
         } else {
-            return transformedRawEvents;
+            return new ArrayListCollectorEventStream(transformedRawEvents);
         }
     }
     
