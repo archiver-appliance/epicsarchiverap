@@ -124,7 +124,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
         if (numEvents > allEvents.size()) {
             return statisticsPostProcessor.getConsolidatedEventStream();
         } else {
-            return transformedRawEvents;
+            return new ArrayListCollectorEventStream(transformedRawEvents);
         }
     }
 
