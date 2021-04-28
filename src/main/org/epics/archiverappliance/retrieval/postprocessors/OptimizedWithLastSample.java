@@ -289,25 +289,9 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                       if (lastBinSaved != null) {
                         long nSkip = currentBin-lastBinSaved;
                         if (nSkip > 1) {
-                          // We've skipped bins!
-                          SummaryValue oldValue = consolidatedData.get(lastBinSaved);
-                          double lastVal = oldValue.values.get(5);
-                          
-                          List<Double> list = new ArrayList<>(6);
-                          list.add(lastVal);
-                          list.add(0.0);
-                          list.add(lastVal);
-                          list.add(lastVal);
-                          list.add(0.0);
-                          list.add(lastVal);
-                          
-                          SummaryValue lastValSum = new SummaryValue(list, currentMaxSeverity,
-                              currentConnectionChangedEvents);
-                          
-                          for (int i = 1; i < nSkip; i++ ) {
-                            consolidatedData.put(lastBinSaved+i, lastValSum);
-                          }
-                         
+                            // Bins have been skipped (had no events) so need to populate them
+                            // with the last value from the last bin to have events
+                            populateSkippedBins(nSkip);
                         }
                       }
                       
@@ -346,13 +330,57 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                 LOGGER.error("Skipping possible corrupted event for pv " + strm.getDescription());
               }
             }
+            // The last bin with events will not yet have been added so it needs to 
+            // be added manually here in order to correct for the remaining bins with
+            // no events.
+            if (currentBinCollector.haveEventsBeenAdded()) {
+                SummaryValue summaryValue;
+                summaryValue = new SummaryValue(
+                    ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(), currentMaxSeverity,
+                    currentConnectionChangedEvents);
+                consolidatedData.put(currentBin, summaryValue);
+                lastBinSaved = currentBin;
+            }
+            if (lastBinSaved < lastBin) {
+                // Last bins have been skipped (had no events) so need to populate them
+                // with the last value from the last bin to have events
+                // Include the last bin (+1)
+                long nSkip = lastBin-lastBinSaved + 1;
+                populateSkippedBins(nSkip);  
+            }
             return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData,
                 inheritValuesFromPreviousBins, zeroOutEmptyBins(), true, 6);
           }
         }
       };
     }
-    
+
+    /**
+     * In the case that some bins have no events, fill them with the last value
+     * from the last bin to be saved (i.e. that has events).
+     *
+     * @param nBins
+     *            the number of bins to fill with last value from last bin to
+     *            have values.
+     */
+    private void populateSkippedBins(long nBins) {
+        SummaryValue oldValue = consolidatedData.get(lastBinSaved);
+        double lastVal = oldValue.values.get(5);
+
+        List<Double> list = new ArrayList<>(6);
+        list.add(lastVal);
+        list.add(0.0);
+        list.add(lastVal);
+        list.add(lastVal);
+        list.add(0.0);
+        list.add(lastVal);
+        SummaryValue lastValSum = new SummaryValue(list, currentMaxSeverity, currentConnectionChangedEvents);
+
+        for (int i = 1; i < nBins; i++) {
+            consolidatedData.put(lastBinSaved + i, lastValSum);
+        }
+    }
+
     private void switchToNewBin(long binNumber) {
       currentBin = binNumber;
       currentMaxSeverity = 0;
