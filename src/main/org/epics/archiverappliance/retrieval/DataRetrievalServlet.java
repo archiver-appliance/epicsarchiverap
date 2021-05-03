@@ -1231,7 +1231,11 @@ public class DataRetrievalServlet  extends HttpServlet {
 		if(externalServers != null) { 
 			for(String serverUrl : externalServers.keySet()) { 
 				String index = externalServers.get(serverUrl);
-				if(index.equals("pbraw")) { 
+				if(index.equals("pbraw")) {
+					if(configService.getFailoverServerURLs().contains(serverUrl)) {
+						logger.debug("Skipping asking " + serverUrl + " for data for PV " + pvName + "as it is configured for failover");
+						return null;
+					}
 					logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv " + pvName);
 					JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8"), false);
 					if(areWeArchivingPVObj != null) {

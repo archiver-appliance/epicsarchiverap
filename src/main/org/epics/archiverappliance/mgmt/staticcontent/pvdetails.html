@@ -177,7 +177,7 @@ $("#pvStopArchivingOk").click(function() {
 $("#pvDetailsConsolidateData").click(function() {
 	var pvName = $("#pvDetailsName").text();
 	$('#pvConsolidateParamsDiv').attr('title', 'Consolidate using ETL all the data for PV ' + pvName + ' into the specified data store ');
-	var stores = getStoresForPV(pvName);
+	var stores = Object.keys(getStoresForPV(pvName));
 	$('#pvConsolidateStore').empty();
 	for (store in stores) { 
 		$('#pvConsolidateStore').append($("<option></option>").attr("value", stores[store]).text(stores[store]))
@@ -218,7 +218,7 @@ if (getNumberOfAppliances() > 1) {
 	$("#pvDetailsReshardPV").click(function() {
 		var pvName = $("#pvDetailsName").text();
 		$("#pvReshardParamsDiv").attr('title', 'Change the appliance archiving the PV ' + pvName);
-		var stores = getStoresForPV(pvName);
+		var stores = Object.keys(getStoresForPV(pvName));
 		$('#pvReshardStore').empty();
 		for (store in stores) { 
 			$('#pvReshardStore').append($("<option></option>").attr("value", stores[store]).text(stores[store]))

@@ -32,7 +32,7 @@ Please see the appliance archiver <a href="../details.html#scripting">details</a
 All the BPL is typically accessible thru the following process
 <ol>
 <li>Construct a URL (pointing to the mgmt web app) using the list below. For most BPL, you can point to any appliance in the cluster.</li>
-<li>Use a HTTP client to get the contents of this URL. For example, in python you can use <code>httplib</code> or <code>urllib2</code></li>
+<li>Use a HTTP client to get the contents of this URL. For example, in python, the <code>requests</code> package is very well suited for this.</li>
 <li>The contents of the response are typically JSON and can be parsed using a standard JSON parser. For example, in python you can use the standard <code>json</code> package.</li>
 </ol>
 

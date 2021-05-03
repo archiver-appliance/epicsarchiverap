@@ -36,6 +36,7 @@ import org.epics.archiverappliance.data.VectorValue;
 import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVFactory;
 import org.epics.archiverappliance.engine.pv.PVListener;
+import org.json.simple.JSONValue;
 /**
  * this class is used to create channel for pv and compute the meta info for one pv.
  * @author Luofeng Li
@@ -353,7 +354,9 @@ public class MetaGet implements Runnable {
 			st.put("usePVAccess", Boolean.toString(mg.usePVAccess));
 			PV pvMain = mg.pvList.get("main");
 			if(pvMain != null) {
-				pvMain.getLowLevelChannelInfo(ret); 
+				List<Map<String, String>> lowLevelInf = new LinkedList<Map<String, String>>();
+				pvMain.getLowLevelChannelInfo(lowLevelInf);
+				st.put("lowLevel", JSONValue.toJSONString(lowLevelInf));
 				MetaInfo mainMeta = pvMain.getTotalMetaInfo();
 				if(mainMeta != null) {
 					st.put("eventsSoFar", Long.toString(mainMeta.getEventCount()));

@@ -15,11 +15,14 @@ import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeSpan;
@@ -28,6 +31,7 @@ import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
+import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.TimeSpanDependentProcessing;
 import org.epics.archiverappliance.retrieval.postprocessors.TimeSpanDependentProcessor;
@@ -132,8 +136,41 @@ public class DataSourceResolution {
 					}
 				}
 			}
+
+			if(RetrievalState.includeExternalServers(req)) {
+				String failoverServer = configService.getFailoverApplianceURL(pvName);
+				if(failoverServer != null) {
+					logger.debug("Including the failover server " + failoverServer + " during data retrieval for PV " + pvName);
+					String pluginDefString = "pbraw://localhost?name=failover&rawURL=" + URLEncoder.encode(failoverServer.split("\\?")[0] + "/data/getData.raw", "UTF-8"); 
+					StoragePlugin failoverPlugin = StoragePluginURLParser.parseStoragePlugin(pluginDefString, configService);
+					List<Callable<EventStream>> failoverStrms = failoverPlugin.getDataForPV(context, pvName, start, end, postProcessor);
+					if(failoverStrms != null && !failoverStrms.isEmpty()) {
+						ArrayListEventStream cacheStream = null;
+						for(Callable<EventStream> failoverStrm : failoverStrms) {
+							try {
+								EventStream ev = failoverStrm.call();
+								if(cacheStream == null) {
+									cacheStream = new ArrayListEventStream(10000, (RemotableEventStreamDesc) ev.getDescription());
+								}
+								for(Event e : ev) {
+									cacheStream.add(e);
+								}
+								
+							} catch (Exception ex) {
+								logger.error("Exception during failover retrieval " + pvName, ex);
+							}
+						}
+						logger.debug("Merging streams from the failover server");
+						for(UnitOfRetrieval unitofretrieval : unitsofretrieval) {
+							unitofretrieval.wrapWithFailoverStreams(CallableEventStream.makeOneStreamCallableList(cacheStream));
+						}				
+					} else {
+						logger.debug("No streams from the failover server for PV " + pvName);				
+					}
+				}
+			}
 		}
-		
+
 		return unitsofretrieval;
 	}
 }

@@ -14,6 +14,7 @@ import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformLoggingMXBean;
 import java.net.InetAddress;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
@@ -71,6 +72,7 @@ import org.epics.archiverappliance.retrieval.RetrievalState;
 import org.epics.archiverappliance.retrieval.channelarchiver.XMLRPCClient;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
+import org.epics.archiverappliance.utils.ui.URIUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.xml.sax.SAXException;
@@ -165,6 +167,7 @@ public class DefaultConfigService implements ConfigService {
 	protected Properties archapplproperties = new Properties();
 	protected PVNameToKeyMapping pvName2KeyConverter = null;
 	protected ConfigPersistence persistanceLayer;
+	protected ConcurrentHashMap<String, LoadingCache<String, Boolean>> failoverPVs = new ConcurrentHashMap<String, LoadingCache<String, Boolean>>();
 
 	// State local to DefaultConfigService.
 	protected WAR_FILE warFile = WAR_FILE.MGMT;
@@ -739,6 +742,8 @@ public class DefaultConfigService implements ConfigService {
 					applianceAggregateInfo.addInfoForPV(pvName, this.getTypeInfoForPV(pvName), this);
 				}
 			}
+		} else if(this.warFile == WAR_FILE.RETRIEVAL) {
+			initializeFailoverServerCache();
 		}
 		
 		// Register for changes to the typeinfo map.
@@ -1517,6 +1522,40 @@ public class DefaultConfigService implements ConfigService {
 		
 	}
 	
+	private void initializeFailoverServerCache() {
+		Map<String, String> existingCAServers = this.getExternalArchiverDataServers();
+		for(String serverURL : existingCAServers.keySet()) {
+			String archiveType = existingCAServers.get(serverURL);
+			if(archiveType.equals("pbraw")) {
+				logger.debug("Checking to see if " + serverURL + " is used for failover");
+				try {
+					URI serverURI = new URI(serverURL);
+					HashMap<String, String> queryNVPairs = URIUtils.parseQueryString(serverURI);
+					if(queryNVPairs != null && !queryNVPairs.isEmpty() && queryNVPairs.containsKey("mergeDuringRetrieval")) {
+						configlogger.info("Merging data from " + serverURL + " during data retrieval");
+						failoverPVs.put(serverURL, CacheBuilder.newBuilder()
+								.expireAfterWrite(86400, TimeUnit.SECONDS)
+								.build(new CacheLoader<String, Boolean>() {
+									public Boolean load(String pvName) throws IOException {
+										String areWeURL = serverURL.split("\\?")[0] + "/" + "bpl/areWeArchivingPV?pv=" + pvName;
+										logger.debug("Checking to see if " + serverURL + " is archiving PV " + pvName + " using " + areWeURL);
+										try {
+											JSONObject areWeResp = GetUrlContent.getURLContentAsJSONObject(areWeURL);
+											return Boolean.valueOf((String)areWeResp.get("status"));
+										} catch(Exception ex) {
+											logger.error("Exception checking to see if " + serverURL + " is archiving PV " + pvName, ex);
+										}
+										return false;
+									}
+								}));
+					}
+				} catch(Exception ex) {
+					logger.error("Exception parsing external server URL " + serverURL, ex);
+				}
+			}
+		}
+	}
+	
 	private static void addExternalCAServerToExistingList(List<ChannelArchiverDataServerPVInfo> alreadyExistingServers, ChannelArchiverDataServerInfo serverInfo, NamesHandler.ChannelDescription pvChannelDesc) {
 		List<ChannelArchiverDataServerPVInfo> copyOfAlreadyExistingServers = new LinkedList<ChannelArchiverDataServerPVInfo>();
 		for(ChannelArchiverDataServerPVInfo alreadyExistingServer : alreadyExistingServers) { 
@@ -2000,6 +2039,31 @@ public class DefaultConfigService implements ConfigService {
 				logger.error("Exception adding Channel Archiver archives " + serverURL + " - " + archivesCSV, ex);
 			}
 		}
+	}
+	
+	@Override
+	public String getFailoverApplianceURL(String pvName) {
+		for(String serverURL: failoverPVs.keySet()) {
+			try {
+				if(failoverPVs.get(serverURL).get(pvName)) {
+					return serverURL;
+				}
+			} catch (ExecutionException e) {
+				logger.error("Exception checking for failover for PV " + pvName + " on server " + serverURL);
+			}
+		}
+		return null;
+	}
+	
+	@Override
+	public Set<String> getFailoverServerURLs() {
+		return failoverPVs.keySet();
+	}
+	
+	@Override
+	public void resetFailoverCaches() {
+		failoverPVs.clear();
+		initializeFailoverServerCache();
 	}
 
 	@Override

@@ -172,7 +172,7 @@ public class PVNames {
 	 * <li>Typeinfo for full PV name</li>
 	 * <li>Alias for full PV name + Typeinfo for full PV name</li>
 	 * </ul>
-	 * </li>If the PV is a field PV
+	 * </li><li>If the PV is a field PV
 	 * <ul>
 	 * <li>Typeinfo for fieldless PVName + archiveFields</li>
 	 * <li>Typeinfo for full PV name</li>
@@ -275,7 +275,7 @@ public class PVNames {
 	 * <li>ArchivePVRequests for full PV name</li>
 	 * <li>Alias for full PV name + ArchivePVRequests for full PV name</li>
 	 * </ul>
-	 * </li>If the PV is a field PV
+	 * </li><li>If the PV is a field PV
 	 * <ul>
 	 * <li>ArchivePVRequests for full PVName</li>
 	 * <li>Alias for full PV name + ArchivePVRequests for full PVName</li>

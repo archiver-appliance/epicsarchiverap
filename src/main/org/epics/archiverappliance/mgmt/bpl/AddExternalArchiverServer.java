@@ -99,7 +99,7 @@ public class AddExternalArchiverServer implements BPLAction {
 		} else { 
 			logger.debug("Testing connectivity for external EPICS Archiver Appliance at " + serverUrl);
 			try { 
-				URL url = new URL(serverUrl + "/ping");
+				URL url = new URL(serverUrl.split("\\?")[0] + "/ping");
 				try(InputStream is = url.openStream()) { 
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
 					byte[] buf = new byte[1024];

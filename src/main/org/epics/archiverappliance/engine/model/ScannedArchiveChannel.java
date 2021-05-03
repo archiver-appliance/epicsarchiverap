@@ -77,7 +77,8 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	// Just for debugging...
 	@Override
 	protected boolean handleNewValue(final DBRTimeEvent timeevent) throws Exception {
-		synchronized(this) { 
+		synchronized(this) {
+			this.pvMetrics.incrementScanRawEventCount();
 			this.serverTimeForStragglingScanValuesMillis = -1;
 			try {
 				if (super.handleNewValue(timeevent)) {

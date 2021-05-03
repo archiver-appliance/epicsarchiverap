@@ -103,6 +103,12 @@ public class PVMetrics {
 	private long invalidTypeLostEventCount = 0;
 	
 	/**
+	 * SCAN's can often receive more events that they store.
+	 */
+	private long scanRawEventCount = 0;
+	
+	
+	/**
 	 * This is the timestamp of the last event from the IOC regardless of whether the timestamp is accurate or not 
 	 * Note this may not be what's written out into the archive that we used to compare against to enforce monotonically increasing eventstreams
 	 */
@@ -165,6 +171,10 @@ public class PVMetrics {
 	public void incrementInvalidTypeLostEventCount(ArchDBRTypes newCADBRType) {
 		invalidTypeLostEventCount++;
 		this.newCADBRType = newCADBRType;
+	}
+	
+	public void incrementScanRawEventCount() { 
+		scanRawEventCount++;
 	}
 	
 	/**
@@ -506,6 +516,7 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "When did we last lose a connection to this PV?", TimeUtils.convertToHumanReadableString(this.connectionLastLostEpochSeconds));
 		addDetailedStatus(statuses, "How many times have we lost and regained the connection to this PV?", Long.toString(connectionLossRegainCount));
 		addDetailedStatus(statuses, "How many events so far?", Long.toString(this.eventCounts));
+		addDetailedStatus(statuses, "How many raw scan events so far?", Long.toString(this.scanRawEventCount));
 		addDetailedStatus(statuses, "How many events lost because the timestamp is in the far future or past so far?", Long.toString(this.timestampWrongEventCount));
 		addDetailedStatus(statuses, "Timestamp of last event from the IOC - correct or not.", this.getLastEventFromIOCTimeStampStr());
 		addDetailedStatus(statuses, "How many events lost because the sample buffer is full so far?", Long.toString(this.sampleBufferFullLostEventCount));

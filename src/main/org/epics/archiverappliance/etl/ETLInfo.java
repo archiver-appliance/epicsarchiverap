@@ -69,4 +69,11 @@ public class ETLInfo {
 	public long getSize() {
 		return size;
 	}
+	
+	public ETLStreamCreator getStrmCreator() {
+		return strmCreator;
+	}
+	public void setStrmCreator(ETLStreamCreator strmCreator) {
+		this.strmCreator = strmCreator;
+	}
 }

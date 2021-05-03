@@ -36,6 +36,7 @@ import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.mergededup.TimeSpanLimitEventStream;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
@@ -57,6 +58,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.ui.URIUtils;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility.StartEndTimeFromName;
 
 /**
  * The plain PB storage plugin stores data in a chunk per PV per partition in sequential form.
@@ -989,9 +991,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(paths != null && paths.length > 0) {
 				for(Path path : paths) { 
 					logger.info("Converting data in " + path.toString() + " for pv " + pvName);
+					StartEndTimeFromName setimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
 					PBFileInfo info = new PBFileInfo(path);
+					EventStream convertedStream = new TimeSpanLimitEventStream(conversionFuntion.convertStream(new FileBackedPBEventStream(pvName, path, info.getType())), setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
 					AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-					state.partitionBoundaryAwareAppendData(context, pvName, conversionFuntion.convertStream(new FileBackedPBEventStream(pvName, path, info.getType())), PB_EXTENSION + randSuffix, null);
+					state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, PB_EXTENSION + randSuffix, null);
 				}
 			}
 		}
@@ -1002,9 +1006,11 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 			if(paths != null && paths.length > 0) {
 				for(Path path : paths) { 
 					logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
+					StartEndTimeFromName setimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
 					PBFileInfo info = new PBFileInfo(path);
+					EventStream convertedStream = new TimeSpanLimitEventStream(conversionFuntion.convertStream(new FileBackedPBEventStream(pvName, path, info.getType())), setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
 					AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-					state.partitionBoundaryAwareAppendData(context, pvName, conversionFuntion.convertStream(new FileBackedPBEventStream(pvName, path, info.getType())), ppExt + randSuffix, null);
+					state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, ppExt + randSuffix, null);
 				}
 			}
 		}

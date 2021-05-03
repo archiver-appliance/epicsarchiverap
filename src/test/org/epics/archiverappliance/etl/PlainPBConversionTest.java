@@ -2,17 +2,22 @@ package org.epics.archiverappliance.etl;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.Timestamp;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -26,12 +31,11 @@ import org.epics.archiverappliance.etl.conversion.ThruNumberAndStringConversion;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PlainPB.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
 /**
@@ -42,54 +46,61 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class PlainPBConversionTest {
-	PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
-	PBCommonSetup setup = new PBCommonSetup();
 	private static Logger logger = Logger.getLogger(PlainPBConversionTest.class.getName());
-
-	@Before
-	public void setUp() throws Exception {
-		setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest");
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		setup.deleteTestFolder();
-	}
+	PlainPBStoragePlugin storagePlugin;
+	PBCommonSetup setup;
 
 	@Test
 	public void testPlainPBConversion() throws Exception {
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_FLOAT, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_INT);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_ENUM);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_ENUM);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_INT);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_FLOAT);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_INT);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_FLOAT);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-		testFailedConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_WAVEFORM_STRING);
-	}
-
-	private void testThruNumberConversionForDBRType(ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType) throws Exception {
-		logger.info("Testing conversion from " + srcDBRType.toString() + " to " + destDBRType.toString());
-		String pvName = "PlainPBConversionTest_" + srcDBRType.toString() + "_" + destDBRType.toString();
-		int numEvents = 5000;
-		generateDataForArchDBRType(pvName, srcDBRType, numEvents);
-		validateStream(pvName, numEvents, srcDBRType);
-		convertToType(pvName, destDBRType);
-		validateStream(pvName, numEvents, destDBRType);
+		testConversionForGranularity(PartitionGranularity.PARTITION_HOUR, 24*60*60);
+		testConversionForGranularity(PartitionGranularity.PARTITION_DAY, 7*24*60*60);
+		testConversionForGranularity(PartitionGranularity.PARTITION_MONTH, 2*31*24*60*60);
 	}
 	
-	private void testFailedConversionForDBRType(ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType) throws Exception {
-		logger.info("Testing failed conversion from " + srcDBRType.toString() + " to " + destDBRType.toString() + ". You should see an exception here; ignore it. It is expected");
+	private void testConversionForGranularity(PartitionGranularity granularity, int numEvents) throws Exception {
+		storagePlugin = new PlainPBStoragePlugin();
+		setup = new PBCommonSetup();
+		setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_FLOAT, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_INT, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_ENUM, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_ENUM, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_INT, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_FLOAT, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_INT, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_FLOAT, numEvents);
+		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
+		testFailedConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_WAVEFORM_STRING, numEvents);
+		setup.deleteTestFolder();
+		
+	}
+
+	private void testThruNumberConversionForDBRType(ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType, int numEvents) throws Exception {
+		logger.info("Testing conversion from " + srcDBRType.toString() + " to " + destDBRType.toString());
 		String pvName = "PlainPBConversionTest_" + srcDBRType.toString() + "_" + destDBRType.toString();
-		int numEvents = 5000;
 		generateDataForArchDBRType(pvName, srcDBRType, numEvents);
 		validateStream(pvName, numEvents, srcDBRType);
-		try { 
+		Set<String> bflist = setup.listTestFolderContents();		
+		convertToType(pvName, destDBRType);
+		validateStream(pvName, numEvents, destDBRType);
+		Set<String> aflist = setup.listTestFolderContents();
+		assertTrue("The contents of the test folder have changed; probably something remained", bflist.equals(aflist));
+	}
+	
+	private void testFailedConversionForDBRType(ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType, int numEvents) throws Exception {
+		logger.info("Testing failed conversion from " + srcDBRType.toString() + " to " + destDBRType.toString() + ". You could see an exception here; ignore it. It is expected");
+		String pvName = "PlainPBConversionTest_" + srcDBRType.toString() + "_" + destDBRType.toString();
+		generateDataForArchDBRType(pvName, srcDBRType, numEvents);
+		
+		validateStream(pvName, numEvents, srcDBRType);
+		try {
+			Logger appendDataLogger = Logger.getLogger(AppendDataStateData.class.getName());
+			Level currLevel = appendDataLogger.getLevel();
+			appendDataLogger.setLevel(Level.FATAL);
 			convertToType(pvName, destDBRType);
+			appendDataLogger.setLevel(currLevel);
 		} catch(Exception ex) { 
 			assertTrue("Expecting a Conversion Exception, instead got a " + ex, ex.getCause() instanceof ConversionException);
 		}
@@ -139,7 +150,7 @@ public class PlainPBConversionTest {
 					for(Event e : strm) { 
 						DBRTimeEvent dbr = (DBRTimeEvent) e;
 						long epochSeconds = dbr.getEpochSeconds();
-						assertTrue("Timestamp is different at event count " + eventCount, epochSeconds == expectedCurrentEpochSeconds);
+						assertTrue("Timestamp is different at event count " + eventCount + " Expected " + TimeUtils.convertToHumanReadableString(expectedCurrentEpochSeconds) + " got " + TimeUtils.convertToHumanReadableString(epochSeconds), epochSeconds == expectedCurrentEpochSeconds);
 						if(eventCount % 1000 == 0) { 
 							assertTrue("Expecting field values at event count " + eventCount, dbr.hasFieldValues());
 							assertTrue("Expecting HIHI as Test at " + eventCount, dbr.getFieldValue("HIHI").equals("Test"));
