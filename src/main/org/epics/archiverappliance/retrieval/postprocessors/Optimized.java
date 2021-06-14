@@ -13,12 +13,12 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.config.PVTypeInfo;
-import org.epics.archiverappliance.data.AlarmInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 
 /**
  * 
@@ -174,11 +174,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
                 } else {
                     transformedRawEvents = new ArrayListEventStream(allEvents.size(),allEvents.getDescription());
                     for (Event e : allEvents) {
-                        if (e instanceof AlarmInfo) {
-                            transformedRawEvents.add(new POJOEvent(e.getDBRType(),e.getEventTimeStamp(),e.getSampleValue(),((AlarmInfo)e).getStatus(),((AlarmInfo)e).getSeverity()));
-                        } else {
-                            transformedRawEvents.add(new POJOEvent(e.getDBRType(),e.getEventTimeStamp(),e.getSampleValue(),0,0));
-                        }
+                        transformedRawEvents.add(DBR2PBTypeMapping.getPBClassFor(e.getDBRType()).getSerializingConstructor().newInstance(e));
                     }
                     return transformedRawEvents;
                 }
