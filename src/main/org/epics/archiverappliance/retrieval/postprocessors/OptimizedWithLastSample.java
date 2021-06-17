@@ -329,13 +329,15 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
             // The last bin with events will not yet have been added so it needs to 
             // be added manually here in order to correct for the remaining bins with
             // no events.
-            if (currentBinCollector.haveEventsBeenAdded()) {
-                SummaryValue summaryValue;
-                summaryValue = new SummaryValue(
-                    ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(), currentMaxSeverity,
-                    currentConnectionChangedEvents);
-                consolidatedData.put(currentBin, summaryValue);
-                lastBinSaved = currentBin;
+            if (currentBinCollector != null) {
+                if (currentBinCollector.haveEventsBeenAdded()) {
+                    SummaryValue summaryValue;
+                    summaryValue = new SummaryValue(
+                        ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(), currentMaxSeverity,
+                        currentConnectionChangedEvents);
+                    consolidatedData.put(currentBin, summaryValue);
+                    lastBinSaved = currentBin;
+                }
             }
             if (lastBinSaved < lastBin) {
                 // Last bins have been skipped (had no events) so need to populate them
