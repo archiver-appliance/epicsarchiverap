@@ -339,12 +339,14 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                     lastBinSaved = currentBin;
                 }
             }
-            if (lastBinSaved < lastBin) {
-                // Last bins have been skipped (had no events) so need to populate them
-                // with the last value from the last bin to have events
-                // Include the last bin (+1)
-                long nSkip = lastBin-lastBinSaved + 1;
-                populateSkippedBins(nSkip);  
+            if (lastBinSaved != null) {
+                if (lastBinSaved < lastBin) {
+                    // Last bins have been skipped (had no events) so need to populate them
+                    // with the last value from the last bin to have events
+                    // Include the last bin (+1)
+                    long nSkip = lastBin-lastBinSaved + 1;
+                    populateSkippedBins(nSkip);  
+                }
             }
             return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData,
                 inheritValuesFromPreviousBins, zeroOutEmptyBins(), true, 6);
