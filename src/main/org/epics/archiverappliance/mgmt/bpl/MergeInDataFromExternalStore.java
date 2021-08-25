@@ -132,7 +132,13 @@ public class MergeInDataFromExternalStore implements BPLAction {
 		
 		if(!info.getIdentity().equals(configService.getMyApplianceInfo().getIdentity())) { 
 			// We should proxy this call to the actual appliance hosting the PV.
-			String redirectURL = info.getMgmtURL() + "/mergeInData?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&other=" + URLEncoder.encode(other, "UTF-8"); 
+			String redirectURL = info.getMgmtURL() + "/mergeInData?pv=" 
+					+ URLEncoder.encode(pvName, "UTF-8") 
+					+ "&other=" + URLEncoder.encode(other, "UTF-8")
+					+ "&storage=" + URLEncoder.encode(storagePluginName, "UTF-8")
+					+ "&from=" + URLEncoder.encode(startTimeStr, "UTF-8")
+					+ "&to=" + URLEncoder.encode(endTimeStr, "UTF-8")
+					; 
 			logger.debug("Routing request to the appliance hosting the PV " + pvName + " using URL " + redirectURL);
 			JSONObject status = GetUrlContent.getURLContentAsJSONObject(redirectURL);
 			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
