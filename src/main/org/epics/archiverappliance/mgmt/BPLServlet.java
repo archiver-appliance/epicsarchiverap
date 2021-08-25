@@ -47,6 +47,7 @@ import org.epics.archiverappliance.mgmt.bpl.GetAppliancesInCluster;
 import org.epics.archiverappliance.mgmt.bpl.GetMatchingPVsForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPVStatusAction;
 import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfo;
+import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfoKeys;
 import org.epics.archiverappliance.mgmt.bpl.GetPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPausedPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetStoresForPV;
@@ -148,7 +149,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/modifyMetaFields", ModifyMetaFieldsAction.class);
 		addAction("/getNamedFlag", NamedFlagsGet.class);
 		addAction("/setNamedFlag", NamedFlagsSet.class);
-		
+		addAction("/getTypeInfoKeys", GetPVTypeInfoKeys.class);
 
 		// BPL related to reports
 		addAction("/getNeverConnectedPVs", NeverConnectedPVsAction.class);
