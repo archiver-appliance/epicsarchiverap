@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.etl;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 
 import org.epics.archiverappliance.EventStream;
 
@@ -22,5 +23,12 @@ import org.epics.archiverappliance.EventStream;
  *
  */
 public interface ConversionFunction {
-	public EventStream convertStream(EventStream srcEventStream) throws IOException;
+	/**
+	 * @param srcEventStream
+	 * @param streamStartTime. In the appliance, streams are often chunked. streamStartTime and streamEndTime are the boundaries of the chunk being converted.  
+	 * @param streamEndTime
+	 * @return
+	 * @throws IOException
+	 */
+	public EventStream convertStream(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException;
 }

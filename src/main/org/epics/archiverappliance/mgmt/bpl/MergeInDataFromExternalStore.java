@@ -25,7 +25,6 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.ConversionFunction;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
@@ -71,53 +70,6 @@ public class MergeInDataFromExternalStore implements BPLAction {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-
-		String endTimeStr = req.getParameter("to");
-		Timestamp end = TimeUtils.plusDays(TimeUtils.now(), 31);
-		if(endTimeStr != null) {
-			try { 
-				end = TimeUtils.convertFromISO8601String(endTimeStr);
-			} catch(IllegalArgumentException ex) {
-				try { 
-					end = TimeUtils.convertFromDateTimeStringWithOffset(endTimeStr);
-				} catch(IllegalArgumentException ex2) { 
-					String msg = "Cannot parse time" + endTimeStr;
-					logger.warn(msg, ex2);
-					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
-					return;
-				}
-			}
-		}
-		
-		String startTimeStr = req.getParameter("from"); 
-		Timestamp start = TimeUtils.minusDays(TimeUtils.now(), 2*31);
-		if(startTimeStr != null) {
-			try { 
-				start = TimeUtils.convertFromISO8601String(startTimeStr);
-			} catch(IllegalArgumentException ex) {
-				try { 
-					start = TimeUtils.convertFromDateTimeStringWithOffset(startTimeStr);
-				} catch(IllegalArgumentException ex2) { 
-					String msg = "Cannot parse time " + startTimeStr;
-					logger.warn(msg, ex2);
-					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
-					return;
-				}
-			}
-		}
-		
-		if(end.before(start)) {
-			String msg = "For request, end " + end.toString() + " is before start " + start.toString() + " for pv " + pvName;
-			logger.error(msg);
-			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
-		
-		final Timestamp startTime = start, endTime = end;
-		
 		
 		// String pvNameFromRequest = pvName;
 		String realName = configService.getRealNameForAlias(pvName);
@@ -136,8 +88,6 @@ public class MergeInDataFromExternalStore implements BPLAction {
 					+ URLEncoder.encode(pvName, "UTF-8") 
 					+ "&other=" + URLEncoder.encode(other, "UTF-8")
 					+ "&storage=" + URLEncoder.encode(storagePluginName, "UTF-8")
-					+ "&from=" + URLEncoder.encode(startTimeStr, "UTF-8")
-					+ "&to=" + URLEncoder.encode(endTimeStr, "UTF-8")
 					; 
 			logger.debug("Routing request to the appliance hosting the PV " + pvName + " using URL " + redirectURL);
 			JSONObject status = GetUrlContent.getURLContentAsJSONObject(redirectURL);
@@ -173,18 +123,18 @@ public class MergeInDataFromExternalStore implements BPLAction {
 
 		class MergeInData implements ConversionFunction {
 			@Override
-			public EventStream convertStream(EventStream srcEventStream) throws IOException {
+			public EventStream convertStream(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
 				if(srcEventStream.getDescription() instanceof RemotableEventStreamDesc) {
 					RemotableEventStreamDesc desc = (RemotableEventStreamDesc) srcEventStream.getDescription();
 					String serverURL = other + "/data/getData.raw" 
 							+ "?pv=" + desc.getPvName() 
-							+ "&from=" + TimeUtils.convertToISO8601String(startTime) 
-							+ "&to=" + TimeUtils.convertToISO8601String(endTime)
+							+ "&from=" + TimeUtils.convertToISO8601String(streamStartTime) 
+							+ "&to=" + TimeUtils.convertToISO8601String(streamEndTime)
 							+ "&skipExternalServers=true";
 					logger.info("Getting data from URL " + serverURL);
 					InputStream is = GetUrlContent.getURLContentAsStream(serverURL);
 					if(is != null) {
-						InputStreamBackedEventStream eis = new InputStreamBackedEventStream(new BufferedInputStream(is), startTime);
+						InputStreamBackedEventStream eis = new InputStreamBackedEventStream(new BufferedInputStream(is), streamStartTime);
 						return new MergeDedupEventStream(srcEventStream, eis);
 					} else {
 						logger.error("Other stream is null for " + srcEventStream.getDescription());

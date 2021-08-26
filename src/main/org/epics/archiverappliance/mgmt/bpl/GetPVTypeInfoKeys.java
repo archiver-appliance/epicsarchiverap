@@ -14,7 +14,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 
 /**
  * @epics.BPLAction - Get a list of all the PV names that have a PVTypeInfo. 

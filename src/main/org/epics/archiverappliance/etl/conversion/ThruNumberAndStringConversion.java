@@ -2,6 +2,7 @@ package org.epics.archiverappliance.etl.conversion;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.sql.Timestamp;
 import java.util.Iterator;
 
 import org.epics.archiverappliance.Event;
@@ -125,7 +126,7 @@ public class ThruNumberAndStringConversion implements ConversionFunction {
 	}
 
 	@Override
-	public EventStream convertStream(final EventStream srcEventStream) throws IOException {
+	public EventStream convertStream(final EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
 		return new ThruNumStrConversionWrapper(srcEventStream); 
 	}
 }

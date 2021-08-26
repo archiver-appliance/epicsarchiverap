@@ -94,7 +94,7 @@ public class ThruNumberAndStringConversionFunctionTest {
 	}
 	
 	private EventStream convertToType(EventStream srcStream, ArchDBRTypes destDBRType) throws IOException { 
-		return new ThruNumberAndStringConversion(destDBRType).convertStream(srcStream);
+		return new ThruNumberAndStringConversion(destDBRType).convertStream(srcStream, null, null);
 	}
 	
 	private void compareStreams(EventStream srcStream, EventStream destStream) throws IOException {
