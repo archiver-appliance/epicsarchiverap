@@ -31,4 +31,16 @@ public interface ConversionFunction {
 	 * @throws IOException
 	 */
 	public EventStream convertStream(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException;
+	
+	/**
+	 * @param srcEventStream
+	 * @param streamStartTime. In the appliance, streams are often chunked. streamStartTime and streamEndTime are the boundaries of the chunk being converted.  
+	 * @param streamEndTime
+	 * @return
+	 * @throws IOException
+	 * Return true if there are any samples to convert in the source event stream.
+	 * For example, in the failover merge usecase, one can check to see if the other server has any data during this time period.
+	 * This provides a useful optimization in that files that no longer need to be converted are left unchanged. 
+	 */
+	public boolean shouldConvert(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException;
 }

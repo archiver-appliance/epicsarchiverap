@@ -129,4 +129,10 @@ public class ThruNumberAndStringConversion implements ConversionFunction {
 	public EventStream convertStream(final EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
 		return new ThruNumStrConversionWrapper(srcEventStream); 
 	}
+
+	@Override
+	public boolean shouldConvert(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
+		// Always convert in the case of type conversion.
+		return true;
+	}
 }

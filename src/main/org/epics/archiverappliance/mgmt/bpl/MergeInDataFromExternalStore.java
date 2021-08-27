@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BPLAction;
@@ -142,6 +143,35 @@ public class MergeInDataFromExternalStore implements BPLAction {
 				}
 				logger.error("Skipping merging in event stream " + srcEventStream.getDescription());
 				return srcEventStream;
+			}
+
+			@Override
+			public boolean shouldConvert(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
+				if(srcEventStream.getDescription() instanceof RemotableEventStreamDesc) {
+					RemotableEventStreamDesc desc = (RemotableEventStreamDesc) srcEventStream.getDescription();
+					String serverURL = other + "/data/getData.raw" 
+							+ "?pv=ncount(" + desc.getPvName() + ")" 
+							+ "&from=" + TimeUtils.convertToISO8601String(streamStartTime) 
+							+ "&to=" + TimeUtils.convertToISO8601String(streamEndTime)
+							+ "&skipExternalServers=true";
+					logger.info("Getting data from URL " + serverURL);
+					InputStream is = GetUrlContent.getURLContentAsStream(serverURL);
+					if(is != null) {
+						try(InputStreamBackedEventStream eis = new InputStreamBackedEventStream(new BufferedInputStream(is), streamStartTime)) {
+							for(Event e : eis) {
+								if(e.getSampleValue().getValue().intValue() > 0) {
+									logger.debug("Remote has values for " + srcEventStream.getDescription());
+									return true;
+								}
+							}
+						}
+						
+					} else {
+						logger.error("Other stream is null for " + srcEventStream.getDescription());
+					}
+				}
+				logger.debug("Remote has no data for " + srcEventStream.getDescription());
+				return false;
 			}
 		}
 

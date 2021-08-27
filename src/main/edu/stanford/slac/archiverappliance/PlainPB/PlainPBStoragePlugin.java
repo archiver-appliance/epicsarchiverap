@@ -993,14 +993,18 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					logger.info("Converting data in " + path.toString() + " for pv " + pvName);
 					StartEndTimeFromName setimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
 					PBFileInfo info = new PBFileInfo(path);
-					EventStream convertedStream = new TimeSpanLimitEventStream(
-							conversionFuntion.convertStream(
-									new FileBackedPBEventStream(pvName, path, info.getType()), 
-									TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
-									TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
-							setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
-					AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-					state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, PB_EXTENSION + randSuffix, null);
+					if(conversionFuntion.shouldConvert(new FileBackedPBEventStream(pvName, path, info.getType()), 
+							TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+							TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0))) {
+						EventStream convertedStream = new TimeSpanLimitEventStream(
+								conversionFuntion.convertStream(
+										new FileBackedPBEventStream(pvName, path, info.getType()), 
+										TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+										TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
+								setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
+						AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
+						state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, PB_EXTENSION + randSuffix, null);
+					}
 				}
 			}
 		}
@@ -1013,14 +1017,18 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
 					StartEndTimeFromName setimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
 					PBFileInfo info = new PBFileInfo(path);
-					EventStream convertedStream = new TimeSpanLimitEventStream(
-							conversionFuntion.convertStream(
-									new FileBackedPBEventStream(pvName, path, info.getType()),
-									TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
-									TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
-							setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
-					AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-					state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, ppExt + randSuffix, null);
+					if(conversionFuntion.shouldConvert(new FileBackedPBEventStream(pvName, path, info.getType()),
+										TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+										TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0))) {
+						EventStream convertedStream = new TimeSpanLimitEventStream(
+								conversionFuntion.convertStream(
+										new FileBackedPBEventStream(pvName, path, info.getType()),
+										TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+										TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
+								setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
+						AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
+						state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, ppExt + randSuffix, null);
+					}
 				}
 			}
 		}
