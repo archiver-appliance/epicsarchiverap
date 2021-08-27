@@ -996,14 +996,15 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					if(conversionFuntion.shouldConvert(new FileBackedPBEventStream(pvName, path, info.getType()), 
 							TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
 							TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0))) {
-						EventStream convertedStream = new TimeSpanLimitEventStream(
+						try(EventStream convertedStream = new TimeSpanLimitEventStream(
 								conversionFuntion.convertStream(
 										new FileBackedPBEventStream(pvName, path, info.getType()), 
 										TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
 										TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
-								setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
-						AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-						state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, PB_EXTENSION + randSuffix, null);
+								setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds)) {
+							AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
+							state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, PB_EXTENSION + randSuffix, null);
+						}
 					}
 				}
 			}
@@ -1020,14 +1021,15 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					if(conversionFuntion.shouldConvert(new FileBackedPBEventStream(pvName, path, info.getType()),
 										TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
 										TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0))) {
-						EventStream convertedStream = new TimeSpanLimitEventStream(
+						try(EventStream convertedStream = new TimeSpanLimitEventStream(
 								conversionFuntion.convertStream(
 										new FileBackedPBEventStream(pvName, path, info.getType()),
 										TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
 										TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
-								setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds);
-						AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-						state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, ppExt + randSuffix, null);
+								setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds)) {
+							AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
+							state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, ppExt + randSuffix, null);
+						}
 					}
 				}
 			}

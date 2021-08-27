@@ -48,7 +48,6 @@ public class MergeDedupEventStream implements EventStream, RemotableOverRaw {
 		public Event next() {
 			Event ret = null;
 			if (s1next != null && s2next != null ) {
-				logger.debug("Still merging both streams " + TimeUtils.convertToHumanReadableString(s1next.getEventTimeStamp()) + " and " + TimeUtils.convertToHumanReadableString(s2next.getEventTimeStamp()));
 				if(s1next.getEventTimeStamp().before(s2next.getEventTimeStamp())) {
 					ret = s1next.makeClone();
 					if(it1.hasNext()) { s1next = it1.next(); } else { s1next = null; }
