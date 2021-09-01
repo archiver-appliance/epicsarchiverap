@@ -22,6 +22,7 @@ import java.util.List;
 public interface ConfigPersistence {
 	public List<String> getTypeInfoKeys() throws IOException;
 	public PVTypeInfo getTypeInfo(String pvName) throws IOException;
+	public List<PVTypeInfo> getAllTypeInfosForAppliance(String applianceIdentity) throws IOException;
 	public void putTypeInfo(String pvName, PVTypeInfo typeInfo) throws IOException;
 	public void deleteTypeInfo(String pvName) throws IOException;
 	

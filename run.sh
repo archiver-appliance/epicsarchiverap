@@ -19,7 +19,7 @@ then
 fi
 
 
-CLASSPATH="${SCRIPTS_DIR}:${SCRIPTS_DIR}/bin"
+CLASSPATH="${SCRIPTS_DIR}:${SCRIPTS_DIR}/bin:/scratch/Work/tomcat/latest/lib/mysql-connector-java-5.1.47.jar"
 pushd ${SCRIPTS_DIR}/lib
 for file in *.jar
 do
@@ -30,6 +30,6 @@ popd
 
 echo "Classpath is ${CLASSPATH}"
 
-java -Xmx2G -Xms2G -Dlog4j.configuration=${LOG4J_PROPERTIES} -classpath ${CLASSPATH} $@
+java -Xmx4G -Xms2G -Dlog4j.configuration=${LOG4J_PROPERTIES} -classpath ${CLASSPATH} $@
 
 

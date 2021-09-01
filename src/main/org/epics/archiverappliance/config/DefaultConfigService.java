@@ -1745,14 +1745,13 @@ public class DefaultConfigService implements ConfigService {
 		try { 
 			configlogger.info("Loading PVTypeInfo from persistence");
 			List<String> upgradedPVs = new LinkedList<String>();
-			List<String> pvNamesFromPersistence = persistanceLayer.getTypeInfoKeys();
+			List<PVTypeInfo> pvTypeInfos = persistanceLayer.getAllTypeInfosForAppliance(myIdentity);
 			HashMap<String, PVTypeInfo> newTypeInfos = new HashMap<String, PVTypeInfo>();
 			HashMap<String, ApplianceInfo> newPVMappings = new HashMap<String, ApplianceInfo>();
 			int objectCount = 0;
 			int batch = 0;
 			int clusterPVCount = 0;
-			for(String pvNameFromPersistence : pvNamesFromPersistence) {
-				PVTypeInfo typeInfo = persistanceLayer.getTypeInfo(pvNameFromPersistence);
+			for(PVTypeInfo typeInfo : pvTypeInfos) {
 				if(typeInfo.getApplianceIdentity().equals(myIdentity)) {
 					// Here's where we put schema update logic
 					upgradeTypeInfo(typeInfo, upgradedPVs);

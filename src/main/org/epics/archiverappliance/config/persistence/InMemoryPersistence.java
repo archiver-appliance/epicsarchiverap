@@ -25,6 +25,11 @@ public class InMemoryPersistence implements ConfigPersistence {
 	public List<String> getTypeInfoKeys() throws IOException {
 		return new LinkedList<String>(typeInfos.keySet());
 	}
+	
+	@Override
+	public List<PVTypeInfo> getAllTypeInfosForAppliance(String applianceIdentity) throws IOException {
+		return new LinkedList<PVTypeInfo>(typeInfos.values());
+	}
 
 	@Override
 	public PVTypeInfo getTypeInfo(String pvName) throws IOException {

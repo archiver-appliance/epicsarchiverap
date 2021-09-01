@@ -7,6 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -49,6 +52,56 @@ public class MySQLPersistence implements ConfigPersistence {
 	@Override
 	public List<String> getTypeInfoKeys() throws IOException {
 		return getKeys("SELECT pvName AS pvName FROM PVTypeInfo ORDER BY pvName;", "getTypeInfoKeys");
+	}
+	
+	private static boolean regexmatch(String typeInfoStr, Pattern instanceIDMatcher) {
+		return instanceIDMatcher.matcher(typeInfoStr).matches();
+	}
+
+	private static boolean attrmatch(PVTypeInfo typeInfo, String instanceIdentity) {
+		return typeInfo.getApplianceIdentity().equals(instanceIdentity);
+	}
+	
+	private static PVTypeInfo parseTypeInfo(String typeInfoStr, JSONDecoder<PVTypeInfo> decoder) {
+		try {
+			JSONObject jsonObj = (JSONObject) JSONValue.parse(typeInfoStr);
+			PVTypeInfo typeInfo = new PVTypeInfo();
+			decoder.decode(jsonObj, typeInfo);
+			return typeInfo;
+		} catch(Exception ex) {
+			return new PVTypeInfo();
+		}
+	}
+	
+	@Override
+	public List<PVTypeInfo> getAllTypeInfosForAppliance(String applianceIdentity) throws IOException {
+		try {
+			List<String> typeInfoStrs = new LinkedList<String>();
+			try(Connection conn = theDataSource.getConnection()) {
+				try(PreparedStatement stmt = conn.prepareStatement("SELECT typeInfoJSON AS typeInfoJSON FROM PVTypeInfo WHERE typeInfoJSON LIKE ?;")) {
+					stmt.setString(1, "%\""+ applianceIdentity + "\"%");
+					try(ResultSet rs = stmt.executeQuery()) {
+						while (rs.next()) {
+							typeInfoStrs.add(rs.getString("typeInfoJSON"));
+						}
+					}
+				}
+			}
+
+			Pattern inst = Pattern.compile(".*\\\"" + applianceIdentity + "\\\".*");
+			JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
+			ForkJoinPool customThreadPool = new ForkJoinPool(Math.max(Runtime.getRuntime().availableProcessors()/2, 1));
+			List<PVTypeInfo> typeInfos = customThreadPool.submit(
+			    () -> typeInfoStrs.parallelStream()
+			    	.filter(x -> regexmatch(x, inst))
+			    	.map(x -> parseTypeInfo(x, decoder))
+			    	.filter(x -> attrmatch(x, applianceIdentity))
+			    	.collect(Collectors.toList())).get();
+			customThreadPool.shutdown();
+			return typeInfos;
+		} catch(Exception ex) {
+			throw new IOException("Exception getting all typeinfos", ex);
+		}
 	}
 
 	@Override
