@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,7 +36,7 @@ import com.google.common.eventbus.Subscribe;
  */
 public class MgmtRuntimeState {
 	private ConfigService configService;
-	private ConcurrentHashMap<String, ArchivePVState> currentPVRequests = new ConcurrentHashMap<String, ArchivePVState>();
+	private Map<String, ArchivePVState> currentPVRequests = Collections.synchronizedMap(new HashMap<String, ArchivePVState>());
 	private static Logger logger = Logger.getLogger(MgmtRuntimeState.class.getName());
 	private static Logger configlogger = Logger.getLogger("config." + MgmtRuntimeState.class.getName());
 	private String myIdentity;
