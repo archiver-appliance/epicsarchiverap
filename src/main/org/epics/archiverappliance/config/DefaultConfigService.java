@@ -1665,8 +1665,11 @@ public class DefaultConfigService implements ConfigService {
 	
 	@Override
 	public List<String> getFieldsArchivedAsPartOfStream() throws IOException {
-		try(ExecutePolicy executePolicy = new ExecutePolicy(this)) { 
+		try { 
+			ExecutePolicy executePolicy = theExecutionPolicy.get("ThePolicy");
 			return executePolicy.getFieldsArchivedAsPartOfStream();
+		} catch(ExecutionException ex) {
+			throw new IOException(ex);
 		}
 	}
 

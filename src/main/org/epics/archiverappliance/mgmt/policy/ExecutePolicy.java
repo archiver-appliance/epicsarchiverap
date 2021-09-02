@@ -42,11 +42,14 @@ import org.python.util.PythonInterpreter;
 public class ExecutePolicy implements AutoCloseable {
 	private static Logger logger = Logger.getLogger(ExecutePolicy.class.getName());
 	private PythonInterpreter interp;
+	private LinkedList<String> fieldsArchivedAsPartOfStream = new LinkedList<String>();
+	
 	public ExecutePolicy(ConfigService configService) throws IOException { 
 		interp = new PythonInterpreter(null, new PySystemState());
 		// Load the policies.py into the interpreter.
 		try(InputStream is = configService.getPolicyText()) { 
 			interp.execfile(is);
+			fetchFieldsArchivedAsPartOfStream();
 		}
 	}
 
@@ -115,13 +118,16 @@ public class ExecutePolicy implements AutoCloseable {
 		HashMap<String, String> ret = new HashMap<String, String>(policies);
 		return ret;
 	}
-
-	public List<String> getFieldsArchivedAsPartOfStream()  throws IOException {
+	
+	@SuppressWarnings("unchecked")
+	private void fetchFieldsArchivedAsPartOfStream() {
 		logger.debug("Getting the list of standard fields.");
 		interp.exec("pvStandardFields = getFieldsArchivedAsPartOfStream()");
 		PyList stdFields = (PyList) interp.get("pvStandardFields");
-		@SuppressWarnings("unchecked")
-		LinkedList<String> ret = new LinkedList<String>(stdFields);
-		return ret;
+		fieldsArchivedAsPartOfStream = new LinkedList<String>(stdFields);
+	}
+
+	public List<String> getFieldsArchivedAsPartOfStream()  throws IOException {
+		return fieldsArchivedAsPartOfStream;
 	}
 }
