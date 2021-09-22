@@ -21,6 +21,7 @@ import org.python.util.PythonInterpreter;
  * <ol>
  * <li><code>dbrtype</code> -- The ArchDBRType of the PV</li>
  * <li><code>eventRate</code> -- The sampled event rate in events per second.</li>
+ * <li><code>eventCount</code> -- The total number of events.</li>
  * <li><code>storageRate</code> -- The sampled storage in bytes per seconds.</li>
  * <li><code>aliasName</code> -- The value of the .NAME field for aliases</li>
  * <li><code>policyName</code> -- If the user has overridden the policy when requesting archiving, this is the name of the policy</li>

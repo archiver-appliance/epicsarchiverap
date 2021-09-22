@@ -1596,6 +1596,7 @@ public class DefaultConfigService implements ConfigService {
 			pvInfo.put("dbrtype", metaInfo.getArchDBRTypes().toString());
 			pvInfo.put("elementCount", metaInfo.getCount());
 			pvInfo.put("eventRate", metaInfo.getEventRate());
+			pvInfo.put("eventCount", metaInfo.getEventCount());
 			pvInfo.put("storageRate", metaInfo.getStorageRate());
 			pvInfo.put("aliasName", metaInfo.getAliasName());
 			if(userSpecParams != null && userSpecParams.getPolicyName() != null) {
