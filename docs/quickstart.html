@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />	
+<link type="text/css" href="docs.css" rel="Stylesheet" />
 <title>EPICS Archiver Appliance -- Quickstart</title>
 
 </head>
@@ -43,27 +43,26 @@
 
 <h3>Quickstart Guide</h3>
 <div id="intro">
-The steps outlined here should get you started quickly with evaluating and testing a new archiver appliance. 
+The steps outlined here should get you started quickly with evaluating and testing a new archiver appliance.
 Note, <b>these steps are not meant for production deployments</b>, but are meant for evaluating and getting to know the system.
 For more details on how to deploy in a cluster or in a production environment, please see the <a href="installguide.html">Installation</a> guide.
-</div> 
+</div>
 
 <section>
 For folks familiar with deployment of WAR files, the archiver appliance consists of 4 WAR files.
 These steps deploy these WAR files on a single Tomcat JVM, set the log levels to ERROR and start the VM.
-To simplify matters, we are not persisting configuration and therefore there are no steps to define a connection pool for the configuration database.  
+To simplify matters, we are not persisting configuration and therefore there are no steps to define a connection pool for the configuration database.
 </section>
 
 
 <section>
 Here are the steps to get started quickly.
 <ol>
-<li>Make sure you have a recent version of JDK 1.12 by running <code>java -version</code>. You should see something like so
-<pre class="bash_output"><code>[ quickstart_test ]$ java -version 
-openjdk version "12.0.1" 2019-04-16
-OpenJDK Runtime Environment (build 12.0.1+12)
-OpenJDK 64-Bit Server VM (build 12.0.1+12, mixed mode, sharing)
-[ quickstart_test ]$ </code></pre>
+<li>Make sure you have a recent version of JDK by running <code>java -version</code>. You should see something like so
+<pre class="bash_output"><code>[ quickstart_test ]$ java -version
+openjdk version "16" 2021-03-16
+OpenJDK Runtime Environment (build 16+36-2231)
+OpenJDK 64-Bit Server VM (build 16+36-2231, mixed mode, sharing)[ quickstart_test ]$ </code></pre>
 </li>
 <li>Download the installation package to a Linux machine into a brand new folder. This should give you a tar.gz file like <code>archappl_vx.x.x.tar.gz</code>.</li>
 <li>Download a recent version of Tomcat 9.x. into the same folder. You should now have two files in this folder like so
@@ -74,7 +73,7 @@ total 160996
 [ quickstart_test ]$ </code></pre>
 </li>
 <li>Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar into 4 WAR files and a bash script like so
-<pre class="bash_output"><code>[ quickstart_test ]$ tar zxf archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz 
+<pre class="bash_output"><code>[ quickstart_test ]$ tar zxf archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz
 [ quickstart_test ]$ ls -l
 total 312440
 -rw-r--r-- 1 mshankar cd     11358 Sep  9 16:03 Apache_2.0_License.txt
@@ -93,7 +92,7 @@ drwxr-xr-x 3 mshankar cd        46 Nov 13 08:10 sample_site_specific_content
 [ quickstart_test ]$ </code></pre>
 </li>
 <li>Run the script like so
-<pre class="bash_output"><code>[ quickstart_test ]$ ./quickstart.sh apache-tomcat-9.0.20.tar.gz 
+<pre class="bash_output"><code>[ quickstart_test ]$ ./quickstart.sh apache-tomcat-9.0.20.tar.gz
 
 </code></pre>
 </li>
@@ -105,7 +104,7 @@ drwxr-xr-x 3 mshankar cd        46 Nov 13 08:10 sample_site_specific_content
 </code></pre>
 </li>
 <li>Open a browser to <code>http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code> and you should see the home screen for your archiver appliance.</li>
-<li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away. 
+<li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away.
 Note it takes about 5 minutes for the archiver appliance to measure the event rate, storage rate etc and to transition PVs from the <code>Initial sampling</code> state to the <code>Being archived</code> state.
 </li>
 <li>To stop the appliance, use a <code>CTRL-C</code> in the console.</li>
@@ -123,7 +122,7 @@ Notes
 
 <section>
 <h4>Quickstart using predefined VMs</h4>
-An alternate way to quickly get started and test the system is to use the predefined VM's provided by Martin. 
+An alternate way to quickly get started and test the system is to use the predefined VM's provided by Martin.
 These consists of three repos needed to set up an EPICS Archiver Appliance test environment:
 <ol>
 <li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/vagrant_archiver_appliance">vagrant_archiver_appliance</a></li>
