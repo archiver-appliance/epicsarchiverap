@@ -366,11 +366,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 		}
 			
 		if(typeInfo == null) {
-			// Check to see if property prompting a further search of the datastore is set. 
-			// Default to false if property does not exist.
-			String searchStoreForRetiredPvsStr = configService.getInstallationProperties()
-					.getProperty(SEARCH_STORE_FOR_RETIRED_PV_STR, "false");
-			boolean searchStoreForNullTypeInfo = Boolean.parseBoolean(searchStoreForRetiredPvsStr);
 			if(retiredPVTemplate != null) {
 				PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
 				if(templateTypeInfo != null) {
@@ -382,40 +377,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 					logger.debug("Using a template PV for " + pvName + " Need to determine the actual DBR type.");
 					setActualDBRTypeFromData(pvName, typeInfo, configService);
 				}
-			} else if (searchStoreForNullTypeInfo) {
-				// Create Python interpreter to access policies.py methods
-				PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
-
-				// Load the policies.py into the interpreter.
-				try (InputStream is = configService.getPolicyText()) {
-				    interp.execfile(is);
-				}
-
-				// Call policies.py determinePolicy() method
-				PyDictionary pvInfoDict = new PyDictionary();
-				pvInfoDict.put("pvName", pvName);
-				pvInfoDict.put("policyName", "");
-				pvInfoDict.put("eventRate", 1.0);
-				interp.set("pvInfo", pvInfoDict);
-				interp.exec("pvPolicy = determinePolicy(pvInfo)");
-				PyDictionary policy = (PyDictionary) interp.get("pvPolicy");
-
-				LinkedList<String> dataStores = new LinkedList<String>();
-				for (Object dataStore : (PyList) policy.get("dataStores")) {
-				    dataStores.add((String) dataStore);
-				}
-				interp.cleanup();
-
-				// Create new PVTypeInfo with pvName and the default dataStores
-				// obtained from the policies.py definitions
-				typeInfo = new PVTypeInfo();
-				typeInfo.setPvName(pvName);
-				typeInfo.setPaused(true);
-				typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
-				// Somehow tell the code downstream that this is a fake
-				// typeInfo.
-				typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
-				typeInfo.setDataStores(dataStores.toArray(new String[dataStores.size()]));
+			} else if (isSearchStoreForRetiredPvs()) {
+				typeInfo = createDefaultPVTypeInfoFromPolicies(pvName);
 				boolean foundRetiredPV = setActualDBRTypeFromData(pvName, typeInfo, configService);
 				
 				// If the PV does not exist in the dataStores at all then
@@ -818,11 +781,6 @@ public class DataRetrievalServlet  extends HttpServlet {
 		
 		for (int i = 0; i < pvNames.size(); i++) {
 			if(typeInfos.get(i) == null) {
-				// Check to see if property prompting a further search of the datastore is set. 
-				// Default to false if property does not exist.
-				String searchStoreForRetiredPvsStr = configService.getInstallationProperties()
-						.getProperty(SEARCH_STORE_FOR_RETIRED_PV_STR, "false");
-				boolean searchStoreForNullTypeInfo = Boolean.parseBoolean(searchStoreForRetiredPvsStr);
 				if(retiredPVTemplate != null) {
 					PVTypeInfo templateTypeInfo = PVNames.determineAppropriatePVTypeInfo(retiredPVTemplate, configService);
 					if(templateTypeInfo != null) { 
@@ -834,40 +792,8 @@ public class DataRetrievalServlet  extends HttpServlet {
 						logger.debug("Using a template PV for " + pvNames.get(i) + " Need to determine the actual DBR type.");
 						setActualDBRTypeFromData(pvNames.get(i), typeInfos.get(i), configService);
 					}
-				} else if (searchStoreForNullTypeInfo) {
-					// Create Python interpreter to access policies.py methods
-					PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
-
-					// Load the policies.py into the interpreter.
-					try (InputStream is = configService.getPolicyText()) {
-					    interp.execfile(is);
-					}
-
-					// Call policies.py determinePolicy() method
-					PyDictionary pvInfoDict = new PyDictionary();
-					pvInfoDict.put("pvName", pvNames.get(i));
-					pvInfoDict.put("policyName", "");
-					pvInfoDict.put("eventRate", 1.0);
-					interp.set("pvInfo", pvInfoDict);
-					interp.exec("pvPolicy = determinePolicy(pvInfo)");
-					PyDictionary policy = (PyDictionary) interp.get("pvPolicy");
-
-					LinkedList<String> dataStores = new LinkedList<String>();
-					for (Object dataStore : (PyList) policy.get("dataStores")) {
-					    dataStores.add((String) dataStore);
-					}
-					interp.cleanup();
-
-					// Create new PVTypeInfo with pvName and the default dataStores
-					// obtained from the policies.py definitions
-					typeInfos.set(i, new PVTypeInfo());
-					typeInfos.get(i).setPvName(pvNames.get(i));
-					typeInfos.get(i).setPaused(true);
-					typeInfos.get(i).setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
-					// Somehow tell the code downstream that this is a fake
-					// typeInfo.
-					typeInfos.get(i).setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
-					typeInfos.get(i).setDataStores(dataStores.toArray(new String[dataStores.size()]));
+				} else if (isSearchStoreForRetiredPvs()) {
+					typeInfos.set(i, createDefaultPVTypeInfoFromPolicies(pvNames.get(i)));
 					boolean foundRetiredPV = setActualDBRTypeFromData(pvNames.get(i), typeInfos.get(i), configService);
 					
 					// If the PV does not exist in the dataStores at all then
@@ -1759,6 +1685,66 @@ public class DataRetrievalServlet  extends HttpServlet {
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Create a PVTypeInfo object based on a pv name and determine the datastore
+	 * locations from the policies.py file.
+	 * 
+	 * @param pvName name of the PV to create a PVTypeInfo object for
+	 * @return a default PVTypeInfo object for the input pv name based on the
+	 *         policies.py file.
+	 * @throws IOException if the policies file cannot be opened.
+	 */
+	private PVTypeInfo createDefaultPVTypeInfoFromPolicies(String pvName) throws IOException {
+		// Create Python interpreter to access policies.py methods
+		PythonInterpreter interp = new PythonInterpreter(null, new PySystemState());
+
+		// Load the policies.py into the interpreter.
+		try (InputStream is = configService.getPolicyText()) {
+		    interp.execfile(is);
+		}
+
+		// Call policies.py determinePolicy() method
+		PyDictionary pvInfoDict = new PyDictionary();
+		pvInfoDict.put("pvName", pvName);
+		pvInfoDict.put("policyName", "");
+		pvInfoDict.put("eventRate", 1.0);
+		interp.set("pvInfo", pvInfoDict);
+		interp.exec("pvPolicy = determinePolicy(pvInfo)");
+		PyDictionary policy = (PyDictionary) interp.get("pvPolicy");
+
+		LinkedList<String> dataStores = new LinkedList<String>();
+		for (Object dataStore : (PyList) policy.get("dataStores")) {
+		    dataStores.add((String) dataStore);
+		}
+		interp.cleanup();
+		
+		// Create new PVTypeInfo with pvName and the default dataStores
+		// obtained from the policies.py definitions
+		PVTypeInfo typeInfo = new PVTypeInfo();
+		typeInfo.setPvName(pvName);
+		typeInfo.setPaused(true);
+		typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+		// Somehow tell the code downstream that this is a fake typeInfo.
+		typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
+		typeInfo.setDataStores(dataStores.toArray(new String[dataStores.size()]));
+		
+		return typeInfo;
+	}
+	
+	/**
+	 * Check to see if the property prompting a further search of the datastore is
+	 * set. This property is used to search for potentially retired PVs that are no
+	 * longer being archived. Default to false if property does not exist.
+	 * 
+	 * @return boolean indicating whether to search for retired PVs based on the
+	 *         defined property.
+	 */
+	private Boolean isSearchStoreForRetiredPvs() {
+		String searchStoreForRetiredPvsStr = configService.getInstallationProperties()
+				.getProperty(SEARCH_STORE_FOR_RETIRED_PV_STR, "false");
+		return Boolean.parseBoolean(searchStoreForRetiredPvsStr);
 	}
 	
     /** 
