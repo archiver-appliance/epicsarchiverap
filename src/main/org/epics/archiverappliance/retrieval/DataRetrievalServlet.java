@@ -1214,6 +1214,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 	/**
 	 * Check to see if the PV is served up by an external server. 
 	 * If it is, make a typeInfo up and set the appliance as this appliance.
+	 * We should only call this method if the typeInfo for this PV is null.
 	 * We need the start time of the request as the ChannelArchiver does not serve up data if the starttime is much later than the last event in the dataset.
 	 * For external EPICS Archiver Appliances, we simply proxy the data right away. Use the response isCommited to see if we have already processed the request
 	 * @param pvName
@@ -1232,10 +1233,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 			for(String serverUrl : externalServers.keySet()) { 
 				String index = externalServers.get(serverUrl);
 				if(index.equals("pbraw")) {
-					if(configService.getFailoverServerURLs().contains(serverUrl)) {
-						logger.debug("Skipping asking " + serverUrl + " for data for PV " + pvName + "as it is configured for failover");
-						return null;
-					}
+					serverUrl = serverUrl.split("\\?")[0];
 					logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv " + pvName);
 					JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8"), false);
 					if(areWeArchivingPVObj != null) {
