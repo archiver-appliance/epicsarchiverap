@@ -146,6 +146,7 @@ public class DataSourceResolution {
 					List<Callable<EventStream>> failoverStrms = failoverPlugin.getDataForPV(context, pvName, start, end, postProcessor);
 					if(failoverStrms != null && !failoverStrms.isEmpty()) {
 						ArrayListEventStream cacheStream = null;
+						int sampleCount = 0;
 						for(Callable<EventStream> failoverStrm : failoverStrms) {
 							try {
 								EventStream ev = failoverStrm.call();
@@ -154,14 +155,16 @@ public class DataSourceResolution {
 								}
 								for(Event e : ev) {
 									cacheStream.add(e);
+									sampleCount++;
 								}
 								
 							} catch (Exception ex) {
 								logger.error("Exception during failover retrieval " + pvName, ex);
 							}
 						}
-						logger.debug("Merging streams from the failover server");
+						logger.debug("Merging " + sampleCount + " samples from the failover server ");
 						for(UnitOfRetrieval unitofretrieval : unitsofretrieval) {
+							logger.debug("Wrapping UnitOfRetrieval with failover stream for PV " + pvName);
 							unitofretrieval.wrapWithFailoverStreams(CallableEventStream.makeOneStreamCallableList(cacheStream));
 						}				
 					} else {

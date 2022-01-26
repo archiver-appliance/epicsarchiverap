@@ -58,12 +58,19 @@ public class UnitOfRetrieval implements Callable<RetrievalResult> {
 			logger.debug("Starting get Data for " + pvName + " from " + description);
 			List<Callable<EventStream>> strms = reader.getDataForPV(context, pvName, start, end, postProcessor);
 			logger.debug("Done getting data for " + pvName + " from " + description);
-			if(failoverStrms != null) {
+			if(strms != null && failoverStrms != null) {
 				logger.debug("Wrapping and merging retrieval with failover data for " + this.pvName);
 				MergeDedupWithCallablesEventStream mret = new MergeDedupWithCallablesEventStream(strms, failoverStrms);
 				return new RetrievalResult(CallableEventStream.makeOneStreamCallableList(mret), this);
-			} else {
+			} else if(strms != null) {
+				logger.debug("Returning only local streams for " + this.pvName);
 				return new RetrievalResult(strms, this);
+			} else if(failoverStrms != null) {
+				logger.debug("Returning only failover streams for " + this.pvName);
+				return new RetrievalResult(failoverStrms, this);
+			} else {
+				logger.error("No data for " + this.pvName);
+				return new RetrievalResult(null, this);
 			}
 		} catch(NoDataException ex) {
 			logger.debug("No data from " + description + " " + ex.getMessage());
