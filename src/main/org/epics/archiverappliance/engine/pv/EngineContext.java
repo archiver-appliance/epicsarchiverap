@@ -66,8 +66,8 @@ public class EngineContext {
 	private static final Logger logger = Logger.getLogger(EngineContext.class.getName());
 	private static final Logger configlogger = Logger.getLogger("config." + EngineContext.class.getName());
 
-	private static final double MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = 5.0;
-	private static final int METACHANNELS_TO_START_AT_A_TIME = 10000;
+	private static double MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = 5.0;
+	private static int METACHANNELS_TO_START_AT_A_TIME = 10000;
 
 	/** writing thread to write samplebuffer to protocol buffer */
 	final private WriterRunnable writer;
@@ -160,6 +160,11 @@ public class EngineContext {
 			command_threads[threadNum] = new JCACommandThread(configService);
 			command_threads[threadNum].start();			
 		}
+		
+		MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = Double.valueOf(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.maximum_disconnected_channel_percentage_before_starting_metachannels", Double.toString(MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS)));
+		METACHANNELS_TO_START_AT_A_TIME = Integer.valueOf(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.metachannels_to_start_at_a_time", Integer.toString(METACHANNELS_TO_START_AT_A_TIME)));
+		configlogger.info("Starting metachannels after " + (100.0 - MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) + "% of channels have connected. We'll start metachannels " + METACHANNELS_TO_START_AT_A_TIME + " at a time");
+
 		
 		writer = new WriterRunnable(configService);
 		channelList = new ConcurrentHashMap<String, ArchiveChannel>();
