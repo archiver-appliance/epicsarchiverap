@@ -69,6 +69,7 @@ import org.epics.archiverappliance.mgmt.bpl.RemoveExternalArchiverServer;
 import org.epics.archiverappliance.mgmt.bpl.RenamePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ResetFailoverCaches;
 import org.epics.archiverappliance.mgmt.bpl.ReshardPV;
+import org.epics.archiverappliance.mgmt.bpl.RestartArchiveWorkflowThreadForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.ResumeArchivingPV;
 import org.epics.archiverappliance.mgmt.bpl.SkipAliasCheckAction;
 import org.epics.archiverappliance.mgmt.bpl.UnarchivedPVsAction;
@@ -200,7 +201,8 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getProcessMetricsDataForAppliance", ProcessMetricsChartData.class);
 		addAction("/refreshPVDataFromChannelArchivers", RefreshPVDataFromChannelArchivers.class);
 		addAction("/getMatchingPVsForThisAppliance", GetMatchingPVsForAppliance.class);
-		addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);		
+		addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);	
+		addAction("/restartArchivePVWorkflowThreadForThisAppliance", RestartArchiveWorkflowThreadForAppliance.class);
 	}
 	
 	@Override
