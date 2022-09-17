@@ -284,6 +284,7 @@ public class MgmtRuntimeState {
 						// It takes a few minutes for the workflow to complete; so you should be setting this to a reasonably high value.
 						if(abortArchiveWorkflowInMins > 0 
 								&& ( runWorkFlowForPV.getCurrentState() != ArchivePVStateMachine.START ) 
+								&& runWorkFlowForPV.getMetaInfoRequestedSubmitted() != null 
 								&& (TimeUtils.now().getTime() - runWorkFlowForPV.getMetaInfoRequestedSubmitted().getTime()) > abortArchiveWorkflowInMins*60*1000) {
 							try {
 								runWorkFlowForPV.setAbortReason("Aborting PV after user specified timeout " + TimeUtils.convertToHumanReadableString(runWorkFlowForPV.getMetaInfoRequestedSubmitted()));
