@@ -330,7 +330,7 @@ EOF
 chmod +x ${DEPLOY_DIR}/deployRelease.sh
 
 # Call deployRelease to deploy the WAR files.
-WARSRC_DIR=`python -c "import os; print os.path.abspath('${SCRIPTS_DIR}/..')"`
+WARSRC_DIR=`python -c "import os; print(os.path.abspath('${SCRIPTS_DIR}/..'))"`
 echo "Calling deploy release with ${DEPLOY_DIR}/deployRelease.sh ${WARSRC_DIR}"
 ${DEPLOY_DIR}/deployRelease.sh ${WARSRC_DIR}
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''This script gets a list of PVS that never connected and then aborts the archive request for these PVs'''
 
 import os
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--older", help="Abort those PV's whose workflow started more that this many days ago. To abort all PV's, specify 0.", default=7, type=int)
     args = parser.parse_args()
     if not args.url.endswith('bpl'):
-        print("The URL needs to point to the mgmt bpl; for example, http://arch.slac.stanford.edu/mgmt/bpl. ", args.url)
+        print(f"The URL needs to point to the mgmt bpl; for example, http://arch.slac.stanford.edu/mgmt/bpl - {args.url}")
         sys.exit(1)
     neverConnectedPVs = requests.get(args.url + '/getNeverConnectedPVs').json()
     for neverConnectedPV in neverConnectedPVs:
@@ -31,7 +31,7 @@ if __name__ == "__main__":
                 abort = True
 
         if abort:
-            print("Aborting PV %s " % neverConnectedPV['pvName'])
+            print(f"Aborting PV %s {neverConnectedPV['pvName']}")
             aresp = requests.get(args.url + '/abortArchivingPV', params={"pv": neverConnectedPV['pvName']})
             aresp.raise_for_status()
             time.sleep(0.25)
