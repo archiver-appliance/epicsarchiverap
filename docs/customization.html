@@ -170,7 +170,10 @@ If the <i>key/file structure reflecting the PV naming convention</i> feature is 
 
 <section id="Persistence">
 <h3>Persistence</h3>
-By default, the configuration for the archiver is stored in a relational database (using connections obtained from JNDI) as key/value pairs.
+By default, the configuration for each appliance is stored in a relational database (using connections obtained from JNDI) as key/value pairs.
+The install guide has instructions on how to set up a MySQL connection pool in tomcat.
+For smaller installs with minimal concurrent access, one can also configure Tomcat to use a <a href="sqlite.html">SQLite</a> backend.
+<br/>     
 Alternate mechanisms for persisting archiver configuration are possible; see the <a href="api/org/epics/archiverappliance/config/ConfigPersistence.html">ConfigPersistence</a> interface.
 To save your configuration in a different location, create an implementation of this interface and use the <a href="api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_PERSISTENCE_LAYER">ARCHAPPL_PERSISTENCE_LAYER</a> environment in your startup scripts.
 </section>
