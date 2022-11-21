@@ -120,7 +120,7 @@ public class WriterRunnable implements Runnable {
 			long startTime = System.currentTimeMillis();
 			write();
 			long endTime = System.currentTimeMillis();
-			configservice.getEngineContext().setSecondsConsumedByWritter(
+			configservice.getEngineContext().setSecondsConsumedByWriter(
 					(double) (endTime - startTime) / 1000);
 		} catch (Exception e) {
 			logger.error("Exception", e);
