@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- ====================================================================== 
-     Apr 11, 2011 3:57:12 PM                                                        
+<!-- ======================================================================
+     Apr 11, 2011 3:57:12 PM
 
-     epicsarchiverap    
-     The EPICS archiver appliance 
-                   
-     mshankar                                                                
+     epicsarchiverap
+     The EPICS archiver appliance
+
+     mshankar
      ====================================================================== -->
 <project name="epicsarchiverap" default="wars">
     <description>The build file for the EPICS archiver appliance.</description>
-	
+
 	<property environment="env"/>
-	<property name="ver" value="0.0.1"/>
+	<property name="ver" value="1.1.0"/>
 	<property name="src" location="src/main"/>
 	<property name="classes" location="bin/"/>
 	<property name="stage" location="stage/"/>
@@ -24,7 +24,7 @@
 	<condition property="log4jprops" value="-Dlog4j.configuration=log4j.properties.debug" else="-Dlog4j.configuration=log4j.properties">
 		<istrue value="${verboselogging}"/>
 	</condition>
-	
+
 	<!-- Determine the site from the environment variable ARCHAPPL_SITEID. If this is not set, we assume the unit tests environment -->
 	<condition property="archapplsite" value="${env.ARCHAPPL_SITEID}" else="tests">
 		<isset property="env.ARCHAPPL_SITEID"/>
@@ -35,14 +35,14 @@
 	<tstamp>
 		<format property="build_date_time" pattern="dd-MMMM-yyyy'T'HH-mm-ss"/>
 	</tstamp>
-	<condition property="version" value="${ver}_${env.BUILDS_ALL_TIME}" else="${ver}_SNAPSHOT_${build_date_time}">
+	<condition property="version" value="${env.BUILDS_ALL_TIME}" else="${ver}_SNAPSHOT_${build_date_time}">
 		<isset property="env.BUILDS_ALL_TIME"/>
 	</condition>
-	
+
 	<available file="src/sitespecific/${archapplsite}/build.xml" property="site_has_site_specific_build_xml">
 	</available>
-	
-	
+
+
 	<echo>Building the archiver appliance for the site ${archapplsite}</echo>
 
     <target name="wars" depends="clean, retrieval_war, engine_war, etl_war, mgmt_war, generate_release_notes">
@@ -73,12 +73,12 @@
        		</tarfileset>
     	</tar>
     </target>
-	
+
     <target name="retrieval_war" depends="compile, stage, sitespecificbuild">
     	<copy todir="${classes}">
     		<fileset dir="src/sitespecific/${archapplsite}/classpathfiles">
     		</fileset>
-   		</copy>	
+   		</copy>
         <war destfile="${wardest}/retrieval.war"  webxml="${src}/org/epics/archiverappliance/retrieval/WEB-INF/web.xml">
         	<zipfileset dir="${stage}/org/epics/archiverappliance/staticcontent" prefix="ui/comm"/>
 			<zipfileset dir="${stage}/org/epics/archiverappliance/retrieval/staticcontent" prefix="ui" followsymlinks="no"/>
@@ -89,12 +89,12 @@
 			</lib>
         </war>
     </target>
-	
+
     <target name="engine_war" depends="compile, stage, sitespecificbuild">
     	<copy todir="${classes}">
     		<fileset dir="src/sitespecific/${archapplsite}/classpathfiles">
     		</fileset>
-   		</copy>	
+   		</copy>
         <war destfile="${wardest}/engine.war"  webxml="${src}/org/epics/archiverappliance/engine/WEB-INF/web.xml">
         	<zipfileset dir="${stage}/org/epics/archiverappliance/staticcontent" prefix="ui/comm"/>
 			<zipfileset dir="${lib}/native/linux-x86" prefix="WEB-INF/lib/native/linux-x86" includes="caRepeater" filemode="755"/>
@@ -112,7 +112,7 @@
     	<copy todir="${classes}">
     		<fileset dir="src/sitespecific/${archapplsite}/classpathfiles">
     		</fileset>
-   		</copy>	
+   		</copy>
         <war destfile="${wardest}/etl.war"  webxml="${src}/org/epics/archiverappliance/etl/WEB-INF/web.xml">
         	<zipfileset dir="${stage}/org/epics/archiverappliance/staticcontent" prefix="ui/comm"/>
     		<classes dir="${classes}"/>
@@ -127,7 +127,7 @@
     	<copy todir="${classes}">
     		<fileset dir="src/sitespecific/${archapplsite}/classpathfiles">
     		</fileset>
-   		</copy>	
+   		</copy>
     	<war destfile="${wardest}/mgmt.war"  webxml="${src}/org/epics/archiverappliance/mgmt/WEB-INF/web.xml">
 			<zipfileset dir="${stage}/org/epics/archiverappliance/mgmt/staticcontent" prefix="ui" followsymlinks="no"/>
         	<zipfileset dir="${stage}/org/epics/archiverappliance/staticcontent" prefix="ui/comm"/>
@@ -173,7 +173,7 @@
 		<echo file="${stage}/org/epics/archiverappliance/staticcontent/version.txt" append="false">Archiver Appliance Version ${version}
 		</echo>
 	</target>
-	
+
     <target name="compile">
     	<mkdir dir="${classes}"/>
     	<javac destdir="${classes}" includeantruntime="false" debug="true">
@@ -196,8 +196,8 @@
     	    </classpath>
     	</javac>
     </target>
-	
-	<!-- The srconlycompile target exists only to make sure that code in the main subfolder does not include anything in the test subfolder 
+
+	<!-- The srconlycompile target exists only to make sure that code in the main subfolder does not include anything in the test subfolder
 	Periodically run this to make sure developers are honoring this division.
 	-->
     <target name="srconlycompile" depends="clean">
@@ -232,7 +232,7 @@
     	</delete>
 		<delete file="RELEASE_NOTES"/>
     </target>
-	
+
 	<target name="test" depends="wars">
 	  <junit fork="yes" haltonfailure="false" printsummary="on" maxmemory="3584M">
 	    <batchtest fork="yes">
@@ -268,7 +268,7 @@
 	  	<env key="ARCHAPPL_LONG_TERM_FOLDER" path="./lts"/>
 	  </junit>
 	</target>
-	
+
 	<target name="singletest" depends="wars" description="Runs the test you specify on the command line with -Dtest=. For example, ant -Dtest=DBRTypeTest singletest">
 	  <junit fork="yes" haltonfailure="yes" printsummary="on" showoutput="yes" maxmemory="4096M">
 	    <batchtest fork="yes">
@@ -337,7 +337,7 @@
 	  	<jvmarg value="-Xrunjdwp:transport=dt_socket,address=17667,server=y,suspend=y"/>
 	  </junit>
 	</target>
-	
+
 	<target name="javadoc" depends="compile">
     	<delete failonerror="false">
 			<fileset dir="docs/api">
@@ -390,7 +390,7 @@
 		  	</taglet>
 		  	<taglet name="org.epics.archiverappliance.taglets.BPLActionEndTaglet">
 		  	</taglet>
-		  </javadoc>	
+		  </javadoc>
 		<copy file="LICENSE" todir="docs"></copy>
 		<copy file="src/main/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto" todir="docs"></copy>
 		<!-- Generate the scriptables from the javadoc taglet processing  -->
@@ -413,10 +413,10 @@
 		    </classpath>
 		</java>
 	</target>
-	
-	
+
+
 	<target name="sync_staticcontent_headers_footers" depends="compile">
-		<!-- Syncs the headers, footers etc in the mgmt/ui/*.html files. 
+		<!-- Syncs the headers, footers etc in the mgmt/ui/*.html files.
 		These elements are copied from index.html to the other files.
 		Please remember to check in after running this.
 		-->
