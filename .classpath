@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/main"/>
+	<classpathentry kind="src" path="src/test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+		<attributes>
+			<attribute name="module" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
+	<classpathentry kind="lib" path="lib/servlet-api.jar"/>
+	<classpathentry kind="lib" path="lib/protobuf-java-2.4.1.jar"/>
+	<classpathentry kind="lib" path="lib/test/json-20080701.jar"/>
+	<classpathentry kind="lib" path="lib/test/commons-compress-1.3.jar"/>
+	<classpathentry kind="lib" path="lib/jamtio_071005.jar"/>
+	<classpathentry kind="lib" path="lib/jdbm-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.17.jar"/>
+	<classpathentry kind="lib" path="lib/jython-2.5.3.jar"/>
+	<classpathentry kind="lib" path="lib/json-simple-1.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-io-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/commons-validator-1.4.0.jar"/>
+	<classpathentry kind="lib" path="lib/commons-codec-1.9.jar"/>
+	<classpathentry kind="lib" path="lib/commons-fileupload-1.3.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang3-3.3.2.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math3-3.3.jar"/>
+	<classpathentry kind="lib" path="lib/httpclient-4.3.5.jar"/>
+	<classpathentry kind="lib" path="lib/httpcore-4.3.2.jar"/>
+	<classpathentry kind="lib" path="lib/joda-time-2.4.jar"/>
+	<classpathentry kind="lib" path="lib/test/junit-4.11.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="lib/commons-logging-1.1.3.jar"/>
+	<classpathentry kind="lib" path="lib/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="lib/commons-pool2-2.4.2.jar"/>
+	<classpathentry kind="lib" path="lib/jedis-2.7.2.jar"/>
+	<classpathentry kind="lib" path="lib/hazelcast-all-3.10.1.jar"/>
+	<classpathentry kind="lib" path="lib/test/selenium-client-combined-3.141.59.jar"/>
+	<classpathentry kind="lib" path="lib/guava-27.1-jre.jar"/>
+	<classpathentry kind="lib" path="lib/test/pbrawclient-0.0.9.jar"/>
+	<classpathentry kind="lib" path="lib/epics-ntypes-0.3.7.jar"/>
+	<classpathentry kind="lib" path="lib/epics-pvaccess-5.1.7.jar"/>
+	<classpathentry kind="lib" path="lib/epics-pvdata-6.1.7.jar"/>
+	<classpathentry kind="lib" path="lib/epics-util-1.0.5.jar"/>
+	<classpathentry kind="lib" path="lib/jca-2.4.7.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
