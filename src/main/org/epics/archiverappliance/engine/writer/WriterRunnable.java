@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.model.SampleBuffer;
@@ -191,6 +192,7 @@ public class WriterRunnable implements Runnable {
 
 				{
 					ArchiveChannel tempChannel = channelList.get(channelNname);
+					tempChannel.aboutToWriteBuffer((DBRTimeEvent)previousSamples.get(previousSamples.size() -1));
 					tempChannel.setlastRotateLogsEpochSeconds(System
 							.currentTimeMillis() / 1000);
 					tempChannel.getWriter().appendData(basicContext,

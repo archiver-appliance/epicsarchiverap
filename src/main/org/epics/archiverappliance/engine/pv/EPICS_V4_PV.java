@@ -398,29 +398,6 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 		    			return;
 		    		}
 		    		
-		    		if(!this.changedFieldValuesForThisEvent.isEmpty()) {
-		    			for(String key: this.changedFieldValuesForThisEvent.keySet()) {
-		    				String value = this.changedFieldValuesForThisEvent.get(key);
-		    				dbrtimeevent.addFieldValue(key, value);
-		    			}
-		    		}
-		    		
-		    		
-					// //////////////////////////
-					// ////////////save all the fields once every day//////////////
-					if (this.archiveFieldsSavedAtEpSec <= 0) {
-						if (currentFieldValues.size() != 0) {
-							saveMetaDataOnceEveryDay();
-						}
-					} else {
-						long nowES = TimeUtils.getCurrentEpochSeconds();
-						if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
-							saveMetaDataOnceEveryDay();
-						}
-					}
-
-
-
 					fireValueUpdate(dbrtimeevent);
 										
 				} catch (Exception e) {
@@ -632,25 +609,7 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 			logger.error("exception when unsubscribing pv", ex);
 		}
 	}
-	
-	private void saveMetaDataOnceEveryDay() {
-		HashMap<String, String> tempHashMap = new HashMap<String, String>();
-		tempHashMap.putAll(currentFieldValues);
-		if(this.totalMetaInfo != null) {
-			if(this.totalMetaInfo.getUnit() != null) { 
-				tempHashMap.put("EGU", this.totalMetaInfo.getUnit());
-			}
-			if(this.totalMetaInfo.getPrecision() != 0) { 
-				tempHashMap.put("PREC", Integer.toString(this.totalMetaInfo.getPrecision()));
-			}
-		}
-		// dbrtimeevent.s
-		dbrtimeevent.setFieldValues(tempHashMap, false);
-		archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
-	}
-
-	
-	
+		
 	private ArchDBRTypes determineDBRType(String structureID, String valueTypeId) { 
 		if(structureID == null || valueTypeId == null) { 
 			return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
@@ -845,6 +804,42 @@ public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, M
 
 	@Override
 	public void sampleWrittenIntoStores() {
-		this.changedFieldValuesForThisEvent.clear();
+	}
+	
+	private void saveMetaDataOnceEveryDay(DBRTimeEvent lastEvent) {
+		HashMap<String, String> tempHashMap = new HashMap<String, String>();
+		tempHashMap.putAll(currentFieldValues);
+		if(this.totalMetaInfo != null) {
+			if(this.totalMetaInfo.getUnit() != null) { 
+				tempHashMap.put("EGU", this.totalMetaInfo.getUnit());
+			}
+			if(this.totalMetaInfo.getPrecision() != 0) { 
+				tempHashMap.put("PREC", Integer.toString(this.totalMetaInfo.getPrecision()));
+			}
+		}
+		// dbrtimeevent.s
+		lastEvent.setFieldValues(tempHashMap, false);
+		archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
+	}
+	
+	@Override
+	public void aboutToWriteBuffer(DBRTimeEvent lastEvent) {
+		if(!this.changedFieldValuesForThisEvent.isEmpty()) {
+			for(String key: this.changedFieldValuesForThisEvent.keySet()) {
+				String value = this.changedFieldValuesForThisEvent.get(key);
+				lastEvent.addFieldValue(key, value);
+			}
+			synchronized(this) {
+				this.changedFieldValuesForThisEvent.clear();
+			}
+		}
+		
+		if (currentFieldValues.size() != 0) {
+			long nowES = TimeUtils.getCurrentEpochSeconds();
+			if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
+				saveMetaDataOnceEveryDay(lastEvent);
+			}
+			
+		}		
 	}
 }

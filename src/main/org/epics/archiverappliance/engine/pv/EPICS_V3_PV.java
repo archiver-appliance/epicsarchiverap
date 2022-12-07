@@ -692,32 +692,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			}
 			
 			updataMetaDataInParentPV(dbrtimeevent);
-			// if this pv has meta data , handle here
-			if (hasMetaField) {
-				// //////////handle the field value when it
-				// changes//////////////
-				if (changedarchiveFieldsData.size() > 0) {
-					logger.debug("Adding changed field for pv " + name + " with " + changedarchiveFieldsData.size());
-					HashMap<String, String> tempHashMap = new HashMap<String, String>();
-					tempHashMap.putAll(changedarchiveFieldsData);
-					// dbrtimeevent.s
-					dbrtimeevent.setFieldValues(tempHashMap, true);
-					changedarchiveFieldsData.clear();
-				}
-				// //////////////////////////
-				// ////////////save all the fields once every day//////////////
-				if (this.archiveFieldsSavedAtEpSec <= 0) {
-					if (allarchiveFieldsData.size() != 0) {
-						saveMetaDataOnceEveryDay();
-					}
-				} else {
-					long nowES = TimeUtils.getCurrentEpochSeconds();
-					if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
-						saveMetaDataOnceEveryDay();
-					}
-				}
-				// //////////////////////////////
-			}
 			fireValueUpdate(dbrtimeevent);
 		} catch (final Exception ex) {
 			logger.error("exception in monitor changed for pv " + this.name, ex);
@@ -828,29 +802,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			changedarchiveFieldsData = new ConcurrentHashMap<String, String>();
 		}
 		this.hasMetaField = hasMetaField;
-	}
-
-	/**
-	 * save the meta data
-	 */
-	private void saveMetaDataOnceEveryDay() {
-		HashMap<String, String> tempHashMap = new HashMap<String, String>();
-		tempHashMap.putAll(allarchiveFieldsData);
-		if(runTimeFieldsData != null && !runTimeFieldsData.isEmpty()) {
-			// This should store fields like the description at least once every day.
-			tempHashMap.putAll(runTimeFieldsData);
-		}
-		if(this.totalMetaInfo != null) {
-			if(this.totalMetaInfo.getUnit() != null) { 
-				tempHashMap.put("EGU", this.totalMetaInfo.getUnit());
-			}
-			if(this.totalMetaInfo.getPrecision() != 0) { 
-				tempHashMap.put("PREC", Integer.toString(this.totalMetaInfo.getPrecision()));
-			}
-		}
-		// dbrtimeevent.s
-		dbrtimeevent.setFieldValues(tempHashMap, false);
-		archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
 	}
 	
 	@Override
@@ -1016,6 +967,56 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 
 	@Override
 	public void sampleWrittenIntoStores() {
+		
+	}
+	
+	/**
+	 * save the meta data
+	 */
+	private void saveMetaDataOnceEveryDay(DBRTimeEvent lastEvent) {
+		HashMap<String, String> tempHashMap = new HashMap<String, String>();
+		tempHashMap.putAll(allarchiveFieldsData);
+		if(runTimeFieldsData != null && !runTimeFieldsData.isEmpty()) {
+			// This should store fields like the description at least once every day.
+			tempHashMap.putAll(runTimeFieldsData);
+		}
+		if(this.totalMetaInfo != null) {
+			if(this.totalMetaInfo.getUnit() != null) { 
+				tempHashMap.put("EGU", this.totalMetaInfo.getUnit());
+			}
+			if(this.totalMetaInfo.getPrecision() != 0) { 
+				tempHashMap.put("PREC", Integer.toString(this.totalMetaInfo.getPrecision()));
+			}
+		}
+		// dbrtimeevent.s
+		lastEvent.setFieldValues(tempHashMap, false);
+		archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
+	}
+
+
+	@Override
+	public void aboutToWriteBuffer(DBRTimeEvent lastEvent) {
+		// if this pv has meta data , handle here
+		if (hasMetaField) {
+			// //////////handle the field value when it
+			// changes//////////////
+			if (changedarchiveFieldsData.size() > 0) {
+				logger.debug("Adding changed field for pv " + name + " with " + changedarchiveFieldsData.size());
+				HashMap<String, String> tempHashMap = new HashMap<String, String>();
+				tempHashMap.putAll(changedarchiveFieldsData);
+				// dbrtimeevent.s
+				lastEvent.setFieldValues(tempHashMap, true);
+				synchronized(this) {
+					changedarchiveFieldsData.clear();
+				}
+			}
+			if (allarchiveFieldsData.size() != 0) {
+				long nowES = TimeUtils.getCurrentEpochSeconds();
+				if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
+					saveMetaDataOnceEveryDay(lastEvent);
+				}
+			}
+		}
 		
 	}
 }

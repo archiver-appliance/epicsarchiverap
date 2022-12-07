@@ -139,4 +139,9 @@ public interface PV
 	 */
 	public void sampleWrittenIntoStores();
     
+	/**
+	 * This method is called each time the Write thread is about to write a batch of samples. 
+	 * The writer thread passes in the last sample of the previous batch of samples after buffer rotation.
+	 */
+	public void aboutToWriteBuffer(DBRTimeEvent lastEvent);
 }

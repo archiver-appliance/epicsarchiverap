@@ -855,4 +855,10 @@ abstract public class ArchiveChannel {
 		}
 		return retVal;
 	}	
+	
+	public void aboutToWriteBuffer(DBRTimeEvent lastSample) {
+		if(this.pv != null) {
+			this.pv.aboutToWriteBuffer(lastSample);
+		}
+	}
 }
