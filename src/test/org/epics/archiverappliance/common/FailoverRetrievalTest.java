@@ -19,6 +19,7 @@ import java.sql.Timestamp;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -37,12 +38,14 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test basic failover - just the retrieval side of things.
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class FailoverRetrievalTest {
 	private static Logger logger = Logger.getLogger(FailoverRetrievalTest.class.getName());
 	private ConfigServiceForTests configService;

@@ -12,6 +12,7 @@ import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -28,6 +29,7 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 
@@ -37,6 +39,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class DataDrivenPostProcessorTest {
 	private static Logger logger = Logger.getLogger(DataDrivenPostProcessorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

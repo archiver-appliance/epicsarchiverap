@@ -18,6 +18,7 @@ import java.net.URLEncoder;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -36,6 +37,7 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test retrieval after the dest appserver has been upgraded.
@@ -64,6 +66,7 @@ import org.junit.Test;
  *  To cater to this, either use a mergededup for the STS as well or simply ask for data that is certain to start from the MTS.  
  *
  */
+@Category(IntegrationTests.class)
 public class FailoverUpgradeTest {
 	private static Logger logger = Logger.getLogger(FailoverUpgradeTest.class.getName());
 	private ConfigServiceForTests configService;

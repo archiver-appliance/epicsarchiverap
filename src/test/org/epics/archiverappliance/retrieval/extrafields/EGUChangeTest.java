@@ -8,6 +8,8 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -21,6 +23,7 @@ import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -35,6 +38,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
  * @author mshankar
  *
  */
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class EGUChangeTest {
 	private static Logger logger = Logger.getLogger(EGUChangeTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

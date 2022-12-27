@@ -19,10 +19,12 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerator;
 
@@ -284,6 +286,7 @@ public class LineByteStreamTest {
 	 * @throws Exception
 	 */
 	@Test
+	@Category(SlowTests.class)
 	public void testLargeLinesSeekToLastLine() throws Exception {
 		for(int linesize=3; linesize < LineByteStream.MAX_LINE_SIZE*3; linesize++) {
 			String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LargeLineByteStreamSeekToLast.txt";
@@ -364,6 +367,7 @@ public class LineByteStreamTest {
 	 * @throws Exception
 	 */
 	@Test
+	@Category(SlowTests.class)
 	public void testLastAndFirstLinesWithBoundedStream() throws Exception {
 		logger.info("testLastAndFirstLinesWithBoundedStream");
 		// Generate the sample file.

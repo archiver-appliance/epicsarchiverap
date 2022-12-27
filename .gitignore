@@ -8,3 +8,5 @@ stage/
 *.swp
 /mts
 
+# Integration tests folders
+tomcat_*

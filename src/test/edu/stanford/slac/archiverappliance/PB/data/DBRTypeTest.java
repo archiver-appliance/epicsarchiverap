@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
@@ -32,6 +33,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
@@ -89,6 +91,7 @@ public class DBRTypeTest {
 
 
 	@Test
+	@Category(SlowTests.class)
 	public void testPopulateAndRead() throws Exception {
 		for(ArchDBRTypes dbrType : ArchDBRTypes.values()) {
 			ConfigService configService = new ConfigServiceForTests(new File("./bin"));
@@ -192,6 +195,7 @@ public class DBRTypeTest {
 	
 	
 	@Test
+	@Category(SlowTests.class)
 	public void testMultipleYearDataForDoubles() throws Exception {
 		ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
@@ -252,6 +256,7 @@ public class DBRTypeTest {
 	
 	
 	@Test
+	@Category(SlowTests.class)
 	public void testSetRepeatCount() throws Exception {
 		// Setting the repeat count un-marshals a PB message, merges it into a new object, sets the RepeatCount and serializes it again. 
 		// We want to test that we do not lose information in this transformation
