@@ -31,8 +31,9 @@ public class SIOCSetup {
 	 * This assumption can be changed; please let me know if this behavior is needed.
 	 */
 	public void startSIOCWithDefaultDB() throws Exception {
-		File f = new File("./src/test/org/epics/archiverappliance/UnitTestPVs.db");
-		if(!f.exists()) throw new IOException("Cannot find SIOC database file ./src/test/org/epics/archiverappliance/UnitTestPVs.db");
+		String path = "src/resources/test/UnitTestPVs.db";
+		File f = new File(path);
+		if(!f.exists()) throw new IOException("Cannot find SIOC database file " + path);
 		
 		logger.info("Starting SIOC with DB file " + f.getAbsolutePath());
 		

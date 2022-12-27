@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<classpath>
-	<classpathentry excluding="bin/**/*.js|src/main/org/epics/archiverappliance/staticcontent/js/jquery-1.8.2.min.js|src/main/org/epics/archiverappliance/staticcontent/js/jquery-ui-1.9.1.custom/**|src/main/org/epics/archiverappliance/staticcontent/js/jquery.flot.js|src/main/org/epics/archiverappliance/staticcontent/js/jquery.flot.navigate.js" kind="src" path=""/>
-	<classpathentry kind="con" path="org.eclipse.wst.jsdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="output" path=""/>
-</classpath>

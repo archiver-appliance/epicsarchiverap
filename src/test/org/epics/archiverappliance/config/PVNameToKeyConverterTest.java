@@ -3,7 +3,6 @@ package org.epics.archiverappliance.config;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
-
 import org.junit.Test;
 
 public class PVNameToKeyConverterTest {
