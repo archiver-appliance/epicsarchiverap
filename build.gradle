@@ -2,14 +2,8 @@ plugins {
     id "java-library"
     id "war"
     id "eclipse"
-    id "ca.cutterslade.analyze" version "1.9.0"
+    id "ca.cutterslade.analyze" version "1.9.0" // Analyzes dependancies for usage
     id 'com.palantir.git-version' version '0.15.0'
-}
-
-// Allow the use of ant tasks from gradle
-// type gradle ant_test to run ant test
-ant.importBuild("build.xml") { String oldTargetName ->
-    return "ant_" + oldTargetName
 }
 
 sourceSets {
@@ -50,7 +44,8 @@ def warDir = layout.projectDir.file("../")
 def distDir = layout.projectDir.file("../")
 def srcDir = layout.projectDir.file("src/main")
 def libDir = layout.projectDir.file("lib")
-def archapplsite = "tests"
+def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
+
 
 repositories {
     flatDir {
@@ -66,6 +61,7 @@ repositories {
 }
 
 dependencies {
+    // Local depencencies
     implementation files("lib/jamtio_071005.jar",
                          "lib/redisnio_0.0.1.jar")
     testImplementation files("lib/test/BPLTaglets.jar")
@@ -97,7 +93,6 @@ dependencies {
     implementation("log4j:log4j:1.2.17")
     implementation("au.com.bytecode:opencsv:2.4")
     implementation("com.google.protobuf:protobuf-java:2.4.1")
-    implementation("org.json:json:20080701")
     testImplementation ("org.apache.commons:commons-compress:1.3")
     testImplementation ("junit:junit:4.13.2")
 }
@@ -206,7 +201,6 @@ tasks.register("stage") {
         into file("${stageDir}/org/epics/archiverappliance/mgmt/staticcontent")
     }
     new File("${stageDir}/org/epics/archiverappliance/staticcontent", "version.txt").text = "Archiver Appliance Version ${version}"
-
 }
 
 tasks.register("generateReleaseNotes", Exec) {
