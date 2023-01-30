@@ -364,7 +364,7 @@ public class PVNames {
 
 
 	/**
-	 * Remove the pva:// prefix from the PV name if present.
+	 * Remove the pva:// or ca:// prefix from the PV name if present.
 	 * @param pvName The name of PV.
 	 * @return String  &emsp;
 	 */
