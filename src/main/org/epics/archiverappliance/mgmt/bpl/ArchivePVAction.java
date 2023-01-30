@@ -237,15 +237,12 @@ public class ArchivePVAction implements BPLAction {
 			throw new IOException(msg);
 		}
 
-		// Check for V4 syntax or default protocol; here's where we lose the prefix
+		// Check for V4 syntax, V3 syntax or default protocol; here's where we lose the prefix
 		String defaultProtocol = configService.getInstallationProperties()
 				.getProperty("org.epics.archiverappliance.mgmt.config.defaultAccessProtocol", "CA");
 
 		boolean usePVAccess = usePVAccess(pvName, defaultProtocol);
-		if(usePVAccess) {
-			pvName = PVNames.stripPrefixFromName(pvName);
-			logger.debug("Removing the V4 prefix from the pvName for " + pvName);
-		}
+		pvName = PVNames.stripPrefixFromName(pvName);
 
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
 		if(typeInfo != null) {
