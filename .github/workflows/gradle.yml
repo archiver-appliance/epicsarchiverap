@@ -33,4 +33,17 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@67421db6bd0bf253fb4bd25b31ebb98943c375e1
         with:
-          arguments: build
+          arguments: build  
+      - name: Upload build reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-reports
+          path: build/reports/
+      - name: Upload package
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: build/distributions/*.tar.gz
+
