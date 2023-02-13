@@ -209,7 +209,7 @@ tasks.register("generateReleaseNotes", Exec) {
     doFirst {
         standardOutput new FileOutputStream("${projectDir}/RELEASE_NOTES")
     }
-    commandLine "git", "log", "--oneline", "master"
+    commandLine "git", "log", "--oneline", "remotes/origin/master"
 }
 
 /**
