@@ -215,7 +215,7 @@ tasks.register("generateReleaseNotes", Exec) {
 /**
  * Common parts to all the war building.
  */
-tasks.withType(War) {
+tasks.withType(War).configureEach {
     dependsOn "stage"
     from("${stageDir}/org/epics/archiverappliance/staticcontent") {
         into "ui/comm"
@@ -248,14 +248,14 @@ tasks.register("mgmtWar", War) {
         into "install/pbutils"
     }
     
-    archiveName "mgmt.war"
+    archiveFileName = "mgmt.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/mgmt/WEB-INF/web.xml")
 }
 
 tasks.register("etlWar", War) {
     group = "Wars"
     
-    archiveName "etl.war"
+    archiveFileName = "etl.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/etl/WEB-INF/web.xml")
 }
 
@@ -277,7 +277,7 @@ tasks.register("engineWar", War) {
         into "WEB-INF/lib/native/linux-x86"
     }
     
-    archiveName "engine.war"
+    archiveFileName = "engine.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/engine/WEB-INF/web.xml")
 }
 
@@ -288,7 +288,7 @@ tasks.register("retreivalWar", War) {
         into "ui"
     }
     
-    archiveName "retrieval.war"
+    archiveFileName = "retrieval.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/retrieval/WEB-INF/web.xml")
 }
 
@@ -301,8 +301,8 @@ tasks.register("buildRelease", Tar) {
     dependsOn "engineWar"
     dependsOn "generateReleaseNotes"
 
-    archiveFileName = "archappl_${version}.tar.gz"
-    compression "gzip"
+    archiveFileName = "archappl_${archiveVersion}.tar.gz"
+    compression = Compression.GZIP
     from layout.buildDirectory.file("libs/mgmt.war")
     from layout.buildDirectory.file("libs/engine.war")
     from layout.buildDirectory.file("libs/etl.war")
@@ -346,7 +346,7 @@ assemble {
     dependsOn "buildRelease"
 }
 
-tasks.withType(Test) {
+tasks.withType(Test).configureEach {
     doFirst {
         mkdir file("${temporaryDir}/sts")
         mkdir file("${temporaryDir}/mts")
