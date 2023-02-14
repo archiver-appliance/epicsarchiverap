@@ -6,14 +6,12 @@ import org.awaitility.Awaitility;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
-import org.epics.archiverappliance.mgmt.pva.actions.NTUtilTest;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.pva.client.PVAChannel;
@@ -87,19 +85,20 @@ public class PVAccessUtil {
 
     public static ArchiveChannel startArchivingPV(String pvName, MemBufWriter writer,
                                         ConfigService configService, ArchDBRTypes type) throws InterruptedException {
-        return startArchivingPV(pvName, writer, configService, type, true);
+        return startArchivingPV(pvName, writer, configService, type, true, new String[0]);
     }
 
     public static ArchiveChannel startArchivingPV(String pvName, MemBufWriter writer,
-                                        ConfigService configService, ArchDBRTypes type, boolean wait) throws InterruptedException {
+                                        ConfigService configService, ArchDBRTypes type, boolean wait,
+                                        String[] metaFields
+                                        ) throws InterruptedException {
 
-        PVTypeInfo typeInfo = new PVTypeInfo(pvName, type, !type.isWaveForm(), 1);
         long samplingPeriodMilliSeconds = 100;
         float samplingPeriod = (float) samplingPeriodMilliSeconds / (float) 1000.0;
         try {
             ArchiveEngine.archivePV(pvName, samplingPeriod, PolicyConfig.SamplingMethod.MONITOR, 10, writer,
                     configService,
-                    type, null, typeInfo.getArchiveFields(), true, false);
+                    type, null, metaFields, true, false);
         } catch (Exception e) {
             fail(e.getMessage());
         }

@@ -149,7 +149,7 @@ public class FlakyPVTest {
 
         var type = ArchDBRTypes.DBR_SCALAR_STRING;
         MemBufWriter writer = new MemBufWriter(pvName, type);
-        ArchiveChannel archiveChannel = startArchivingPV(pvName, writer, configService, type, false);
+        ArchiveChannel archiveChannel = startArchivingPV(pvName, writer, configService, type, false, new String[0]);
         Thread.sleep(1000);
 
         try {

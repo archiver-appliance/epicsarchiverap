@@ -121,9 +121,10 @@ public class ChangedFieldsTest {
                 hysteresis);
 
         var extraString = new PVAString("extra", "extra value");
+        var extraArchivedString = new PVAString("extraArchived", "extra archived value");
 
         PVAStructure pvaStructure = new PVAStructure("struct name", struct_name, value,
-                timeStamp, alarm, display, control, valueAlarm, extraString);
+                timeStamp, alarm, display, control, valueAlarm, extraString, extraArchivedString);
 
         HashMap<Instant, HashMap<String, String>> expectedInstantFieldValues = new HashMap<>();
         HashMap<String, String> initFieldValues = new HashMap<>();
@@ -148,6 +149,7 @@ public class ChangedFieldsTest {
         initFieldValues.put("valueAlarm.highAlarmLimit", "1");
         initFieldValues.put("valueAlarm.hysteresis", "1");
         initFieldValues.put("extra", "extra value");
+        initFieldValues.put("extraArchived", "extra archived value");
 
         expectedInstantFieldValues.put(firstInstant, initFieldValues);
 
@@ -155,7 +157,7 @@ public class ChangedFieldsTest {
 
         var type = ArchDBRTypes.DBR_SCALAR_STRING;
         MemBufWriter writer = new MemBufWriter(pvName, type);
-        startArchivingPV(pvName, writer, configService, type);
+        startArchivingPV(pvName, writer, configService, type, true, new String[]{"extraArchived", "noMetaField"});
         long samplingPeriodMilliSeconds = 100;
         try {
             value.setValue(new PVAString("value", "2 value string"));
@@ -218,7 +220,24 @@ public class ChangedFieldsTest {
             fail(e.getMessage());
         }
 
-        expectedInstantFieldValues.put(instant, new HashMap<>());
+        // Update extraArchived field
+        Thread.sleep(samplingPeriodMilliSeconds);
+        try {
+            extraArchivedString.set("extraArchived2");
+
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        instant = Instant.now();
+        timeStamp.set(instant);
+        try {
+            serverPV.update(pvaStructure);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        HashMap<String, String> extraFields = new HashMap<>();
+        extraFields.put("extraArchived", "extraArchived2");
+        expectedInstantFieldValues.put(instant, extraFields);
 
         Thread.sleep(samplingPeriodMilliSeconds);
 

@@ -421,9 +421,10 @@ public class FieldValuesCache {
      *
      * @param getEverything If to retrieve every field value regardless if maps to a
      *                      v3 type or not and keep not mapped
+     * @param metaFieldNames Any fields that should always be archived if they change
      * @return A flat map of String values
      */
-    public HashMap<String, String> getUpdatedFieldValues(final boolean getEverything) {
+    public HashMap<String, String> getUpdatedFieldValues(final boolean getEverything, final List<String> metaFieldNames) {
         if (getEverything) {
             return (HashMap<String, String>) this.cachedFieldValues;
         }
@@ -433,7 +434,7 @@ public class FieldValuesCache {
         }
         if (this.excludeV4Changes) {
             changed = changed.entrySet().stream()
-                    .filter(e -> FieldValuesCache.v4FieldNames2v3FieldNames.containsKey(e.getKey()))
+                    .filter(e -> FieldValuesCache.v4FieldNames2v3FieldNames.containsKey(e.getKey()) || metaFieldNames.contains(e.getKey()))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         }
         return v3NamedValues(changed);

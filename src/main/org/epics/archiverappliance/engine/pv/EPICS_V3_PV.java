@@ -60,7 +60,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	
 	/**
 	 * Use plain mode?
-	 * @see #EPICS_V3_PV(String, boolean)
+	 * @see EPICS_V3_PV(String, boolean)
 	 */
 	final private boolean plain;
 
@@ -73,7 +73,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	/**
 	 * If this pv is a meta field, then the metafield parent PV is where the data for this metafield is stored.
 	 **/
-	private PV parentPVForMetaField = null;
+	private EPICS_V3_PV parentPVForMetaField = null;
 	
 	/**
 	 * If this pv has many meta fields archived, allarchiveFieldsData includes the meta field names and their values.
@@ -759,8 +759,12 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		}
 	}
 
-	@Override
-	public void setMetaFieldParentPV(PV parentPV, boolean isRuntimeOnly) {
+	/***
+	 * Set the "parent" PV for this meta field pv. The data from this PV is stored as a metafield in the parentPV.
+	 * @param parentPV - Store data from this PV as a metafield in the parentPV.
+	 * @param isRuntimeOnly - Only store values in the runtime hashMaps.
+	 */
+	public void setMetaFieldParentPV(EPICS_V3_PV parentPV, boolean isRuntimeOnly) {
 		this.parentPVForMetaField = parentPV;
 		isarchiveFieldsField = true;
 		this.isruntimeFieldField = isRuntimeOnly;
@@ -776,12 +780,13 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		}
 	}
 
-	/**
-	 * @see PV#updataMetaFieldValue
+	/***
+	 * Update the value in the parent pv hashmaps for this field
+	 * @param pvName  this meta field pv 's name - this is the full PV names - for example, a:b:c.HIHI
+	 * @param fieldValue - this meta field pv's value as a string.
 	 */
-	@Override
-	public void updataMetaFieldValue(String PVname, String fieldValue) {
-		String[] strs = PVname.split("\\.");
+	public void updataMetaFieldValue(String pvName, String fieldValue) {
+		String[] strs = pvName.split("\\.");
 		String fieldName = strs[strs.length - 1];
 		if(isruntimeFieldField) { 
 			logger.debug("Not storing value change for runtime field " + fieldName);
@@ -794,9 +799,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	}
 
 	/***
-	 * @see PV#markPVHasMetafields
+	 * Making this PV as having metafields or not
+	 * If the PV has metafields, then internal state is created to maintain the latest values of these metafields.
+	 * @param hasMetaField  &emsp;
 	 */
-	@Override
 	public void markPVHasMetafields(boolean hasMetaField) {
 		if (hasMetaField) {
 			allarchiveFieldsData = new ConcurrentHashMap<String, String>();

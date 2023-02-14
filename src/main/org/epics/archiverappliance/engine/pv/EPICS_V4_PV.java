@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.engine.pv;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
@@ -79,10 +80,15 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	 *  The field values changed for this event.
 	 */
 	private FieldValuesCache fieldValuesCache;
+	/**
+	 *  The field values changed for this event.
+	 */
+	private final List<String> metaFields = new ArrayList<>();
 
 	/**we save all meta field once every day and lastTimeStampWhenSavingarchiveFields is when we save all last meta fields*/
 	private long archiveFieldsSavedAtEpSec = 0;
 
+	private int pipeline = 0;
 	/**
 	 * the ioc host name where this pv is
 	 */
@@ -171,21 +177,6 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	}
 
 	@Override
-	public void markPVHasMetafields(boolean hasMetaField) {
-		// We don't use this for PVAccess
-	}
-
-	@Override
-	public void setMetaFieldParentPV(PV parentPV, boolean isRuntimeOnly) {
-		// We don't use this for PVAccess
-	}
-
-	@Override
-	public void updataMetaFieldValue(String pvName, String fieldValue) {
-		// We don't use this for PVAccess
-	}
-
-	@Override
 	public HashMap<String, String> getLatestMetadata() {
 		HashMap<String, String> retVal = new HashMap<>();
 		// The totalMetaInfo is updated once every 24hours...
@@ -268,7 +259,7 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 			return changes.intersects(timeStampBits);
 		}
 		return false;
-	}
+		}
 
 	private boolean newMetaDataSavePeriod(long lastSaveSecs, long periodLengthSecs) {
 		long nowES = TimeUtils.getCurrentEpochSeconds();
@@ -282,6 +273,7 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 		this.totalMetaInfo.computeRate(dbrtimeevent);
 
 		this.fieldValuesCache.updateFieldValues(data, changes);
+		dbrtimeevent.setFieldValues(this.fieldValuesCache.getUpdatedFieldValues(false, this.metaFields), false);
 
 		return dbrtimeevent;
 	}
@@ -474,62 +466,62 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 			return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 		}
 
-		switch (valueTypeId) {
+			switch(valueTypeId) {
 			case "string[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_STRING;
+					return ArchDBRTypes.DBR_WAVEFORM_STRING;
 			}
 			case "double[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
+					return ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
 			}
 			case "int[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_INT;
+					return ArchDBRTypes.DBR_WAVEFORM_INT;
 			}
 			case "byte[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_BYTE;
+					return ArchDBRTypes.DBR_WAVEFORM_BYTE;
 			}
 			case "float[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_FLOAT;
+					return ArchDBRTypes.DBR_WAVEFORM_FLOAT;
 			}
 			case "short[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_SHORT;
+					return ArchDBRTypes.DBR_WAVEFORM_SHORT;
 			}
 			case "enum_t[]" -> {
-				return ArchDBRTypes.DBR_WAVEFORM_ENUM;
+					return ArchDBRTypes.DBR_WAVEFORM_ENUM;
 			}
 			case "string" -> {
-				return ArchDBRTypes.DBR_SCALAR_STRING;
+					return ArchDBRTypes.DBR_SCALAR_STRING;
 			}
 			case "double" -> {
-				return ArchDBRTypes.DBR_SCALAR_DOUBLE;
+					return ArchDBRTypes.DBR_SCALAR_DOUBLE;
 			}
 			case "int" -> {
-				return ArchDBRTypes.DBR_SCALAR_INT;
+					return ArchDBRTypes.DBR_SCALAR_INT;
 			}
 			case "byte" -> {
-				return ArchDBRTypes.DBR_SCALAR_BYTE;
+					return ArchDBRTypes.DBR_SCALAR_BYTE;
 			}
 			case "float" -> {
-				return ArchDBRTypes.DBR_SCALAR_FLOAT;
+					return ArchDBRTypes.DBR_SCALAR_FLOAT;
 			}
 			case "short" -> {
-				return ArchDBRTypes.DBR_SCALAR_SHORT;
+					return ArchDBRTypes.DBR_SCALAR_SHORT;
 			}
 			case "enum_t" -> {
-				return ArchDBRTypes.DBR_SCALAR_ENUM;
+					return ArchDBRTypes.DBR_SCALAR_ENUM;
 			}
 			case "structure" -> {
-				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
+					return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
 			default -> {
 				logger.error("Cannot determine arch dbrtypes for " + structureID + " and " + valueTypeId);
-				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
+					return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
 		}
 
 	}
 
 	/***
-	 *get  the meta info for this pv
+	 *get  the meta info for this pv 
 	 * @return MetaInfo
 	 */
 	@Override
@@ -548,19 +540,19 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	 */
 	@Override
 	public void aboutToWriteBuffer(DBRTimeEvent lastEvent) {
-		HashMap<String, String> fieldValues = new HashMap<>();
 		// save all the fields once every period
 		// 24 hours
 		int saveMetaDataPeriodSecs = 86400;
 		if (newMetaDataSavePeriod(this.archiveFieldsSavedAtEpSec, saveMetaDataPeriodSecs)) {
+			HashMap<String, String> fieldValues = new HashMap<>();
 			fieldValues.putAll(metaInfoToStore(totalMetaInfo));
-			fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true));
+			fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true, this.metaFields));
 			this.archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
 			lastEvent.setFieldValues(fieldValues, false);
-		} else {
-			fieldValues.putAll(this.fieldValuesCache.getUpdatedFieldValues(false));
-			lastEvent.setFieldValues(fieldValues, true);
-		}
+	}
 	}
 
+	public void addMetaField(String fieldName) {
+		metaFields.add(fieldName);
+	}
 }

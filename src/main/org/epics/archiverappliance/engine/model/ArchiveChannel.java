@@ -34,6 +34,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
+import org.epics.archiverappliance.engine.pv.EPICS_V4_PV;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PV;
 import org.epics.archiverappliance.engine.pv.PVFactory;
@@ -349,24 +350,32 @@ abstract public class ArchiveChannel {
 	 */
 	private void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess, boolean useDBEProperties) throws IOException {
 		if(this.pv == null) throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
-		// This tells the main PV to create the hashmaps for the metafield storage
-		this.pv.markPVHasMetafields(true);
-		
-		String pvNameForField = PVNames.stripFieldNameFromPVName(name) + "." + fieldName;
-		ArchDBRTypes metaFieldDBRType = this.pv.getArchDBRTypes();
-		if(metaFieldOverrideTypes.containsKey(fieldName)) { 
-			metaFieldDBRType = metaFieldOverrideTypes.get(fieldName);
-		}
 
+		if (!usePVAccess) {
+			EPICS_V3_PV v3Pv = (EPICS_V3_PV) this.pv;
+			v3AddMetaField(v3Pv, fieldName, configservice, isRuntimeOnly, useDBEProperties);
+		} else {
+			EPICS_V4_PV v4Pv = (EPICS_V4_PV) this.pv;
+			v4Pv.addMetaField(fieldName);
+		}
+	}
+
+	private void v3AddMetaField(EPICS_V3_PV v3Pv,  String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean useDBEProperties) {
 		if(useDBEProperties) {
 			// For a DBE_PROPERTIES, we use the name of the PV as the name of the channel
-			((EPICS_V3_PV)this.pv).setDBEroperties();
+			v3Pv.setDBEroperties();
 			return;
 		}
-
-		logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType " + metaFieldDBRType.toString() + " DBE_PROPERTIES is " + useDBEProperties);
-		PV metaPV = PVFactory.createPV(pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, usePVAccess, useDBEProperties);
-		metaPV.setMetaFieldParentPV(this.pv, isRuntimeOnly);
+		// This tells the main PV to create the hashmaps for the metafield storage
+		v3Pv.markPVHasMetafields(true);
+		String pvNameForField = PVNames.stripFieldNameFromPVName(this.name) + "." + fieldName;
+		ArchDBRTypes metaFieldDBRType = v3Pv.getArchDBRTypes();
+		if(metaFieldOverrideTypes.containsKey(fieldName)) {
+			metaFieldDBRType = metaFieldOverrideTypes.get(fieldName);
+		}
+		logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType " + metaFieldDBRType.toString() + " DBE_PROPERTIES is " + false);
+		EPICS_V3_PV metaPV = (EPICS_V3_PV) PVFactory.createPV(pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, false, false);
+		metaPV.setMetaFieldParentPV(v3Pv, isRuntimeOnly);
 		this.metaPVs.put(fieldName, metaPV);
 	}
 

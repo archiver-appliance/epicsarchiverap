@@ -1,11 +1,5 @@
 package org.epics.archiverappliance.engine.pv;
 
-import static org.junit.Assert.assertEquals;
-
-import java.time.Instant;
-import java.util.BitSet;
-import java.util.HashMap;
-
 import org.epics.pva.data.PVADouble;
 import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAString;
@@ -14,6 +8,13 @@ import org.epics.pva.data.PVAStructureArray;
 import org.epics.pva.data.PVAny;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.junit.Test;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
+
+import static org.junit.Assert.assertEquals;
 
 public class FieldValuesCacheTest {
     @Test
@@ -30,7 +31,7 @@ public class FieldValuesCacheTest {
         var bitSet = new BitSet();
         bitSet.set(1, true);
         fieldValuesCache.updateFieldValues(pvaStructure, bitSet);
-        fieldValuesCache.getUpdatedFieldValues(false);
+        fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>());
         expectedMap.put("string0", "String2");
         assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
     }
@@ -52,7 +53,7 @@ public class FieldValuesCacheTest {
         var bitSet = new BitSet();
         bitSet.set(3, true);
         fieldValuesCache.updateFieldValues(pvaStructure, bitSet);
-        fieldValuesCache.getUpdatedFieldValues(false);
+        fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>());
         expectedMap.put("a.timeStamp", timeStamp.format());
         assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
     }
@@ -71,21 +72,21 @@ public class FieldValuesCacheTest {
         expectedMap.put("anyStruct.anyValue2", pvaStructure.locate("anyStruct.anyValue2").format());
         assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
 
-        ((PVAny) pvaStructure.get("anyValue"))
+        pvaStructure.get("anyValue")
                 .setValue(new PVAString("string4", "String4"));
         var bitSet = new BitSet();
         bitSet.set(1, true);
         fieldValuesCache.updateFieldValues(pvaStructure, bitSet);
-        fieldValuesCache.getUpdatedFieldValues(false);
+        fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>());
         expectedMap.put("anyValue", pvaStructure.get("anyValue").format());
         assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
 
-        ((PVAny) pvaStructure.locate("anyStruct.anyValue1"))
+        pvaStructure.locate("anyStruct.anyValue1")
                 .setValue(new PVAString("string5", "String5"));
         bitSet = new BitSet();
         bitSet.set(2, true);
         fieldValuesCache.updateFieldValues(pvaStructure, bitSet);
-        fieldValuesCache.getUpdatedFieldValues(false);
+        fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>());
         expectedMap.put("anyStruct.anyValue1", pvaStructure.locate("anyStruct.anyValue1").format());
         assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
     }
@@ -107,7 +108,7 @@ public class FieldValuesCacheTest {
         var bitSet = new BitSet();
         bitSet.set(1, true);
         fieldValuesCache.updateFieldValues(pvaStructure, bitSet);
-        fieldValuesCache.getUpdatedFieldValues(false);
+        fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>());
         expectedMap.put("array", "[" + ((PVAStructureArray) pvaStructure.get("array")).get()[0].format() + "]");
         assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
     }
@@ -141,20 +142,23 @@ public class FieldValuesCacheTest {
     }
 
     @Test
-    public void testGetUpdatedFieldValues() throws Exception {
+    public void testEmptyGetUpdatedFieldValues() throws Exception {
         // Test Empty structure
         var pvaStructure = new PVAStructure("structureName", "struct_name");
         var actualFieldValues = new FieldValuesCache(pvaStructure, false);
         actualFieldValues.updateFieldValues(pvaStructure, new BitSet());
-        var actualMap = actualFieldValues.getUpdatedFieldValues( false);
+        var actualMap = actualFieldValues.getUpdatedFieldValues(false, new ArrayList<>());
         assertEquals(new HashMap<>(), actualMap);
+    }
 
+    @Test
+    public void testIgnoreDefaultGetUpdatedFieldValues() throws Exception {
         // Test ignore default stored values
         var timeStamp = new PVAStructure("timeStamp", "timeStamp_t", new PVAString("string", "String"));
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAString("alarmString", "alarmString"));
         var value = new PVAString("value", "String2");
 
-        pvaStructure = new PVAStructure("structureName", "struct_name", timeStamp, alarm, value);
+        var pvaStructure = new PVAStructure("structureName", "struct_name", timeStamp, alarm, value);
         var allBits = new BitSet(22);
         allBits.set(1, true);
         allBits.set(2, true);
@@ -165,18 +169,30 @@ public class FieldValuesCacheTest {
         var fieldValuesCache = new FieldValuesCache(pvaStructure, false);
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
         assertEquals(new HashMap<>(),
-                fieldValuesCache.getUpdatedFieldValues(false));
+                fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>()));
+    }
 
+    @Test
+    public void testV4GetUpdatedFieldValues() throws Exception {
         // Test v4 changes
         var v4Value = new PVAString("v4string", "v4String");
+        var allBits = new BitSet(22);
+        allBits.set(1, true);
+        allBits.set(2, true);
+        allBits.set(3, true);
+        allBits.set(4, true);
+        allBits.set(5, true);
         allBits.set(6, true);
-        pvaStructure = new PVAStructure("structureName", "struct_name", timeStamp, alarm, value, v4Value);
-        fieldValuesCache = new FieldValuesCache(pvaStructure, false);
+        var timeStamp = new PVAStructure("timeStamp", "timeStamp_t", new PVAString("string", "String"));
+        var alarm = new PVAStructure("alarm", "alarm_t", new PVAString("alarmString", "alarmString"));
+        var value = new PVAString("value", "String2");
+        var pvaStructure = new PVAStructure("structureName", "struct_name", timeStamp, alarm, value, v4Value);
+        var fieldValuesCache = new FieldValuesCache(pvaStructure, false);
         var expectedMap = new HashMap<>();
         expectedMap.put("v4string", "v4String");
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
         assertEquals(expectedMap,
-                fieldValuesCache.getUpdatedFieldValues(false));
+                fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>()));
 
         // Test exclude v4 changes and get Everything
         expectedMap.put("timeStamp.string", "String");
@@ -184,21 +200,43 @@ public class FieldValuesCacheTest {
         fieldValuesCache = new FieldValuesCache(pvaStructure, true);
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
         assertEquals(expectedMap,
-                fieldValuesCache.getUpdatedFieldValues(true));
+                fieldValuesCache.getUpdatedFieldValues(true, new ArrayList<>()));
 
         // Test not exclude v4 changes and get everything
         fieldValuesCache = new FieldValuesCache(pvaStructure, false);
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
         assertEquals(expectedMap,
-                fieldValuesCache.getUpdatedFieldValues( true));
+                fieldValuesCache.getUpdatedFieldValues(true, new ArrayList<>()));
 
         // Test exclude v4 changes and not everything
         fieldValuesCache = new FieldValuesCache(pvaStructure, true);
         expectedMap = new HashMap<>();
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
         assertEquals(expectedMap,
-                fieldValuesCache.getUpdatedFieldValues(false));
+                fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>()));
 
+        // Test exclude v4 changes and not everything with added meta field
+        fieldValuesCache = new FieldValuesCache(pvaStructure, true);
+        var metaFields = new ArrayList<String>();
+        metaFields.add("v4string");
+        expectedMap = new HashMap<>();
+        expectedMap.put("v4string", "v4String");
+        fieldValuesCache.updateFieldValues(pvaStructure, allBits);
+        assertEquals(expectedMap,
+        fieldValuesCache.getUpdatedFieldValues(false, metaFields));
+
+        // Test exclude v4 changes and not everything with added meta field that is not in structure
+        fieldValuesCache = new FieldValuesCache(pvaStructure, true);
+        metaFields = new ArrayList<String>();
+        metaFields.add("v5string");
+        expectedMap = new HashMap<>();
+        fieldValuesCache.updateFieldValues(pvaStructure, allBits);
+        assertEquals(expectedMap,
+        fieldValuesCache.getUpdatedFieldValues(false, metaFields));
+    }
+
+    @Test
+    public void testV3V4GetUpdatedFieldValues() throws Exception {
         // Test v3 - v4 Mapping
         var limitLow = new PVADouble("limitLow", 1.0);
         var limitHigh = new PVADouble("limitHigh", 1.0);
@@ -209,11 +247,19 @@ public class FieldValuesCacheTest {
                 limitHigh,
                 description,
                 units);
+        var allBits = new BitSet(22);
+        allBits.set(1, true);
+        allBits.set(2, true);
+        allBits.set(3, true);
+        allBits.set(4, true);
+        allBits.set(5, true);
+        allBits.set(6, true);
         allBits.set(7, true);
         allBits.set(8, true);
         allBits.set(9, true);
         allBits.set(10, true);
         allBits.set(11, true);
+        var expectedMap = new HashMap<>();
         expectedMap.put("LOPR", "1.0");
         expectedMap.put("HOPR", "1.0");
         expectedMap.put("DESC", "DESC");
@@ -258,11 +304,15 @@ public class FieldValuesCacheTest {
         allBits.set(20, true);
         allBits.set(21, true);
 
-        pvaStructure = new PVAStructure("structureName", "struct_name", timeStamp, alarm, value, display, control,
+        var timeStamp = new PVAStructure("timeStamp", "timeStamp_t", new PVAString("string", "String"));
+        var alarm = new PVAStructure("alarm", "alarm_t", new PVAString("alarmString", "alarmString"));
+        var value = new PVAString("value", "String2");
+        var v4Value = new PVAString("v4string", "v4String");
+        var pvaStructure = new PVAStructure("structureName", "struct_name", timeStamp, alarm, value, display, control,
                 valueAlarm, v4Value);
-        fieldValuesCache = new FieldValuesCache(pvaStructure, true);
+        var fieldValuesCache = new FieldValuesCache(pvaStructure, true);
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
-        assertEquals(expectedMap, fieldValuesCache.getUpdatedFieldValues(false));
+        assertEquals(expectedMap, fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>()));
 
         expectedMap = new HashMap<>();
         expectedMap.put("v4string", "v4String");
@@ -281,7 +331,7 @@ public class FieldValuesCacheTest {
         expectedMap.put("valueAlarm.highAlarmLimit", "1");
         expectedMap.put("valueAlarm.hysteresis", "1");
         fieldValuesCache.updateFieldValues(pvaStructure, allBits);
-        assertEquals(expectedMap, fieldValuesCache.getUpdatedFieldValues( true));
+        assertEquals(expectedMap, fieldValuesCache.getUpdatedFieldValues(true, new ArrayList<>()));
     }
 
 }

@@ -85,34 +85,12 @@ public interface PV
     */
 	ArchDBRTypes getArchDBRTypes();
 
-    /***
-     * Making this PV as having metafields or not
-     * If the PV has metafields, then internal state is created to maintain the latest values of these metafields.
-     * @param hasMetaField  &emsp;
-     */
-	void markPVHasMetafields(boolean hasMetaField);
-	
-	
-	/***
-	 * Set the "parent" PV for this meta field pv. The data from this PV is stored as a metafield in the parentPV. 
-	 * @param parentPV - Store data from this PV as a metafield in the parentPV.
-	 * @param isRuntimeOnly - Only store values in the runtime hashMaps.
-	 */
-	public void setMetaFieldParentPV(PV parentPV, boolean isRuntimeOnly);
-	
-	/***
-	 * Update the value in the parent pv hashmaps for this field
-	 * @param pvName  this meta field pv 's name - this is the full PV names - for example, a:b:c.HIHI
-	 * @param fieldValue - this meta field pv's value as a string.
-	 */
-	public void updataMetaFieldValue(String pvName,String fieldValue);
-	
 	/**
 	 * Combine the metadata from various sources and return the latest copy.
 	 * @return HashMap   &emsp;
 	 */
 	public HashMap<String, String> getLatestMetadata();
-	
+
 	/**
 	 * Do a caget and update the metadata that is cached in the PV.
 	 * @throws IllegalStateException  &emsp;
