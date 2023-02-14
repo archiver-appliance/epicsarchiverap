@@ -130,6 +130,24 @@ public class ChangedFieldsTest {
         initFieldValues.put("cnxlostepsecs", "0");
         initFieldValues.put("startup", "true");
         initFieldValues.put("cnxregainedepsecs", Long.toString(firstInstant.getEpochSecond() + 1));
+        initFieldValues.put("timeStamp.nanoseconds", Integer.toString(firstInstant.getNano()));
+        initFieldValues.put("timeStamp.userTag", "0");
+        initFieldValues.put("timeStamp.secondsPastEpoch", Long.toString(firstInstant.getEpochSecond()));
+        initFieldValues.put("alarm.status", "0");
+        initFieldValues.put("alarm.severity", "0");
+        initFieldValues.put("display.limitLow", "1.0");
+        initFieldValues.put("display.limitHigh", "1.0");
+        initFieldValues.put("display.description", "DESC");
+        initFieldValues.put("display.units", "kHz");
+        initFieldValues.put("control.limitLow", "1.0");
+        initFieldValues.put("control.limitHigh", "1.0");
+        initFieldValues.put("control.minStep", "1.0");
+        initFieldValues.put("valueAlarm.lowAlarmLimit", "1");
+        initFieldValues.put("valueAlarm.lowWarningLimit", "1");
+        initFieldValues.put("valueAlarm.highWarningLimit", "1");
+        initFieldValues.put("valueAlarm.highAlarmLimit", "1");
+        initFieldValues.put("valueAlarm.hysteresis", "1");
+        initFieldValues.put("extra", "extra value");
 
         expectedInstantFieldValues.put(firstInstant, initFieldValues);
 
@@ -220,24 +238,6 @@ public class ChangedFieldsTest {
         }
         HashMap<String, String> oneField = new HashMap<>();
         oneField.put("HOPR", "3.0");
-        oneField.put("timeStamp.nanoseconds", Integer.toString(firstInstant.getNano()));
-        oneField.put("timeStamp.userTag", "0");
-        oneField.put("timeStamp.secondsPastEpoch", Long.toString(firstInstant.getEpochSecond()));
-        oneField.put("alarm.status", "0");
-        oneField.put("alarm.severity", "0");
-        oneField.put("display.limitLow", "1.0");
-        oneField.put("display.limitHigh", "1.0");
-        oneField.put("display.description", "DESC");
-        oneField.put("display.units", "kHz");
-        oneField.put("control.limitLow", "1.0");
-        oneField.put("control.limitHigh", "1.0");
-        oneField.put("control.minStep", "1.0");
-        oneField.put("valueAlarm.lowAlarmLimit", "1");
-        oneField.put("valueAlarm.lowWarningLimit", "1");
-        oneField.put("valueAlarm.highWarningLimit", "1");
-        oneField.put("valueAlarm.highAlarmLimit", "1");
-        oneField.put("valueAlarm.hysteresis", "1");
-        oneField.put("extra", "extra value");
         expectedInstantFieldValues.put(instant, oneField);
 
         Thread.sleep(samplingPeriodMilliSeconds);
@@ -253,6 +253,7 @@ public class ChangedFieldsTest {
         logger.info("actualValues: " + actualValues);
         for (Map.Entry<Instant, HashMap<String, String>> e : expectedInstantFieldValues.entrySet()) {
             var actualMap = actualValues.get(e.getKey());
+            logger.info("For time " + e.getKey() + " expected " + e.getValue() + " actual " + actualMap);
             for (var v : e.getValue().entrySet()) {
                 if (v.getKey().equals("cnxregainedepsecs")) {
                     assertTrue(Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey()))) < 10);

@@ -47,8 +47,7 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
-import org.epics.pvaccess.client.ChannelProvider;
-import org.epics.pvaccess.client.ChannelProviderRegistryFactory;
+import org.epics.pva.client.PVAClient;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
@@ -84,7 +83,7 @@ public class EngineContext {
         /**the command thread for all  pvs*/
 	private JCACommandThread[] command_threads = null;
 	private Context[] context2CommandThreadId = null;
-	private ChannelProvider channelProvider;
+	private PVAClient pvaClient;
 
 	
 	/**the total time consumed by the writer*/
@@ -224,8 +223,8 @@ public class EngineContext {
 
 					controlingPVList.clear();
 					
-			        if (channelProvider != null) {
-		                org.epics.pvaccess.ClientFactory.stop();
+			        if (pvaClient != null) {
+						pvaClient.close();
 			        }
 
 
@@ -753,18 +752,19 @@ public class EngineContext {
 	
 	
     private void iniV4ChannelProvidert() {
-        if (channelProvider == null) {
-                org.epics.pvaccess.ClientFactory.start();
+        if (pvaClient == null) {
                 logger.info("Registered the pvAccess client factory.");
-                channelProvider = ChannelProviderRegistryFactory.getChannelProviderRegistry().getProvider(org.epics.pvaccess.ClientFactory.PROVIDER_NAME);
-
-                for(String providerName : ChannelProviderRegistryFactory.getChannelProviderRegistry().getProviderNames()) {
-                        logger.debug("PVAccess Channel provider " + providerName);
-                }
+                try {
+					pvaClient = new PVAClient();
+				} catch (Exception e) {
+					logger.error(
+							"Exception when initializing PVA Client",
+							e);
+				}
         }
     }
-	public ChannelProvider getChannelProvider() {
-		return channelProvider;
+	public PVAClient getPVAClient() {
+		return pvaClient;
 	}
 	
 	public ScheduledThreadPoolExecutor getMiscTasksScheduler() {

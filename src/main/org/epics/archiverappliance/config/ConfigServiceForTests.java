@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.config;
 
-import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;

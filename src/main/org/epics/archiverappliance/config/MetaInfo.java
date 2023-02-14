@@ -28,7 +28,7 @@ import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAStructure;
 /** this class is used for getting the meta data
  *  <p>
  *  @author luofeng li
@@ -730,7 +730,7 @@ public class MetaInfo {
 		}
 	}
 
-    public void applyV4BasicInfo(String pvName, PVStructure pvStructure, ConfigService configService) {
+    public void applyV4BasicInfo(String pvName, PVAStructure pvStructure, ConfigService configService) {
         // TODO Copy over meta info from the pvStructure...
     }
 }

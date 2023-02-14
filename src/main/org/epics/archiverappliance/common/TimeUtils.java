@@ -15,6 +15,9 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVALong;
+import org.epics.pva.data.PVAInt;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -516,7 +519,17 @@ public class TimeUtils {
 		return !DateTimeZone.getDefault().isStandardOffset(ts.getTime());
 	}
 	
-	
+	/**
+	 * Convert the timeStamp from a pvAccess normative type to YearSecondTimestamp
+	 * @param timeStampPVStructure
+	 * @return Timestamp
+	 */
+    public static YearSecondTimestamp convertFromPVTimeStamp(PVAStructure timeStampPVStructure) {
+        long secondsPastEpoch = ((PVALong)timeStampPVStructure.get("secondsPastEpoch")).get();
+        int nanoSeconds = ((PVAInt) timeStampPVStructure.get("nanoseconds")).get();
+        Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
+        return TimeUtils.convertToYearSecondTimestamp(timestamp);
+    }
 	
 	/**
 	 * Break a time span into smaller time spans according to binSize

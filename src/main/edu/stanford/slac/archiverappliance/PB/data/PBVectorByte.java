@@ -18,13 +18,12 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.VectorValue;
-import org.epics.pvdata.pv.ByteArrayData;
-import org.epics.pvdata.pv.PVByteArray;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
+import org.epics.pva.data.PVAByteArray;
+import org.epics.pva.data.PVAStructure;
 
 import com.google.protobuf.ByteString;
 
@@ -98,29 +97,20 @@ public class PBVectorByte implements DBRTimeEvent, PartionedTime {
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
-	public PBVectorByte(PVStructure v4Data) {
-		PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
-		long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
-		int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
-		Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
-		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+	public PBVectorByte(PVAStructure v4Data) {
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+		DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
-		PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
-		int severity = alarmPVStructure.getIntField("severity").get();
-		int status = alarmPVStructure.getIntField("status").get();
-
-		PVByteArray pvArray = (PVByteArray) v4Data.getScalarArrayField("value", ScalarType.pvByte);
-		ByteArrayData arrayData = new ByteArrayData();
-		pvArray.get(0, pvArray.getLength(), arrayData);
-		byte[] data = arrayData.data;
+		PVAByteArray pvArray = (PVAByteArray) v4Data.get("value");
+		byte[] data = pvArray.get();
 
 		year = yst.getYear();
 		Builder builder = EPICSEvent.VectorChar.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
 				.setNano(yst.getNanos())
 				.setVal(ByteString.copyFrom(data));
-		if(severity != 0) builder.setSeverity(severity);
-		if(status != 0) builder.setStatus(status);
+		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
+		if(alarm.status != 0) builder.setStatus(alarm.status);
 		dbevent = builder.build();
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}

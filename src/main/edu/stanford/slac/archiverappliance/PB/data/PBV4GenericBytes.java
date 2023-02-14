@@ -1,11 +1,9 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 import java.sql.Timestamp;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,13 +16,11 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.ByteBufSampleValue;
+import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
-import org.epics.pvaccess.impl.remote.IntrospectionRegistry;
-import org.epics.pvaccess.impl.remote.SerializationHelper;
-import org.epics.pvdata.pv.Field;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.SerializableControl;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVAInt;
 
 import com.google.protobuf.ByteString;
 
@@ -39,7 +35,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
-	private static Logger logger = LogManager.getLogger(PBV4GenericBytes.class.getName());
+	private static final Logger logger = LogManager.getLogger(PBV4GenericBytes.class.getName());
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.V4GenericBytes dbevent = null;
@@ -71,33 +67,37 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
-	public PBV4GenericBytes(PVStructure v4Data) throws IOException {
-		PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
-		long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
-		int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
-		int userTag = timeStampPVStructure.getIntField("userTag").get();
-		Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
-		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+	public PBV4GenericBytes(PVAStructure v4Data) throws IOException {
+		PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
+		int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
+		DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
-		PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
-		int severity = alarmPVStructure.getIntField("severity").get();
-		int status = alarmPVStructure.getIntField("status").get();
-
-		try(DummySerializationControl serControl = new DummySerializationControl(4*1024*1024)) {
-			SerializationHelper.serializeStructureFull(serControl.getTheBuffer(), serControl, v4Data);
-			ByteString byteString = serControl.closeAndGetByteString();
-
-			year = yst.getYear();
-			Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
-					.setSecondsintoyear(yst.getSecondsintoyear())
-					.setNano(yst.getNanos())
-					.setUserTag(userTag)
-					.setVal(byteString);
-			if(severity != 0) builder.setSeverity(severity);
-			if(status != 0) builder.setStatus(status);
-			dbevent = builder.build();
-			bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+		var buffer = ByteBuffer.allocate(4*1024*1024);
+		try {
+			v4Data.encodeType(buffer, new BitSet());
+			v4Data.encode(buffer);
+			buffer.flip();
+		} catch (Exception e) {
+			logger.error("Error serializing pvAccess Generic Bytes ", e);
 		}
+
+
+		ByteString byteString = ByteString.copyFrom(buffer, buffer.limit());
+
+		year = yst.getYear();
+		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
+				.setSecondsintoyear(yst.getSecondsintoyear())
+				.setNano(yst.getNanos())
+				.setUserTag(userTag)
+				.setVal(byteString);
+
+		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
+
+		if(alarm.status != 0) builder.setStatus(alarm.status);
+
+		dbevent = builder.build();
+		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
 
@@ -273,69 +273,5 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 	}
 
-    /**
-     * Sample from Matej to allow us to reuse the serialization that comes as part of PVAccess.
-     * @author mshankar
-     *
-     */
-    class DummySerializationControl implements SerializableControl, AutoCloseable {
-    	protected final IntrospectionRegistry outgoingIR = new IntrospectionRegistry();
-    	private ByteArrayOutputStream bos;
-    	WritableByteChannel channel;
-    	private ByteBuffer theBuffer;
-
-
-        public DummySerializationControl(int bufferSize) {
-        	theBuffer = ByteBuffer.allocate(bufferSize);
-        	bos = new ByteArrayOutputStream();
-        	channel = Channels.newChannel(bos);
-        }
-
-        @Override
-        public void alignBuffer(int arg0) {
-        }
-
-        @Override
-        public void cachedSerialize(Field field, ByteBuffer buffer) {
-        	outgoingIR.serialize(field, buffer, this);
-        }
-
-        @Override
-        public void ensureBuffer(int arg0) {
-        }
-
-        @Override
-        public void flushSerializeBuffer() {
-        	try {
-        		theBuffer.flip();
-        		channel.write(theBuffer);
-        		theBuffer.flip();
-        	} catch(IOException ex) {
-        		logger.error("Error flushing V4 buffer", ex);
-        	}
-        }
-
-		public ByteBuffer getTheBuffer() {
-			return theBuffer;
-		}
-
-		public ByteString closeAndGetByteString() throws IOException {
-			flushSerializeBuffer();
-			bos.flush();
-			channel.close();
-			channel = null;
-			bos.close();
-			ByteString byteString = ByteString.copyFrom(bos.toByteArray());
-			bos = null;
-			return byteString;
-		}
-
-		@Override
-		public void close() {
-			if(channel != null) { try { channel.close(); channel = null; } catch(Exception ex) {} }
-			if(bos != null) { try { bos.close(); bos = null; } catch(Exception ex) {} }
-		}
-
-    }
 
 }
