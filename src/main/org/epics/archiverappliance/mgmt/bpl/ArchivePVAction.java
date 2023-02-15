@@ -172,6 +172,29 @@ public class ArchivePVAction implements BPLAction {
 
 
 	/**
+	 * Does this pvName imply a connection using PVAccess?
+	 * @param pvName  The name of PV.
+	 * @param defaultProtocol  The defaultProtocol see org.epics.archiverappliance.mgmt.config.defaultAccessProtocol
+	 *                         default is CA
+	 * @return boolean True or False
+	 */
+	public static boolean usePVAccess(String pvName, String defaultProtocol) {
+		PVNames.EPICSVersion version = PVNames.pvNameVersion(pvName);
+		switch (version) {
+			case DEFAULT -> {
+				return defaultProtocol.equals("PVA");
+			}
+			case V3 -> {
+				return false;
+			}
+			case V4 -> {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * This is the main method for adding PVs into the archiver. All other entry points should eventually call this method.
 	 * @param out PrintWriter
 	 * @param pvName The name of PV.
@@ -186,7 +209,11 @@ public class ArchivePVAction implements BPLAction {
 	 * @param fieldsArchivedAsPartOfStream  &emsp;
 	 * @throws IOException  &emsp;
 	 */
-	public static void archivePV(PrintWriter out, String pvName, boolean overridePolicyParams, SamplingMethod overriddenSamplingMethod, float overRiddenSamplingPeriod, String controllingPV, String policyName, String alias, boolean skipCapacityPlanning, ConfigService configService, List<String> fieldsArchivedAsPartOfStream) throws IOException {
+	public static void archivePV(PrintWriter out, String pvName, boolean overridePolicyParams,
+	                             SamplingMethod overriddenSamplingMethod, float overRiddenSamplingPeriod,
+	                             String controllingPV, String policyName, String alias, boolean skipCapacityPlanning,
+	                             ConfigService configService, List<String> fieldsArchivedAsPartOfStream)
+			throws IOException {
 		String fieldName = PVNames.getFieldName(pvName);
 		boolean isStandardFieldName = false;
 
@@ -210,12 +237,12 @@ public class ArchivePVAction implements BPLAction {
 			throw new IOException(msg);
 		}
 
-		// Check for V4 syntax; here's where we lose the prefix
-		boolean usePVAccess = PVNames.isEPICSV4PVName(pvName);
-		if(usePVAccess) {
-			pvName = PVNames.stripPrefixFromName(pvName);
-			logger.debug("Removing the V4 prefix from the pvName for " + pvName);
-		}
+		// Check for V4 syntax, V3 syntax or default protocol; here's where we lose the prefix
+		String defaultProtocol = configService.getInstallationProperties()
+				.getProperty("org.epics.archiverappliance.mgmt.bpl.ArchivePVAction.defaultAccessProtocol", "CA");
+
+		boolean usePVAccess = usePVAccess(pvName, defaultProtocol);
+		pvName = PVNames.stripPrefixFromName(pvName);
 
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
 		if(typeInfo != null) {
