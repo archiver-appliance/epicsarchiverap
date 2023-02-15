@@ -8,7 +8,6 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
-import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
@@ -67,9 +66,7 @@ public class ArrayListCollectorEventStream implements EventStream, RemotableOver
 			if(eventYear != currentYear) { 
 				logger.info("Detected a change in years eventYear " + eventYear + " and currentYear is " + currentYear);
 				ArrayListCollectorEventStream.this.desc.setYear(eventYear);
-				short tempCurrentYear = currentYear;
 				currentYear = eventYear;
-				throw new ChangeInYearsException(tempCurrentYear, eventYear);
 			}
 			currentIndex++;
 			return next;

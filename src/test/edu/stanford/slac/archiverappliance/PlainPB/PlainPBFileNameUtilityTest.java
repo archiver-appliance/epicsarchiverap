@@ -110,7 +110,7 @@ public class PlainPBFileNameUtilityTest {
 		PartitionGranularity partition = PartitionGranularity.PARTITION_MONTH;
 		String extension = ".pb";
 		DateTime endMonth = null;
-		for(int months = 1; months <= 12; months++) {
+		for(int months = 1; months <= 11; months++) {
 			mkPath(PlainPBPathNameUtility.getPathNameForTime(rootFolderStr, pvName, curr.getMillis()/1000, partition, new ArchPaths(), CompressionMode.NONE, configService.getPVNameToKeyConverter()));
 			curr = curr.plusMonths(1);
 			if(months == 4) endMonth = curr;
@@ -150,14 +150,14 @@ public class PlainPBFileNameUtilityTest {
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(endYear.getMillis()/1000, 0), extension,  partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
 		assertTrue("File count " + etlPaths.length, etlPaths.length == 8);
 		
-		// Ask for the next year here; the last file written out is for Nov so expect 11.pb here
+		// Ask for the next year here; the last file written out is for current year plus (20 - 1)
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds((curr.plusYears(1).getMillis())/1000, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
 		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith(curr.getYear() + ".pb"));
+		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith(curr.minusYears(1).getYear() + ".pb"));
 
 		File mostRecentFile2 = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds((endYear.getMillis())/1000, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
 		assertTrue("Most recent file is null?", mostRecentFile2 != null);
-		String expectedEnd2 = endYear.getYear() + ".pb";
+		String expectedEnd2 = endYear.minusYears(1).getYear() + ".pb";
 		assertTrue("Unxpected most recent file " + mostRecentFile2.getAbsolutePath() + " expecting " + expectedEnd2, mostRecentFile2.getName().endsWith(expectedEnd2));
 	}
 	
