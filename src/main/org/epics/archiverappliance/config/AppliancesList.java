@@ -88,7 +88,7 @@ public class AppliancesList {
 			logger.info("appliances.xml file specified in the environment as " + applianceFileFromEnvVar);
 			File appliancesXMLFile = new File(applianceFileFromEnvVar);
 			if(!appliancesXMLFile.exists()) {
-				String msg = "Specified appliances.xml file " + applianceFileFromEnvVar + " does not seem to exist. This is a fatal error; cannot continue";
+				String msg = "Specified appliances.xml file " + applianceFileFromEnvVar + " does not seem to exist. This is a fatal error; cannot continue. CWD=" + System.getProperty("user.dir");
 				logger.fatal(msg);
 				throw new IOException(msg);
 			}

@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
@@ -24,6 +26,7 @@ import org.epics.pvdata.pv.ScalarType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * {@link PvaGetArchivedPVs}
@@ -31,6 +34,7 @@ import org.junit.Test;
  * @author Kunal Shroff
  *
  */
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaGetArchivedPVsTest {
 
 	private static Logger logger = Logger.getLogger(PvaGetArchivedPVsTest.class.getName());

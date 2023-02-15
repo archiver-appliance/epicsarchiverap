@@ -40,15 +40,15 @@ public class EngineMetrics implements JSONAware {
 	private int totalEPICSChannels;
 	private double eventRate;
 	private double dataRate;
-	private double secondsConsumedByWritter=0.00;
+	private double secondsConsumedByWriter=0.00;
 	//private static Logger logger=Logger.getLogger(EngineMetrics.class.getName());
 	
 
-	public double getSecondsConsumedByWritter() {
-		return secondsConsumedByWritter;
+	public double getSecondsConsumedByWriter() {
+		return secondsConsumedByWriter;
 	}
-	public void setSecondsConsumedByWritter(double secondsConsumedByWritter) {
-		this.secondsConsumedByWritter = secondsConsumedByWritter;
+	public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
+		this.secondsConsumedByWriter = secondsConsumedByWriter;
 	}
 	public double getEventRate() {
 		return eventRate;
@@ -87,8 +87,8 @@ public class EngineMetrics implements JSONAware {
 		engineMetrics.put("pvCount", Integer.toString(pvCount));
 		engineMetrics.put("connectedPVCount", Integer.toString(connectedPVCount));
 		engineMetrics.put("disconnectedPVCount", Integer.toString(disconnectedPVCount));
-		engineMetrics.put("formattedWriteThreadSeconds", twoSignificantDigits.format(secondsConsumedByWritter));
-		engineMetrics.put("secondsConsumedByWritter", Double.toString(secondsConsumedByWritter));
+		engineMetrics.put("formattedWriteThreadSeconds", twoSignificantDigits.format(secondsConsumedByWriter));
+		engineMetrics.put("secondsConsumedByWriter", Double.toString(secondsConsumedByWriter));
 
 		return JSONValue.toJSONString(engineMetrics);
 	}
@@ -106,10 +106,10 @@ public class EngineMetrics implements JSONAware {
 		addDetailedStatus(details, "Data Rate (in bytes/sec)", twoSignificantDigits.format(dataRate));
 		addDetailedStatus(details, "Data Rate in (GB/day)", twoSignificantDigits.format((dataRate*60*60*24)/(1024*1024*1024)));
 		addDetailedStatus(details, "Data Rate in (GB/year)", twoSignificantDigits.format((dataRate*60*60*24*365)/(1024*1024*1024)));
-		addDetailedStatus(details, "Time consumed for writing samplebuffers to STS (in secs)", twoSignificantDigits.format(secondsConsumedByWritter));
-		if(secondsConsumedByWritter != 0) { 
-			double writesPerSec = eventRate * context.getWritePeriod() / secondsConsumedByWritter;
-			double writeBytesPerSec = (dataRate * context.getWritePeriod() / secondsConsumedByWritter)/(1024*1024);
+		addDetailedStatus(details, "Time consumed for writing samplebuffers to STS (in secs)", twoSignificantDigits.format(secondsConsumedByWriter));
+		if(secondsConsumedByWriter != 0) { 
+			double writesPerSec = eventRate * context.getWritePeriod() / secondsConsumedByWriter;
+			double writeBytesPerSec = (dataRate * context.getWritePeriod() / secondsConsumedByWriter)/(1024*1024);
 			addDetailedStatus(details, "Benchmark - writing at (events/sec)", twoSignificantDigits.format(writesPerSec));
 			addDetailedStatus(details, "Benchmark - writing at (MB/sec)", twoSignificantDigits.format(writeBytesPerSec));
 		}
@@ -183,7 +183,7 @@ public class EngineMetrics implements JSONAware {
 			totalchannelCount += archiveChannel.getMetaChannelCount();
 		}
 		engineMetrics.setTotalEPICSChannels(totalchannelCount);
-		engineMetrics.setSecondsConsumedByWritter(engineContext.getAverageSecondsConsumedByWritter());
+		engineMetrics.setSecondsConsumedByWriter(engineContext.getAverageSecondsConsumedByWriter());
 
 		return engineMetrics;
 	}

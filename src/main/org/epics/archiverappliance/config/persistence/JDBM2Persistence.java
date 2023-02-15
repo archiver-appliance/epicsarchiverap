@@ -59,6 +59,11 @@ public class JDBM2Persistence implements ConfigPersistence {
 	public List<String> getTypeInfoKeys() throws IOException {
 		return getKeys("TypeInfo");
 	}
+	
+	@Override
+	public List<PVTypeInfo> getAllTypeInfosForAppliance(String applianceIdentity) throws IOException {
+		return new LinkedList<PVTypeInfo>(cachedTypeInfos.values());
+	}
 
 	@Override
 	public PVTypeInfo getTypeInfo(String pvName) throws IOException {

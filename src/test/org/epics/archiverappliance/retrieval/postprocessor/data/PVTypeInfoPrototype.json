@@ -1,1 +1,48 @@
-{"upperDisplayLimit":"0.0","computedBytesPerEvent":"17","userSpecifiedEventRate":"0.0","lowerCtrlLimit":"0.0","lowerDisplayLimit":"0.0","samplingPeriod":"1.0","lowerAlarmLimit":"NaN","computedEventRate":"0.016666668","hostName":"mshankar-GNOME3-VirtualBox","extraFields":{"NAME":"UnitTestNoNamingConvention:inactive1","RTYP":"ai","ADEL":"0.0","MDEL":"0.0","SCAN":"0.0"},"creationTime":"2014-12-11T14:49:58.523Z","DBRType":"DBR_SCALAR_DOUBLE","hasReducedDataSet":"false","upperWarningLimit":"0.5","computedStorageRate":"0.28333333","applianceIdentity":"appliance0","precision":"0.0","scalar":"true","samplingMethod":"MONITOR","paused":"false","elementCount":"1","pvName":"UnitTestNoNamingConvention:inactive1","upperAlarmLimit":"NaN","modificationTime":"2014-12-11T14:49:58.523Z","upperCtrlLimit":"0.0","units":"","dataStores":["pb:\/\/localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR&consolidateOnShutdown=true","pb:\/\/localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY&hold=2&gather=1","pb:\/\/localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR"],"archiveFields":["LOLO","HIGH","LOW","LOPR","HOPR","HIHI"],"lowerWarningLimit":"-0.7"}
+{
+    "upperDisplayLimit": "0.0",
+    "computedBytesPerEvent": "17",
+    "userSpecifiedEventRate": "0.0",
+    "lowerCtrlLimit": "0.0",
+    "lowerDisplayLimit": "0.0",
+    "samplingPeriod": "1.0",
+    "lowerAlarmLimit": "NaN",
+    "computedEventRate": "0.016666668",
+    "hostName": "mshankar-GNOME3-VirtualBox",
+    "extraFields": {
+        "NAME": "UnitTestNoNamingConvention:inactive1",
+        "RTYP": "ai",
+        "ADEL": "0.0",
+        "MDEL": "0.0",
+        "SCAN": "0.0"
+    },
+    "creationTime": "2014-12-11T14:49:58.523Z",
+    "DBRType": "DBR_SCALAR_DOUBLE",
+    "hasReducedDataSet": "false",
+    "upperWarningLimit": "0.5",
+    "computedStorageRate": "0.28333333",
+    "applianceIdentity": "appliance0",
+    "precision": "0.0",
+    "scalar": "true",
+    "samplingMethod": "MONITOR",
+    "paused": "false",
+    "elementCount": "1",
+    "pvName": "UnitTestNoNamingConvention:inactive1",
+    "upperAlarmLimit": "NaN",
+    "modificationTime": "2014-12-11T14:49:58.523Z",
+    "upperCtrlLimit": "0.0",
+    "units": "",
+    "dataStores": [
+        "pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR&consolidateOnShutdown=true",
+        "pb://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY&hold=2&gather=1",
+        "pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR"
+    ],
+    "archiveFields": [
+        "LOLO",
+        "HIGH",
+        "LOW",
+        "LOPR",
+        "HOPR",
+        "HIHI"
+    ],
+    "lowerWarningLimit": "-0.7"
+}

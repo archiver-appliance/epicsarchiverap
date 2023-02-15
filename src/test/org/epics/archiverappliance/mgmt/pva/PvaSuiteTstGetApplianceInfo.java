@@ -6,6 +6,8 @@ import static org.junit.Assert.assertArrayEquals;
 
 import java.util.logging.Logger;
 
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetApplianceInfo;
 import org.epics.nt.NTTable;
 import org.epics.nt.NTURI;
@@ -17,6 +19,7 @@ import org.epics.pvdata.pv.PVStructure;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test the the pvAccess mgmt service's ability to start archiving a pv
@@ -24,6 +27,7 @@ import org.junit.Test;
  * @author Kunal Shroff
  *
  */
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaSuiteTstGetApplianceInfo {
 
 	private static Logger logger = Logger.getLogger(PvaSuiteTstGetApplianceInfo.class.getName());

@@ -55,7 +55,7 @@ public class InputStreamBackedEventStreamIterator implements Iterator<Event> {
 		nextLine = readLine();
 		if(nextLine == null) return false;
 		while(nextLine.length <= 1) {
-			logger.info("Detected PB header. Length of transition line is " + nextLine.length);
+			logger.debug("Detected PB header. Length of transition line is " + nextLine.length);
 			// We have an empty line.
 			// Per the protocol, the next line should be a header line.
 			try {

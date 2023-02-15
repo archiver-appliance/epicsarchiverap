@@ -13,10 +13,12 @@ import java.text.DecimalFormat;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerator;
 
@@ -295,10 +297,11 @@ public class LineByteStreamByteArrayTest {
 	 * @throws Exception
 	 */
 	@Test
+	@Category(SlowTests.class)
 	public void testLargeLinesSeekToLastLine() throws Exception {
 		logger.info("testLargeLinesSeekToLastLine");
 		for(int linesize=3; linesize < LineByteStream.MAX_LINE_SIZE*3; linesize++) {
-			String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LargeLineByteStreamSeekToLast.txt";
+			String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LargeLineByteStreamSeekToLastArray.txt";
 			File f = new File(fileName);
 			if(f.exists()) {
 				f.delete();
@@ -337,10 +340,11 @@ public class LineByteStreamByteArrayTest {
 	 * @throws Exception
 	 */
 	@Test
+	@Category(SlowTests.class)
 	public void testLastAndFirstLinesWithBoundedStream() throws Exception {
 		logger.info("testLastAndFirstLinesWithBoundedStream");
 		// Generate the sample file.
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LastAndFirstLinesWithBoundedStream.txt";
+		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LastAndFirstLinesWithBoundedStreamArray.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();

@@ -21,6 +21,7 @@ import org.python.util.PythonInterpreter;
  * <ol>
  * <li><code>dbrtype</code> -- The ArchDBRType of the PV</li>
  * <li><code>eventRate</code> -- The sampled event rate in events per second.</li>
+ * <li><code>eventCount</code> -- The total number of events.</li>
  * <li><code>storageRate</code> -- The sampled storage in bytes per seconds.</li>
  * <li><code>aliasName</code> -- The value of the .NAME field for aliases</li>
  * <li><code>policyName</code> -- If the user has overridden the policy when requesting archiving, this is the name of the policy</li>
@@ -42,11 +43,14 @@ import org.python.util.PythonInterpreter;
 public class ExecutePolicy implements AutoCloseable {
 	private static Logger logger = Logger.getLogger(ExecutePolicy.class.getName());
 	private PythonInterpreter interp;
+	private LinkedList<String> fieldsArchivedAsPartOfStream = new LinkedList<String>();
+	
 	public ExecutePolicy(ConfigService configService) throws IOException { 
 		interp = new PythonInterpreter(null, new PySystemState());
 		// Load the policies.py into the interpreter.
 		try(InputStream is = configService.getPolicyText()) { 
 			interp.execfile(is);
+			fetchFieldsArchivedAsPartOfStream();
 		}
 	}
 
@@ -115,13 +119,16 @@ public class ExecutePolicy implements AutoCloseable {
 		HashMap<String, String> ret = new HashMap<String, String>(policies);
 		return ret;
 	}
-
-	public List<String> getFieldsArchivedAsPartOfStream()  throws IOException {
+	
+	@SuppressWarnings("unchecked")
+	private void fetchFieldsArchivedAsPartOfStream() {
 		logger.debug("Getting the list of standard fields.");
 		interp.exec("pvStandardFields = getFieldsArchivedAsPartOfStream()");
 		PyList stdFields = (PyList) interp.get("pvStandardFields");
-		@SuppressWarnings("unchecked")
-		LinkedList<String> ret = new LinkedList<String>(stdFields);
-		return ret;
+		fieldsArchivedAsPartOfStream = new LinkedList<String>(stdFields);
+	}
+
+	public List<String> getFieldsArchivedAsPartOfStream()  throws IOException {
+		return fieldsArchivedAsPartOfStream;
 	}
 }

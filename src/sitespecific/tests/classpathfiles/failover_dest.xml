@@ -1,0 +1,11 @@
+ <appliances>
+   <appliance>
+     <identity>dest_appliance</identity>
+     <cluster_inetport>localhost:16670</cluster_inetport>
+     <mgmt_url>http://localhost:17665/mgmt/bpl</mgmt_url>
+     <engine_url>http://localhost:17665/engine/bpl</engine_url>
+     <etl_url>http://localhost:17665/etl/bpl</etl_url>
+     <retrieval_url>http://localhost:17665/retrieval/bpl</retrieval_url>
+     <data_retrieval_url>http://localhost:17665/retrieval</data_retrieval_url>
+   </appliance>
+ </appliances>

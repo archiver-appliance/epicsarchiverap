@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<link type="text/css" href="docs.css" rel="Stylesheet" />	
+<title>Using SQLite as a configuration database</title>
+</head>
+<body>
+<!-- Header starts here -->
+ <nav class="navbar navbar-inverse">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+    </div>
+    <div>
+      <ul id="mainNavBar" class="nav navbar-nav">
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
+		<li><a href="details.html">Details</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
+		<li><a href="quickstart.html">Quickstart</a></li>
+		<li><a href="installguide.html">Installation</a></li>
+		<li><a href="userguide.html">User Guide</a></li>
+		<li><a href="customization.html">Customize</a></li>
+		<li><a href="developersguide.html">Developers</a></li>
+		<li><a href="admin.html">Admin</a></li>
+		<li><a href="api/index.html">Javadoc</a></li>
+		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
+		<li><a href="faq.html">FAQ</a></li>
+		<li><a href="license.html">License</a></li>
+	  </ul>
+	  <ul class="nav navbar-nav navbar-right">
+   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
+	  </ul>
+    </div>
+  </div>
+</nav>
+<!-- Header ends here -->
+
+<div class="container">
+
+<section>
+<h3>Using SQLite as a configuration database</h3>
+<div>
+For smaller installations with lighter concurrent access, one can consider using SQLite as a configuration database.
+<ol>
+ <li>Copy the SQLite JDBC from <a href="https://github.com/xerial/sqlite-jdbc">https://github.com/xerial/sqlite-jdbc</a> to the <code>${TOMCAT_HOME}/lib</code> folder.
+ <pre class="bash_output"><code>$ cd $TOMCAT_HOME/lib
+$ ls sqlite-jdbc-3.39.3.0.jar
+sqlite-jdbc-3.39.3.0.jar
+</code></pre>
+ </li>
+ <li>Configure a connection pool using SQLite in the Tomcat context.xml
+<pre class="bash_output"><code>$ cd $TOMCAT_HOME/conf
+$ cat context.xml
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+...
+    &lt;Resource   name="jdbc/archappl"
+                auth="Container"
+                type="javax.sql.DataSource"
+                username="xxx"
+                password="xxx"
+                maxTotal="1"
+                maxIdle="1"
+                maxActive="1"
+                driverClassName="org.sqlite.JDBC"
+                url="jdbc:sqlite:/archappl/config/archappl.sqlite?journal_mode=WAL"
+                /&gt;
+...
+ </code></pre>
+ 	<ol><li>Note that sqlite requires both the DB file and the containing directory to be writable.</li>
+ 	<li>SQLite does file locking during updates; so we cannot really use multiple connections in the connection pool. This requires us setting the <code>maxActive</code>, <code>maxIdle</code> and <code>maxTotal</code> to 1.</li>
+ 	<li>If more than one connection tries to write to the DB at the same time, we'd see exceptions of the following nature
+<pre class="bash_output"><code>ERROR org.epics.archiverappliance.config.DefaultConfigService  - Exception persisting pvTypeInfo for pv ...
+java.io.IOException: org.sqlite.SQLiteException: [SQLITE_BUSY] The database file is locked (database is locked)
+</code></pre>	
+ 	</li>
+ 	</ol>
+ </li>
+ <li>Initialize the SQLite database using the <code>install/archappl_sqlite.sql</code> SQL script shipped as part of the <code>mgmt.war</code>
+<pre class="bash_output"><code>$ cd /archappl/config/
+$ sqlite3 --init ~/unzipped_mgmt_war/install/archappl_sqlite.sql archappl.sqlite
+-- Loading resources from install/archappl_sqlite.sql
+
+SQLite version 3.7.17 2013-05-20 00:56:22
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite> .quit
+$ 
+</code></pre>
+ </li>
+<li>It is recommended to use the SQLite <a href="https://www.sqlite.org/wal.html">WAL</a> journal mode to improve write performance.
+Using WAL usually implies the presence of a .shm and .wal file in addition to the .sqlite file. 
+</li>
+</ol> 
+ 
+</div>  
+</section>
+</div>
+
+<script src="js/jquery/1.11.3/jquery.min.js"></script>
+<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="js/arch/docs.js"></script>
+
+</body>
+</html>

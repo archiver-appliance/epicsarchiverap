@@ -6,6 +6,8 @@ import static org.junit.Assert.assertArrayEquals;
 
 import java.util.logging.Logger;
 
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.nt.NTTable;
 import org.epics.pvaccess.client.rpc.RPCClient;
@@ -17,12 +19,14 @@ import org.epics.pvdata.pv.ScalarType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * 
  * @author Kunal Shroff
  *
  */
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaSuiteTstArchivePV {
 
 	private static Logger logger = Logger.getLogger(PvaSuiteTstArchivePV.class.getName());

@@ -15,6 +15,7 @@ import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
+import org.epics.archiverappliance.common.mergededup.MergeDedupStoragePlugin;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin;
@@ -59,6 +60,9 @@ public class StoragePluginURLParser {
 			case "rtree" : {
 				return parseChannelArchiverPlugin(srcURIStr, configService);
 			}
+			case "merge" : {
+				return parseMergeDedupPlugin(srcURIStr, configService);
+			}
 			default : { 
 				logger.error("Unsupported plugin " + pluginIdentifier + ". Did you forget to register this?");
 			}
@@ -78,6 +82,9 @@ public class StoragePluginURLParser {
 			switch(pluginIdentifier) {
 			case "pb" : {
 				return parsePlainPBStoragePlugin(srcURIStr, configService);
+			}
+			case "merge" : {
+				return parseMergeDedupPlugin(srcURIStr, configService);
 			}
 			case "blackhole" : {
 				logger.warn("The blackhole plugin cannot serve as an ETL source; so it has to be the last plugin in the list of data stores.");
@@ -101,6 +108,9 @@ public class StoragePluginURLParser {
 			switch(pluginIdentifier) {
 			case "pb" : {
 				return parsePlainPBStoragePlugin(srcURIStr, configService);
+			}
+			case "merge" : {
+				return parseMergeDedupPlugin(srcURIStr, configService);
 			}
 			case "blackhole" : {
 				return parseBlackHolePlugin(srcURIStr, configService);
@@ -138,6 +148,12 @@ public class StoragePluginURLParser {
 
 	private static ChannelArchiverReadOnlyPlugin parseChannelArchiverPlugin(String srcURIStr, ConfigService configService) throws IOException {
 		ChannelArchiverReadOnlyPlugin  ret = new ChannelArchiverReadOnlyPlugin();
+		ret.initialize(srcURIStr, configService);
+		return ret;
+	}
+	
+	private static MergeDedupStoragePlugin parseMergeDedupPlugin(String srcURIStr, ConfigService configService) throws IOException {
+		MergeDedupStoragePlugin  ret = new MergeDedupStoragePlugin();
 		ret.initialize(srcURIStr, configService);
 		return ret;
 	}

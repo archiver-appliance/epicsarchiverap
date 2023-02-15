@@ -18,6 +18,7 @@ import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -28,6 +29,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStreamIterato
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
@@ -60,6 +62,7 @@ public class SearchInPBFileTest {
 	}
 
 	@Test
+	@Category(SlowTests.class)
 	public void testSeekToTime() {
 		try {
 			Path testPath = PlainPBPathNameUtility.getPathNameForTime(pbplugin, "Sine1", TimeUtils.getStartOfCurrentYearInSeconds(), new ArchPaths(), configService.getPVNameToKeyConverter());

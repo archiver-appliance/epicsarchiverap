@@ -47,6 +47,7 @@ import org.epics.archiverappliance.mgmt.bpl.GetAppliancesInCluster;
 import org.epics.archiverappliance.mgmt.bpl.GetMatchingPVsForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPVStatusAction;
 import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfo;
+import org.epics.archiverappliance.mgmt.bpl.GetPVTypeInfoKeys;
 import org.epics.archiverappliance.mgmt.bpl.GetPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetPausedPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.GetStoresForPV;
@@ -55,7 +56,9 @@ import org.epics.archiverappliance.mgmt.bpl.ImportChannelArchiverConfigAction;
 import org.epics.archiverappliance.mgmt.bpl.ImportConfig;
 import org.epics.archiverappliance.mgmt.bpl.ImportConfigForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.ImportDataFromPlugin;
+import org.epics.archiverappliance.mgmt.bpl.MergeInDataFromExternalStore;
 import org.epics.archiverappliance.mgmt.bpl.ModifyMetaFieldsAction;
+import org.epics.archiverappliance.mgmt.bpl.ModifyStoreURLForPV;
 import org.epics.archiverappliance.mgmt.bpl.NamedFlagsGet;
 import org.epics.archiverappliance.mgmt.bpl.NamedFlagsSet;
 import org.epics.archiverappliance.mgmt.bpl.PauseArchivingPV;
@@ -64,7 +67,9 @@ import org.epics.archiverappliance.mgmt.bpl.RefreshPVDataFromChannelArchivers;
 import org.epics.archiverappliance.mgmt.bpl.RemoveAliasAction;
 import org.epics.archiverappliance.mgmt.bpl.RemoveExternalArchiverServer;
 import org.epics.archiverappliance.mgmt.bpl.RenamePVAction;
+import org.epics.archiverappliance.mgmt.bpl.ResetFailoverCaches;
 import org.epics.archiverappliance.mgmt.bpl.ReshardPV;
+import org.epics.archiverappliance.mgmt.bpl.RestartArchiveWorkflowThreadForAppliance;
 import org.epics.archiverappliance.mgmt.bpl.ResumeArchivingPV;
 import org.epics.archiverappliance.mgmt.bpl.SkipAliasCheckAction;
 import org.epics.archiverappliance.mgmt.bpl.UnarchivedPVsAction;
@@ -122,6 +127,7 @@ public class BPLServlet extends HttpServlet {
 		addAction("/pauseArchivingPV", PauseArchivingPV.class);
 		addAction("/resumeArchivingPV", ResumeArchivingPV.class);
 		addAction("/getStoresForPV", GetStoresForPV.class);
+		addAction("/modifyStoreURLForPV", ModifyStoreURLForPV.class);
 		addAction("/consolidateDataForPV", ConsolidatePBFilesForOnePV.class);
 		addAction("/deletePV", DeletePV.class);
 		addAction("/abortArchivingPV", AbortArchiveRequest.class);
@@ -138,11 +144,13 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getAllAliases", GetAllAliasesAction.class);
 		addAction("/skipAliasCheck", SkipAliasCheckAction.class);
 		addAction("/changeTypeForPV", ChangeTypeForPV.class);
+		addAction("/mergeInData", MergeInDataFromExternalStore.class);
+		addAction("/resetFailoverCaches", ResetFailoverCaches.class);
 		addAction("/getVersions", GetVersions.class);
 		addAction("/modifyMetaFields", ModifyMetaFieldsAction.class);
 		addAction("/getNamedFlag", NamedFlagsGet.class);
 		addAction("/setNamedFlag", NamedFlagsSet.class);
-		
+		addAction("/getTypeInfoKeys", GetPVTypeInfoKeys.class);
 
 		// BPL related to reports
 		addAction("/getNeverConnectedPVs", NeverConnectedPVsAction.class);
@@ -193,7 +201,8 @@ public class BPLServlet extends HttpServlet {
 		addAction("/getProcessMetricsDataForAppliance", ProcessMetricsChartData.class);
 		addAction("/refreshPVDataFromChannelArchivers", RefreshPVDataFromChannelArchivers.class);
 		addAction("/getMatchingPVsForThisAppliance", GetMatchingPVsForAppliance.class);
-		addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);		
+		addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);	
+		addAction("/restartArchivePVWorkflowThreadForThisAppliance", RestartArchiveWorkflowThreadForAppliance.class);
 	}
 	
 	@Override

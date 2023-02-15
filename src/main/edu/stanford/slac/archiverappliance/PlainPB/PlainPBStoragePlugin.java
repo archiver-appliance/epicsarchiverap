@@ -36,6 +36,7 @@ import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.mergededup.TimeSpanLimitEventStream;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
@@ -57,6 +58,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.ui.URIUtils;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility.StartEndTimeFromName;
 
 /**
  * The plain PB storage plugin stores data in a chunk per PV per partition in sequential form.
@@ -984,47 +986,59 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 		Random r = new Random();
 		int randomInt = r.nextInt();
 		String randSuffix = "_tmp_" + randomInt;
-		{ 
-			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
-			if(paths != null && paths.length > 0) {
-				for(Path path : paths) { 
-					logger.info("Converting data in " + path.toString() + " for pv " + pvName);
-					PBFileInfo info = new PBFileInfo(path);
-					AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-					state.partitionBoundaryAwareAppendData(context, pvName, conversionFuntion.convertStream(new FileBackedPBEventStream(pvName, path, info.getType())), PB_EXTENSION + randSuffix, null);
+		try {
+			{ 
+				Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, PB_EXTENSION, partitionGranularity, this.compressionMode, this.pv2key);
+				if(paths != null && paths.length > 0) {
+					for(Path path : paths) { 
+						logger.info("Converting data in " + path.toString() + " for pv " + pvName);
+						StartEndTimeFromName setimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
+						PBFileInfo info = new PBFileInfo(path);
+						if(conversionFuntion.shouldConvert(new FileBackedPBEventStream(pvName, path, info.getType()), 
+								TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+								TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0))) {
+							try(EventStream convertedStream = new TimeSpanLimitEventStream(
+									conversionFuntion.convertStream(
+											new FileBackedPBEventStream(pvName, path, info.getType()), 
+											TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+											TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
+									setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds)) {
+								AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
+								state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, PB_EXTENSION + randSuffix, null);
+							}
+						}
+					}
 				}
 			}
-		}
-		
-		// Convert data for the post processors...
-		for(String ppExt : getPPExtensions()) { 
-			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, ppExt, partitionGranularity, this.compressionMode, this.pv2key);
-			if(paths != null && paths.length > 0) {
-				for(Path path : paths) { 
-					logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
-					PBFileInfo info = new PBFileInfo(path);
-					AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
-					state.partitionBoundaryAwareAppendData(context, pvName, conversionFuntion.convertStream(new FileBackedPBEventStream(pvName, path, info.getType())), ppExt + randSuffix, null);
-				}
-			}
-		}
-		
-		// Switch the files for the main pb file
-		{ 
-			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, PB_EXTENSION + randSuffix, partitionGranularity, this.compressionMode, this.pv2key);
-			if(paths != null && paths.length > 0) {
-				for(Path path : paths) { 
-					Path destPath = context.getPaths().get(path.toString().replace(randSuffix, ""));
-					logger.info("Moving path " + path + " to " + destPath);
-					Files.move(path, destPath, StandardCopyOption.ATOMIC_MOVE);
-				}
-			}
-		}
-		
-		// Switch the files for the post processors...
-		{ 
+			
+			// Convert data for the post processors...
 			for(String ppExt : getPPExtensions()) { 
-				Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, ppExt + randSuffix, partitionGranularity, this.compressionMode, this.pv2key);
+				Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, ppExt, partitionGranularity, this.compressionMode, this.pv2key);
+				if(paths != null && paths.length > 0) {
+					for(Path path : paths) { 
+						logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
+						StartEndTimeFromName setimes = PlainPBPathNameUtility.determineTimesFromFileName(pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
+						PBFileInfo info = new PBFileInfo(path);
+						if(conversionFuntion.shouldConvert(new FileBackedPBEventStream(pvName, path, info.getType()),
+											TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+											TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0))) {
+							try(EventStream convertedStream = new TimeSpanLimitEventStream(
+									conversionFuntion.convertStream(
+											new FileBackedPBEventStream(pvName, path, info.getType()),
+											TimeUtils.convertFromEpochSeconds(setimes.chunkStartEpochSeconds, 0), 
+											TimeUtils.convertFromEpochSeconds(setimes.chunkEndEpochSeconds, 0)), 
+									setimes.chunkStartEpochSeconds, setimes.chunkEndEpochSeconds)) {
+								AppendDataStateData state = new AppendDataStateData(this.partitionGranularity, this.rootFolder, this.desc, new Timestamp(0), this.compressionMode, this.pv2key);
+								state.partitionBoundaryAwareAppendData(context, pvName, convertedStream, ppExt + randSuffix, null);
+							}
+						}
+					}
+				}
+			}
+			
+			// Switch the files for the main pb file
+			{ 
+				Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, PB_EXTENSION + randSuffix, partitionGranularity, this.compressionMode, this.pv2key);
 				if(paths != null && paths.length > 0) {
 					for(Path path : paths) { 
 						Path destPath = context.getPaths().get(path.toString().replace(randSuffix, ""));
@@ -1033,6 +1047,30 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 					}
 				}
 			}
-		}
+			
+			// Switch the files for the post processors...
+			{ 
+				for(String ppExt : getPPExtensions()) { 
+					Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, ppExt + randSuffix, partitionGranularity, this.compressionMode, this.pv2key);
+					if(paths != null && paths.length > 0) {
+						for(Path path : paths) { 
+							Path destPath = context.getPaths().get(path.toString().replace(randSuffix, ""));
+							logger.info("Moving path " + path + " to " + destPath);
+							Files.move(path, destPath, StandardCopyOption.ATOMIC_MOVE);
+						}
+					}
+				}
+			}
+		} finally {
+			// Clean up any tmp files
+			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, randSuffix, partitionGranularity, this.compressionMode, this.pv2key);
+			if(paths != null && paths.length > 0) {
+				for(Path path : paths) { 
+					logger.error("Deleting leftover file " + path);
+					Files.delete(path);
+				}
+			}
+			
+		}		
 	}
 }

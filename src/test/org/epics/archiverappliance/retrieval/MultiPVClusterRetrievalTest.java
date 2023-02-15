@@ -22,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -41,9 +42,11 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
+@Category(IntegrationTests.class)
 public class MultiPVClusterRetrievalTest {
 	private static Logger logger = Logger.getLogger(MultiPVClusterRetrievalTest.class.getName());
 	private TomcatSetup tomcatSetup = new TomcatSetup();

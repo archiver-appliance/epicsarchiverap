@@ -48,7 +48,9 @@ This is an implementation of an archiver for <a href="http://www.aps.anl.gov/epi
 <section>
 Here are the main features.
 <ul>
-<li>Ability to cluster appliances and to scale by adding appliances to the cluster.</li>
+<li>Ability to cluster appliances and to scale by adding appliances to the cluster.
+  <ul><li>Limited support for <a href="redundancy.html">redundancy</a>.</li></ul>
+</li>
 <li>Multiple stages and an inbuilt process to move data between the stages.
 <ul>
 <li>This supports the ability to use faster storage (which is perhaps limited in size) to improve performance.</li>
@@ -84,7 +86,7 @@ Here are the main features.
 These are the prerequisites for the EPICS archiver appliance.
 <ul>
 <li>A recent version of Linux, definitely 64 bit Linux for production systems. If using RedHat, we should aim for RedHat 6.1.</li>
-<li>JDK 1.12+ - definitely the 64 bit version for production systems. We need the JDK, <b>not</b> the JRE.</li>
+<li>JDK 1.16+ - definitely the 64 bit version for production systems. We need the JDK, <b>not</b> the JRE.</li>
 <li>A recent version of Tomcat 9.x; preferably <code>apache-tomcat-9.0.20</code> or later.</li>
 <li>The management UI works best with a recent version of Firefox or Chrome.</li>
 <li>By default, the EPICS archiver appliance uses a bundled versions of the Java CA and PVA libraries from <a href="https://github.com/epics-base/epicsCoreJava">EPICS base</a>.</li>
@@ -198,6 +200,9 @@ However, both data retrieval and business requests can be dispatched to any rand
 </figure>
 In addition, users do not need to allocate PVs to appliances when requesting for new PVs be archived.
 The appliances maintain a small set of metrics during their operation and use this in addition to the measured event and storage rates to do an automated <a href="api/org/epics/archiverappliance/mgmt/archivepv/CapacityPlanningBPL.html">Capacity Planning</a>/load balancing.
+<p>
+
+</p>
 </section>
 
 <section id="scripting">

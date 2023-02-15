@@ -144,6 +144,24 @@ As the JVM can cache DNS lookups, giving your replacement appliance the same IP 
 </div>
 </section>
 
+<section>
+<h3>Inspecting the Channel Access ( also PVAccess ) protocol</h3>
+<div>
+To troubleshoot certain issues in production, it is often more practical to inspect the wire protocol.
+For example, to see if the archivers are issuing search requests to the IOC when looking into connectivity issues, it's faster to get a packet capture from production and then inspect the same elsewhere.
+Michael Davidsaver maintains a <a href="https://github.com/mdavidsaver/cashark/">Wireshark LUA plugin</a> that can understand Channel Access ( and PVAccess ).
+Here's an example of this process
+<ul>
+<li>First, take a packet capture using Wireshark or tcpdump. For example, you can constrain tcpdump to capture packets on the network interface <code>em1</code> between the archiver appliance and the IOC using something like so <code>/usr/sbin/tcpdump -i em1 'host ioc_or_gateway_hostname and appliance_hostname' -w /localdisk/captured_packets</code> </li>
+<li>The file <code>/localdisk/captured_packets</code> contains the packet capture and can be copied over to a dev box and inspected at leisure.</li>
+<li>Wireshark has a very comprehensive GUI and can be used to load the packet capture. Alternatively, one can also use the command line variant of Wireshark called <code>tshark</code> like so <code>tshark -X lua_script:ca.lua -r captured_packets 2>&amp;1 | less</code></li>
+<li>Recent version of the EPICS archiver appliance display the Channel Access <code>CID - Client ID</code>, <code>SID - Server ID</code> and <code>Subscription ID</code> in the PV details page.</li>
+<li>Pausing and resuming the PV during packet capture will also enable the <code>cashark</code> plugin to track the life cycle of the Channel Access channel.</li>
+</ul>  
+</div>
+</section>
+
+
 </div>
 
 <script src="js/jquery/1.11.3/jquery.min.js"></script>

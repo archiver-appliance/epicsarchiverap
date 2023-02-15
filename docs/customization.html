@@ -92,8 +92,9 @@ Buildfile: /workspace/epicsarchiverap/build.xml
      [echo] Building the archiver appliance for the site slacdev</code></pre>
 </li>
 <li>
-The archiver appliance uses <a href="http://ant.apache.org/">Apache Ant</a> for its builds. 
-As part of the regular build process, you have the opportunity to call an ant script that is as part of the <code>src/sitespecific</code> folder. 
+The archiver appliance uses <a href="http://ant.apache.org/">Apache Ant</a> or <a href="http://gradle.org">gradle</a> for its builds. 
+As part of the ant build process, you have the opportunity to call an ant script that is as part of the <code>src/sitespecific</code> folder. 
+The Gradle build script does not currently support sitespecific builds.
 The <code>build.xml</code> in the <code>src/sitespecific</code> is called (if it exists) after the compile and staging tasks and before the WAR is packed.
 This lets you replace default collateral (like images, phone numbers in messages etc) with your own collateral in the generated WAR file(s).     
 </li>
@@ -170,7 +171,10 @@ If the <i>key/file structure reflecting the PV naming convention</i> feature is 
 
 <section id="Persistence">
 <h3>Persistence</h3>
-By default, the configuration for the archiver is stored in a relational database (using connections obtained from JNDI) as key/value pairs.
+By default, the configuration for each appliance is stored in a relational database (using connections obtained from JNDI) as key/value pairs.
+The install guide has instructions on how to set up a MySQL connection pool in tomcat.
+For smaller installs with minimal concurrent access, one can also configure Tomcat to use a <a href="sqlite.html">SQLite</a> backend.
+<br/>     
 Alternate mechanisms for persisting archiver configuration are possible; see the <a href="api/org/epics/archiverappliance/config/ConfigPersistence.html">ConfigPersistence</a> interface.
 To save your configuration in a different location, create an implementation of this interface and use the <a href="api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_PERSISTENCE_LAYER">ARCHAPPL_PERSISTENCE_LAYER</a> environment in your startup scripts.
 </section>

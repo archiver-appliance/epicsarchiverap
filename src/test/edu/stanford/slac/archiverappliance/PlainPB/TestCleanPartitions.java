@@ -6,6 +6,7 @@ import java.io.File;
 import java.nio.file.Path;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -18,6 +19,7 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility.StartEndTimeFromName;
@@ -29,6 +31,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  * @author mshankar
  *
  */
+@Category(SlowTests.class)
 public class TestCleanPartitions {
 	private static Logger logger = Logger.getLogger(TestCleanPartitions.class.getName());
 	private ConfigService configService;

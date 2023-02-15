@@ -10,6 +10,8 @@ package org.epics.archiverappliance.etl;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -20,6 +22,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.SingleForkTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -38,6 +41,9 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStr
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
@@ -46,6 +52,8 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
+@RunWith(Parameterized.class)
+@Category(SingleForkTests.class)
 public class DataReductionPostProcessorsTest extends TestCase {
 	private static final Logger logger = Logger.getLogger(DataReductionPostProcessorsTest.class);
 	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
@@ -76,43 +84,47 @@ public class DataReductionPostProcessorsTest extends TestCase {
 		cleanDataFolders();
 	}
 
-	@Test
-	public void testReducedETL() throws Exception {
-		String[] postProcessors = new String[] {
+	private String reduceDataUsing;
+    @Parameterized.Parameters
+	public static Collection<Object[]> postProcessors() {
+		return Arrays.asList( new Object[][] {
 				// No fill versions
-				"lastSample_3600", 
-				"firstSample_3600", 
-				"firstSample_600", 
-				"lastSample_600", 
-				"meanSample_3600", 
-				"meanSample_600", 
-				"meanSample_1800", 
-				"minSample_3600", 
-				"maxSample_3600",
-				"medianSample_3600",
+				{"lastSample_3600"},
+				{"firstSample_3600"},
+				{"firstSample_600"},
+				{"lastSample_600"},
+				{"meanSample_3600"},
+				{"meanSample_600"},
+				{"meanSample_1800"},
+				{"minSample_3600"},
+				{"maxSample_3600"},
+				{"medianSample_3600"},
 				// Fill versions
-				"mean_3600", 
-				"mean_600", 
-				"mean_1800", 
-				"min_3600", 
-				"max_3600",
-				"median_3600",
-				"firstFill_3600",
-				"lastFill_3600"
-				};
-		
-		for(String reduceDataUsing : postProcessors) { 
-			testPostProcessor(reduceDataUsing);
-		}
+				{"mean_3600"},
+				{"mean_600"},
+				{"mean_1800"},
+				{"min_3600"},
+				{"max_3600"},
+				{"median_3600"},
+				{"firstFill_3600"},
+				{"lastFill_3600"}
+				});
 	}
 	
+	public DataReductionPostProcessorsTest(String reduceDataUsing) {
+		this.reduceDataUsing = reduceDataUsing;
+	}
+
 	/**
 	 * 1) Set up the raw and reduced PV's
 	 * 2) Generate data in STS
 	 * 3) Run ETL
 	 * 4) Compare
 	 */
-	private void testPostProcessor(String reduceDataUsing) throws Exception {
+	@Test
+	public void testPostProcessor() throws Exception {
+		String reduceDataUsing = this.reduceDataUsing;
+		logger.info("Testing for " + this.reduceDataUsing);
 		cleanDataFolders();
 
 		ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"), 1);

@@ -2,11 +2,15 @@ package org.epics.archiverappliance.config.persistence;
 
 import java.io.IOException;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -34,6 +38,12 @@ public class MySQLPersistence implements ConfigPersistence {
 	private static Logger logger = Logger.getLogger(MySQLPersistence.class.getName());
 	private DataSource theDataSource;
 
+	private static enum dialect_t {
+		MySQL,
+		SQLite,
+	};
+	private dialect_t dialect;
+	
 	public MySQLPersistence() throws ConfigException {
 		try {
 			configlogger.info("Looking up datasource called jdbc/archappl in the java:/comp/env namespace using JDNI");
@@ -51,6 +61,22 @@ public class MySQLPersistence implements ConfigPersistence {
             String db_string = "jdbc/" +  dbname;
 			theDataSource = (DataSource)envContext.lookup(db_string);
 			configlogger.info("Found datasource called jdbc/archappl in the java:/comp/env namespace using JDNI");
+
+			// test RDB connection and probe type
+			try(Connection conn = theDataSource.getConnection()) {
+				DatabaseMetaData meta = conn.getMetaData();
+				String name = meta.getDatabaseProductName();
+
+				configlogger.info(String.format("RDB Engine is '%s' '%s'", name, meta.getDatabaseProductVersion()));
+				configlogger.info(String.format("RDB Driver is '%s' '%s'", meta.getDriverName(), meta.getDriverVersion()));
+
+				if(Pattern.compile(".*sqlite.*", Pattern.CASE_INSENSITIVE).matcher(name).matches()) {
+					dialect = dialect_t.SQLite;
+				} else {
+					dialect = dialect_t.MySQL;
+				}
+				configlogger.info(String.format("SQL Dialect %s", dialect.toString()));
+			}
 		} catch(Exception ex) {
 			throw new ConfigException("Exception initializing MySQLPersistence ", ex);
 		}
@@ -60,6 +86,56 @@ public class MySQLPersistence implements ConfigPersistence {
 	public List<String> getTypeInfoKeys() throws IOException {
 		return getKeys("SELECT pvName AS pvName FROM PVTypeInfo ORDER BY pvName;", "getTypeInfoKeys");
 	}
+	
+	private static boolean regexmatch(String typeInfoStr, Pattern instanceIDMatcher) {
+		return instanceIDMatcher.matcher(typeInfoStr).matches();
+	}
+
+	private static boolean attrmatch(PVTypeInfo typeInfo, String instanceIdentity) {
+		return typeInfo.getApplianceIdentity().equals(instanceIdentity);
+	}
+	
+	private static PVTypeInfo parseTypeInfo(String typeInfoStr, JSONDecoder<PVTypeInfo> decoder) {
+		try {
+			JSONObject jsonObj = (JSONObject) JSONValue.parse(typeInfoStr);
+			PVTypeInfo typeInfo = new PVTypeInfo();
+			decoder.decode(jsonObj, typeInfo);
+			return typeInfo;
+		} catch(Exception ex) {
+			return new PVTypeInfo();
+		}
+	}
+	
+	@Override
+	public List<PVTypeInfo> getAllTypeInfosForAppliance(String applianceIdentity) throws IOException {
+		try {
+			List<String> typeInfoStrs = new LinkedList<String>();
+			try(Connection conn = theDataSource.getConnection()) {
+				try(PreparedStatement stmt = conn.prepareStatement("SELECT typeInfoJSON AS typeInfoJSON FROM PVTypeInfo WHERE typeInfoJSON LIKE ?;")) {
+					stmt.setString(1, "%\""+ applianceIdentity + "\"%");
+					try(ResultSet rs = stmt.executeQuery()) {
+						while (rs.next()) {
+							typeInfoStrs.add(rs.getString("typeInfoJSON"));
+						}
+					}
+				}
+			}
+
+			Pattern inst = Pattern.compile(".*\\\"" + applianceIdentity + "\\\".*");
+			JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
+			ForkJoinPool customThreadPool = new ForkJoinPool(Math.max(Runtime.getRuntime().availableProcessors()/2, 1));
+			List<PVTypeInfo> typeInfos = customThreadPool.submit(
+			    () -> typeInfoStrs.parallelStream()
+			    	.filter(x -> regexmatch(x, inst))
+			    	.map(x -> parseTypeInfo(x, decoder))
+			    	.filter(x -> attrmatch(x, applianceIdentity))
+			    	.collect(Collectors.toList())).get();
+			customThreadPool.shutdown();
+			return typeInfos;
+		} catch(Exception ex) {
+			throw new IOException("Exception getting all typeinfos", ex);
+		}
+	}
 
 	@Override
 	public PVTypeInfo getTypeInfo(String pvName) throws IOException {
@@ -68,7 +144,17 @@ public class MySQLPersistence implements ConfigPersistence {
 
 	@Override
 	public void putTypeInfo(String pvName, PVTypeInfo typeInfo) throws IOException {
-		putValueForKey("INSERT INTO PVTypeInfo (pvName, typeInfoJSON) VALUES (?, ?) ON DUPLICATE KEY UPDATE typeInfoJSON = ?;", pvName, typeInfo, PVTypeInfo.class, "putTypeInfo");
+		String sql;
+		switch(dialect) {
+		default:
+		case MySQL:
+			sql = "INSERT INTO PVTypeInfo (pvName, typeInfoJSON) VALUES (?, ?) ON DUPLICATE KEY UPDATE typeInfoJSON = ?;";
+			break;
+		case SQLite:
+			sql = "INSERT INTO PVTypeInfo (pvName, typeInfoJSON) VALUES (?, ?) ON CONFLICT(pvName) DO UPDATE SET typeInfoJSON = ?;";
+			break;
+		}
+		putValueForKey(sql, pvName, typeInfo, PVTypeInfo.class, "putTypeInfo");
 	}
 
 	@Override
@@ -88,7 +174,17 @@ public class MySQLPersistence implements ConfigPersistence {
 
 	@Override
 	public void putArchivePVRequest(String pvName, UserSpecifiedSamplingParams userParams) throws IOException {
-		putValueForKey("INSERT INTO ArchivePVRequests (pvName, userParams) VALUES (?, ?) ON DUPLICATE KEY UPDATE userParams = ?;", pvName, userParams, UserSpecifiedSamplingParams.class, "putArchivePVRequest");
+		String sql;
+		switch(dialect) {
+		default:
+		case MySQL:
+			sql = "INSERT INTO ArchivePVRequests (pvName, userParams) VALUES (?, ?) ON DUPLICATE KEY UPDATE userParams = ?;";
+			break;
+		case SQLite:
+			sql = "INSERT INTO ArchivePVRequests (pvName, userParams) VALUES (?, ?) ON CONFLICT(pvName) DO UPDATE SET userParams = ?;";
+			break;
+		}
+		putValueForKey(sql, pvName, userParams, UserSpecifiedSamplingParams.class, "putArchivePVRequest");
 	}
 
 	@Override
@@ -108,7 +204,17 @@ public class MySQLPersistence implements ConfigPersistence {
 
 	@Override
 	public void putExternalDataServer(String serverId, String serverInfo) throws IOException {
-		putStringValueForKey("INSERT INTO ExternalDataServers (serverid, serverinfo) VALUES (?, ?) ON DUPLICATE KEY UPDATE serverinfo = ?;", serverId, serverInfo, "putExternalDataServer");
+		String sql;
+		switch(dialect) {
+		default:
+		case MySQL:
+			sql = "INSERT INTO ExternalDataServers (serverid, serverinfo) VALUES (?, ?) ON DUPLICATE KEY UPDATE serverinfo = ?;";
+			break;
+		case SQLite:
+			sql = "INSERT INTO ExternalDataServers (serverid, serverinfo) VALUES (?, ?) ON CONFLICT(serverid) DO UPDATE SET serverinfo = ?;";
+			break;
+		}
+		putStringValueForKey(sql, serverId, serverInfo, "putExternalDataServer");	
 	}
 
 	@Override
@@ -130,7 +236,17 @@ public class MySQLPersistence implements ConfigPersistence {
 
 	@Override
 	public void putAliasNamesToRealName(String pvName, String realName) throws IOException {
-		putStringValueForKey("INSERT INTO PVAliases (pvName, realName) VALUES (?, ?) ON DUPLICATE KEY UPDATE realName = ?;", pvName, realName, "putAliasNamesToRealName");
+		String sql;
+		switch(dialect) {
+		default:
+		case MySQL:
+			sql = "INSERT INTO PVAliases (pvName, realName) VALUES (?, ?) ON DUPLICATE KEY UPDATE realName = ?;";
+			break;
+		case SQLite:
+			sql = "INSERT INTO PVAliases (pvName, realName) VALUES (?, ?) ON CONFLICT(pvName) DO UPDATE SET realName = ?;";
+			break;
+		}
+		putStringValueForKey(sql, pvName, realName, "putAliasNamesToRealName");
 	}
 
 	@Override

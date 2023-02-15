@@ -83,6 +83,7 @@ The unit tests that use Tomcat copy the conf_original folder to generate new con
 <code>cd ${TOMCAT_HOME}
 cp -R conf conf_original</code>
 </pre>
+Gradle will do this step for you if you forget.
 
 </section>
 
@@ -90,9 +91,9 @@ cp -R conf conf_original</code>
 <h3>Building</h3>
 The EPICS archiver appliance is shared on <a href="https://github.com/slacmshankar/epicsarchiverap">GitHub</a> using Git as the source control repository.
 We use Eclipse as the IDE; the Mars version of Eclipse has the support for .
-We use <a href="http://ant.apache.org/">Apache Ant</a> for building. 
+We use <a href="http://ant.apache.org/">Apache Ant</a> or <a href="http://gradle.org/">Gradle</a> for building. 
 If you have a Eclipse workspace called <code>workspace</code> and the EPICS archiver appliance code checked out into a folder called <code>epicsarchiverap</code>, 
-then the build script is run by calling ant from within <code>workspace/epicsarchiverap</code>.
+then the ant build script is run by calling ant from within <code>workspace/epicsarchiverap</code>.
 <pre class="bash_output"><code>[ epicsarchiverap ]$ ant
 Buildfile: /workspace/epicsarchiverap/build.xml
      [echo] Building the archiver appliance for the site tests
@@ -111,6 +112,16 @@ The default target builds the install package and the various wars and places th
 -rw-r--r-- 1 mshankar cd 154000860 Nov 13 14:48 ../archappl_v0.0.1_SNAPSHOT_13-November-2019T14-48-26.tar.gz
 [ epicsarchiverap ]$ 
 </code></pre>
+</section>
+
+The Gradle build script will build into the default build directory <code>build</code>. You don't need to install
+Gradle, instead you can use the wrapper as <code>./gradlew</code>, or install it
+and run from the <code>epicsarchiverap</code> folder:
+<pre class="bash_output"><code>[ epicsarchiverap ]$ gradle
+BUILD SUCCESSFUL in 16s
+12 actionable tasks: 10 executed, 2 up-to-date</code>
+</pre>
+The build can then be found in <code>epicsarchiverap/build/distributions</code> or the war files in <code>epicsarchiverap/build/libs</code>.
 
 <section>
 <h3>Deploying</h3>
@@ -154,6 +165,33 @@ To bring up the management app, bring up <code>http://<i>YourMachineHere</i>:176
 
 <section>
 <h3>Running the unit tests</h3>
+
+<h4>With Gradle</h4>
+
+Gradle creates temporary directories for all the unit tests. If you wish to clean 
+them first you can use <code>gradle clean</code>. You then have the following options:
+
+<pre>
+<code>
+gradle test // Runs all unit tests except slow tests
+gradle unitTests // Runs all unit tests
+gradle integrationTests // Runs all tests that require a tomcat installation and/or epics installation
+gradle flakyTests // Runs all tests that can fail due to system resources
+gradle allTests // Runs all tests (not recommended)
+</code>
+</pre>
+
+Or run individual tests with:
+
+<pre>
+<code>
+gradle test -tests PolicyExecutionTest
+gradle integrationTests --tests PvaGetArchivedPVsTest --info
+</code>
+</pre>
+
+<h4>With Ant</h4>
+
 To run all the unit tests, first set the environment variables for the short term and medium term stores. 
 <pre>
 <code>

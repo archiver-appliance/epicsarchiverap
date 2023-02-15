@@ -4,13 +4,15 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +37,7 @@ import com.google.common.eventbus.Subscribe;
  */
 public class MgmtRuntimeState {
 	private ConfigService configService;
-	private ConcurrentHashMap<String, ArchivePVState> currentPVRequests = new ConcurrentHashMap<String, ArchivePVState>();
+	private Map<String, ArchivePVState> currentPVRequests = Collections.synchronizedMap(new HashMap<String, ArchivePVState>());
 	private static Logger logger = Logger.getLogger(MgmtRuntimeState.class.getName());
 	private static Logger configlogger = Logger.getLogger("config." + MgmtRuntimeState.class.getName());
 	private String myIdentity;
@@ -59,7 +61,7 @@ public class MgmtRuntimeState {
 	 * Abort PV's in the archive PV workflow after this many minutes if the archiver is not able to connect to the PV. 
 	 * The workflow can take a few minutes; so this should be set to a reasonable value (for example, 1 minute would mean that no PV would complete the workflow) 
 	 */
-	private static int abortArchiveWorkflowInMins = DEFAULT_ABORT_ARCHIVE_REQUEST_TIMEOUT_MINS;
+	private int abortArchiveWorkflowInMins = DEFAULT_ABORT_ARCHIVE_REQUEST_TIMEOUT_MINS;
 
 
 	/**
@@ -104,6 +106,8 @@ public class MgmtRuntimeState {
 			return t;
 		}
 	});
+	
+	private ScheduledFuture<?> theArchiveWorkflow = null;
 	
 	public MgmtRuntimeState(final ConfigService configService) {
 		this.configService = configService;
@@ -247,49 +251,80 @@ public class MgmtRuntimeState {
 		}
 
 		
-		archivePVWorkflow.scheduleAtFixedRate(new Runnable() {
-			
-			@Override
-			public void run() {
-				LinkedList<ArchivePVState> archivePVStates = new LinkedList<ArchivePVState>(currentPVRequests.values());
-				logger.info("Running the archive PV workflow with " + archivePVStates.size() + " requests pending");
-				Collections.sort(archivePVStates, new Comparator<ArchivePVState>() {
-					@Override
-					public int compare(ArchivePVState state0, ArchivePVState state1) {
-						if(state0.getStartOfWorkflow().equals(state1.getStartOfWorkflow())) { 
-							return state0.getPvName().compareTo(state1.getPvName());
-						} else { 
-							return state0.getStartOfWorkflow().compareTo(state1.getStartOfWorkflow());
-						}
-					}
-				});
-				int totRequests = archivePVStates.size();
-				int maxRequestsToProcess = Math.min(archivePVWorkflowBatchSize, totRequests);
-				int pvCount = 0;
-				while(pvCount < maxRequestsToProcess) { 
-					ArchivePVState runWorkFlowForPV = archivePVStates.pop();
-					String pvName = runWorkFlowForPV.getPvName();
-					// It takes a few minutes for the workflow to complete; so you should be setting this to a reasonably high value.
-					if(abortArchiveWorkflowInMins > 0 
-							&& ( runWorkFlowForPV.getCurrentState() != ArchivePVStateMachine.START ) 
-							&& (TimeUtils.now().getTime() - runWorkFlowForPV.getMetaInfoRequestedSubmitted().getTime()) > abortArchiveWorkflowInMins*60*1000) {
-						try {
-							runWorkFlowForPV.setAbortReason("Aborting PV after user specified timeout " + TimeUtils.convertToHumanReadableString(runWorkFlowForPV.getMetaInfoRequestedSubmitted()));
-							abortPVWorkflow(pvName);
-						} catch(Exception ex) { 
-							logger.error("Exception aborting PV after timeout " + pvName, ex);
-						}
-					} else {
-						logger.debug("Running the next step in the workflow for PV " + pvName);
-						runWorkFlowForPV.nextStep();
-					}
-					pvCount++;
-				}
-			}
-		}, initialDelayInSeconds, archivePVWorkflowTickSeconds, TimeUnit.SECONDS);
+		startArchivePVWorkflow(initialDelayInSeconds);
 
 		logger.info("Done starting archive requests");
 	}
+
+
+	private void startArchivePVWorkflow(int initialDelayInSeconds) {
+		theArchiveWorkflow = archivePVWorkflow.scheduleAtFixedRate(new Runnable() {
+			
+			@Override
+			public void run() {
+				try {
+					LinkedList<ArchivePVState> archivePVStates = new LinkedList<ArchivePVState>(currentPVRequests.values());
+					logger.info("Running the archive PV workflow with " + archivePVStates.size() + " requests pending");
+					Collections.sort(archivePVStates, new Comparator<ArchivePVState>() {
+						@Override
+						public int compare(ArchivePVState state0, ArchivePVState state1) {
+							if(state0.getStartOfWorkflow().equals(state1.getStartOfWorkflow())) { 
+								return state0.getPvName().compareTo(state1.getPvName());
+							} else { 
+								return state0.getStartOfWorkflow().compareTo(state1.getStartOfWorkflow());
+							}
+						}
+					});
+					int totRequests = archivePVStates.size();
+					int maxRequestsToProcess = Math.min(archivePVWorkflowBatchSize, totRequests);
+					int pvCount = 0;
+					while(pvCount < maxRequestsToProcess) { 
+						ArchivePVState runWorkFlowForPV = archivePVStates.pop();
+						String pvName = runWorkFlowForPV.getPvName();
+						// It takes a few minutes for the workflow to complete; so you should be setting this to a reasonably high value.
+						if(abortArchiveWorkflowInMins > 0 
+								&& ( runWorkFlowForPV.getCurrentState() != ArchivePVStateMachine.START ) 
+								&& runWorkFlowForPV.getMetaInfoRequestedSubmitted() != null 
+								&& (TimeUtils.now().getTime() - runWorkFlowForPV.getMetaInfoRequestedSubmitted().getTime()) > abortArchiveWorkflowInMins*60*1000) {
+							try {
+								runWorkFlowForPV.setAbortReason("Aborting PV after user specified timeout " + TimeUtils.convertToHumanReadableString(runWorkFlowForPV.getMetaInfoRequestedSubmitted()));
+								abortPVWorkflow(pvName);
+							} catch(Exception ex) { 
+								logger.error("Exception aborting PV after timeout " + pvName, ex);
+							}
+						} else {
+							logger.debug("Running the next step in the workflow for PV " + pvName);
+							runWorkFlowForPV.nextStep();
+						}
+						pvCount++;
+					}				
+				} catch(Throwable t) {
+					logger.error("Exception processing next step in archive PV workflow", t);
+				}
+
+			}
+		}, initialDelayInSeconds, archivePVWorkflowTickSeconds, TimeUnit.SECONDS);
+	}
+	
+	
+	/**
+	 * Abort all pending PV requests and then restart the thread.
+	 * Use only if your main archive thread seems to be stuck.
+	 */
+	public void abortAllAndRestartArchiveRequestsThread() throws IOException {
+		configlogger.info("Cancelling the main archive PV workflow thread ( to restart it ).");
+		this.theArchiveWorkflow.cancel(false);
+		configlogger.info("Aborting all existing requests.");
+		LinkedList<String> currPVs = new LinkedList<String>(this.currentPVRequests.keySet());
+		for(String pvName : currPVs) {
+			this.abortPVWorkflow(pvName);
+		}
+		configlogger.info("Aborted all the PV requests");
+		startArchivePVWorkflow(archivePVWorkflowTickSeconds);
+		configlogger.info("Restarted the arvhive PV workflow with an initial delay of " + archivePVWorkflowTickSeconds);
+	}
+
+	
 	
 	public boolean haveChildComponentsStartedUp() { 
 		return componentsThatHaveCompletedStartup.contains(WAR_FILE.ENGINE) 

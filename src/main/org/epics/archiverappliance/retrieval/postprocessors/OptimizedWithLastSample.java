@@ -14,10 +14,8 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.config.PVTypeInfo;
-import org.epics.archiverappliance.data.AlarmInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -25,6 +23,8 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.postprocessors.SummaryStatsPostProcessor.SummaryValue;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 
 
 /**
@@ -232,11 +232,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                 } else {
                     transformedRawEvents = new ArrayListEventStream(allEvents.size(),allEvents.getDescription());
                     for (Event e : allEvents) {
-                        if (e instanceof AlarmInfo) {
-                            transformedRawEvents.add(new POJOEvent(e.getDBRType(),e.getEventTimeStamp(),e.getSampleValue(),((AlarmInfo)e).getStatus(),((AlarmInfo)e).getSeverity()));
-                        } else {
-                            transformedRawEvents.add(new POJOEvent(e.getDBRType(),e.getEventTimeStamp(),e.getSampleValue(),0,0));
-                        }
+                        transformedRawEvents.add(DBR2PBTypeMapping.getPBClassFor(e.getDBRType()).getSerializingConstructor().newInstance(e));
                     }
                     return transformedRawEvents;
                 }
@@ -333,20 +329,24 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
             // The last bin with events will not yet have been added so it needs to 
             // be added manually here in order to correct for the remaining bins with
             // no events.
-            if (currentBinCollector.haveEventsBeenAdded()) {
-                SummaryValue summaryValue;
-                summaryValue = new SummaryValue(
-                    ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(), currentMaxSeverity,
-                    currentConnectionChangedEvents);
-                consolidatedData.put(currentBin, summaryValue);
-                lastBinSaved = currentBin;
+            if (currentBinCollector != null) {
+                if (currentBinCollector.haveEventsBeenAdded()) {
+                    SummaryValue summaryValue;
+                    summaryValue = new SummaryValue(
+                        ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(), currentMaxSeverity,
+                        currentConnectionChangedEvents);
+                    consolidatedData.put(currentBin, summaryValue);
+                    lastBinSaved = currentBin;
+                }
             }
-            if (lastBinSaved < lastBin) {
-                // Last bins have been skipped (had no events) so need to populate them
-                // with the last value from the last bin to have events
-                // Include the last bin (+1)
-                long nSkip = lastBin-lastBinSaved + 1;
-                populateSkippedBins(nSkip);  
+            if (lastBinSaved != null) {
+                if (lastBinSaved < lastBin) {
+                    // Last bins have been skipped (had no events) so need to populate them
+                    // with the last value from the last bin to have events
+                    // Include the last bin (+1)
+                    long nSkip = lastBin-lastBinSaved + 1;
+                    populateSkippedBins(nSkip);  
+                }
             }
             return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData,
                 inheritValuesFromPreviousBins, zeroOutEmptyBins(), true, 6);

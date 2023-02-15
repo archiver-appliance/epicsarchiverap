@@ -182,6 +182,9 @@ public class PVTypeInfo implements Serializable {
 		this.extraFields = new HashMap<String, String>(srcTypeInfo.extraFields);
 		this.archiveFields = Arrays.copyOf(srcTypeInfo.archiveFields, srcTypeInfo.archiveFields.length);
 
+		this.usePVAccess = srcTypeInfo.usePVAccess;
+		this.useDBEProperties = srcTypeInfo.useDBEProperties;
+
 		// Inherit the creation type from the source. This seems to serve us better
 		this.creationTime = srcTypeInfo.getCreationTime();
 		this.modificationTime = TimeUtils.now();

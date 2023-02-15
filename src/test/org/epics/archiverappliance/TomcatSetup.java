@@ -10,22 +10,16 @@ package org.epics.archiverappliance;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
-import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecuteResultHandler;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.ExecuteWatchdog;
-import org.apache.commons.exec.Executor;
-import org.apache.commons.exec.LogOutputStream;
-import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
@@ -33,6 +27,7 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.DefaultConfigService;
 import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
+import org.python.google.common.io.LineReader;
 
 /**
  * Setup Tomcat without having to import all the tomcat jars into your project.
@@ -41,7 +36,7 @@ import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
  */
 public class TomcatSetup {
 	private static Logger logger = Logger.getLogger(TomcatSetup.class.getName());
-	LinkedList<ExecuteWatchdog> executorWatchDogs = new LinkedList<ExecuteWatchdog>();
+	LinkedList<Process> watchedProcesses = new LinkedList<Process>();
 	LinkedList<File> cleanupFolders = new LinkedList<File>();
 	private static int DEFAULT_SERVER_STARTUP_PORT = 16000;
 	
@@ -82,61 +77,93 @@ public class TomcatSetup {
 		}
 	}
 
+	/**
+	 * Set up a dest/other pair to test failover.
+	 * @param testName
+	 * @throws Exception
+	 */
+	public void setUpFailoverWithWebApps(String testName) throws Exception {
+		initialSetup(testName);
+		logger.info("Starting up dest appliance");
+		// We are in the tomcat logs folder...
+		System.getProperties().put(ConfigService.ARCHAPPL_APPLIANCES, "../webapps/mgmt/WEB-INF/classes/failover_dest.xml"); 
+		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", "../sts"); 
+		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts"); 
+		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", "../lts"); 
+				
+		createAndStartTomcatInstance(testName, "dest_appliance", ConfigServiceForTests.RETRIEVAL_TEST_PORT, DEFAULT_SERVER_STARTUP_PORT);
+		logger.info("Done starting up dest appliance");
+		logger.info("Starting up other appliance");
+		System.getProperties().put(ConfigService.ARCHAPPL_APPLIANCES, "../webapps/mgmt/WEB-INF/classes/failover_other.xml"); 
+		createAndStartTomcatInstance(testName, "other_appliance", ConfigServiceForTests.RETRIEVAL_TEST_PORT+4, DEFAULT_SERVER_STARTUP_PORT+4);
+		logger.info("Done starting up other appliance");
+	}
+	
 
 	public void tearDown() throws Exception {
-		for(ExecuteWatchdog watchdog : executorWatchDogs) {
-			// We brutally kill the process
-			watchdog.destroyProcess();
-			try {Thread.sleep(10*1000);} catch(Exception ex) {}
-			assert(watchdog.killedProcess());
+		for(Process process : watchedProcesses) {
+			// First try to kill the process cleanly
+			long pid = process.pid();
+			String cmd = "kill -s SIGINT " + pid;
+			logger.info("Sending a signal using " + cmd);
+			Runtime.getRuntime().exec(cmd);
+			try {Thread.sleep(15*1000);} catch(Exception ex) {}
+			if(process.isAlive()) {
+				logger.warn("Tomcat process did not stop propoerly within time. Forcibly stopping it.");
+				process.destroyForcibly();
+				try {Thread.sleep(3*60*1000);} catch(Exception ex) {}				
+			}
 		}
 		
 		for(File cleanupFolder : cleanupFolders) { 
 			logger.debug("Cleaning up folder " + cleanupFolder.getAbsolutePath());
 			FileUtils.deleteDirectory(cleanupFolder);
 		}
-		
-		// So many timeouts; if we are running multiple tests in sequence; the Tomcat socket seems to wind up in a TIME_WAIT site for about 2 minutes.
-		// Setting the net.netfilter.nf_conntrack_tcp_timeout_time_wait (using sysctl) seems to hurt other behaviours...
-		// Sigh!
-		try {Thread.sleep(3*60*1000);} catch(Exception ex) {}
 	}
 	
 	
 	private void createAndStartTomcatInstance(String testName, final String applianceName, int port, int startupPort) throws IOException { 
 		File workFolder = makeTomcatFolders(testName, applianceName, port, startupPort);
-		HashMap<String, String> environment = createEnvironment(testName, applianceName);
 		File logsFolder = new File(workFolder, "logs");
 		assert(logsFolder.exists());
 		
-		CommandLine cmdLine = new CommandLine(System.getenv("TOMCAT_HOME") + File.separator + "bin" + File.separator + "catalina.sh");
-		cmdLine.addArgument("run");
-		DefaultExecuteResultHandler resultHandler = new DefaultExecuteResultHandler();
+		ProcessBuilder pb = new ProcessBuilder(System.getenv("TOMCAT_HOME") + File.separator + "bin" + File.separator + "catalina.sh", "run");
+		createEnvironment(testName, applianceName, pb.environment());
+		pb.directory(logsFolder);
+		pb.redirectErrorStream(true);
+		pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+		Process p = pb.start();
+		watchedProcesses.add(p);
+		
 		final CountDownLatch latch = new CountDownLatch(1);
-		PumpStreamHandler pump = new PumpStreamHandler(new LogOutputStream() {
+		
+		final LineReader li = new LineReader(new InputStreamReader(p.getInputStream()));
+		Thread t = new Thread() {
 			@Override
-			protected void processLine(String msg, int level) {
-				if(msg != null && msg.contains("All components in this appliance have started up")) {
-					logger.info(applianceName + " has started up.");
-					latch.countDown();
+			public void run() {
+				try {
+					while(p.isAlive()) {
+						String msg = li.readLine();
+						if(msg != null) { 
+							System.out.println(applianceName + "-->" + msg); 
+							if(msg.contains("All components in this appliance have started up")) {
+								logger.info(applianceName + " has started up.");
+								latch.countDown();
+							}
+						} else {
+							try {Thread.sleep(500);} catch(Exception ex) {}							
+						}
+					}
+				} catch(Exception ex) {
+					logger.error("Exception starting Tomcat", ex);
 				}
-				System.out.println(msg);
 			}
-		}, System.err);
-
-		ExecuteWatchdog watchdog = new ExecuteWatchdog(ExecuteWatchdog.INFINITE_TIMEOUT);
-		Executor executor = new DefaultExecutor();
-		executor.setExitValue(1);
-		executor.setWatchdog(watchdog);
-		executor.setStreamHandler(pump);
-		executor.setWorkingDirectory(logsFolder);
-		executor.execute(cmdLine, environment, resultHandler);
-		executorWatchDogs.add(watchdog);
+		};
+		t.start();
 		
 		// We wait for some time to make sure the server started up
 		try { latch.await(2, TimeUnit.MINUTES); } catch(InterruptedException ex) {} 
-		logger.info("Done starting tomcat for the testing.");
-
+		logger.info("Done starting " + applianceName + " Releasing latch");
 	}
 	
 	
@@ -190,8 +217,7 @@ public class TomcatSetup {
 	}
 	
 	
-	private HashMap<String, String> createEnvironment(String testName, String applianceName) { 
-		HashMap<String, String> environment = new HashMap<String, String>();
+	private Map<String, String> createEnvironment(String testName, String applianceName, Map<String, String> environment) { 
 		environment.putAll(System.getenv());
 		environment.remove("CLASSPATH");
 		environment.put("CATALINA_HOME", System.getenv("TOMCAT_HOME"));
@@ -236,7 +262,7 @@ public class TomcatSetup {
 	}
 	
 	
-	private static void overrideEnvWithSystemProperty(HashMap<String, String> environment, String key) { 
+	private static void overrideEnvWithSystemProperty(Map<String, String> environment, String key) { 
 		if(System.getProperties().containsKey(key)) { 
 			String value = (String) System.getProperties().get(key);
 			logger.debug("Overriding " + key + " from the system properties " + value);

@@ -2,7 +2,7 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.LinkedList;
+import java.util.HashMap;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -19,7 +19,7 @@ import org.json.simple.JSONValue;
 /**
  * Gets the names of the data stores for this PV.
  * 
- * @epics.BPLAction - Gets the names of the data stores for this PV. Every store in a PV's typeinfo is expected to have a name - this is typically "name=STS" or something similar. This call returns the names of all the stores for a PV.
+ * @epics.BPLAction - Gets the names and definitions of the data stores for this PV. Every store in a PV's typeinfo is expected to have a name - this is typically "name=STS" or something similar. This call returns the names of all the stores for a PV with their URI representations as a dictionary.
  * @epics.BPLActionParam pv - The name of the pv.
  * @epics.BPLActionEnd
  * @author mshankar
@@ -49,10 +49,10 @@ public class GetStoresForPV implements BPLAction {
 		}
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
-			LinkedList<String> stores = new LinkedList<String>();
+			HashMap<String, String> stores = new HashMap<String, String>();
 			for(String store : typeInfo.getDataStores()) {
 				StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
-				stores.add(plugin.getName());
+				stores.put(plugin.getName(), store);
 			}
 			out.println(JSONValue.toJSONString(stores));
 		} catch(Exception ex) {

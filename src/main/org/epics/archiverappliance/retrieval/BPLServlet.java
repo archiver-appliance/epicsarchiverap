@@ -25,6 +25,7 @@ import org.epics.archiverappliance.retrieval.bpl.FilterArchivedPVs;
 import org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration;
 import org.epics.archiverappliance.retrieval.bpl.GetMatchingPVs;
 import org.epics.archiverappliance.retrieval.bpl.GetPVMetaData;
+import org.epics.archiverappliance.retrieval.bpl.ResetFailoverCachesForThisAppliance;
 import org.epics.archiverappliance.retrieval.bpl.SearchForPVsRegex;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetricsDetails;
@@ -50,6 +51,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getClientConfig", GetClientConfiguration.class);
 		getActions.put("/getMetadata", GetPVMetaData.class);
 		getActions.put("/areWeArchivingPV", AreWeArchivingPV.class);
+		getActions.put("/resetFailoverCachesForThisAppliance", ResetFailoverCachesForThisAppliance.class);
 	}
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)

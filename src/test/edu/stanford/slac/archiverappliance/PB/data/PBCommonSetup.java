@@ -10,6 +10,8 @@ package edu.stanford.slac.archiverappliance.PB.data;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
@@ -96,5 +98,17 @@ public class PBCommonSetup {
 	
 	public File getRootFolder() {
 		return tempFolderForTests;
+	}
+
+	public File getTempFolderForTests() {
+		return tempFolderForTests;
+	}
+	
+	public Set<String> listTestFolderContents() {
+		HashSet<String> ret = new HashSet<String>();
+		for(File f : FileUtils.listFiles(tempFolderForTests, new String[] { "*" }, true)) {
+			ret.add(f.getAbsolutePath().toString());
+		}
+		return ret;
 	}
 }

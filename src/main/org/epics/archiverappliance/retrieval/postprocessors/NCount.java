@@ -36,8 +36,9 @@ public class NCount implements PostProcessor, PostProcessorWithConsolidatedEvent
 	private long startTime;
 	private long endTime;
 	private ArrayListEventStream data;
-	private int count;
+	private int count = 0;
 	private boolean countAddedToStream = false;
+	private String pvName;
 	
 	@Override
 	public String getIdentity() {
@@ -51,7 +52,7 @@ public class NCount implements PostProcessor, PostProcessorWithConsolidatedEvent
 
 	@Override
 	public void initialize(String userarg, String pvName) throws IOException {
-		//nothing
+		this.pvName = pvName;
 	}
 
 	@Override
@@ -109,6 +110,10 @@ public class NCount implements PostProcessor, PostProcessorWithConsolidatedEvent
 	@Override
 	public EventStream getConsolidatedEventStream() {
 		if(!countAddedToStream) { 
+			if(data == null) { 
+				RemotableEventStreamDesc desc = new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_INT, pvName, TimeUtils.computeYearForEpochSeconds(startTime/1000));				
+				data = new ArrayListEventStream(1,desc);
+			}
 			data.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_INT,new Timestamp(startTime),new ScalarValue<>(count),0,0));
 			countAddedToStream = true;
 		}

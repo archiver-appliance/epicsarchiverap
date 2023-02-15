@@ -54,6 +54,11 @@ public class RedisPersistence implements ConfigPersistence {
 	public List<String> getTypeInfoKeys() throws IOException {
 		return getKeys("TypeInfo");
 	}
+	
+	@Override
+	public List<PVTypeInfo> getAllTypeInfosForAppliance(String applianceIdentity) throws IOException {
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	public PVTypeInfo getTypeInfo(String pvName) throws IOException {

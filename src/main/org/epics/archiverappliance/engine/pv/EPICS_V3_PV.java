@@ -27,6 +27,7 @@ import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 
 import com.cosylab.epics.caj.CAJChannel;
+import com.cosylab.epics.caj.CAJMonitor;
 
 import gov.aps.jca.CAException;
 import gov.aps.jca.Channel;
@@ -891,8 +892,11 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if(this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
 			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
 			ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));			
-			ad.addKV("CAJ channel ID", Integer.toString(cajChannel.getChannelID()));
-			ad.addKV("CAJ server channel ID", Integer.toString(cajChannel.getServerChannelID()));
+			ad.addKV("CAJ channel ID (CID)", Integer.toString(cajChannel.getChannelID()));
+			ad.addKV("CAJ server channel ID (SID)", Integer.toString(cajChannel.getServerChannelID()));
+			if(this.subscription != null && this.subscription instanceof CAJMonitor) {
+				ad.addKV("CAJ subscription ID", Integer.toString(((CAJMonitor)subscription).getSID()));
+			}
 			ad.addKV("CAJ connection state", cajChannel.getConnectionState().getName());
 		}		
 		ad.addKV("Daily metadata last saved at", TimeUtils.convertToHumanReadableString(archiveFieldsSavedAtEpSec));
