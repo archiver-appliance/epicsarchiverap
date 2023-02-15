@@ -33,10 +33,11 @@ public class FileBackedPBEventStreamPositionBasedIterator implements FileBackedP
 	private short year = 0;
 	private LineByteStream lbs = null;
 	private ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
+	// Whether the line already in nextLine has been used by the iterator
+	private boolean lineUsed = false;
 	private ArchDBRTypes type;
 	private DBR2PBTypeMapping mapping;
 	private Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
-	
 
 	public FileBackedPBEventStreamPositionBasedIterator(Path path, long startFilePos, long endFilePos, short year, ArchDBRTypes type) throws IOException {
 		this.startFilePos = startFilePos;
@@ -52,11 +53,13 @@ public class FileBackedPBEventStreamPositionBasedIterator implements FileBackedP
 		lbs.seekToFirstNewLine();
 	}
 
-	
 	@Override
 	public boolean hasNext() {
 		try {
-			lbs.readLine(nextLine);
+			if (nextLine.isEmpty() || lineUsed) {
+				lbs.readLine(nextLine);
+				lineUsed = false;
+			}
 			if(!nextLine.isEmpty()) return true;
 		} catch(Exception ex) {
 			logger.error("Exception creating event object", ex);
@@ -68,7 +71,12 @@ public class FileBackedPBEventStreamPositionBasedIterator implements FileBackedP
 	@Override
 	public Event next() {
 		try {
-			return (Event) unmarshallingConstructor.newInstance(year, nextLine);
+			if (nextLine.isEmpty() || lineUsed) {
+				lbs.readLine(nextLine);
+			}
+			Event e = unmarshallingConstructor.newInstance(year, nextLine);
+			lineUsed = true;
+			return e;
 		} catch (Exception ex) {
 			logger.error("Exception creating event object", ex);
 			return null;
