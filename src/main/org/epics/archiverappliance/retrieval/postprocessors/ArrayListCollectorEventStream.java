@@ -64,7 +64,7 @@ public class ArrayListCollectorEventStream implements EventStream, RemotableOver
 			Event next = sourceStream.get(currentIndex);
 			short eventYear = TimeUtils.computeYearForEpochSeconds(next.getEpochSeconds());
 			if(eventYear != currentYear) { 
-				logger.warn("Detected a change in years eventYear " + eventYear + " and currentYear is " + currentYear);
+				logger.info("Detected a change in years eventYear " + eventYear + " and currentYear is " + currentYear);
 				ArrayListCollectorEventStream.this.desc.setYear(eventYear);
 				currentYear = eventYear;
 			}

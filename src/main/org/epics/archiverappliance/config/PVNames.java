@@ -17,6 +17,12 @@ public class PVNames {
 	 * This syntax should be consistent with CSS. 
 	 */
 	public static final String V4_PREFIX = "pva://";
+
+	/**
+	 * When you intend to connect to the PV's using Channel Access, use this string as a prefix in the UI/archivePV BPL. For example, ca://double01
+	 * This syntax should be consistent with CSS.
+	 */
+	public static final String V3_PREFIX = "ca://";
 	
 	/**
 	 * Remove the .VAL, .HIHI etc portion of a pvName and return the plain pvName
@@ -332,26 +338,43 @@ public class PVNames {
 	}
 
 
-	/**
-	 * Does this pvName imply a connection using PVAccess?
-	 * @param pvName  The name of PV.
-	 * @return boolean True or False
-	 */
-	public static boolean isEPICSV4PVName(String pvName) { 
-		if(pvName == null || pvName.isEmpty()) return false;
-		return pvName.startsWith(V4_PREFIX);
+	public enum EPICSVersion {
+		V3,
+		V4,
+		DEFAULT
 	}
-	
-	
+
 	/**
-	 * Remove the pva:// prefix from the PV name if present.
+	 * What type of name is the pv.
+	 * return EPICSVersion.V3 if starts with ca://
+	 * return EPICSVersion.V4 if starts with pva://
+	 * returns EPICSVersion.DEFAULT otherwise.
+	 *
+	 * @param pvName  The name of PV.
+	 * @return EPICSVersion
+	 */
+	public static EPICSVersion pvNameVersion(String pvName) {
+		if(pvName == null || pvName.isEmpty()) return EPICSVersion.DEFAULT;
+		if (pvName.startsWith(V4_PREFIX))
+			return EPICSVersion.V4;
+		if (pvName.startsWith(V3_PREFIX))
+			return EPICSVersion.V3;
+		return EPICSVersion.DEFAULT;
+	}
+
+
+	/**
+	 * Remove the pva:// or ca:// prefix from the PV name if present.
 	 * @param pvName The name of PV.
 	 * @return String  &emsp;
 	 */
 	public static String stripPrefixFromName(String pvName) { 
 		if(pvName == null || pvName.isEmpty()) return pvName;
-		if(pvName.startsWith(V4_PREFIX)) { 
+		if(pvName.startsWith(V4_PREFIX)) {
 			return pvName.replace(V4_PREFIX, "");
+		}
+		if(pvName.startsWith(V3_PREFIX)) {
+			return pvName.replace(V3_PREFIX, "");
 		}
 		
 		return pvName;
