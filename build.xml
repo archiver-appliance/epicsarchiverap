@@ -134,7 +134,7 @@
         	<zipfileset dir="${src}/org/epics/archiverappliance/config/persistence" prefix="install" includes="*.sql"/>
         	<zipfileset dir="docs" prefix="ui/help"/>
         	<zipfileset dir="docs/samples" prefix="install" includes="deployMultipleTomcats.py"/>
-        	<zipfileset dir="src/main/org/epics/archiverappliance/common/scripts" prefix="install/pbutils" filemode="755"/>
+        	<zipfileset dir="${src}/org/epics/archiverappliance/common/scripts" prefix="install/pbutils" filemode="755"/>
     		<classes dir="${classes}"/>
 			<lib dir="${lib}">
 				<include name="*.jar"/>
@@ -363,7 +363,7 @@
 		        </fileset>
 		    </classpath>
 		</java>
-		  <javadoc sourcepath="src/main"
+		  <javadoc sourcepath="${src}"
 		    	   destdir="docs/api"
 		           author="true"
 		           version="true"
@@ -392,7 +392,7 @@
 		  	</taglet>
 		  </javadoc>
 		<copy file="LICENSE" todir="docs"></copy>
-		<copy file="src/main/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto" todir="docs"></copy>
+		<copy file="${src}/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto" todir="docs"></copy>
 		<!-- Generate the scriptables from the javadoc taglet processing  -->
 		<java classname="org.epics.archiverappliance.common.taglets.ProcessMgmtScriptables">
 		    <classpath>
@@ -421,8 +421,8 @@
 		Please remember to check in after running this.
 		-->
 		<java classname="org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters">
-			<arg value="./src/main/org/epics/archiverappliance/mgmt/staticcontent/index.html"/>
-			<arg value="./src/main/org/epics/archiverappliance/mgmt/staticcontent/"/>
+			<arg value="${src}/org/epics/archiverappliance/mgmt/staticcontent/index.html"/>
+			<arg value="${src}/org/epics/archiverappliance/mgmt/staticcontent/"/>
 		    <classpath>
 		    	<pathelement path="${classes}"/>
 		    	<pathelement path="."/>

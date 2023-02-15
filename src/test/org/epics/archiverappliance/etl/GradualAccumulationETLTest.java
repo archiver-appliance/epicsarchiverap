@@ -16,6 +16,7 @@ import java.sql.Timestamp;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -31,6 +32,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
@@ -63,6 +65,7 @@ public class GradualAccumulationETLTest {
 	 * @throws Exception
 	 */
 	@Test
+	@Category(SlowTests.class)
 	public void testGradualAccumulation() throws Exception {
 		for(PartitionGranularity granularity : PartitionGranularity.values()) {
 			if(granularity.getNextLargerGranularity() == null) continue;

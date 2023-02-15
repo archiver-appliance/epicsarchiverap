@@ -18,6 +18,7 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -26,12 +27,14 @@ import org.epics.archiverappliance.retrieval.GenerateData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Unit test to make sure the client retrieval libraries can retrieval all the DBR types.
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class DBRRetrievalTest {
 	private static final Logger logger = Logger.getLogger(DBRRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

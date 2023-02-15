@@ -9,6 +9,7 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,6 +25,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
@@ -33,6 +35,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class GetExtraFieldsTest {
 	private static Logger logger = Logger.getLogger(GetExtraFieldsTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder());

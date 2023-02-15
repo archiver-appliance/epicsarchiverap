@@ -3,6 +3,8 @@ package org.epics.archiverappliance.engine.test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -11,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.FlakyTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -21,6 +24,9 @@ import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 /**
  * A small test to test the double buffering algorithm we use. 
@@ -28,10 +34,15 @@ import org.junit.Test;
  * @author mshankar
  *
  */
+@RunWith(Parameterized.class)
+@Category(FlakyTests.class)
 public class DoubleBufferTest {
 	private static Logger logger = Logger.getLogger(DoubleBufferTest.class.getName());
 	private int eventsAdded = 0;
 	private int eventsStored = 0;
+
+	private int bufferSize;
+	private StoredState allStored;
 
 	@Before
 	public void setUp() throws Exception {
@@ -42,23 +53,31 @@ public class DoubleBufferTest {
 	}
 
 	enum StoredState { ALL_STORED, SOME_LOSS, MAYBE_SOME_LOSS}
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.asList(new Object[][]{
+			{7, StoredState.SOME_LOSS},
+			{8, StoredState.SOME_LOSS},
+			{9, StoredState.SOME_LOSS},
+			{10, StoredState.MAYBE_SOME_LOSS},
+			{11, StoredState.ALL_STORED},
+			{12, StoredState.ALL_STORED},
+			{13, StoredState.ALL_STORED},
+			{14, StoredState.ALL_STORED},
+			{15, StoredState.ALL_STORED},
+			{16, StoredState.ALL_STORED},
+			{17, StoredState.ALL_STORED}
+        });
+    }
 	
-	@Test
-	public void testDoubleBuffering() throws Exception { 
-		testSampleBufferDoubleBufferingForBufferSize(7, StoredState.SOME_LOSS);
-		testSampleBufferDoubleBufferingForBufferSize(8, StoredState.SOME_LOSS);
-		testSampleBufferDoubleBufferingForBufferSize(9, StoredState.SOME_LOSS);
-		testSampleBufferDoubleBufferingForBufferSize(10, StoredState.MAYBE_SOME_LOSS);
-		testSampleBufferDoubleBufferingForBufferSize(11, StoredState.ALL_STORED);
-		testSampleBufferDoubleBufferingForBufferSize(12, StoredState.ALL_STORED);
-		testSampleBufferDoubleBufferingForBufferSize(13, StoredState.ALL_STORED);
-		testSampleBufferDoubleBufferingForBufferSize(14, StoredState.ALL_STORED);
-		testSampleBufferDoubleBufferingForBufferSize(15, StoredState.ALL_STORED);
-		testSampleBufferDoubleBufferingForBufferSize(16, StoredState.ALL_STORED);
-		testSampleBufferDoubleBufferingForBufferSize(17, StoredState.ALL_STORED);
+	public DoubleBufferTest(int bufferSize, StoredState allStored ) {
+		this.bufferSize = bufferSize;
+		this.allStored = allStored;
 	}
-	
-	private void testSampleBufferDoubleBufferingForBufferSize(int bufferSize, StoredState allStored) throws Exception {
+
+	@Test
+	public void testSampleBufferDoubleBufferingForBufferSize() throws Exception {
 		logger.info("Testing for buffer size " + bufferSize);
 		this.eventsAdded = 0;
 		this.eventsStored = 0;

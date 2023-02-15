@@ -14,6 +14,7 @@ import java.sql.Timestamp;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -21,12 +22,14 @@ import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStrea
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test retrieval from a Channel Archiver XML file that spans multiple years.
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class CAYearSpanRetrievalTest {
 	private static Logger logger = Logger.getLogger(CAYearSpanTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

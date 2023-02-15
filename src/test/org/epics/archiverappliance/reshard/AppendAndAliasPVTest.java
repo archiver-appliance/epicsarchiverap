@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
@@ -36,6 +37,7 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Simple test to test appending data from an older PV to a newer one.
@@ -53,6 +55,7 @@ import org.junit.Test;
  * @author mshankar
  *
  */
+@Category(LocalEpicsTests.class)
 public class AppendAndAliasPVTest {
 	private static Logger logger = Logger.getLogger(AppendAndAliasPVTest.class.getName());
 	private ConfigServiceForTests configService;

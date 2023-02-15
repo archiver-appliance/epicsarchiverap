@@ -17,7 +17,6 @@ import org.epics.pvdata.factory.StatusFactory;
 import org.epics.pvdata.pv.PVStringArray;
 import org.epics.pvdata.pv.PVStructure;
 import org.epics.pvdata.pv.ScalarType;
-import org.json.JSONException;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -132,7 +131,6 @@ public class PvaArchivePVAction implements PvaAction {
 	 * { "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }
 	 * @param resultString
 	 * @return
-	 * @throws JSONException 
 	 */
 	public static NTTable parseArchivePvResult(String resultString) {
 		NTTable resultTable = NTTable.createBuilder()

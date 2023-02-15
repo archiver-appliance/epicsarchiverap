@@ -19,6 +19,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.SingleForkTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -34,6 +35,7 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
@@ -45,6 +47,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
  * @author mshankar
  *
  */
+@Category(SingleForkTests.class)
 public class DataReductionTest extends TestCase {
         private static final Logger logger = Logger.getLogger(DataReductionTest.class);
     	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";

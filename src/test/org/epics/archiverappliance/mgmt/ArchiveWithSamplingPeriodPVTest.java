@@ -3,16 +3,20 @@ package org.epics.archiverappliance.mgmt;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.log4j.Logger;
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ArchiveWithSamplingPeriodPVTest {
 	private static Logger logger = Logger.getLogger(ArchiveWithSamplingPeriodPVTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

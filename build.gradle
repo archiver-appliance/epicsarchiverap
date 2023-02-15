@@ -1,0 +1,462 @@
+plugins {
+    id "java-library"
+    id "war"
+    id "eclipse"
+    id "ca.cutterslade.analyze" version "1.9.0" // Analyzes dependancies for usage
+    id 'com.palantir.git-version' version '0.15.0'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir "src/main/"
+        }
+        resources {
+            srcDirs = []
+        }
+    }
+    test {
+        java {
+            srcDir "src/test/"
+        }
+        resources {
+            srcDirs = []
+        }
+    }
+}
+
+processTestResources {
+    from(file("src/sitespecific/tests/classpathfiles"))
+    from(file(".")) {
+        include "log4j.properties"
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+version gitVersion()
+def stageDir = layout.projectDir.file("stage")
+def warDir = layout.projectDir.file("../")
+def distDir = layout.projectDir.file("../")
+def srcDir = layout.projectDir.file("src/main")
+def libDir = layout.projectDir.file("lib")
+def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
+
+
+repositories {
+    flatDir {
+        name = "libs dir"
+        dir file("lib")
+    }
+    flatDir {
+        name = "test libs dir"
+        dir file("lib/test")
+    }
+    mavenCentral()
+    maven { url "https://clojars.org/repo" }
+}
+
+dependencies {
+    // Local depencencies
+    implementation files("lib/jamtio_071005.jar",
+                         "lib/redisnio_0.0.1.jar")
+    testImplementation files("lib/test/BPLTaglets.jar")
+    testImplementation(":pbrawclient:0.0.9")
+    // Maven dependencies
+    testImplementation("org.seleniumhq.selenium:selenium-api:4.7.0")
+    testImplementation("org.seleniumhq.selenium:selenium-firefox-driver:4.7.0")
+    testImplementation("org.seleniumhq.selenium:selenium-support:4.7.0")
+    implementation("org.apache.tomcat:tomcat-servlet-api:7.0.12")// Only needed for tests, but inbuilt to main)
+    implementation("org.epics:jca:2.4.7")
+    implementation("org.epics:epics-ntypes:0.3.7")
+    implementation("org.epics:epics-pvaccess:5.1.7")
+    implementation("org.epics:epics-pvdata:6.1.7")
+    implementation("commons-codec:commons-codec:1.9")
+    implementation("commons-fileupload:commons-fileupload:1.3.1")
+    implementation("commons-io:commons-io:2.4")
+    implementation("org.apache.commons:commons-lang3:3.12.0")
+    implementation("org.apache.commons:commons-math3:3.3")
+    implementation("commons-validator:commons-validator:1.4.0")
+    implementation("com.google.guava:guava:27.1-jre")
+    implementation("com.hazelcast:hazelcast-all:3.10.1")
+    implementation("org.apache.httpcomponents:httpclient:4.3.5")
+    implementation("org.apache.httpcomponents:httpcore:4.3.2")
+    implementation("jdbm:jdbm:2.4") //clojar dependancy
+    implementation("redis.clients:jedis:2.7.2")
+    implementation("joda-time:joda-time:2.4")
+    implementation("com.googlecode.json-simple:json-simple:1.1.1")
+    implementation("org.python:jython-standalone:2.5.3")
+    implementation("log4j:log4j:1.2.17")
+    implementation("au.com.bytecode:opencsv:2.4")
+    implementation("com.google.protobuf:protobuf-java:2.4.1")
+    testImplementation ("org.apache.commons:commons-compress:1.3")
+    testImplementation ("junit:junit:4.13.2")
+}
+
+tasks.register("cleanWars", Delete) {
+    group = "Clean"
+    description = "Remove any war files created, and the staging directory"
+    delete file(stageDir)
+    delete file("${warDir}/retrieval.war")
+    delete file("${warDir}/engine.war")
+    delete file("${warDir}/etl.war")
+    delete file("${warDir}/mgmt.war")
+    delete file("${warDir}/archappl_v${version}.tar.gz")
+    delete file("RELEASE_NOTES")
+}
+
+clean.dependsOn "cleanWars"
+
+tasks.register("generateBPLActionsMappings", JavaExec) {
+    group = "Documentation"
+    description = "Generates the rest api documentation."
+    doFirst {
+        mkdir "docs/api"
+        standardOutput new FileOutputStream("${projectDir}/docs/api/mgmtpathmappings.txt")
+    }
+    mainClass = "org.epics.archiverappliance.mgmt.BPLServlet"
+
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+tasks.register("generateJavaDocTagletScriptables", JavaExec) {
+    group = "Documentation"
+    mainClass = "org.epics.archiverappliance.common.taglets.ProcessMgmtScriptables"
+
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = project.projectDir
+}
+
+javadoc {
+    dependsOn "generateBPLActionsMappings"
+    mustRunAfter "generateBPLActionsMappings"
+    finalizedBy "generateJavaDocTagletScriptables"
+    doFirst {
+        copy {
+            from layout.projectDirectory.file("LICENSE"), 
+                 file("${srcDir}/main/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
+            into layout.projectDirectory.dir("docs")
+        }
+    }
+    source = sourceSets.main.allJava
+    failOnError = false
+    options {
+        author true
+        version true
+        setUse(true)
+        links "https://docs.oracle.com/en/java/javase/12/docs/api/"
+        taglets "org.epics.archiverappliance.taglets.BPLActionTaglet", 
+                "org.epics.archiverappliance.taglets.BPLActionParamTaglet", 
+                "org.epics.archiverappliance.taglets.BPLActionEndTaglet"
+        tagletPath file("lib/test/BPLTaglets.jar")
+    }
+}
+
+
+tasks.register("syncStaticContentHeaderFooters", JavaExec) {
+    group = "Staging"
+    dependsOn "compileJava"
+    mainClass = "org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters"
+    args "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/index.html", 
+         "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/"
+
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+tasks.register("updateSvgViewer", Exec) {
+    group = "Staging"
+    description = "Update the svg viewer repository."
+    commandLine "git", "submodule", "update", "--init", "--recursive"
+}
+
+tasks.register("zipSvgViewer", Zip) {
+    group = "Staging"
+    description = "Zip up the svg viewer project for assembling"
+    dependsOn "updateSvgViewer"
+    archiveFileName = "viewer.zip"
+    destinationDirectory = layout.projectDirectory.dir("${stageDir}/org/epics/archiverappliance/retrieval/staticcontent")
+    from layout.projectDirectory.dir("svg_viewer")
+}
+
+tasks.register("stage") {
+    group = "Staging"
+    description = "Copy static content from each of the projects into the staging directory."
+    finalizedBy "zipSvgViewer"
+    mkdir stageDir
+
+    copy {
+        from file("${srcDir}/org/epics/archiverappliance/staticcontent")
+        into file("${stageDir}/org/epics/archiverappliance/staticcontent")
+    }
+    copy {
+        from file("${srcDir}/org/epics/archiverappliance/retrieval/staticcontent")
+        into file("${stageDir}/org/epics/archiverappliance/retrieval/staticcontent")
+    }
+    copy {
+        from file("${srcDir}/org/epics/archiverappliance/mgmt/staticcontent")
+        into file("${stageDir}/org/epics/archiverappliance/mgmt/staticcontent")
+    }
+    new File("${stageDir}/org/epics/archiverappliance/staticcontent", "version.txt").text = "Archiver Appliance Version ${version}"
+}
+
+tasks.register("generateReleaseNotes", Exec) {
+    group = "Staging"
+    description = "Generate the Release Notes."
+    doFirst {
+        standardOutput new FileOutputStream("${projectDir}/RELEASE_NOTES")
+    }
+    commandLine "git", "log", "--oneline", "remotes/origin/master"
+}
+
+/**
+ * Common parts to all the war building.
+ */
+tasks.withType(War).configureEach {
+    dependsOn "stage"
+    from("${stageDir}/org/epics/archiverappliance/staticcontent") {
+        into "ui/comm"
+    }
+    from("src/sitespecific/${archapplsite}/classpathfiles") {
+        into "WEB-INF/classes"
+    }
+    rootSpec.exclude("**/tomcat-servlet-api*.jar")
+}
+
+tasks.register("mgmtWar", War) {
+    group = "Wars"
+    dependsOn javadoc
+    from("${stageDir}/org/epics/archiverappliance/mgmt/staticcontent") {
+        into "ui"
+    }
+    from("${srcDir}/org/epics/archiverappliance/config/persistence") {
+        include "*.sql"
+        into "install"
+    }
+    from("docs") {
+        into "ui/help"
+    }
+    from("docs/samples") {
+        include "deployMultipleTomcats.py"
+        into "install"
+    }
+    from("${srcDir}/org/epics/archiverappliance/common/scripts") {
+        fileMode 755
+        into "install/pbutils"
+    }
+    
+    archiveFileName = "mgmt.war"
+    webXml = file("${srcDir}/org/epics/archiverappliance/mgmt/WEB-INF/web.xml")
+}
+
+tasks.register("etlWar", War) {
+    group = "Wars"
+    
+    archiveFileName = "etl.war"
+    webXml = file("${srcDir}/org/epics/archiverappliance/etl/WEB-INF/web.xml")
+}
+
+tasks.register("engineWar", War) {
+    group = "Wars"
+    from("lib/native/linux-x86") {
+        fileMode 755
+        include "caRepeater"
+        into "WEB-INF/lib/native/linux-x86"
+    }
+    from("lib/native/linux-x86_64") {
+        fileMode 755
+        include "caRepeater"
+        into "WEB-INF/lib/native/linux-x86_64"
+    }
+    from("lib/native") {
+        fileMode 755
+        include "**/*.so"
+        into "WEB-INF/lib/native/linux-x86"
+    }
+    
+    archiveFileName = "engine.war"
+    webXml = file("${srcDir}/org/epics/archiverappliance/engine/WEB-INF/web.xml")
+}
+
+tasks.register("retreivalWar", War) {
+    group = "Wars"
+    dependsOn "zipSvgViewer"
+    from("${stageDir}/org/epics/archiverappliance/retrieval/staticcontent") {
+        into "ui"
+    }
+    
+    archiveFileName = "retrieval.war"
+    webXml = file("${srcDir}/org/epics/archiverappliance/retrieval/WEB-INF/web.xml")
+}
+
+tasks.register("buildRelease", Tar) {
+    group = "Wars"
+    description = "Builds a full release and zips up in a tar file."
+    dependsOn "mgmtWar"
+    dependsOn "retreivalWar"
+    dependsOn "etlWar"
+    dependsOn "engineWar"
+    dependsOn "generateReleaseNotes"
+
+    archiveFileName = "archappl_${archiveVersion}.tar.gz"
+    compression = Compression.GZIP
+    from layout.buildDirectory.file("libs/mgmt.war")
+    from layout.buildDirectory.file("libs/engine.war")
+    from layout.buildDirectory.file("libs/etl.war")
+    from layout.buildDirectory.file("libs/retrieval.war")
+    from (".") {
+        include "LICENSE"
+        include "NOTICE"
+        include "*License.txt"
+        include "RELEASE_NOTES"
+    }
+    from ("docs/samples") {
+        fileMode 755
+        include "quickstart.sh"
+    }
+    from ("docs/samples") {
+		include "sampleStartup.sh"
+		include "deployMultipleTomcats.py"
+		include "addMysqlConnPool.py"
+		include "single_machine_install.sh"
+        into "install_scripts"
+    }
+    from ("docs/samples/site_specific_content") {
+        into "sample_site_specific_content"
+        include "template_changes.html"
+    }
+    from ("docs/samples/site_specific_content") {
+        into "sample_site_specific_content/img"
+        include "*.png"
+    }
+    from ("${srcDir}/org/epics/archiverappliance/config/persistence") {
+        into "install_scripts"
+        include "*.sql"
+    }
+}
+
+war {
+    dependsOn "buildRelease"
+}
+
+assemble {
+    dependsOn "buildRelease"
+}
+
+tasks.withType(Test).configureEach {
+    doFirst {
+        mkdir file("${temporaryDir}/sts")
+        mkdir file("${temporaryDir}/mts")
+        mkdir file("${temporaryDir}/lts")
+    }
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    filter {
+        //include specific method in any of the tests
+        includeTestsMatching "*Test"
+    }
+    maxHeapSize = "1G"
+    jvmArgs "-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver"
+
+    environment "ARCHAPPL_SHORT_TERM_FOLDER", "${temporaryDir}/sts"
+    environment "ARCHAPPL_MEDIUM_TERM_FOLDER", "${temporaryDir}/mts"
+    environment "ARCHAPPL_LONG_TERM_FOLDER", "${temporaryDir}/lts"
+
+    doLast {
+        delete file("${temporaryDir}/sts")
+        delete file("${temporaryDir}/mts")
+        delete file("${temporaryDir}/lts")
+    }
+}
+
+tasks.register("unitTests", Test) {
+    group = "Test"
+    description = "Run all unit tests."
+    useJUnit {
+        excludeCategories "org.epics.archiverappliance.FlakyTests",
+                          "org.epics.archiverappliance.IntegrationTests",
+                          "org.epics.archiverappliance.LocalEpicsTests"
+    }
+}
+
+tasks.register("flakyTests", Test) {
+    group = "Test"
+    description = "Run unit tests that due to timimg or machine specifics, could fail."
+    useJUnit {
+        includeCategories "org.epics.archiverappliance.FlakyTests"
+        excludeCategories "org.epics.archiverappliance.SlowTests",
+                          "org.epics.archiverappliance.IntegrationTests",
+                          "org.epics.archiverappliance.LocalEpicsTests"
+    }
+}
+
+tasks.register("integrationTests", Test) {
+    group = "Test"
+    description = "Run the integration tests, ones that require a tomcat installation."
+    forkEvery 1
+    maxParallelForks = 1
+    dependsOn "buildRelease"
+    doFirst {
+        copy {
+            from layout.buildDirectory.file("libs/mgmt.war")
+            from layout.buildDirectory.file("libs/engine.war")
+            from layout.buildDirectory.file("libs/etl.war")
+            from layout.buildDirectory.file("libs/retrieval.war")
+            into file("${warDir}")
+        }
+        // backup the original tomcat conf folder
+        // if not already done. See org.epics.archiverappliance.TomcatSetup
+        def catalinaConf = file("$System.env.TOMCAT_HOME/conf_original")
+        if (!catalinaConf.exists()) {
+            copy {
+                from file("$System.env.TOMCAT_HOME/conf")
+                into file("$System.env.TOMCAT_HOME/conf_original")
+            }
+        }
+    }
+    useJUnit {
+        includeCategories "org.epics.archiverappliance.IntegrationTests",
+                          "org.epics.archiverappliance.LocalEpicsTests"
+        excludeCategories "org.epics.archiverappliance.SlowTests",
+                          "org.epics.archiverappliance.FlakyTests"
+    }
+}
+
+tasks.register("singleForkTests", Test) {
+    group = "Test"
+    description = "Run the single fork tests. Ones that require a fork every test."
+    forkEvery 1
+    useJUnit {
+        includeCategories "org.epics.archiverappliance.SingleForkTests"
+        excludeCategories "org.epics.archiverappliance.SlowTests",
+                          "org.epics.archiverappliance.FlakyTests",
+                          "org.epics.archiverappliance.IntegrationTests",
+                          "org.epics.archiverappliance.LocalEpicsTests"
+    }
+}
+
+test {
+    group = "Test"
+    description = "Run all the fast unit tests."
+    useJUnit {
+        excludeCategories "org.epics.archiverappliance.IntegrationTests",
+                          "org.epics.archiverappliance.LocalEpicsTests",
+                          "org.epics.archiverappliance.FlakyTests",
+                          "org.epics.archiverappliance.SingleForkTests",
+                          "org.epics.archiverappliance.SlowTests"
+    }
+    failFast = true
+}
+
+tasks.register("allTests", Test) {
+    group = "Test"
+    description = "Run all the tests."
+    dependsOn "unitTests"
+    dependsOn "singleForkTests"
+    dependsOn "integrationTests"
+    dependsOn "flakyTests"
+}
+
+defaultTasks "buildRelease"

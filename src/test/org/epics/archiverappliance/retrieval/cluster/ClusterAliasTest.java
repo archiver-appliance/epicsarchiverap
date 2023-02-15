@@ -10,6 +10,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -21,6 +22,7 @@ import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStrea
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -32,6 +34,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
+@Category(LocalEpicsTests.class)
 public class ClusterAliasTest {
 	private static Logger logger = Logger.getLogger(ClusterAliasTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ClusterAliasTest");

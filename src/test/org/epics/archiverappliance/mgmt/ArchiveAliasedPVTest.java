@@ -8,6 +8,8 @@ import java.sql.Timestamp;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -16,6 +18,7 @@ import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStrea
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -26,6 +29,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ArchiveAliasedPVTest {
 	private static Logger logger = Logger.getLogger(ArchiveAliasedPVTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

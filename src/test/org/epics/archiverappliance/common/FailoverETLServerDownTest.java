@@ -21,6 +21,7 @@ import java.util.concurrent.Callable;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -37,6 +38,7 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test basic failover - test the ETL side of things when the other server is down...
@@ -121,6 +123,7 @@ public class FailoverETLServerDownTest {
 	}
 
 	@Test
+	@Category(SlowTests.class)
 	public void testETL() throws Exception {
 		configService.getETLLookup().manualControlForUnitTests();
 		// Register the PV with both appliances and generate data.

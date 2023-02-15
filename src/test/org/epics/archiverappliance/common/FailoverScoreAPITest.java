@@ -20,6 +20,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -39,6 +40,7 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test the getDataAtTime API when using the merge dedup plugin.
@@ -46,6 +48,7 @@ import org.junit.Test;
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class FailoverScoreAPITest {
 	private static Logger logger = Logger.getLogger(FailoverScoreAPITest.class.getName());
 	private ConfigServiceForTests configService;

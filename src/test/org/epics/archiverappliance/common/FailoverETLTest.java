@@ -22,6 +22,7 @@ import java.util.concurrent.Callable;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -42,12 +43,14 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test basic failover - test the ETL side of things.
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class FailoverETLTest {
 	private static Logger logger = Logger.getLogger(FailoverETLTest.class.getName());
 	private ConfigServiceForTests configService;

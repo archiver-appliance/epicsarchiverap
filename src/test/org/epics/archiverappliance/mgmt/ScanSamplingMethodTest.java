@@ -8,6 +8,8 @@ import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.IntegrationTests;
+import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.PVCaPut;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
@@ -18,6 +20,7 @@ import org.epics.archiverappliance.retrieval.client.RetrievalEventProcessor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -34,6 +37,7 @@ import org.openqa.selenium.support.ui.Select;
  * @author mshankar
  *
  */
+@Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ScanSamplingMethodTest {
 	private static Logger logger = Logger.getLogger(ScanSamplingMethodTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();

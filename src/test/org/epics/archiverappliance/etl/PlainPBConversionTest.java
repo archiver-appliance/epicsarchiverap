@@ -16,6 +16,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -32,6 +33,7 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
@@ -51,6 +53,7 @@ public class PlainPBConversionTest {
 	PBCommonSetup setup;
 
 	@Test
+	@Category(SlowTests.class)
 	public void testPlainPBConversion() throws Exception {
 		testConversionForGranularity(PartitionGranularity.PARTITION_HOUR, 24*60*60);
 		testConversionForGranularity(PartitionGranularity.PARTITION_DAY, 7*24*60*60);

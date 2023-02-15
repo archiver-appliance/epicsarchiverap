@@ -11,6 +11,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,6 +25,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 
@@ -32,6 +34,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
  * @author mshankar
  *
  */
+@Category(SlowTests.class)
 public class PlainPBETLDestTest {
 	private static final Logger logger = Logger.getLogger(PlainPBETLDestTest.class);
 	PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();

@@ -17,6 +17,7 @@ import java.sql.Timestamp;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -31,6 +32,8 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
@@ -41,6 +44,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
+@Category(IntegrationTests.class)
 public class DataRetrievalServletTest {
 	
 	private static Logger logger = Logger.getLogger(DataRetrievalServletTest.class.getName());

@@ -17,6 +17,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -31,12 +32,14 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 /**
  * Test EventStreams that span multiple PB files.
  * @author mshankar
  *
  */
+@Category(SlowTests.class)
 public class MultiFilePBEventStreamTest {
 	private static final Logger logger = Logger.getLogger(MultiFilePBEventStreamTest.class);
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MultiFilePBEventStream/";

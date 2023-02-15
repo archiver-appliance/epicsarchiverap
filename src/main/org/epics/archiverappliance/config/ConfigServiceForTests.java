@@ -91,12 +91,12 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		try{
             InputStream is = this.getClass().getClassLoader().getResourceAsStream(DEFAULT_ARCHAPPL_PROPERTIES_FILENAME);
 			archapplproperties.load(is);
-			configlogger.info("loadings properties files.");
+			configlogger.info(String.format("loadings properties file. %s",DEFAULT_ARCHAPPL_PROPERTIES_FILENAME));
         }
         catch(NullPointerException e){
             Path config_path = Paths.get(this.webInfClassesFolder.getAbsolutePath() + File.separatorChar + DEFAULT_ARCHAPPL_PROPERTIES_FILENAME);
             config_path = config_path.normalize();
-            String msg = new String("Could not find config file:%s".format(config_path.toString()));
+            String msg = String.format("Could not find config file:%s", config_path.toString());
             configlogger.error(msg);
 			throw new ConfigException(msg);
         }
