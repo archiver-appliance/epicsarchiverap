@@ -28,7 +28,7 @@ import org.json.simple.JSONValue;
 
 /**
  * Persistence layer ontop of MySQL TEXT(blobs) on InnoDB
- * Bear in mind, an untuned mysql server does poorly in terms of performance. 
+ * Bear in mind, an untuned mysql server does poorly in terms of performance.
  * At the minimum consider using innodb_flush_log_at_trx_commit=0 if you plan to import large numbers of pvs etc.
  * @author mshankar
  *
@@ -37,6 +37,7 @@ public class MySQLPersistence implements ConfigPersistence {
 	private static Logger configlogger = Logger.getLogger("config." + MySQLPersistence.class.getName());
 	private static Logger logger = Logger.getLogger(MySQLPersistence.class.getName());
 	private DataSource theDataSource;
+
 	private static enum dialect_t {
 		MySQL,
 		SQLite,
@@ -48,7 +49,17 @@ public class MySQLPersistence implements ConfigPersistence {
 			configlogger.info("Looking up datasource called jdbc/archappl in the java:/comp/env namespace using JDNI");
 			Context initContext = new InitialContext();
 			Context envContext  = (Context) initContext.lookup("java:/comp/env");
-			theDataSource = (DataSource)envContext.lookup("jdbc/archappl");
+
+            String dbname = System.getenv().get("ARCHAPPL_DB_NAME");
+            if ( dbname.length() > 0 ) {
+                configlogger.info("Using DB name from environment variable:" + dbname);
+            }
+            else {
+                configlogger.info("Using default MySQL database name.");
+                dbname = "archappl";
+            }
+            String db_string = "jdbc/" +  dbname;
+			theDataSource = (DataSource)envContext.lookup(db_string);
 			configlogger.info("Found datasource called jdbc/archappl in the java:/comp/env namespace using JDNI");
 
 			// test RDB connection and probe type
@@ -175,7 +186,7 @@ public class MySQLPersistence implements ConfigPersistence {
 		}
 		putValueForKey(sql, pvName, userParams, UserSpecifiedSamplingParams.class, "putArchivePVRequest");
 	}
-	
+
 	@Override
 	public void removeArchivePVRequest(String pvName) throws IOException {
 		removeKey("DELETE FROM ArchivePVRequests WHERE pvName = ?;", pvName, "removeArchivePVRequest");
@@ -205,7 +216,7 @@ public class MySQLPersistence implements ConfigPersistence {
 		}
 		putStringValueForKey(sql, serverId, serverInfo, "putExternalDataServer");	
 	}
-	
+
 	@Override
 	public void removeExternalDataServer(String serverId, String serverInfo) throws IOException {
 		removeKey("DELETE FROM ExternalDataServers WHERE serverid = ?;", serverId, "removeExternalDataServer");
@@ -237,14 +248,14 @@ public class MySQLPersistence implements ConfigPersistence {
 		}
 		putStringValueForKey(sql, pvName, realName, "putAliasNamesToRealName");
 	}
-	
+
 	@Override
-	public void removeAliasName(String pvName, String realName) throws IOException { 
+	public void removeAliasName(String pvName, String realName) throws IOException {
 		removeKey("DELETE FROM PVAliases WHERE pvName = ?;", pvName, "removeAliasName");
 	}
 
-	
-	
+
+
 	private List<String> getKeys(String sql, String msg) throws IOException {
 		LinkedList<String> ret = new LinkedList<String>();
 		try(Connection conn = theDataSource.getConnection()) {
@@ -262,12 +273,12 @@ public class MySQLPersistence implements ConfigPersistence {
 		logger.debug(msg + " returns " + ret.size() + " keys");
 		return ret;
 	}
-	
-	
-	
+
+
+
 	private <T> T getValueForKey(String sql, String key, T obj, Class<T> clazz, String msg) throws IOException {
 		if(key == null || key.equals("")) return null;
-		
+
 		try(Connection conn = theDataSource.getConnection()) {
 			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
 				stmt.setString(1, key);
@@ -284,13 +295,13 @@ public class MySQLPersistence implements ConfigPersistence {
 		} catch(Exception ex) {
 			throw new IOException(ex);
 		}
-		
+
 		return null;
 	}
-	
+
 	private String getStringValueForKey(String sql, String key, String msg) throws IOException {
 		if(key == null || key.equals("")) return null;
-		
+
 		try(Connection conn = theDataSource.getConnection()) {
 			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
 				stmt.setString(1, key);
@@ -303,21 +314,21 @@ public class MySQLPersistence implements ConfigPersistence {
 		} catch(Exception ex) {
 			throw new IOException(ex);
 		}
-		
+
 		return null;
 	}
 
-	
-	
+
+
 	private <T> void putValueForKey(String sql, String key, T obj, Class<T> clazz, String msg) throws IOException {
 		if(key == null || key.equals("")) throw new IOException("key cannot be null when persisting " + msg);
 		if(obj == null || obj.equals("")) throw new IOException("value cannot be null when persisting " + msg);
-		
+
 		try(Connection conn = theDataSource.getConnection()) {
 			JSONEncoder<T> encoder = JSONEncoder.getEncoder(clazz);
 			JSONObject jsonObj = encoder.encode(obj);
 			String jsonStr = jsonObj.toJSONString();
-			
+
 			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
 				stmt.setString(1, key);
 				stmt.setString(2, jsonStr);
@@ -333,12 +344,12 @@ public class MySQLPersistence implements ConfigPersistence {
 			throw new IOException(ex);
 		}
 	}
-	
-	
+
+
 	private void putStringValueForKey(String sql, String key, String value, String msg) throws IOException {
 		if(key == null || key.equals("")) throw new IOException("key cannot be null when persisting " + msg);
 		if(value == null || value.equals("")) throw new IOException("value cannot be null when persisting " + msg);
-		
+
 		try(Connection conn = theDataSource.getConnection()) {
 			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
 				stmt.setString(1, key);
@@ -355,8 +366,8 @@ public class MySQLPersistence implements ConfigPersistence {
 			throw new IOException(ex);
 		}
 	}
-	
-	
+
+
 	private void removeKey(String sql, String key, String msg) throws IOException {
 		try(Connection conn = theDataSource.getConnection()) {
 			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
