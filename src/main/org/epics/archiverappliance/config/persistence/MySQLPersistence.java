@@ -51,7 +51,7 @@ public class MySQLPersistence implements ConfigPersistence {
 			Context envContext  = (Context) initContext.lookup("java:/comp/env");
 
             String dbname = System.getenv().get("ARCHAPPL_DB_NAME");
-            if ( dbname.length() > 0 ) {
+            if ( dbname != null && dbname.length() > 0 ) {
                 configlogger.info("Using DB name from environment variable:" + dbname);
             }
             else {
