@@ -44,6 +44,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import static org.junit.Assert.*;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
@@ -54,7 +55,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 @RunWith(Parameterized.class)
 @Category(SingleForkTests.class)
-public class DataReductionPostProcessorsTest extends TestCase {
+public class DataReductionPostProcessorsTest {
 	private static final Logger logger = Logger.getLogger(DataReductionPostProcessorsTest.class);
 	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
 	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";

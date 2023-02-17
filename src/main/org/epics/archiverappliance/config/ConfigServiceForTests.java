@@ -115,13 +115,6 @@ public class ConfigServiceForTests extends DefaultConfigService {
 
 		persistanceLayer = new InMemoryPersistence();
 
-		this.engineContext=new EngineContext(this);
-		this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
-		this.etlPVLookup = new PBThreeTierETLPVLookup(this);
-		this.retrievalState = new SampleRetrievalState(this);
-		this.mgmtRuntime = new MgmtRuntimeState(this);
-
-
 		startupExecutor = Executors.newScheduledThreadPool(1, new ThreadFactory() {
 			@Override
 			public Thread newThread(Runnable r) {
@@ -130,6 +123,14 @@ public class ConfigServiceForTests extends DefaultConfigService {
 				return t;
 			}
 		});
+
+		this.engineContext=new EngineContext(this);
+		this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+		this.etlPVLookup = new PBThreeTierETLPVLookup(this);
+		this.retrievalState = new SampleRetrievalState(this);
+		this.mgmtRuntime = new MgmtRuntimeState(this);
+
+
 		startupState = STARTUP_SEQUENCE.STARTUP_COMPLETE;
 		this.addShutdownHook(new Runnable() {
 			@Override
