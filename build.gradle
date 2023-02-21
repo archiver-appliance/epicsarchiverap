@@ -41,7 +41,6 @@ java {
 version gitVersion()
 def stageDir = layout.projectDir.file("stage")
 def warDir = layout.projectDir.file("../")
-def distDir = layout.projectDir.file("../")
 def srcDir = layout.projectDir.file("src/main")
 def libDir = layout.projectDir.file("lib")
 def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
@@ -301,7 +300,7 @@ tasks.register("buildRelease", Tar) {
     dependsOn "engineWar"
     dependsOn "generateReleaseNotes"
 
-    archiveFileName = "archappl_${archiveVersion}.tar.gz"
+    archiveFileName = "archappl_v${version}.tar.gz"
     compression = Compression.GZIP
     from layout.buildDirectory.file("libs/mgmt.war")
     from layout.buildDirectory.file("libs/engine.war")
@@ -447,7 +446,6 @@ test {
                           "org.epics.archiverappliance.SingleForkTests",
                           "org.epics.archiverappliance.SlowTests"
     }
-    failFast = true
 }
 
 tasks.register("allTests", Test) {
