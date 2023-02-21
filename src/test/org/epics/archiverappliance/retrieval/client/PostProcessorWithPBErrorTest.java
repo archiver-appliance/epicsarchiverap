@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Random;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
@@ -32,6 +33,7 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
@@ -63,7 +65,12 @@ public class PostProcessorWithPBErrorTest {
 	StoragePlugin storageplugin;
 	private ConfigServiceForTests configService;
 	private short dataGeneratedForYears = 5;
-	
+
+	@BeforeClass
+	public static void setupClass() {
+		WebDriverManager.firefoxdriver().setup();
+	}
+
 	@Before
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));

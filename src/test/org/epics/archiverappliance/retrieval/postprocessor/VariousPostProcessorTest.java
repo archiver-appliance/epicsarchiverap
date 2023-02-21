@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -20,6 +21,7 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
@@ -48,7 +50,12 @@ public class VariousPostProcessorTest {
 	double expectedStd = 1.7370;
 	double expectedJitter = 1.5851;
 	double expectedVariance = 3.0172;
-	
+
+	@BeforeClass
+	public static void setupClass() {
+		WebDriverManager.firefoxdriver().setup();
+	}
+
 	@Before
 	public void setUp() throws Exception {
 		FileUtils.deleteDirectory(new File(ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "UnitTestNoNamingConvention"));
