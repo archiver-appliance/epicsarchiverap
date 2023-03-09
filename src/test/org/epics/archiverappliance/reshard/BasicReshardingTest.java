@@ -39,6 +39,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import java.io.File;
 import java.io.StringWriter;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 
@@ -61,12 +62,14 @@ import java.util.List;
  *
  */
 @Tag("localEpics")
+@Tag("integration")
 public class BasicReshardingTest {
-	private static Logger logger = LogManager.getLogger(BasicReshardingTest.class.getName());
-	private String pvName = "UnitTestNoNamingConvention:sine";
+	private static final Logger logger = LogManager.getLogger(BasicReshardingTest.class.getName());
+	private final String pvPrefix = BasicReshardingTest.class.getSimpleName();
+	private final String pvName = pvPrefix + "UnitTestNoNamingConvention:sine";
 	private ConfigServiceForTests configService;
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	SIOCSetup siocSetup = new SIOCSetup();
+	SIOCSetup siocSetup = new SIOCSetup(pvPrefix);
 	WebDriver driver;
 	String folderSTS = ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "reshardSTS";
 	String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardMTS";
@@ -79,7 +82,7 @@ public class BasicReshardingTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", folderSTS);
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", folderMTS);
@@ -123,16 +126,16 @@ public class BasicReshardingTest {
 		Thread.sleep(2*1000);
 		WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		String pvNameObtainedFromTable = statusPVName.getText();
-		Assertions.assertTrue(pvName.equals(pvNameObtainedFromTable), "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
+		Assertions.assertEquals(pvName, pvNameObtainedFromTable, "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
 		WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		String expectedPVStatus = "Being archived";
-		Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
+		Assertions.assertEquals(expectedPVStatus, pvArchiveStatusObtainedFromTable, "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		
 		PVTypeInfo typeInfoBeforePausing = getPVTypeInfo();
 		// We determine the appliance for the PV by getting it's typeInfo.
 		String applianceIdentity = typeInfoBeforePausing.getApplianceIdentity();
-		Assertions.assertTrue(applianceIdentity != null, "Cannot determine appliance identity for pv from typeinfo ");
+		Assertions.assertNotNull(applianceIdentity, "Cannot determine appliance identity for pv from typeinfo ");
 		
 		// We use the PV's PVTypeInfo creation date for moving data. This PVTypeInfo was just created. 
 		// We need to fake this to an old value so that the data is moved correctly.
@@ -188,7 +191,7 @@ public class BasicReshardingTest {
 		}
 		
 		// Let's pause the PV.
-		String pausePVURL = "http://localhost:17665/mgmt/bpl/pauseArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
+		String pausePVURL = "http://localhost:17665/mgmt/bpl/pauseArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
 		JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
 		Assertions.assertTrue(pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Cannot pause PV");
 		Thread.sleep(1000);
@@ -210,8 +213,7 @@ public class BasicReshardingTest {
 			if(pvDetailsTableFirstCol.getText().contains("Instance archiving PV")) {
 				WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 				String obtainedAppliance = pvDetailsTableSecondCol.getText();
-				String expectedAppliance = otherAppliance;
-				Assertions.assertTrue(expectedAppliance.equals(obtainedAppliance), "Expecting appliance to be " + expectedAppliance + "; instead it is " + obtainedAppliance);
+				Assertions.assertEquals(otherAppliance, obtainedAppliance, "Expecting appliance to be " + otherAppliance + "; instead it is " + obtainedAppliance);
 				break;
 			}
 		}
@@ -225,7 +227,7 @@ public class BasicReshardingTest {
         Instant afterReshardingCreationTimedstamp = typeInfoAfterResharding.getCreationTime();
 		
 		// Let's resume the PV.
-		String resumePVURL = "http://localhost:17665/mgmt/bpl/resumeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
+		String resumePVURL = "http://localhost:17665/mgmt/bpl/resumeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
 		JSONObject resumeStatus = GetUrlContent.getURLContentAsJSONObject(resumePVURL);
 		Assertions.assertTrue(resumeStatus.containsKey("status") && resumeStatus.get("status").equals("ok"), "Cannot resume PV");
 
@@ -236,7 +238,7 @@ public class BasicReshardingTest {
 		checkRemnantShardPVs();
 
 		// Make sure the creation timestamps are ok. If we have external integration, these play a part and you can not serve data because the creation timestamp is off
-		Assertions.assertTrue(beforeReshardingCreationTimedstamp.equals(afterReshardingCreationTimedstamp), "Creation timestamps before "
+		Assertions.assertEquals(beforeReshardingCreationTimedstamp, afterReshardingCreationTimedstamp, "Creation timestamps before "
 				+ TimeUtils.convertToHumanReadableString(beforeReshardingCreationTimedstamp)
 				+ " and after "
 				+ TimeUtils.convertToHumanReadableString(afterReshardingCreationTimedstamp)
@@ -254,35 +256,35 @@ public class BasicReshardingTest {
 			buf.append(reshardPV.toString());
 			buf.append(",");
 		}
-		Assertions.assertTrue(reshardPVs.size() == 0, "We seem to have some reshard temporary PV's present " + buf.toString());
+		Assertions.assertTrue(reshardPVs.isEmpty(), "We seem to have some reshard temporary PV's present " + buf);
 	}
 	
-	private PVTypeInfo getPVTypeInfo() throws Exception { 
-		String getPVTypeInfoURL = "http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8");
+	private PVTypeInfo getPVTypeInfo() throws Exception {
+		String getPVTypeInfoURL = "http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
 		JSONObject typeInfoJSON = GetUrlContent.getURLContentAsJSONObject(getPVTypeInfoURL);
-		Assertions.assertTrue(typeInfoJSON != null, "Cannot get typeinfo for pv using " + getPVTypeInfoURL);
+		Assertions.assertNotNull(typeInfoJSON, "Cannot get typeinfo for pv using " + getPVTypeInfoURL);
         PVTypeInfo unmarshalledTypeInfo = new PVTypeInfo();
         JSONDecoder<PVTypeInfo> typeInfoDecoder = JSONDecoder.getDecoder(PVTypeInfo.class);
         typeInfoDecoder.decode((JSONObject) typeInfoJSON, unmarshalledTypeInfo);
         return unmarshalledTypeInfo;
 	}
-	
+
 	private long getNumberOfEvents() throws Exception {
-        Instant start = TimeUtils.convertFromEpochSeconds(TimeUtils.getStartOfYearInSeconds(TimeUtils.getCurrentYear() - 2), 0);
-        Instant end = TimeUtils.now();
+		Instant start = TimeUtils.convertFromEpochSeconds(TimeUtils.getStartOfYearInSeconds(TimeUtils.getCurrentYear() - 2), 0);
+		Instant end = TimeUtils.now();
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-        Instant obtainedFirstSample = null;
+		Instant obtainedFirstSample = null;
 		long eventCount = 0;
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, start, end, null)) {
 			if(stream != null) {
 				for(Event e : stream) {
-					if(obtainedFirstSample == null) { 
+					if (obtainedFirstSample == null) {
 						obtainedFirstSample = e.getEventTimeStamp();
 					}
 					logger.debug("Sample from " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 					eventCount++;
 				}
-			} else { 
+			} else {
 				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}

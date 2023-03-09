@@ -57,27 +57,33 @@ public class ConfigServiceForTests extends DefaultConfigService {
     public static final int defaultSecondsDisconnect = 10;
     private File webInfClassesFolder;
 
-    public ConfigServiceForTests() throws ConfigException {
-        super();
+    /**
+     * Special Constructor for Integration tests Do not use in unit tests.
+     *
+     * @throws ConfigException
+     */
+	public ConfigServiceForTests() throws ConfigException {
+		super();
+	}
+    public ConfigServiceForTests(int jcaCommandThreadCount) throws ConfigException {
+        this(new File("./build/classes"), jcaCommandThreadCount);
     }
 
-    public ConfigServiceForTests(File WebInfClassesFolder) throws ConfigException {
-        this(WebInfClassesFolder, -1);
-    }
-    public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
-        this.webInfClassesFolder = WebInfClassesFolder;
-        configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
-        appliances = new HashMap<String, ApplianceInfo>();
-        pv2appliancemapping = new ConcurrentHashMap<String, ApplianceInfo>();
-        namedFlags = new ConcurrentHashMap<String, Boolean>();
-        typeInfos = new ConcurrentHashMap<String, PVTypeInfo>();
-        archivePVRequests = new ConcurrentHashMap<String, UserSpecifiedSamplingParams>();
-        aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
-        channelArchiverDataServers = new ConcurrentHashMap<String, String>();
-        pvsForThisAppliance = new ConcurrentSkipListSet<String>();
-        pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
-        pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
-        appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
+	public static final int defaultMinutesDisconnect = 1;
+	public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
+		this.webInfClassesFolder = WebInfClassesFolder;
+		configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
+		appliances = new HashMap<String, ApplianceInfo>();
+		pv2appliancemapping = new ConcurrentHashMap<String, ApplianceInfo>();
+		namedFlags = new ConcurrentHashMap<String, Boolean>();
+		typeInfos = new ConcurrentHashMap<String, PVTypeInfo>();
+		archivePVRequests = new ConcurrentHashMap<String, UserSpecifiedSamplingParams>();
+		aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
+		channelArchiverDataServers = new ConcurrentHashMap<String, String>();
+		pvsForThisAppliance = new ConcurrentSkipListSet<String>();
+		pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
+		pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
+		appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
 
         myApplianceInfo = new ApplianceInfo(
                 TESTAPPLIANCE0,
@@ -173,11 +179,16 @@ public class ConfigServiceForTests extends DefaultConfigService {
         }
     }
 
-    @Override
-    public ApplianceInfo getApplianceForPV(String pvName) {
-        // We should do the following code only for unit tests (and not for the real config service).
-        return super.getApplianceForPV(pvName);
-    }
+	@Override
+	public ApplianceInfo getApplianceForPV(String pvName) {
+		ApplianceInfo applianceInfo = super.getApplianceForPV(pvName);
+		// We should do the following code only for unit tests (and not for the real config service).
+        if (applianceInfo == null && pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX)) {
+			logger.debug("Setting appliance for unit test pv " + pvName + " to self in unit tests mode.");
+			applianceInfo = myApplianceInfo;
+		}
+		return applianceInfo;
+	}
 
     /**
      * Register the pv to the appliance
@@ -188,23 +199,24 @@ public class ConfigServiceForTests extends DefaultConfigService {
      * @param applianceInfo ApplianceInfo
      * @throws AlreadyRegisteredException pv already registered.
      */
-    @Override
-    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
-        super.registerPVToAppliance(pvName, applianceInfo);
-        if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
-            logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");
-            this.pvsForThisAppliance.add(pvName);
+	@Override
+	public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
+		super.registerPVToAppliance(pvName, applianceInfo);
+		if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
+			logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");
+			this.pvsForThisAppliance.add(pvName);
             if (this.getETLLookup() != null) {
-                this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));
+            	this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));
             }
         }
     }
 
+
     @Override
     public InputStream getPolicyText() throws IOException {
         if (webInfClassesFolder != null) {
-            String policiesPyPath = this.webInfClassesFolder.getAbsolutePath() + File.separator + "policies.py";
-            return new FileInputStream(new File(policiesPyPath));
+            String policyURL = ConfigServiceForTests.class.getClassLoader().getResource("policies.py").getPath().toString();
+            return new FileInputStream(policyURL);
         }
         return super.getPolicyText();
     }
@@ -225,20 +237,24 @@ public class ConfigServiceForTests extends DefaultConfigService {
                         pvName + " does not follow the testing convention. Defaulting the dbrtype to a scalar double.");
                 namingConventionType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
             }
-            PVTypeInfo typeInfo = new PVTypeInfo(pvName, namingConventionType, !namingConventionType.isWaveForm(), 1);
-            typeInfo.setUpperDisplayLimit(1.0);
-            typeInfo.setLowerDisplayLimit(-1.0);
-            typeInfo.setHasReducedDataSet(true);
-            typeInfo.setComputedEventRate(1.0f);
-            typeInfo.setComputedStorageRate(12.0f);
-            typeInfo.setUserSpecifiedEventRate(1.0f);
-            typeInfo.setApplianceIdentity(this.myIdentity);
-            typeInfo.addArchiveField("HIHI");
-            typeInfo.addArchiveField("LOLO");
-            return typeInfo;
+            return getPvTypeInfo(pvName, namingConventionType);
         }
 
         return null;
+    }
+
+    private PVTypeInfo getPvTypeInfo(String pvName, ArchDBRTypes namingConventionType) {
+        PVTypeInfo typeInfo = new PVTypeInfo(pvName, namingConventionType, !namingConventionType.isWaveForm(), 1);
+        typeInfo.setUpperDisplayLimit(1.0);
+        typeInfo.setLowerDisplayLimit(-1.0);
+        typeInfo.setHasReducedDataSet(true);
+        typeInfo.setComputedEventRate(1.0f);
+        typeInfo.setComputedStorageRate(12.0f);
+        typeInfo.setUserSpecifiedEventRate(1.0f);
+        typeInfo.setApplianceIdentity(this.myIdentity);
+        typeInfo.addArchiveField("HIHI");
+        typeInfo.addArchiveField("LOLO");
+        return typeInfo;
     }
 
     /**
@@ -257,11 +273,12 @@ public class ConfigServiceForTests extends DefaultConfigService {
         this.rootFolder = rootFolder;
     }
 
-    @Override
-    public String getWebInfFolder() {
-        if (this.webInfClassesFolder != null) {
-            return this.webInfClassesFolder.getAbsolutePath();
-        }
+
+	@Override
+	public String getWebInfFolder() {
+		if (this.webInfClassesFolder != null) {
+			return this.webInfClassesFolder.getAbsolutePath();
+		}
 
         return super.getWebInfFolder();
     }

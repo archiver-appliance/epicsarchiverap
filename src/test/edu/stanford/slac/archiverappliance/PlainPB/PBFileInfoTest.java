@@ -47,7 +47,7 @@ public class PBFileInfoTest {
                 pvName,
                 TimeUtils.getStartOfYear(currentYear),
                 new ArchPaths(),
-                (new ConfigServiceForTests(new File("./bin")).getPVNameToKeyConverter()));
+                (new ConfigServiceForTests(-1).getPVNameToKeyConverter()));
         Instant start = TimeUtils.getStartOfYear(currentYear);
         Instant end = start.plusSeconds(10000);
         GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, end);

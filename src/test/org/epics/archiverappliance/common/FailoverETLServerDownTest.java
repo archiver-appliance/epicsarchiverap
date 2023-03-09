@@ -53,12 +53,12 @@ public class FailoverETLServerDownTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 	}
 
     private int generateData(String applianceName, Instant lastMonth, int startingOffset) throws IOException {
 		int genEventCount = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_" + this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(lastMonth).getYear()));
 
@@ -127,9 +127,9 @@ public class FailoverETLServerDownTest {
 		// Register the PV with both appliances and generate data.
         Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2*31);
 
-		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts"); 
-		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"); 
-		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts"); 
+		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "libs/"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts");
+		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts");
+		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts");
 		long dCount = generateData("dest_appliance", lastMonth, 1);
 
 		tCount = dCount;
@@ -143,7 +143,7 @@ public class FailoverETLServerDownTest {
     	logger.info("Checking merged data after running ETL");
 		long lCount = testMergedRetrieval("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts" + "&partitionGranularity=PARTITION_YEAR", TimeUtils.minusDays(TimeUtils.now(), 365*2), TimeUtils.plusDays(TimeUtils.now(), 365*2));		
 		Assertions.assertTrue(lCount == 0, "We expected LTS to have failed " + lCount);
-		long mCount = testMergedRetrieval("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts" + "&partitionGranularity=PARTITION_DAY", TimeUtils.minusDays(TimeUtils.now(), 365*2), TimeUtils.plusDays(TimeUtils.now(), 365*2));		
+		long mCount = testMergedRetrieval("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts" + "&partitionGranularity=PARTITION_DAY", TimeUtils.minusDays(TimeUtils.now(), 365*2), TimeUtils.plusDays(TimeUtils.now(), 365*2));
 		Assertions.assertTrue(mCount == tCount, "We expected MTS to have the same amount of data " + tCount + " instead we got " + mCount);
 
 	}	

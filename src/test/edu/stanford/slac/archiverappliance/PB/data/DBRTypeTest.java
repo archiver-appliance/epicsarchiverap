@@ -36,7 +36,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
@@ -54,11 +53,12 @@ public class DBRTypeTest {
     static PBCommonSetup pbSetup = new PBCommonSetup();
     static ConfigService configService;
 
+    private static final int SECONDS_INTO_YEAR = 100;
     @BeforeAll
     public static void setUp() throws Exception {
         pbplugin = new PlainPBStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin, "DBRTypeTestsPB");
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
     }
 
     @AfterAll
@@ -84,7 +84,7 @@ public class DBRTypeTest {
         if (!dbrType.isV3Type()) return;
         logger.info("Testing JCA conversion for DBR_type: " + dbrType.name());
         BoundaryConditionsSimulationValueGenerator valuegenerator = new BoundaryConditionsSimulationValueGenerator();
-        for (int secondsintoyear = 0; secondsintoyear < 100; secondsintoyear++) {
+        for (int secondsintoyear = 0; secondsintoyear < SECONDS_INTO_YEAR; secondsintoyear++) {
             try {
                 DBR dbr = valuegenerator.getJCASampleValue(dbrType, secondsintoyear);
                 Event e = configService
@@ -172,7 +172,7 @@ public class DBRTypeTest {
         }
         logger.info("Testing CSV events for DBR_type: " + dbrType.name());
         BoundaryConditionsSimulationValueGenerator valuegenerator = new BoundaryConditionsSimulationValueGenerator();
-        for (int secondsintoyear = 0; secondsintoyear < 100; secondsintoyear++) {
+        for (int secondsintoyear = 0; secondsintoyear < SECONDS_INTO_YEAR; secondsintoyear++) {
             try {
                 SampleValue generatedVal = valuegenerator.getSampleValue(dbrType, secondsintoyear);
                 String[] line = new String[5];
@@ -271,7 +271,7 @@ public class DBRTypeTest {
         if (!dbrType.isV3Type()) return;
         logger.info("Testing setting repeat count for DBR_type: " + dbrType.name());
         BoundaryConditionsSimulationValueGenerator valuegenerator = new BoundaryConditionsSimulationValueGenerator();
-        for (int secondsintoyear = 0; secondsintoyear < 100; secondsintoyear++) {
+        for (int secondsintoyear = 0; secondsintoyear < SECONDS_INTO_YEAR; secondsintoyear++) {
             try {
                 DBR dbr = valuegenerator.getJCASampleValue(dbrType, secondsintoyear);
                 DBRTimeEvent beforeEvent = EPICS2PBTypeMapping.getPBClassFor(dbrType)

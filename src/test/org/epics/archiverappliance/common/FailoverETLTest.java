@@ -60,7 +60,7 @@ public class FailoverETLTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "../sts"); 
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts"); 
 		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "../lts"); 
@@ -93,7 +93,7 @@ public class FailoverETLTest {
 		logger.info("Added " + pvName + " to the appliance " + applianceName);
 
 		int genEventCount = generateData(applianceName, lastMonth, startingOffset);
-		
+
 
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");
 		long rtvlEventCount = 0;
@@ -159,14 +159,14 @@ public class FailoverETLTest {
 				+ "&other=" + URLEncoder.encode(otherURL, "UTF-8");
 		configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
 		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
-		configService.getETLLookup().manualControlForUnitTests(); 
+		configService.getETLLookup().manualControlForUnitTests();
 
 	}
 
     private long testMergedRetrieval(String applianceName, Instant startTime, Instant endTime) throws Exception {
 		long rtvlEventCount = 0;
 		long lastEvEpoch = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
 		try(BasicContext context = new BasicContext()) {
 			List<Callable<EventStream>> callables = plugin.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
 			Assertions.assertTrue(callables.size() > 0, "We got zero callables");
@@ -197,10 +197,10 @@ public class FailoverETLTest {
         Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2*31);
 		long oCount = generateDataAndRegisterPV("http://localhost:17665", ConfigServiceForTests.TESTAPPLIANCE0, lastMonth, 0);
 
-		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts"); 
-		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"); 
-		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts"); 
-		long dCount = generateData("dest_appliance", lastMonth, stepSeconds / 2);
+		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts");
+		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts");
+		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts");
+		long dCount = generateData("dest_appliance", lastMonth, 1);
 
 		tCount = dCount + oCount;
 		

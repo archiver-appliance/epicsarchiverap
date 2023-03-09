@@ -7,29 +7,8 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.common.POJOEvent;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.JCA2ArchDBRType;
-import org.epics.archiverappliance.config.MetaInfo;
-import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.data.ScalarStringSampleValue;
-import org.epics.archiverappliance.engine.ArchiveEngine;
-
 import com.cosylab.epics.caj.CAJChannel;
 import com.cosylab.epics.caj.CAJMonitor;
-
 import gov.aps.jca.CAException;
 import gov.aps.jca.Channel;
 import gov.aps.jca.Channel.ConnectionState;
@@ -46,6 +25,25 @@ import gov.aps.jca.event.GetEvent;
 import gov.aps.jca.event.GetListener;
 import gov.aps.jca.event.MonitorEvent;
 import gov.aps.jca.event.MonitorListener;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.POJOEvent;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.JCA2ArchDBRType;
+import org.epics.archiverappliance.config.MetaInfo;
+import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.ScalarStringSampleValue;
+import org.epics.archiverappliance.engine.ArchiveEngine;
+
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * EPICS ChannelAccess implementation of the PV interface.
@@ -83,7 +81,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	private ConcurrentHashMap<String, String> allarchiveFieldsData = null;
 	
 	/** Runtime fields that are not archived/stored are stored here */
-	private ConcurrentHashMap<String, String> runTimeFieldsData = new ConcurrentHashMap<String, String>();
+	private final ConcurrentHashMap<String, String> runTimeFieldsData = new ConcurrentHashMap<String, String>();
 	
 	/** if this pv has many meta fields archived,changedarchiveFieldsData includes the changed meta values and the field names*/
 	private ConcurrentHashMap<String, String> changedarchiveFieldsData = null;
@@ -367,7 +365,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 						fireConnectionRequestMade();
 						if (channel_ref.getChannel().getConnectionState() == ConnectionState.CONNECTED) {
 							handleConnected(channel_ref.getChannel());
-						} else {
 						}
 					}
 				} catch (Exception e) {
@@ -509,13 +506,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	@Override
 	public void stop() {
 		running = false;
-		PVContext.scheduleCommand(this.name, this.jcaCommandThreadId, this.channel_ref, "stop", new Runnable() {
-			@Override
-			public void run() {
-				logger.debug("Stopping channel " + EPICS_V3_PV.this.name);
-				unsubscribe();
-				disconnect();
-			}
+		PVContext.scheduleCommand(this.name, this.jcaCommandThreadId, this.channel_ref, "stop", () -> {
+			logger.debug("Stopping channel " + EPICS_V3_PV.this.name);
+			unsubscribe();
+			disconnect();
 		});
 	}
 	
@@ -643,7 +637,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if (controlledPVList != null) {
 			// this pv is control pv.
 			try {
-				updateAllControlPVEnablMent(ev);
+				updateAllControlPVEnablement(ev);
 			} catch (Exception e) {
 				logger.error(
 						"exception in monitor changed function when updatinng controlled pvs' enablement for " + this.name,
@@ -740,7 +734,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * @param ev  
 	 * @throws Exception error when update all controlled pv's archiving status
 	 */
-	private void updateAllControlPVEnablMent(MonitorEvent ev) throws Exception {
+	private void updateAllControlPVEnablement(MonitorEvent ev) throws Exception {
 		final DBR dbr = ev.getDBR();
 		boolean enable = DBR_Helper.decodeBooleanValue(dbr);
 		ArrayList<String> copyOfControlledPVList = new ArrayList<String>(controlledPVList);
@@ -823,7 +817,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		}		
 */
 		class AddDetail {
-			private List<Map<String, String>> statuses;
+			private final List<Map<String, String>> statuses;
 			AddDetail(List<Map<String, String>> statuses) {
 				this.statuses = statuses;
 			}
@@ -846,10 +840,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		ad.addKV("Various transient errors", Long.toString(transientErrorCount));
 		
 		ad.addKV("Do we have a CA channel?", Boolean.toString(this.channel_ref != null && this.channel_ref.getChannel() != null));
-		ad.addKV("Do we have a subscription?", Boolean.toString(this.subscription != null));		
-		if(this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel)) { 
-			CAJChannel cajChannel = (CAJChannel)this.channel_ref.getChannel();
-			ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));			
+		ad.addKV("Do we have a subscription?", Boolean.toString(this.subscription != null));
+		if (this.channel_ref != null && this.channel_ref.getChannel() != null && (this.channel_ref.getChannel() instanceof CAJChannel cajChannel)) {
+			ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));
 			ad.addKV("CAJ channel ID (CID)", Integer.toString(cajChannel.getChannelID()));
 			ad.addKV("CAJ server channel ID (SID)", Integer.toString(cajChannel.getServerChannelID()));
 			if(this.subscription != null && this.subscription instanceof CAJMonitor) {
@@ -877,18 +870,15 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	
 	
 	@Override
-	public void updateTotalMetaInfo() throws IllegalStateException, CAException { 
-		GetListener getListener = new GetListener() {
-			@Override
-			public void getCompleted(final GetEvent event) {
-				// This runs in a CA thread
-				if (event.getStatus().isSuccessful()) {
-					final DBR dbr = event.getDBR();
-					logger.debug("Updating metadata (EGU/PREC etc) for pv " + EPICS_V3_PV.this.name);
-					totalMetaInfo.applyBasicInfo(EPICS_V3_PV.this.name, dbr, EPICS_V3_PV.this.configservice);
-				} else {
-					logger.error("The meta get listener was not successful for EPICS_V3_PV " + name);
-				}
+	public void updateTotalMetaInfo() throws IllegalStateException, CAException {
+		GetListener getListener = event -> {
+			// This runs in a CA thread
+			if (event.getStatus().isSuccessful()) {
+				final DBR dbr = event.getDBR();
+				logger.debug("Updating metadata (EGU/PREC etc) for pv " + EPICS_V3_PV.this.name);
+				totalMetaInfo.applyBasicInfo(EPICS_V3_PV.this.name, dbr, EPICS_V3_PV.this.configservice);
+			} else {
+				logger.error("The meta get listener was not successful for EPICS_V3_PV " + name);
 			}
 		};
 		if(channel_ref != null) { 
@@ -926,10 +916,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if(allarchiveFieldsData != null) { 
 			retVal.putAll(allarchiveFieldsData);
 		}
-		if(runTimeFieldsData != null) { 
-			retVal.putAll(runTimeFieldsData);
-		}
-		
+		retVal.putAll(runTimeFieldsData);
+
 		return retVal;
 	}
 	
@@ -942,6 +930,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if(currentValue != null && value != null && !currentValue.equals(value)) { 
 			this.changedarchiveFieldsData.put(fieldName, value);
 		}
+		assert value != null;
 		this.allarchiveFieldsData.put(fieldName, value);
 	}
 	
@@ -953,7 +942,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			addUpdateChangedDBEPropertyMetaField("LABELS", String.join(",", labels.getLabels()));
 		} else if (dbr instanceof DBR_CTRL_Double || dbr instanceof DBR_CTRL_Int) {
 			logger.debug("Updating DBE_PROPERTIES metafields for DBR_CTRL_Double for pv " + name);
-			final DBR_CTRL_Double ctrl = (DBR_CTRL_Double)dbr;
+			assert dbr instanceof DBR_CTRL_Double;
+			final DBR_CTRL_Double ctrl = (DBR_CTRL_Double) dbr;
 			// fieldsAvailableFromDBRControl = new String[] {"PREC", "EGU", "HOPR", "LOPR", "HIHI", "HIGH", "LOW", "LOLO", "DRVH", "DRVL" };  
 			addUpdateChangedDBEPropertyMetaField("PREC", Short.toString(ctrl.getPrecision()));
 			addUpdateChangedDBEPropertyMetaField("EGU", ctrl.getUnits());
@@ -968,7 +958,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 			addUpdateChangedDBEPropertyMetaField("DRVH", ctrl.getUpperCtrlLimit().toString());
 			addUpdateChangedDBEPropertyMetaField("DRVL", ctrl.getLowerCtrlLimit().toString());
 		} else {
-			logger.error("In applyBasicInfo, cannot determine dbr type for " + (dbr != null ? dbr.getClass().getName() : "Null DBR"));
+			logger.error("In applyBasicInfo, cannot determine dbr type for " + dbr.getClass().getName());
 		}
 	}
 
@@ -981,9 +971,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	 * save the meta data
 	 */
 	private void saveMetaDataOnceEveryDay(DBRTimeEvent lastEvent) {
-		HashMap<String, String> tempHashMap = new HashMap<String, String>();
-		tempHashMap.putAll(allarchiveFieldsData);
-		if(runTimeFieldsData != null && !runTimeFieldsData.isEmpty()) {
+		HashMap<String, String> tempHashMap = new HashMap<String, String>(allarchiveFieldsData);
+		if (!runTimeFieldsData.isEmpty()) {
 			// This should store fields like the description at least once every day.
 			tempHashMap.putAll(runTimeFieldsData);
 		}
@@ -1007,17 +996,16 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 		if (hasMetaField) {
 			// //////////handle the field value when it
 			// changes//////////////
-			if (changedarchiveFieldsData.size() > 0) {
+			if (!changedarchiveFieldsData.isEmpty()) {
 				logger.debug("Adding changed field for pv " + name + " with " + changedarchiveFieldsData.size());
-				HashMap<String, String> tempHashMap = new HashMap<String, String>();
-				tempHashMap.putAll(changedarchiveFieldsData);
+				HashMap<String, String> tempHashMap = new HashMap<>(changedarchiveFieldsData);
 				// dbrtimeevent.s
 				lastEvent.setFieldValues(tempHashMap, true);
 				synchronized(this) {
 					changedarchiveFieldsData.clear();
 				}
 			}
-			if (allarchiveFieldsData.size() != 0) {
+			if (!allarchiveFieldsData.isEmpty()) {
 				long nowES = TimeUtils.getCurrentEpochSeconds();
 				if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
 					saveMetaDataOnceEveryDay(lastEvent);

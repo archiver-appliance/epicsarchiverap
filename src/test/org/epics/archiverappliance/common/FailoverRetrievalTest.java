@@ -38,6 +38,15 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.time.Instant;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.sql.Timestamp;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * Test basic failover - just the retrieval side of things.
  * @author mshankar
@@ -55,7 +64,7 @@ public class FailoverRetrievalTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
 	}
 
@@ -70,7 +79,7 @@ public class FailoverRetrievalTest {
     private long generateMTSData(String applURL, String applianceName, Instant lastMonth, int startingOffset)
 			throws Exception {
 		int genEventCount = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
             ArrayListEventStream strm = new ArrayListEventStream(
                     0,

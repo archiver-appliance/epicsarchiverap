@@ -89,7 +89,7 @@ public class ZeroedFileEventStreamTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
     }
 
 

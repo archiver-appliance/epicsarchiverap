@@ -50,7 +50,7 @@ public class RenamePVTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		if(rootFolder.exists()) {
 			FileUtils.deleteDirectory(rootFolder);
 		}

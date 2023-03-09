@@ -40,6 +40,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -119,7 +121,7 @@ public class DataReductionPostProcessorsTest {
         logger.info("Testing for " + reduceDataUsing);
         cleanDataFolders();
 
-        ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"), 1);
+        ConfigServiceForTests configService = new ConfigServiceForTests(1);
         // Set up the raw and reduced PV's
         PlainPBStoragePlugin etlSTS = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",

@@ -39,8 +39,9 @@ import java.time.Instant;
  *
  */
 @Tag("localEpics")
+@Tag("integration")
 public class ClusterAliasSpanApplianceTest {
-	private static Logger logger = LogManager.getLogger(ClusterAliasSpanApplianceTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(ClusterAliasSpanApplianceTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ClusterAliasSpanApplianceTest");
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();

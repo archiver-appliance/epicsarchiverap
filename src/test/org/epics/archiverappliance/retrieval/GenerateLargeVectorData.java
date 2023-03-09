@@ -48,7 +48,7 @@ public class GenerateLargeVectorData {
 		String folder = args[1];
 		
 		
-		ConfigService configService = new ConfigServiceForTests(new File("./bin"), 1);
+		ConfigService configService = new ConfigServiceForTests(1);
 		String pluginURL = "pb://localhost?name=LTS&rootFolder=" + folder + "&partitionGranularity=PARTITION_DAY";
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(pluginURL, configService);
 
@@ -67,7 +67,7 @@ public class GenerateLargeVectorData {
 				logger.info("Generating data for " + TimeUtils.convertToHumanReadableString(currentSeconds));
 				YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(currentSeconds);
 				List<Double> vals = new ArrayList<Double>(80000);
-				for(int k = 0; k < 80000; k++) { 
+				for (int k = 0; k < 80000; k++) {
 					vals.add(Double.valueOf(k));
 				}
 				instream.add(new SimulationEvent(yts.getSecondsintoyear(), yts.getYear(), ArchDBRTypes.DBR_WAVEFORM_DOUBLE, new VectorValue<Double>(vals)));

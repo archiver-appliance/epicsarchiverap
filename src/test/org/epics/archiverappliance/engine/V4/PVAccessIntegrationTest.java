@@ -77,7 +77,7 @@ public class PVAccessIntegrationTest {
     @Test
     public void testPVAccessGenericJsonApi() throws Exception {
 
-        String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName()  + ":testPVAccessGenericJsonApi:" + UUID.randomUUID();
+        String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName() + ":testPVAccessGenericJsonApi:" + UUID.randomUUID();
 
         var level1 = new PVAString("level 1", "level 1 0");
         var level2 = new PVAInt("level 2", 16);
@@ -155,13 +155,13 @@ public class PVAccessIntegrationTest {
     public void testPVAccessUnsignedBytes() throws Exception {
         String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName() + ":testPVAccessUnsignedBytes:" + UUID.randomUUID();
 
-        var value = new PVAByteArray("value", true, Integer.valueOf(1).byteValue(),Integer.valueOf(-1).byteValue() );
+        var value = new PVAByteArray("value", true, Integer.valueOf(1).byteValue(), Integer.valueOf(-1).byteValue());
         var value2 = new PVAByteArray("value", true, Integer.valueOf(255).byteValue(), Integer.valueOf(1).byteValue());
 
         testPVData(ArchDBRTypes.DBR_WAVEFORM_BYTE,
                 List.of(value, value2), (sampleValue) -> {
                     var values = sampleValue.getValues();
-                    return new PVAByteArray("value", true, ((Number)values.get(0)).byteValue(), ((Number)values.get(1)).byteValue());
+                    return new PVAByteArray("value", true, ((Number) values.get(0)).byteValue(), ((Number) values.get(1)).byteValue());
                 }, "epics:nt/NTScalarArray:1.0", pvName);
 
     }
@@ -182,13 +182,13 @@ public class PVAccessIntegrationTest {
     public void testPVAccessUnsignedShorts() throws Exception {
         String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName() + ":testPVAccessUnsignedShorts:" + UUID.randomUUID();
 
-        var value = new PVAShortArray("value", true, Integer.valueOf(1).shortValue(),Integer.valueOf(-1).shortValue() );
+        var value = new PVAShortArray("value", true, Integer.valueOf(1).shortValue(), Integer.valueOf(-1).shortValue());
         var value2 = new PVAShortArray("value", true, Integer.valueOf(255).shortValue(), Integer.valueOf(1).shortValue());
 
         testPVData(ArchDBRTypes.DBR_WAVEFORM_SHORT,
                 List.of(value, value2), (sampleValue) -> {
                     var values = sampleValue.getValues();
-                    return new PVAShortArray("value", true, ((Number)values.get(0)).shortValue(), ((Number)values.get(1)).shortValue());
+                    return new PVAShortArray("value", true, ((Number) values.get(0)).shortValue(), ((Number) values.get(1)).shortValue());
                 }, "epics:nt/NTScalarArray:1.0", pvName);
 
     }
@@ -216,13 +216,13 @@ public class PVAccessIntegrationTest {
         testPVData(ArchDBRTypes.DBR_WAVEFORM_INT,
                 List.of(value, value2), (sampleValue) -> {
                     var values = sampleValue.getValues();
-                    return new PVAIntArray("value", true, ((Number)values.get(0)).intValue(), ((Number)values.get(1)).intValue());
+                    return new PVAIntArray("value", true, ((Number) values.get(0)).intValue(), ((Number) values.get(1)).intValue());
                 }, "epics:nt/NTScalarArray:1.0", pvName);
 
     }
 
     public <PVA extends PVAData> void testPVData(ArchDBRTypes type,
-        List<PVA> inputPvaDataList, Function<SampleValue, PVA> expectedDataMapping,
+                                                 List<PVA> inputPvaDataList, Function<SampleValue, PVA> expectedDataMapping,
                                                  String structName, String pvName)
             throws Exception {
 

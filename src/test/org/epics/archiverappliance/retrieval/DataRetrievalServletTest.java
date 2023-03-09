@@ -57,7 +57,7 @@ public class DataRetrievalServletTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		pbSetup.setUpRootFolder(pbplugin);
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 	}
@@ -76,7 +76,7 @@ public class DataRetrievalServletTest {
 	@Test
 	public void testTimesAreSequential() throws Exception {
 		PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
-		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
+		ConfigService configService = new ConfigServiceForTests(-1);
 		storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw", StandardCharsets.UTF_8), configService);
 
 		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYear(year), new ArchPaths(), configService.getPVNameToKeyConverter()));

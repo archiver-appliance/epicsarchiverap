@@ -54,7 +54,7 @@ public class ConsolidateETLJobsForOnePV2Test {
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         if (new File(rootFolderName).exists()) {
             FileUtils.deleteDirectory(new File(rootFolderName));
         }

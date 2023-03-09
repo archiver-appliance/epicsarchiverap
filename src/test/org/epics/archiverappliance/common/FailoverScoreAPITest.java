@@ -57,8 +57,13 @@ public class FailoverScoreAPITest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());
+    }
+
+    @AfterEach
+    public void tearDown() throws Exception {
+        tomcatSetup.tearDown();
     }
 
     /**
@@ -154,11 +159,6 @@ public class FailoverScoreAPITest {
                 genEventCount,
                 rtvlEventCount,
                 "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        tomcatSetup.tearDown();
     }
 
     private void changeMTSForDest() throws Exception {

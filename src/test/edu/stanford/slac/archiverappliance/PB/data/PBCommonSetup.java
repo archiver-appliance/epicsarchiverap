@@ -34,7 +34,7 @@ public class PBCommonSetup {
 
     static {
         try {
-            configService = new ConfigServiceForTests(new File("./bin"), 1);
+            configService = new ConfigServiceForTests(1);
         } catch (ConfigException e) {
             throw new RuntimeException(e);
         }
@@ -44,7 +44,7 @@ public class PBCommonSetup {
     public void setUpRootFolder() throws Exception {
 
 		String rootFolder = System.getProperty("edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.rootFolder");
-		 
+
 		if(rootFolder != null)  {
 			logger.info("Setting PB root folder to " + rootFolder);
 			configService.setPBRootFolder(rootFolder);

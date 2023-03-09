@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 
@@ -35,7 +34,7 @@ public class CleanPartitionsTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
     }
 
     @Test

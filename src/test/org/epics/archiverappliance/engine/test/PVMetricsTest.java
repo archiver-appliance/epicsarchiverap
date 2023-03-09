@@ -7,8 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -21,8 +19,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-
-
 import org.junit.jupiter.api.Test;
 
 /**
@@ -32,17 +28,18 @@ import org.junit.jupiter.api.Test;
  */
 @Tag("localEpics")
 public class PVMetricsTest {
-	private static Logger logger = LogManager.getLogger(PVMetricsTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(PVMetricsTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
 	private FakeWriter writer = new FakeWriter();
-	
+
+    private final String pvPrefix = PVMetricsTest.class.getSimpleName();
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		ioc = new SIOCSetup();
+		ioc = new SIOCSetup(pvPrefix);
 		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(new File("./bin"));
+        testConfigService = new ConfigServiceForTests(-1);
 		Thread.sleep(3000);
 	}
 
@@ -52,19 +49,15 @@ public class PVMetricsTest {
 		ioc.stopSIOC();
 	}
 
-	@Test
-	public void testAll() {
-		PVMetricsForSingleScanChannel();
-		PVMetricsForSingleMonitorChannel();
-	}
 /**
  * test of getting pv metrics for one pv in scan mode
  */
-	private void PVMetricsForSingleScanChannel() {
-		String pvName = "test_0";
+@Test
+public void PVMetricsForSingleScanChannel() {
+		String pvName = pvPrefix + "test_0";
 		try {
 
-			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, 5, writer,
+			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.SCAN, writer,
 					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
 			Thread.sleep(2000);
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
@@ -83,11 +76,12 @@ public class PVMetricsTest {
 /**
  * test of getting pv metrics of one pv in monitor mode
  */
-	private void PVMetricsForSingleMonitorChannel() {
-		String pvName = "test_1";
+@Test
+public void PVMetricsForSingleMonitorChannel() {
+		String pvName = pvPrefix + "test_1";
 		try {
 
-			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.MONITOR, 5,
+			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.MONITOR,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
 					null, false, false);
 			Thread.sleep(2000);

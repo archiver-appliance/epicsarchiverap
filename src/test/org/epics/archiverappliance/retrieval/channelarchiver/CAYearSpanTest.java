@@ -7,8 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.channelarchiver;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;

@@ -53,6 +53,7 @@ import java.time.Instant;
  * @author mshankar
  *
  */
+@Tag("integration")
 @Tag("localEpics")
 public class AppendAndAliasPVTest {
 	private static Logger logger = LogManager.getLogger(AppendAndAliasPVTest.class.getName());
@@ -65,7 +66,7 @@ public class AppendAndAliasPVTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", folderSTS);
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", folderMTS);

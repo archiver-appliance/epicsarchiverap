@@ -1,0 +1,72 @@
+# Download Epics
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS epics-download-extract
+SHELL ["/bin/bash", "-c"]
+RUN apt-get update && apt-get install -yq wget git
+WORKDIR /var/cache
+ARG EPICSVERSION=7.0.7
+RUN wget -q --show-progress https://epics.anl.gov/download/base/base-$EPICSVERSION.tar.gz \
+&& mkdir /epics/ \
+&& tar -xf base-$EPICSVERSION.tar.gz -C /epics \
+&& rm base-$EPICSVERSION.tar.gz
+
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS base
+
+FROM base AS base-amd64
+ENV EPICS_HOST_ARCH=linux-x86_64
+
+FROM base AS base-386
+ENV EPICS_HOST_ARCH=linux-x86
+
+FROM base AS base-arm64
+ENV EPICS_HOST_ARCH=linux-arm
+
+FROM base AS base-arm
+ENV EPICS_HOST_ARCH=linux-arm
+
+# Now finally choose the right base image:
+FROM base-$TARGETARCH AS build-epics
+SHELL ["/bin/bash", "-c"]
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update \
+ && apt-get install --no-install-recommends -yq \
+  build-essential \
+  ca-certificates \
+  curl \
+  libreadline-dev \
+  telnet \
+ && apt-get clean && rm -rf /var/lib/apt/lists/* && rm -rf /var/cache/apt
+
+WORKDIR /epics
+COPY --from=epics-download-extract /epics /epics
+ARG EPICSVERSION=7.0.7
+RUN mv base-$EPICSVERSION base
+RUN cd base && make -j$(nproc)
+
+
+FROM debian:bookworm-slim  AS tomcat-download-extract
+SHELL ["/bin/bash", "-c"]
+RUN apt-get update && apt-get install -yq wget git
+WORKDIR /var/cache
+RUN mkdir /tomcat-download
+RUN mkdir /tomcat
+ARG TOMCAT_VERSION=9.0.79
+RUN wget https://archive.apache.org/dist/tomcat/tomcat-9/v$TOMCAT_VERSION/bin/apache-tomcat-$TOMCAT_VERSION.tar.gz -O /tmp/tomcat.tar.gz
+RUN tar -xf /tmp/tomcat.tar.gz -C /tomcat-download
+RUN cp -Rv /tomcat-download/apache-tomcat-$TOMCAT_VERSION/* /tomcat/
+
+# syntax=docker/dockerfile:1
+
+FROM base-$TARGETARCH AS gradle-base
+
+RUN apt-get update && apt-get install -yq git default-jdk libreadline-dev
+COPY --from=tomcat-download-extract /tomcat /tomcat
+ENV TOMCAT_HOME=/tomcat
+
+COPY --from=build-epics /epics /epics
+# Epics env
+ENV EPICS_ROOT=/epics
+ENV EPICS_BASE=${EPICS_ROOT}/base
+ENV EPICS_BASE_BIN=${EPICS_BASE}/bin/${EPICS_HOST_ARCH} \
+    EPICS_BASE_LIB=${EPICS_BASE}/lib/${EPICS_HOST_ARCH} \
+    LD_LIBRARY_PATH=${EPICS_BASE_LIB}:${LD_LIBRARY_PATH}
+ENV PATH=${PATH}:${EPICS_BASE_BIN}

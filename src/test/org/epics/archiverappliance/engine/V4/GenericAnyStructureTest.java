@@ -25,7 +25,15 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.test.MemBufWriter;
-import org.epics.pva.data.*;
+import org.epics.pva.data.PVAAnyArray;
+import org.epics.pva.data.PVAData;
+import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVAIntArray;
+import org.epics.pva.data.PVAString;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVAStructureArray;
+import org.epics.pva.data.PVAUnion;
+import org.epics.pva.data.PVAny;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
@@ -33,7 +41,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.BitSet;
@@ -42,7 +49,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.*;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.bytesToString;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.convertBytesToPVAStructure;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -59,7 +69,7 @@ public class GenericAnyStructureTest {
 
     @Before
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 

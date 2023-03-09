@@ -47,7 +47,7 @@ public class ETLSourceGetStreamsTest {
 	@BeforeEach
 	public void setUp() throws Exception {
 		testFolder.mkdirs();
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR", configService);
 	}
 

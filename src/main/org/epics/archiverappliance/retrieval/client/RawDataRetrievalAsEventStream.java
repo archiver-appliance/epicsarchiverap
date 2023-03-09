@@ -85,12 +85,12 @@ public class RawDataRetrievalAsEventStream implements DataRetrieval {
 			if(connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 				InputStream is = new BufferedInputStream(connection.getInputStream());
 				if(is.available() <= 0) {
-					logger.info("We got an empty stream as a response for PVs " + concatedPVs + " + using URL " + url.toString());
+					logger.info("We got an empty stream as a response for PVs " + concatedPVs + " + using URL " + url);
 					return null;
 				}
 				return new InputStreamBackedEventStream(is, startTime, retrievalEventProcessor);
 			} else { 
-				logger.info("No data found for PVs " + concatedPVs + " + using URL " + url.toString());
+				logger.info("No data found for PVs " + concatedPVs + " + using URL " + url);
 				return null;
 			}
 		} catch(Exception ex) {

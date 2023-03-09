@@ -8,17 +8,15 @@ import gov.aps.jca.TimeoutException;
 import gov.aps.jca.configuration.Configuration;
 import gov.aps.jca.configuration.ConfigurationException;
 import gov.aps.jca.configuration.DefaultConfigurationBuilder;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
 import org.xml.sax.SAXException;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 public class PVCaPut {
 	private static Logger logger = LogManager.getLogger(PVCaPut.class.getName());
@@ -36,8 +34,8 @@ public class PVCaPut {
          * @throws SAXException 
      */
     private void initialize() throws CAException, SAXException, IOException, ConfigurationException, ConfigException {
-        
-    	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+
+        ConfigServiceForTests configService = new ConfigServiceForTests(-1);
                 // Get the JCALibrary instance.
          if(jca==null)
                  jca = JCALibrary.getInstance();

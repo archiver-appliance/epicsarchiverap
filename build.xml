@@ -13,12 +13,12 @@
 	<property environment="env"/>
 	<property name="ver" value="1.1.0"/>
 	<property name="src" location="src/main"/>
-	<property name="classes" location="bin/"/>
+	<property name="classes" location="build/classes/"/>
 	<property name="stage" location="stage/"/>
 	<property name="lib" location="lib/"/>
 	<property name="docs" location="docs/"/>
-	<property name="wardest" location="./build"/>
-	<property name="dist" location="./build"/>
+	<property name="wardest" location="./build/libs"/>
+	<property name="dist" location="./build/distributions"/>
 	<property name="test.dir" location="src/test"/>
 	<property name="tomcathome" location="${env.TOMCAT_HOME}"/>
 
@@ -43,7 +43,7 @@
 	<echo>Building the archiver appliance for the site ${archapplsite}</echo>
 
     <target name="wars" depends="clean, retrieval_war, engine_war, etl_war, mgmt_war, generate_release_notes">
-    	<tar destfile="${wardest}/archappl_v${version}.tar.gz" basedir="${wardest}" compression="gzip" includes="mgmt.war engine.war etl.war retrieval.war">
+    	<tar destfile="${dist}/archappl_v${version}.tar.gz" basedir="${wardest}" compression="gzip" includes="mgmt.war engine.war etl.war retrieval.war">
     		<tarfileset dir="${docs}/samples" filemode="755">
     			<include name="quickstart.sh"/>
     		</tarfileset>

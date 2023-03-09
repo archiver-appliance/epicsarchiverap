@@ -36,36 +36,27 @@ import java.util.LinkedList;
 public class DBRRetrievalTest {
 	private static final Logger logger = LogManager.getLogger(DBRRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	private static final class DataDBR {
-		String pvName;
-		ArchDBRTypes type;
-		public DataDBR(String pvName, ArchDBRTypes type) {
-			this.pvName = pvName;
-			this.type = type;
-		}
-	}
-	
 	private final LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
 
 
 	@BeforeEach
 	public void setUp() throws Exception {
 		
-		for(ArchDBRTypes type : ArchDBRTypes.values()) {
+		for (ArchDBRTypes type : ArchDBRTypes.values()) {
 			dataDBRs.add(new DataDBR(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + (type.isWaveForm() ? "V_" : "S_") + type.getPrimitiveName(), type));
 		}
 
-		for(DataDBR dataDBR : dataDBRs) {
-			GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type);
-		}
-		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());	
-	}
+        for (DataDBR dataDBR : dataDBRs) {
+            GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type);
+        }
+        tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
+    }
 
 	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
-	
+
 	@Test
 	public void testGetDataForDBRs() {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
@@ -94,10 +85,24 @@ public class DBRRetrievalTest {
 					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 				}
-			} finally {
-				if(stream != null) try { stream.close(); stream = null; } catch(Throwable ignored) { }
-			}
+            } finally {
+                if (stream != null) try {
+                    stream.close();
+                    stream = null;
+                } catch (Throwable t) {
+                }
+            }
 		}
 	}
+
+    private static final class DataDBR {
+        String pvName;
+        ArchDBRTypes type;
+
+        public DataDBR(String pvName, ArchDBRTypes type) {
+            this.pvName = pvName;
+            this.type = type;
+        }
+    }
 
 }

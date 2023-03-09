@@ -35,7 +35,8 @@ import java.time.Instant;
 public class MultiplePVSimpleRetrievalTest {
 	private static final Logger logger = LogManager.getLogger(MultiplePVSimpleRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	private static final int TOTAL_NUMBER_OF_PVS = 10;
+    private static long previousEpochSeconds = 0;
+    private static final int TOTAL_NUMBER_OF_PVS = 10;
 	private static final String[] pvs = new String[TOTAL_NUMBER_OF_PVS];
 
 
@@ -54,7 +55,6 @@ public class MultiplePVSimpleRetrievalTest {
 		tomcatSetup.tearDown();
 	}
 
-	static long previousEpochSeconds = 0; 
 	@Test
 	public void testGetDataForMultiplePVs() {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
@@ -80,7 +80,11 @@ public class MultiplePVSimpleRetrievalTest {
 				}
 			}
 		} finally {
-			if(stream != null) try { stream.close(); stream = null; } catch(Throwable ignored) { }
+			if (stream != null) try {
+				stream.close();
+				stream = null;
+			} catch (Throwable ignored) {
+			}
 		}
-	}	
+	}
 }

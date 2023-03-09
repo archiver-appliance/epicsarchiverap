@@ -517,11 +517,11 @@ public class EngineContext {
 			this.configService = configService;
 			this.myIdentity = myIdentity;
 		}
-		
-		
+
+
 		@Override
 		public void completed(MetaInfo metaInfo) {
-			try { 
+			try {
 				logger.debug("Completed computing archive info for pv " + pvName);
 				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
 				JSONEncoder<MetaInfo> encoder = JSONEncoder.getEncoder(MetaInfo.class);
@@ -533,8 +533,8 @@ public class EngineContext {
 			}
 		}
 	}
-	
-	
+
+
 	private void startArchivingPV(String pvName) throws Exception {
 		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
 		if(typeInfo == null) {
@@ -551,13 +551,16 @@ public class EngineContext {
         Instant lastKnownTimeStamp = typeInfo.determineLastKnownEventFromStores(configService);
 		String controllingPV = typeInfo.getControllingPV();
 		String[] archiveFields = typeInfo.getArchiveFields();
-		
+
 		logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "+ samplingPeriod + "(s)");
-		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType, lastKnownTimeStamp, controllingPV, archiveFields, typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties()); 
+		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod,
+				firstDest, configService,
+				dbrType, lastKnownTimeStamp, controllingPV,
+				archiveFields, typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties());
 	}
-	
-	
-	public boolean abortComputeMetaInfo(String pvName) { 
+
+
+	public boolean abortComputeMetaInfo(String pvName) {
 		return MetaGet.abortMetaGet(pvName);
 	}
 

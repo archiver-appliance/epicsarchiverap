@@ -103,7 +103,7 @@ public class PVAccessUtil {
         long samplingPeriodMilliSeconds = 100;
         float samplingPeriod = (float) samplingPeriodMilliSeconds / (float) 1000.0;
         try {
-            ArchiveEngine.archivePV(pvName, samplingPeriod, PolicyConfig.SamplingMethod.MONITOR, 10, writer,
+            ArchiveEngine.archivePV(pvName, samplingPeriod, PolicyConfig.SamplingMethod.MONITOR, writer,
                     configService,
                     type, null, metaFields, true, false);
         } catch (Exception e) {

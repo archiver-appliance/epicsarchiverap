@@ -53,7 +53,7 @@ public class YearSpanRetrievalTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         pbSetup.setUpRootFolder(pbplugin);
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
         generateDataForYears();

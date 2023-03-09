@@ -81,7 +81,7 @@ public class ETLWithRecurringFilesTest {
         PBCommonSetup destSetup = new PBCommonSetup();
         PlainPBStoragePlugin etlNewDest = new PlainPBStoragePlugin();
         PBCommonSetup newDestSetup = new PBCommonSetup();
-        ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"), 1);
+        ConfigServiceForTests configService = new ConfigServiceForTests(1);
         etlDest.setBackupFilesBeforeETL(backUpFiles);
 
         srcSetup.setUpRootFolder(etlSrc, "RecurringFilesTestSrc" + granularity, granularity);

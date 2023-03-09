@@ -66,7 +66,7 @@ public class FileBackedPBEventStreamTest {
                     .plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
     static {
         try {
-            configService = new ConfigServiceForTests(new File("./bin"));
+            configService = new ConfigServiceForTests(-1);
         } catch (ConfigException e) {
             throw new RuntimeException(e);
         }
