@@ -312,6 +312,31 @@ function checkPVStatus() {
 	$('#archstatsdiv').show();
 }
 
+//Get a report on the PV's that are currently paused
+function getPVNames() {
+	//http://172.21.225.187:17665/mgmt/bpl/getMatchingPVsForThisAppliance?regex=.*&limit=1000
+	
+	var pvNames = $('#archstatpVNames').val();
+	if(sessionStorage && pvNames != null) {
+		sessionStorage['archstatpVNames'] = $('#archstatpVNames').val();
+	}
+
+	var pvQuery = getPVQueryParam();
+	if(!pvQuery) return;
+	
+	var jsonurl = '../bpl/getMatchingPVsForThisAppliance?regex=.*&limit=-1';
+	var tabledivname = 'archstatsdiv';
+	createReportTable(jsonurl, tabledivname,
+			[{'srcAttr' : 'pvName', 'label' : 'PV Name', 'srcFunction' : function(curdata) {
+				 return curdata;
+			 }},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Details', 'srcFunction' : function(curdata) { return '<a href="pvdetails.html?pv=' + encodeURIComponent(curdata) + '" ><img class="imgintable" src="comm/img/details.png"></a>'; }},
+			 {'srcAttr' : 'pvName', 'sortType' : 'none', 'label' : 'Delete',  'srcFunction' : function(curdata) { return '<a onclick="showDialogForDeletePausedPV(' + "'" + curdata + "'" + ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'; }},
+			]);
+	$('#archstatsdiv').show();
+	$("#pvStopArchivingOk").click(deletePausedPV);
+}
+
 function getPVDetails() {
 	var pvName = getQueryParams()['pv'];
 	$('#pvDetailsName').text(pvName);
@@ -627,7 +652,8 @@ function deletePausedPV() {
 	$("#pvStopArchivingParamsDiv").dialog('close');
 
 	var reportTable = $("#reporttablediv_table");
-	deleteRowAndRefresh(reportTable, function(dataObject) { return dataobj.pvName == pvName; } );
+	if (!reportTable.length) reportTable = $("#archstatsdiv_table");
+	deleteRowAndRefresh(reportTable, function(dataObject) { return dataobj.pvName ? dataobj.pvName == pvName : dataobj == pvName; } );
 	
 	var deleteData = $('#pvStopArchivingDeleteData').is(':checked');
 	$.ajax({
