@@ -1275,6 +1275,44 @@ function pauseMultiplePVs() {
 	});
 }
 
+function deleteMultiplePVs() {
+	
+	var pvQuery = getPVQueryParam();
+	if(!pvQuery) return;
+	
+	var jsonurl = '../bpl/deletePV?' + pvQuery;
+	var components = jsonurl.split('?');
+	var urlalone = components[0];
+	var querystring = '';
+	if(components.length > 1) {
+		querystring = components[1];
+	}
+	var HTTPMethod = 'GET';
+	if(jsonurl.length > 2048) {
+		HTTPMethod = 'POST';
+	}
+	
+	$.ajax({
+		url: urlalone,
+		data: querystring,
+		type: HTTPMethod,
+		dataType: 'json',
+		success: function(data, textStatus, jqXHR) {
+			if(data.status != null && data.status != undefined && data.status == "ok") {
+				getPVNames();
+			} else if(data.validation != null && data.validation != undefined){
+				alert(data.validation);
+			} else {
+				alert("deleteMultiplePVs returned something valid but did not have a status field.");
+			}
+
+		},
+		error: function(jqXHR, textStatus, errorThrown) {
+			alert("An error occured on the server while deleting PVs -- " + textStatus + " -- " + errorThrown);
+		}
+	});
+}
+
 function resumeMultiplePVs() {
 	
 	var pvQuery = getPVQueryParam();
