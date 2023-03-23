@@ -163,6 +163,22 @@ public final class PBThreeTierETLPVLookup {
 					long nextExpectedETLRunInSecs = nextPartitionFirstSec + 5*60*(etllifetimeid+1);
 					// We compute the initial delay so that the ETL jobs run at a predictable time. 
 					long initialDelay = nextExpectedETLRunInSecs - epochSeconds;
+
+					if(System.getenv().containsKey("ARCHAPPL_SKIP_ETL_FOR_STORE")) {
+						// Temporarily set the initial delay to a distant future; meant for emergencies only.
+						// If you are having trouble with a particular store and it might take some time to fix
+						// you can restart the archiver with ARCHAPPL_SKIP_ETL_FOR_STORE set to the name of the destination store
+						// This will set the initial delay for that store for 10 year into the future.
+						// Note your breathing room for fixing the issue with the storage is really the capacity of the upstream store
+						// and your changes of running out of space with this setting are quite high. 
+						// Needless to say; this is meant for emergencies only.
+						String skipStoreName = System.getenv("ARCHAPPL_SKIP_ETL_FOR_STORE");
+						if(skipStoreName != null && skipStoreName.equals(((StoragePlugin)etlDest).getName())) {
+							initialDelay = 3600*24*365*10;
+							logger.error("Setting ETL for store " + skipStoreName + " for PV " + pvName + " to a very distant future");
+						}
+					}
+
 					// We schedule a ETLPVLookupItems with the appropriate thread using an ETLJob
 					ETLJob etlJob = new ETLJob(etlpvLookupItems);
 					ScheduledFuture<?> cancellingFuture = etlLifeTimeThreadPoolExecutors.get(etllifetimeid).scheduleWithFixedDelay(etlJob, initialDelay, delaybetweenETLJobs, TimeUnit.SECONDS);
