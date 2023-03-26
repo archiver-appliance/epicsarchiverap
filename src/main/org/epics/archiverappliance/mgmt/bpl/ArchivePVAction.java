@@ -81,6 +81,13 @@ public class ArchivePVAction implements BPLAction {
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
+		if(!configService.hasClusterFinishedInitialization()) {
+			// If you have defined spare appliances in the appliances.xml that will never come up; you should remove them
+			// This seems to be one of the few ways we can prevent split brain clusters from messing up the pv <-> appliance mapping.
+			throw new IOException("Waiting for all the appliances listed in appliances.xml to finish loading up their PVs into the cluster");
+		}
+
+
 		String contentType = req.getContentType();
 		if(contentType != null && contentType.equals(MimeTypeConstants.APPLICATION_JSON)) {
 			processJSONRequest(req, resp, configService);

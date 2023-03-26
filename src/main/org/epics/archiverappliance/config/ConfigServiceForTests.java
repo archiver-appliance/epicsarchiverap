@@ -76,6 +76,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		pvsForThisAppliance = new ConcurrentSkipListSet<String>();
 		pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
 		pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
+		appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
 
 		myApplianceInfo = new ApplianceInfo(TESTAPPLIANCE0,
 				"http://localhost:17665/mgmt/bpl",

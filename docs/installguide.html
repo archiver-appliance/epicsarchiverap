@@ -157,8 +157,13 @@ to set the location of the <code>appliances.xml</code> file.
 </li>
 <li>
 The <code>appliances.xml</code> has one <code>&lt;appliance&gt;</code> section per appliance.
-You can have more entries than you have appliances; that is, if you plan to eventually deploy a cluster of 10 machines but only have a budget for 2, you can go ahead and add entries for the other machines.
-The cluster should start up even if one or more appliances are missing.
+Please only define those appliances that are currently in production.
+Certain BPL, most importantly, the <code>/archivePV </code> BPL, are suspended until all the appliances defined in the <code>appliances.xml</code> have started up and registered their PVs in the cluster.
+Previously, we would allow any number of appliances to be defined in the <code>appliances.xml</code> regardless of whether they are in production or not.
+However, it's becoming more and more untenable to support this feature.
+So, from Mar 2023 onwards, please only define live appliances in <code>appliances.xml</code>.
+<strike>You can have more entries than you have appliances; that is, if you plan to eventually deploy a cluster of 10 machines but only have a budget for 2, you can go ahead and add entries for the other machines.
+The cluster should start up even if one or more appliances are missing.</strike>
 </li>
 <li>
 The <code>identity</code> for each appliance is unique to each appliance.

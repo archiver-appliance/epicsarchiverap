@@ -256,13 +256,18 @@ public class MgmtRuntimeState {
 		logger.info("Done starting archive requests");
 	}
 
-
 	private void startArchivePVWorkflow(int initialDelayInSeconds) {
 		theArchiveWorkflow = archivePVWorkflow.scheduleAtFixedRate(new Runnable() {
 			
 			@Override
 			public void run() {
 				try {
+					if(!configService.hasClusterFinishedInitialization()) {
+						// If you have defined spare appliances in the appliances.xml that will never come up; you should remove them
+						// This seems to be one of the few ways we can prevent split brain clusters from messing up the pv <-> appliance mapping.
+						configlogger.info("Waiting for all the appliances listed in appliances.xml to finish loading up their PVs into the cluster");
+						return;
+					}
 					LinkedList<ArchivePVState> archivePVStates = new LinkedList<ArchivePVState>(currentPVRequests.values());
 					logger.info("Running the archive PV workflow with " + archivePVStates.size() + " requests pending");
 					Collections.sort(archivePVStates, new Comparator<ArchivePVState>() {

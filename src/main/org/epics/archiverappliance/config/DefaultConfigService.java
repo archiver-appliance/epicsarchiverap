@@ -143,6 +143,7 @@ public class DefaultConfigService implements ConfigService {
 	// These are not persisted but derived from other info
 	protected Map<String, ApplianceInfo> pv2appliancemapping = null;
 	protected Map<String, String> clusterInet2ApplianceIdentity = null;
+	protected Map<String, Boolean> appliancesConfigLoaded = null;
 	protected Map<String, List<ChannelArchiverDataServerPVInfo>> pv2ChannelArchiverDataServer = null;
 	protected ITopic<PubSubEvent> pubSub = null;
 	protected Map<String, Boolean> namedFlags = null;
@@ -594,6 +595,7 @@ public class DefaultConfigService implements ConfigService {
 		archivePVRequests = hzinstance.getMap("archivePVRequests");
 		channelArchiverDataServers = hzinstance.getMap("channelArchiverDataServers");
 		clusterInet2ApplianceIdentity = hzinstance.getMap("clusterInet2ApplianceIdentity");
+		appliancesConfigLoaded = hzinstance.getMap("appliancesConfigLoaded");
 		aliasNamesToRealNames = hzinstance.getMap("aliasNamesToRealNames");
 		pv2ChannelArchiverDataServer = hzinstance.getMap("pv2ChannelArchiverDataServer");
 		pubSub = hzinstance.getTopic("pubSub");
@@ -732,16 +734,24 @@ public class DefaultConfigService implements ConfigService {
 			loadArchiveRequestsFromPersistence();
 			
 			loadExternalServersFromPersistence();
+
+			appliancesConfigLoaded.put(myIdentity, Boolean.TRUE);
 			
 			registerForNewExternalServers(hzinstance.getMap("channelArchiverDataServers"));
 
 			// Cache the aggregate of all the PVs that are registered to this appliance.
 			logger.debug("Building a local aggregate of PV infos that are registered to this appliance");
-			for(String pvName : getPVsForThisAppliance()) {
-				if(!pvsForThisAppliance.contains(pvName)) {
-					applianceAggregateInfo.addInfoForPV(pvName, this.getTypeInfoForPV(pvName), this);
+			try {
+				for(String pvName : getPVsForThisAppliance()) {
+					if(!pvsForThisAppliance.contains(pvName)) {
+						applianceAggregateInfo.addInfoForPV(pvName, this.getTypeInfoForPV(pvName), this);
+					}
 				}
+			} catch(Exception ex) {
+				logger.error("Exception building data for capacity planning", ex);
 			}
+
+
 		} else if(this.warFile == WAR_FILE.RETRIEVAL) {
 			initializeFailoverServerCache();
 		}
@@ -975,6 +985,12 @@ public class DefaultConfigService implements ConfigService {
 			}
 		});
 		return sortedAppliances;
+	}
+
+	@Override
+	public boolean hasClusterFinishedInitialization() {
+		logger.info("Appliances that have loaded their PVs" + String.join(",", appliancesConfigLoaded.keySet()));
+		return appliancesConfigLoaded.keySet().containsAll(appliances.keySet());
 	}
 
 	@Override
@@ -1293,14 +1309,11 @@ public class DefaultConfigService implements ConfigService {
 
 	@Override
 	public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
-		int appliancesInCluster = 0;
-		for(@SuppressWarnings("unused") ApplianceInfo info : this.getAppliancesInCluster()) { 
-			appliancesInCluster++;
-		}
-		
+		int appliancesInCluster = this.appliances.size();		
 		int initialDelayInSeconds = 10;
 		if(appliancesInCluster > 1) { 
 			// We use a longer initial delay here to get all the appliances in the cluster a chance to restart
+			// We also need some time to build up the capacity planning metrics.
 			initialDelayInSeconds = 30*60;
 		}
 		

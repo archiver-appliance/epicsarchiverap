@@ -197,7 +197,21 @@ public interface ConfigService {
 	 * @return ApplianceInfo &emsp;
 	 */
 	public ApplianceInfo getAppliance(String identity);
-	
+
+	/**
+	 * To prevent split brain side-effects, we support cetain BPL only when all the member of the cluster have finished loading their PVs into the cluster.
+	 * This consists of two checks
+	 * 1) Make sure all appliances listed in appliances.xml have started up and are part of the cluster
+	 * 2) All appliances in the cluster have registered their PVs with the cluster.
+	 * 
+	 * Previously, we'd allow appliances.xml to have more appliances that are actually present in the cluster. 
+	 * However; this is becoming increasingly hard to support.
+	 * We've had to tighten this to avoid split brain issues which can happen when the networking between instances fails.
+	 * 
+	 * @return boolean &emsp;
+	 */
+	public boolean hasClusterFinishedInitialization();
+		
 	/**
 	 * Get an exhaustive list of all the PVs this cluster of appliances knows about
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
