@@ -54,6 +54,7 @@ To check the status of or to archive some PV's, please type in some PV names her
 </div>
 <div id="archstatpVButtonsdiv">
 <input type="button" id="archstatCheckStatus" name="Check status" value="Check Status" onclick="checkPVStatus(); return false"></input> 
+<input type="button" id="archstatGetPVs" name="Get PV Names" value="Get PV Names" onclick="getPVNames(); return false"></input> 
 <input type="button" id="archstatArchive" name="Archive" value="Archive" onclick="archivePVs(); return false"></input> 
 <input type="button" id="archstatArchiveWithPeriod" name="Archive" value="Archive (specify sampling period)" onclick="archivePVsWithDetails(); return false"></input> 
 <input type="button" id="lookupPVs" name="Lookup" value="Lookup" onclick="lookupPVs(); return false"></input> 
@@ -93,7 +94,12 @@ To check the status of or to archive some PV's, please type in some PV names her
 </div>
 </div>
 
-
+<div id="pvStopArchivingParamsDiv"  title="Are you certain you want to stop archiving the PV?">
+<div id="pvStopArchivingParams">
+<div><input id="pvStopArchivingDeleteData" type="checkbox"/>Do you want to delete any data stored for this PV?</div>
+<div id="pvStopArchivingdiv"><input id="pvStopArchivingOk" type="button" name="Ok" value="Ok"></input></div>
+</div>
+</div>
 
 <!-- @begin(site_footer) -->
 <div class="pagefooter">
@@ -123,6 +129,13 @@ $(document).ready(function() {
   
   // Set up help
   $("#help").click(function() { window.open('help/userguide.html#ArchivePV'); } );
+  
+  $(document).ready(function() {
+	    // Set up help
+		$("#help").click(function() { window.open('help/userguide.html#Reports'); } );
+		$('#pvStopArchivingParams').hide();
+	});
+
 });
 </script>
 

@@ -2,6 +2,7 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Set;
 
@@ -68,6 +69,7 @@ public class GetMatchingPVsForAppliance implements BPLAction {
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 		try (PrintWriter out = resp.getWriter()) {
+			Collections.sort(pvNames);
 			out.println(JSONValue.toJSONString(pvNames));
 		} catch(Exception ex) {
 			logger.error("Exception getting all pvs on appliance " + configService.getMyApplianceInfo().getIdentity(), ex);
