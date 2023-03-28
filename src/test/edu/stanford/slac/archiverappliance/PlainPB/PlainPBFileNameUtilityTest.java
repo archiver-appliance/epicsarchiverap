@@ -13,14 +13,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,6 +36,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class PlainPBFileNameUtilityTest {
+	private final static Logger logger = Logger.getLogger(PlainPBFileNameUtilityTest.class);
 	String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "PlainPBFileNameUtility/";
 	String rootFolderStr = fileName;
 	private ConfigService configService;
@@ -105,25 +109,37 @@ public class PlainPBFileNameUtilityTest {
 	public void testGetFilesWithDataOnAMonthPartition() throws Exception {
 		// Lets create some files that cater to this partition.
 		long startOfYearEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-		DateTime curr = new DateTime(startOfYearEpochSeconds*1000);
+		DateTime curr = new DateTime(startOfYearEpochSeconds*1000, DateTimeZone.UTC);
+		logger.info("Current time is " + curr);
 		String pvName = "First:Second:Third:MonthPart_1";
 		PartitionGranularity partition = PartitionGranularity.PARTITION_MONTH;
 		String extension = ".pb";
-		DateTime endMonth = null;
+		DateTime endMonth = curr.plusMonths(3); // January + 3 months is April
 		for(int months = 1; months <= 11; months++) {
 			mkPath(PlainPBPathNameUtility.getPathNameForTime(rootFolderStr, pvName, curr.getMillis()/1000, partition, new ArchPaths(), CompressionMode.NONE, configService.getPVNameToKeyConverter()));
 			curr = curr.plusMonths(1);
-			if(months == 4) endMonth = curr;
 		}
+		logger.info("Current time after adding months is " + curr);
+		logger.info("End month is " + endMonth);
 		
-		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(endMonth.getMillis()/1000 - 1, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 4);
+		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName,
+				TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), // January
+				TimeUtils.convertFromEpochSeconds(endMonth.getMillis()/1000, 0), // April
+				extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
+		logger.info("matching Paths " + Arrays.toString(matchingPaths));
+		assertTrue("Matching File count " + matchingPaths.length, matchingPaths.length == 4);
 
-		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(endMonth.getMillis()/1000, 0), extension,  partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 3);
+		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName,
+				TimeUtils.convertFromEpochSeconds(endMonth.getMillis()/1000, 0), // Before April
+				extension,  partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
+		logger.info("etl Paths " + Arrays.toString(etlPaths));
+
+		assertTrue("ETL File count " + etlPaths.length, etlPaths.length == 3);
 		
 		// Ask for the next year here; the last file written out is for Nov so expect 11.pb here
-		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds((curr.plusMonths(5).getMillis())/1000, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
+		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName,
+				TimeUtils.convertFromEpochSeconds((curr.plusMonths(5).getMillis())/1000, 0),
+				extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
 		assertTrue("Most recent file is null?", mostRecentFile != null);
 		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("11.pb"));
 
@@ -133,7 +149,7 @@ public class PlainPBFileNameUtilityTest {
 	public void testGetFilesWithDataOnAYearlyPartition() throws Exception {
 		// Lets create some files that cater to this partition.
 		long startOfYearEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-		DateTime curr = new DateTime(startOfYearEpochSeconds*1000);
+		DateTime curr = new DateTime(startOfYearEpochSeconds*1000, DateTimeZone.UTC);
 		String pvName = "First:Second:Third:YearPart_1";
 		PartitionGranularity partition = PartitionGranularity.PARTITION_YEAR;
 		String extension = ".pb";

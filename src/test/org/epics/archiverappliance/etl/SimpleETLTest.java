@@ -29,6 +29,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -95,7 +96,7 @@ public class SimpleETLTest {
         		configService.getETLLookup().manualControlForUnitTests();
 
         		Timestamp timeETLruns = TimeUtils.now();
-        		DateTime ts = new DateTime();
+        		DateTime ts = new DateTime(DateTimeZone.UTC);
         		if(ts.getMonthOfYear() == 1) {
         			// This means that we never test this in Jan but I'd rather have the null check than skip this. 
         			timeETLruns = TimeUtils.plusDays(timeETLruns, 35);

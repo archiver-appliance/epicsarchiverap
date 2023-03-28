@@ -30,6 +30,7 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -167,7 +168,7 @@ public class ZeroedFileEventStreamTest {
 		configService.getETLLookup().manualControlForUnitTests();
 
 		Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 366);
-		DateTime ts = new DateTime();
+		DateTime ts = new DateTime(DateTimeZone.UTC);
 		if(ts.getMonthOfYear() == 1) {
 			// This means that we never test this in Jan but I'd rather have the null check than skip this. 
 			timeETLruns = TimeUtils.plusDays(timeETLruns, 35);
@@ -273,7 +274,7 @@ public class ZeroedFileEventStreamTest {
 		configService.getETLLookup().manualControlForUnitTests();
 
 		Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 366);
-		DateTime ts = new DateTime();
+		DateTime ts = new DateTime(DateTimeZone.UTC);
 		if(ts.getMonthOfYear() == 1) {
 			// This means that we never test this in Jan but I'd rather have the null check than skip this. 
 			timeETLruns = TimeUtils.plusDays(timeETLruns, 35);
