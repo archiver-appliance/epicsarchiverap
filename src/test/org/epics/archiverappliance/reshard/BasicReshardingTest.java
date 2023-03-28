@@ -9,6 +9,7 @@ import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.List;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -35,6 +36,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
@@ -71,6 +73,11 @@ public class BasicReshardingTest {
 	String folderSTS = ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "reshardSTS";
 	String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardMTS";
 	String folderLTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardLTS";
+
+	@BeforeClass
+	public static void setupClass() {
+		WebDriverManager.firefoxdriver().setup();
+	}
 
 	@Before
 	public void setUp() throws Exception {

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.List;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -20,6 +21,7 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
@@ -80,6 +82,10 @@ public class ArchiveFieldsNotInStreamTest {
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
+	@BeforeClass
+	public static void setupClass() {
+		WebDriverManager.firefoxdriver().setup();
+	}
 	@Before
 	public void setUp() throws Exception {
 		System.getProperties().put("ARCHAPPL_POLICIES", System.getProperty("user.dir") + "/src/test/org/epics/archiverappliance/mgmt/ArchiveFieldsNotInStream.py");

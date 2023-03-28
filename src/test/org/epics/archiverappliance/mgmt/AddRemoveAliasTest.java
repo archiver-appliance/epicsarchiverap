@@ -20,12 +20,15 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import io.github.bonigarcia.wdm.WebDriverManager;
 
 /**
  * Check addAlias and removeAlias functionality.
@@ -40,6 +43,11 @@ public class AddRemoveAliasTest {
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
+
+	@BeforeClass
+	public static void setupClass() {
+		WebDriverManager.firefoxdriver().setup();
+	}
 
 	@Before
 	public void setUp() throws Exception {

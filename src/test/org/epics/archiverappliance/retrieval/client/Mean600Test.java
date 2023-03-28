@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
@@ -25,6 +26,7 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.openqa.selenium.By;
@@ -52,7 +54,12 @@ public class Mean600Test {
 	private File ltsFolder = new File(System.getenv("ARCHAPPL_LONG_TERM_FOLDER") + "/UnitTestNoNamingConvention");
 	StoragePlugin storageplugin;
 	private ConfigServiceForTests configService;
-	
+
+	@BeforeClass
+	public static void setupClass() {
+		WebDriverManager.firefoxdriver().setup();
+	}
+
 	@Before
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
