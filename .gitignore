@@ -7,9 +7,10 @@ stage/
 .DS_Store
 *.swp
 /mts
+*.war
+*.gz
 
 .gradle
-**/build/
 !src/**/build/
 
 # Ignore Gradle GUI config

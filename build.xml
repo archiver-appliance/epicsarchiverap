@@ -18,7 +18,7 @@
 	<property name="lib" location="lib/"/>
 	<property name="docs" location="docs/"/>
 	<property name="wardest" location="./build"/>
-	<property name="dist" location="../"/>
+	<property name="dist" location="./build"/>
 	<property name="test.dir" location="src/test"/>
 	<property name="tomcathome" location="${env.TOMCAT_HOME}"/>
 	<condition property="log4jprops" value="-Dlog4j.configuration=log4j.properties.debug" else="-Dlog4j.configuration=log4j.properties">
