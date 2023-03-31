@@ -17,7 +17,7 @@
 	<property name="stage" location="stage/"/>
 	<property name="lib" location="lib/"/>
 	<property name="docs" location="docs/"/>
-	<property name="wardest" location="../"/>
+	<property name="wardest" location="./build"/>
 	<property name="dist" location="../"/>
 	<property name="test.dir" location="src/test"/>
 	<property name="tomcathome" location="${env.TOMCAT_HOME}"/>
