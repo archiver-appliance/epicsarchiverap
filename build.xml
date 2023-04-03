@@ -221,6 +221,7 @@
 
 
 	<target name="clean">
+		<mkdir dir="${wardest}"/>
     	<delete dir="${classes}"/>
     	<delete dir="${stage}"/>
     	<delete file="${wardest}/retrieval.war"/>
