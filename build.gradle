@@ -40,7 +40,7 @@ java {
 
 version gitVersion()
 def stageDir = layout.projectDir.file("stage")
-def warDir = layout.projectDir.file("../")
+def warDir = layout.projectDir.file("build")
 def srcDir = layout.projectDir.file("src/main")
 def libDir = layout.projectDir.file("lib")
 def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
