@@ -17,8 +17,8 @@
 	<property name="stage" location="stage/"/>
 	<property name="lib" location="lib/"/>
 	<property name="docs" location="docs/"/>
-	<property name="wardest" location="../"/>
-	<property name="dist" location="../"/>
+	<property name="wardest" location="./build"/>
+	<property name="dist" location="./build"/>
 	<property name="test.dir" location="src/test"/>
 	<property name="tomcathome" location="${env.TOMCAT_HOME}"/>
 	<condition property="log4jprops" value="-Dlog4j.configuration=log4j.properties.debug" else="-Dlog4j.configuration=log4j.properties">
@@ -221,6 +221,7 @@
 
 
 	<target name="clean">
+		<mkdir dir="${wardest}"/>
     	<delete dir="${classes}"/>
     	<delete dir="${stage}"/>
     	<delete file="${wardest}/retrieval.war"/>

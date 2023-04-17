@@ -324,7 +324,7 @@ function getPVNames() {
 	var pvQuery = getPVQueryParam();
 	if(!pvQuery) return;
 	
-	var jsonurl = '../bpl/getMatchingPVsForThisAppliance?regex=.*&limit=-1';
+	var jsonurl = '../bpl/getMatchingPVsForThisAppliance?' + pvQuery + '&limit=-1';
 	var tabledivname = 'archstatsdiv';
 	createReportTable(jsonurl, tabledivname,
 			[{'srcAttr' : 'pvName', 'label' : 'PV Name', 'srcFunction' : function(curdata) {
