@@ -60,6 +60,12 @@ public class PvaArchivePVAction implements PvaAction {
 
 	@Override
 	public void request(PVStructure args, RPCResponseCallback callback, ConfigService configService) {
+		if(!configService.hasClusterFinishedInitialization()) {
+			// If you have defined spare appliances in the appliances.xml that will never come up; you should remove them
+			// This seems to be one of the few ways we can prevent split brain clusters from messing up the pv <-> appliance mapping.
+			throw new RuntimeException("Waiting for all the appliances listed in appliances.xml to finish loading up their PVs into the cluster");
+		}
+
 		NTTable ntTable = NTTable.wrap(args);
 		String[] pvNames = NTUtil.extractStringArray(ntTable.getColumn(PVStringArray.class, "pv"));
 		String[] samplingperiods = NTUtil.extractStringArray(ntTable.getColumn(PVStringArray.class, "samplingperiod"));
