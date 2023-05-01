@@ -190,10 +190,10 @@ public class TomcatSetup {
 		tempFolder.mkdir();
 		
 		logger.debug("Copying the webapps wars to " + webAppsFolder.getAbsolutePath());
-		FileUtils.copyFile(new File("../mgmt.war"), new File(webAppsFolder, "mgmt.war"));
-		FileUtils.copyFile(new File("../retrieval.war"), new File(webAppsFolder, "retrieval.war"));
-		FileUtils.copyFile(new File("../etl.war"), new File(webAppsFolder, "etl.war"));
-		FileUtils.copyFile(new File("../engine.war"), new File(webAppsFolder, "engine.war"));
+		FileUtils.copyFile(new File("./build/mgmt.war"), new File(webAppsFolder, "mgmt.war"));
+		FileUtils.copyFile(new File("./build/retrieval.war"), new File(webAppsFolder, "retrieval.war"));
+		FileUtils.copyFile(new File("./build/etl.war"), new File(webAppsFolder, "etl.war"));
+		FileUtils.copyFile(new File("./build/engine.war"), new File(webAppsFolder, "engine.war"));
 		
 		File confOriginal = new File(System.getenv("TOMCAT_HOME"), "conf_original");
 		File confFolder = new File(workFolder, "conf");
