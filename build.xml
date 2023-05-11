@@ -85,7 +85,7 @@
     		<classes dir="${classes}"/>
 			<lib dir="${lib}">
 				<include name="*.jar"/>
-				<exclude name="servlet-api.jar"/>
+				<exclude name="tomcat-servlet-api-9.0.74.jar"/>
 			</lib>
         </war>
     </target>
@@ -103,7 +103,7 @@
     		<classes dir="${classes}"/>
 			<lib dir="${lib}">
 				<include name="*.jar"/>
-				<exclude name="servlet-api.jar"/>
+				<exclude name="tomcat-servlet-api-9.0.74.jar"/>
 			</lib>
         </war>
     </target>
@@ -118,7 +118,7 @@
     		<classes dir="${classes}"/>
 			<lib dir="${lib}">
 				<include name="*.jar"/>
-				<exclude name="servlet-api.jar"/>
+				<exclude name="tomcat-servlet-api-9.0.74.jar"/>
 			</lib>
         </war>
     </target>
@@ -138,7 +138,7 @@
     		<classes dir="${classes}"/>
 			<lib dir="${lib}">
 				<include name="*.jar"/>
-				<exclude name="servlet-api.jar"/>
+				<exclude name="tomcat-servlet-api-9.0.74.jar"/>
 			</lib>
         </war>
     </target>

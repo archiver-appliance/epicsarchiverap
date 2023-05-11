@@ -18,7 +18,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import au.com.bytecode.opencsv.CSVReader;
+import com.opencsv.CSVReader;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 
 /**
