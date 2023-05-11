@@ -20,7 +20,8 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -41,7 +42,7 @@ import org.epics.archiverappliance.retrieval.postprocessors.TimeSpanDependentPro
  * Class for resolving data sources
  */
 public class DataSourceResolution {
-	private static Logger logger = Logger.getLogger(DataSourceResolution.class.getName());
+	private static Logger logger = LogManager.getLogger(DataSourceResolution.class.getName());
 	private ConfigService configService;
 	
 	public DataSourceResolution(ConfigService configService) {

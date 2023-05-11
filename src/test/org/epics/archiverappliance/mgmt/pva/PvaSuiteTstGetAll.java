@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.mgmt.pva;
 
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
@@ -26,7 +27,7 @@ import static org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs.NAME;
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaSuiteTstGetAll {
 
-	private static Logger logger = Logger.getLogger(PvaSuiteTstGetAll.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaSuiteTstGetAll.class.getName());
 	private static RPCClient client;
 
 	@BeforeClass

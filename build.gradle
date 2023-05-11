@@ -2,7 +2,7 @@ plugins {
     id "java-library"
     id "war"
     id "eclipse"
-    id "ca.cutterslade.analyze" version "1.9.0" // Analyzes dependancies for usage
+    //id "ca.cutterslade.analyze" version "1.9.0" // Analyzes dependancies for usage
     id 'com.palantir.git-version' version '0.15.0'
 }
 
@@ -27,8 +27,8 @@ sourceSets {
 
 processTestResources {
     from(file("src/sitespecific/tests/classpathfiles"))
-    from(file(".")) {
-        include "log4j.properties"
+    from(file("src/resources/test")) {
+        include "log4j2.xml"
     }
 }
 
@@ -62,7 +62,7 @@ repositories {
 dependencies {
     // Local depencencies
     implementation files("lib/jamtio_071005.jar",
-                         "lib/redisnio_0.0.1.jar")
+            "lib/redisnio_0.0.1.jar")
     testImplementation files("lib/test/BPLTaglets.jar")
     testImplementation(":pbrawclient:0.0.9")
     // Maven dependencies
@@ -70,6 +70,7 @@ dependencies {
     testImplementation("org.seleniumhq.selenium:selenium-firefox-driver:4.9.0")
     testImplementation("org.seleniumhq.selenium:selenium-support:4.9.0")
     testImplementation("io.github.bonigarcia:webdrivermanager:5.3.2")
+    testImplementation("org.apache.commons:commons-compress:1.23.0")
     implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")// Only needed for tests, but inbuilt to main)
     implementation("org.epics:jca:2.4.7")
     implementation("org.epics:epics-ntypes:0.3.7")
@@ -90,11 +91,12 @@ dependencies {
     implementation("joda-time:joda-time:2.12.5")
     implementation("com.googlecode.json-simple:json-simple:1.1.1")
     implementation("org.python:jython-standalone:2.7.3")
-    implementation("log4j:log4j:1.2.17")
+    implementation("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies
+    implementation("org.apache.logging.log4j:log4j-api:2.20.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
     implementation("com.opencsv:opencsv:5.7.1")
     implementation("com.google.protobuf:protobuf-java:3.23.0")
-    testImplementation ("org.apache.commons:commons-compress:1.23.0")
-    permitTestUnusedDeclared("org.junit.vintage:junit-vintage-engine:5.9.3")
+    testImplementation("org.junit.vintage:junit-vintage-engine:5.9.3") // TODO upgrade tests to JUNIT 5
 }
 
 tasks.register("cleanWars", Delete) {
@@ -108,8 +110,9 @@ tasks.register("cleanWars", Delete) {
     delete file("${warDir}/archappl_v${version}.tar.gz")
     delete file("RELEASE_NOTES")
 }
+
 Collection getListOfFolders(String dir, String pattern) {
-    file(dir).listFiles({file -> !file.isFile() && file.name ==~ pattern} as FileFilter)
+    file(dir).listFiles({ file -> !file.isFile() && file.name ==~ pattern } as FileFilter)
 }
 
 tasks.register("cleanTestData", Delete) {
@@ -146,8 +149,8 @@ javadoc {
     finalizedBy "generateJavaDocTagletScriptables"
     doFirst {
         copy {
-            from layout.projectDirectory.file("LICENSE"), 
-                 file("${srcDir}/main/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
+            from layout.projectDirectory.file("LICENSE"),
+                    file("${srcDir}/main/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
             into layout.projectDirectory.dir("docs")
         }
     }
@@ -158,8 +161,8 @@ javadoc {
         version true
         setUse(true)
         links "https://docs.oracle.com/en/java/javase/12/docs/api/"
-        taglets "org.epics.archiverappliance.taglets.BPLActionTaglet", 
-                "org.epics.archiverappliance.taglets.BPLActionParamTaglet", 
+        taglets "org.epics.archiverappliance.taglets.BPLActionTaglet",
+                "org.epics.archiverappliance.taglets.BPLActionParamTaglet",
                 "org.epics.archiverappliance.taglets.BPLActionEndTaglet"
         tagletPath file("lib/test/BPLTaglets.jar")
     }
@@ -170,8 +173,8 @@ tasks.register("syncStaticContentHeaderFooters", JavaExec) {
     group = "Staging"
     dependsOn "compileJava"
     mainClass = "org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters"
-    args "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/index.html", 
-         "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/"
+    args "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/index.html",
+            "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/"
 
     classpath = sourceSets.main.runtimeClasspath
 }
@@ -230,7 +233,7 @@ tasks.withType(War).configureEach {
         into "ui/comm"
     }
     if (archapplsite == "tests") {
-        from("log4j.properties") {
+        from("src/resources/log4j2.xml") {
             into "WEB-INF/classes"
         }
     }
@@ -261,14 +264,14 @@ tasks.register("mgmtWar", War) {
         fileMode 755
         into "install/pbutils"
     }
-    
+
     archiveFileName = "mgmt.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/mgmt/WEB-INF/web.xml")
 }
 
 tasks.register("etlWar", War) {
     group = "Wars"
-    
+
     archiveFileName = "etl.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/etl/WEB-INF/web.xml")
 }
@@ -290,7 +293,7 @@ tasks.register("engineWar", War) {
         include "**/*.so"
         into "WEB-INF/lib/native/linux-x86"
     }
-    
+
     archiveFileName = "engine.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/engine/WEB-INF/web.xml")
 }
@@ -301,7 +304,7 @@ tasks.register("retreivalWar", War) {
     from("${stageDir}/org/epics/archiverappliance/retrieval/staticcontent") {
         into "ui"
     }
-    
+
     archiveFileName = "retrieval.war"
     webXml = file("${srcDir}/org/epics/archiverappliance/retrieval/WEB-INF/web.xml")
 }
@@ -321,32 +324,32 @@ tasks.register("buildRelease", Tar) {
     from layout.buildDirectory.file("libs/engine.war")
     from layout.buildDirectory.file("libs/etl.war")
     from layout.buildDirectory.file("libs/retrieval.war")
-    from (".") {
+    from(".") {
         include "LICENSE"
         include "NOTICE"
         include "*License.txt"
         include "RELEASE_NOTES"
     }
-    from ("docs/samples") {
+    from("docs/samples") {
         fileMode 755
         include "quickstart.sh"
     }
-    from ("docs/samples") {
-		include "sampleStartup.sh"
-		include "deployMultipleTomcats.py"
-		include "addMysqlConnPool.py"
-		include "single_machine_install.sh"
+    from("docs/samples") {
+        include "sampleStartup.sh"
+        include "deployMultipleTomcats.py"
+        include "addMysqlConnPool.py"
+        include "single_machine_install.sh"
         into "install_scripts"
     }
-    from ("docs/samples/site_specific_content") {
+    from("docs/samples/site_specific_content") {
         into "sample_site_specific_content"
         include "template_changes.html"
     }
-    from ("docs/samples/site_specific_content") {
+    from("docs/samples/site_specific_content") {
         into "sample_site_specific_content/img"
         include "*.png"
     }
-    from ("${srcDir}/org/epics/archiverappliance/config/persistence") {
+    from("${srcDir}/org/epics/archiverappliance/config/persistence") {
         into "install_scripts"
         include "*.sql"
     }
@@ -372,7 +375,7 @@ tasks.withType(Test).configureEach {
         includeTestsMatching "*Test"
     }
     maxHeapSize = "1G"
-    jvmArgs "-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver"
+    jvmArgs = ["-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver", "-Dlog4j1.compatibility=\"true\"" ]
 
     environment "ARCHAPPL_SHORT_TERM_FOLDER", "${temporaryDir}/sts"
     environment "ARCHAPPL_MEDIUM_TERM_FOLDER", "${temporaryDir}/mts"
@@ -390,8 +393,8 @@ tasks.register("unitTests", Test) {
     description = "Run all unit tests."
     useJUnit {
         excludeCategories "org.epics.archiverappliance.FlakyTests",
-                          "org.epics.archiverappliance.IntegrationTests",
-                          "org.epics.archiverappliance.LocalEpicsTests"
+                "org.epics.archiverappliance.IntegrationTests",
+                "org.epics.archiverappliance.LocalEpicsTests"
     }
 }
 
@@ -401,8 +404,8 @@ tasks.register("flakyTests", Test) {
     useJUnit {
         includeCategories "org.epics.archiverappliance.FlakyTests"
         excludeCategories "org.epics.archiverappliance.SlowTests",
-                          "org.epics.archiverappliance.IntegrationTests",
-                          "org.epics.archiverappliance.LocalEpicsTests"
+                "org.epics.archiverappliance.IntegrationTests",
+                "org.epics.archiverappliance.LocalEpicsTests"
     }
 }
 
@@ -438,9 +441,9 @@ tasks.register("integrationTests", Test) {
     }
     useJUnit {
         includeCategories "org.epics.archiverappliance.IntegrationTests",
-                          "org.epics.archiverappliance.LocalEpicsTests"
+                "org.epics.archiverappliance.LocalEpicsTests"
         excludeCategories "org.epics.archiverappliance.SlowTests",
-                          "org.epics.archiverappliance.FlakyTests"
+                "org.epics.archiverappliance.FlakyTests"
     }
 }
 
@@ -451,9 +454,9 @@ tasks.register("singleForkTests", Test) {
     useJUnit {
         includeCategories "org.epics.archiverappliance.SingleForkTests"
         excludeCategories "org.epics.archiverappliance.SlowTests",
-                          "org.epics.archiverappliance.FlakyTests",
-                          "org.epics.archiverappliance.IntegrationTests",
-                          "org.epics.archiverappliance.LocalEpicsTests"
+                "org.epics.archiverappliance.FlakyTests",
+                "org.epics.archiverappliance.IntegrationTests",
+                "org.epics.archiverappliance.LocalEpicsTests"
     }
 }
 
@@ -462,10 +465,10 @@ test {
     description = "Run all the fast unit tests."
     useJUnit {
         excludeCategories "org.epics.archiverappliance.IntegrationTests",
-                          "org.epics.archiverappliance.LocalEpicsTests",
-                          "org.epics.archiverappliance.FlakyTests",
-                          "org.epics.archiverappliance.SingleForkTests",
-                          "org.epics.archiverappliance.SlowTests"
+                "org.epics.archiverappliance.LocalEpicsTests",
+                "org.epics.archiverappliance.FlakyTests",
+                "org.epics.archiverappliance.SingleForkTests",
+                "org.epics.archiverappliance.SlowTests"
     }
 }
 

@@ -7,7 +7,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -20,7 +21,7 @@ import org.json.simple.JSONArray;
  * @author mshankar
  */
 public class BulkPauseResumeUtils {
-	private static Logger logger = Logger.getLogger(BulkPauseResumeUtils.class);
+	private static Logger logger = LogManager.getLogger(BulkPauseResumeUtils.class);
 	
 	/**
 	 * Get a list of PVNames based on if this is a POST or GET.

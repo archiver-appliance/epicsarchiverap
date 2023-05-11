@@ -257,7 +257,7 @@ At the end, there should be two ports active in the <code>conf/server.xml</code>
 </li>
 </ol>
 </li>
-<li>Setting the appropriate log4j configuration level by creating/editing the <code>lib/log4j.properties</code>.
+<li>Setting the appropriate log4j configuration level by creating/editing the <code>lib/log4j2.xml</code>.
 Here's a sample that logs exceptions and errors with one exception - log messages logged to the <code>config</code> namespace are logged at INFO level.
 <pre>
 <code>
@@ -330,10 +330,10 @@ There should be at least these tables
 </ol>
 </li>
 <li>Download and install the <a href="http://dev.mysql.com/downloads/connector/j/">MySQL Connector/J</a> jar file into your Tomcat's <code>lib</code> folder.
-In addition to the log4j.properties file, you should have a <code>mysql-connector-java-XXX.jar</code> as show here.
+In addition to the log4j2.xml file, you should have a <code>mysql-connector-java-XXX.jar</code> as show here.
 <pre class="bash_output"><code>[ lib ]$ ls -ltra
 ...
--rw-r--r-- 1 mshankar cd     505 Nov 13 10:29 log4j.properties
+-rw-r--r-- 1 mshankar cd     505 Nov 13 10:29 log4j2.xml
 -rw-r--r-- 1 mshankar cd 1007505 Nov 13 10:29 mysql-connector-java-5.1.47-bin.jar
 </code></pre>
 </li>

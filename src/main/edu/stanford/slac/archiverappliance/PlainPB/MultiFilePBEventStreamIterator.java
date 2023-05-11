@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -27,7 +28,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class MultiFilePBEventStreamIterator implements Iterator<Event> {
-	private static Logger logger = Logger.getLogger(MultiFilePBEventStreamIterator.class.getName());
+	private static Logger logger = LogManager.getLogger(MultiFilePBEventStreamIterator.class.getName());
 	private short year = 0;
 	private ArchDBRTypes type;
 	private DBR2PBTypeMapping mapping;

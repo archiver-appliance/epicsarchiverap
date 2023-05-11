@@ -13,7 +13,8 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.NoDataException;
 import org.epics.archiverappliance.Reader;
@@ -28,7 +29,7 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  * Some variation of a ExecutorService is expected to be used to launch the UnitOfRetrievals in parallel and then push the event streams into the consumer.
  */
 public class UnitOfRetrieval implements Callable<RetrievalResult> {
-	private static Logger logger = Logger.getLogger(UnitOfRetrieval.class.getName());
+	private static Logger logger = LogManager.getLogger(UnitOfRetrieval.class.getName());
 	private String description;
 	private Reader reader;
 	private String pvName;

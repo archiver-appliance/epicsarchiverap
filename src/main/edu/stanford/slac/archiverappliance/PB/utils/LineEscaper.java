@@ -12,7 +12,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Simple class to escape/unescape newlines in binary data.
@@ -31,7 +32,7 @@ public class LineEscaper {
 	public static final byte CARRIAGERETURN_CHAR = 0x0D;
 	public static final byte CARRIAGERETURN_ESCAPE_CHAR = 0x03;
 	public static final byte[] CARRIAGERETURN_CHAR_SEQUENCE = { ESCAPE_CHAR, CARRIAGERETURN_ESCAPE_CHAR} ;
-	private static Logger logger = Logger.getLogger(LineEscaper.class.getName());
+	private static Logger logger = LogManager.getLogger(LineEscaper.class.getName());
 	
 
 	public static void escapeNewLines(byte[] input, OutputStream os) throws IOException {

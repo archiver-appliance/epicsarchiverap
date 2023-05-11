@@ -11,7 +11,8 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeSpan;
@@ -40,7 +41,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  */
 public class OptimizedWithLastSample implements PostProcessor, PostProcessorWithConsolidatedEventStream, FillNoFillSupport {
 
-    private static final Logger LOGGER = Logger.getLogger(OptimizedWithLastSample.class.getName());
+    private static final Logger Logger = LogManager.getLogger(OptimizedWithLastSample.class.getName());
     private static final int DEFAULT_NUMBER_OF_POINTS = 1000;
     private static final String IDENTITY = "optimLastSample";
     
@@ -110,7 +111,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                         lastValue = val;
                         stats.addValue(val);
                     } else { 
-                        LOGGER.warn("Skipping NAN");
+                        Logger.warn("Skipping NAN");
                     }
                 }
             };
@@ -134,7 +135,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
         
         firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
         lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
-        LOGGER.debug("Expecting " + lastBin + " - " + firstBin + " values " + (lastBin+2 - firstBin)); // Add 2 for the first and last bins..
+        Logger.debug("Expecting " + lastBin + " - " + firstBin + " values " + (lastBin+2 - firstBin)); // Add 2 for the first and last bins..
         float storageRate = typeInfo.getComputedStorageRate();
         long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
         
@@ -166,7 +167,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
     private EventStream customStatsConsolidatedEventStream() {
       if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
         switchToNewBin(firstBin-1);
-        LOGGER.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
+        Logger.debug("Adding lastSampleBeforeStart to bin " + TimeUtils.convertToHumanReadableString(lastSampleBeforeStart.getEpochSeconds()));
         currentBinCollector.addEvent(lastSampleBeforeStart);
         lastSampleBeforeStartAdded = true; 
       }
@@ -259,8 +260,8 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                 } else {
                   // Note that this is expected. ETL is not transactional; so we
                   // can get the same event twice from different stores.
-                  if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Skipping older event "
+                  if (Logger.isDebugEnabled()) {
+                    Logger.debug("Skipping older event "
                         + TimeUtils.convertToHumanReadableString(dbrTimeEvent.getEventTimeStamp()) + " previous "
                         + TimeUtils.convertToHumanReadableString(previousEventTimestamp));
                   }
@@ -323,7 +324,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
                   }
                 }
               } catch (PBParseException ex) {
-                LOGGER.error("Skipping possible corrupted event for pv " + strm.getDescription());
+                Logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
               }
             }
             // The last bin with events will not yet have been added so it needs to 

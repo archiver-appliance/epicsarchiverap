@@ -11,7 +11,8 @@ import java.util.List;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.LocalEpicsTests;
@@ -64,7 +65,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category(LocalEpicsTests.class)
 public class BasicReshardingTest {
-	private static Logger logger = Logger.getLogger(BasicReshardingTest.class.getName());
+	private static Logger logger = LogManager.getLogger(BasicReshardingTest.class.getName());
 	private String pvName = "UnitTestNoNamingConvention:sine";
 	private ConfigServiceForTests configService;
 	TomcatSetup tomcatSetup = new TomcatSetup();

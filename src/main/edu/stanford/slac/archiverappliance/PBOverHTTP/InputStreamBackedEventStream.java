@@ -13,7 +13,8 @@ import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.EmptyEventIterator;
@@ -30,7 +31,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class InputStreamBackedEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(InputStreamBackedEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(InputStreamBackedEventStream.class.getName());
 	// We expect the PB headers to fit within this buffer size.
 	private static int MAX_PB_HEADER_LINE_SIZE = 10*1024;
 	private RemotableEventStreamDesc descFromFirstLine;

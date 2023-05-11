@@ -5,7 +5,8 @@ import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceAggregateInfo;
 import org.epics.archiverappliance.config.ApplianceInfo;
@@ -27,7 +28,7 @@ import org.json.simple.JSONObject;
  */
 public class CapacityPlanningData {
 	private static final int MEASURED_DATA_CACHE_TIME = 60*60*1000;
-	private static Logger logger = Logger.getLogger(CapacityPlanningData.class.getName());
+	private static Logger logger = LogManager.getLogger(CapacityPlanningData.class.getName());
 	/**
 	 * This is the percentage of time taken (averaged over the lifetime of the engine) that the engine write thread takes to flush data into short term store.
 	 */

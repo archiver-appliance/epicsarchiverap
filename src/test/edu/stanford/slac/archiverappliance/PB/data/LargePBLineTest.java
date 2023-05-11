@@ -15,7 +15,8 @@ import java.nio.file.Path;
 import java.util.Collections;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -45,7 +46,7 @@ public class LargePBLineTest {
 	private ConfigService configService;
 	PlainPBStoragePlugin largeLineTest = new PlainPBStoragePlugin();
 	PBCommonSetup largeLineSetup = new PBCommonSetup();
-	private static Logger logger = Logger.getLogger(LargePBLineTest.class.getName());
+	private static Logger logger = LogManager.getLogger(LargePBLineTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

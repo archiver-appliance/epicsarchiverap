@@ -5,7 +5,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -22,7 +23,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ChangeArchivalParamsTest {
-	private static Logger logger = Logger.getLogger(ChangeArchivalParamsTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ChangeArchivalParamsTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

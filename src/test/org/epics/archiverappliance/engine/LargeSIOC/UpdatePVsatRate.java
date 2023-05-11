@@ -28,7 +28,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
 
@@ -38,7 +39,7 @@ import org.epics.archiverappliance.engine.epics.JCAConfigGen;
  * @author mshankar
  */
 public class UpdatePVsatRate {
-	private static final Logger logger = Logger.getLogger(UpdatePVsatRate.class);
+	private static final Logger logger = LogManager.getLogger(UpdatePVsatRate.class);
 	private static Context JCAContext = null;
 	private static LinkedBlockingQueue<Runnable> contextTasks = new LinkedBlockingQueue<Runnable>();
 	private static ScheduledThreadPoolExecutor eventGenerator = new ScheduledThreadPoolExecutor(1);

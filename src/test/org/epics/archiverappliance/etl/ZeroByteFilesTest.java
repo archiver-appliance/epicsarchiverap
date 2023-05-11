@@ -18,7 +18,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -55,7 +56,7 @@ import junit.framework.TestCase;
  *
  */
 public class ZeroByteFilesTest extends TestCase {
-	private static final Logger logger = Logger.getLogger(ZeroByteFilesTest.class);
+	private static final Logger logger = LogManager.getLogger(ZeroByteFilesTest.class);
 	private String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
 	private String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
 	private  ConfigServiceForTests configService;

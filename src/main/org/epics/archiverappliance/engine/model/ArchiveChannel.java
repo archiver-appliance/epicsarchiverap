@@ -23,7 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -54,7 +55,7 @@ import org.epics.archiverappliance.engine.pv.PVMetrics;
 
 @SuppressWarnings("nls")
 abstract public class ArchiveChannel {
-	private static final Logger logger = Logger.getLogger(ArchiveChannel.class);
+	private static final Logger logger = LogManager.getLogger(ArchiveChannel.class);
 
 	/** Throttled log for NaN samples */
 	private static ThrottledLogger trouble_sample_log = new ThrottledLogger(LogLevel.info, 60);

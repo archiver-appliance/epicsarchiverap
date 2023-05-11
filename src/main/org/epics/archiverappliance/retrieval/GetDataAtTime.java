@@ -17,7 +17,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -39,7 +40,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 
 public class GetDataAtTime {
-	private static final Logger logger = Logger.getLogger(GetDataAtTime.class);
+	private static final Logger logger = LogManager.getLogger(GetDataAtTime.class);
 	
 	static class Appliance2PVs {
 		ApplianceInfo applianceInfo;

@@ -3,7 +3,8 @@ package org.epics.archiverappliance.retrieval.postprocessors;
 import java.io.IOException;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -18,7 +19,7 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  * @see PostProcessorWithConsolidatedEventStream
  */
 public class ArrayListCollectorEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(ArrayListCollectorEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(ArrayListCollectorEventStream.class.getName());
 	private ArrayListEventStream sourceStream;
 	private final RemotableEventStreamDesc desc;
 	private Iterator<Event> theOneAndOnlyIterator;

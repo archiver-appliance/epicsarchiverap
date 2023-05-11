@@ -22,7 +22,8 @@ import junit.framework.TestCase;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -50,7 +51,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 @Category(SlowTests.class)
 public class ConsolidateETLJobsForOnePVTest extends TestCase {
 
-        private static Logger logger = Logger.getLogger(ConsolidateETLJobsForOnePVTest.class.getName());
+        private static Logger logger = LogManager.getLogger(ConsolidateETLJobsForOnePVTest.class.getName());
         String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ConsolidateETLJobsForOnePVTest";
         String shortTermFolderName=rootFolderName+"/shortTerm";
         String mediumTermFolderName=rootFolderName+"/mediumTerm";

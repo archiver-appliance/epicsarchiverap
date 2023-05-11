@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
@@ -16,7 +17,7 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  *
  */
 public class CallableEventStream implements Callable<EventStream> {
-	private static Logger logger = Logger.getLogger(CallableEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(CallableEventStream.class.getName());
 	private EventStream theStream = null;
 	
 	public CallableEventStream(EventStream st) {

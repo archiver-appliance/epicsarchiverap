@@ -35,7 +35,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -51,7 +52,7 @@ import org.json.simple.parser.ParseException;
 
 public class GetUrlContent {
 	public static final String ARCHAPPL_COMPONENT = "ARCHAPPL_COMPONENT";
-	private static final Logger logger = Logger.getLogger(GetUrlContent.class);
+	private static final Logger logger = LogManager.getLogger(GetUrlContent.class);
 	
 	/**
 	 * Small utility method for getting the content of an URL as a string

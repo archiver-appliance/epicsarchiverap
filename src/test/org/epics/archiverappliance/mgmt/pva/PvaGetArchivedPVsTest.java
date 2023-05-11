@@ -8,9 +8,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -37,7 +38,7 @@ import org.junit.experimental.categories.Category;
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaGetArchivedPVsTest {
 
-	private static Logger logger = Logger.getLogger(PvaGetArchivedPVsTest.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaGetArchivedPVsTest.class.getName());
 
 	static TomcatSetup tomcatSetup = new TomcatSetup();
 	static SIOCSetup siocSetup = new SIOCSetup();
@@ -57,7 +58,7 @@ public class PvaGetArchivedPVsTest {
 					+ " Waiting three mins for the service setup to complete");
 			client = RPCClientFactory.create(PVA_MGMT_SERVICE);
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, e.getMessage(), e);
+			logger.log(Level.FATAL, e.getMessage(), e);
 		}
 	}
 
@@ -69,7 +70,7 @@ public class PvaGetArchivedPVsTest {
 			tomcatSetup.tearDown();
 			siocSetup.stopSIOC();
 		} catch (Exception e) {
-			logger.log(Level.SEVERE, e.getMessage(), e);
+			logger.log(Level.FATAL, e.getMessage(), e);
 		}
 	}
 

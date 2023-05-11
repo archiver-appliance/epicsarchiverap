@@ -14,7 +14,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 
@@ -26,7 +27,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class PBCommonSetup {
-	private static Logger logger = Logger.getLogger(PBCommonSetup.class.getName());
+	private static Logger logger = LogManager.getLogger(PBCommonSetup.class.getName());
 	private File tempFolderForTests;
 	private String testSpecificFolder;
 	ConfigServiceForTests configService;

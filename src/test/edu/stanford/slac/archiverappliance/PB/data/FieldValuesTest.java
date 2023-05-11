@@ -5,7 +5,8 @@ import static org.junit.Assert.assertTrue;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -16,7 +17,7 @@ import org.junit.Test;
 
 
 public class FieldValuesTest {
-	private static Logger logger = Logger.getLogger(FieldValuesTest.class.getName());
+	private static Logger logger = LogManager.getLogger(FieldValuesTest.class.getName());
 	@Test
 	public void testFieldValues() throws Exception {
 		for(ArchDBRTypes dbrType : ArchDBRTypes.values()) {

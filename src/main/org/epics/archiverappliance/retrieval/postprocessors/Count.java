@@ -1,7 +1,8 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 
 /**
@@ -11,7 +12,7 @@ import org.epics.archiverappliance.Event;
  */
 public class Count extends SummaryStatsPostProcessor implements PostProcessor {
 	static final String IDENTITY = "count";
-	private static Logger logger = Logger.getLogger(Count.class.getName());
+	private static Logger logger = LogManager.getLogger(Count.class.getName());
 
 	@Override
 	public String getIdentity() {

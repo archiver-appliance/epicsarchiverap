@@ -11,7 +11,8 @@ import java.nio.file.Path;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.After;
@@ -19,7 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 public class ArchPathsTest extends TestCase {
 	private String rootFolderStr = ConfigServiceForTests.getDefaultPBTestFolder() + "/ArchPathsTest";
-	private static Logger logger = Logger.getLogger(ArchPathsTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchPathsTest.class.getName());
 	
 	@Before
 	public void setUp() throws Exception {

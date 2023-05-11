@@ -14,7 +14,8 @@ import java.util.LinkedList;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SingleForkTests;
@@ -49,7 +50,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 @Category(SingleForkTests.class)
 public class DataReductionDailyETLTest extends TestCase {
-	private static final Logger logger = Logger.getLogger(DataReductionDailyETLTest.class);
+	private static final Logger logger = LogManager.getLogger(DataReductionDailyETLTest.class);
 	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
 	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
 	String longTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/longTerm";

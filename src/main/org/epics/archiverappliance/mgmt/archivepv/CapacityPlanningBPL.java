@@ -15,7 +15,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceAggregateInfo;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -34,13 +35,13 @@ import org.epics.archiverappliance.mgmt.archivepv.CapacityPlanningData.ETLMetric
 *
 */
 public class CapacityPlanningBPL {
-        private static Logger logger = Logger.getLogger(CapacityPlanningBPL.class.getName());
+        private static Logger logger = LogManager.getLogger(CapacityPlanningBPL.class.getName());
         private static boolean isDebug=false;
         /**
          * the percentage limitation for the ETL and Writer
          */
         private static float percentageLimitation=80;
-        private static Logger configlogger = Logger.getLogger("config." + CapacityPlanningBPL.class.getName());
+        private static Logger configlogger = LogManager.getLogger("config." + CapacityPlanningBPL.class.getName());
  
    /***
     * get the appliance for this pv.

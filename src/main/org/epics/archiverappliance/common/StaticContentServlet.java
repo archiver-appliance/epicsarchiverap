@@ -29,7 +29,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.STARTUP_SEQUENCE;
 import org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters;
@@ -49,7 +50,7 @@ import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
  */
 public class StaticContentServlet extends HttpServlet {
 	private static final long serialVersionUID = 0L;
-	private static Logger logger = Logger.getLogger(StaticContentServlet.class.getName());
+	private static Logger logger = LogManager.getLogger(StaticContentServlet.class.getName());
 	private static final int DEFAULT_BUFFER_SIZE = 10240;
 	// We expire content in this many minutes
 	private static final long DEFAULT_EXPIRE_TIME = 10*60*1000L;

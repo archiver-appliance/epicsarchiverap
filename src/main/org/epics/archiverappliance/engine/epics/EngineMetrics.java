@@ -16,7 +16,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
@@ -32,7 +33,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class EngineMetrics implements JSONAware {
-	private static final Logger logger = Logger.getLogger(EngineMetrics.class);
+	private static final Logger logger = LogManager.getLogger(EngineMetrics.class);
 	private int pvCount;
 	private int connectedPVCount;
 	private int disconnectedPVCount;

@@ -24,7 +24,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -44,7 +45,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
  *
  */
 public class PBOverHTTPStoragePlugin implements StoragePlugin {
-	private static Logger logger = Logger.getLogger(PBOverHTTPStoragePlugin.class.getName());
+	private static Logger logger = LogManager.getLogger(PBOverHTTPStoragePlugin.class.getName());
 	private String accessURL = null;
 	private String desc = "A event stream backed by a .raw response from a remote server.";
 	private String name;

@@ -19,7 +19,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -48,7 +49,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
 @Category(IntegrationTests.class)
 public class MultiPVClusterRetrievalTest {
-	private static Logger logger = Logger.getLogger(MultiPVClusterRetrievalTest.class.getName());
+	private static Logger logger = LogManager.getLogger(MultiPVClusterRetrievalTest.class.getName());
 	private TomcatSetup tomcatSetup = new TomcatSetup();
 	private PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
 	short year = (short) TimeUtils.getCurrentYear();

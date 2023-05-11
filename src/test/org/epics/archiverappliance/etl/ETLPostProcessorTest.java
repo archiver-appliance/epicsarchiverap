@@ -11,7 +11,8 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SlowTests;
@@ -49,7 +50,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 @Category(SlowTests.class)
 public class ETLPostProcessorTest {
-	private static Logger logger = Logger.getLogger(ETLPostProcessorTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ETLPostProcessorTest.class.getName());
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ETLPostProcessorTest";
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETLPostProcessorTest";
 	PlainPBStoragePlugin srcpbplugin;

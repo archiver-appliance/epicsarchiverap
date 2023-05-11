@@ -16,7 +16,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.WAR_FILE;
@@ -38,8 +39,8 @@ import com.google.common.eventbus.Subscribe;
 public class MgmtRuntimeState {
 	private ConfigService configService;
 	private Map<String, ArchivePVState> currentPVRequests = Collections.synchronizedMap(new HashMap<String, ArchivePVState>());
-	private static Logger logger = Logger.getLogger(MgmtRuntimeState.class.getName());
-	private static Logger configlogger = Logger.getLogger("config." + MgmtRuntimeState.class.getName());
+	private static Logger logger = LogManager.getLogger(MgmtRuntimeState.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + MgmtRuntimeState.class.getName());
 	private String myIdentity;
 	private ConcurrentSkipListSet<WAR_FILE> componentsThatHaveCompletedStartup = new ConcurrentSkipListSet<WAR_FILE>();
 	/**

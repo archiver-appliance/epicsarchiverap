@@ -7,7 +7,8 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.model;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import gov.aps.jca.event.ContextExceptionEvent;
 import gov.aps.jca.event.ContextExceptionListener;
@@ -23,7 +24,7 @@ import gov.aps.jca.event.ContextVirtualCircuitExceptionEvent;
 @SuppressWarnings("nls")
 public class ContextErrorHandler implements ContextExceptionListener,
 		ContextMessageListener {
-	private static final Logger logger = Logger.getLogger(ArchiveChannel.class);
+	private static final Logger logger = LogManager.getLogger(ArchiveChannel.class);
 
 	/** @see ContextExceptionListener */
 	@Override

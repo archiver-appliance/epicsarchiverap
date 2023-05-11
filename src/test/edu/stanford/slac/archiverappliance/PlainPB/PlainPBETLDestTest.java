@@ -9,7 +9,8 @@ package edu.stanford.slac.archiverappliance.PlainPB;
 
 import static org.junit.Assert.assertTrue;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
@@ -36,7 +37,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
  */
 @Category(SlowTests.class)
 public class PlainPBETLDestTest {
-	private static final Logger logger = Logger.getLogger(PlainPBETLDestTest.class);
+	private static final Logger logger = LogManager.getLogger(PlainPBETLDestTest.class);
 	PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
 	PBCommonSetup setup = new PBCommonSetup();
 

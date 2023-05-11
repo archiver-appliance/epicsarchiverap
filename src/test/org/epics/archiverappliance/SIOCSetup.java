@@ -6,7 +6,8 @@ import java.io.OutputStreamWriter;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.xml.sax.SAXException;
 
@@ -20,7 +21,7 @@ import gov.aps.jca.configuration.ConfigurationException;
  *
  */
 public class SIOCSetup {
-	private static Logger logger = Logger.getLogger(SIOCSetup.class.getName());
+	private static Logger logger = LogManager.getLogger(SIOCSetup.class.getName());
 	Process watchedProcess;
 	PipedOutputStream osforstdin = new PipedOutputStream();
 	PrintWriter writerforstdin = new PrintWriter(new OutputStreamWriter(osforstdin));

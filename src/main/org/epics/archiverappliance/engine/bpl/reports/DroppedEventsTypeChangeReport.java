@@ -12,7 +12,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -23,7 +24,7 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
 
 public class DroppedEventsTypeChangeReport implements BPLAction {
-	private static Logger logger = Logger.getLogger(DroppedEventsTypeChangeReport.class.getName());
+	private static Logger logger = LogManager.getLogger(DroppedEventsTypeChangeReport.class.getName());
 	private static class PVDroppedEvents {
 		String pvName;
 		long droppedEvents;

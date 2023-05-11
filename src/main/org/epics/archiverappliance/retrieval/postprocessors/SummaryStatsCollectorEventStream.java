@@ -6,7 +6,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.POJOEvent;
@@ -28,7 +29,7 @@ import org.epics.archiverappliance.retrieval.postprocessors.SummaryStatsPostProc
  * @see PostProcessorWithConsolidatedEventStream
  */
 public class SummaryStatsCollectorEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(SummaryStatsCollectorEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(SummaryStatsCollectorEventStream.class.getName());
 	private final RemotableEventStreamDesc desc;
 	private LinkedHashMap<Long, SummaryValue> consolidatedData;
 	private long firstBin;

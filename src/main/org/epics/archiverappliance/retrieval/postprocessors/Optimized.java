@@ -10,7 +10,8 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeSpan;
@@ -32,7 +33,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  */
 public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEventStream, FillNoFillSupport {
 
-    private static final Logger LOGGER = Logger.getLogger(Optimized.class);
+    private static final Logger Logger = LogManager.getLogger(Optimized.class);
     private static final int DEFAULT_NUMBER_OF_POINTS = 1000;
     private static final String IDENTITY = "optimized";
     
@@ -81,7 +82,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
                     if(!Double.isNaN(val)) { 
                         stats.addValue(val);
                     } else { 
-                        LOGGER.warn("Skipping NAN");
+                        Logger.warn("Skipping NAN");
                     }
                 }
             };
@@ -104,7 +105,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
         try {
             statisticsPostProcessor.initialize(getIdentity() + "_" + Integer.toString(intervalSecs),pvName);
         } catch (IOException e) {
-            LOGGER.error("Error initializing the optimized post processor.",e);
+            Logger.error("Error initializing the optimized post processor.",e);
         }
         return statisticsPostProcessor.estimateMemoryConsumption(pvName,typeInfo,start,end,req);
     }

@@ -5,7 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -19,7 +20,7 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  *
  */
 public class CurrentThreadWorkerEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(CurrentThreadWorkerEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(CurrentThreadWorkerEventStream.class.getName());
 	private String pvName;
 	private List<Callable<EventStream>> theStreams = null;
 	private CurrentThreadWorkerEventStreamIterator theIterator = null;

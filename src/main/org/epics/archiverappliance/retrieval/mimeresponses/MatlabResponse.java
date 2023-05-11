@@ -8,7 +8,8 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -48,7 +49,7 @@ import com.jmatio.types.MLUInt8;
  *
  */
 public class MatlabResponse implements MimeResponse {
-	private static Logger logger = Logger.getLogger(MatlabResponse.class.getName());
+	private static Logger logger = LogManager.getLogger(MatlabResponse.class.getName());
 	private MLStructure headerStruct = new MLStructure("header", new int[] {1, 1});
 	private MLStructure dataStruct = new MLStructure("data", new int[] {1, 1});
 	private WritableByteChannel channel = null; 

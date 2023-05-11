@@ -9,7 +9,8 @@ package org.epics.archiverappliance.engine.model;
 
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -24,7 +25,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
  */
 @SuppressWarnings("nls")
 public class MonitoredArchiveChannel extends ArchiveChannel {
-	private static final Logger logger = Logger.getLogger(MonitoredArchiveChannel.class);
+	private static final Logger logger = LogManager.getLogger(MonitoredArchiveChannel.class);
 	/** Estimated period of change in seconds */
 	final private double period_estimate;
 

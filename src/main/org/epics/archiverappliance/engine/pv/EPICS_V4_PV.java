@@ -8,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -47,7 +48,7 @@ import org.epics.pvdata.pv.Status;
 import org.epics.pvdata.pv.Structure;
 
 public class EPICS_V4_PV implements PV, ChannelGetRequester, ChannelRequester, MonitorRequester {
-	private static final Logger logger = Logger.getLogger(EPICS_V4_PV.class.getName());
+	private static final Logger logger = LogManager.getLogger(EPICS_V4_PV.class.getName());
 
 	/** Channel name. */
 	private String name = null;

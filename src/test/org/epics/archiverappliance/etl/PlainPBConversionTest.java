@@ -2,18 +2,17 @@ package org.epics.archiverappliance.etl;
 
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.sql.Timestamp;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SlowTests;
@@ -48,7 +47,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class PlainPBConversionTest {
-	private static Logger logger = Logger.getLogger(PlainPBConversionTest.class.getName());
+	private static Logger logger = LogManager.getLogger(PlainPBConversionTest.class.getName());
 	PlainPBStoragePlugin storagePlugin;
 	PBCommonSetup setup;
 
@@ -99,12 +98,8 @@ public class PlainPBConversionTest {
 		
 		validateStream(pvName, numEvents, srcDBRType);
 		try {
-			Logger appendDataLogger = Logger.getLogger(AppendDataStateData.class.getName());
-			Level currLevel = appendDataLogger.getLevel();
-			appendDataLogger.setLevel(Level.FATAL);
 			convertToType(pvName, destDBRType);
-			appendDataLogger.setLevel(currLevel);
-		} catch(Exception ex) { 
+		} catch(Exception ex) {
 			assertTrue("Expecting a Conversion Exception, instead got a " + ex, ex.getCause() instanceof ConversionException);
 		}
 		validateStream(pvName, numEvents, srcDBRType);

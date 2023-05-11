@@ -23,7 +23,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
@@ -42,7 +43,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
  *
  */
 public class ValidateAndFixPBFile {
-	private static Logger logger = Logger.getLogger(ValidateAndFixPBFile.class.getName());
+	private static Logger logger = LogManager.getLogger(ValidateAndFixPBFile.class.getName());
 	
 	/**
 	 * @param args  &emsp;

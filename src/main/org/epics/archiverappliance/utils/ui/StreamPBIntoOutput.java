@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -30,7 +31,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class StreamPBIntoOutput {
-	private static final Logger logger = Logger.getLogger(StreamPBIntoOutput.class);
+	private static final Logger logger = LogManager.getLogger(StreamPBIntoOutput.class);
 	
 	
 	/**

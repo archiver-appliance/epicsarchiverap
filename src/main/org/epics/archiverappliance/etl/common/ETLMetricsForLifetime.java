@@ -6,7 +6,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
@@ -17,7 +18,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
  *
  */
 public class ETLMetricsForLifetime implements StorageMetricsContext {
-	private static Logger logger = Logger.getLogger(ETLMetricsForLifetime.class.getName());
+	private static Logger logger = LogManager.getLogger(ETLMetricsForLifetime.class.getName());
 	int lifeTimeId;
 	long totalETLRuns;
 	long timeForOverallETLInMilliSeconds;

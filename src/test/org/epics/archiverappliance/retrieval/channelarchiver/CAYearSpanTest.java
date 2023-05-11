@@ -13,7 +13,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -28,7 +29,7 @@ import org.junit.Test;
  *
  */
 public class CAYearSpanTest {
-	private static Logger logger = Logger.getLogger(CAYearSpanTest.class.getName());
+	private static Logger logger = LogManager.getLogger(CAYearSpanTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

@@ -14,7 +14,8 @@ import java.net.URLEncoder;
 import java.nio.file.Files;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -47,7 +48,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 @Category(IntegrationTests.class)
 public class DataRetrievalServletTest {
 	
-	private static Logger logger = Logger.getLogger(DataRetrievalServletTest.class.getName());
+	private static Logger logger = LogManager.getLogger(DataRetrievalServletTest.class.getName());
 	private ConfigService configService;
 	PBCommonSetup pbSetup = new PBCommonSetup();
 	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();

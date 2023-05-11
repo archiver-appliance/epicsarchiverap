@@ -9,7 +9,8 @@ package org.epics.archiverappliance.config;
 
 import java.io.Serializable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin;
 
 /**
@@ -18,7 +19,7 @@ import org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverRead
  *
  */
 public class ChannelArchiverDataServerInfo implements Serializable {
-	private static Logger logger = Logger.getLogger(ChannelArchiverDataServerInfo.class.getName());
+	private static Logger logger = LogManager.getLogger(ChannelArchiverDataServerInfo.class.getName());
 	private static final long serialVersionUID = 2721786392131798533L;
 	private String serverURL;
 	private String index;

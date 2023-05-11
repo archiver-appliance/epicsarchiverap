@@ -4,7 +4,8 @@ import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVI
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
@@ -29,7 +30,7 @@ import org.junit.experimental.categories.Category;
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaSuiteTstArchivePV {
 
-	private static Logger logger = Logger.getLogger(PvaSuiteTstArchivePV.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaSuiteTstArchivePV.class.getName());
 	private static RPCClient client;
 
 	@BeforeClass

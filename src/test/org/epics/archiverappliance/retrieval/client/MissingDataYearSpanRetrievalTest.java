@@ -17,7 +17,8 @@ import java.sql.Timestamp;
 import java.util.LinkedList;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -54,7 +55,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 @Category(IntegrationTests.class)
 public class MissingDataYearSpanRetrievalTest {
-	private static Logger logger = Logger.getLogger(MissingDataYearSpanRetrievalTest.class.getName());
+	private static Logger logger = LogManager.getLogger(MissingDataYearSpanRetrievalTest.class.getName());
 	String testSpecificFolder = "MissingDataYearSpanRetrieval";
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":" + testSpecificFolder + ":mdata_yspan";
 	File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator +  "ArchUnitTest" + File.separator + testSpecificFolder);

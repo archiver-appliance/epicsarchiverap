@@ -10,7 +10,8 @@ package org.epics.archiverappliance.mgmt.bpl.cahdlers;
 import java.io.StringWriter;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -23,7 +24,7 @@ import org.xml.sax.helpers.DefaultHandler;
 public class InfoHandler extends DefaultHandler {
 	private String desc = null;
 	
-	private static Logger logger = Logger.getLogger(InfoHandler.class.getName());
+	private static Logger logger = LogManager.getLogger(InfoHandler.class.getName());
 	LinkedList<String> currentNodes = new LinkedList<String>();
 	boolean descFound = false;
 

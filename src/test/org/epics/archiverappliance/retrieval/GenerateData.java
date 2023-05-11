@@ -12,7 +12,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -37,7 +38,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class GenerateData {
-	private static Logger logger = Logger.getLogger(GenerateData.class.getName());
+	private static Logger logger = LogManager.getLogger(GenerateData.class.getName());
 
 	/**
 	 * We generate a sine wave for the data if it does not already exist.

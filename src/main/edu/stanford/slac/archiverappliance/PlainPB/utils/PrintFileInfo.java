@@ -14,7 +14,8 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -28,7 +29,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
  *  If a folder is specified, we walk the folder and print the PBFileInfo for every .pb file we encounter
  */
 public class PrintFileInfo {
-	private static Logger logger = Logger.getLogger(PrintFileInfo.class.getName());
+	private static Logger logger = LogManager.getLogger(PrintFileInfo.class.getName());
 
 	private static void printFileInfo(Path path) {
 		try {

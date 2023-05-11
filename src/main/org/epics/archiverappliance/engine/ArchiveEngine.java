@@ -21,7 +21,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -60,7 +61,7 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
  */
 
 public class ArchiveEngine {
-	private static final Logger logger = Logger.getLogger(ArchiveEngine.class.getName());
+	private static final Logger logger = LogManager.getLogger(ArchiveEngine.class.getName());
 
 	/**
 	 * Create the channel for the PV and register it in the places where it needs to be registered.

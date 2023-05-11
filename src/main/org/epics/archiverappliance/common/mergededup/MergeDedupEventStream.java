@@ -3,7 +3,8 @@ package org.epics.archiverappliance.common.mergededup;
 import java.io.IOException;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -19,7 +20,7 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  *
  */
 public class MergeDedupEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(MergeDedupEventStream.class);
+	private static Logger logger = LogManager.getLogger(MergeDedupEventStream.class);
 	
 	EventStream strm1;
 	EventStream strm2;

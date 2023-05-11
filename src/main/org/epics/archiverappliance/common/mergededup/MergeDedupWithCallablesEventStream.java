@@ -6,7 +6,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -22,7 +23,7 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  *
  */
 public class MergeDedupWithCallablesEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(MergeDedupWithCallablesEventStream.class);
+	private static Logger logger = LogManager.getLogger(MergeDedupWithCallablesEventStream.class);
 	
 	List<Callable<EventStream>> callables1;
 	List<Callable<EventStream>> callables2;

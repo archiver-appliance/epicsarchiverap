@@ -15,7 +15,8 @@ import java.util.Random;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -54,7 +55,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PostProcessorWithPBErrorTest {
-	private static Logger logger = Logger.getLogger(PostProcessorWithPBErrorTest.class.getName());
+	private static Logger logger = LogManager.getLogger(PostProcessorWithPBErrorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

@@ -11,7 +11,8 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -28,7 +29,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  * Low level utility for printing PB/HTTP response dumps. 
  */
 public class PrintPBResponse {
-	private static Logger logger = Logger.getLogger(PrintPBResponse.class.getName());
+	private static Logger logger = LogManager.getLogger(PrintPBResponse.class.getName());
 	public static void main(String[] args) throws Exception {
 		if(args == null || args.length < 1) { 
 			System.err.println("Usage: java edu.stanford.slac.archiverappliance.PlainPB.utils.PrintTimes <PB/HTTP response dump>");

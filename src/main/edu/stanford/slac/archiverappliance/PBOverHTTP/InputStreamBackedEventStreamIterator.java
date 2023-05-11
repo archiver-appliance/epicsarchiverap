@@ -15,7 +15,8 @@ import java.lang.reflect.Constructor;
 import java.sql.Timestamp;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -32,7 +33,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class InputStreamBackedEventStreamIterator implements Iterator<Event> {
-	private static Logger logger = Logger.getLogger(InputStreamBackedEventStreamIterator.class.getName());
+	private static Logger logger = LogManager.getLogger(InputStreamBackedEventStreamIterator.class.getName());
 	private static int BUFFER_SIZE=10*1024;
 	private InputStream is = null;
 	private int linenumber = 0;

@@ -13,7 +13,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
@@ -58,7 +59,7 @@ import org.json.simple.JSONObject;
  *
  */
 public class PvaGetPVStatus implements PvaAction {
-	private static final Logger logger = Logger.getLogger(PvaGetPVStatus.class);
+	private static final Logger logger = LogManager.getLogger(PvaGetPVStatus.class);
 	
 	public static final String NAME = "PVStatus";
 	

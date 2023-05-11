@@ -13,7 +13,8 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -33,7 +34,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
-	private static final Logger logger = Logger.getLogger(MultiFilePBEventStream.class);
+	private static final Logger logger = LogManager.getLogger(MultiFilePBEventStream.class);
 	private LineByteStreamCreator istreams[] = null;
 	private String pvName;
 	private ArchDBRTypes type;

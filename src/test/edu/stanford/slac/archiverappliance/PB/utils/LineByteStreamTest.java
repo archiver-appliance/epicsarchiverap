@@ -18,7 +18,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.After;
@@ -34,7 +35,7 @@ import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerat
  *
  */
 public class LineByteStreamTest {
-	private static Logger logger = Logger.getLogger(LineByteStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(LineByteStreamTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

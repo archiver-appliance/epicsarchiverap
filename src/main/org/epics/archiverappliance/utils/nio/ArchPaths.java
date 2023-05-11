@@ -17,7 +17,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This is a replacement for NIO Paths that caters to our syntax rules.
@@ -31,7 +32,7 @@ import org.apache.log4j.Logger;
  */
 public class ArchPaths implements Closeable {
 	public static final String ZIP_PREFIX = "jar:file://";
-	private static Logger logger = Logger.getLogger(ArchPaths.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchPaths.class.getName());
 	private static FileSystemProvider zipFSProvider = getZipFSProvider();
 	private ConcurrentHashMap<String, FileSystem>  fileSystemList = new ConcurrentHashMap<String, FileSystem>();	
 	/**

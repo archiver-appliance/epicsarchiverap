@@ -17,7 +17,8 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -31,7 +32,7 @@ import org.json.simple.JSONObject;
  *
  */
 public class CreationTimeReportForAppliance implements BPLAction {
-	private static final Logger logger = Logger.getLogger(CreationTimeReportForAppliance.class);
+	private static final Logger logger = LogManager.getLogger(CreationTimeReportForAppliance.class);
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {

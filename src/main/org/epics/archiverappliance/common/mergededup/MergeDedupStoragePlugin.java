@@ -8,7 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -77,7 +78,7 @@ import org.epics.archiverappliance.utils.ui.URIUtils;
  *
  */
 public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics {
-	private static Logger logger = Logger.getLogger(MergeDedupStoragePlugin.class.getName());
+	private static Logger logger = LogManager.getLogger(MergeDedupStoragePlugin.class.getName());
 	private String name;
 	private StoragePlugin dest;
 	private StoragePlugin other;

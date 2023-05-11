@@ -3,7 +3,8 @@ package org.epics.archiverappliance.engine.V4;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.pvaccess.client.Channel;
 import org.epics.pvaccess.client.Channel.ConnectionState;
 import org.epics.pvaccess.client.ChannelProvider;
@@ -25,7 +26,7 @@ import org.epics.pvdata.pv.Structure;
  *
  */
 public class SampleV4Client implements ChannelRequester, MonitorRequester {
-	private static final Logger logger = Logger.getLogger(SampleV4Client.class);
+	private static final Logger logger = LogManager.getLogger(SampleV4Client.class);
 	private static ChannelProvider channelProvider;
 	
 	private Channel channel;

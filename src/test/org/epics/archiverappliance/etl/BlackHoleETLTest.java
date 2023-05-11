@@ -12,7 +12,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -41,7 +42,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class BlackHoleETLTest {
-	private static Logger logger = Logger.getLogger(GradualAccumulationETLTest.class.getName());
+	private static Logger logger = LogManager.getLogger(GradualAccumulationETLTest.class.getName());
 	private ConfigService configService;
 
 	@Before

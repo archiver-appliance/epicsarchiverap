@@ -3,7 +3,8 @@ package org.epics.archiverappliance.config;
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.ConfigException;
 
 /**
@@ -34,7 +35,7 @@ import org.epics.archiverappliance.config.exception.ConfigException;
  * @author mshankar
  */
 public class ConvertPVNameToKey implements PVNameToKeyMapping {
-	private static Logger configlogger = Logger.getLogger("config." + ConvertPVNameToKey.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + ConvertPVNameToKey.class.getName());
 	private static final String SITE_NAME_SPACE_SEPARATORS = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceSeparators";
 	private static final String SITE_NAME_SPACE_TERMINATOR = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator";
 	private String siteNameSpaceSeparators;

@@ -10,7 +10,8 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.POJOEvent;
@@ -73,7 +74,7 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 		}
 	} 
 	
-	private static Logger logger = Logger.getLogger(CAPlotBinning.class.getName());
+	private static Logger logger = LogManager.getLogger(CAPlotBinning.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	
 	class PlotBin { 

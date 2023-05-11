@@ -14,7 +14,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -29,7 +30,7 @@ import org.epics.archiverappliance.engine.model.YearListener;
  *
  */
 public class WriterRunnable implements Runnable {
-	private static final Logger logger = Logger.getLogger(WriterRunnable.class);
+	private static final Logger logger = LogManager.getLogger(WriterRunnable.class);
 	/** Minimum write period [seconds] */
 	private static final double MIN_WRITE_PERIOD = 10.0;
     /**the sample buffer hash map*/

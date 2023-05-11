@@ -17,7 +17,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -42,7 +43,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class GetDataAtTimeEngine implements BPLAction {
-	private static final Logger logger = Logger.getLogger(GetDataAtTimeEngine.class);
+	private static final Logger logger = LogManager.getLogger(GetDataAtTimeEngine.class);
 	
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,

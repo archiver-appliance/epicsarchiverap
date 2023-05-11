@@ -16,7 +16,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -45,7 +46,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class SearchInPBFileTest {
-	private static Logger logger = Logger.getLogger(SearchInPBFileTest.class.getName());
+	private static Logger logger = LogManager.getLogger(SearchInPBFileTest.class.getName());
 	PBCommonSetup pbSetup = new PBCommonSetup();
 	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
 	private ConfigService configService;

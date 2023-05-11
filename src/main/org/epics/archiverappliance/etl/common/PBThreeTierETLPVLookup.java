@@ -19,7 +19,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
@@ -40,8 +41,8 @@ import org.epics.archiverappliance.etl.StorageMetrics;
  */
 
 public final class PBThreeTierETLPVLookup {
-	private static Logger logger = Logger.getLogger(PBThreeTierETLPVLookup.class.getName());
-	private static Logger configlogger = Logger.getLogger("config." + PBThreeTierETLPVLookup.class.getName());
+	private static Logger logger = LogManager.getLogger(PBThreeTierETLPVLookup.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + PBThreeTierETLPVLookup.class.getName());
 	private static int DEFAULT_ETL_PERIOD = 60*5; // Seconds; needs to be the smallest time interval in the PartitionGranularity.
 	private static int DEFAULT_ETL_INITIAL_DELAY = 60*1; // Seconds.
 

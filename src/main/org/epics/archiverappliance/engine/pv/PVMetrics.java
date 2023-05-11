@@ -20,7 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -31,7 +32,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
  */
 
 public class PVMetrics {
-	private static Logger logger = Logger.getLogger(PVMetrics.class.getName());
+	private static Logger logger = LogManager.getLogger(PVMetrics.class.getName());
 	private static final long ROTATEEVENTS_OR_STORAGE_LIMIT = Long.MAX_VALUE - 100000;
 
 	/**pv name*/

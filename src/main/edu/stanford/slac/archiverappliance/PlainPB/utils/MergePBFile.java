@@ -16,7 +16,8 @@ import java.nio.file.StandardOpenOption;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -34,7 +35,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
  * @author mshankar
  */
 public class MergePBFile {
-	private static Logger logger = Logger.getLogger(MergePBFile.class.getName());
+	private static Logger logger = LogManager.getLogger(MergePBFile.class.getName());
 	private static boolean verboseMode = false;
 	
 	/**

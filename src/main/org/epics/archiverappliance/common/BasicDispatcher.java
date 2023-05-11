@@ -14,7 +14,8 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.WAR_FILE;
 import org.epics.archiverappliance.config.exception.ConfigException;
@@ -28,7 +29,7 @@ import org.json.simple.JSONObject;
  *
  */
 public class BasicDispatcher {
-	private static final Logger logger = Logger.getLogger(BasicDispatcher.class);
+	private static final Logger logger = LogManager.getLogger(BasicDispatcher.class);
 
 	public static void dispatch(HttpServletRequest req, HttpServletResponse resp, ConfigService configService, HashMap<String, Class<? extends BPLAction>> actions) throws IOException {
 		String requestPath = req.getPathInfo();

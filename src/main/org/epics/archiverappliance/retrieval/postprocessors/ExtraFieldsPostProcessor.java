@@ -7,7 +7,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.POJOEvent;
@@ -23,7 +24,7 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
  *
  */
 public class ExtraFieldsPostProcessor implements PostProcessor {
-	private static Logger logger = Logger.getLogger(ExtraFieldsPostProcessor.class.getName());
+	private static Logger logger = LogManager.getLogger(ExtraFieldsPostProcessor.class.getName());
 	private static final String EXTRA_FIELDS = "extraFields";
 	private String fieldName;
 	

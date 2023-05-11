@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -33,7 +34,7 @@ import junit.framework.TestCase;
  */
 @Category(LocalEpicsTests.class)
 public class MetaTest extends TestCase {
-	private static Logger logger = Logger.getLogger(MetaTest.class.getName());
+	private static Logger logger = LogManager.getLogger(MetaTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
 

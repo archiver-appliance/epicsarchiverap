@@ -2,8 +2,9 @@ package org.epics.archiverappliance.mgmt.pva;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetApplianceInfo;
@@ -24,7 +25,7 @@ import org.epics.pvdata.pv.PVStructure;
  */
 public class PvaMgmtService implements RPCServiceAsync {
 
-	private static Logger logger = Logger.getLogger(PvaMgmtService.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaMgmtService.class.getName());
 	private final ConfigService configService;
 
 	public static final String PVA_MGMT_SERVICE = "pvaMgmtService";

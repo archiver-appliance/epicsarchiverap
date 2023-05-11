@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
@@ -51,7 +52,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
  */
 @Category(IntegrationTests.class)
 public class DeadBandTest {
-	private static Logger logger = Logger.getLogger(DeadBandTest.class.getName());
+	private static Logger logger = LogManager.getLogger(DeadBandTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	private String pvName = "UnitTestNoNamingConvention:inactive1";
 	private String ltsFolderName = System.getenv("ARCHAPPL_LONG_TERM_FOLDER"); 

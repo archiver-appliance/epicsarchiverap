@@ -14,7 +14,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -42,7 +43,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class RenamePVTest {
-	private static final Logger logger = Logger.getLogger(RenamePVTest.class);
+	private static final Logger logger = LogManager.getLogger(RenamePVTest.class);
 	private ConfigService configService;
 	private File rootFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "RenamePV"); 
 

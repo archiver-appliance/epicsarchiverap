@@ -6,7 +6,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -37,7 +38,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  *
  */
 public class DeadBand implements PostProcessor {
-	private static Logger logger = Logger.getLogger(DeadBand.class.getName());
+	private static Logger logger = LogManager.getLogger(DeadBand.class.getName());
 	private static final double DEFAULT_ADEL=1.0;
 	private double adelValue = DEFAULT_ADEL;
 	private Event lastEventWrittenOut = null;

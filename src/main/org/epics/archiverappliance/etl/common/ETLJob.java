@@ -5,7 +5,8 @@ import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.etl.ETLContext;
@@ -21,7 +22,7 @@ import org.epics.archiverappliance.etl.StorageMetrics;
  *
  */
 public class ETLJob implements Runnable {
-	private static Logger logger = Logger.getLogger(ETLJob.class.getName());
+	private static Logger logger = LogManager.getLogger(ETLJob.class.getName());
 	private ETLPVLookupItems lookupItem;
 	private boolean currentlyRunning = false;
 	private long ETLRunStartEpochSeconds = 0;

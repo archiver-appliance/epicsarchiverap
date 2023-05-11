@@ -6,7 +6,8 @@ import java.io.IOException;
 import java.sql.Timestamp;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -33,7 +34,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ArchiveAliasedPVTest {
-	private static Logger logger = Logger.getLogger(ArchiveAliasedPVTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchiveAliasedPVTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

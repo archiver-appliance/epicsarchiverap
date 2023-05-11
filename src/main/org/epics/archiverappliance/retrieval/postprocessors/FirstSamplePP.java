@@ -6,7 +6,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -23,7 +24,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  *
  */
 public class FirstSamplePP implements PostProcessor, AfterAllStreams {
-	private static Logger logger = Logger.getLogger(FirstSamplePP.class.getName());
+	private static Logger logger = LogManager.getLogger(FirstSamplePP.class.getName());
 	private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private long firstBin = 0;
 	private long lastBin = Long.MAX_VALUE;

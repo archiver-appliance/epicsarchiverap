@@ -7,8 +7,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletConfig;
@@ -16,13 +14,16 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.pvaccess.PVAException;
 import org.epics.pvaccess.server.rpc.RPCServer;
 
 public class PvaDataRetrievalServlet extends GenericServlet {
 
-	private static Logger logger = Logger.getLogger(PvaDataRetrievalServlet.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaDataRetrievalServlet.class.getName());
 
 	/**
 	 * 
@@ -44,7 +45,7 @@ public class PvaDataRetrievalServlet extends GenericServlet {
 				server.printInfo();
 				server.run(0);
 			} catch (PVAException e) {
-				logger.log(Level.SEVERE, "Failed to start service : " + PVA_DATA_SERVICE, e);
+				logger.log(Level.FATAL, "Failed to start service : " + PVA_DATA_SERVICE, e);
 			}
 		});
 		logger.info(ZonedDateTime.now(ZoneId.systemDefault()) + PVA_DATA_SERVICE + " is operational.");
@@ -64,7 +65,7 @@ public class PvaDataRetrievalServlet extends GenericServlet {
 			executorService.shutdown();
 			logger.info(PVA_DATA_SERVICE + " Shutdown complete.");
 		} catch (PVAException e) {
-			logger.log(Level.SEVERE, "Failed to close service : " + PVA_DATA_SERVICE, e);
+			logger.log(Level.FATAL, "Failed to close service : " + PVA_DATA_SERVICE, e);
 		}
 		super.destroy();
 	}

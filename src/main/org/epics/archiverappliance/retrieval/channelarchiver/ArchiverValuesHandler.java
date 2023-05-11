@@ -21,7 +21,8 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -44,7 +45,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  *
  */
 public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, Iterator<Event>, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(ArchiverValuesHandler.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchiverValuesHandler.class.getName());
 	
 	public enum ArchiverValuesType {
 		// See page 43 of the Channel Archiver Manual for this...

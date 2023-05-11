@@ -7,7 +7,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.POJOEvent;
@@ -30,7 +31,7 @@ public class Nth implements PostProcessor, PostProcessorWithConsolidatedEventStr
 	private static final String IDENTITY = "nth";
 	public static final int MAX_COUNT = Integer.MAX_VALUE/1000;
 	
-	private static Logger logger = Logger.getLogger(Nth.class.getName());
+	private static Logger logger = LogManager.getLogger(Nth.class.getName());
 	
 	private int everyNth = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private int count;

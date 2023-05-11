@@ -17,7 +17,8 @@ import java.util.LinkedList;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
@@ -28,7 +29,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class PauseArchivingPV implements BPLAction {
-	private static final Logger logger = Logger.getLogger(PauseArchivingPV.class);
+	private static final Logger logger = LogManager.getLogger(PauseArchivingPV.class);
 	
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {

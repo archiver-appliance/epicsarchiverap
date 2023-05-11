@@ -8,7 +8,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeSpan;
@@ -27,7 +28,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 
 // The implementation however is similar to lastFill.
 public class LastSample implements PostProcessor, PostProcessorWithConsolidatedEventStream {
-	private static Logger logger = Logger.getLogger(LastSample.class.getName());
+	private static Logger logger = LogManager.getLogger(LastSample.class.getName());
 	private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private long firstBin = 0;
 	private long lastBin = Long.MAX_VALUE;

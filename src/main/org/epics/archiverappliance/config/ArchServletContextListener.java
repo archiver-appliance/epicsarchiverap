@@ -13,7 +13,8 @@ import java.io.PrintWriter;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This is a ServletContextListener expected to be registered in web.xml that serves as the source of dependency injection.
@@ -22,8 +23,8 @@ import org.apache.log4j.Logger;
  *
  */
 public class ArchServletContextListener implements ServletContextListener {
-	private static final Logger logger = Logger.getLogger(ArchServletContextListener.class);
-	private static final Logger configlogger = Logger.getLogger("config." + ArchServletContextListener.class);
+	private static final Logger logger = LogManager.getLogger(ArchServletContextListener.class);
+	private static final Logger configlogger = LogManager.getLogger("config." + ArchServletContextListener.class);
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
 		try {

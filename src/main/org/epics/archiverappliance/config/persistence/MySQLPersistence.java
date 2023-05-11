@@ -16,7 +16,8 @@ import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.sql.DataSource;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigPersistence;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.UserSpecifiedSamplingParams;
@@ -34,8 +35,8 @@ import org.json.simple.JSONValue;
  *
  */
 public class MySQLPersistence implements ConfigPersistence {
-	private static Logger configlogger = Logger.getLogger("config." + MySQLPersistence.class.getName());
-	private static Logger logger = Logger.getLogger(MySQLPersistence.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + MySQLPersistence.class.getName());
+	private static Logger logger = LogManager.getLogger(MySQLPersistence.class.getName());
 	private DataSource theDataSource;
 
 	private static enum dialect_t {

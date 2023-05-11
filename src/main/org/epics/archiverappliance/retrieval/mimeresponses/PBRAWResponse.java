@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -38,7 +39,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  */
 public class PBRAWResponse implements MimeResponse {
 	private static final int MERGEDEDUP_BUFFER_EVENTCOUNT = 2;
-	private static Logger logger = Logger.getLogger(PBRAWResponse.class.getName());
+	private static Logger logger = LogManager.getLogger(PBRAWResponse.class.getName());
 	private OutputStream os = null;
 	boolean firstChunk = true;
 	long eventsWritten = 0;

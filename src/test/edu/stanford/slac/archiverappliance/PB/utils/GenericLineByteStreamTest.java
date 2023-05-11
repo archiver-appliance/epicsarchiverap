@@ -11,14 +11,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.text.DecimalFormat;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 public class GenericLineByteStreamTest {
-	private static Logger logger = Logger.getLogger(GenericLineByteStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(GenericLineByteStreamTest.class.getName());
 	private String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LineByteStream.txt";
 
 	@Before

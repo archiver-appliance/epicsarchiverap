@@ -11,7 +11,8 @@ package org.epics.archiverappliance.retrieval;
 import java.io.OutputStream;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -30,7 +31,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  *
  */
 class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
-	private static Logger logger = Logger.getLogger(MergeDedupConsumer.class.getName());
+	private static Logger logger = LogManager.getLogger(MergeDedupConsumer.class.getName());
 	private Timestamp startTimeStamp;
 	int totalEvents = 0;
 	int skippedEvents = 0;

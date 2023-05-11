@@ -15,7 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.mergededup.MergeDedupWithCallablesEventStream;
@@ -36,7 +37,7 @@ import org.junit.Test;
  *
  */
 public class MergeDedupCallablesEventStreamTest {
-	private static Logger logger = Logger.getLogger(MergeDedupCallablesEventStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(MergeDedupCallablesEventStreamTest.class.getName());
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":MergeDedupEventStreamTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	short currentYear = TimeUtils.getCurrentYear();

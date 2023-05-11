@@ -6,7 +6,8 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -39,7 +40,7 @@ import io.github.bonigarcia.wdm.WebDriverManager;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class AddRemoveAliasTest {
-	private static Logger logger = Logger.getLogger(AddRemoveAliasTest.class.getName());
+	private static Logger logger = LogManager.getLogger(AddRemoveAliasTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

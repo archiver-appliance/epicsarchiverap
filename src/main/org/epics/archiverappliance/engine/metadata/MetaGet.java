@@ -21,7 +21,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -53,7 +54,7 @@ public class MetaGet implements Runnable {
 	private ConcurrentHashMap<String, DBRTimeEvent> fieldValues = new ConcurrentHashMap<String, DBRTimeEvent>();
 
 	final private ConfigService configservice;
-	private static final Logger logger = Logger.getLogger(MetaGet.class.getName());
+	private static final Logger logger = LogManager.getLogger(MetaGet.class.getName());
 	private boolean isScheduled = false;
 	private long scheduleStartEpochSecs = -1L;
 	private ScheduledFuture<?> samplingFuture = null;

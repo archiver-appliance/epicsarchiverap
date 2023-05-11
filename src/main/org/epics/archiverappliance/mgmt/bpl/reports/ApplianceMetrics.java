@@ -17,7 +17,8 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -32,7 +33,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class ApplianceMetrics implements BPLAction {
-	private static final Logger logger = Logger.getLogger(ApplianceMetrics.class);
+	private static final Logger logger = LogManager.getLogger(ApplianceMetrics.class);
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,
 			ConfigService configService) throws IOException {

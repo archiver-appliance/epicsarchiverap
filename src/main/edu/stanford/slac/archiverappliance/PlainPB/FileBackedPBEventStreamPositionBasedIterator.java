@@ -12,7 +12,8 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -27,7 +28,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class FileBackedPBEventStreamPositionBasedIterator implements FileBackedPBEventStreamIterator {
-	private static Logger logger = Logger.getLogger(FileBackedPBEventStreamPositionBasedIterator.class.getName());
+	private static Logger logger = LogManager.getLogger(FileBackedPBEventStreamPositionBasedIterator.class.getName());
 	private long startFilePos = 0;
 	private long endFilePos = 0;
 	private short year = 0;

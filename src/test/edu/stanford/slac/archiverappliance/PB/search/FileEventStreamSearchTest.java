@@ -16,7 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.After;
 import org.junit.Before;
@@ -30,7 +31,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class FileEventStreamSearchTest {
-	private static final Logger logger = Logger.getLogger(FileEventStreamSearchTest.class);
+	private static final Logger logger = LogManager.getLogger(FileEventStreamSearchTest.class);
 	String pathName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "FileEventStreamSearchTest.txt";
 	Path path = Paths.get(pathName);
 

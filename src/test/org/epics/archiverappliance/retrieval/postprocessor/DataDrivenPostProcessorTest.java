@@ -11,7 +11,8 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -41,7 +42,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
  */
 @Category(IntegrationTests.class)
 public class DataDrivenPostProcessorTest {
-	private static Logger logger = Logger.getLogger(DataDrivenPostProcessorTest.class.getName());
+	private static Logger logger = LogManager.getLogger(DataDrivenPostProcessorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	private String pvName = "UnitTestNoNamingConvention:inactive1";
 	private String ltsFolderName = System.getenv("ARCHAPPL_LONG_TERM_FOLDER"); 

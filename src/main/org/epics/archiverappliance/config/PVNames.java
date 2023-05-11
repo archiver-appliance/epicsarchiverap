@@ -2,7 +2,8 @@ package org.epics.archiverappliance.config;
 
 import java.util.regex.Pattern;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Utility class for dealing with various aspects of EPICS PV names
@@ -10,7 +11,7 @@ import org.apache.log4j.Logger;
  *
  */
 public class PVNames {
-	private static Logger logger = Logger.getLogger(PVNames.class.getName());
+	private static Logger logger = LogManager.getLogger(PVNames.class.getName());
 
 	/**
 	 * When you intend to connect to the PV's using PVAccess, use this string as a prefix in the UI/archivePV BPL. For example, pva://double01

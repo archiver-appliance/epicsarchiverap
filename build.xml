@@ -21,9 +21,6 @@
 	<property name="dist" location="./build"/>
 	<property name="test.dir" location="src/test"/>
 	<property name="tomcathome" location="${env.TOMCAT_HOME}"/>
-	<condition property="log4jprops" value="-Dlog4j.configuration=log4j.properties.debug" else="-Dlog4j.configuration=log4j.properties">
-		<istrue value="${verboselogging}"/>
-	</condition>
 
 	<!-- Determine the site from the environment variable ARCHAPPL_SITEID. If this is not set, we assume the unit tests environment -->
 	<condition property="archapplsite" value="${env.ARCHAPPL_SITEID}" else="tests">
@@ -246,9 +243,12 @@
 	    <classpath>
 	    	<pathelement path="${classes}"/>
 	    	<pathelement path="."/>
-	        <fileset dir="lib">
-	          <include name="**/*.jar"/>
-	        </fileset>
+			<fileset dir="src/resources/test">
+				<include name="*"/>
+			</fileset>
+			<fileset dir="lib">
+				<include name="**/*.jar"/>
+			</fileset>
             <fileset dir="${tomcathome}/lib">
               <include name="**/*.jar"/>
             </fileset>
@@ -262,7 +262,6 @@
 	  	<assertions>
 	  	  <enable/>
 	  	</assertions>
-	  	<jvmarg value="-Dlog4j.configuration=log4j.properties"/>
 	  	<jvmarg value="-Dwebdriver.gecko.driver=./lib/test/geckodriver-v0.24.0-linux64/geckodriver"/>
 	  	<env key="ARCHAPPL_SHORT_TERM_FOLDER" path="./sts"/>
 	  	<env key="ARCHAPPL_MEDIUM_TERM_FOLDER" path="./mts"/>
@@ -297,7 +296,6 @@
 	  	<assertions>
 	  	  <enable/>
 	  	</assertions>
-	  	<jvmarg value="${log4jprops}"/>
 	  	<jvmarg value="-Dwebdriver.gecko.driver=./lib/test/geckodriver-v0.24.0-linux64/geckodriver"/>
 	  	<env key="ARCHAPPL_SHORT_TERM_FOLDER" path="./sts"/>
 	  	<env key="ARCHAPPL_MEDIUM_TERM_FOLDER" path="./mts"/>
@@ -332,7 +330,6 @@
 	  	<assertions>
 	  	  <enable/>
 	  	</assertions>
-	  	<jvmarg value="${log4jprops}"/>
 	  	<jvmarg value="-Dwebdriver.gecko.driver=./lib/test/geckodriver-v0.24.0-linux64/geckodriver"/>
 	  	<jvmarg value="-Xdebug"/>
 	  	<jvmarg value="-Xrunjdwp:transport=dt_socket,address=17667,server=y,suspend=y"/>

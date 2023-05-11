@@ -28,7 +28,8 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.NoDataException;
@@ -110,7 +111,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility.StartE
  *
  */
 public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics {
-	private static Logger logger = Logger.getLogger(PlainPBStoragePlugin.class.getName());
+	private static Logger logger = LogManager.getLogger(PlainPBStoragePlugin.class.getName());
 
 	public static final String PB_EXTENSION = ".pb";
 	public static final String APPEND_EXTENSION = ".pbappend";

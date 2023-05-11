@@ -3,7 +3,8 @@ package org.epics.archiverappliance.common;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -19,7 +20,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  *
  */
 public class POJOEvent implements DBRTimeEvent {
-	public static Logger logger = Logger.getLogger(POJOEvent.class.getName());
+	public static Logger logger = LogManager.getLogger(POJOEvent.class.getName());
 	private ArchDBRTypes dbrType;
 	private Timestamp recordProcessingTime;
 	private SampleValue sampleValue;

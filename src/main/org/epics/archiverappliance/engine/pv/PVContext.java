@@ -14,7 +14,8 @@ import gov.aps.jca.event.ConnectionListener;
 
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 
 /**
@@ -32,7 +33,7 @@ import org.epics.archiverappliance.config.ConfigService;
  */
 @SuppressWarnings("nls")
 public class PVContext {
-	private static Logger logger = Logger.getLogger(PVContext.class.getName());
+	private static Logger logger = LogManager.getLogger(PVContext.class.getName());
 
 	public enum MonitorMask {
 		/** Listen to changes in value beyond 'MDEL' threshold or alarm state */

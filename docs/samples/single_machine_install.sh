@@ -82,23 +82,21 @@ then
 	exit 1
 fi
 
-# Copy over the mysql client jar and create a logj.properties file.
-cat > ${TOMCAT_HOME}/lib/log4j.properties <<EOF
-# Set root logger level and its only appender to A1.
-log4j.rootLogger=ERROR, A1
-log4j.logger.config.org.epics.archiverappliance=INFO
-log4j.logger.org.apache.http=ERROR
-
-
-# A1 is set to be a DailyRollingFileAppender
-log4j.appender.A1=org.apache.log4j.DailyRollingFileAppender
-log4j.appender.A1.File=arch.log
-log4j.appender.A1.DatePattern='.'yyyy-MM-dd
-
-
-# A1 uses PatternLayout.
-log4j.appender.A1.layout=org.apache.log4j.PatternLayout
-log4j.appender.A1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
+# Copy over the mysql client jar and create a logj2.xml file.
+cat > ${TOMCAT_HOME}/lib/log4j2.xml <<EOF
+<Configuration>
+   <Appenders>
+       <Console name="STDOUT" target="SYSTEM_OUT">
+           <PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/>
+       </Console>
+   </Appenders>
+   <Loggers>
+       <Logger name="org.apache.log4j.xml" level="info"/>
+       <Root level="debug">
+           <AppenderRef ref="STDOUT"/>
+       </Root>
+   </Loggers>
+</Configuration>
 EOF
 
 # Build the Apache Commons Daemon that ships with Tomcat

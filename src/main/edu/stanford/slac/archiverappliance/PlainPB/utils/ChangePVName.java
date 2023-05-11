@@ -18,7 +18,8 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
@@ -36,7 +37,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
  *
  */
 public class ChangePVName {
-	private static Logger logger = Logger.getLogger(ChangePVName.class.getName());
+	private static Logger logger = LogManager.getLogger(ChangePVName.class.getName());
 	
 	/**
 	 * @param args  &emsp;

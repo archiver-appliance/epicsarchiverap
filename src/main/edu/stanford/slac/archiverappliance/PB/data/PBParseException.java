@@ -8,7 +8,8 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 import org.apache.commons.codec.binary.Hex;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * We convert PB exceptions into a runtime exception to minimize the number of IOExceptions in the method declarations.
@@ -18,7 +19,7 @@ import org.apache.log4j.Logger;
  */
 public class PBParseException extends RuntimeException {
 	private static final long serialVersionUID = 5552973945298428020L;
-	private static Logger logger = Logger.getLogger(PBParseException.class.getName());
+	private static Logger logger = LogManager.getLogger(PBParseException.class.getName());
 
 	public PBParseException(Exception ex) {
 		super(ex);

@@ -12,7 +12,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -34,7 +35,7 @@ import org.junit.experimental.categories.Category;
  */
 @Category(IntegrationTests.class)
 public class MultiplePVSimpleRetrievalTest {
-	private static final Logger logger = Logger.getLogger(MultiplePVSimpleRetrievalTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(MultiplePVSimpleRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	private static int TOTAL_NUMBER_OF_PVS = 10;
 	private static String[] pvs = new String[TOTAL_NUMBER_OF_PVS];

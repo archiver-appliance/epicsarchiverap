@@ -12,7 +12,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -30,7 +31,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
  *
  */
 public class GenerateLargeVectorData {
-	private static Logger logger = Logger.getLogger(GenerateLargeVectorData.class.getName());
+	private static Logger logger = LogManager.getLogger(GenerateLargeVectorData.class.getName());
 
 	/**
 	 * Generate a year's worth of data in the specified folder for the specified PV. 
