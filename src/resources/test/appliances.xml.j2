@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+<appliances>
+{% for host in cluster %}
+  {% set cluster_host = host.hostname() -%}
+  {% set default_data_retrieval_url = "http://" ~ cluster_host ~ ":" ~ host.retrievalPort() ~ "/retrieval" -%}
+  <appliance>
+    <identity>{{ host.identity() }}</identity>
+    <cluster_inetport>{{ cluster_host }}:{{ host.clusterInetport()}}</cluster_inetport>
+    <mgmt_url>http://{{ cluster_host }}:{{ host.mgmtPort() }}/mgmt/bpl</mgmt_url>
+    <engine_url>http://{{ cluster_host }}:{{ host.enginePort() }}/engine/bpl</engine_url>
+    <etl_url>http://{{ cluster_host }}:{{ host.etlPort() }}/etl/bpl</etl_url>
+    <retrieval_url>http://{{ cluster_host }}:{{ host.retrievalPort() }}/retrieval/bpl</retrieval_url>
+    <data_retrieval_url>{{ default_data_retrieval_url }}</data_retrieval_url>
+  </appliance>
+{% endfor %}
+</appliances>

@@ -259,24 +259,20 @@ At the end, there should be two ports active in the <code>conf/server.xml</code>
 </li>
 <li>Setting the appropriate log4j configuration level by creating/editing the <code>lib/log4j2.xml</code>.
 Here's a sample that logs exceptions and errors with one exception - log messages logged to the <code>config</code> namespace are logged at INFO level.
-<pre>
-<code>
-# Set root logger level and its only appender to A1.
-log4j.rootLogger=ERROR, A1
-log4j.logger.config.org.epics.archiverappliance=INFO
-log4j.logger.org.apache.http=ERROR
-
-
-# A1 is set to be a DailyRollingFileAppender
-log4j.appender.A1=org.apache.log4j.DailyRollingFileAppender
-log4j.appender.A1.File=arch.log
-log4j.appender.A1.DatePattern='.'yyyy-MM-dd
-
-
-# A1 uses PatternLayout.
-log4j.appender.A1.layout=org.apache.log4j.PatternLayout
-log4j.appender.A1.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
-</code>
+<pre class="bash_output">
+<code>&lt;Configuration&gt;
+   &lt;Appenders&gt;
+        &lt;Console name="STDOUT" target="SYSTEM_OUT"&gt;
+            &lt;PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/&gt;
+        &lt;/Console&gt;
+    &lt;/Appenders&gt;
+    &lt;Loggers&gt;
+        &lt;Logger name="org.apache.log4j.xml" level="info"/&gt;
+        &lt;Root level="info"&gt;
+            &lt;AppenderRef ref="STDOUT"/&gt;
+        &lt;/Root&gt;
+    &lt;/Loggers&gt;
+&lt;/Configuration&gt;</code>
 </pre>
 
 </li>
