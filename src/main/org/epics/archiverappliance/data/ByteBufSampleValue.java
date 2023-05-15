@@ -93,7 +93,7 @@ public class ByteBufSampleValue implements SampleValue {
 			childMap.put("union", pvDataToMap(((PVAUnion) pvaData).get()));
 			return childMap;
 		}
- 		if (type == PVAStructure.class) {
+		if (type == PVAStructure.class) {
 			PVAStructure childStruct = (PVAStructure) pvaData;
 			assert (childStruct != null);
 			Map<String, Object> childMap = new TreeMap<>();
@@ -105,31 +105,31 @@ public class ByteBufSampleValue implements SampleValue {
 		}
 		if (type == PVAByte.class) {
 			return ((PVAByte) pvaData).get();
-			
+
 		}
 		if (type == PVADouble.class) {
 			return ((PVADouble) pvaData).get();
-			
+
 		}
 		if (type == PVAFloat.class) {
 			return ((PVAFloat) pvaData).get();
-			
+
 		}
 		if (type == PVAInt.class) {
 			return ((PVAInt) pvaData).get();
-			
+
 		}
 		if (type == PVALong.class) {
 			return ((PVALong) pvaData).get();
-			
+
 		}
 		if (type == PVAShort.class) {
 			return ((PVAShort) pvaData).get();
-			
+
 		}
 		if (type == PVAString.class) {
 			return ((PVAString) pvaData).get();
-			
+
 		}
 
 		if (type == PVABoolArray.class) {
@@ -139,7 +139,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVAByteArray.class) {
 			byte[] data = ((PVAByteArray) pvaData).get();
@@ -148,7 +148,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVADoubleArray.class) {
 			double[] data = ((PVADoubleArray) pvaData).get();
@@ -157,7 +157,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVAFloatArray.class) {
 			float[] data = ((PVAFloatArray) pvaData).get();
@@ -166,7 +166,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVAIntArray.class) {
 			int[] data = ((PVAIntArray) pvaData).get();
@@ -175,7 +175,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVALongArray.class) {
 			long[] data = ((PVALongArray) pvaData).get();
@@ -184,7 +184,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVAShortArray.class) {
 			short[] data = ((PVAShortArray) pvaData).get();
@@ -193,7 +193,7 @@ public class ByteBufSampleValue implements SampleValue {
 				vals.add(dataitem);
 			}
 			return vals;
-			
+
 		}
 		if (type == PVAStringArray.class) {
 			String[] data = ((PVAStringArray) pvaData).get();
@@ -221,7 +221,7 @@ public class ByteBufSampleValue implements SampleValue {
 			pvaStructure.decode(types, buf);
 			pvStructure2JSON(pvaStructure, ret);
 		} catch (Exception e) {
-            logger.error("exception in converting pvaStructure to JSON", e);
+			logger.error("exception in converting pvaStructure to JSON", e);
 		}
 		return JSONValue.toJSONString(ret);
 	}

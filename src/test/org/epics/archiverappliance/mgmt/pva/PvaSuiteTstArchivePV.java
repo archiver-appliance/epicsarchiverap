@@ -3,20 +3,25 @@ package org.epics.archiverappliance.mgmt.pva;
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.fail;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
-import org.epics.nt.NTTable;
-import org.epics.pvaccess.client.rpc.RPCClient;
-import org.epics.pvaccess.client.rpc.RPCClientFactory;
-import org.epics.pvaccess.server.rpc.RPCRequestException;
-import org.epics.pvdata.pv.PVStringArray;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
+import org.epics.pva.client.PVAChannel;
+import org.epics.pva.client.PVAClient;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.MustBeArrayException;
+import org.epics.pva.data.nt.PVATable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,65 +36,66 @@ import org.junit.experimental.categories.Category;
 public class PvaSuiteTstArchivePV {
 
 	private static Logger logger = LogManager.getLogger(PvaSuiteTstArchivePV.class.getName());
-	private static RPCClient client;
+
+	private static PVAClient pvaClient;
+	private static PVAChannel pvaChannel;
 
 	@BeforeClass
-	public static void setup() {
-		client = RPCClientFactory.create(PVA_MGMT_SERVICE);
+	public static void setup() throws ExecutionException, InterruptedException, TimeoutException {
+		try {
+			pvaClient = new PVAClient();
+		} catch (Exception e) {
+			logger.log(Level.FATAL, e.getMessage(), e);
+		}
+		pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
+		pvaChannel.connect().get(5, TimeUnit.SECONDS);
 
 	}
 
 	@AfterClass
 	public static void cleanup() {
-		client.destroy();
+		pvaChannel.close();
+		pvaClient.close();
 	}
 
 	@Test
-	public void addSinglePVtest() {
-		NTTable archivePvReqTable = NTTable.createBuilder()
-									.addDescriptor()
-									.addColumn("pv", ScalarType.pvString)
-									.addColumn("samplingperiod", ScalarType.pvString)
-									.addColumn("samplingmethod", ScalarType.pvString)
-									.create();
-		archivePvReqTable.getDescriptor().put(PvaArchivePVAction.NAME);
-		archivePvReqTable.getColumn(PVStringArray.class, "pv")
-							.put(0, 2, new String[] {"UnitTestNoNamingConvention:sine","UnitTestNoNamingConvention:cosine"}, 0);
-		archivePvReqTable.getColumn(PVStringArray.class, "samplingperiod")
-							.put(0, 2, new String[] {"1.0","2.0"}, 0);
-		archivePvReqTable.getColumn(PVStringArray.class, "samplingmethod")
-							.put(0, 2, new String[] {"SCAN","MONITOR"}, 0);
+	public void addSinglePVtest() throws MustBeArrayException {
+		PVATable archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
+				.name(PvaArchivePVAction.NAME)
+				.descriptor(PvaArchivePVAction.NAME)
+				.addColumn(new PVAStringArray("pv", "UnitTestNoNamingConvention:sine","UnitTestNoNamingConvention:cosine"))
+				.addColumn(new PVAStringArray("samplingperiod", "1.0","2.0"))
+				.addColumn(new PVAStringArray("samplingmethod", "SCAN","MONITOR"))
+				.build();
 
 		try {
-			PVStructure result = client.request(archivePvReqTable.getPVStructure(), 30);
-			/**
-			 * Expected result string
-			 * { "pvName": "mshankar:arch:sine", "status": "Archive request submitted" }
-			 * { "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }
+			PVAStructure result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
+			/*
+			  Expected result string
+			  { "pvName": "mshankar:arch:sine", "status": "Archive request submitted" }
+			  { "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }
 			 */
 			String[] expextedKePvNames = new String[] { "UnitTestNoNamingConvention:sine", "UnitTestNoNamingConvention:cosine" };
 			String[] expectedStatus = new String[] { "Archive request submitted", "Archive request submitted" };
 			logger.info("results" + result.toString());
 			assertArrayEquals(expextedKePvNames,
-					extractStringArray(NTTable.wrap(result).getColumn(PVStringArray.class, "pvName")));
+					extractStringArray(PVATable.fromStructure(result).getColumn("pvName")));
 			assertArrayEquals(expectedStatus,
-					extractStringArray(NTTable.wrap(result).getColumn(PVStringArray.class, "status")));
+					extractStringArray(PVATable.fromStructure(result).getColumn("status")));
 			
 			// Try submitting the request again...this time you should get a "already submitted" status response.
 			Thread.sleep(60000L);
 			String[] expectedSuccessfulStatus = new String[] { "Already submitted", "Already submitted" };
-			result = client.request(archivePvReqTable.getPVStructure(), 30);
+			result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
 			logger.info("results" + result.toString());
 			assertArrayEquals(expextedKePvNames,
-					extractStringArray(NTTable.wrap(result).getColumn(PVStringArray.class, "pvName")));
+					extractStringArray(PVATable.fromStructure(result).getColumn("pvName")));
 			assertArrayEquals(expectedSuccessfulStatus,
-					extractStringArray(NTTable.wrap(result).getColumn(PVStringArray.class, "status")));
+					extractStringArray(PVATable.fromStructure(result).getColumn("status")));
 
-		} catch (RPCRequestException e) {
+		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			fail(e.getMessage());
 		}
 	}
 }

@@ -17,13 +17,10 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.EventStreamConsumer;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvdata.factory.StatusFactory;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAStructure;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 
@@ -35,7 +32,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  *
  */
 public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
-	private static Logger logger = LogManager.getLogger(PvaMergeDedupConsumer.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaMergeDedupConsumer.class.getName());
 	
 	private Timestamp startTimeStamp;
 	int totalEvents = 0;
@@ -52,13 +49,10 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	int skippedEventsForAllPVs = 0;
 	int comparedEventsForAllPVs = 0;
 
-	private final RPCResponseCallback resp;
+	private final PVAStructure resultStruct;
 
-	private PVStructure resultStruct;
-	
-	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, RPCResponseCallback resp, PVStructure resultStruct, PVTypeInfo typeInfo) {
+	PvaMergeDedupConsumer(PvaMimeResponse mimeresponse, PVAStructure resultStruct) {
 		this.mimeresponse = mimeresponse;
-		this.resp = resp;
 		this.resultStruct = resultStruct;
 		this.mimeresponse.setOutputStruct(resultStruct);
 	}
@@ -95,10 +89,16 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 		mimeresponse.close();
 	}
 	
-	public void send() {
-		resp.requestDone(StatusFactory.getStatusCreate().getStatusOK(), resultStruct);
+	public PVAStructure send() {
+		return resultStruct;
 	}
 
+	/*
+	 * Goes through the PB data stream over a period of time. The relevant MIME
+	 * response actually deal with the processing of the PV. `start` and `end` refer
+	 * to the very beginning and very end of the time period being retrieved over,
+	 * regardless of whether it is divided up or not.
+	 */
 	public void processingPV(BasicContext retrievalContext, String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
 		logNumbersAndCollectTotal();
 		this.startTimeStamp = start;
@@ -113,79 +113,80 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 			for(Event e : strm) {
 				try {
 					eventsInCurrentStream++;
-					
-					if(!haveIpushedTheFirstEvent && firstEvent == null) {
-						logger.debug("Making a copy of the first event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-						firstEvent = e.makeClone();
-						continue;
-					}
-					
-					if(!haveIpushedTheFirstEvent) { 
-						if(e.getEventTimeStamp().before(this.startTimeStamp)) {
-							logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-							firstEvent = e.makeClone();
-							continue;
-						} else { 
-							haveIpushedTheFirstEvent = true;
-							logger.debug("Consuming first and current events " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-							mimeresponse.consumeEvent(firstEvent);
-							timestampOfLastEvent = firstEvent.getEventTimeStamp();
-							totalEvents++;
-							if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
-								logger.debug("After sending first event, current event is not after the first event. Skipping " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-								skippedEvents++;
-								continue;
-							} else { 
-								mimeresponse.consumeEvent(e);
-								totalEvents++;
-								timestampOfLastEvent = e.getEventTimeStamp();
-								continue;
-							}
-						}
-					}
-					
-					if(amIDeduping) {
-						comparedEvents++;
-						if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
-							skippedEvents++;
-							continue;
-						} else {
-							amIDeduping = false;
-							mimeresponse.consumeEvent(e);
-							timestampOfLastEvent = e.getEventTimeStamp();
-							totalEvents++;
-						}
-					} else {
-						mimeresponse.consumeEvent(e);
-						timestampOfLastEvent = e.getEventTimeStamp();
-						totalEvents++;
-					}
-				} catch(InvalidProtocolBufferException|PBParseException ex) { 
+
+					handleEvent(e);
+				} catch(InvalidProtocolBufferException|PBParseException ex) {
 					logger.warn(ex.getMessage(), ex);
-					if(this.mimeresponse instanceof ExceptionCommunicator) { 
+					if(this.mimeresponse instanceof ExceptionCommunicator) {
 						((ExceptionCommunicator)this.mimeresponse).comminucateException(ex);
 					}
 					skippedEvents++;
 				}
 			}
-			
+
 			if(eventsInCurrentStream == 0) {
 				logger.info("The stream from " + ((strm.getDescription() != null ) ? strm.getDescription().getSource() : "Unknown") + " was an empty stream.");
 			}
 
-			// We start deduping at the boundaries of event streams. 
+			// We start deduping at the boundaries of event streams.
 			// This does not apply until we have pushed the first event out..
 			if(haveIpushedTheFirstEvent) startDeduping();
 		} catch(InvalidProtocolBufferException|PBParseException ex) {
 			logger.warn(ex.getMessage(), ex);
-			if(this.mimeresponse instanceof ExceptionCommunicator) { 
+			if(this.mimeresponse instanceof ExceptionCommunicator) {
 				((ExceptionCommunicator)this.mimeresponse).comminucateException(ex);
 			}
 			skippedEvents++;
 		}
 	}
 
-	
+	private void handleEvent(Event e) throws Exception {
+		if(!haveIpushedTheFirstEvent && firstEvent == null) {
+			logger.debug("Making a copy of the first event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+			firstEvent = e.makeClone();
+			return;
+		}
+
+		if(!haveIpushedTheFirstEvent) {
+			if(e.getEventTimeStamp().before(this.startTimeStamp)) {
+				logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+				firstEvent = e.makeClone();
+			} else {
+				haveIpushedTheFirstEvent = true;
+				logger.debug("Consuming first and current events " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+				mimeresponse.consumeEvent(firstEvent);
+				timestampOfLastEvent = firstEvent.getEventTimeStamp();
+				totalEvents++;
+				if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+					logger.debug("After sending first event, current event is not after the first event. Skipping " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+					skippedEvents++;
+				} else {
+					mimeresponse.consumeEvent(e);
+					totalEvents++;
+					timestampOfLastEvent = e.getEventTimeStamp();
+				}
+			}
+			return;
+		}
+
+		if(amIDeduping) {
+			comparedEvents++;
+			if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+				skippedEvents++;
+			} else {
+				amIDeduping = false;
+				mimeresponse.consumeEvent(e);
+				timestampOfLastEvent = e.getEventTimeStamp();
+				totalEvents++;
+			}
+		} else {
+			mimeresponse.consumeEvent(e);
+			timestampOfLastEvent = e.getEventTimeStamp();
+			totalEvents++;
+		}
+	}
+
+
 	private void startDeduping() {
 		amIDeduping = true;
 	}

@@ -200,7 +200,7 @@ public class FieldValuesCache {
                 final String fulFldName = makeFullFieldName(fldName, fieldName);
                 add2BitFieldMapping(fulFldName, subPvaData, mapping);
             }
-        } 
+        }
     }
 
     /**

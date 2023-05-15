@@ -1,10 +1,11 @@
 package org.epics.archiverappliance.mgmt.pva.actions;
 
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.server.RPCService;
 
 /**
+ * Wrapper around the {@link RPCService} for the Archiver
  * 
  * @author Kunal Shroff
  *
@@ -15,13 +16,14 @@ public interface PvaAction {
 	 * Name of the action
 	 * @return the name of the service
 	 */
-	public String getName();
+	String getName();
 
 	/**
-	 * 
-	 * @param args
-	 * @param callback
-	 * @param configService
+	 * Handles an RPC request to the archiver.
+	 *
+	 * @param args Input arguments
+	 * @param configService Current config service
+	 * @throws PvaActionException which is then passed to the serverPV to return the error to the user.
 	 */
-	public void request(PVStructure args, RPCResponseCallback callback, ConfigService configService);
+	PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException;
 }

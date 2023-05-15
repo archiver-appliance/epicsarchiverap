@@ -17,35 +17,44 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsAction;
-import org.epics.nt.NTTable;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvdata.factory.StatusFactory;
-import org.epics.pvdata.pv.PVStringArray;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.MustBeArrayException;
+import org.epics.pva.data.nt.PVATable;
 
 /**
  * Given a list of PVs, determine those that are being archived. Of course, you
  * can use the status call but that makes calls to the engine etc and can be
  * stressful if you are checking several thousand PVs All this does is check the
  * configservice...
- * 
+ * <p>
  * Given a list of PVs, determine those that are being archived.
- * 
+ * <p>
  * example request
+ * <p>
  * epics:nt/NTTable:1.0
- *         string[] labels [pv]
- *         structure value
- *            string[] pv [test_0,test_1,test_10,test_100...]
- *            
+ * <ul>
+ *   <li>string[] labels [pv]</li>
+ *   <li>structure value
+ *   <ul>
+ *     <li>string[] pv [test_0,test_1,test_10,test_100...]</li>
+ *   </ul>
+ *   </li>
+ * </ul>
  * example result:
+ * <p>
  * epics:nt/NTTable:1.0
- *         string[] labels [pv,status]
- *         structure value
- *            string[] pv [test_0,test_1,test_10,test_100...]
- *            string[] status [Being archived,Initial sampling,Being archived,Being archived,...]
+ * <ul>
+ *   <li>string[] labels [pv,status]</li>
+ *   <li>structure value
+ *   <ul>
+ *     <li>string[] pv [test_0,test_1,test_10,test_100...]</li>
+ *     <li>string[] status [Being archived,Initial sampling,Being archived,Being archived,...]</li>
+ *   </ul>
+ *   </li>
+ * </ul>
+ * <p>
  * Based on {@link ArchivedPVsAction}
- * 
  * @author mshankar, shroffk
  *
  */
@@ -60,10 +69,10 @@ public class PvaGetArchivedPVs implements PvaAction {
 	}
 
 	@Override
-	public void request(PVStructure args, RPCResponseCallback callback, ConfigService configService) {
+	public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
 		logger.info("Determining PVs that are archived ");
 		LinkedHashMap<String, String> map = new LinkedHashMap<>();
-		for(String pvName : NTUtil.extractStringArray(NTTable.wrap(args).getColumn(PVStringArray.class, "pv"))) {
+		for(String pvName : NTUtil.extractStringArray(PVATable.fromStructure(args).getColumn("pv"))) {
 			PVTypeInfo typeInfo = null;
 			logger.debug("Check for the name as it came in from the user " + pvName);
 			typeInfo = configService.getTypeInfoForPV(pvName);
@@ -99,16 +108,22 @@ public class PvaGetArchivedPVs implements PvaAction {
 			}
 			map.put(pvName, "Not Archived");
 		}
-		NTTable resultTable = NTTable.createBuilder()
-				.addColumn("pv", ScalarType.pvString)
-				.addColumn("status", ScalarType.pvString)
-				.create();
+		String[] pvs = new String[map.size()];
+		String[] statuses = new String[map.size()];
 		int counter = 0;
 		for (Entry<String, String> entry : map.entrySet()) {
-			resultTable.getColumn(PVStringArray.class, "pv").put(counter, 1, new String[] {entry.getKey()} , 0);
-			resultTable.getColumn(PVStringArray.class, "status").put(counter, 1, new String[] {entry.getValue()}, 0);
+			pvs[counter]= entry.getKey();
+			statuses[counter] = entry.getValue();
 			counter++;
 		}
-		callback.requestDone(StatusFactory.getStatusCreate().getStatusOK(), resultTable.getPVStructure());
+		try {
+			return PVATable.PVATableBuilder.aPVATable()
+					.name(NAME)
+					.addColumn(new PVAStringArray("pv", pvs))
+					.addColumn(new PVAStringArray("status", statuses))
+					.build();
+		} catch (MustBeArrayException e) {
+			throw new RuntimeException(e);
+		}
 	}
 }

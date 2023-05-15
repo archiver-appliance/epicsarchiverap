@@ -7,17 +7,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
-import org.epics.nt.NTURI;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvaccess.server.rpc.RPCServiceAsync;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.PVAURI;
+import org.epics.pva.server.RPCService;
 
 /**
  * 
  * @author Kunal Shroff
  *
  */
-public class PvaDataRetrievalService implements RPCServiceAsync {
+public class PvaDataRetrievalService implements RPCService {
 
 	public static final String PVA_DATA_SERVICE = "pvaDataRetrievalService";
 
@@ -39,13 +38,13 @@ public class PvaDataRetrievalService implements RPCServiceAsync {
 	 * 
 	 */
 	@Override
-	public void request(PVStructure args, RPCResponseCallback callback) {
-		if (NTURI.isCompatible(args)) {
-			NTURI uri = NTURI.wrap(args);
-			if (actions.get(uri.getPath().get()) != null) {
-				actions.get(uri.getPath().get()).request(args, callback, configService);
+	public PVAStructure call(PVAStructure pvaStructure) throws Exception {
+		PVAURI uri = PVAURI.fromStructure(pvaStructure);
+		if (uri != null) {
+			if (actions.get(uri.getPath()) != null) {
+				return actions.get(uri.getPath()).request(pvaStructure, configService);
 			} else {
-				throw new UnsupportedOperationException("The requested operation is not supported " + uri.getPath().get());
+				throw new UnsupportedOperationException("The requested operation is not supported " + uri.getPath());
 			}
 		} else {
 			// Unable to handle the request args

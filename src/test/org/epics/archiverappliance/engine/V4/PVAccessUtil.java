@@ -12,6 +12,7 @@ import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
+import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtilTest;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -204,10 +205,10 @@ public class PVAccessUtil {
     }
 
     public static HashMap<String, String> getStatuses(List<String> pvNamesAll, PVAChannel pvaChannel) throws ExecutionException, InterruptedException, TimeoutException, MustBeArrayException {
-        var statuses = NTUtilTest.extractStringArray(PVATable
+        var statuses = NTUtil.extractStringArray(PVATable
                 .fromStructure(getCurrentStatus(pvNamesAll, pvaChannel))
                 .getColumn("status"));
-        var pvs = NTUtilTest.extractStringArray(PVATable
+        var pvs = NTUtil.extractStringArray(PVATable
                 .fromStructure(getCurrentStatus(pvNamesAll, pvaChannel))
                 .getColumn("pv"));
         var result = new HashMap<String, String>();

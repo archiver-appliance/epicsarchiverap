@@ -1,13 +1,12 @@
 package org.epics.archiverappliance.mgmt.pva;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.fail;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,14 +15,14 @@ import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
+import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetArchivedPVs;
-import org.epics.nt.NTTable;
-import org.epics.pvaccess.client.rpc.RPCClient;
-import org.epics.pvaccess.client.rpc.RPCClientFactory;
-import org.epics.pvdata.pv.PVStringArray;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
+import org.epics.pva.client.PVAChannel;
+import org.epics.pva.client.PVAClient;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.PVATable;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,12 +37,13 @@ import org.junit.experimental.categories.Category;
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaGetArchivedPVsTest {
 
-	private static Logger logger = LogManager.getLogger(PvaGetArchivedPVsTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaGetArchivedPVsTest.class.getName());
 
 	static TomcatSetup tomcatSetup = new TomcatSetup();
 	static SIOCSetup siocSetup = new SIOCSetup();
 
-	private static RPCClient client;
+	private static PVAClient pvaClient;
+	private static PVAChannel pvaChannel;
 
 	@BeforeClass
 	public static void setup() {
@@ -52,11 +52,9 @@ public class PvaGetArchivedPVsTest {
 			siocSetup.startSIOCWithDefaultDB();
 			tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
 
-			Thread.sleep(3*60*1000);
-		
-			logger.info(ZonedDateTime.now(ZoneId.systemDefault())
-					+ " Waiting three mins for the service setup to complete");
-			client = RPCClientFactory.create(PVA_MGMT_SERVICE);
+			pvaClient = new PVAClient();
+			pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
+			pvaChannel.connect().get(5, TimeUnit.SECONDS);
 		} catch (Exception e) {
 			logger.log(Level.FATAL, e.getMessage(), e);
 		}
@@ -66,7 +64,8 @@ public class PvaGetArchivedPVsTest {
 	public static void tearDown() {
 		logger.info("Tear Down for the PvaGetArchivedPVsTest");
 		try {
-			client.destroy();
+			pvaChannel.close();
+			pvaClient.close();
 			tomcatSetup.tearDown();
 			siocSetup.stopSIOC();
 		} catch (Exception e) {
@@ -93,24 +92,27 @@ public class PvaGetArchivedPVsTest {
 
 		try {
 			// Submit all the even named pv's to be archived
-			NTTable archivePvReqTable = NTTable.createBuilder().addDescriptor().addColumn("pv", ScalarType.pvString).create();
-			archivePvReqTable.getDescriptor().put(PvaArchivePVAction.NAME);
-			archivePvReqTable.getColumn(PVStringArray.class, "pv").put(0, pvNamesEven.size(), pvNamesEven.toArray(new String[pvNamesEven.size()]), 0);
-			PVStructure result = client.request(archivePvReqTable.getPVStructure(), 30);
-			
-			Thread.sleep(2*60*1000);
-			
+			PVATable archivePvReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
+					.descriptor(PvaArchivePVAction.NAME)
+					.addColumn(new PVAStringArray("pv", pvNamesEven.toArray(new String[pvNamesEven.size()])))
+					.build();
+			pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
+
 			// Wait 2 mins for the pv's to start archiving
-			archivePvReqTable = NTTable.createBuilder().addDescriptor().addColumn("pv", ScalarType.pvString).create();
-			archivePvReqTable.getDescriptor().put(PvaGetArchivedPVs.NAME);
-			archivePvReqTable.getColumn(PVStringArray.class, "pv").put(0, pvNamesAll.size(), pvNamesAll.toArray(new String[pvNamesAll.size()]), 0);
-			result = client.request(archivePvReqTable.getPVStructure(), 30);
+			Thread.sleep(2*60*1000);
+
+			archivePvReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
+					.descriptor(PvaGetArchivedPVs.NAME)
+					.addColumn(new PVAStringArray("pv", pvNamesAll.toArray(new String[pvNamesAll.size()])))
+					.build();
+			PVAStructure result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
 			assertArrayEquals(pvNamesAll.toArray(new String[1000]),
-					extractStringArray(NTTable.wrap(result).getColumn(PVStringArray.class, "pv")));
+					NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("pv")));
 			assertArrayEquals(expectedStatus.toArray(new String[1000]),
-					extractStringArray(NTTable.wrap(result).getColumn(PVStringArray.class, "status")));
+					NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("status")));
 		} catch (Exception e) {
 			e.printStackTrace();
+			fail(e.getMessage());
 		}
 
 	}

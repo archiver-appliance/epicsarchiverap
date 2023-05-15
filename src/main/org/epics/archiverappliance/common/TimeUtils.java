@@ -171,14 +171,19 @@ public class TimeUtils {
 		String retval = fmt.print(dateTime);
 		return retval;
 	}
-	
+
 	public static long convertToLocalEpochMillis(long epochMillis) {
 		if(epochMillis == 0) return 0;
 		return epochMillis + DateTimeZone.getDefault().getOffset(epochMillis);
 	}
 
-	
-	
+
+	public static Instant convertTimestampToInstant(Timestamp timestamp) {
+		return Instant.ofEpochSecond(timestamp.getTime()/1000, timestamp.getNanos());
+	}
+
+
+
 	public static long getStartOfCurrentYearInSeconds() {
 		DateTime now = new DateTime(DateTimeZone.UTC);
 		DateTime startoftheYear = new DateTime(now.getYear(), 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);

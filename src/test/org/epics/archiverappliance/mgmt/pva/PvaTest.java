@@ -27,7 +27,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({ PvaSuiteTstGetAll.class, PvaSuiteTstMgmtServiceStartup.class, PvaSuiteTstGetApplianceInfo.class, PvaSuiteTstArchivePV.class })
 public class PvaTest {
 
-	private static Logger logger = LogManager.getLogger(PvaTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaTest.class.getName());
 
 	static TomcatSetup tomcatSetup = new TomcatSetup();
 	static SIOCSetup siocSetup = new SIOCSetup();
@@ -39,7 +39,6 @@ public class PvaTest {
 			siocSetup.startSIOCWithDefaultDB();
 			tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
 			logger.info(ZonedDateTime.now(ZoneId.systemDefault()) + " Waiting three mins for the service setup to complete");
-			Thread.sleep(3 * 60 * 1000);
 		} catch (Exception e) {
 			logger.log(Level.FATAL, e.getMessage(), e);
 		}

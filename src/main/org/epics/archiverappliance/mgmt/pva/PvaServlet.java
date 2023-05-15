@@ -1,10 +1,9 @@
 package org.epics.archiverappliance.mgmt.pva;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.servlet.GenericServlet;
 import javax.servlet.ServletConfig;
@@ -17,8 +16,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Level;
 import org.epics.archiverappliance.config.ArchServletContextListener;
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.pvaccess.PVAException;
-import org.epics.pvaccess.server.rpc.RPCServer;
+import org.epics.pva.server.PVAServer;
+import org.epics.pva.server.ServerPV;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 
@@ -31,31 +30,24 @@ import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVI
  */
 public class PvaServlet extends GenericServlet {
 
-	private static Logger logger = LogManager.getLogger(PvaServlet.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaServlet.class.getName());
 
-	/**
-	 * 
-	 */
+	@Serial
 	private static final long serialVersionUID = 1L;
 
-	ExecutorService executorService = Executors.newSingleThreadExecutor();
-	private final RPCServer server = new RPCServer(20, 1);
+	private final PVAServer server;
+	private ServerPV serverPV;
+
+	public PvaServlet() throws Exception {
+		server = new PVAServer();
+	}
 
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		ConfigService configService = (ConfigService) getServletConfig().getServletContext()
 				.getAttribute(ConfigService.CONFIG_SERVICE_NAME);
-		server.registerService(PVA_MGMT_SERVICE, new PvaMgmtService(configService));
-		executorService.execute(() -> {
-			try {
-				logger.info(Thread.currentThread().getName());
-				server.printInfo();
-				server.run(0);
-			} catch (PVAException e) {
-				logger.log(Level.FATAL, "Failed to start service : " + PVA_MGMT_SERVICE, e);
-			}
-		});
+		serverPV = server.createPV(PVA_MGMT_SERVICE, new PvaMgmtService(configService));
 		logger.info(ZonedDateTime.now(ZoneId.systemDefault()) + PVA_MGMT_SERVICE + " is operational.");
 	}
 
@@ -66,15 +58,10 @@ public class PvaServlet extends GenericServlet {
 
 	@Override
 	public void destroy() {
-		// TODO the shutdown can be improved
 		logger.info("Shutting down service " + PVA_MGMT_SERVICE);
-		try {
-			server.destroy();
-			executorService.shutdown();
-			logger.info(PVA_MGMT_SERVICE + " Shutdown complete.");
-		} catch (PVAException e) {
-			logger.log(Level.FATAL, "Failed to close service : " + PVA_MGMT_SERVICE, e);
-		}
+		serverPV.close();
+		server.close();
+		logger.info(PVA_MGMT_SERVICE + " Shutdown complete.");
 		super.destroy();
 	}
 

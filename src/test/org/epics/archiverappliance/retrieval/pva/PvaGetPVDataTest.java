@@ -33,9 +33,6 @@ import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.epics.archiverappliance.retrieval.pva.PvaDataRetrievalService.PVA_DATA_SERVICE;
 
-/**
- * Tests the retrieval api over pvAccess
- */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaGetPVDataTest {
 
