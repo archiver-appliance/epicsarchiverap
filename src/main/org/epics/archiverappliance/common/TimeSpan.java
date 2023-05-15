@@ -42,4 +42,9 @@ public class TimeSpan {
 		return (this.startTime.before(other.startTime) || this.startTime.equals(other.startTime)) &&
 				(this.endTime.after(other.endTime) || this.endTime.equals(other.endTime));
 	}
+
+	@Override
+	public String toString() {
+		return this.startTime + " - " + this.endTime;
+	}
 }

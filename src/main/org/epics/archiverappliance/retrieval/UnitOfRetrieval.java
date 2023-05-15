@@ -29,15 +29,15 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  * Some variation of a ExecutorService is expected to be used to launch the UnitOfRetrievals in parallel and then push the event streams into the consumer.
  */
 public class UnitOfRetrieval implements Callable<RetrievalResult> {
-	private static Logger logger = LogManager.getLogger(UnitOfRetrieval.class.getName());
-	private String description;
-	private Reader reader;
-	private String pvName;
-	private String pvNameFromRequest;
-	private Timestamp start;
-	private Timestamp end;
-	private PostProcessor postProcessor;
-	private BasicContext context;
+	private static final Logger logger = LogManager.getLogger(UnitOfRetrieval.class.getName());
+	private final String description;
+	private final Reader reader;
+	private final String pvName;
+	private final String pvNameFromRequest;
+	private final Timestamp start;
+	private final Timestamp end;
+	private final PostProcessor postProcessor;
+	private final BasicContext context;
 	private List<Callable<EventStream>> failoverStrms;
 
 	
