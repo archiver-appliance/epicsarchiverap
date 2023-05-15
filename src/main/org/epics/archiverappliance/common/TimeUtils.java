@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.common;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,7 +51,13 @@ public class TimeUtils {
 		ts.setNanos(nanos);
 		return ts;
 	}
-	
+
+	public static java.sql.Timestamp convertFromInstant(Instant instant) {
+		Timestamp ts = new Timestamp(instant.getEpochSecond()*1000);
+		ts.setNanos(instant.getNano());
+		return ts;
+	}
+
 	public static java.sql.Timestamp convertFromEpochMillis(long epochMillis) {
 		Timestamp ts = new Timestamp(epochMillis);
 		return ts;

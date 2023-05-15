@@ -128,7 +128,7 @@ public class PvaMimeResponse implements MimeResponse {
 		}
 		case DBR_SCALAR_STRING: {
 			NTScalar struct = NTScalar.createBuilder().value(ScalarType.pvString).addAlarm().addTimeStamp().create();
-			struct.getValue(PVString.class).put(evnt.getSampleValue().getValue().toString());
+			struct.getValue(PVString.class).put(evnt.getSampleValue().toString());
 			addAlarmInfo(struct, evnt);
 			addTimeInfo(struct, evnt);
 			val.put(val.getLength(), 1, new PVStructure[] { struct.getPVStructure() }, 0);

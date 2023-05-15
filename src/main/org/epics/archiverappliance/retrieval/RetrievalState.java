@@ -157,6 +157,8 @@ public class RetrievalState {
 	 * @return boolean True or False
 	 */
 	public static boolean includeExternalServers(HttpServletRequest req) {
+		if (req == null)
+			return true;
 		String skipExternalServersStr = req.getParameter("skipExternalServers");
 		if(skipExternalServersStr != null) { 
 			try { 

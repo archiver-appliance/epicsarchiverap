@@ -29,6 +29,8 @@ processTestResources {
     from(file("src/sitespecific/tests/classpathfiles"))
     from(file("src/resources/test")) {
         include "log4j2.xml"
+    }
+    from(file("src/resources/test")) {
         include "appliances.xml.j2"
     }
 
@@ -101,6 +103,8 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java:3.23.0")
     permitTestUnusedDeclared("org.junit.vintage:junit-vintage-engine:5.9.3") // TODO upgrade tests to JUNIT 5
     permitTestUsedUndeclared("junit:junit:4.13.2")
+    testImplementation('org.awaitility:awaitility:4.2.0')
+    testImplementation("org.phoebus:core-pva:4.7.2")
 }
 
 tasks.register("cleanWars", Delete) {
@@ -237,7 +241,7 @@ tasks.withType(War).configureEach {
         into "ui/comm"
     }
     if (archapplsite == "tests") {
-        from("src/resources/test/log4j2.xml") {
+        from("src/resources/log4j2.xml") {
             into "WEB-INF/classes"
         }
     }
