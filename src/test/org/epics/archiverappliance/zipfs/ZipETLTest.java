@@ -6,7 +6,8 @@ import java.io.File;
 import java.sql.Timestamp;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SlowTests;
@@ -33,7 +34,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
 @Category(SlowTests.class)
 public class ZipETLTest {
-	private static Logger logger = Logger.getLogger(ZipETLTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipETLTest");
 	private ConfigService configService;
 

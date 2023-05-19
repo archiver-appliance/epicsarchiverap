@@ -11,7 +11,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 
 /**
@@ -20,7 +21,7 @@ import org.epics.archiverappliance.config.ConfigService;
  *
  */
 public class MgmtUIFilter implements Filter {
-	private static Logger logger = Logger.getLogger(MgmtUIFilter.class.getName());
+	private static Logger logger = LogManager.getLogger(MgmtUIFilter.class.getName());
 	private FilterConfig filterConfig = null;
 	
 	@Override

@@ -7,7 +7,8 @@ import java.util.List;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -35,7 +36,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ResumePVAfterRestartTest {
-	private static Logger logger = Logger.getLogger(ResumePVAfterRestartTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ResumePVAfterRestartTest.class.getName());
 	private File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
 	private String pvNameToArchive = "UnitTestNoNamingConvention:sine";
 	TomcatSetup tomcatSetup = new TomcatSetup();

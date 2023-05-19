@@ -4,9 +4,11 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.mgmt.bpl.GetApplianceInfo;
 import org.epics.nt.NTTable;
 import org.epics.nt.NTURI;
 import org.epics.pvaccess.server.rpc.RPCResponseCallback;
@@ -25,7 +27,7 @@ import org.epics.pvdata.pv.Status.StatusType;
  */
 public class PvaGetApplianceInfo implements PvaAction {
 
-	private static Logger logger = Logger.getLogger(PvaGetApplianceInfo.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaGetApplianceInfo.class.getName());
 
 	public static final String NAME = "getApplianceInfo";
 

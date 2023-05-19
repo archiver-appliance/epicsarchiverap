@@ -12,7 +12,8 @@ import javax.servlet.ServletContext;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -24,7 +25,7 @@ import org.w3c.dom.NodeList;
  *
  */
 public class AppliancesList {
-	private static Logger logger = Logger.getLogger(AppliancesList.class.getName());
+	private static Logger logger = LogManager.getLogger(AppliancesList.class.getName());
 	
 	/**
 	 * Parses the appliances.xml file and loads the appliances into the specified appliancesList

@@ -11,7 +11,8 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
@@ -27,7 +28,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class JSONEncoder<T> {
-	private static Logger logger = Logger.getLogger(JSONEncoder.class.getName());
+	private static Logger logger = LogManager.getLogger(JSONEncoder.class.getName());
 	public static <T> JSONEncoder<T> getEncoder(Class<T> clazz) throws IntrospectionException {
 		return new JSONEncoder<T>(clazz);
 	}

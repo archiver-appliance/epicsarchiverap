@@ -6,7 +6,8 @@ import java.lang.management.MemoryUsage;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 
@@ -17,7 +18,7 @@ import org.json.simple.JSONObject;
  */
 public class ProcessMetrics {
 	private static final int MINUTES_IN_DAY = 24*60;
-	private static Logger logger = Logger.getLogger(ProcessMetrics.class.getName());
+	private static Logger logger = LogManager.getLogger(ProcessMetrics.class.getName());
 	
 	public ProcessMetrics() { 
 		

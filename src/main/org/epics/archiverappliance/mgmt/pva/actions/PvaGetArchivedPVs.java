@@ -11,7 +11,8 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -49,7 +50,7 @@ import org.epics.pvdata.pv.ScalarType;
  *
  */
 public class PvaGetArchivedPVs implements PvaAction {
-	private static final Logger logger = Logger.getLogger(PvaGetArchivedPVs.class);
+	private static final Logger logger = LogManager.getLogger(PvaGetArchivedPVs.class);
 	
 	public static final String NAME = "archivedPVStatus";
 

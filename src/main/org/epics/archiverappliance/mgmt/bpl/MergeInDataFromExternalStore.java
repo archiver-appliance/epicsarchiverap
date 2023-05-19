@@ -11,7 +11,8 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -50,7 +51,7 @@ import edu.stanford.slac.archiverappliance.PBOverHTTP.InputStreamBackedEventStre
  *
  */
 public class MergeInDataFromExternalStore implements BPLAction {
-	private static Logger logger = Logger.getLogger(MergeInDataFromExternalStore.class.getName());
+	private static Logger logger = LogManager.getLogger(MergeInDataFromExternalStore.class.getName());
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {

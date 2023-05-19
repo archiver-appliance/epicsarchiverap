@@ -5,7 +5,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigPersistence;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -32,7 +33,7 @@ import redis.clients.jedis.JedisPool;
  *
  */
 public class RedisPersistence implements ConfigPersistence {
-	private static Logger logger = Logger.getLogger(RedisPersistence.class.getName());
+	private static Logger logger = LogManager.getLogger(RedisPersistence.class.getName());
 	public static final String ARCHAPPL_PERSISTENCE_LAYER_REDISURL = ConfigService.ARCHAPPL_PERSISTENCE_LAYER + "_REDISURL";
 	private static String redisURL = "localhost";
 	private JedisPool jedisPool = null;

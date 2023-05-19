@@ -7,7 +7,8 @@ import java.util.concurrent.Callable;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -31,7 +32,7 @@ i.e. index points to the values that are N standard deviations away from the mea
  */
 public class IgnoreFliers implements PostProcessor {
 	private static final float DEFAULT_DEVIATIONS = 3.0f;
-	private static Logger logger = Logger.getLogger(IgnoreFliers.class.getName());
+	private static Logger logger = LogManager.getLogger(IgnoreFliers.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	float numDeviations = DEFAULT_DEVIATIONS;
 	

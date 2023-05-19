@@ -10,7 +10,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
@@ -28,7 +29,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 
 public class GeneratePBFileAndCompress {
-	private static Logger logger = Logger.getLogger(GeneratePBFileAndCompress.class.getName());
+	private static Logger logger = LogManager.getLogger(GeneratePBFileAndCompress.class.getName());
         
         //pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR
         /**

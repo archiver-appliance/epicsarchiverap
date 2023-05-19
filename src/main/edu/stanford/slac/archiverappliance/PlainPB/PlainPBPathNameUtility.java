@@ -20,7 +20,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
@@ -37,7 +38,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class PlainPBPathNameUtility {
-	private static final Logger logger = Logger.getLogger(PlainPBPathNameUtility.class);
+	private static final Logger logger = LogManager.getLogger(PlainPBPathNameUtility.class);
 
 	public static Path getPathNameForTime(PlainPBStoragePlugin plugin, String pvName, long epochSeconds, ArchPaths paths, PVNameToKeyMapping pv2key) throws IOException {
 		return getPathNameForTime(plugin.getRootFolder(), pvName, epochSeconds, plugin.getPartitionGranularity(), paths, plugin.getCompressionMode(), pv2key);

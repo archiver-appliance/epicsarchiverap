@@ -10,7 +10,8 @@ import java.util.HashMap;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -51,7 +52,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class RenamePVBPLTest {
-	private static Logger logger = Logger.getLogger(RenamePVBPLTest.class.getName());
+	private static Logger logger = LogManager.getLogger(RenamePVBPLTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

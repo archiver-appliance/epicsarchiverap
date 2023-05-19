@@ -10,7 +10,8 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -38,7 +39,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class ZipSingleDayRawFetchTest {
-	private static Logger logger = Logger.getLogger(ZipSingleDayRawFetchTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ZipSingleDayRawFetchTest.class.getName());
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZipSingleDayRawFetch/";
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZipSingleDayRawFetch";
 	PlainPBStoragePlugin pbplugin;

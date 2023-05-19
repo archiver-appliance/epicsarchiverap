@@ -17,7 +17,8 @@ import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -32,7 +33,7 @@ import org.junit.Test;
  *
  */
 public class TimeUtilsTest {
-	private static Logger logger = Logger.getLogger(TimeUtilsTest.class.getName());
+	private static Logger logger = LogManager.getLogger(TimeUtilsTest.class.getName());
 	private LinkedList<Timestamp> testcases = new LinkedList<Timestamp>();
 
 	@Before

@@ -28,7 +28,8 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -54,7 +55,7 @@ import org.epics.archiverappliance.utils.ui.URIUtils;
  *
  */
 public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
-	private static Logger logger = Logger.getLogger(ChannelArchiverReadOnlyPlugin.class.getName());
+	private static Logger logger = LogManager.getLogger(ChannelArchiverReadOnlyPlugin.class.getName());
 	private String serverURL;
 	private int archiveKey;
 	private int reducedArchiveKey = -1;

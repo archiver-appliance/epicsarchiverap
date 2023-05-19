@@ -24,7 +24,8 @@ import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.output.NullOutputStream;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ChannelArchiver.EngineConfigParser;
@@ -37,7 +38,7 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
  *
  */
 public class UploadChannelArchiverConfigAction implements BPLAction {
-	private static final Logger logger = Logger.getLogger(UploadChannelArchiverConfigAction.class);
+	private static final Logger logger = LogManager.getLogger(UploadChannelArchiverConfigAction.class);
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,

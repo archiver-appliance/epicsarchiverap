@@ -14,7 +14,8 @@ import java.io.File;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SlowTests;
@@ -48,7 +49,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
  */
 @Category(SlowTests.class)
 public class SimpleETLTest {
-        private static final Logger logger = Logger.getLogger(SimpleETLTest.class);
+        private static final Logger logger = LogManager.getLogger(SimpleETLTest.class);
 
         @Before
         public void setUp() throws Exception {

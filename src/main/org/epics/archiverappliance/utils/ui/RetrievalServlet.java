@@ -17,7 +17,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -34,7 +35,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 @SuppressWarnings("serial")
 public class RetrievalServlet  extends HttpServlet {
-	private static Logger logger = Logger.getLogger(RetrievalServlet.class.getName());
+	private static Logger logger = LogManager.getLogger(RetrievalServlet.class.getName());
 	String pbRootFolder = null;
 
 	@Override

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 
 /**
@@ -18,7 +19,7 @@ import org.epics.archiverappliance.Event;
 public class Statistics extends SummaryStatsPostProcessor {
 
     public static final String IDENTITY = "stats";
-    private static Logger logger = Logger.getLogger(Statistics.class.getName());
+    private static Logger logger = LogManager.getLogger(Statistics.class.getName());
     
     @Override
     public String getIdentity() {

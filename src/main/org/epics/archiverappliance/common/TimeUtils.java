@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -42,7 +43,7 @@ public class TimeUtils {
 	 * This constant contains the offset that must be added to epicstimestamps to generate java timestamps.
 	 */
 	public static final long EPICS_EPOCH_2_JAVA_EPOCH_OFFSET = computeEpicsEpochSecondsOffset(); 
-	public static Logger logger = Logger.getLogger(TimeUtils.class);
+	public static Logger logger = LogManager.getLogger(TimeUtils.class);
 
 	public static java.sql.Timestamp convertFromEpochSeconds(long epochSeconds, int nanos) {
 		Timestamp ts = new Timestamp(epochSeconds*1000);

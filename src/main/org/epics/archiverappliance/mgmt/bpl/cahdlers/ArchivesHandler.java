@@ -11,7 +11,8 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -22,7 +23,7 @@ import org.xml.sax.helpers.DefaultHandler;
  *
  */
 public class ArchivesHandler extends DefaultHandler {
-	private static Logger logger = Logger.getLogger(ArchivesHandler.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchivesHandler.class.getName());
 	private boolean inStruct = false;
 	private LinkedList<HashMap<String, String>> structs = new LinkedList<HashMap<String, String>>();
 	private HashMap<String, String> currentStruct = null;

@@ -11,7 +11,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
@@ -35,7 +36,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent;
  *
  */
 public class FileEventStreamSearch {
-	private static final Logger logger = Logger.getLogger(FileEventStreamSearch.class);
+	private static final Logger logger = LogManager.getLogger(FileEventStreamSearch.class);
 	/**
 	 * Constant use to bound length of searches before giving up.
 	 */

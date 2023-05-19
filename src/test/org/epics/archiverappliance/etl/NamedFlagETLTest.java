@@ -14,7 +14,8 @@ import java.sql.Timestamp;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SingleForkTests;
@@ -47,7 +48,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
  */
  @Category(SingleForkTests.class)
 public class NamedFlagETLTest extends TestCase {
-        private static final Logger logger = Logger.getLogger(NamedFlagETLTest.class);
+        private static final Logger logger = LogManager.getLogger(NamedFlagETLTest.class);
     	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
     	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
 

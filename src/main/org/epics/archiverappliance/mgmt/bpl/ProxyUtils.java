@@ -2,7 +2,8 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -13,7 +14,7 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
  *
  */
 public class ProxyUtils {
-	private static Logger logger = Logger.getLogger(ProxyUtils.class.getName());
+	private static Logger logger = LogManager.getLogger(ProxyUtils.class.getName());
 
 	/**
 	 * Route pathAndQuery to all appliances other than this appliance

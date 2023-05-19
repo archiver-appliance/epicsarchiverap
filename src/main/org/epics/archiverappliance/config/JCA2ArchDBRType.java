@@ -5,7 +5,8 @@ import gov.aps.jca.dbr.DBRType;
 
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public enum JCA2ArchDBRType {
 	JCAMAPPING_SCALAR_STRING(DBRType.TIME_STRING, false, ArchDBRTypes.DBR_SCALAR_STRING),      
@@ -23,7 +24,7 @@ public enum JCA2ArchDBRType {
 	JCAMAPPING_WAVEFORM_INT(DBRType.TIME_INT, true, ArchDBRTypes.DBR_WAVEFORM_INT),
 	JCAMAPPING_WAVEFORM_DOUBLE(DBRType.TIME_DOUBLE, true, ArchDBRTypes.DBR_WAVEFORM_DOUBLE);
 	
-	private static Logger logger = Logger.getLogger(JCA2ArchDBRType.class.getName());
+	private static Logger logger = LogManager.getLogger(JCA2ArchDBRType.class.getName());
 	private DBRType dbrtype;
 	private boolean waveform;
 	private ArchDBRTypes archDBRType;

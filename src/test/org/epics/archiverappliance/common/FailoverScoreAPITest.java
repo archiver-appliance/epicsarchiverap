@@ -17,7 +17,8 @@ import java.net.URLEncoder;
 import java.sql.Timestamp;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -50,7 +51,7 @@ import org.junit.experimental.categories.Category;
  */
 @Category(IntegrationTests.class)
 public class FailoverScoreAPITest {
-	private static Logger logger = Logger.getLogger(FailoverScoreAPITest.class.getName());
+	private static Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
 	private ConfigServiceForTests configService;
 	String pvName = "FailoverRetrievalTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;

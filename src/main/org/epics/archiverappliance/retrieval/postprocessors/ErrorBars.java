@@ -3,7 +3,8 @@ package org.epics.archiverappliance.retrieval.postprocessors;
 import java.util.HashMap;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 
 /**
@@ -13,7 +14,7 @@ import org.epics.archiverappliance.Event;
  */
 public class ErrorBars extends SummaryStatsPostProcessor implements PostProcessor {
 	static final String IDENTITY = "errorbar";
-	private static Logger logger = Logger.getLogger(ErrorBars.class.getName());
+	private static Logger logger = LogManager.getLogger(ErrorBars.class.getName());
 
 	@Override
 	public String getIdentity() {

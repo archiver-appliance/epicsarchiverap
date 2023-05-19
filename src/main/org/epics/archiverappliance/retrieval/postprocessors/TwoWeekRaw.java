@@ -8,7 +8,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -23,7 +24,7 @@ public class TwoWeekRaw implements PostProcessor, TimeSpanDependentProcessing {
 	public static final String TWOWEEK_IDENTITY = "twoweek";
 	private FirstSamplePP sparsifiedData = new FirstSamplePP();
 	private DefaultRawPostProcessor rawData = new DefaultRawPostProcessor();
-	private static Logger logger = Logger.getLogger(TwoWeekRaw.class.getName());
+	private static Logger logger = LogManager.getLogger(TwoWeekRaw.class.getName());
 	private String pvName;
 
 	@Override

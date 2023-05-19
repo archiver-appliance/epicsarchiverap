@@ -12,7 +12,8 @@ import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -42,7 +43,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class ZipCachedFetchTest {
-	private static Logger logger = Logger.getLogger(ZipCachedFetchTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ZipCachedFetchTest.class.getName());
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZipCachedFetchTest/";
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZipCachedFetchTest";
 	PlainPBStoragePlugin pbplugin;

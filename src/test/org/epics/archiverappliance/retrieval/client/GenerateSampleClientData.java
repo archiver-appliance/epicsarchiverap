@@ -5,7 +5,8 @@ import java.io.FileOutputStream;
 import java.sql.Timestamp;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -23,7 +24,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class GenerateSampleClientData {
-	private static Logger logger = Logger.getLogger(GenerateSampleClientData.class.getName());
+	private static Logger logger = LogManager.getLogger(GenerateSampleClientData.class.getName());
 	/**
 	 * @param args
 	 */

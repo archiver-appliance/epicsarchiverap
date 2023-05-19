@@ -19,12 +19,13 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.utils.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 
 public class GZIPUtil {
-	private static Logger logger = Logger.getLogger(GZIPUtil.class.getName());
+	private static Logger logger = LogManager.getLogger(GZIPUtil.class.getName());
    public static InputStream  unpackZip(File source, String fileName) throws IOException
    {
            ZipFile zipFile=new ZipFile(source);

@@ -4,7 +4,8 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -18,7 +19,7 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  *
  */
 public class TimeSpanLimitEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(TimeSpanLimitEventStream.class);
+	private static Logger logger = LogManager.getLogger(TimeSpanLimitEventStream.class);
 	
 	private EventStream srcStream;
 	private Timestamp startTime;

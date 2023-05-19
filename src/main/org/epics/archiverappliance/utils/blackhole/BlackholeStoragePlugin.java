@@ -18,7 +18,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
@@ -39,7 +40,7 @@ import org.epics.archiverappliance.utils.ui.URIUtils;
  *
  */
 public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
-	private static Logger logger = Logger.getLogger(BlackholeStoragePlugin.class.getName());
+	private static Logger logger = LogManager.getLogger(BlackholeStoragePlugin.class.getName());
 
 	@Override
 	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor)  throws IOException {

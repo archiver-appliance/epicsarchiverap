@@ -21,7 +21,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.DefaultConfigService;
@@ -35,7 +36,7 @@ import org.python.google.common.io.LineReader;
  *
  */
 public class TomcatSetup {
-	private static Logger logger = Logger.getLogger(TomcatSetup.class.getName());
+	private static Logger logger = LogManager.getLogger(TomcatSetup.class.getName());
 	LinkedList<Process> watchedProcesses = new LinkedList<Process>();
 	LinkedList<File> cleanupFolders = new LinkedList<File>();
 	private static int DEFAULT_SERVER_STARTUP_PORT = 16000;

@@ -15,7 +15,8 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.SlowTests;
@@ -39,13 +40,14 @@ import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import gov.aps.jca.dbr.DBR;
+
 /**
  * Generates a file using appendData for one years worth of a DBT type and then runs a validation check afterwards.
  * @author mshankar
  *
  */
 public class DBRTypeTest {
-	private static Logger logger = Logger.getLogger(DBRTypeTest.class.getName());
+	private static Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
 	PBCommonSetup pbSetup = new PBCommonSetup();
 	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
 	

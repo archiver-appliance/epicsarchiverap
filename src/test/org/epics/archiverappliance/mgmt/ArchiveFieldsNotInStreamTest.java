@@ -7,7 +7,8 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -77,7 +78,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ArchiveFieldsNotInStreamTest {
-	private static Logger logger = Logger.getLogger(ArchiveFieldsNotInStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchiveFieldsNotInStreamTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

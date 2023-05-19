@@ -22,7 +22,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -70,7 +71,7 @@ import org.json.simple.JSONObject;
 
 public class PvaGetPVData implements PvaAction {
 
-	private static final Logger logger = Logger.getLogger(PvaGetPVData.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaGetPVData.class.getName());
 	public static final String NAME = "getPVsData";
 
 	static FieldCreate fieldCreate = FieldFactory.getFieldCreate();

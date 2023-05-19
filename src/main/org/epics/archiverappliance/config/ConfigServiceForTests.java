@@ -15,7 +15,8 @@ import java.util.concurrent.ThreadFactory;
 
 import javax.servlet.ServletContext;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
@@ -24,8 +25,8 @@ import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
 
 public class ConfigServiceForTests extends DefaultConfigService {
-	private static Logger logger = Logger.getLogger(ConfigServiceForTests.class.getName());
-	private static Logger configlogger = Logger.getLogger("config." + ConfigServiceForTests.class.getName());
+	private static Logger logger = LogManager.getLogger(ConfigServiceForTests.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + ConfigServiceForTests.class.getName());
 
 	private File webInfClassesFolder;
 
@@ -54,6 +55,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		for(ArchDBRTypes type : ArchDBRTypes.values()) {
 			samplePV2DBRtypemap.put(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + (type.isWaveForm() ? "V_" : "S_") + type.getPrimitiveName(), type);
 		}
+		System.getProperties().setProperty("log4j1.compatibility", "true");
 
 	}
 

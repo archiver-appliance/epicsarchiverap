@@ -12,7 +12,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.mergededup.MergeDedupEventStream;
@@ -32,7 +33,7 @@ import org.junit.Test;
  *
  */
 public class MergeDedupEventStreamTest {
-	private static Logger logger = Logger.getLogger(MergeDedupEventStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(MergeDedupEventStreamTest.class.getName());
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":MergeDedupEventStreamTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	short currentYear = TimeUtils.getCurrentYear();

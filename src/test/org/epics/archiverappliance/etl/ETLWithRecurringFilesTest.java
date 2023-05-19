@@ -16,7 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SlowTests;
@@ -49,7 +50,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  */
 @Category(SlowTests.class)
 public class ETLWithRecurringFilesTest {
-	private static Logger logger = Logger.getLogger(ETLWithRecurringFilesTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ETLWithRecurringFilesTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

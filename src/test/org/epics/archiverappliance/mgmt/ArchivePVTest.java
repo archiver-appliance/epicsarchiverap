@@ -3,7 +3,8 @@ package org.epics.archiverappliance.mgmt;
 import static org.junit.Assert.assertTrue;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -25,7 +26,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ArchivePVTest {
-	private static Logger logger = Logger.getLogger(ArchivePVTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchivePVTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

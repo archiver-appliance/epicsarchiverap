@@ -2,7 +2,8 @@ package org.epics.archiverappliance.retrieval.postprocessors;
 
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Factory class for post processors.
@@ -12,7 +13,7 @@ import org.apache.log4j.Logger;
  *
  */
 public class PostProcessors {
-	private static Logger logger = Logger.getLogger(PostProcessors.class.getName());
+	private static Logger logger = LogManager.getLogger(PostProcessors.class.getName());
 	
 	private enum InheritValuesFromPreviousBins {DO_NOT_INHERIT, INHERIT}
 	private static class PostProcessorImplementation {

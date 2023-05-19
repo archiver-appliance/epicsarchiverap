@@ -18,7 +18,8 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SlowTests;
@@ -46,7 +47,7 @@ import org.junit.experimental.categories.Category;
  *
  */
 public class FailoverETLServerDownTest {
-	private static Logger logger = Logger.getLogger(FailoverETLServerDownTest.class.getName());
+	private static Logger logger = LogManager.getLogger(FailoverETLServerDownTest.class.getName());
 	private ConfigServiceForTests configService;
 	String pvName = "FailoverETLTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;

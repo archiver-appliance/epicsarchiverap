@@ -10,7 +10,8 @@ import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeSpan;
@@ -47,7 +48,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	    return 1;
 	}
 	
-	private static Logger logger = Logger.getLogger(SummaryStatsPostProcessor.class.getName());
+	private static Logger logger = LogManager.getLogger(SummaryStatsPostProcessor.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	private Timestamp previousEventTimestamp = new Timestamp(1);
 	

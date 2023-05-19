@@ -10,7 +10,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.retrieval.DataSourceforPV;
@@ -19,7 +20,7 @@ import org.epics.archiverappliance.retrieval.RetrievalState;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
 public class SampleRetrievalState extends RetrievalState {
-	private static Logger logger = Logger.getLogger(SampleRetrievalState.class.getName());
+	private static Logger logger = LogManager.getLogger(SampleRetrievalState.class.getName());
 	
 	ConfigServiceForTests configService;
 	public SampleRetrievalState(ConfigServiceForTests parentConfigService) {

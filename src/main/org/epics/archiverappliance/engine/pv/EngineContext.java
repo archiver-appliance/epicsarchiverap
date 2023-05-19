@@ -25,7 +25,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
@@ -63,8 +64,8 @@ import gov.aps.jca.Context;
  *
  */
 public class EngineContext {
-	private static final Logger logger = Logger.getLogger(EngineContext.class.getName());
-	private static final Logger configlogger = Logger.getLogger("config." + EngineContext.class.getName());
+	private static final Logger logger = LogManager.getLogger(EngineContext.class.getName());
+	private static final Logger configlogger = LogManager.getLogger("config." + EngineContext.class.getName());
 
 	private static double MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = 5.0;
 	private static int METACHANNELS_TO_START_AT_A_TIME = 10000;

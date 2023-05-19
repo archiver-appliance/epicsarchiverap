@@ -8,7 +8,8 @@
 package org.epics.archiverappliance.engine.pv;
 
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 import gov.aps.jca.Channel;
@@ -20,7 +21,7 @@ import gov.aps.jca.Channel;
 public class RefCountedChannel
 {
     private Channel channel;
-    private static final Logger logger = Logger.getLogger(RefCountedChannel.class);
+    private static final Logger logger = LogManager.getLogger(RefCountedChannel.class);
 
     private int refs;
 

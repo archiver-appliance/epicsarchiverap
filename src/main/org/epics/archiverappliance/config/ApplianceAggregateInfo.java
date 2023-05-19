@@ -2,7 +2,8 @@ package org.epics.archiverappliance.config;
 
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.StorageMetrics;
 
@@ -21,7 +22,7 @@ public class ApplianceAggregateInfo {
 	private double totalEventRate;
 	private double totalPVCount;
 	private HashMap<String, Long> totalStorageImpact= new HashMap<String, Long>();
-	private static Logger logger = Logger.getLogger(DefaultConfigService.class.getName());
+	private static Logger logger = LogManager.getLogger(DefaultConfigService.class.getName());
 	
 	public ApplianceAggregateInfo clone() {
 		ApplianceAggregateInfo retval = new ApplianceAggregateInfo();

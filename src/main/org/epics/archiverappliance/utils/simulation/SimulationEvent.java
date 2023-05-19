@@ -10,7 +10,8 @@ package org.epics.archiverappliance.utils.simulation;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -33,7 +34,7 @@ public class SimulationEvent implements DBRTimeEvent {
 	private ArchDBRTypes type;
 	private DBR2PBTypeMapping mapping;
 	SampleValue sampleValue;
-	private static Logger logger = Logger.getLogger(SimulationEvent.class.getName());
+	private static Logger logger = LogManager.getLogger(SimulationEvent.class.getName());
 
 	public SimulationEvent(int secondsIntoYear, short yearofdata, ArchDBRTypes type, SimulationValueGenerator valueGenerator) {
 		this.secondsIntoYear = secondsIntoYear;

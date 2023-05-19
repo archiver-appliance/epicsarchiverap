@@ -12,7 +12,8 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -31,7 +32,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class PBFileInfo {
-	private static final Logger logger = Logger.getLogger(PBFileInfo.class);
+	private static final Logger logger = LogManager.getLogger(PBFileInfo.class);
 	PayloadInfo info;
 	DBRTimeEvent firstEvent = null;
 	DBRTimeEvent lastEvent = null;

@@ -16,7 +16,8 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -36,7 +37,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class PlainPBFileNameUtilityTest {
-	private final static Logger logger = Logger.getLogger(PlainPBFileNameUtilityTest.class);
+	private final static Logger logger = LogManager.getLogger(PlainPBFileNameUtilityTest.class);
 	String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "PlainPBFileNameUtility/";
 	String rootFolderStr = fileName;
 	private ConfigService configService;

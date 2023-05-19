@@ -6,7 +6,8 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
@@ -50,7 +51,7 @@ import org.json.simple.parser.ParseException;
  */
 public class PvaArchivePVAction implements PvaAction {
 
-	public static final Logger logger = Logger.getLogger(PvaArchivePVAction.class);
+	public static final Logger logger = LogManager.getLogger(PvaArchivePVAction.class);
 	public static final String NAME = "archivePVs";
 
 	@Override

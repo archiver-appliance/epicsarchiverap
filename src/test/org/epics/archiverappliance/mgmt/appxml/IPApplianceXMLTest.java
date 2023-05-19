@@ -8,7 +8,8 @@ import java.net.InetAddress;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
@@ -30,7 +31,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category(IntegrationTests.class)
 public class IPApplianceXMLTest {
-	private static Logger logger = Logger.getLogger(IPApplianceXMLTest.class.getName());
+	private static Logger logger = LogManager.getLogger(IPApplianceXMLTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ApplianceXMLTest");
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	WebDriver driver;

@@ -2,7 +2,8 @@ package org.epics.archiverappliance.engine.test;
 
 import java.io.File;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -21,7 +22,7 @@ import junit.framework.TestCase;
 
 @Category(LocalEpicsTests.class)
 public class PauseAndResumePVwithMetaFieldTest extends TestCase {
-	private static Logger logger = Logger.getLogger(PauseAndResumePVwithMetaFieldTest.class.getName());
+	private static Logger logger = LogManager.getLogger(PauseAndResumePVwithMetaFieldTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
 	private WriterTest writer = new WriterTest();

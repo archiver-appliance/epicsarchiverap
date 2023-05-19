@@ -6,8 +6,10 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.mgmt.bpl.GetAllPVs;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.nt.NTScalarArray;
 import org.epics.nt.NTURI;
@@ -56,7 +58,7 @@ import org.epics.pvdata.pv.ScalarType;
  *
  */
 public class PvaGetAllPVs implements PvaAction {
-	private static Logger logger = Logger.getLogger(PvaGetAllPVs.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaGetAllPVs.class.getName());
 
 	public static final String NAME = "getAllPVs";
 

@@ -9,7 +9,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +25,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class ZipFetchTest {
-	private static Logger logger = Logger.getLogger(ZipFetchTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ZipFetchTest.class.getName());
 	private static final int NUM_DAYS = 365;
 	private static final int DATA_PER_DAY = 1024*1024;
 	private static final int SAMPLE_SIZE = NUM_DAYS*DATA_PER_DAY;

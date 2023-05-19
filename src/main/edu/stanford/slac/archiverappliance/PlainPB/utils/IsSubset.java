@@ -14,7 +14,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -30,7 +31,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
  *  This only compares timestamps; not the values or the meta fields.
  */
 public class IsSubset {
-	private static Logger logger = Logger.getLogger(MergePBFile.class.getName());
+	private static Logger logger = LogManager.getLogger(MergePBFile.class.getName());
 
 	private static void printHelpMsg() {
 		System.out.println();

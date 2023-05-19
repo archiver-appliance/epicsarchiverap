@@ -6,7 +6,8 @@ import java.io.File;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -37,7 +38,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 @Category(IntegrationTests.class)
 public class GetExtraFieldsTest {
-	private static Logger logger = Logger.getLogger(GetExtraFieldsTest.class.getName());
+	private static Logger logger = LogManager.getLogger(GetExtraFieldsTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder());
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":GetExtraFieldsTest";
 	TomcatSetup tomcatSetup = new TomcatSetup();

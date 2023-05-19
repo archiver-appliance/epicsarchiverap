@@ -11,7 +11,8 @@ import java.text.DecimalFormat;
 import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
@@ -52,7 +53,7 @@ import org.junit.Test;
  *
  */
 public class FileBackedIteratorTest {
-	private static Logger logger = Logger.getLogger(FileBackedIteratorTest.class.getName());
+	private static Logger logger = LogManager.getLogger(FileBackedIteratorTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "FileBackedIteratorTest");
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":FileBackedIteratorTest";
 	short currentYear = TimeUtils.getCurrentYear();

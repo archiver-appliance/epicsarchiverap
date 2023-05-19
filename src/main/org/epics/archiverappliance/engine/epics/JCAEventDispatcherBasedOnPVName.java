@@ -22,7 +22,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * Attempt to distribute the load of serializing the event across multiple threads
@@ -35,7 +36,7 @@ public class JCAEventDispatcherBasedOnPVName extends AbstractEventDispatcher {
 	ExecutorService allOtherEventsHandler = null;
 	ExecutorService[] pvNameEventsHandlers = new ExecutorService[Math.max(Runtime.getRuntime().availableProcessors()/4, 4)];
 	int numThreads =  pvNameEventsHandlers.length;
-	private static Logger logger = Logger.getLogger(JCAEventDispatcherBasedOnPVName.class.getName());
+	private static Logger logger = LogManager.getLogger(JCAEventDispatcherBasedOnPVName.class.getName());
 
 	public JCAEventDispatcherBasedOnPVName() {
 		super();

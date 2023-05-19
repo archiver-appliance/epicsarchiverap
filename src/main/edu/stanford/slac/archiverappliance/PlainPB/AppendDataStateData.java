@@ -11,7 +11,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -34,7 +35,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class AppendDataStateData {
-	private static Logger logger = Logger.getLogger(AppendDataStateData.class.getName());
+	private static Logger logger = LogManager.getLogger(AppendDataStateData.class.getName());
 
 	private PartitionGranularity partitionGranularity;
 	private String rootFolder;

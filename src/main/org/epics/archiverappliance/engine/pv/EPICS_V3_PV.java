@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -55,7 +56,7 @@ import gov.aps.jca.event.MonitorListener;
  * @version 4-Jun-2012, Luofeng Li:added codes to support for the new archiver
  */
 public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, MonitorListener {
-	private static final Logger logger = Logger.getLogger(EPICS_V3_PV.class.getName());
+	private static final Logger logger = LogManager.getLogger(EPICS_V3_PV.class.getName());
 	
 	/**
 	 * Use plain mode?

@@ -13,7 +13,8 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.exception.ConfigException;
 
@@ -27,7 +28,7 @@ import org.epics.archiverappliance.config.exception.ConfigException;
  */
 public class JCAConfigGen {
 	private static final String JCA_CONFIG_GEN_USE_CAJ = "org.epics.archiverappliance.engine.epics.JCAConfigGen.useCAJ";
-	private static final Logger configlogger = Logger.getLogger("config." + JCAConfigGen.class.getName());
+	private static final Logger configlogger = LogManager.getLogger("config." + JCAConfigGen.class.getName());
 	
 	/**
 	 * Use environment vars to generate a JCA config that can be handed off to a JCA DefaultConfigurationBuilder

@@ -6,7 +6,8 @@ import java.io.File;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
@@ -41,7 +42,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class InactiveClusterMemberArchivePVTest {
-	private static Logger logger = Logger.getLogger(InactiveClusterMemberArchivePVTest.class.getName());
+	private static Logger logger = LogManager.getLogger(InactiveClusterMemberArchivePVTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "InactiveClusterMemberArchivePVTest");
 	private String pvNameToArchive1 = "UnitTestNoNamingConvention:inactive1";
 	private String pvNameToArchive2 = "UnitTestNoNamingConvention:inactive2";

@@ -8,7 +8,8 @@ import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -30,7 +31,7 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
  *
  */
 public class ArchivePVState {
-	private static Logger logger = Logger.getLogger(ArchivePVState.class.getName());
+	private static Logger logger = LogManager.getLogger(ArchivePVState.class.getName());
 	public enum ArchivePVStateMachine { START, METAINFO_REQUESTED, METAINFO_GATHERING, METAINFO_OBTAINED, POLICY_COMPUTED, TYPEINFO_STABLE, ARCHIVE_REQUEST_SUBMITTED, ARCHIVING, ABORTED, FINISHED}
 
 	private ArchivePVStateMachine currentState = ArchivePVStateMachine.START;

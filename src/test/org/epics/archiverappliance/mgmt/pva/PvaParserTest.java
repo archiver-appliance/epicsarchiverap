@@ -3,7 +3,8 @@ package org.epics.archiverappliance.mgmt.pva;
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.util.logging.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.nt.NTTable;
@@ -12,7 +13,7 @@ import org.junit.Test;
 
 public class PvaParserTest {
 
-	private static Logger logger = Logger.getLogger(PvaParserTest.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaParserTest.class.getName());
 
 	@Test
 	public void test() {

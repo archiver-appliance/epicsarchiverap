@@ -11,7 +11,8 @@ package org.epics.archiverappliance.utils.imprt;
 import java.util.Iterator;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -25,7 +26,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
  *
  */
 public class CSVEventStream implements EventStream {
-	private static Logger logger = Logger.getLogger(CSVEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(CSVEventStream.class.getName());
 	private String csvFileName;
 	private ArchDBRTypes dbrtype;
 	private LinkedList<CSVEventStreamIterator> allIterators = new LinkedList<CSVEventStreamIterator>();

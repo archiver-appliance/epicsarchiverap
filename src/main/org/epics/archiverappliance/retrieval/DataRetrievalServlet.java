@@ -46,7 +46,8 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -110,7 +111,7 @@ public class DataRetrievalServlet  extends HttpServlet {
 	private static final String ARCH_APPL_PING_PV = "ArchApplPingPV";
 	private static final String SEARCH_STORE_FOR_RETIRED_PV_STR = 
 			"org.epics.archiverappliance.retrieval.SearchStoreForRetiredPvs";
-	private static Logger logger = Logger.getLogger(DataRetrievalServlet.class.getName());
+	private static Logger logger = LogManager.getLogger(DataRetrievalServlet.class.getName());
 	static class MimeMappingInfo {
 		Class<? extends MimeResponse> mimeresponseClass;
 		String contentType;

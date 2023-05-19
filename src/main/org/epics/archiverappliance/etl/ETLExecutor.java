@@ -6,7 +6,8 @@ import java.util.LinkedList;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
@@ -21,7 +22,7 @@ import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
  *
  */
 public class ETLExecutor {
-	private static Logger logger = Logger.getLogger(ETLExecutor.class.getName());
+	private static Logger logger = LogManager.getLogger(ETLExecutor.class.getName());
 	
 	/**
 	 * This should only be called from within unit tests...

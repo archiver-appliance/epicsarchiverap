@@ -9,7 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
@@ -19,7 +20,7 @@ import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
 import org.json.simple.JSONValue;
 
 public class StorageWithLifetime {
-	private static Logger logger = Logger.getLogger(StorageWithLifetime.class.getName());
+	private static Logger logger = LogManager.getLogger(StorageWithLifetime.class.getName());
 	StorageMetrics storageMetricsAPI;
 	int lifetimeid;
 	double totalETLTimeIntoThisDestInMillis;

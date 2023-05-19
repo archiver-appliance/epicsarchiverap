@@ -17,7 +17,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 
@@ -32,7 +33,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
  *
  */
 public class ValidatePBFile {
-	private static Logger logger = Logger.getLogger(ValidatePBFile.class.getName());
+	private static Logger logger = LogManager.getLogger(ValidatePBFile.class.getName());
 	
 	public static boolean validatePBFile(Path path, boolean verboseMode) throws IOException {
 		PBFileInfo info = new PBFileInfo(path);

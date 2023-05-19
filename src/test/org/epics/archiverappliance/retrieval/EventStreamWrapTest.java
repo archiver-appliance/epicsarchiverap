@@ -12,7 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -40,7 +41,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class EventStreamWrapTest {
-	private static Logger logger = Logger.getLogger(EventStreamWrapTest.class.getName());
+	private static Logger logger = LogManager.getLogger(EventStreamWrapTest.class.getName());
 	String shortTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/EventStreamWrapTest";
 	PlainPBStoragePlugin storageplugin;
 	short currentYear = TimeUtils.getCurrentYear();

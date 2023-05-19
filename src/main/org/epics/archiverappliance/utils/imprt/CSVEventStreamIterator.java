@@ -13,12 +13,13 @@ import java.io.LineNumberReader;
 import java.lang.reflect.Constructor;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import au.com.bytecode.opencsv.CSVReader;
+import com.opencsv.CSVReader;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 
 /**
@@ -27,7 +28,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  *
  */
 class CSVEventStreamIterator implements Iterator<Event> {
-	private static Logger logger = Logger.getLogger(CSVEventStreamIterator.class.getName());
+	private static Logger logger = LogManager.getLogger(CSVEventStreamIterator.class.getName());
 	private String csvFileName;
 	private ArchDBRTypes dbrtype;
 	private LineNumberReader linereader;

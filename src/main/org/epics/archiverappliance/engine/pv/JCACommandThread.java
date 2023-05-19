@@ -17,7 +17,8 @@ import gov.aps.jca.event.ContextMessageListener;
 import java.io.ByteArrayInputStream;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
 import org.epics.archiverappliance.engine.model.ContextErrorHandler;
@@ -44,7 +45,7 @@ public class JCACommandThread extends Thread {
 	 */
 	final private static long DELAY_MILLIS = 100;
 
-	private static final Logger logger = Logger.getLogger(JCACommandThread.class.getName());
+	private static final Logger logger = LogManager.getLogger(JCACommandThread.class.getName());
 
 	/** The JCA Context */
 	private volatile Context jca_context = null;

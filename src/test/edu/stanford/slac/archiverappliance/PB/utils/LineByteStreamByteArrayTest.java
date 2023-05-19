@@ -11,7 +11,8 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -23,7 +24,7 @@ import org.junit.experimental.categories.Category;
 import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerator;
 
 public class LineByteStreamByteArrayTest {
-	private static Logger logger = Logger.getLogger(LineByteStreamByteArrayTest.class.getName());
+	private static Logger logger = LogManager.getLogger(LineByteStreamByteArrayTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

@@ -15,7 +15,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
@@ -33,7 +34,7 @@ import org.json.simple.JSONValue;
  */
 public class PVTypeInfo implements Serializable {
 	private static final long serialVersionUID = 6298175991390616559L;
-	private static Logger logger = Logger.getLogger(PVTypeInfo.class.getName());
+	private static Logger logger = LogManager.getLogger(PVTypeInfo.class.getName());
 	public static final int DEFAULT_BUFFER_INTERVAL = 10;
 
 	/**

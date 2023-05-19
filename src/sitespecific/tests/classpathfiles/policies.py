@@ -25,9 +25,6 @@
 # The results of this method is placed into a list variable called called 'pvStandardFields'.  
 
 
-import sys
-import os
-
 # Generate a list of policy names. This is used to feed the dropdown in the UI.
 def getPolicyList():
 	pvPoliciesDict = {}

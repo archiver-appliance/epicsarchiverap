@@ -16,7 +16,8 @@ import java.net.URL;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 
@@ -30,7 +31,7 @@ import edu.stanford.slac.archiverappliance.PBOverHTTP.InputStreamBackedEventStre
  *
  */
 public class RawDataRetrievalAsEventStream implements DataRetrieval {
-	private static Logger logger = Logger.getLogger(RawDataRetrievalAsEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(RawDataRetrievalAsEventStream.class.getName());
 	private String accessURL = null;
 	
 	public RawDataRetrievalAsEventStream(String accessURL) {

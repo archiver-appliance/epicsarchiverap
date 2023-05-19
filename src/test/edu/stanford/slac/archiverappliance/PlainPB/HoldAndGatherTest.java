@@ -13,7 +13,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
@@ -43,7 +44,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
  */
 @Category(SlowTests.class)
 public class HoldAndGatherTest {
-	private static Logger logger = Logger.getLogger(HoldAndGatherTest.class.getName());
+	private static Logger logger = LogManager.getLogger(HoldAndGatherTest.class.getName());
 	PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
 	PBCommonSetup srcSetup = new PBCommonSetup();
 

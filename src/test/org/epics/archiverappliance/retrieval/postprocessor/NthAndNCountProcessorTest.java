@@ -5,7 +5,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -32,7 +33,7 @@ import org.junit.Test;
  */
 public class NthAndNCountProcessorTest {
 	
-	private static Logger logger = Logger.getLogger(NthAndNCountProcessorTest.class.getName());
+	private static Logger logger = LogManager.getLogger(NthAndNCountProcessorTest.class.getName());
 	private String pvName = "Test_NthNCount";
 	
 	

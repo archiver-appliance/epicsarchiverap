@@ -12,7 +12,8 @@ import java.sql.Timestamp;
 import java.util.Random;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -43,7 +44,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class ZeroedFileEventStreamTest {
-	private static Logger logger = Logger.getLogger(ZeroedFileEventStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ZeroedFileEventStreamTest.class.getName());
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZeroedFileEventStreamTestTest/";
 	File rootFolder = new File(rootFolderName);
 	static String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest";

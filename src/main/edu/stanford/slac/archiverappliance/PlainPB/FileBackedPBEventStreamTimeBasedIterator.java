@@ -13,7 +13,8 @@ import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -32,7 +33,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEventStreamIterator {
-	private static Logger logger = Logger.getLogger(FileBackedPBEventStreamTimeBasedIterator.class.getName());
+	private static Logger logger = LogManager.getLogger(FileBackedPBEventStreamTimeBasedIterator.class.getName());
 	private long startTimeEpochSeconds = 0;
 	private long endTimeEpochSeconds = 0;
 	private short year;

@@ -7,7 +7,8 @@ import java.util.LinkedList;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -42,7 +43,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class MatlabFileTest {
-	private static Logger logger = Logger.getLogger(MatlabFileTest.class.getName());
+	private static Logger logger = LogManager.getLogger(MatlabFileTest.class.getName());
 	ConfigService configService;
 	PlainPBStoragePlugin storageplugin;
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MatlabFileTest";

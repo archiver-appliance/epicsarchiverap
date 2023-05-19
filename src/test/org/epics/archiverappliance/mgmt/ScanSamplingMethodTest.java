@@ -5,7 +5,8 @@ import static org.junit.Assert.assertTrue;
 import java.sql.Timestamp;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -41,7 +42,7 @@ import org.openqa.selenium.support.ui.Select;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class ScanSamplingMethodTest {
-	private static Logger logger = Logger.getLogger(ScanSamplingMethodTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ScanSamplingMethodTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

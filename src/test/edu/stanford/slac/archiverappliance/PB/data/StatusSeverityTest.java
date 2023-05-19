@@ -21,7 +21,8 @@ import gov.aps.jca.dbr.DBR_TIME_String;
 import java.util.Collections;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -35,7 +36,7 @@ import org.junit.Test;
  *
  */
 public class StatusSeverityTest {
-	private static Logger logger = Logger.getLogger(StatusSeverityTest.class.getName());
+	private static Logger logger = LogManager.getLogger(StatusSeverityTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

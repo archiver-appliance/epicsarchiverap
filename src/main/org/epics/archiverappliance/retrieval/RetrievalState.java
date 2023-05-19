@@ -9,7 +9,8 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
@@ -22,7 +23,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 
 public class RetrievalState {
-	private static Logger logger = Logger.getLogger(RetrievalState.class.getName());
+	private static Logger logger = LogManager.getLogger(RetrievalState.class.getName());
 	private ConfigService configService;
 	private int engineWriteThreadInSeconds = 60;
 	

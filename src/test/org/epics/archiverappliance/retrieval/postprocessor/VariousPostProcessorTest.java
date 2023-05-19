@@ -8,7 +8,8 @@ import java.sql.Timestamp;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.IntegrationTests;
@@ -37,7 +38,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  */
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class VariousPostProcessorTest {
-	private static Logger logger = Logger.getLogger(VariousPostProcessorTest.class.getName());
+	private static Logger logger = LogManager.getLogger(VariousPostProcessorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;

@@ -11,7 +11,8 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -41,7 +42,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  *
  */
 public class ThruNumberAndStringConversionFunctionTest {
-	private static Logger logger = Logger.getLogger(ThruNumberAndStringConversionFunctionTest.class.getName());
+	private static Logger logger = LogManager.getLogger(ThruNumberAndStringConversionFunctionTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {

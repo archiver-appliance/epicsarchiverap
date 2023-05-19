@@ -7,7 +7,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.POJOEvent;
@@ -25,7 +26,7 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  * @see PostProcessorWithConsolidatedEventStream
  */
 public class FillsCollectorEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = Logger.getLogger(FillsCollectorEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(FillsCollectorEventStream.class.getName());
 	private final RemotableEventStreamDesc desc;
 	private LinkedHashMap<Long, Event> consolidatedData;
 	private long firstBin;

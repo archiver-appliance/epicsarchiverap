@@ -14,7 +14,8 @@ import java.sql.Timestamp;
 import junit.framework.TestCase;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -41,7 +42,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  */
 public class ConsolidateETLJobsForOnePVTest2 extends TestCase{
 
-        private static Logger logger = Logger.getLogger(ConsolidateETLJobsForOnePVTest2.class.getName());
+        private static Logger logger = LogManager.getLogger(ConsolidateETLJobsForOnePVTest2.class.getName());
         String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ConsolidateETLJobsForOnePVTest";
         String shortTermFolderName=rootFolderName+"/shortTerm";
         String mediumTermFolderName=rootFolderName+"/mediumTerm";

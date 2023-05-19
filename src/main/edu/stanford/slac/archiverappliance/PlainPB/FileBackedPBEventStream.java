@@ -18,7 +18,8 @@ import java.nio.file.StandardOpenOption;
 import java.sql.Timestamp;
 import java.util.Iterator;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -43,7 +44,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, ETLBulkStream {
-	private static Logger logger = Logger.getLogger(FileBackedPBEventStream.class.getName());
+	private static Logger logger = LogManager.getLogger(FileBackedPBEventStream.class.getName());
 	private String pvName;
 	private Path path = null;
 	private long startFilePos = 0;

@@ -7,7 +7,8 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.model;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
@@ -62,7 +63,7 @@ public class SampleBuffer {
 	 */
 	final private ArchDBRTypes archdbrtype;
 	private short year;
-	private static Logger logger = Logger.getLogger(SampleBuffer.class.getName());
+	private static Logger logger = LogManager.getLogger(SampleBuffer.class.getName());
 
 	/** Create sample buffer of given capacity 
 	 *

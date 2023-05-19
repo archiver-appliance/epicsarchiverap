@@ -9,7 +9,8 @@ package org.epics.archiverappliance.engine.model;
 
 
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 
 
@@ -20,7 +21,7 @@ import org.apache.log4j.Logger;
 public class ThrottledLogger
 {
 	
-    static private final Logger logger = Logger.getLogger(ThrottledLogger.class);
+    static private final Logger logger = LogManager.getLogger(ThrottledLogger.class);
     /** Log level */
     final private LogLevel level;
 

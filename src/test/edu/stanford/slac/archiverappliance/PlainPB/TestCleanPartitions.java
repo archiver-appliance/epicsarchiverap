@@ -5,7 +5,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
@@ -33,7 +34,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  */
 @Category(SlowTests.class)
 public class TestCleanPartitions {
-	private static Logger logger = Logger.getLogger(TestCleanPartitions.class.getName());
+	private static Logger logger = LogManager.getLogger(TestCleanPartitions.class.getName());
 	private ConfigService configService;
 
 	@Before

@@ -42,14 +42,15 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import org.apache.logging.log4j.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.servlet.ServletContext;
 
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.ProcessMetrics;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -118,10 +119,14 @@ import edu.stanford.slac.archiverappliance.PB.data.PBTypeSystem;
  *
  */
 public class DefaultConfigService implements ConfigService {
-	private static Logger logger = Logger.getLogger(DefaultConfigService.class.getName());
-	private static Logger configlogger = Logger.getLogger("config." + DefaultConfigService.class.getName());
-	private static Logger clusterLogger = Logger.getLogger("cluster." + DefaultConfigService.class.getName());
-	
+	private static Logger logger = LogManager.getLogger(DefaultConfigService.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + DefaultConfigService.class.getName());
+	private static Logger clusterLogger = LogManager.getLogger("cluster." + DefaultConfigService.class.getName());
+
+	static {
+		System.getProperties().setProperty("log4j1.compatibility", "true");
+	}
+
 	public static final String SITE_FOR_UNIT_TESTS_NAME = "org.epics.archiverappliance.config.site";
 	public static final String SITE_FOR_UNIT_TESTS_VALUE = "tests";
 	
@@ -416,25 +421,16 @@ public class DefaultConfigService implements ConfigService {
 					logging.setLoggerLevel("com.hazelcast", java.util.logging.Level.INFO.toString());
 				} else { 
 					logger.info("Setting clustering logging based on log levels for cluster." + getClass().getName());
-					logging.setLoggerLevel("com.hazelcast", java.util.logging.Level.SEVERE.toString());
+					logging.setLoggerLevel("com.hazelcast", Level.FATAL.toString());
 				}
 			}
-			
-			Logger hzMain = Logger.getLogger("com.hazelcast");
-			if(clusterLogger.isDebugEnabled()) { 
-				hzMain.setLevel(Level.DEBUG);
-			} else if(clusterLogger.isInfoEnabled()) { 
-				hzMain.setLevel(Level.INFO);
-			} else { 
-				logger.info("Setting clustering logging based on log levels for cluster." + getClass().getName());
-				hzMain.setLevel(Level.FATAL);
-			}			
+
 		} catch(Exception ex) { 
 			logger.error("Exception setting logging JVM levels ", ex);
 		}
 		
 		// Add this to the system props before doing anything with Hz
-		System.getProperties().put("hazelcast.logging.type", "log4j");
+		System.getProperties().put("hazelcast.logging.type", "log4j2");
 
 		HazelcastInstance hzinstance = null;
 		
@@ -479,7 +475,7 @@ public class DefaultConfigService implements ConfigService {
 					// Backup count is 1 by default; we set it explicitly however...
 					config.getMapConfig("default").setBackupCount(1);
 					
-					config.setProperty("hazelcast.logging.type", "log4j");
+					config.setProperty("hazelcast.logging.type", "log4j2");
 				} else {
 					logger.debug("There is a hazelcast.xml in the classpath; skipping default configuration in the code.");
 				}
@@ -562,19 +558,13 @@ public class DefaultConfigService implements ConfigService {
 	
 				configlogger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress() + ":" + myClusterPort);
 				clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
-				clientConfig.setProperty("hazelcast.logging.type", "log4j");
+				clientConfig.setProperty("hazelcast.logging.type", "log4j2");
 				
 				if(!hzThreadCounts.isEmpty()) {
 					logger.info("Reducing the generic clustering thread counts.");
 					clientConfig.getProperties().putAll(hzThreadCounts);
 				}
-				
-				if(!clusterLogger.isDebugEnabled()) {
-					// The client code logs some SEVERE exceptions on shutdown when deploying on the same Tomcat container.
-					// These exceptions are confusing; ideally, we would not have to set the log levels like so.
-					Logger.getLogger("com.hazelcast.client.spi.impl.ClusterListenerThread").setLevel(Level.OFF);
-					Logger.getLogger("com.hazelcast.client.spi.ClientPartitionService").setLevel(Level.OFF);
-				}
+
 				configlogger.info("client network config conn attempt limit: " + clientConfig.getNetworkConfig().getConnectionAttemptLimit());
 				configlogger.info("client network config conn attempt period: " + clientConfig.getNetworkConfig().getConnectionAttemptPeriod());
 				configlogger.info("client network config conn timeout: " + clientConfig.getNetworkConfig().getConnectionTimeout());

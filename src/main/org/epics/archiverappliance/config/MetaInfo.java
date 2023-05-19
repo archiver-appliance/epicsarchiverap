@@ -25,7 +25,8 @@ import java.io.StringWriter;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.pvdata.pv.PVStructure;
 /** this class is used for getting the meta data
@@ -35,8 +36,8 @@ import org.epics.pvdata.pv.PVStructure;
 
 public class MetaInfo {
 
-	private static Logger logger = Logger.getLogger(MetaInfo.class.getName());
-	private static Logger configLogger = Logger.getLogger("config." + MetaInfo.class.getName());
+	private static Logger logger = LogManager.getLogger(MetaInfo.class.getName());
+	private static Logger configLogger = LogManager.getLogger("config." + MetaInfo.class.getName());
 
 	/**
 	 * the name of ioc where this pv is

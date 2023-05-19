@@ -3,7 +3,8 @@ package org.epics.archiverappliance.mgmt;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledFuture;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.WAR_FILE;
@@ -16,8 +17,8 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
  *
  */
 public class MgmtPostStartup implements Runnable {
-	private static Logger logger = Logger.getLogger(MgmtPostStartup.class.getName());
-	private static Logger configlogger = Logger.getLogger("config." + MgmtPostStartup.class.getName());
+	private static Logger logger = LogManager.getLogger(MgmtPostStartup.class.getName());
+	private static Logger configlogger = LogManager.getLogger("config." + MgmtPostStartup.class.getName());
 	private ScheduledFuture<?> cancellingFuture;
 	private ConfigService configService;
 	

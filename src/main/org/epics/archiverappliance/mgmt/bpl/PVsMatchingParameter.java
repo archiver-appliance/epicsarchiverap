@@ -13,7 +13,8 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
@@ -27,7 +28,7 @@ import org.json.simple.parser.ParseException;
  *
  */
 public class PVsMatchingParameter {
-	private static Logger logger = Logger.getLogger(PVsMatchingParameter.class.getName());
+	private static Logger logger = LogManager.getLogger(PVsMatchingParameter.class.getName());
 	public static LinkedList<String> getMatchingPVs(HttpServletRequest req, ConfigService configService, int defaultLimit) {
 		return getMatchingPVs(req, configService, false, defaultLimit);
 	}

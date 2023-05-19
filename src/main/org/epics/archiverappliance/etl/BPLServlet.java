@@ -15,7 +15,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.GetVersion;
@@ -40,7 +41,7 @@ import org.epics.archiverappliance.etl.bpl.reports.StorageMetricsForAppliance;
  */
 @SuppressWarnings("serial")
 public class BPLServlet extends HttpServlet {
-	private static final Logger logger = Logger.getLogger(BPLServlet.class);
+	private static final Logger logger = LogManager.getLogger(BPLServlet.class);
 
 	private static HashMap<String, Class<? extends BPLAction>> getActions = new HashMap<String, Class<? extends BPLAction>>();
 	static {

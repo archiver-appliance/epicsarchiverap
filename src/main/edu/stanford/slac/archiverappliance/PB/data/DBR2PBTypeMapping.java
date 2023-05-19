@@ -11,7 +11,8 @@ package edu.stanford.slac.archiverappliance.PB.data;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -24,7 +25,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
  *
  */
 public class DBR2PBTypeMapping {
-	private static Logger logger = Logger.getLogger(DBR2PBTypeMapping.class.getName());
+	private static Logger logger = LogManager.getLogger(DBR2PBTypeMapping.class.getName());
 	private static HashMap<ArchDBRTypes, DBR2PBTypeMapping> typemap = new HashMap<ArchDBRTypes, DBR2PBTypeMapping>();
 	static {
 		typemap.put(ArchDBRTypes.DBR_SCALAR_STRING, new DBR2PBTypeMapping(PBScalarString.class));      

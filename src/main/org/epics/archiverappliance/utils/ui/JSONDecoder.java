@@ -12,7 +12,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
@@ -27,7 +28,7 @@ import org.json.simple.JSONObject;
  *
  */
 public class JSONDecoder<T> {
-	private static Logger logger = Logger.getLogger(JSONDecoder.class.getName());
+	private static Logger logger = LogManager.getLogger(JSONDecoder.class.getName());
 	public static <T> JSONDecoder<T> getDecoder(Class<T> clazz) throws IntrospectionException, NoSuchMethodException {
 		return new JSONDecoder<T>(clazz);
 	}

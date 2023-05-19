@@ -4,8 +4,9 @@ import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.*;
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.junit.Assert.assertArrayEquals;
 
-import java.util.logging.Logger;
+import org.apache.logging.log4j.Logger;
 
+import org.apache.logging.log4j.LogManager;
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetApplianceInfo;
@@ -30,7 +31,7 @@ import org.junit.experimental.categories.Category;
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaSuiteTstGetApplianceInfo {
 
-	private static Logger logger = Logger.getLogger(PvaSuiteTstGetApplianceInfo.class.getName());
+	private static Logger logger = LogManager.getLogger(PvaSuiteTstGetApplianceInfo.class.getName());
 	private static RPCClient client;
 
 	@BeforeClass

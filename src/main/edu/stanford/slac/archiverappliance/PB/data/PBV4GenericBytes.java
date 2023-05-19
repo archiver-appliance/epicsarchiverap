@@ -10,7 +10,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -38,7 +39,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
-	private static Logger logger = Logger.getLogger(PBV4GenericBytes.class.getName());
+	private static Logger logger = LogManager.getLogger(PBV4GenericBytes.class.getName());
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.V4GenericBytes dbevent = null;

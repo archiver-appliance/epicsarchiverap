@@ -10,7 +10,8 @@ package org.epics.archiverappliance.etl;
 import java.util.HashMap;
 import java.util.LinkedList;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 
 /**
@@ -21,7 +22,7 @@ import org.epics.archiverappliance.common.BasicContext;
  *
  */
 public class ETLContext extends BasicContext {
-	private static Logger logger = Logger.getLogger(ETLContext.class.getName());
+	private static Logger logger = LogManager.getLogger(ETLContext.class.getName());
 	
 	private HashMap<String, Object> state = new HashMap<String, Object>();
 	private LinkedList<Runnable> postETLTasks = new LinkedList<Runnable>(); 

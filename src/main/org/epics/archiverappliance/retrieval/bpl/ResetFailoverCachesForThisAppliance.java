@@ -8,7 +8,8 @@ import java.util.LinkedList;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.json.simple.JSONValue;
@@ -24,7 +25,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class ResetFailoverCachesForThisAppliance implements BPLAction {
-	private static Logger logger = Logger.getLogger(ResetFailoverCachesForThisAppliance.class.getName());
+	private static Logger logger = LogManager.getLogger(ResetFailoverCachesForThisAppliance.class.getName());
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {

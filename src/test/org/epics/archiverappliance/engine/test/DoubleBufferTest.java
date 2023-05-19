@@ -11,7 +11,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.FlakyTests;
 import org.epics.archiverappliance.common.BasicContext;
@@ -37,7 +38,7 @@ import org.junit.runners.Parameterized;
 @RunWith(Parameterized.class)
 @Category(FlakyTests.class)
 public class DoubleBufferTest {
-	private static Logger logger = Logger.getLogger(DoubleBufferTest.class.getName());
+	private static Logger logger = LogManager.getLogger(DoubleBufferTest.class.getName());
 	private int eventsAdded = 0;
 	private int eventsStored = 0;
 

@@ -12,7 +12,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -34,7 +35,7 @@ import org.junit.experimental.categories.Category;
  */
 @Category(IntegrationTests.class)
 public class SinglePVRetrievalTest {
-	private static final Logger logger = Logger.getLogger(SinglePVRetrievalTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(SinglePVRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	
 	@Before

@@ -13,7 +13,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVNames;
@@ -29,7 +30,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
  *
  */
 public class RemotableEventStreamDesc extends EventStreamDesc {
-	private static Logger logger = Logger.getLogger(RemotableEventStreamDesc.class.getName());
+	private static Logger logger = LogManager.getLogger(RemotableEventStreamDesc.class.getName());
 	private short year;
 	private int elementCount = 1;
 	private HashMap<String, String> headers = new HashMap<String, String>();

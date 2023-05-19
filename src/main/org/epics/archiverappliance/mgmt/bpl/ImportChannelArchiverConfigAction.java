@@ -19,7 +19,8 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ChannelArchiver.EngineConfigParser;
@@ -33,7 +34,7 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
  *
  */
 public class ImportChannelArchiverConfigAction implements BPLAction {
-	private static final Logger logger = Logger.getLogger(ImportChannelArchiverConfigAction.class);
+	private static final Logger logger = LogManager.getLogger(ImportChannelArchiverConfigAction.class);
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,

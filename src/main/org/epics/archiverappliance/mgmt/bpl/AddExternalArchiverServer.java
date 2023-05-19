@@ -17,7 +17,8 @@ import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.bpl.cahdlers.ArchivesHandler;
@@ -37,7 +38,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class AddExternalArchiverServer implements BPLAction {
-	private static Logger logger = Logger.getLogger(AddExternalArchiverServer.class.getName());
+	private static Logger logger = LogManager.getLogger(AddExternalArchiverServer.class.getName());
 	
 	enum ExternalServerType { 
 		CA_XMLRPC,

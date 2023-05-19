@@ -10,7 +10,8 @@ import java.sql.Timestamp;
 import java.util.GregorianCalendar;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -35,7 +36,7 @@ import org.junit.Test;
  *
  */
 public class FileBackedPBEventStreamTest {
-	private static Logger logger = Logger.getLogger(FileBackedPBEventStreamTest.class.getName());
+	private static Logger logger = LogManager.getLogger(FileBackedPBEventStreamTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "FileBackedPBEventStreamTest");
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":FileBackedPBEventStreamTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;

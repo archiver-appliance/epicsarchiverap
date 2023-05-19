@@ -5,7 +5,8 @@ import java.util.LinkedList;
 
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 
 /**
@@ -14,7 +15,7 @@ import org.epics.archiverappliance.Event;
  *
  */
 public class LoessInterpolation extends SummaryStatsPostProcessor implements PostProcessor {
-	private static Logger logger = Logger.getLogger(LoessInterpolation.class.getName());
+	private static Logger logger = LogManager.getLogger(LoessInterpolation.class.getName());
 	static final String IDENTITY = "loess";
 	
 	private class InterpolationValues { 

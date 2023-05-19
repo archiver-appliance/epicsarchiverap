@@ -5,7 +5,8 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.nio.file.Path;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -35,7 +36,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  *
  */
 public class TImezoneAheadTest {
-	private static Logger logger = Logger.getLogger(TImezoneAheadTest.class.getName());
+	private static Logger logger = LogManager.getLogger(TImezoneAheadTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {
