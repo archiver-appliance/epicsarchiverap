@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -88,7 +87,6 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	/**we save all meta field once every day and lastTimeStampWhenSavingarchiveFields is when we save all last meta fields*/
 	private long archiveFieldsSavedAtEpSec = 0;
 
-	private int pipeline = 0;
 	/**
 	 * the ioc host name where this pv is
 	 */
@@ -209,17 +207,18 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	@Override
 	public void channelStateChanged(PVAChannel channel, ClientChannelState clientChannelState) {
 		this.scheduleCommand(() -> {
+
 			if (clientChannelState == ClientChannelState.CONNECTED) {
-				logger.info("channelStateChange:connected " + channel.getName());
+				logger.info("channelStateChange:" + clientChannelState + " " + channel.getName());
 				handleConnected();
 			} else if (clientChannelState == ClientChannelState.CLOSING || clientChannelState == ClientChannelState.INIT) {
-				logger.info("channelStateChange:disconnected " + channel.getName());
+				logger.info("channelStateChange:" + clientChannelState + " fireDisconnected " + channel.getName());
 				state = PVConnectionState.Disconnected;
 				connected = false;
 				unsubscribe();
 				fireDisconnected();
 			} else {
-				logger.info("channelStateChange:" + clientChannelState);
+				logger.info("channelStateChange:" + clientChannelState + " " + channel.getName());
 			}
 
 		});
@@ -246,7 +245,7 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 				archDBRType = ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			} else {
 				logger.info("Value field in monitorConnect is of type " + valueField.getType());
-				archDBRType = determineDBRType(structureID, valueField.getType());
+				archDBRType = determineDBRType(structureID, valueField.getType(), valueField.formatType());
 			}
 
 			con = configservice.getArchiverTypeSystem().getV4Constructor(archDBRType);
@@ -280,6 +279,13 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 
 	@Override
 	public void handleMonitor(PVAChannel channel, BitSet changes, BitSet overruns, PVAStructure data) {
+		logger.debug("handleMonitor: {}", data);
+		if (data == null) {
+			logger.warn("Server ends subscription for " + this.name);
+			unsubscribe();
+			fireDisconnected();
+		}
+
 		state = PVConnectionState.GotMonitor;
 
 		if (!connected)
@@ -325,6 +331,7 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	}
 
 	private void connect() {
+		logger.info("Connecting to PV " + this.name);
 		this.scheduleCommand(new Runnable() {
 			@Override
 			public void run() {
@@ -336,8 +343,10 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 									EPICS_V4_PV.this);
 						}
 
-						if (pvaChannel == null)
+						if (pvaChannel == null) {
+							logger.error("No pvaChannel when trying to connect to pv " + name);
 							return;
+						}
 
 						if (pvaChannel.isConnected()) {
 							handleConnected();
@@ -360,6 +369,7 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 
 		state = PVConnectionState.Connected;
 
+
 		for (final PVListener listener : listeners) {
 			listener.pvConnected(this);
 		}
@@ -376,17 +386,17 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	}
 
 	private void disconnect() {
-		PVAChannel channel_copy;
+		PVAChannel channelCopy;
 		synchronized (this) {
 			if (pvaChannel == null)
 				return;
-			channel_copy = pvaChannel;
+			channelCopy = pvaChannel;
 			connected = false;
 			pvaChannel = null;
 		}
 
 		try {
-			channel_copy.close();
+			channelCopy.close();
 		} catch (final Exception e) {
 			logger.error("exception when disconnecting pv", e);
 		}
@@ -399,11 +409,13 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 		synchronized (this) {
 			// Prevent multiple subscriptions.
 			if (subscriptionCloseable != null) {
+				logger.error("When trying to establish a subscription, subscription already exists " + this.name);
 				return;
 			}
 
 			// Late callback, channel already closed?
 			if (pvaChannel == null) {
+				logger.error("When trying to establish a subscription, channel already closed " + this.name);
 				return;
 			}
 
@@ -416,6 +428,10 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 				logger.error("exception when reading pv", e);
 			}
 			try {
+				if(pvaChannel.getState() != ClientChannelState.CONNECTED){
+					logger.error("When trying to establish a subscription, the PVA channel is not connected for " + this.name);
+					return;
+				}
 				state = PVConnectionState.Subscribing;
 				totalMetaInfo.setStartTime(System.currentTimeMillis());
 				int pipeline = 0;
@@ -429,22 +445,22 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 
 	/** Unsubscribe from value updates. */
 	private void unsubscribe() {
-		AutoCloseable sub_copy;
+		AutoCloseable subCopy;
 		synchronized (this) {
-			sub_copy = subscriptionCloseable;
+			subCopy = subscriptionCloseable;
 			subscriptionCloseable = null;
 			archDBRType = null;
 			con = null;
 		}
 
-		if (sub_copy == null) {
+		if (subCopy == null) {
 			return;
 		}
 
 		try {
-			sub_copy.close();
+			subCopy.close();
 		} catch (final Exception ex) {
-			logger.error("exc eption when unsubscribing pv", ex);
+			logger.error("exception when unsubscribing pv", ex);
 		}
 	}
 
@@ -461,12 +477,12 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 		return tempHashMap;
 	}
 
-	private static ArchDBRTypes determineDBRType(String structureID, String valueTypeId) {
+	private static ArchDBRTypes determineDBRType(String structureID, String valueTypeId, String valueFormatType) {
 		if(structureID == null || valueTypeId == null) {
 			return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 		}
 
-			switch(valueTypeId) {
+		switch(valueTypeId) {
 			case "string[]" -> {
 					return ArchDBRTypes.DBR_WAVEFORM_STRING;
 			}
@@ -509,7 +525,16 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 			case "enum_t" -> {
 					return ArchDBRTypes.DBR_SCALAR_ENUM;
 			}
+			case "structure[]" -> {
+				if (valueFormatType.startsWith("enum_t[]")) {
+					return ArchDBRTypes.DBR_WAVEFORM_ENUM;
+				}
+				return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
+			}
 			case "structure" -> {
+					if (valueFormatType.startsWith("enum")) {
+						return ArchDBRTypes.DBR_SCALAR_ENUM;
+					}
 					return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
 			}
 			default -> {
@@ -536,7 +561,7 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 
 	/**
 	 * Updates field values when about to write to the buffer.
-	 * @param lastEvent
+	 * @param lastEvent Last event got.
 	 */
 	@Override
 	public void aboutToWriteBuffer(DBRTimeEvent lastEvent) {
@@ -552,6 +577,10 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 	}
 	}
 
+	/**
+	 * Add a meta field to archive along with the value.
+	 * @param fieldName Name of the meta field.
+	 */
 	public void addMetaField(String fieldName) {
 		metaFields.add(fieldName);
 	}

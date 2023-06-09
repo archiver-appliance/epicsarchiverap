@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.engine.V4;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.epics.archiverappliance.Event;
@@ -29,9 +30,11 @@ import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -41,6 +44,7 @@ import static org.junit.Assert.*;
 
 public class PVAccessUtil {
 
+    private final static Logger logger = LogManager.getLogger(PVAccessUtil.class);
     public static Map<Instant, SampleValue> getReceivedValues(MemBufWriter writer, ConfigService configService) throws Exception {
 
         return getReceivedEvents(writer, configService).entrySet().stream()
@@ -128,32 +132,36 @@ public class PVAccessUtil {
     }
 
     /**
-     * to string formats as "value type_name actual_value"
+     * to string formats as "type_name value actual_value"
      */
     public static String formatInput(PVAData value) {
-        String[] splitStrings = value.toString().split(" ");
-        String[] subArray = ArrayUtils.subarray(splitStrings, 2, splitStrings.length);
+        String dataString = value.toString();
+        var firstValueSubString = dataString.indexOf("value", 0);
+        String valueString = dataString.substring(firstValueSubString + 5).replaceAll(" ", "");
+        if (dataString.startsWith("string[]")) { // Bug in phoebus core-pva 4.7.2 fixed in next release
+            return "[" + valueString;
+        }
 
-        return String.join("", subArray);
+        return valueString;
     }
 
-    public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl, Logger logger) {
-        waitForStatusChange(pvName, expectedStatus, maxTries, mgmtUrl, logger, 5);
+    public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl) {
+        waitForStatusChange(pvName, expectedStatus, maxTries, mgmtUrl, 5);
     }
 
-    public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl, Logger logger, long waitPeriodSeconds) {
+    public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl, long waitPeriodSeconds) {
         Awaitility.await()
                 .pollInterval(waitPeriodSeconds, TimeUnit.SECONDS)
                 .atMost(maxTries * waitPeriodSeconds, TimeUnit.SECONDS)
                 .untilAsserted(() ->
                         Assert.assertEquals(
                                 expectedStatus,
-                                getCurentStatus(pvName, mgmtUrl, logger)
+                                getCurentStatus(pvName, mgmtUrl)
                         )
                 );
     }
 
-    private static String getCurentStatus(String pvName, String mgmtUrl, Logger logger) {
+    private static String getCurentStatus(String pvName, String mgmtUrl) {
         String curentStatus;
         // Check archiving
         String statusPVURL = mgmtUrl + "getPVStatus?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
@@ -198,7 +206,7 @@ public class PVAccessUtil {
 
         PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaGetPVStatus.NAME)
                 .descriptor(PvaGetPVStatus.NAME)
-                .addColumn(new PVAStringArray("pv", pvNames.toArray(new String[pvNames.size()])))
+                .addColumn(new PVAStringArray("pv", pvNames.toArray(new String[0])))
                 .build();
         return pvaChannel.invoke(archivePvStatusReqTable).get(30, TimeUnit.SECONDS);
     }

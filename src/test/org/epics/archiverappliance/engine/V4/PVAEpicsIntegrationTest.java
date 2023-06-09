@@ -61,7 +61,7 @@ public class PVAEpicsIntegrationTest {
         String archivePVURL = mgmtUrl + "archivePV?pv=pva://";
 
         GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
-        waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, logger, 10);
+        waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, 10);
 
         Timestamp start = TimeUtils.convertFromInstant(firstInstant);
 
@@ -69,6 +69,13 @@ public class PVAEpicsIntegrationTest {
 
         Thread.sleep(samplingPeriodMilliSeconds);
         double secondsToBuffer = 5.0;
+
+        logger.info("Stop the ioc");
+        siocSetup.stopSIOC();
+        Thread.sleep(61 * 1000);
+        logger.info("Restart the ioc");
+        siocSetup.startSIOCWithDefaultDB();
+        Thread.sleep(samplingPeriodMilliSeconds);
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
         Timestamp end = TimeUtils.convertFromInstant(Instant.now());
@@ -93,7 +100,7 @@ public class PVAEpicsIntegrationTest {
             } catch (Throwable ignored) {
             }
         }
-
+        logger.info("Data was {}", actualValues);
         assertTrue(actualValues.size() > secondsToBuffer);
     }
 

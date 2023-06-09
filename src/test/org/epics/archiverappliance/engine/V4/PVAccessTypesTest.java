@@ -32,8 +32,6 @@ import static org.junit.Assert.fail;
  */
 public class PVAccessTypesTest {
 
-    // TODO Add enums
-
     private static final Logger logger = LogManager.getLogger(PVAccessTypesTest.class.getName());
     private static final String VALUE_STRING = "value";
 
@@ -103,14 +101,13 @@ public class PVAccessTypesTest {
                         fakeData.get(0).stream()
                                 .map((d) -> (PVAData) new PVADouble(VALUE_STRING, d))
                                 .toList()),
-                // entry(ArchDBRTypes.DBR_WAVEFORM_STRING, 
-                //         fakeData.stream()
-                //                 .map((dArray) -> (PVAData) new PVAStringArray(
-                //                         VALUE_STRING,
-                //                         dArray.stream().map((d) -> d.toString())
-                //                                 .toArray(String[]::new)))
-                //                 .toList()),
-                // Need to wait for https://github.com/ControlSystemStudio/phoebus/pull/2500 to be in release of phoebus library
+                entry(ArchDBRTypes.DBR_WAVEFORM_STRING,
+                     fakeData.stream()
+                             .map((dArray) -> (PVAData) new PVAStringArray(
+                                     VALUE_STRING,
+                                     dArray.stream().map(Object::toString)
+                                             .toArray(String[]::new)))
+                             .toList()),
                 entry(ArchDBRTypes.DBR_WAVEFORM_SHORT,
                         fakeData.stream()
                                 .map((dArray) -> {

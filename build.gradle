@@ -29,8 +29,6 @@ processTestResources {
     from(file("src/sitespecific/tests/classpathfiles"))
     from(file("src/resources/test")) {
         include "log4j2.xml"
-    }
-    from(file("src/resources/test")) {
         include "appliances.xml.j2"
     }
 
@@ -95,6 +93,10 @@ dependencies {
     implementation("org.python:jython-standalone:2.7.3")
     runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies
     implementation("org.apache.logging.log4j:log4j-api:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+    permitUnusedDeclared("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-jul:2.20.0")
+    permitUnusedDeclared("org.apache.logging.log4j:log4j-jul:2.20.0")
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
     implementation("com.opencsv:opencsv:5.7.1")
     implementation("com.google.protobuf:protobuf-java:3.23.0")
@@ -237,11 +239,6 @@ tasks.withType(War).configureEach {
     from("${stageDir}/org/epics/archiverappliance/staticcontent") {
         into "ui/comm"
     }
-    if (archapplsite == "tests") {
-        from("src/resources/log4j2.xml") {
-            into "WEB-INF/classes"
-        }
-    }
     from("src/sitespecific/${archapplsite}/classpathfiles") {
         into "WEB-INF/classes"
     }
@@ -380,7 +377,8 @@ tasks.withType(Test).configureEach {
         includeTestsMatching "*Test"
     }
     maxHeapSize = "1G"
-    jvmArgs = ["-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver", "-Dlog4j1.compatibility=\"true\"" ]
+    jvmArgs = ["-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver",
+               "-Dlog4j1.compatibility=\"true\""]
 
     environment "ARCHAPPL_SHORT_TERM_FOLDER", "${temporaryDir}/sts"
     environment "ARCHAPPL_MEDIUM_TERM_FOLDER", "${temporaryDir}/mts"

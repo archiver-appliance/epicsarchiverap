@@ -95,9 +95,150 @@ public class FlakyPVTest {
         }
 
         // Disconnect the pv
+        logger.info("Close pv " + pvName);
         serverPV.close();
         pvaServer.close();
         logger.info("Close pv " + pvName);
+        Thread.sleep(samplingPeriodMilliSeconds);
+
+        // Restart the pv
+        logger.info("Restart pv " + pvName);
+        pvaServer = new PVAServer();
+        serverPV = pvaServer.createPV(pvName, data);
+
+        waitForIsConnected(archiveChannel);
+        Instant instantSecondChange = Instant.now();
+        timeStamp.set(instantSecondChange);
+        value.set("value2");
+        expectedData.put(instantSecondChange, formatInput(value));
+        try {
+            serverPV.update(data);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        Thread.sleep(5000);
+
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
+                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+
+        assertEquals(expectedData, actualValues);
+    }
+    /**
+     * Test that disconnecting a pv doesn't cause any issues.
+     *
+     * @throws Exception From dealing with pvaStructures
+     */
+    @Test
+    public void testDestroyServer() throws Exception {
+
+        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":"
+                + UUID.randomUUID();
+
+        logger.info("Starting pvAccess test for pv " + pvName);
+
+        HashMap<Instant, String> expectedData = new HashMap<>();
+        Instant instant = Instant.now();
+        var value = new PVAString("value", "value0");
+
+        expectedData.put(instant, formatInput(value));
+        PVATimeStamp timeStamp = new PVATimeStamp(instant);
+        String struct_name = "epics:nt/NTScalar:1.0";
+        var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
+        PVAStructure data = new PVAStructure("demo", struct_name, value,
+                timeStamp, alarm);
+
+        ServerPV serverPV = pvaServer.createPV(pvName, data);
+
+        var type = ArchDBRTypes.DBR_SCALAR_STRING;
+        MemBufWriter writer = new MemBufWriter(pvName, type);
+        ArchiveChannel archiveChannel = startArchivingPV(pvName, writer, configService, type);
+
+        long samplingPeriodMilliSeconds = 100;
+
+        Thread.sleep(samplingPeriodMilliSeconds);
+        Instant instantFirstChange = Instant.now();
+        timeStamp.set(instantFirstChange);
+        value.set("value1");
+        expectedData.put(instantFirstChange, formatInput(value));
+        try {
+            serverPV.update(data);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
+        // close pv the pv
+        pvaServer.close();
+        logger.info("Server close pv " + pvName);
+        Thread.sleep(samplingPeriodMilliSeconds);
+
+        // Restart the pv
+        pvaServer = new PVAServer();
+        serverPV = pvaServer.createPV(pvName, data);
+        logger.info("Restart pv " + pvName);
+
+        waitForIsConnected(archiveChannel);
+        Instant instantSecondChange = Instant.now();
+        timeStamp.set(instantSecondChange);
+        value.set("value2");
+        expectedData.put(instantSecondChange, formatInput(value));
+        try {
+            serverPV.update(data);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        Thread.sleep(5000);
+
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
+                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+
+        assertEquals(expectedData, actualValues);
+    }
+    /**
+     * Test that disconnecting a pv doesn't cause any issues.
+     *
+     * @throws Exception From dealing with pvaStructures
+     */
+    @Test
+    public void testDestroyServerPV() throws Exception {
+
+        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":"
+                + UUID.randomUUID();
+
+        logger.info("Starting pvAccess test for pv " + pvName);
+
+        HashMap<Instant, String> expectedData = new HashMap<>();
+        Instant instant = Instant.now();
+        var value = new PVAString("value", "value0");
+
+        expectedData.put(instant, formatInput(value));
+        PVATimeStamp timeStamp = new PVATimeStamp(instant);
+        String struct_name = "epics:nt/NTScalar:1.0";
+        var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
+        PVAStructure data = new PVAStructure("demo", struct_name, value,
+                timeStamp, alarm);
+
+        ServerPV serverPV = pvaServer.createPV(pvName, data);
+
+        var type = ArchDBRTypes.DBR_SCALAR_STRING;
+        MemBufWriter writer = new MemBufWriter(pvName, type);
+        ArchiveChannel archiveChannel = startArchivingPV(pvName, writer, configService, type);
+
+        long samplingPeriodMilliSeconds = 100;
+
+        Thread.sleep(samplingPeriodMilliSeconds);
+        Instant instantFirstChange = Instant.now();
+        timeStamp.set(instantFirstChange);
+        value.set("value1");
+        expectedData.put(instantFirstChange, formatInput(value));
+        try {
+            serverPV.update(data);
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+
+        // close pv the pv
+        serverPV.close();
+        logger.info("ServerPV close pv " + pvName);
         Thread.sleep(samplingPeriodMilliSeconds);
 
         // Restart the pv

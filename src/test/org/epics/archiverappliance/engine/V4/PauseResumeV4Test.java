@@ -57,7 +57,7 @@ public class PauseResumeV4Test {
 
         GetUrlContent
                 .getURLContentAsJSONArray(archivePVURL + pvURLName);
-        waitForStatusChange(pvName, "Being archived", 100, mgmtUrl, logger);
+        waitForStatusChange(pvName, "Being archived", 100, mgmtUrl);
 
         usingPvAccessCheck(pvURLName, mgmtUrl);
 
@@ -65,13 +65,13 @@ public class PauseResumeV4Test {
         String pausePVURL = mgmtUrl + "pauseArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
         assertTrue("Pause PV", pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"));
-        waitForStatusChange(pvName, "Paused", 20, mgmtUrl, logger);
+        waitForStatusChange(pvName, "Paused", 20, mgmtUrl);
 
         // Resume PV
         String resumePVURL = mgmtUrl + "resumeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         JSONObject pvResumeStatus = GetUrlContent.getURLContentAsJSONObject(resumePVURL);
         assertTrue("Resume PV", pvResumeStatus.containsKey("status") && pvResumeStatus.get("status").equals("ok"));
-        waitForStatusChange(pvName, "Being archived", 20, mgmtUrl, logger);
+        waitForStatusChange(pvName, "Being archived", 20, mgmtUrl);
 
         usingPvAccessCheck(pvURLName, mgmtUrl);
 

@@ -520,7 +520,7 @@ public class EngineContext {
 				long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInMinutes*60;
 				for(ArchiveChannel channel : EngineContext.this.channelList.values()) {
 					if(!channel.isConnected()) {
-						logger.debug(channel.getName() + " is not connected. See if we have requested for it some time back and have still not connected.");
+						logger.debug( "{} is not connected since {}. See if we have requested for it greater than {} and have still not connected.",channel.getName(), channel.getSecondsElapsedSinceSearchRequest(), disconnectTimeoutInSeconds);
 						if(disconnectTimeoutInSeconds > 0 && channel.getSecondsElapsedSinceSearchRequest() > disconnectTimeoutInSeconds) { 
 							disconnectedPVNames.add(channel.getName());
 						} else {
@@ -652,7 +652,7 @@ public class EngineContext {
 	 * There are no guarantees that using this on a running server will be benign.
 	 */
 	public void setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(int newDisconnectCheckTimeoutMins) { 
-		logger.error("Changing the disconnect timer - this should be done only in the unit tests.");
+		logger.error("Changing the disconnect timer to {} minutes - this should be done only in the unit tests.", newDisconnectCheckTimeoutMins);
 		disconnectFuture.cancel(false);
 		this.disconnectCheckTimeoutInMinutes = newDisconnectCheckTimeoutMins;
 		this.disconnectCheckerPeriodInMinutes = newDisconnectCheckTimeoutMins;

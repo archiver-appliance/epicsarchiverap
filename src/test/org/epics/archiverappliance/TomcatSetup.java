@@ -8,6 +8,7 @@
 package org.epics.archiverappliance;
 
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -29,8 +30,6 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.DefaultConfigService;
 import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.python.google.common.io.LineReader;
-import org.python.google.common.io.Resources;
 
 /**
  * Setup Tomcat without having to import all the tomcat jars into your project.
@@ -149,34 +148,35 @@ public class TomcatSetup {
 		watchedProcesses.add(p);
 
 		final CountDownLatch latch = new CountDownLatch(1);
-		
-		final LineReader li = new LineReader(new InputStreamReader(p.getInputStream()));
+
+		final BufferedReader li = new BufferedReader(new InputStreamReader(p.getInputStream()));
 		Thread t = new Thread(() -> {
-			try {
-				while(p.isAlive()) {
-					String msg = li.readLine();
-					if(msg != null) {
-						System.out.println(applianceName + "-->" + msg);
-						if(msg.contains("All components in this appliance have started up")) {
-							logger.info(applianceName + " has started up.");
-							latch.countDown();
-						}
-					} else {
-						try {Thread.sleep(500);} catch(Exception ignored) {}
-					}
-				}
-			} catch(Exception ex) {
-				logger.error("Exception starting Tomcat", ex);
-			}
+			catchApplianceLog(applianceName, p, latch, li);
 		});
 		t.start();
-		
+
 		// We wait for some time to make sure the server started up
 		try { latch.await(2, TimeUnit.MINUTES); } catch(InterruptedException ignored) {}
 		logger.info("Done starting " + applianceName + " Releasing latch");
 	}
-	
-	
+
+	private static void catchApplianceLog(String applianceName, Process p, CountDownLatch latch, BufferedReader li) {
+		Logger applianceLogger = LogManager.getLogger("APP" + applianceName);
+		try {
+			String msg;
+			while((msg = li.readLine()) != null && p.isAlive()) {
+				applianceLogger.info(applianceName + " | " + msg);
+				if(msg.contains("All components in this appliance have started up")) {
+					logger.info(applianceName + " has started up.");
+					latch.countDown();
+				}
+			}
+		} catch(Exception ex) {
+			logger.error("Exception starting Tomcat", ex);
+		}
+	}
+
+
 	/**
 	 * @param testName
 	 * @param applianceName
@@ -195,9 +195,10 @@ public class TomcatSetup {
 		assert(webAppsFolder.mkdir());
 		File logsFolder = new File(workFolder, "logs");
 		assert(logsFolder.mkdir());
+
 		FileUtils.copyFile(new File("src/resources/test/log4j2.xml"), new File(logsFolder, "log4j2.xml"));
 		File tempFolder = new File(workFolder, "temp");
-		tempFolder.mkdir();
+		assert(tempFolder.mkdir());
 		
 		logger.debug("Copying the webapps wars to " + webAppsFolder.getAbsolutePath());
 		FileUtils.copyFile(new File("./build/mgmt.war"), new File(webAppsFolder, "mgmt.war"));
@@ -235,6 +236,7 @@ public class TomcatSetup {
 		assert (workFolder.exists());
 		environment.put("CATALINA_BASE", workFolder.getAbsolutePath());
 
+		environment.put("LOG4J_CONFIGURATION_FILE", (new File("src/resources/test/log4j2.xml")).getAbsolutePath());
 		environment.put(ConfigService.ARCHAPPL_CONFIGSERVICE_IMPL, ConfigServiceForTests.class.getName());
 		environment.put(DefaultConfigService.SITE_FOR_UNIT_TESTS_NAME, DefaultConfigService.SITE_FOR_UNIT_TESTS_VALUE);
 

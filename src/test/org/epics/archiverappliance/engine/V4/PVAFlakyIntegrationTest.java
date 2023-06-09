@@ -92,7 +92,7 @@ public class PVAFlakyIntegrationTest {
         expectedValues.put(firstInstant, pvaStructure.cloneData());
 
         ServerPV serverPV = pvaServer.createPV(pvName, pvaStructure);
-        waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, logger, 10);
+        waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, 10);
 
         Thread.sleep(samplingPeriodMilliSeconds);
         level1.set("level 1 1");
@@ -106,7 +106,7 @@ public class PVAFlakyIntegrationTest {
         serverPV.close();
         pvaServer.close();
         logger.info("Close pv " + pvName);
-        Thread.sleep(samplingPeriodMilliSeconds);
+        Thread.sleep(2 * 60 * 1000);
 
         // Restart the pv
         pvaServer = new PVAServer();
