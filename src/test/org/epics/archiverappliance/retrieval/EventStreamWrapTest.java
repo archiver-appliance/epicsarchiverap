@@ -1,8 +1,11 @@
 package org.epics.archiverappliance.retrieval;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,21 +44,20 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  *
  */
 public class EventStreamWrapTest {
-	private static Logger logger = LogManager.getLogger(EventStreamWrapTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(EventStreamWrapTest.class.getName());
 	String shortTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/EventStreamWrapTest";
 	PlainPBStoragePlugin storageplugin;
 	short currentYear = TimeUtils.getCurrentYear();
 	ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-	private  ConfigServiceForTests configService;
-	private String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX +  "S_" + type.getPrimitiveName();
+	private final String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX +  "S_" + type.getPrimitiveName();
 
 	@Before
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
 		if(new File(shortTermFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(shortTermFolderName));
 		}
-		new File(shortTermFolderName).mkdirs();
+		assert new File(shortTermFolderName).mkdirs();
 		
 		storageplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_MONTH", configService);
 
@@ -65,7 +67,7 @@ public class EventStreamWrapTest {
 					ArrayListEventStream testData = new ArrayListEventStream(86400, new RemotableEventStreamDesc(type, pvName, year));
 					int startofdayinseconds = day*86400;
 					for(int s = 0; s < 86400; s++) {
-						testData.add(new SimulationEvent(startofdayinseconds + s, year, type, new ScalarValue<Double>(1.0)));
+						testData.add(new SimulationEvent(startofdayinseconds + s, year, type, new ScalarValue<>(1.0)));
 					}
 					storageplugin.appendData(context, pvName, testData);
 				}
@@ -81,17 +83,22 @@ public class EventStreamWrapTest {
 	}
 
 	@Test
-	public void testWrappers() throws Exception {
+	public void testWrappers()  {
 		testSimpleWrapper();
 		testMultiThreadWrapper();
 	}
 	
 	
-	private void testSimpleWrapper() throws Exception { 
+	private void testSimpleWrapper()  {
 		Timestamp end = TimeUtils.now();
 		Timestamp start = TimeUtils.minusDays(end, 365);
 		Mean mean_86400 = (Mean) PostProcessors.findPostProcessor("mean_86400");
-		mean_86400.initialize("mean_86400", pvName);
+		try {
+			mean_86400.initialize("mean_86400", pvName);
+		} catch (IOException e) {
+			logger.error(e);
+			fail();
+		}
 		PVTypeInfo info = new PVTypeInfo();
 		info.setComputedStorageRate(40);
 		mean_86400.estimateMemoryConsumption(pvName, info, start, end, null);
@@ -108,7 +115,7 @@ public class EventStreamWrapTest {
 			while(continueprocessing) {
 				try { 
 					for(Event e : consolidatedEventStream) {
-						assertTrue("All values are 1 so mean should be 1. Instead we got " + e.getSampleValue().getValue().doubleValue() + " at " + eventCount + " for pv " + pvName, e.getSampleValue().getValue().doubleValue() == 1.0);
+						assertEquals("All values are 1 so mean should be 1. Instead we got " + e.getSampleValue().getValue().doubleValue() + " at " + eventCount + " for pv " + pvName, 1.0, e.getSampleValue().getValue().doubleValue(), 0.0);
 						eventCount++;
 					}
 					continueprocessing = false;
@@ -118,32 +125,41 @@ public class EventStreamWrapTest {
 			}
 			long t1 = System.currentTimeMillis();
 			// We get 365 or 366 events based on what now() is
-			assertTrue("Expecting 366 values got " + eventCount + " for pv " + pvName, eventCount >= 365 && eventCount >= 366);
+			assertTrue("Expecting 366 values got " + eventCount + " for pv " + pvName, eventCount >= 366);
 			logger.info("Simple wrapper took " + (t1-t0) + "(ms)");
+		} catch (Exception e) {
+
+			logger.error(e);
+			fail();
 		}
 	}
 	
 	/**
 	 * We wrap a thread around each source event stream. Since the source data is generated using month partitions, we should get about 12 source event streams..
-	 * @throws Exception
 	 */
-	private void testMultiThreadWrapper() throws Exception {
+	private void testMultiThreadWrapper() {
 		Timestamp end = TimeUtils.now();
 		Timestamp start = TimeUtils.minusDays(end, 365);
 		Mean mean_86400 = (Mean) PostProcessors.findPostProcessor("mean_86400");
-		mean_86400.initialize("mean_86400", pvName);
+		try {
+			mean_86400.initialize("mean_86400", pvName);
+		} catch (IOException e) {
+			logger.error(e);
+			fail();
+		}
 		PVTypeInfo info = new PVTypeInfo();
 		info.setComputedStorageRate(40);
 		mean_86400.estimateMemoryConsumption(pvName, info, start, end, null);
 		try(BasicContext context = new BasicContext()) {
-			ExecutorService executors = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+			List<Future<EventStream>> futures = new ArrayList<>();
 			long t0 = System.currentTimeMillis();
-			List<Callable<EventStream>> callables = storageplugin.getDataForPV(context, pvName, start, end, mean_86400);
-			List<Future<EventStream>> futures = new ArrayList<Future<EventStream>>();
-			for(Callable<EventStream> callable : callables) { 
-				futures.add(executors.submit(callable));
-			}
-			
+			ExecutorService executors = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+
+				List<Callable<EventStream>> callables = storageplugin.getDataForPV(context, pvName, start, end, mean_86400);
+				for (Callable<EventStream> callable : callables) {
+					futures.add(executors.submit(callable));
+				}
 			for(Future<EventStream> future : futures) {
 				try { 
 					future.get();
@@ -159,7 +175,7 @@ public class EventStreamWrapTest {
 			while(continueprocessing) {
 				try { 
 					for(Event e : consolidatedEventStream) {
-						assertTrue("All values are 1 so mean should be 1. Instead we got " + e.getSampleValue().getValue().doubleValue() + " at " + eventCount + " for pv " + pvName, e.getSampleValue().getValue().doubleValue() == 1.0);
+						assertEquals("All values are 1 so mean should be 1. Instead we got " + e.getSampleValue().getValue().doubleValue() + " at " + eventCount + " for pv " + pvName, 1.0, e.getSampleValue().getValue().doubleValue(), 0.0);
 						eventCount++;
 					}
 					continueprocessing = false;
@@ -167,10 +183,15 @@ public class EventStreamWrapTest {
 					logger.debug("Change in years");
 				}
 			}
-			long t1 = System.currentTimeMillis();
 			executors.shutdown();
+
+
+			long t1 = System.currentTimeMillis();
 			// assertTrue("Expecting 365 values got " + eventCount + " for pv " + pvName, eventCount == 365);
 			logger.info("Multi threaded wrapper took " + (t1-t0) + "(ms)");
+		} catch (IOException e) {
+			logger.error(e);
+			fail();
 		}
 	}	
 }

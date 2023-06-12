@@ -489,16 +489,16 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 			case "double[]" -> {
 					return ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
 			}
-			case "int[]" -> {
+			case "int[]", "uint[]" -> {
 					return ArchDBRTypes.DBR_WAVEFORM_INT;
 			}
-			case "byte[]" -> {
+			case "byte[]", "ubyte[]" -> {
 					return ArchDBRTypes.DBR_WAVEFORM_BYTE;
 			}
 			case "float[]" -> {
 					return ArchDBRTypes.DBR_WAVEFORM_FLOAT;
 			}
-			case "short[]" -> {
+			case "short[]", "ushort[]" -> {
 					return ArchDBRTypes.DBR_WAVEFORM_SHORT;
 			}
 			case "enum_t[]" -> {
@@ -510,16 +510,16 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 			case "double" -> {
 					return ArchDBRTypes.DBR_SCALAR_DOUBLE;
 			}
-			case "int" -> {
+			case "int", "uint" -> {
 					return ArchDBRTypes.DBR_SCALAR_INT;
 			}
-			case "byte" -> {
+			case "byte", "ubyte" -> {
 					return ArchDBRTypes.DBR_SCALAR_BYTE;
 			}
 			case "float" -> {
 					return ArchDBRTypes.DBR_SCALAR_FLOAT;
 			}
-			case "short" -> {
+			case "short", "ushort" -> {
 					return ArchDBRTypes.DBR_SCALAR_SHORT;
 			}
 			case "enum_t" -> {

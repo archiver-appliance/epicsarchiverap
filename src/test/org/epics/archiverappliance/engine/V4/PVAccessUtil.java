@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.engine.V4;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
@@ -30,11 +29,9 @@ import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -184,7 +181,7 @@ public class PVAccessUtil {
         return Hexdump.toHexdump(buffer);
     }
 
-    private static PVAData extracted(SampleValue sampleValue, PVATypeRegistry types) throws Exception {
+    public static PVAData fromGenericSampleValueToPVAData(SampleValue sampleValue, PVATypeRegistry types) throws Exception {
         ByteBuffer bytes = sampleValue.getValueAsBytes();
         var val = types.decodeType("struct name", bytes);
         val.decode(types, bytes);
@@ -194,7 +191,7 @@ public class PVAccessUtil {
         PVATypeRegistry types = new PVATypeRegistry();
         return actualValues.entrySet().stream().map((e) -> {
             try {
-                return Map.entry(e.getKey(), extracted(e.getValue(), types));
+                return Map.entry(e.getKey(), fromGenericSampleValueToPVAData(e.getValue(), types));
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
