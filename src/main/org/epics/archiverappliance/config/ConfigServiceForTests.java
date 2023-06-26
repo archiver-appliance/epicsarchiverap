@@ -135,12 +135,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 
 
 		startupState = STARTUP_SEQUENCE.STARTUP_COMPLETE;
-		this.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
-				startupExecutor.shutdown();
-			}
-		});
+		this.addShutdownHook(() -> startupExecutor.shutdown());
 	}
 
 	@Override

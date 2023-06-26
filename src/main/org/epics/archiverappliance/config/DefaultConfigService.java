@@ -42,7 +42,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import org.apache.logging.log4j.Level;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -421,7 +420,7 @@ public class DefaultConfigService implements ConfigService {
 					logging.setLoggerLevel("com.hazelcast", java.util.logging.Level.INFO.toString());
 				} else { 
 					logger.info("Setting clustering logging based on log levels for cluster." + getClass().getName());
-					logging.setLoggerLevel("com.hazelcast", Level.FATAL.toString());
+					logging.setLoggerLevel("com.hazelcast", java.util.logging.Level.SEVERE.toString());
 				}
 			}
 

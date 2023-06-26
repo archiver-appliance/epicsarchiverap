@@ -59,7 +59,7 @@ public class ArchivePVTest {
 		 logger.debug("About to submit");
 		 archiveButton.click();
 		 // We have to wait for about 10 minutes here as it does take a while for the workflow to complete.
-		 Thread.sleep(10*60*1000);
+		 Thread.sleep(2*60*1000);
 		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		 checkStatusButton.click();
 		 Thread.sleep(2*1000);
