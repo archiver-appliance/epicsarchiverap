@@ -204,26 +204,21 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 
 	}
 
-	@Override
-	public void channelStateChanged(PVAChannel channel, ClientChannelState clientChannelState) {
-		this.scheduleCommand(() -> {
+    @Override
+    public void channelStateChanged(PVAChannel channel, ClientChannelState clientChannelState) {
 
-			if (clientChannelState == ClientChannelState.CONNECTED) {
-				logger.info("channelStateChange:" + clientChannelState + " " + channel.getName());
-				handleConnected();
-			} else if (clientChannelState == ClientChannelState.CLOSING || clientChannelState == ClientChannelState.INIT) {
-				logger.info("channelStateChange:" + clientChannelState + " fireDisconnected " + channel.getName());
-				state = PVConnectionState.Disconnected;
-				connected = false;
-				unsubscribe();
-				fireDisconnected();
-			} else {
-				logger.info("channelStateChange:" + clientChannelState + " " + channel.getName());
-			}
-
-		});
-
-	}
+        logger.info("channelStateChanged:" + clientChannelState + " " + channel.getName());
+        if (clientChannelState == ClientChannelState.CONNECTED) {
+            this.scheduleCommand(this::handleConnected);
+        } else if (connected) {
+            this.scheduleCommand(() -> {
+                state = PVConnectionState.Disconnected;
+                connected = false;
+                unsubscribe();
+                fireDisconnected();
+            });
+        }
+    }
 
 	private void setupDBRType(PVAStructure data) {
 		logger.info("Construct the fieldValuesCache for PV " + this.getName());
@@ -545,12 +540,12 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
 
 	}
 
-	/***
-	 *get  the meta info for this pv 
-	 * @return MetaInfo
-	 */
-	@Override
-	public MetaInfo getTotalMetaInfo() {
+    /***
+     *get  the meta info for this pv
+     * @return MetaInfo
+     */
+    @Override
+    public MetaInfo getTotalMetaInfo() {
 		return totalMetaInfo;
 	}
 

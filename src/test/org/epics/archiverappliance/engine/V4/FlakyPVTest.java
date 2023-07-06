@@ -37,6 +37,7 @@ public class FlakyPVTest {
 
     private ConfigService configService;
     private PVAServer pvaServer;
+    private static final long disconnectTime = 60 * 1000;
 
     @Before
     public void setUp() throws Exception {
@@ -49,7 +50,6 @@ public class FlakyPVTest {
         configService.shutdownNow();
         pvaServer.close();
     }
-
 
     /**
      * Test that disconnecting a pv doesn't cause any issues.
@@ -99,7 +99,7 @@ public class FlakyPVTest {
         serverPV.close();
         pvaServer.close();
         logger.info("Close pv " + pvName);
-        Thread.sleep(samplingPeriodMilliSeconds);
+        Thread.sleep(disconnectTime);
 
         // Restart the pv
         logger.info("Restart pv " + pvName);
@@ -169,7 +169,7 @@ public class FlakyPVTest {
         // close pv the pv
         pvaServer.close();
         logger.info("Server close pv " + pvName);
-        Thread.sleep(samplingPeriodMilliSeconds);
+        Thread.sleep(disconnectTime);
 
         // Restart the pv
         pvaServer = new PVAServer();
@@ -239,7 +239,7 @@ public class FlakyPVTest {
         // close pv the pv
         serverPV.close();
         logger.info("ServerPV close pv " + pvName);
-        Thread.sleep(samplingPeriodMilliSeconds);
+        Thread.sleep(disconnectTime);
 
         // Restart the pv
         pvaServer = new PVAServer();
@@ -319,7 +319,7 @@ public class FlakyPVTest {
         serverPV.close();
         pvaServer.close();
         logger.info("Close pv " + pvName);
-        Thread.sleep(samplingPeriodMilliSeconds);
+        Thread.sleep(disconnectTime);
 
         // Restart the pv
         pvaServer = new PVAServer();

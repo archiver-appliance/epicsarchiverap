@@ -505,91 +505,129 @@ public class EngineContext {
 			this.configService = configService;
 		}
 
-		@Override
-		public void run() {
-			try { 
-				// We run thru all the channels - if a channel has not reconnected in disconnectCheckTimeoutInMinutes, we pause and resume the channel.
-				if(EngineContext.this.configService.isShuttingDown()) {
-					logger.debug("Skipping checking for disconnected channels as the system is shutting down.");
-					return;
-				}
-				logger.debug("Checking for disconnected channels.");
-				LinkedList<String> disconnectedPVNames = new LinkedList<String>();
-				LinkedList<String> needToStartMetaChannelPVNames = new LinkedList<String>();
-				int totalChannels = EngineContext.this.channelList.size();
-				long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInMinutes*60;
-				for(ArchiveChannel channel : EngineContext.this.channelList.values()) {
-					if(!channel.isConnected()) {
-						logger.debug( "{} is not connected since {}. See if we have requested for it greater than {} and have still not connected.",channel.getName(), channel.getSecondsElapsedSinceSearchRequest(), disconnectTimeoutInSeconds);
-						if(disconnectTimeoutInSeconds > 0 && channel.getSecondsElapsedSinceSearchRequest() > disconnectTimeoutInSeconds) { 
-							disconnectedPVNames.add(channel.getName());
-						} else {
-							if(disconnectTimeoutInSeconds > 0) { 
-								logger.debug(channel.getName() + " is not connected but we still have some time to go before attempting pause/resume " + channel.getSecondsElapsedSinceSearchRequest() + " and disconnectTimeoutInSeconds " + disconnectTimeoutInSeconds);
-							} else { 
-								logger.debug("The pause/resume on disconnect has been turned off. Not attempting reconnect using pause/resume for PV " + channel.getName());
-							}
-						}
-					} else { 
-						// Channel is connected.
-						logger.debug(channel.getName() + " is connected. Seeing if we need to start up the meta channels for the fields.");
-						if(channel.metaChannelsNeedStartingUp()) { 
-							needToStartMetaChannelPVNames.add(channel.getName());
-						}
-					}
-				}
+        @Override
+        public void run() {
+            try {
+                // We run thru all the channels
+                // - if a channel has not reconnected in disconnectCheckTimeoutInMinutes,
+                // we pause and resume the channel. (No longer done)
+                if (EngineContext.this.configService.isShuttingDown()) {
+                    logger.debug("Skipping checking for disconnected channels as the system is shutting down.");
+                    return;
+                }
+                logger.debug("Checking for disconnected channels.");
+                LinkedList<String> disconnectedPVNames = new LinkedList<String>();
+                LinkedList<String> needToStartMetaChannelPVNames = new LinkedList<String>();
+                int totalChannels = EngineContext.this.channelList.size();
+                long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInMinutes * 60L;
+                for (ArchiveChannel channel : EngineContext.this.channelList.values()) {
+	                checkChannelDisconnectTime(disconnectedPVNames,
+			                needToStartMetaChannelPVNames, disconnectTimeoutInSeconds, channel);
 
-				int disconnectedChannels = disconnectedPVNames.size();
+                }
 
-				// Need to start up the metachannels here after we determine that the cluster has started up..
-				// To do this we update the connected/disconnected count for this appliance.
-				// We fire up the metachannels gradually only after the entire cluster's connected PV count has reached a certain threshold.
-				// First we see if the percentage of disconnected channels in this appliance is lower than a threshold
-				if(!needToStartMetaChannelPVNames.isEmpty()) {   
-					if ((disconnectedChannels*100.0)/totalChannels < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
-						boolean kickOffMetaChannels = true;
-						// Then we repeat the same check for the other appliances in this cluster
-						for(ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) { 
-							if(applianceInfo.getIdentity().equals(configService.getMyApplianceInfo().getIdentity())) { 
-								// We do not check for ourself...
-							} else { 
-								String connectedPVCountURL = applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
-								try { 
-									JSONObject connectedPVCount = GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
-									int applianceTotalPVCount = Integer.parseInt((String) connectedPVCount.get("total"));
-									int applianceDisconnectedPVCount = Integer.parseInt((String) connectedPVCount.get("disconnected"));
-									if ((applianceDisconnectedPVCount*100.0/applianceTotalPVCount) < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) { 
-										logger.debug("Appliance " + applianceInfo.getIdentity() + " has connected to most of its channels");
-									} else { 
-										logger.info("Appliance " + applianceInfo.getIdentity() + " has not connected to most of its channels. Skipping starting of meta channels");
-										kickOffMetaChannels = false;
-										break;
-									}
-								} catch(Exception ex) { 
-									logger.error("Exception checking for disconnected PVs on appliance " + applianceInfo.getIdentity() + " using URL " + connectedPVCountURL, ex);
-								}
-							}
-						}
+                int disconnectedChannels = disconnectedPVNames.size();
 
-						if(kickOffMetaChannels && !needToStartMetaChannelPVNames.isEmpty()) { 
-							// We can kick off the metachannels. We kick them off a few at a time.
-							for (int i = 0; i < METACHANNELS_TO_START_AT_A_TIME; i++) { 
-								String channelPVNameToKickOffMetaFields = needToStartMetaChannelPVNames.poll();
-								if(channelPVNameToKickOffMetaFields != null) { 
-									logger.debug("Starting meta channels for " + channelPVNameToKickOffMetaFields);
-									ArchiveChannel channelToKickOffMetaFields = EngineContext.this.channelList.get(channelPVNameToKickOffMetaFields);
-									channelToKickOffMetaFields.startUpMetaChannels();
-								} else { 
-									logger.debug("No more metachannels to start");
-									break;
-								}
-							}
-						}
-					}
-				}
-			} catch(Throwable t) { 
-				logger.error("Exception doing the pause/resume checks", t);
+                // Need to start up the metachannels here after we determine that the cluster has started up..
+                // To do this we update the connected/disconnected count for this appliance.
+                // We fire up the metachannels gradually only after the entire cluster's connected PV count has reached
+                // a certain threshold.
+                // First we see if the percentage of disconnected channels in this appliance is lower than a threshold
+                if (!needToStartMetaChannelPVNames.isEmpty()) {
+                    if ((disconnectedChannels * 100.0) / totalChannels
+                            < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
+                        boolean kickOffMetaChannels = true;
+                        // Then we repeat the same check for the other appliances in this cluster
+                        for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
+                            if (applianceInfo
+                                    .getIdentity()
+                                    .equals(configService.getMyApplianceInfo().getIdentity())) {
+                                // We do not check for ourself...
+                            } else {
+                                String connectedPVCountURL =
+                                        applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
+                                try {
+                                    JSONObject connectedPVCount =
+                                            GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
+                                    int applianceTotalPVCount =
+                                            Integer.parseInt((String) connectedPVCount.get("total"));
+                                    int applianceDisconnectedPVCount =
+                                            Integer.parseInt((String) connectedPVCount.get("disconnected"));
+                                    if ((applianceDisconnectedPVCount * 100.0 / applianceTotalPVCount)
+                                            < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
+                                        logger.debug("Appliance " + applianceInfo.getIdentity()
+                                                + " has connected to most of its channels");
+                                    } else {
+                                        logger.info(
+                                                "Appliance " + applianceInfo.getIdentity()
+                                                        + " has not connected to most of its channels. Skipping starting of meta channels");
+                                        kickOffMetaChannels = false;
+                                        break;
+                                    }
+                                } catch (Exception ex) {
+                                    logger.error(
+                                            "Exception checking for disconnected PVs on appliance "
+                                                    + applianceInfo.getIdentity() + " using URL " + connectedPVCountURL,
+                                            ex);
+                                }
+                            }
+                        }
+
+                        if (kickOffMetaChannels) {
+                            // We can kick off the metachannels. We kick them off a few at a time.
+                            for (int i = 0; i < METACHANNELS_TO_START_AT_A_TIME; i++) {
+                                String channelPVNameToKickOffMetaFields = needToStartMetaChannelPVNames.poll();
+                                if (channelPVNameToKickOffMetaFields != null) {
+                                    logger.debug("Starting meta channels for " + channelPVNameToKickOffMetaFields);
+                                    ArchiveChannel channelToKickOffMetaFields =
+                                            EngineContext.this.channelList.get(channelPVNameToKickOffMetaFields);
+                                    channelToKickOffMetaFields.startUpMetaChannels();
+                                } else {
+                                    logger.debug("No more metachannels to start");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Throwable t) {
+                logger.error("Exception doing the pause/resume checks", t);
+            }
+        }
+
+		private boolean checkChannelDisconnectTime(LinkedList<String> disconnectedPVNames,
+		                                        LinkedList<String> needToStartMetaChannelPVNames,
+		                                        long disconnectTimeoutInSeconds, ArchiveChannel channel) {
+			if (!channel.isConnected()) {
+			    logger.debug(
+			            "{} is not connected since {}. "
+			                    + "See if we have requested for it greater than {} and have still not connected.",
+			            channel.getName(),
+			            channel.getSecondsElapsedSinceSearchRequest(),
+					    disconnectTimeoutInSeconds);
+			    if (disconnectTimeoutInSeconds > 0
+			            && channel.getSecondsElapsedSinceSearchRequest() > disconnectTimeoutInSeconds) {
+			        disconnectedPVNames.add(channel.getName());
+			    } else {
+			        if (disconnectTimeoutInSeconds > 0) {
+			            logger.debug(channel.getName()
+			                    + " is not connected but we still have some time to go before attempting pause/resume "
+			                    + channel.getSecondsElapsedSinceSearchRequest()
+			                    + " and disconnectTimeoutInSeconds " + disconnectTimeoutInSeconds);
+			        } else {
+			            return true;
+
+			        }
+			    }
+			} else {
+			    // Channel is connected.
+			    logger.debug(channel.getName()
+			            + " is connected. Seeing if we need to start up the meta channels for the fields.");
+			    if (channel.metaChannelsNeedStartingUp()) {
+			        needToStartMetaChannelPVNames.add(channel.getName());
+			    }
 			}
+			return false;
 		}
 	}
 
@@ -766,7 +804,7 @@ public class EngineContext {
 	public PVAClient getPVAClient() {
 		return pvaClient;
 	}
-	
+
 	public ScheduledThreadPoolExecutor getMiscTasksScheduler() {
 		return miscTasksScheduler;
 	}
