@@ -69,7 +69,7 @@ public class LineByteStreamTest {
 			}
 		}
 	}
-	
+
 	@Test
 	public void testLineByteStream() throws Exception {
 		String fileName = testFolder.getAbsolutePath() + "/" + "LineByteStream.txt";
@@ -128,7 +128,7 @@ public class LineByteStreamTest {
 			f.delete();
 		}
 	}
-	
+
 	
 	@Test
 	public void testSmallFileSeekToLastLine() throws Exception {

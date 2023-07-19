@@ -1,14 +1,5 @@
 package org.epics.archiverappliance.retrieval;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ConcurrentSkipListSet;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -21,6 +12,14 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class RetrievalState {
 	private static Logger logger = LogManager.getLogger(RetrievalState.class.getName());
@@ -37,13 +36,13 @@ public class RetrievalState {
 	 * @param context BasicContext
 	 * @param pvName The name of PV.
 	 * @param typeInfo  PVTypeInfo
-	 * @param start Timestamp
-	 * @param end Timestamp
+     * @param start Instant
+     * @param end Instant
 	 * @param req HttpServletRequest
 	 * @return the data source for a PV
 	 * @throws IOException  &emsp; 
 	 */
-	public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) throws IOException {
+    public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) throws IOException {
 		if(typeInfo == null) {
 			List<ChannelArchiverDataServerPVInfo> caServers = this.configService.getChannelArchiverDataServers(pvName);
 			if(caServers != null) {
@@ -87,7 +86,7 @@ public class RetrievalState {
 				StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
 				dataSourcesForPV.add(new DataSourceforPV(pvName, storagePlugin, lifetimeid++, null, null));
 				Event firstKnownEvent = storagePlugin.getFirstKnownEvent(context, pvName);
-				if(firstKnownEvent != null && firstKnownEvent.getEventTimeStamp().before(start)) { 
+                if (firstKnownEvent != null && firstKnownEvent.getEventTimeStamp().isBefore(start)) {
 					logger.info("Found a data source " + storagePlugin.getName() + " that has an event " + TimeUtils.convertToISO8601String(firstKnownEvent.getEventTimeStamp()) + " older than the request start time " + TimeUtils.convertToISO8601String(start));
 					// Optimize the rest of the data sources away....
 					return new ArrayList<DataSourceforPV>(dataSourcesForPV);
@@ -95,9 +94,9 @@ public class RetrievalState {
 			}
 			
 			// Add any external servers if any only if the creation time for this type info is after the start time of the request.
-			Timestamp creationTime = typeInfo.getCreationTime();
-			if(includeExternalServers(req)) { 
-				if(creationTime == null || start.before(creationTime)) { 
+            Instant creationTime = typeInfo.getCreationTime();
+			if(includeExternalServers(req)) {
+                if (creationTime == null || start.isBefore(creationTime)) {
 					List<ChannelArchiverDataServerPVInfo> caServers = this.configService.getChannelArchiverDataServers(pvName);
 					if(caServers != null) {
 						for(ChannelArchiverDataServerPVInfo caServer : caServers) { 

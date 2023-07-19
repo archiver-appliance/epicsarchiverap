@@ -83,7 +83,7 @@ public class LargePBLineTest {
                 new ArchPaths(),
                 storagePlugin.getRootFolder(),
                 pvName,
-                ".pb",
+                PlainPBStoragePlugin.pbFileExtension,
                 storagePlugin.getPartitionGranularity(),
                 CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
@@ -93,8 +93,7 @@ public class LargePBLineTest {
 
         for (Path destPath : allPaths) {
             try {
-                PBFileInfo info =new PBFileInfo(destPath);
-                info.getLastEventEpochSeconds();
+                new PBFileInfo(destPath);
                 Assertions.assertTrue(
                         ValidatePBFile.validatePBFile(destPath, false),
                         "File validation failed for " + destPath.toAbsolutePath());

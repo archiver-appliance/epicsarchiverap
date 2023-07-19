@@ -7,8 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -23,8 +21,10 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
 
 /**
  * test for meta data archiving
@@ -44,7 +44,7 @@ public class ArchiveFieldsTest  {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
 		testConfigService = new ConfigServiceForTests(new File("./bin"));
-		testConfigService.getEngineContext().setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+		testConfigService.getEngineContext().setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(ConfigServiceForTests.defaultSecondsDisconnect);
 		Thread.sleep(3000);
 	}
 

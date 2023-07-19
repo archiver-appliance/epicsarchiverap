@@ -15,7 +15,12 @@ import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.pva.client.PVAChannel;
-import org.epics.pva.data.*;
+import org.epics.pva.data.Hexdump;
+import org.epics.pva.data.PVAData;
+import org.epics.pva.data.PVAString;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVATypeRegistry;
 import org.epics.pva.data.nt.MustBeArrayException;
 import org.epics.pva.data.nt.PVATable;
 import org.epics.pva.data.nt.PVATimeStamp;
@@ -37,7 +42,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class PVAccessUtil {
 
@@ -56,7 +62,7 @@ public class PVAccessUtil {
         HashMap<Instant, Event> actualValues = new HashMap<>();
         try {
             for (Event event : writer.getCollectedSamples()) {
-                actualValues.put(event.getEventTimeStamp().toInstant(), event);
+                actualValues.put(event.getEventTimeStamp(), event);
             }
         } catch (IOException e) {
             fail(e.getMessage());

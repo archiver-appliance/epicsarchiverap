@@ -1,14 +1,5 @@
 package org.epics.archiverappliance.engine.test;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -25,14 +16,21 @@ import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Start an appserver with persistence; start archiving a PV; then start and restart the SIOC and make sure we get the expected cnxlost headers.
@@ -206,17 +204,17 @@ public class CnxLostTest {
 	
 	private void checkRetrieval(String retrievalPVName, ExpectedEventType[] expectedEvents) throws IOException {
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp now = TimeUtils.now();
-		Timestamp start = TimeUtils.minusDays(now, 366);
-		Timestamp end = now;
+        Instant now = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(now, 366);
+        Instant end = now;
 
 		LinkedList<EpicsMessage> retrievedData = new LinkedList<EpicsMessage>();
-		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			int eventCount = 0;
 			Assertions.assertTrue(strm != null, "We should get some data, we are getting a null stream back");
 				for(EpicsMessage dbrevent : strm) {
 					logger.info("Adding event with value " + dbrevent.getNumberValue().doubleValue()
-							+ " at time " + TimeUtils.convertToHumanReadableString(dbrevent.getTimestamp()));
+                            + " at time " + TimeUtils.convertToHumanReadableString(TimeUtils.fromSQLTimeStamp(dbrevent.getTimestamp())));
 					retrievedData.add(dbrevent);
 					eventCount++;
 				}

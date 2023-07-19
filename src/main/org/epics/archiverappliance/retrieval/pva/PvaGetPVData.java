@@ -1,23 +1,5 @@
 package org.epics.archiverappliance.retrieval.pva;
 
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-
-import javax.servlet.ServletException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,6 +41,23 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.NotValueException;
 import org.epics.pva.data.nt.PVAURI;
 import org.json.simple.JSONObject;
+
+import javax.servlet.ServletException;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.text.DecimalFormat;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 public class PvaGetPVData implements PvaAction {
 
@@ -114,7 +113,7 @@ public class PvaGetPVData implements PvaAction {
 					+ " until the appliance has completely started up.";
 			logger.error(msg);
 			throw new PvaActionException(msg);
-			
+
 		}
 
 		String startTimeStr = reqParameters.get("from");
@@ -152,7 +151,7 @@ public class PvaGetPVData implements PvaAction {
 		if (pvName == null) {
 			String msg = "PV name is null.";
 			throw new PvaActionException(msg);
-			
+
 		}
 
 		if (pvName.endsWith(".VAL")) {
@@ -162,7 +161,7 @@ public class PvaGetPVData implements PvaAction {
 		}
 
 		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
-		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 1);
+        Instant end = TimeUtils.plusHours(TimeUtils.now(), 1);
 		if (endTimeStr != null) {
 			try {
 				end = TimeUtils.convertFromISO8601String(endTimeStr);
@@ -172,13 +171,13 @@ public class PvaGetPVData implements PvaAction {
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time" + endTimeStr;
 					throw new PvaActionException(msg, ex2);
-					
+
 				}
 			}
 		}
 
 		// We get one day by default
-		Timestamp start = TimeUtils.minusDays(end, 1);
+        Instant start = TimeUtils.minusDays(end, 1);
 		if (startTimeStr != null) {
 			try {
 				start = TimeUtils.convertFromISO8601String(startTimeStr);
@@ -189,17 +188,17 @@ public class PvaGetPVData implements PvaAction {
 					String msg = "Cannot parse time " + startTimeStr;
 					logger.warn(msg, ex2);
 					throw new PvaActionException(msg, ex2);
-					
+
 				}
 			}
 		}
 
-		if (end.before(start)) {
+        if (end.isBefore(start)) {
 			String msg = "For request, end " + end.toString() + " is before start " + start.toString() + " for pv "
 					+ pvName;
 			logger.error(msg);
 			throw new PvaActionException(msg);
-			
+
 		}
 
 		LinkedList<TimeSpan> requestTimes = new LinkedList<TimeSpan>();
@@ -226,7 +225,7 @@ public class PvaGetPVData implements PvaAction {
 			if (!pvName.contains(")")) {
 				logger.error("Unbalanced paran " + pvName);
 				throw new PvaActionException("Unbalanced paran " + pvName);
-				
+
 			}
 			String[] components = pvName.split("[(,)]");
 			postProcessorUserArg = components[0];
@@ -261,7 +260,7 @@ public class PvaGetPVData implements PvaAction {
 		if (typeInfo == null) {
 			logger.error("Unable to find typeinfo for pv " + pvName);
 			throw new PvaActionException("Unable to find typeinfo for pv " + pvName);
-			
+
 		}
 
 		if (postProcessor == null) {
@@ -311,7 +310,7 @@ public class PvaGetPVData implements PvaAction {
 			logger.error("Postprocessor threw an exception during initialization for " + pvName, ex);
 			throw new PvaActionException(
 					"Postprocessor threw an exception during initialization for " + pvName, ex);
-			
+
 		}
 
 		// TODO creating the result structure that will be sent over the wire.
@@ -471,7 +470,7 @@ public class PvaGetPVData implements PvaAction {
 					+ ") until the appliance has completely started up.";
 			logger.error(msg);
 			throw new PvaActionException(msg);
-			
+
 		}
 
 		// Getting various fields from arguments
@@ -518,7 +517,7 @@ public class PvaGetPVData implements PvaAction {
 			if (nullPVs > 0) {
 				logger.warn("Some PVs are null in the request.");
 				throw new PvaActionException( "Some PVs are null in the request.");
-				
+
 			}
 		}
 
@@ -530,7 +529,7 @@ public class PvaGetPVData implements PvaAction {
 			}
 
 		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
-		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 1);
+        Instant end = TimeUtils.plusHours(TimeUtils.now(), 1);
 		if (endTimeStr != null) {
 			try {
 				end = TimeUtils.convertFromISO8601String(endTimeStr);
@@ -541,13 +540,13 @@ public class PvaGetPVData implements PvaAction {
 					String msg = "Cannot parse time " + endTimeStr;
 					logger.warn(msg, ex2);
 					throw new PvaActionException(msg, ex2);
-					
+
 				}
 			}
 		}
 
 		// We get one day by default
-		Timestamp start = TimeUtils.minusDays(end, 1);
+        Instant start = TimeUtils.minusDays(end, 1);
 		if (startTimeStr != null) {
 			try {
 				start = TimeUtils.convertFromISO8601String(startTimeStr);
@@ -558,17 +557,17 @@ public class PvaGetPVData implements PvaAction {
 					String msg = "Cannot parse time " + startTimeStr;
 					logger.warn(msg, ex2);
 					throw new PvaActionException(msg, ex2);
-					
+
 				}
 			}
 		}
 
-		if (end.before(start)) {
+        if (end.isBefore(start)) {
 			String msg = "For request, end " + end.toString() + " is before start " + start.toString() + " for pvs "
 					+ StringUtils.join(pvNames, ", ");
 			logger.error(msg);
 			throw new PvaActionException(msg);
-			
+
 		}
 
 		LinkedList<TimeSpan> requestTimes = new LinkedList<TimeSpan>();
@@ -604,7 +603,7 @@ public class PvaGetPVData implements PvaAction {
 					String msg = "Unbalanced paren " + pvNames.get(i);
 					logger.error(msg);
 					throw new PvaActionException(msg);
-					
+
 				}
 				String[] components = pvNames.get(i).split("[(,)]");
 				postProcessorUserArg = components[0];
@@ -655,7 +654,7 @@ public class PvaGetPVData implements PvaAction {
 				String msg = "Unable to find typeinfo for pv " + pvNames.get(i);
 				logger.error(msg);
 				throw new PvaActionException(msg);
-				
+
 			}
 
 			if (postProcessors.get(i) == null) {
@@ -724,12 +723,12 @@ public class PvaGetPVData implements PvaAction {
 				try {
 					// TODO the http request is needed to process
 					List<List<Future<EventStream>>> resultFromForeignAppliances = retrieveEventStreamFromForeignAppliance(
-							pvInfos, requestTimes, useChunkedEncoding);
+							pvInfos, requestTimes);
 					listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
 				} catch (Exception ex) {
 					logger.error(
 							"Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
-					
+
 				}
 			}
 		}
@@ -763,7 +762,7 @@ public class PvaGetPVData implements PvaAction {
 				String msg = "Postprocessor threw an exception during initialization for " + pvName;
 				logger.error(msg, ex);
 				throw new PvaActionException(msg, ex);
-				
+
 			}
 		}
 
@@ -791,7 +790,7 @@ public class PvaGetPVData implements PvaAction {
 			String msg = "Exception when retrieving data " + "-->" + se.toString();
 			logger.error(msg, se);
 			throw new PvaActionException(msg, se);
-			
+
 		}
 
 		/*
@@ -1017,14 +1016,14 @@ public class PvaGetPVData implements PvaAction {
 			throw new PvaActionException(msg);
 		}
 
-		LinkedList<Timestamp> timeRangesList = new LinkedList<Timestamp>();
+        LinkedList<Instant> timeRangesList = new LinkedList<Instant>();
 		for (String timeRangesStrItem : timeRangesStrList) {
 			try {
-				Timestamp ts = TimeUtils.convertFromISO8601String(timeRangesStrItem);
+                Instant ts = TimeUtils.convertFromISO8601String(timeRangesStrItem);
 				timeRangesList.add(ts);
 			} catch (IllegalArgumentException ex) {
 				try {
-					Timestamp ts = TimeUtils.convertFromDateTimeStringWithOffset(timeRangesStrItem);
+                    Instant ts = TimeUtils.convertFromDateTimeStringWithOffset(timeRangesStrItem);
 					timeRangesList.add(ts);
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time " + timeRangesStrItem;
@@ -1035,12 +1034,12 @@ public class PvaGetPVData implements PvaAction {
 		}
 
 		assert (timeRangesList.size() % 2 == 0);
-		Timestamp prevEnd = null;
+        Instant prevEnd = null;
 		while (!timeRangesList.isEmpty()) {
-			Timestamp t0 = timeRangesList.pop();
-			Timestamp t1 = timeRangesList.pop();
+            Instant t0 = timeRangesList.pop();
+            Instant t1 = timeRangesList.pop();
 
-			if (t1.before(t0)) {
+            if (t1.isBefore(t0)) {
 				String msg = "For request, end " + t1.toString() + " is before start " + t0.toString() + " for pv "
 						+ pvName;
 				logger.error(msg);
@@ -1048,7 +1047,7 @@ public class PvaGetPVData implements PvaAction {
 			}
 
 			if (prevEnd != null) {
-				if (t0.before(prevEnd)) {
+                if (t0.isBefore(prevEnd)) {
 					String msg = "For request, start time " + t0.toString() + " is before previous end time "
 							+ prevEnd.toString() + " for pv " + pvName;
 					logger.error(msg);
@@ -1264,15 +1263,14 @@ public class PvaGetPVData implements PvaAction {
 	 * @param pvName
 	 * @param typeInfo
 	 * @param postProcessor
-	 * @param applianceForPV
 	 * @param retrievalContext
 	 * @param executorResult
 	 * @return
 	 * @throws IOException
 	 */
 	private LinkedList<Future<RetrievalResult>> resolveAllDataSources(String pvName, PVTypeInfo typeInfo,
-			PostProcessor postProcessor, ApplianceInfo applianceForPV, BasicContext retrievalContext,
-			RetrievalExecutorResult executorResult) throws IOException {
+	                                                                  PostProcessor postProcessor, ApplianceInfo applianceForPV, BasicContext retrievalContext,
+	                                                                  RetrievalExecutorResult executorResult) throws IOException {
 
 		LinkedList<Future<RetrievalResult>> retrievalResultFutures = new LinkedList<Future<RetrievalResult>>();
 
@@ -1303,13 +1301,12 @@ public class PvaGetPVData implements PvaAction {
 	 *
 	 * @param requestTimes
 	 * @param pvInfos
-	 * @param useChunkedEncoding
 	 * @throws IOException
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
 	private List<List<Future<EventStream>>> retrieveEventStreamFromForeignAppliance(
-			ArrayList<PVInfoForClusterRetrieval> pvInfos, LinkedList<TimeSpan> requestTimes, boolean useChunkedEncoding)
+			ArrayList<PVInfoForClusterRetrieval> pvInfos, LinkedList<TimeSpan> requestTimes)
 			throws IOException, InterruptedException, ExecutionException {
 
 		// Get the executors for the PVs in other clusters

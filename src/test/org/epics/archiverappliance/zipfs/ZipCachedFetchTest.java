@@ -26,8 +26,8 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.Serial;
 import java.nio.file.Path;
-import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -116,16 +116,16 @@ public class ZipCachedFetchTest {
         for (int months = 2; months <= 9; months++) {
             int startMonth = 2;
             int endMonth = startMonth + months;
-            Timestamp startTime = TimeUtils.convertFromISO8601String(
+            Instant startTime = TimeUtils.convertFromISO8601String(
                     currentYear + "-" + format.format(startMonth) + "-01T00:00:00.000Z");
-            Timestamp endTime = TimeUtils.convertFromISO8601String(
+            Instant endTime = TimeUtils.convertFromISO8601String(
                     currentYear + "-" + format.format(endMonth) + "-30T00:00:00.000Z");
             testParallelFetch(startTime, endTime, months);
             testSerialFetch(startTime, endTime, months);
         }
     }
 
-    private void testSerialFetch(Timestamp startTime, Timestamp endTime, int months) throws Exception {
+    private void testSerialFetch(Instant startTime, Instant endTime, int months) throws Exception {
         try (BasicContext context = new BasicContext()) {
             long st0 = System.currentTimeMillis();
             Path[] paths = PlainPBPathNameUtility.getPathsWithData(
@@ -134,7 +134,7 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    ".pb",
+                    PlainPBStoragePlugin.pbFileExtension,
                     pbplugin.getPartitionGranularity(),
                     pbplugin.getCompressionMode(),
                     configService.getPVNameToKeyConverter());
@@ -156,7 +156,7 @@ public class ZipCachedFetchTest {
         }
     }
 
-    private void testParallelFetch(Timestamp startTime, Timestamp endTime, int months) throws Exception {
+    private void testParallelFetch(Instant startTime, Instant endTime, int months) throws Exception {
         ForkJoinPool forkJoinPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() / 2);
         logger.info("The parallelism in the pool is " + forkJoinPool.getParallelism());
         try (BasicContext context = new BasicContext()) {
@@ -167,7 +167,7 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    ".pb",
+                    PlainPBStoragePlugin.pbFileExtension,
                     pbplugin.getPartitionGranularity(),
                     pbplugin.getCompressionMode(),
                     configService.getPVNameToKeyConverter());

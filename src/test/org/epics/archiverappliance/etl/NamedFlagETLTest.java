@@ -7,18 +7,15 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.sql.Timestamp;
-
-
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -32,13 +29,14 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Test if the named flags control of ETL works if the flag is set and unset
@@ -170,7 +168,9 @@ public class NamedFlagETLTest {
         	PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR" + appendToDestURL, configService);
 
         	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_NamedFlagTest" + etlSrc.getPartitionGranularity();
-        	SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0));
+            short currentYear = TimeUtils.getCurrentYear();
+
+            SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
         	try(BasicContext context = new BasicContext()) {
         		etlSrc.appendData(context, pvName, simstream);
         	}
@@ -191,15 +191,15 @@ public class NamedFlagETLTest {
         	configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
         	configService.getETLLookup().manualControlForUnitTests();
 
-        	Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365*10);
+            Instant timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
         	ETLExecutor.runETLs(configService, timeETLruns);
         	logger.info("Done performing ETL as though today is " + TimeUtils.convertToHumanReadableString(timeETLruns));
 
-        	Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
-        	Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
+            Instant startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
+            Instant endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
 
         	// Check that all the files in the destination store are valid files.
-        	Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(new ArchPaths(), etlDest.getRootFolder(), pvName, ".pb", etlDest.getPartitionGranularity(), CompressionMode.NONE, configService.getPVNameToKeyConverter());
+	        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(new ArchPaths(), etlDest.getRootFolder(), pvName, pbFileExtension, etlDest.getPartitionGranularity(), CompressionMode.NONE, configService.getPVNameToKeyConverter());
         	Assertions.assertTrue(allPaths != null, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
 
         	for(Path destPath : allPaths) {

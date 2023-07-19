@@ -7,10 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance;
 
-import java.sql.Timestamp;
-
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.SampleValue;
+
+import java.time.Instant;
 
 
 
@@ -33,11 +33,11 @@ public interface Event {
 	
 	/**
 	 * Get the epoch seconds and the nanos..
-	 * We use java.sql.Timestamp as the main timestamp class.
+     * We use Instant as the main timestamp class.
 	 * See TimeUtils for more time related utilities.
 	 * @return The java epoch seconds and the nanos of this event
 	 */
-	public Timestamp getEventTimeStamp();
+    public Instant getEventTimeStamp();
 
 	
 	/**

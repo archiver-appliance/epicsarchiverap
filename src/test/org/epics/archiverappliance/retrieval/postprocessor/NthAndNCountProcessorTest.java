@@ -1,7 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -19,6 +17,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.Nth;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 
 /**
@@ -71,9 +71,9 @@ public class NthAndNCountProcessorTest {
 		ArrayListEventStream testData = getData(year);
 				
 		int[] sampling = new int[]{1,2,5,10,60};
-		 
-		Timestamp start = TimeUtils.convertFromISO8601String(year + "-05-01T10:00:00.000Z");
-		Timestamp end   = TimeUtils.convertFromISO8601String(year + "-08-31T09:59:59.999Z");
+
+		Instant start = TimeUtils.convertFromISO8601String(year + "-05-01T10:00:00.000Z");
+		Instant end = TimeUtils.convertFromISO8601String(year + "-08-31T09:59:59.999Z");
 		int expectedSamplesInPeriod = 60 * 24 * 60;
 		PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
 		pvTypeInfo.setSamplingPeriod(60);
@@ -85,10 +85,10 @@ public class NthAndNCountProcessorTest {
     		nthProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
     		EventStream retData = nthProcessor.getConsolidatedEventStream();
     		int eventCount = 0;
-    		Timestamp previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
+			Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
     		int n = 0;
     		for(Event e : retData) {
-    			Timestamp eventTs = e.getEventTimeStamp();
+			    Instant eventTs = e.getEventTimeStamp();
     			Assertions.assertTrue(eventTs.compareTo(previousTimeStamp) >= 0, "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
     			Assertions.assertEquals(testData.get(n).getSampleValue().getValue().doubleValue(), e.getSampleValue().getValue().doubleValue(), Double.MIN_VALUE, "Event value should match the n-th value in the test data");
     			n+=sampling[i];
@@ -112,9 +112,9 @@ public class NthAndNCountProcessorTest {
 		ArrayListEventStream testData = getData(year);
 		
 		int[] sampling = new int[]{1,2,5,10,60};
-		
-		Timestamp start = TimeUtils.convertFromISO8601String(year + "-06-05T10:00:00.000Z");
-		Timestamp end   = TimeUtils.convertFromISO8601String(year + "-06-10T09:59:59.999Z");
+
+		Instant start = TimeUtils.convertFromISO8601String(year + "-06-05T10:00:00.000Z");
+		Instant end = TimeUtils.convertFromISO8601String(year + "-06-10T09:59:59.999Z");
 		int expectedSamplesInPeriod = 5 * 24 * 60; //5 days of data
 		PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
 		pvTypeInfo.setSamplingPeriod(60);
@@ -126,11 +126,11 @@ public class NthAndNCountProcessorTest {
     		nthProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
     		EventStream retData = nthProcessor.getConsolidatedEventStream();
     		int eventCount = 0;
-    		Timestamp previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
+			Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
     		//starting with the n-th from the raw data array
     		int n = 4*24*60;
     		for(Event e : retData) {
-    			Timestamp eventTs = e.getEventTimeStamp();
+			    Instant eventTs = e.getEventTimeStamp();
     			Assertions.assertTrue(eventTs.compareTo(previousTimeStamp) >= 0, "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
     			Assertions.assertEquals(testData.get(n).getSampleValue().getValue().doubleValue(), e.getSampleValue().getValue().doubleValue(), Double.MIN_VALUE, "Event value should match the n-th value in the test data");
     			n+=sampling[i];
@@ -156,8 +156,8 @@ public class NthAndNCountProcessorTest {
 			testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + s, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double) s)));
 		}
 		//retrieve data for the total time window
-		Timestamp start = TimeUtils.convertFromISO8601String(year + "-06-01T00:00:00.000Z");
-		Timestamp end   = TimeUtils.convertFromISO8601String(year + "-12-30T09:59:59.999Z");
+		Instant start = TimeUtils.convertFromISO8601String(year + "-06-01T00:00:00.000Z");
+		Instant end = TimeUtils.convertFromISO8601String(year + "-12-30T09:59:59.999Z");
 		PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
 		pvTypeInfo.setSamplingPeriod(1);
 
@@ -182,10 +182,10 @@ public class NthAndNCountProcessorTest {
 	public void testNCountProcessor() throws Exception {
 		short year = (short)(TimeUtils.getCurrentYear()-1);
 		ArrayListEventStream testData = getData(year);
-		
-		Timestamp start = TimeUtils.convertFromISO8601String(year + "-06-05T10:00:00.000Z");
+
+		Instant start = TimeUtils.convertFromISO8601String(year + "-06-05T10:00:00.000Z");
 		for (int i = 2; i < 5; i++) {
-    		Timestamp end   = TimeUtils.convertFromISO8601String(year + "-06-" + (i*5) + "T09:59:59.999Z");
+			Instant end = TimeUtils.convertFromISO8601String(year + "-06-" + (i * 5) + "T09:59:59.999Z");
     		int expectedSamplesInPeriod = (i-1)*5 * 24 * 60; //(i-1) * 5 days of data
     		PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
     		pvTypeInfo.setSamplingPeriod(60);

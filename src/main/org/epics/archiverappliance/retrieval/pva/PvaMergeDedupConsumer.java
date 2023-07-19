@@ -8,8 +8,8 @@
 package org.epics.archiverappliance.retrieval.pva;
 
 
-import java.sql.Timestamp;
-
+import com.google.protobuf.InvalidProtocolBufferException;
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -22,9 +22,7 @@ import org.epics.archiverappliance.retrieval.EventStreamConsumer;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
 import org.epics.pva.data.PVAStructure;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import java.time.Instant;
 
 /**
  * Implementation of the Merge/Dedup algorithm for combining EventStreams into one EventStream.
@@ -33,12 +31,12 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  */
 public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 	private static final Logger logger = LogManager.getLogger(PvaMergeDedupConsumer.class.getName());
-	
-	private Timestamp startTimeStamp;
+
+    private Instant startTimeStamp;
 	int totalEvents = 0;
 	int skippedEvents = 0;
 	int comparedEvents = 0;
-	private Timestamp timestampOfLastEvent;
+    private Instant timestampOfLastEvent;
 	boolean amIDeduping = false;
 	boolean haveIpushedTheFirstEvent = false;
 	Event firstEvent = null;
@@ -99,7 +97,7 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 	 * to the very beginning and very end of the time period being retrieved over,
 	 * regardless of whether it is divided up or not.
 	 */
-	public void processingPV(BasicContext retrievalContext, String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+	public void processingPV(BasicContext retrievalContext, String PV, Instant start, Instant end, EventStreamDesc streamDesc) {
 		logNumbersAndCollectTotal();
 		this.startTimeStamp = start;
 		mimeresponse.processingPV(retrievalContext, PV, start, end, streamDesc);
@@ -145,10 +143,10 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 			logger.debug("Making a copy of the first event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 			firstEvent = e.makeClone();
 			return;
-		}
-
-		if(!haveIpushedTheFirstEvent) {
-			if(e.getEventTimeStamp().before(this.startTimeStamp)) {
+					}
+					
+					if(!haveIpushedTheFirstEvent) {
+                        if (e.getEventTimeStamp().isBefore(this.startTimeStamp)) {
 				logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 				firstEvent = e.makeClone();
 			} else {
@@ -157,7 +155,7 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 				mimeresponse.consumeEvent(firstEvent);
 				timestampOfLastEvent = firstEvent.getEventTimeStamp();
 				totalEvents++;
-				if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+                            if (!e.getEventTimeStamp().isAfter(timestampOfLastEvent)) {
 					logger.debug("After sending first event, current event is not after the first event. Skipping " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 					skippedEvents++;
 				} else {
@@ -171,7 +169,7 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 
 		if(amIDeduping) {
 			comparedEvents++;
-			if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+                        if (!e.getEventTimeStamp().isAfter(timestampOfLastEvent)) {
 				skippedEvents++;
 			} else {
 				amIDeduping = false;
@@ -195,7 +193,7 @@ public class PvaMergeDedupConsumer implements EventStreamConsumer, AutoCloseable
 		totalEvents = 0;
 		skippedEvents = 0;
 		comparedEvents = 0;
-		timestampOfLastEvent = new Timestamp(Long.MIN_VALUE);
+        timestampOfLastEvent = Instant.ofEpochMilli(Long.MIN_VALUE);
 		amIDeduping = false;
 		firstEvent = null;
 		haveIpushedTheFirstEvent = false;

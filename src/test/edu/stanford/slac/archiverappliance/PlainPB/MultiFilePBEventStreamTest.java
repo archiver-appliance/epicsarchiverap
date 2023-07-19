@@ -7,9 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import java.io.File;
-import java.sql.Timestamp;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,10 +24,13 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.time.Instant;
 
 /**
  * Test EventStreams that span multiple PB files.
@@ -82,8 +82,8 @@ public class MultiFilePBEventStreamTest {
 				}
 			}
 			logger.info("Done generating sample data for granularity " + granularity);
-			Timestamp startTime = TimeUtils.convertFromISO8601String(currentYear + "-09-11T08:12:48.000Z");
-			Timestamp endTime = TimeUtils.convertFromISO8601String(currentYear + "-10-04T22:53:31.000Z");
+            Instant startTime = TimeUtils.convertFromISO8601String(currentYear + "-09-11T08:12:48.000Z");
+            Instant endTime = TimeUtils.convertFromISO8601String(currentYear + "-10-04T22:53:31.000Z");
 			long startEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
 			long endEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
 			long expectedEpochSeconds = startEpochSeconds-1;

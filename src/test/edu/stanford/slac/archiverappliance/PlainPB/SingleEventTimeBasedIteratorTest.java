@@ -19,11 +19,11 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.nio.file.Path;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.
@@ -71,7 +71,7 @@ public class SingleEventTimeBasedIteratorTest {
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    ".pb",
+                    pbFileExtension,
                     PartitionGranularity.PARTITION_HOUR,
                     CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());

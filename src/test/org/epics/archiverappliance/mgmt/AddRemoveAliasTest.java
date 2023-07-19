@@ -1,11 +1,6 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -19,16 +14,18 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.Instant;
 
 /**
  * Check addAlias and removeAlias functionality.
@@ -139,8 +136,8 @@ public class AddRemoveAliasTest {
 	 */
 	private void testRetrievalCount(String pvName, boolean expectingData) throws IOException {
 		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		 Timestamp end = TimeUtils.plusDays(TimeUtils.now(), 3);
-		 Timestamp start = TimeUtils.minusDays(end, 6);
+		Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
+		Instant start = TimeUtils.minusDays(end, 6);
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
 			 long previousEpochSeconds = 0;
 			 int eventCount = 0;

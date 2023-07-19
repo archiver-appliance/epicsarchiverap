@@ -8,10 +8,8 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.nio.file.Path;
-
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -19,8 +17,9 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.nio.file.Path;
 
 /**
  * An iterator for a FileBackedPBEventStream.
@@ -28,29 +27,22 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class FileBackedPBEventStreamPositionBasedIterator implements FileBackedPBEventStreamIterator {
-	private static Logger logger = LogManager.getLogger(FileBackedPBEventStreamPositionBasedIterator.class.getName());
-	private long startFilePos = 0;
-	private long endFilePos = 0;
+	private static final Logger logger = LogManager.getLogger(FileBackedPBEventStreamPositionBasedIterator.class.getName());
 	private short year = 0;
 	private LineByteStream lbs = null;
-	private ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
+	private final ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
 	// Whether the line already in nextLine has been used by the iterator
 	private boolean lineUsed = false;
-	private ArchDBRTypes type;
-	private DBR2PBTypeMapping mapping;
-	private Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
+	private final Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
 
 	public FileBackedPBEventStreamPositionBasedIterator(Path path, long startFilePos, long endFilePos, short year, ArchDBRTypes type) throws IOException {
-		this.startFilePos = startFilePos;
-		this.endFilePos = endFilePos;
-		this.type = type;
-		mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
+		DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(type);
 		unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
 		assert(startFilePos >= 0);
 		assert(endFilePos >= 0);
 		assert(endFilePos >= startFilePos);
 		this.year = year;
-		lbs = new LineByteStream(path, this.startFilePos, this.endFilePos);
+		lbs = new LineByteStream(path, startFilePos, endFilePos);
 		lbs.seekToFirstNewLine();
 	}
 

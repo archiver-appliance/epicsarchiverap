@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 /**
  * Simple time span class with start and end times.
@@ -15,17 +15,20 @@ import java.sql.Timestamp;
  *
  */
 public class TimeSpan {
-	Timestamp startTime;
-	Timestamp endTime;
-	public Timestamp getStartTime() {
-		return startTime;
-	}
-	public Timestamp getEndTime() {
-		return endTime;
-	}
-	public TimeSpan(Timestamp startTime, Timestamp endTime) {
+    Instant startTime;
+    Instant endTime;
+
+    public TimeSpan(Instant startTime, Instant endTime) {
 		this.startTime = startTime;
 		this.endTime = endTime;
+	}
+
+    public Instant getStartTime() {
+		return startTime;
+	}
+
+    public Instant getEndTime() {
+		return endTime;
 	}
 
 	public TimeSpan(long startTimeEpochSeconds, long endTimeEpochSeconds) {
@@ -38,9 +41,9 @@ public class TimeSpan {
 	 * @param other TimeSpan
 	 * @return boolean True or False
 	 */
-	public boolean contains(TimeSpan other) { 
-		return (this.startTime.before(other.startTime) || this.startTime.equals(other.startTime)) &&
-				(this.endTime.after(other.endTime) || this.endTime.equals(other.endTime));
+	public boolean contains(TimeSpan other) {
+        return (this.startTime.isBefore(other.startTime) || this.startTime.equals(other.startTime)) &&
+                (this.endTime.isAfter(other.endTime) || this.endTime.equals(other.endTime));
 	}
 
 	@Override

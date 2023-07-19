@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 
 /**
  * Test the PBFileInfo.
@@ -28,39 +29,33 @@ import java.nio.file.Path;
  */
 public class PBFileInfoTest {
     PBCommonSetup setup = new PBCommonSetup();
-    Path PBfile;
+    Path pBfile;
     String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PVInfo";
 
     @AfterEach
     public void tearDown() throws Exception {
-        Files.deleteIfExists(PBfile);
+        Files.deleteIfExists(pBfile);
     }
 
     @Test
     public void testPBInfo() throws Exception {
         PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
-
+        short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
-        PBfile = PlainPBPathNameUtility.getPathNameForTime(
+        pBfile = PlainPBPathNameUtility.getPathNameForTime(
                 storagePlugin,
                 pvName,
-                TimeUtils.getStartOfCurrentYearInSeconds(),
+                TimeUtils.getStartOfYear(currentYear),
                 new ArchPaths(),
                 (new ConfigServiceForTests(new File("./bin")).getPVNameToKeyConverter()));
-        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-        PBFileInfo info = new PBFileInfo(PBfile);
+        Instant start = TimeUtils.getStartOfYear(currentYear);
+        Instant end = start.plusSeconds(10000);
+        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, end);
+        PBFileInfo info = new PBFileInfo(pBfile);
         Assertions.assertEquals(info.getPVName(), pvName, "PVInfo PV name " + info.getPVName());
-        Assertions.assertEquals(info.getDataYear(), TimeUtils.getCurrentYear(), "PVInfo year " + info.getDataYear());
+        Assertions.assertEquals(info.getDataYear(), currentYear, "PVInfo year " + info.getDataYear());
         Assertions.assertEquals(info.getType(), ArchDBRTypes.DBR_SCALAR_DOUBLE, "PVInfo type " + info.getType());
-        long firstSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-        Assertions.assertEquals(
-                info.getFirstEventEpochSeconds(),
-                firstSeconds,
-                "PVInfo first event time " + info.getFirstEventEpochSeconds() + "/" + firstSeconds);
-        long lastSeconds = TimeUtils.getStartOfYearInSeconds(TimeUtils.getCurrentYear() + 1) - 1;
-        Assertions.assertEquals(
-                info.getLastEventEpochSeconds(),
-                lastSeconds,
-                "PVInfo last event time " + info.getLastEventEpochSeconds() + "!=" + lastSeconds);
+        Assertions.assertEquals(start, info.getFirstEvent().getEventTimeStamp());
+        Assertions.assertEquals(end.minusSeconds(1), info.getLastEvent().getEventTimeStamp());
     }
 }

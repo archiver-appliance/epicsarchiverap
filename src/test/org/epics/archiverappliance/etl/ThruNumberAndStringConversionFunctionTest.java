@@ -1,16 +1,6 @@
 package org.epics.archiverappliance.etl;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map.Entry;
-import java.util.Set;
-
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -28,11 +18,18 @@ import org.epics.archiverappliance.etl.conversion.ThruNumberAndStringConversion;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test various type conversion functions. 
@@ -66,10 +63,12 @@ public class ThruNumberAndStringConversionFunctionTest {
 
 	private EventStream generateDataForArchDBRType(ArchDBRTypes dbrType) throws Exception { 
 		int numEvents = 500;
-		ArrayListEventStream ret = new ArrayListEventStream(numEvents, new RemotableEventStreamDesc(dbrType, "test", TimeUtils.getCurrentYear()));
+        short currentYear = TimeUtils.getCurrentYear();
+        ArrayListEventStream ret = new ArrayListEventStream(numEvents, new RemotableEventStreamDesc(dbrType, "test", currentYear));
 		int eventsAdded = 0;
 		Constructor<? extends DBRTimeEvent> serializingConstructor = DBR2PBTypeMapping.getPBClassFor(dbrType).getSerializingConstructor();
-		try(SimulationEventStream simstream = new SimulationEventStream(dbrType, new ValueGenerator(dbrType, numEvents))) {
+
+        try (SimulationEventStream simstream = new SimulationEventStream(dbrType, new ValueGenerator(dbrType), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1)) {
 			for(Event simEvent : simstream) {
 				DBRTimeEvent genEvent = (DBRTimeEvent) serializingConstructor.newInstance(simEvent);
 				if(eventsAdded % 1000 == 0) { 
@@ -124,57 +123,38 @@ public class ThruNumberAndStringConversionFunctionTest {
 		
 		return removedKeys.isEmpty() && addedKeys.isEmpty() && changedEntries.isEmpty();
 	}
-	
-	
-	private class ValueGenerator implements SimulationValueGenerator {
-		private int numSamples;
-		private ArchDBRTypes dbrType;
-		public ValueGenerator(ArchDBRTypes dbrType, int numSamples) { 
-			this.numSamples = numSamples;
+
+
+    private static class ValueGenerator implements SimulationValueGenerator {
+        private final ArchDBRTypes dbrType;
+
+        public ValueGenerator(ArchDBRTypes dbrType) {
 			this.dbrType = dbrType;
 		}
 
 		@Override
-		public int getNumberOfSamples(ArchDBRTypes type) {
-			return numSamples;
-		}
-
-		@Override
 		public SampleValue getSampleValue(ArchDBRTypes type, int secondsIntoYear) {
-			switch(dbrType) {
-			case DBR_SCALAR_BYTE:
-				return new ScalarValue<Byte>((byte) secondsIntoYear);
-			case DBR_SCALAR_DOUBLE:
-				return new ScalarValue<Double>((double) secondsIntoYear);
-			case DBR_SCALAR_ENUM:
-				return new ScalarValue<Short>((short) secondsIntoYear);
-			case DBR_SCALAR_FLOAT:
-				return new ScalarValue<Float>((float) secondsIntoYear);
-			case DBR_SCALAR_INT:
-				return new ScalarValue<Integer>((int) secondsIntoYear);
-			case DBR_SCALAR_SHORT:
-				return new ScalarValue<Short>((short) secondsIntoYear);
-			case DBR_SCALAR_STRING:
-				return new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
-			case DBR_V4_GENERIC_BYTES:
-				return new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
-			case DBR_WAVEFORM_BYTE:
-				return new VectorValue<Byte>(Collections.nCopies(10*secondsIntoYear, ((byte)(secondsIntoYear%255))));
-			case DBR_WAVEFORM_DOUBLE:
-				return new VectorValue<Double>(Collections.nCopies(10*secondsIntoYear, ((double)secondsIntoYear)));
-			case DBR_WAVEFORM_ENUM:
-				return new VectorValue<Short>(Collections.nCopies(10*secondsIntoYear, ((short)secondsIntoYear)));
-			case DBR_WAVEFORM_FLOAT:
-				return new VectorValue<Float>(Collections.nCopies(10*secondsIntoYear, ((float)secondsIntoYear)));
-			case DBR_WAVEFORM_INT:
-				return new VectorValue<Integer>(Collections.nCopies(10*secondsIntoYear, ((int)secondsIntoYear)));
-			case DBR_WAVEFORM_SHORT:
-				return new VectorValue<Short>(Collections.nCopies(10*secondsIntoYear, ((short)secondsIntoYear)));
-			case DBR_WAVEFORM_STRING:
-				return new VectorStringSampleValue(Collections.nCopies(10*secondsIntoYear, Integer.toString(secondsIntoYear)));
-			default:
-				throw new UnsupportedOperationException(); 
-			}
+            return switch (dbrType) {
+                case DBR_SCALAR_BYTE -> new ScalarValue<Byte>((byte) secondsIntoYear);
+                case DBR_SCALAR_DOUBLE -> new ScalarValue<Double>((double) secondsIntoYear);
+                case DBR_SCALAR_ENUM, DBR_SCALAR_SHORT -> new ScalarValue<Short>((short) secondsIntoYear);
+                case DBR_SCALAR_FLOAT -> new ScalarValue<Float>((float) secondsIntoYear);
+                case DBR_SCALAR_INT -> new ScalarValue<Integer>((int) secondsIntoYear);
+                case DBR_SCALAR_STRING, DBR_V4_GENERIC_BYTES ->
+                        new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
+                case DBR_WAVEFORM_BYTE ->
+                        new VectorValue<Byte>(Collections.nCopies(10 * secondsIntoYear, ((byte) (secondsIntoYear % 255))));
+                case DBR_WAVEFORM_DOUBLE ->
+                        new VectorValue<Double>(Collections.nCopies(10 * secondsIntoYear, ((double) secondsIntoYear)));
+                case DBR_WAVEFORM_ENUM, DBR_WAVEFORM_SHORT ->
+                        new VectorValue<Short>(Collections.nCopies(10 * secondsIntoYear, ((short) secondsIntoYear)));
+                case DBR_WAVEFORM_FLOAT ->
+                        new VectorValue<Float>(Collections.nCopies(10 * secondsIntoYear, ((float) secondsIntoYear)));
+                case DBR_WAVEFORM_INT ->
+                        new VectorValue<Integer>(Collections.nCopies(10 * secondsIntoYear, ((int) secondsIntoYear)));
+                case DBR_WAVEFORM_STRING ->
+                        new VectorStringSampleValue(Collections.nCopies(10 * secondsIntoYear, Integer.toString(secondsIntoYear)));
+            };
 		} 
 		
 	}

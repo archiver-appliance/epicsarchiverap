@@ -7,17 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -38,8 +27,18 @@ import org.json.simple.JSONValue;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 import org.junit.jupiter.api.Tag;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test basic failover - test the ETL side of things when the other server is down...
@@ -59,15 +58,15 @@ public class FailoverETLServerDownTest {
 		configService = new ConfigServiceForTests(new File("./bin"));
 	}
 
-	private int generateData(String applianceName, Timestamp lastMonth, int startingOffset) throws IOException {
+    private int generateData(String applianceName, Instant lastMonth, int startingOffset) throws IOException {
 		int genEventCount = 0;
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
-			for(long s = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(lastMonth), PartitionGranularity.PARTITION_MONTH) + 1 + startingOffset; // We generate a months worth of data.
-					s < TimeUtils.getNextPartitionFirstSecond(TimeUtils.convertToEpochSeconds(lastMonth), PartitionGranularity.PARTITION_MONTH); 
-					s = s + stepSeconds) {
+            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH).plusSeconds(1 + startingOffset); // We generate a months worth of data.
+                 s.isBefore(TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH));
+                 s = s.plusSeconds(stepSeconds)) {
 				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
-				strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, TimeUtils.convertFromEpochSeconds(s, 0), new ScalarValue<Double>((double)s), 0, 0));
+                strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0));
 				genEventCount++;
 				plugin.appendData(context, pvName, strm);
 			}			
@@ -99,8 +98,8 @@ public class FailoverETLServerDownTest {
 		configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
 		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
 	}
-	
-	private long testMergedRetrieval(String pluginURL, Timestamp startTime, Timestamp endTime) throws Exception {
+
+    private long testMergedRetrieval(String pluginURL, Instant startTime, Instant endTime) throws Exception {
 		long rtvlEventCount = 0;
 		long lastEvEpoch = 0;
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(pluginURL, configService);
@@ -128,7 +127,7 @@ public class FailoverETLServerDownTest {
 	public void testETL() throws Exception {
 		configService.getETLLookup().manualControlForUnitTests();
 		// Register the PV with both appliances and generate data.
-		Timestamp lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);		
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);
 
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts"); 
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"); 
@@ -138,7 +137,7 @@ public class FailoverETLServerDownTest {
 		tCount = dCount;
 		
 		changeMTSForDest();
-		Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365*10);
+        Instant timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
     	logger.info("Running ETL now as if it is " + TimeUtils.convertToHumanReadableString(timeETLruns));
     	ETLExecutor.runETLs(configService, timeETLruns);
     	

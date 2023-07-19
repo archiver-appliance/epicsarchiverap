@@ -1,20 +1,8 @@
 package org.epics.archiverappliance.retrieval.client;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Random;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -43,9 +31,18 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Random;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Generate known amount of data for a PV; corrupt known number of the values.
@@ -151,13 +148,13 @@ public class PostProcessorWithPBErrorDailyTest {
 	private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		 Timestamp now = TimeUtils.now();
-		 Timestamp start = TimeUtils.minusDays(now, (dataGeneratedForYears+1)*366);
+        Instant now = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
 		int eventCount = 0;
 
 		 final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		 // Make sure we get the EGU as part of a regular VAL call.
-		 try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, now, false, null)) {
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
 			 PayloadInfo info = null;
 			 Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
 			 info =  strm.getPayLoadInfo();
@@ -206,7 +203,7 @@ public class PostProcessorWithPBErrorDailyTest {
                     context.getPaths(),
                     mtsFolderName,
                     pvName,
-                    ".pb",
+		            pbFileExtension,
                     PartitionGranularity.PARTITION_DAY,
                     CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());

@@ -1,10 +1,5 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import static org.junit.Assert.assertTrue;
-
-import java.lang.reflect.Constructor;
-import java.util.HashMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -14,6 +9,11 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.junit.Test;
+
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+
+import static org.junit.Assert.assertTrue;
 
 
 public class FieldValuesTest {
@@ -26,7 +26,8 @@ public class FieldValuesTest {
 			
 			short year = TimeUtils.getCurrentYear();
 			BoundaryConditionsSimulationValueGenerator valuegenerator = new BoundaryConditionsSimulationValueGenerator();
-			try(SimulationEventStream simstream = new SimulationEventStream(dbrType, valuegenerator)) { 
+            short currentYear = TimeUtils.getCurrentYear();
+            try (SimulationEventStream simstream = new SimulationEventStream(dbrType, valuegenerator, TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1)) {
 				PBTypeSystem pbTypeSystem = new PBTypeSystem();
 				Constructor<? extends DBRTimeEvent> constructorFromDBRTimeEvent = pbTypeSystem.getSerializingConstructor(dbrType);
 				Constructor<? extends DBRTimeEvent> constructorFromBytes = pbTypeSystem.getUnmarshallingFromByteArrayConstructor(dbrType);

@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +26,7 @@ public class SampleRetrievalState extends RetrievalState {
 	}
 	
 	@Override
-	public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req)  throws IOException {
+    public List<DataSourceforPV> getDataSources(BasicContext context, String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) throws IOException {
 		if(pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX)) {
 			logger.info("Returnng unit test data sources");
 			return getUnitTestDataSources(pvName);

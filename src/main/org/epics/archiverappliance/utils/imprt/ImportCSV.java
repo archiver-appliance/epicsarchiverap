@@ -7,14 +7,13 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.imprt;
 
-import java.io.IOException;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.IOException;
 
 /**
  * Simple import of a CSV file into storage plugin.
@@ -53,8 +52,8 @@ public class ImportCSV {
 		CSVEventStream strm = null;
 		try(BasicContext context = new BasicContext()) {
 			strm = new CSVEventStream(pvName, fileName, type);
-			boolean success = pbplugin.appendData(context, pvName, strm);
-			if(!success) {
+            int eventsAppended = pbplugin.appendData(context, pvName, strm);
+            if (eventsAppended == 0) {
 				throw new IOException("Please check the logs to make sure the import succeeded.");
 			}
 		} catch (Exception ex) {

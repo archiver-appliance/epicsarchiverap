@@ -8,25 +8,22 @@
 package edu.stanford.slac.PB.utils;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Test TimeUtils.
@@ -34,8 +31,49 @@ import org.junit.jupiter.api.Test;
  *
  */
 public class TimeUtilsTest {
-	private static Logger logger = LogManager.getLogger(TimeUtilsTest.class.getName());
-	private LinkedList<Timestamp> testcases = new LinkedList<Timestamp>();
+	private static final Logger logger = LogManager.getLogger(TimeUtilsTest.class.getName());
+	private final LinkedList<Instant> testcases = new LinkedList<Instant>();
+
+	private static boolean compareTimeSpans(List<TimeSpan> spans, String isoformattedlist) {
+		String[] times = isoformattedlist.split(",");
+		if(times.length != spans.size()*2) {
+			logger.warn("The string array has " + times.length + " elements and the time span list has " + spans.size() + " elements");
+			return false;
+		}
+		int currTimeIndex = 0;
+		for(TimeSpan span : spans) {
+			String expectedStartTime = times[currTimeIndex++];
+			String expectedEndTime = times[currTimeIndex++];
+			Instant expectedStartTS = TimeUtils.convertFromISO8601String(expectedStartTime);
+			Instant expectedEndTS = TimeUtils.convertFromISO8601String(expectedEndTime);
+			if (!expectedStartTS.equals(span.getStartTime())) {
+				logger.warn("Expected start of " + expectedStartTime + " obtained " + TimeUtils.convertToISO8601String(span.getStartTime()));
+				return false;
+			}
+			if (!expectedEndTS.truncatedTo(ChronoUnit.MILLIS).equals(span.getEndTime().truncatedTo(ChronoUnit.MILLIS))) {
+				logger.warn("Expected end of " + expectedEndTime + " obtained " + TimeUtils.convertToISO8601String(span.getEndTime()));
+				return false;
+			}
+		}
+
+		if(currTimeIndex != times.length) {
+			logger.warn("We are missing some expected values");
+			for(; currTimeIndex<times.length; currTimeIndex++) {
+				logger.warn("We are missing value " + times[currTimeIndex++]);
+			}
+			return false;
+		}
+
+		return true;
+	}
+
+	static private void testNextEquals(String tsstr, PartitionGranularity granularity, String expectedStr) {
+		Assertions.assertEquals(expectedStr, TimeUtils.convertToISO8601String(TimeUtils.getNextPartitionFirstSecond(TimeUtils.convertFromISO8601String(tsstr), granularity)));
+	}
+
+	static private void testPrevEquals(String tsstr, PartitionGranularity granularity, String expectedStr) {
+		Assertions.assertEquals(expectedStr, TimeUtils.convertToISO8601String(TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertFromISO8601String(tsstr), granularity)));
+	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -49,13 +87,13 @@ public class TimeUtilsTest {
 		testcases.add(TimeUtils.convertFromISO8601String("2008-02-29T08:33:55.003Z"));
 		testcases.add(TimeUtils.convertFromISO8601String("2012-02-29T08:33:55.003Z"));
 		long startOfCurrentYearInSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-		for(int secondsintoYear = 0; secondsintoYear < 24*60*60*365; secondsintoYear+=323) {
-			testcases.add(new Timestamp((startOfCurrentYearInSeconds+secondsintoYear)*1000));
+		for (int secondsintoYear = 0; secondsintoYear < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 365; secondsintoYear += 323) {
+			testcases.add(Instant.ofEpochMilli((startOfCurrentYearInSeconds + secondsintoYear) * 1000));
 		}
 		// 2008 was a leap year
 		long startOf2008InSeconds = TimeUtils.getStartOfYearInSeconds(2008);
-		for(int secondsintoYear = 0; secondsintoYear < 24*60*60*366; secondsintoYear+=656) {
-			testcases.add(new Timestamp((startOf2008InSeconds+secondsintoYear)*1000));
+		for (int secondsintoYear = 0; secondsintoYear < PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk(); secondsintoYear += 656) {
+			testcases.add(Instant.ofEpochMilli((startOf2008InSeconds + secondsintoYear) * 1000));
 		}
 		// Create some sample times for the rest of the millenium.
 		DecimalFormat df = new DecimalFormat("0000");
@@ -64,107 +102,44 @@ public class TimeUtilsTest {
 		}
 	}
 
-	@AfterEach
-	public void tearDown() throws Exception {
-	}
-
 	@Test
 	public void testConvertFromEpochSeconds() {
-		for(Timestamp ts : testcases) {
+		for (Instant ts : testcases) {
 			long epochSeconds = TimeUtils.convertToEpochSeconds(ts);
-			int nanos = ts.getNanos();
-			Timestamp finalresult = TimeUtils.convertFromEpochSeconds(epochSeconds, nanos);
+			int nanos = ts.getNano();
+			Instant finalresult = TimeUtils.convertFromEpochSeconds(epochSeconds, nanos);
 			Assertions.assertEquals(ts, finalresult);
 		}
 	}
-
+	
 	@Test
 	public void convertFromEpochMillis() {
-		for(Timestamp ts : testcases) {
+		for (Instant ts : testcases) {
 			// We can't really test the millis portion, however this is adequate for now
 			long epochMilliSeconds = TimeUtils.convertToEpochMillis(ts);
-			int nanos = ts.getNanos();
-			Timestamp finalresult = TimeUtils.convertFromEpochMillis(epochMilliSeconds);
-			ts.setNanos(nanos);
-			Assertions.assertEquals(ts, finalresult);
+			Instant finalresult = TimeUtils.convertFromEpochMillis(epochMilliSeconds);
+			Assertions.assertEquals(0, Duration.between(ts, finalresult).truncatedTo(ChronoUnit.MILLIS).compareTo(Duration.ofMillis(0)));
 		}
 	}
 
 	@Test
 	public void testConvertFromJCATimeStamp() {
-		for(Timestamp ts : testcases) {
+		for (Instant ts : testcases) {
 			long epochSeconds = TimeUtils.convertToEpochSeconds(ts);
-			int nanos = ts.getNanos();
+			int nanos = ts.getNano();
 			gov.aps.jca.dbr.TimeStamp jcats = new gov.aps.jca.dbr.TimeStamp(epochSeconds - TimeUtils.EPICS_EPOCH_2_JAVA_EPOCH_OFFSET, nanos);
-			Timestamp finalresult = TimeUtils.convertFromJCATimeStamp(jcats);
+			Instant finalresult = TimeUtils.convertFromJCATimeStamp(jcats);
 			Assertions.assertEquals(ts, finalresult);
 		}
 	}
-
+	
 	@Test
 	public void testConvertFromYearSecondTimestamp() {
-		for(Timestamp ts : testcases) {
+		for (Instant ts : testcases) {
 			YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(ts);
-			Timestamp finalresult = TimeUtils.convertFromYearSecondTimestamp(yts);
+			Instant finalresult = TimeUtils.convertFromYearSecondTimestamp(yts);
 			Assertions.assertEquals(ts, finalresult);
 		}
-	}
-	
-	@Test
-	public void testConvertJCAToFromYearSecond() {
-		for(Timestamp ts : testcases) {
-			long epochSeconds = TimeUtils.convertToEpochSeconds(ts);
-			int nanos = ts.getNanos();
-			gov.aps.jca.dbr.TimeStamp jcats = new gov.aps.jca.dbr.TimeStamp(epochSeconds - TimeUtils.EPICS_EPOCH_2_JAVA_EPOCH_OFFSET, nanos);
-			YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(jcats);
-			Timestamp finalresult = TimeUtils.convertFromYearSecondTimestamp(yts);
-			Assertions.assertEquals(ts, finalresult);
-		}
-	}
-
-	@Test
-	public void testConvertEpochSecondsToFromYearSecond() {
-		for(Timestamp ts : testcases) {
-			long epochSeconds = TimeUtils.convertToEpochSeconds(ts);
-			int nanos = ts.getNanos();
-			YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(epochSeconds);
-			yts.setNanos(nanos);
-			Timestamp finalresult = TimeUtils.convertFromYearSecondTimestamp(yts);
-			Assertions.assertEquals(ts, finalresult);
-		}
-	}
-	
-	private static boolean compareTimeSpans(List<TimeSpan> spans, String isoformattedlist) {
-		String[] times = isoformattedlist.split(",");
-		if(times.length != spans.size()*2) { 
-			logger.warn("The string array has " + times.length + " elements and the time span list has " + spans.size() + " elements");
-			return false;
-		}
-		int currTimeIndex = 0;
-		for(TimeSpan span : spans) {
-			String expectedStartTime = times[currTimeIndex++];
-			String expectedEndTime = times[currTimeIndex++];
-			Timestamp expectedStartTS = TimeUtils.convertFromISO8601String(expectedStartTime);
-			Timestamp expectedEndTS = TimeUtils.convertFromISO8601String(expectedEndTime);
-			if(expectedStartTS.getTime() != span.getStartTime().getTime()) {
-				logger.warn("Expected start of " + expectedStartTime + " obtained " + TimeUtils.convertToISO8601String(span.getStartTime()));
-				return false;
-			}
-			if(expectedEndTS.getTime() != span.getEndTime().getTime()) {
-				logger.warn("Expected end of " + expectedStartTime + " obtained " + TimeUtils.convertToISO8601String(span.getStartTime()));
-				return false;
-			}
-		}
-		
-		if(currTimeIndex != times.length) {
-			logger.warn("We are missing some expected values");
-			for(; currTimeIndex<times.length; currTimeIndex++) {
-				logger.warn("We are missing value " + times[currTimeIndex++]);
-			}
-			return false;
-		}
-		
-		return true;
 	}
 	
 	@Test
@@ -223,39 +198,27 @@ public class TimeUtilsTest {
 	}
 	
 	@Test
-	public void testgetPartitionName() {
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_YEAR), "2011");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_YEAR), "2012");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_YEAR), "2022");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_MONTH), "2011_01");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_MONTH), "2012_02");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z")), PartitionGranularity.PARTITION_MONTH), "2013_03");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_MONTH), "2022_12");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_DAY), "2011_01_01");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_DAY), "2012_02_29");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z")), PartitionGranularity.PARTITION_DAY), "2013_03_31");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_DAY), "2022_12_31");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_HOUR), "2011_01_01_00");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_HOUR), "2012_02_29_12");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z")), PartitionGranularity.PARTITION_HOUR), "2013_03_31_23");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_HOUR), "2022_12_31_21");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_5MIN), "2011_01_01_00_00");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_5MIN), "2012_02_29_12_20");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z")), PartitionGranularity.PARTITION_5MIN), "2013_03_31_23_55");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_5MIN), "2022_12_31_21_20");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_15MIN), "2011_01_01_00_00");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_15MIN), "2012_02_29_12_15");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z")), PartitionGranularity.PARTITION_15MIN), "2013_03_31_23_45");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_15MIN), "2022_12_31_21_15");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z")), PartitionGranularity.PARTITION_30MIN), "2011_01_01_00_00");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z")), PartitionGranularity.PARTITION_30MIN), "2012_02_29_12_00");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z")), PartitionGranularity.PARTITION_30MIN), "2013_03_31_23_30");
-		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z")), PartitionGranularity.PARTITION_30MIN), "2022_12_31_21_00");
-	
+	public void testConvertJCAToFromYearSecond() {
+		for (Instant ts : testcases) {
+			long epochSeconds = TimeUtils.convertToEpochSeconds(ts);
+			int nanos = ts.getNano();
+			gov.aps.jca.dbr.TimeStamp jcats = new gov.aps.jca.dbr.TimeStamp(epochSeconds - TimeUtils.EPICS_EPOCH_2_JAVA_EPOCH_OFFSET, nanos);
+			YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(jcats);
+			Instant finalresult = TimeUtils.convertFromYearSecondTimestamp(yts);
+			Assertions.assertEquals(ts, finalresult);
+		}
 	}
 	
-	static private void testNextEquals(String tsstr, PartitionGranularity granularity, String expectedStr) {
-		Assertions.assertEquals(TimeUtils.convertToISO8601String(TimeUtils.getNextPartitionFirstSecond(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String(tsstr)), granularity)), expectedStr);
+	@Test
+	public void testConvertEpochSecondsToFromYearSecond() {
+		for (Instant ts : testcases) {
+			long epochSeconds = TimeUtils.convertToEpochSeconds(ts);
+			int nanos = ts.getNano();
+			YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(epochSeconds);
+			yts.setNanos(nanos);
+			Instant finalresult = TimeUtils.convertFromYearSecondTimestamp(yts);
+			Assertions.assertEquals(ts, finalresult);
+		}
 	}
 	
 	@Test
@@ -295,8 +258,36 @@ public class TimeUtilsTest {
 		testNextEquals("2012-02-29T23:59:59.999Z", PartitionGranularity.PARTITION_30MIN,"2012-03-01T00:00:00.000Z");
 	}
 	
-	static private void testPrevEquals(String tsstr, PartitionGranularity granularity, String expectedStr) {
-		Assertions.assertEquals(TimeUtils.convertToISO8601String(TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(TimeUtils.convertFromISO8601String(tsstr)), granularity)), expectedStr);
+	@Test
+	public void testgetPartitionName() {
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_YEAR), "2011");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_YEAR), "2012");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_YEAR), "2022");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_MONTH), "2011_01");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_MONTH), "2012_02");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z"), PartitionGranularity.PARTITION_MONTH), "2013_03");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_MONTH), "2022_12");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_DAY), "2011_01_01");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_DAY), "2012_02_29");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z"), PartitionGranularity.PARTITION_DAY), "2013_03_31");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_DAY), "2022_12_31");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_HOUR), "2011_01_01_00");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_HOUR), "2012_02_29_12");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z"), PartitionGranularity.PARTITION_HOUR), "2013_03_31_23");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_HOUR), "2022_12_31_21");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_5MIN), "2011_01_01_00_00");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_5MIN), "2012_02_29_12_20");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z"), PartitionGranularity.PARTITION_5MIN), "2013_03_31_23_55");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_5MIN), "2022_12_31_21_20");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_15MIN), "2011_01_01_00_00");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_15MIN), "2012_02_29_12_15");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z"), PartitionGranularity.PARTITION_15MIN), "2013_03_31_23_45");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_15MIN), "2022_12_31_21_15");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2011-01-01T00:00:00.000Z"), PartitionGranularity.PARTITION_30MIN), "2011_01_01_00_00");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2012-02-29T12:24:26.000Z"), PartitionGranularity.PARTITION_30MIN), "2012_02_29_12_00");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2013-03-31T23:59:59.000Z"), PartitionGranularity.PARTITION_30MIN), "2013_03_31_23_30");
+		Assertions.assertEquals(TimeUtils.getPartitionName(TimeUtils.convertFromISO8601String("2022-12-31T21:22:59.000Z"), PartitionGranularity.PARTITION_30MIN), "2022_12_31_21_00");
+
 	}
 	
 	@Test
@@ -341,7 +332,6 @@ public class TimeUtilsTest {
 		testPrevEquals("2012-03-01T00:00:00.000Z", PartitionGranularity.PARTITION_30MIN,"2012-02-29T23:59:59.000Z");
 	}
 	
-	
 	@Test
 	public void testconvertToTenthsOfASecond() throws Exception {
 		long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
@@ -356,8 +346,8 @@ public class TimeUtilsTest {
 		}
 		
 		for(int i = 0; i < 100000; i++) {
-			Timestamp ts = TimeUtils.now();
-			TimeUtils.convertToTenthsOfASecond(ts.getTime()/1000, ts.getNanos());
+			Instant ts = TimeUtils.now();
+			TimeUtils.convertToTenthsOfASecond(ts.toEpochMilli() / 1000, ts.getNano());
 		}
 	}
 	
@@ -368,28 +358,28 @@ public class TimeUtilsTest {
 	 */
 	@Test
 	public void testStartEndIntervalBreakDown() throws Exception {
-		testStartEndIntervalBreakDown(TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z"), TimeUtils.convertFromISO8601String("2012-02-01T08:00:00.000Z"), 60*60*24*30, 13);
-		testStartEndIntervalBreakDown(TimeUtils.convertFromISO8601String("2011-02-25T00:00:00.000Z"), TimeUtils.convertFromISO8601String("2012-02-01T08:00:00.000Z"), 60*60*24*30, 12);
-		testStartEndIntervalBreakDown(TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z"), TimeUtils.convertFromISO8601String("2012-01-21T00:00:00.000Z"), 60*60*24*30, 12);
+		testStartEndIntervalBreakDown(TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z"), TimeUtils.convertFromISO8601String("2012-02-01T08:00:00.000Z"), PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 30, 13);
+		testStartEndIntervalBreakDown(TimeUtils.convertFromISO8601String("2011-02-25T00:00:00.000Z"), TimeUtils.convertFromISO8601String("2012-02-01T08:00:00.000Z"), PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 30, 12);
+		testStartEndIntervalBreakDown(TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z"), TimeUtils.convertFromISO8601String("2012-01-21T00:00:00.000Z"), PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 30, 12);
 	}
-	
-	private void testStartEndIntervalBreakDown(Timestamp start, Timestamp end, long binInterval, int expectedBins) throws Exception {
+
+	private void testStartEndIntervalBreakDown(Instant start, Instant end, long binInterval, int expectedBins) throws Exception {
 		logger.debug("Testing interval breakdown for retrieval");
 		List<TimeSpan> intervals = TimeUtils.breakIntoIntervals(start, end, binInterval);
-		Assertions.assertTrue(intervals.size() == expectedBins, "Expecting " + expectedBins + " bins, got " + intervals.size());
-		Timestamp previousEnd = null;
+		Assertions.assertEquals(intervals.size(), expectedBins, "Expecting " + expectedBins + " bins, got " + intervals.size());
+		Instant previousEnd = null;
 		for(int i = 0; i < intervals.size(); i++) {
 			TimeSpan currentInterval = intervals.get(i);
-			Assertions.assertTrue(currentInterval.getEndTime().after(currentInterval.getStartTime()), "Expecting end greater than start" +
+			Assertions.assertTrue(currentInterval.getEndTime().isAfter(currentInterval.getStartTime()), "Expecting end greater than start" +
 					TimeUtils.convertToHumanReadableString(currentInterval.getStartTime()) + " - " +
 					TimeUtils.convertToHumanReadableString(currentInterval.getEndTime()));
 
 			logger.debug(TimeUtils.convertToISO8601String(currentInterval.getStartTime()) + " - " + TimeUtils.convertToISO8601String(currentInterval.getEndTime()));
-			if(i == 0) { 
-				Assertions.assertTrue(currentInterval.getStartTime().equals(start), "Expecting start at the beginning " + i);
+			if (i == 0) {
+				Assertions.assertEquals(currentInterval.getStartTime(), start, "Expecting start at the beginning " + i);
 			}
 			if(i == intervals.size() - 1) {
-				Assertions.assertTrue(currentInterval.getEndTime().equals(end), "Expecting end at the end " + i);
+				Assertions.assertEquals(currentInterval.getEndTime(), end, "Expecting end at the end " + i);
 			} 
 			if(previousEnd != null) { 
 				Assertions.assertTrue((TimeUtils.convertToEpochSeconds(currentInterval.getStartTime()) - TimeUtils.convertToEpochSeconds(previousEnd) == 1), "Expecting at most a one second difference between " +

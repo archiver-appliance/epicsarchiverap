@@ -7,14 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.bpl;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
@@ -26,6 +18,13 @@ import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.ui.StreamPBIntoOutput;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * PV for getting the data for a PV from the engine's buffers
@@ -47,11 +46,11 @@ public class GetEngineDataAction implements BPLAction {
 		String startTimeStr = req.getParameter("from"); 
 		String endTimeStr = req.getParameter("to");
 		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z" 
-		Timestamp start = null;
+        Instant start = null;
 		if(startTimeStr != null) { 
 			start = TimeUtils.convertFromISO8601String(startTimeStr);
 		}
-		Timestamp end = null;
+        Instant end = null;
 		if(endTimeStr != null) { 
 			end = TimeUtils.convertFromISO8601String(endTimeStr);
 		}

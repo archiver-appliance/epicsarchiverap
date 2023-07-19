@@ -7,11 +7,13 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.etl.ETLStreamCreator;
+
 import java.io.IOException;
 import java.nio.file.Path;
-
-import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.etl.ETLStreamCreator;
+import java.time.Instant;
 
 /**
  * A stream creator that is backed by a single file.
@@ -19,9 +21,9 @@ import org.epics.archiverappliance.etl.ETLStreamCreator;
  *
  */
 public class FileStreamCreator implements ETLStreamCreator {
-    private String pvName;
-    private Path path;
-    private PBFileInfo info;
+    private final String pvName;
+    private final Path path;
+    private final PBFileInfo info;
 
     public FileStreamCreator(String pvName, Path path, PBFileInfo fileinfo) {
         this.pvName = pvName;
@@ -29,9 +31,39 @@ public class FileStreamCreator implements ETLStreamCreator {
         this.info = fileinfo;
     }
 
+    public static EventStream getTimeStream(
+            String pvName,
+            Path path,
+            ArchDBRTypes dbrType,
+            Instant start,
+            Instant end,
+            boolean skipSearch) throws IOException {
+
+        return new FileBackedPBEventStream(pvName, path, dbrType, start, end, skipSearch);
+    }
+
+    public static EventStream getTimeStream(
+            String pvName,
+            Path path,
+            Instant start,
+            Instant end,
+            boolean skipSearch, ArchDBRTypes archDBRTypes) throws IOException {
+
+        return new FileBackedPBEventStream(pvName, path, archDBRTypes, start, end, skipSearch);
+    }
+
+    public static EventStream getStream(
+            String pvName,
+            Path path,
+            ArchDBRTypes dbrType) throws IOException {
+
+        return new FileBackedPBEventStream(pvName, path, dbrType);
+    }
+
     @Override
     public EventStream getStream() throws IOException {
         return new FileBackedPBEventStream(pvName, path, info.getType());
     }
+
 
 }

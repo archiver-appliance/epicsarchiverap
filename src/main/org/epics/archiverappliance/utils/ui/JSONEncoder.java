@@ -1,16 +1,5 @@
 package org.epics.archiverappliance.utils.ui;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -19,6 +8,17 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * Generate something that converts a POJO into JSON using bean introspection.
@@ -54,7 +54,7 @@ public class JSONEncoder<T> {
 				encoders.add(new ToStringEncoder(descriptor));
 			} else if(descriptor.getPropertyType().equals(Long.class)) {
 				encoders.add(new ToStringEncoder(descriptor));
-			} else if(descriptor.getPropertyType().equals(Timestamp.class)) {
+            } else if (descriptor.getPropertyType().equals(Instant.class)) {
 				encoders.add(new ISO8601Encoder(descriptor));
 			} else if(descriptor.getPropertyType().equals(ArchDBRTypes.class)) {
 				encoders.add(new ToStringEncoder(descriptor));
@@ -183,7 +183,7 @@ public class JSONEncoder<T> {
 		@SuppressWarnings("unchecked")
 		@Override
 		public void encode(Object obj, JSONObject jsonObj) throws IllegalAccessException, InvocationTargetException {
-			Timestamp ts = (Timestamp) readMethod.invoke(obj);
+            Instant ts = (Instant) readMethod.invoke(obj);
 			if(ts != null) {
 				jsonObj.put(propertyName, TimeUtils.convertToISO8601String(ts));
 			}

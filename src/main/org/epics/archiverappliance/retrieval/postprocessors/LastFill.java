@@ -1,13 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -17,6 +9,13 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.concurrent.Callable;
 
 /**
  * Similar to the firstFill operator with the exception that we use the last sample in the bin.
@@ -47,7 +46,7 @@ public class LastFill implements PostProcessor, PostProcessorWithConsolidatedEve
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
 		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
 		float storageRate = typeInfo.getComputedStorageRate();
@@ -82,7 +81,7 @@ public class LastFill implements PostProcessor, PostProcessorWithConsolidatedEve
 									bin2Event.put(currentBin, e.makeClone());		
 								} else { 
 									Event currentBinEvent = bin2Event.get(currentBin);
-									if(e.getEventTimeStamp().after(currentBinEvent.getEventTimeStamp())) { 
+                                    if (e.getEventTimeStamp().isAfter(currentBinEvent.getEventTimeStamp())) {
 										bin2Event.put(currentBin, e.makeClone());		
 									}
 								}

@@ -6,7 +6,9 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.EmptyEventIterator;
 import org.epics.archiverappliance.common.POJOEvent;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -27,10 +29,13 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.stream.Stream;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileSuffix;
 
 /**
  * The FileBackedPBEventStream supports two iterators - one is a file-position based one and the other is a time based one.
@@ -64,7 +69,8 @@ public class FileBackedIteratorTest {
     private static final String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":FileBackedIteratorTest";
     private static final short currentYear = TimeUtils.getCurrentYear();
     private static final Path pbFilePath = Paths.get(
-            testFolder.getAbsolutePath(), pvName.replace(":", "/").replace("--", "") + ":" + currentYear + ".pb");
+            testFolder.getAbsolutePath(),
+            pvName.replace(":", "/").replace("--", "") + ":" + currentYear + pbFileExtension);
     private static final ConfigService configService;
 
     static {
@@ -93,14 +99,14 @@ public class FileBackedIteratorTest {
 
     public static Stream<Arguments> provideCorrectIterator() {
 
-        PBFileInfo fileInfo = null;
+        PBFileInfo fileInfo;
         try {
             fileInfo = new PBFileInfo(pbFilePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Timestamp FKTS = fileInfo.getFirstEvent().getEventTimeStamp();
-        Timestamp LKTS = fileInfo.getLastEvent().getEventTimeStamp();
+        Instant FKTS = fileInfo.getFirstEvent().getEventTimeStamp();
+        Instant LKTS = fileInfo.getLastEvent().getEventTimeStamp();
         logger.info("After generating data," + "FKTS = "
                 + TimeUtils.convertToISO8601String(FKTS) + "LKTS = "
                 + TimeUtils.convertToISO8601String(LKTS));
@@ -109,59 +115,60 @@ public class FileBackedIteratorTest {
         return Stream.of(
                 Arguments.of(
                         "Case 1",
-                        TimeUtils.minusDays(FKTS, 60),
+                        TimeUtils.minusDays(FKTS, 5),
                         TimeUtils.minusDays(FKTS, 2),
-                        TimeUtils.minusDays(FKTS, 59),
+                        TimeUtils.minusDays(FKTS, 4),
                         FKTS,
-                        FileBackedPBEventStreamTimeBasedIterator.class),
+                        EmptyEventIterator.class),
                 Arguments.of(
                         "Case 2",
-                        TimeUtils.minusDays(FKTS, 60),
+                        TimeUtils.minusDays(FKTS, 5),
                         TimeUtils.minusDays(FKTS, 2),
                         TimeUtils.plusDays(FKTS, 1),
-                        TimeUtils.plusDays(FKTS, 90),
+                        TimeUtils.plusDays(FKTS, 10),
                         mainIteratorClass),
                 Arguments.of(
                         "Case 3",
-                        TimeUtils.minusDays(FKTS, 60),
+                        TimeUtils.minusDays(FKTS, 5),
                         TimeUtils.minusDays(FKTS, 1),
                         TimeUtils.plusDays(LKTS, 1),
-                        TimeUtils.plusDays(LKTS, 90),
+                        TimeUtils.plusDays(LKTS, 10),
                         mainIteratorClass),
                 Arguments.of(
                         "Case 4",
                         FKTS,
-                        TimeUtils.plusDays(FKTS, 60),
-                        TimeUtils.minusDays(LKTS, 90),
+                        TimeUtils.plusDays(FKTS, 5),
+                        TimeUtils.minusDays(LKTS, 10),
                         TimeUtils.minusDays(LKTS, 1),
                         mainIteratorClass),
                 Arguments.of(
                         "Case 5",
                         FKTS,
-                        TimeUtils.plusDays(FKTS, 60),
+                        TimeUtils.plusDays(FKTS, 5),
                         LKTS,
-                        TimeUtils.plusDays(LKTS, 90),
+                        TimeUtils.plusDays(LKTS, 10),
                         mainIteratorClass),
                 Arguments.of(
                         "Case 6",
-                        LKTS,
+                        TimeUtils.plusDays(LKTS, 1),
                         TimeUtils.plusDays(LKTS, 10),
                         TimeUtils.plusDays(LKTS, 1),
-                        TimeUtils.plusDays(LKTS, 90),
+                        TimeUtils.plusDays(LKTS, 10),
+                        EmptyEventIterator.class,
                         mainIteratorClass));
     }
 
     private static void generateData() throws IOException {
-        logger.info("generate Data " + "pb" + " to " + pbFilePath);
+        logger.info("generate Data " + pbFileExtension + " to " + pbFilePath);
         PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
+                pbFileSuffix + "://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
                         + "&partitionGranularity=PARTITION_YEAR",
                 FileBackedIteratorTest.configService);
 
         // Add data with gaps every month
         DecimalFormat monthFmt = new DecimalFormat("00");
         ArrayListEventStream strm = new ArrayListEventStream(
-                86400 * 12 * 10,
+                PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 12 * 10,
                 new RemotableEventStreamDesc(
                         ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, FileBackedIteratorTest.currentYear));
         for (int month = 1; month < 12; month++) {
@@ -169,10 +176,16 @@ public class FileBackedIteratorTest {
                     FileBackedIteratorTest.currentYear + "-" + monthFmt.format(month + 1) + "-01T08:00:00.000Z"));
             // Generate data for  10 days
             for (int day = 0; day < 10; day++) {
-                for (int second = 0; second < 86400; second += 15) {
+                for (int second = 0;
+                     second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                     second += 15) {
                     strm.add(new POJOEvent(
                             ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                            TimeUtils.convertFromEpochSeconds(startOfMonthEpochSeconds + day * 86400 + second, 0),
+                            TimeUtils.convertFromEpochSeconds(
+                                    startOfMonthEpochSeconds
+                                            + (long) day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk()
+                                            + second,
+                                    0),
                             new ScalarValue<>((double) second),
                             0,
                             0));
@@ -192,24 +205,26 @@ public class FileBackedIteratorTest {
     @MethodSource("provideCorrectIterator")
     public void makeSureWeGetCorrectIterator(
             String testCase,
-            Timestamp minQTS,
-            Timestamp maxQTS,
-            Timestamp minQTE,
-            Timestamp maxQTE,
+            Instant minQTS,
+            Instant maxQTS,
+            Instant minQTE,
+            Instant maxQTE,
             Class<? extends Iterator<Event>> expectedIteratorClass)
             throws IOException {
-        for (Timestamp QTS = minQTS; QTS.before(maxQTS); QTS = TimeUtils.plusDays(QTS, 1)) {
-            for (Timestamp QTE = minQTE; QTE.before(maxQTE); QTE = TimeUtils.plusDays(QTE, 1)) {
-                if (QTS.equals(QTE) || QTS.after(QTE)) {
+        for (Instant QTS = minQTS; QTS.isBefore(maxQTS); QTS = TimeUtils.plusDays(QTS, 1)) {
+            for (Instant QTE = minQTE; QTE.isBefore(maxQTE); QTE = TimeUtils.plusDays(QTE, 1)) {
+                if (QTS.equals(QTE) || QTS.isAfter(QTE)) {
                     continue;
                 }
                 logger.debug("Checking " + testCase + " for QTS " + TimeUtils.convertToISO8601String(QTS) + " and QTE "
                         + TimeUtils.convertToISO8601String(QTE));
 
-                try (EventStream strm = new FileBackedPBEventStream(pvName, pbFilePath, dbrType, QTS, QTE, false)) {
-                    Assertions.assertTrue(
-                            expectedIteratorClass.isInstance(strm.iterator()),
-                            "We are not getting the expeected iterator " + expectedIteratorClass.getName()
+                try (EventStream strm =
+                             FileStreamCreator.getTimeStream(pvName, pbFilePath, dbrType, QTS, QTE, false)) {
+                    Assertions.assertSame(
+                            expectedIteratorClass,
+                            strm.iterator().getClass(),
+                            "We are not getting the expected iterator " + expectedIteratorClass.getName()
                                     + " for " + testCase
                                     + " for QTS " + TimeUtils.convertToISO8601String(QTS)
                                     + " and QTE " + TimeUtils.convertToISO8601String(QTE));

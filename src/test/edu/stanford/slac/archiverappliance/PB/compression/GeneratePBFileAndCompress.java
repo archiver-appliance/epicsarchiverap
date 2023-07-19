@@ -1,28 +1,10 @@
 package edu.stanford.slac.archiverappliance.PB.compression;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
-import org.epics.archiverappliance.StoragePlugin;
-import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.common.YearSecondTimestamp;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.StoragePluginURLParser;
-import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarDouble.Builder;
-import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.File;
+import java.util.ArrayList;
 
 public class GeneratePBFileAndCompress {
 	private static Logger logger = LogManager.getLogger(GeneratePBFileAndCompress.class.getName());

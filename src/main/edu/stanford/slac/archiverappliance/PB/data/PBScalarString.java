@@ -7,11 +7,12 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarString.Builder;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import gov.aps.jca.dbr.DBR;
+import gov.aps.jca.dbr.DBR_TIME_String;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,19 +25,17 @@ import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarString.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import gov.aps.jca.dbr.DBR;
-import gov.aps.jca.dbr.DBR_TIME_String;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A DBRTimeEvent for a scalar string. 
  * @author mshankar
  *
  */
-public class PBScalarString implements DBRTimeEvent, PartionedTime {
+public class PBScalarString implements DBRTimeEvent {
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.ScalarString dbevent = null;
@@ -52,7 +51,7 @@ public class PBScalarString implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarString.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 				.setVal(ev.getSampleValue().toString());
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -75,7 +74,7 @@ public class PBScalarString implements DBRTimeEvent, PartionedTime {
         year = yst.getYear();
         Builder builder = EPICSEvent.ScalarString.newBuilder()
                         .setSecondsintoyear(yst.getSecondsintoyear())
-                        .setNano(yst.getNanos())
+                .setNano(yst.getNano())
                         .setVal(realtype.getStringValue()[0]);
         if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
         if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
@@ -93,7 +92,7 @@ public class PBScalarString implements DBRTimeEvent, PartionedTime {
         year = yst.getYear();
         Builder builder = EPICSEvent.ScalarString.newBuilder()
                         .setSecondsintoyear(yst.getSecondsintoyear())
-                        .setNano(yst.getNanos())
+                .setNano(yst.getNano())
                         .setVal(value);
         if(alarm.severity != 0) builder.setSeverity(alarm.severity);
         if(alarm.status != 0) builder.setStatus(alarm.status);
@@ -108,20 +107,9 @@ public class PBScalarString implements DBRTimeEvent, PartionedTime {
 	}
 	
 	@Override
-	public Timestamp getEventTimeStamp() {
+    public Instant getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
-	}
-	
-	@Override
-	public short getYear() {
-		return year;
-	}
-	
-	@Override
-	public int getSecondsIntoYear() {
-		unmarshallEventIfNull();
-		return dbevent.getSecondsintoyear();
 	}
 
 	@Override

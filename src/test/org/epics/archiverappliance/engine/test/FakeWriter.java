@@ -7,13 +7,12 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.IOException;
-
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.BasicContext;
+
+import java.io.IOException;
 /**
  * do nothing ,just used for creating channels
  * @author Luofeng Li
@@ -23,10 +22,10 @@ public class FakeWriter implements Writer {
 
 
 	@Override
-	public boolean appendData(BasicContext context, String arg0,
+    public int appendData(BasicContext context, String arg0,
 			EventStream arg1) throws IOException {
 		//
-		return false;
+        return 0;
 	}
 
 	@Override

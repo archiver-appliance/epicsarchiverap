@@ -8,10 +8,6 @@
 package org.epics.archiverappliance.retrieval.client;
 
 
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -27,6 +23,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 /**
  * Test retrieval for two PVs
@@ -54,8 +52,8 @@ public class TwoPVRetrievalTest {
 	@Test
 	public void testGetDataForTwoPVs() {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
+        Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
 		EventStream stream = null;
 		try {
 			stream = rawDataRetrieval.getDataForPVS(new String[] { ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1", ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine2" }, start, end, new RetrievalEventProcessor() {

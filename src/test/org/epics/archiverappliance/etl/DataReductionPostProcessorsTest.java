@@ -13,9 +13,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -39,7 +39,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -164,12 +164,12 @@ public class DataReductionPostProcessorsTest {
         for (int day = 0; day < 40; day++) {
             // Generate data into the STS on a daily basis
             ArrayListEventStream genDataRaw = new ArrayListEventStream(
-                    86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
             ArrayListEventStream genDataReduced = new ArrayListEventStream(
-                    86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
-            for (int second = 0; second < 86400; second++) {
-                YearSecondTimestamp ysts = new YearSecondTimestamp(currentYear, day * 86400 + second, 0);
-                Timestamp ts = TimeUtils.convertFromYearSecondTimestamp(ysts);
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
+            for (int second = 0; second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(); second++) {
+                YearSecondTimestamp ysts = new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + second, 0);
+                Instant ts = TimeUtils.convertFromYearSecondTimestamp(ysts);
                 genDataRaw.add(
                         new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>(second * 1.0), 0, 0));
                 genDataReduced.add(
@@ -183,8 +183,8 @@ public class DataReductionPostProcessorsTest {
             logger.debug("For postprocessor " + reduceDataUsing + " done generating data into the STS for day " + day);
 
             // Run ETL at the end of the day
-            Timestamp timeETLruns = TimeUtils.convertFromYearSecondTimestamp(
-                    new YearSecondTimestamp(currentYear, day * 86400 + 86399, 0));
+            Instant timeETLruns = TimeUtils.convertFromYearSecondTimestamp(
+                    new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 86399, 0));
             ETLExecutor.runETLs(configService, timeETLruns);
             logger.debug("For postprocessor " + reduceDataUsing + " done performing ETL as though today is "
                     + TimeUtils.convertToHumanReadableString(timeETLruns));
@@ -197,10 +197,10 @@ public class DataReductionPostProcessorsTest {
             int reducedCount = 0;
 
             try (BasicContext context = new BasicContext()) {
-                Timestamp startTime = TimeUtils.minusDays(TimeUtils.now(), 10 * 366);
-                Timestamp endTime = TimeUtils.plusDays(TimeUtils.now(), 10 * 366);
-                LinkedList<Timestamp> rawTimestamps = new LinkedList<Timestamp>();
-                LinkedList<Timestamp> reducedTimestamps = new LinkedList<Timestamp>();
+                Instant startTime = TimeUtils.minusDays(TimeUtils.now(), 10 * 366);
+                Instant endTime = TimeUtils.plusDays(TimeUtils.now(), 10 * 366);
+                LinkedList<Instant> rawTimestamps = new LinkedList<Instant>();
+                LinkedList<Instant> reducedTimestamps = new LinkedList<Instant>();
                 if (postProcessor instanceof PostProcessorWithConsolidatedEventStream) {
                     List<Callable<EventStream>> callables =
                             etlLTSRaw.getDataForPV(context, rawPVName, startTime, endTime, postProcessor);

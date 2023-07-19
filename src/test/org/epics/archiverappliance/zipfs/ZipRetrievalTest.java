@@ -1,16 +1,7 @@
 package org.epics.archiverappliance.zipfs;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,15 +16,20 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
-import org.epics.archiverappliance.utils.simulation.SimulationEventStreamIterator;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.text.DecimalFormat;
+import java.time.Instant;
 
 /**
  * Test basic functionality when using zipfs.  
@@ -108,7 +104,8 @@ public class ZipRetrievalTest {
 		String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":SimpleZipTest";
 		ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 		int phasediffindegrees = 10;
-		SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees));
+        short currentYear = TimeUtils.getCurrentYear();
+        SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
 		try(BasicContext context = new BasicContext()) {
 			storagePlugin.appendData(context, pvName, simstream);
 		}
@@ -124,7 +121,7 @@ public class ZipRetrievalTest {
 				eventCount++;
 			}
 			logger.info("Got " + eventCount + " events");
-			Assertions.assertTrue(eventCount >= (SimulationEventStreamIterator.DEFAULT_NUMBER_OF_SAMPLES-1), "Retrieval does not seem to return any events " + eventCount);
+            Assertions.assertTrue(eventCount >= (simstream.getNumberOfEvents() - 1), "Retrieval does not seem to return any events " + eventCount);
 		}
 	}
 	
@@ -137,7 +134,8 @@ public class ZipRetrievalTest {
 			PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
 			logger.info(storagePlugin.getURLRepresentation());
 			int phasediffindegrees = 10;
-			SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees));
+            short currentYear = TimeUtils.getCurrentYear();
+            SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
 			try(BasicContext context = new BasicContext()) {
 				storagePlugin.appendData(context, pvName, simstream);
 			}
@@ -147,7 +145,8 @@ public class ZipRetrievalTest {
 			PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
 			logger.info(storagePlugin.getURLRepresentation());
 			int phasediffindegrees = 10;
-			SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees));
+            short currentYear = TimeUtils.getCurrentYear();
+            SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
 			try(BasicContext context = new BasicContext()) {
 				storagePlugin.appendData(context, pvName, simstream);
 			}
@@ -162,8 +161,8 @@ public class ZipRetrievalTest {
 			long totalTimeConsumed = 0;
 			int numdays = 27;
 			for(int day = 1; day <= numdays; day++) {
-				Timestamp start = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day) + "T08:00:00.000Z");
-				Timestamp end   = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day+1) + "T08:00:00.000Z");
+                Instant start = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day) + "T08:00:00.000Z");
+                Instant end = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day + 1) + "T08:00:00.000Z");
 				long startTime = System.currentTimeMillis();
 				try(BasicContext context = new BasicContext();
 						EventStream strm = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end))
@@ -188,8 +187,8 @@ public class ZipRetrievalTest {
 			long totalTimeConsumed = 0;
 			int numdays = 27;
 			for(int day = 1; day <= numdays; day++) {
-				Timestamp start = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day) + "T08:00:00.000Z");
-				Timestamp end   = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day+1) + "T08:00:00.000Z");
+                Instant start = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day) + "T08:00:00.000Z");
+                Instant end = TimeUtils.convertFromISO8601String(currentYear + "-02-" + format.format(day + 1) + "T08:00:00.000Z");
 				long startTime = System.currentTimeMillis();
 				try(BasicContext context = new BasicContext();
 						EventStream strm = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end))

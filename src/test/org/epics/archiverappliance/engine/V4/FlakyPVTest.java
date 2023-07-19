@@ -39,7 +39,7 @@ public class FlakyPVTest {
 
     private ConfigService configService;
     private PVAServer pvaServer;
-    private static final long disconnectTime = ConfigServiceForTests.defaultMinutesDisconnect * 60 * 1000;
+    private static final long disconnectTime = ConfigServiceForTests.defaultSecondsDisconnect * 1000;
 
     @BeforeEach
     public void setUp() throws Exception {

@@ -81,8 +81,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.text.DecimalFormat;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -177,10 +177,10 @@ public class DataRetrievalServlet extends HttpServlet {
         return new RetrievalExecutorResult(new CurrentThreadExecutorService(), requestTimes);
     }
 
-    static Timestamp fromString(String timestampString, Timestamp defaultTime) throws IllegalArgumentException {
+    static Instant fromString(String timestampString, Instant defaultTime) throws IllegalArgumentException {
 
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
-        Timestamp res = defaultTime;
+        Instant res = defaultTime;
         if (timestampString != null) {
             try {
                 res = TimeUtils.convertFromISO8601String(timestampString);
@@ -601,7 +601,7 @@ public class DataRetrievalServlet extends HttpServlet {
 
     private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp, String pvName) throws IOException {
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
-        Timestamp end;
+        Instant end;
         try {
             end = fromString(req.getParameter("to"), TimeUtils.plusHours(TimeUtils.now(), 1));
         } catch (IllegalArgumentException ex) {
@@ -609,7 +609,7 @@ public class DataRetrievalServlet extends HttpServlet {
             return null;
         }
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
-        Timestamp start;
+        Instant start;
         try {
             start = fromString(req.getParameter("from"), TimeUtils.minusDays(end, 1));
         } catch (IllegalArgumentException ex) {
@@ -617,7 +617,7 @@ public class DataRetrievalServlet extends HttpServlet {
             return null;
         }
 
-        if (end.before(start)) {
+        if (end.isBefore(start)) {
             logAndRespond("For request, end " + end + " is before start " + start + " for pv " + pvName, null, resp, HttpServletResponse.SC_BAD_REQUEST);
             return null;
         }
@@ -625,7 +625,7 @@ public class DataRetrievalServlet extends HttpServlet {
         return getRequestTimes(req, resp, pvName, end, start);
     }
 
-    private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp, String pvName, Timestamp end, Timestamp start) throws IOException {
+    private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp, String pvName, Instant end, Instant start) throws IOException {
         LinkedList<TimeSpan> requestTimes = new LinkedList<>();
 
         // We can specify a list of time stamp pairs using the optional timeranges parameter
@@ -1007,7 +1007,6 @@ public class DataRetrievalServlet extends HttpServlet {
      * @param pvName
      * @param typeInfo
      * @param postProcessor
-     * @param applianceForPV
      * @param retrievalContext
      * @param executorResult
      * @param req
@@ -1090,7 +1089,7 @@ public class DataRetrievalServlet extends HttpServlet {
      * @return
      * @throws IOException
      */
-    private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Timestamp start, Timestamp end) throws IOException {
+    private PVTypeInfo checkIfPVisServedByExternalServer(String pvName, Instant start, Instant end) throws IOException {
         PVTypeInfo typeInfo = null;
         // See if external EPICS archiver appliances have this PV.
         Map<String, String> externalServers = configService.getExternalArchiverDataServers();
@@ -1356,21 +1355,21 @@ public class DataRetrievalServlet extends HttpServlet {
     private boolean parseTimeRanges(HttpServletResponse resp, String pvName, LinkedList<TimeSpan> requestTimes, String timeRangesStr) throws IOException {
         String[] timeRangesStrList = timeRangesStr.split(",");
         if (timeRangesStrList.length % 2 != 0) {
-            String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have " + timeRangesStrList.length + " times";
-            logger.error(msg);
-            resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
-            return false;
-        }
+			String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have " + timeRangesStrList.length + " times";
+			logger.error(msg);
+			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
+			return false;
+		}
 
-        LinkedList<Timestamp> timeRangesList = new LinkedList<Timestamp>();
-        for (String timeRangesStrItem : timeRangesStrList) {
-            try {
-                Timestamp ts = TimeUtils.convertFromISO8601String(timeRangesStrItem);
+        LinkedList<Instant> timeRangesList = new LinkedList<Instant>();
+		for(String timeRangesStrItem : timeRangesStrList) { 
+			try {
+                Instant ts = TimeUtils.convertFromISO8601String(timeRangesStrItem);
                 timeRangesList.add(ts);
             } catch (IllegalArgumentException ex) {
-                try {
-                    Timestamp ts = TimeUtils.convertFromDateTimeStringWithOffset(timeRangesStrItem);
+				try {
+                    Instant ts = TimeUtils.convertFromDateTimeStringWithOffset(timeRangesStrItem);
                     timeRangesList.add(ts);
                 } catch (IllegalArgumentException ex2) {
                     String msg = "Cannot parse time " + timeRangesStrItem;
@@ -1382,23 +1381,23 @@ public class DataRetrievalServlet extends HttpServlet {
             }
         }
 
-        assert (timeRangesList.size() % 2 == 0);
-        Timestamp prevEnd = null;
-        while (!timeRangesList.isEmpty()) {
-            Timestamp t0 = timeRangesList.pop();
-            Timestamp t1 = timeRangesList.pop();
+		assert(timeRangesList.size()%2 == 0);
+        Instant prevEnd = null;
+		while(!timeRangesList.isEmpty()) {
+            Instant t0 = timeRangesList.pop();
+            Instant t1 = timeRangesList.pop();
 
-            if (t1.before(t0)) {
-                String msg = "For request, end " + t1 + " is before start " + t0.toString() + " for pv " + pvName;
+            if (t1.isBefore(t0)) {
+				String msg = "For request, end " + t1.toString() + " is before start " + t0.toString() + " for pv " + pvName;
                 logger.error(msg);
                 resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
                 return false;
             }
 
-            if (prevEnd != null) {
-                if (t0.before(prevEnd)) {
-                    String msg = "For request, start time " + t0 + " is before previous end time " + prevEnd + " for pv " + pvName;
+			if(prevEnd != null) {
+                if (t0.isBefore(prevEnd)) {
+					String msg = "For request, start time " + t0.toString() + " is before previous end time " + prevEnd.toString() + " for pv " + pvName;
                     logger.error(msg);
                     resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
@@ -1499,7 +1498,7 @@ public class DataRetrievalServlet extends HttpServlet {
         return Boolean.parseBoolean(searchStoreForRetiredPvsStr);
     }
 
-    private record RequestTimes(Timestamp end, Timestamp start,
+    private record RequestTimes(Instant end, Instant start,
                                 LinkedList<TimeSpan> requestTimes) {
     }
 

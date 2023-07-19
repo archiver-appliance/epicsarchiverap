@@ -8,11 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 
-import java.io.File;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
@@ -26,11 +22,17 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import org.junit.jupiter.api.Assertions;
+import java.io.File;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Test the ETL source funtionality of PlainPBStoragePlugin
@@ -66,8 +68,11 @@ public class ETLSourceGetStreamsTest {
 	@Test
 	public void getETLStreams() throws Exception {
 		short currentYear = TimeUtils.getCurrentYear();
-		long startOfTodayInEpochSeconds = TimeUtils.getStartOfCurrentDayInEpochSeconds();
-		
+		ZonedDateTime startOfToday = ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC))
+				.withHour(0)
+				.withMinute(0)
+				.withSecond(0);
+
 		HashMap<PartitionGranularity, DataForGetETLStreamsTest> testParams = new HashMap<PartitionGranularity, DataForGetETLStreamsTest>();
 		testParams.put(PartitionGranularity.PARTITION_5MIN, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
 		testParams.put(PartitionGranularity.PARTITION_15MIN, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
@@ -75,7 +80,7 @@ public class ETLSourceGetStreamsTest {
 		testParams.put(PartitionGranularity.PARTITION_HOUR, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
 		testParams.put(PartitionGranularity.PARTITION_DAY, new DataForGetETLStreamsTest(3600*24*7, 1800)); // One week; sample every 30 mins
 		testParams.put(PartitionGranularity.PARTITION_MONTH, new DataForGetETLStreamsTest(3600*24*7*365, 3600*12)); // One year; sample every 1/2 day
-		testParams.put(PartitionGranularity.PARTITION_YEAR, new DataForGetETLStreamsTest(3600*24*7*365*10, 3600*24*7)); // 10 years; sample every week
+		testParams.put(PartitionGranularity.PARTITION_YEAR, new DataForGetETLStreamsTest(3600L * 24 * 7 * 365 * 10, 3600 * 24 * 7)); // 10 years; sample every week
 		
 		
 		for(PartitionGranularity partitionGranularity : PartitionGranularity.values()) {
@@ -92,7 +97,7 @@ public class ETLSourceGetStreamsTest {
 			ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 			ArrayListEventStream testData = new ArrayListEventStream(1000, new RemotableEventStreamDesc(type, pvName, currentYear));
 			for(long i = 0; i < sampleRange; i+=skipSeconds) {
-				testData.add(new SimulationEvent(TimeUtils.getSecondsIntoYear(startOfTodayInEpochSeconds+i), TimeUtils.computeYearForEpochSeconds(startOfTodayInEpochSeconds+i), type, new ScalarValue<Double>((double) i)));
+				testData.add(new SimulationEvent(TimeUtils.getSecondsIntoYear(startOfToday.toEpochSecond() + i), TimeUtils.computeYearForEpochSeconds(startOfToday.toEpochSecond() + i), type, new ScalarValue<Double>((double) i)));
 			}
 			try(BasicContext context = new BasicContext()) {
 				pbplugin.appendData(context, pvName, testData);
@@ -101,21 +106,18 @@ public class ETLSourceGetStreamsTest {
 			// So we now check the number of files we get as we cruise thru the whole day.
 			
 			int expectedFiles = 0;
-			long firstSecondOfNextPartition = TimeUtils.getNextPartitionFirstSecond(startOfTodayInEpochSeconds, partitionGranularity);
+			Instant firstSecondOfNextPartition = TimeUtils.getNextPartitionFirstSecond(startOfToday.toInstant(), partitionGranularity);
 			for(long i = 0; i < sampleRange; i+=skipSeconds) {
-				long currSecond = startOfTodayInEpochSeconds + i;
-				if(currSecond >= firstSecondOfNextPartition) {
-					firstSecondOfNextPartition = TimeUtils.getNextPartitionFirstSecond(currSecond, partitionGranularity);
+				Instant currentTime = startOfToday.toInstant().plusSeconds(i);
+				if (currentTime.isAfter(firstSecondOfNextPartition) || currentTime.equals(firstSecondOfNextPartition)) {
+					firstSecondOfNextPartition = TimeUtils.getNextPartitionFirstSecond(currentTime, partitionGranularity);
 					expectedFiles++;
 				}
-				Timestamp currentTime = TimeUtils.convertFromEpochSeconds(currSecond, 0);
 				List<ETLInfo> ETLFiles = pbplugin.getETLStreams(pvName, currentTime, etlContext);
-				Assertions.assertTrue((ETLFiles != null) ? (ETLFiles.size() == expectedFiles) : (expectedFiles == 0),
-						"getETLStream failed for "
-				+ TimeUtils.convertToISO8601String(currSecond) 
-				+ " for partition " + partitionGranularity.toString()
-				+ " Expected " + expectedFiles + " got " + (ETLFiles != null ? Integer.toString(ETLFiles.size()) : "null")
-						);
+				Assertions.assertTrue((ETLFiles != null) ? (ETLFiles.size() == expectedFiles) : (expectedFiles == 0), "getETLStream failed for "
+						+ TimeUtils.convertToISO8601String(currentTime)
+						+ " for partition " + partitionGranularity
+						+ " Expected " + expectedFiles + " got " + (ETLFiles != null ? Integer.toString(ETLFiles.size()) : "null"));
 			}
 		}
 	}

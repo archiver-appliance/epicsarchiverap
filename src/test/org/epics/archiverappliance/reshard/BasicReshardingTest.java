@@ -1,14 +1,5 @@
 package org.epics.archiverappliance.reshard;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.StringWriter;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.List;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -38,12 +29,18 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.StringWriter;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.List;
 
 /**
  * Simple test to test resharding a PV from one appliance to another...
@@ -143,8 +140,8 @@ public class BasicReshardingTest {
 		typeInfoBeforePausing.setCreationTime(TimeUtils.getStartOfYear(TimeUtils.getCurrentYear() - 4));
 		String updatePVTypeInfoURL = "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true";
 		GetUrlContent.postObjectAndGetContentAsJSONObject(updatePVTypeInfoURL, JSONEncoder.getEncoder(PVTypeInfo.class).encode(typeInfoBeforePausing));
-		
-		Timestamp beforeReshardingCreationTimedstamp = typeInfoBeforePausing.getCreationTime();
+
+        Instant beforeReshardingCreationTimedstamp = typeInfoBeforePausing.getCreationTime();
 
 		// Generate some data into the MTS and LTS
 		String[] dataStores = typeInfoBeforePausing.getDataStores();
@@ -155,7 +152,7 @@ public class BasicReshardingTest {
 			String name = plugin.getName();
 			if(name.equals("MTS")) {
 				// For the MTS we generate a couple of days worth of data
-				Timestamp startOfMtsData = TimeUtils.minusDays(TimeUtils.now(), 3);
+                Instant startOfMtsData = TimeUtils.minusDays(TimeUtils.now(), 3);
 				long startOfMtsDataSecs = TimeUtils.convertToEpochSeconds(startOfMtsData);
 				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(startOfMtsDataSecs).getYear()));
 				for(long offsetSecs = 0; offsetSecs < 2*24*60*60; offsetSecs += 60) { 
@@ -225,7 +222,7 @@ public class BasicReshardingTest {
 		PVTypeInfo typeInfoAfterResharding = getPVTypeInfo();
 		String afterReshardingAppliance = typeInfoAfterResharding.getApplianceIdentity();
 		Assertions.assertTrue(afterReshardingAppliance != null && afterReshardingAppliance.equals(otherAppliance), "Invalid appliance identity after resharding " + afterReshardingAppliance);
-		Timestamp afterReshardingCreationTimedstamp = typeInfoAfterResharding.getCreationTime();
+        Instant afterReshardingCreationTimedstamp = typeInfoAfterResharding.getCreationTime();
 		
 		// Let's resume the PV.
 		String resumePVURL = "http://localhost:17665/mgmt/bpl/resumeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
@@ -270,11 +267,11 @@ public class BasicReshardingTest {
         return unmarshalledTypeInfo;
 	}
 	
-	private long getNumberOfEvents() throws Exception { 
-		Timestamp start = TimeUtils.convertFromEpochSeconds(TimeUtils.getStartOfYearInSeconds(TimeUtils.getCurrentYear() - 2), 0);
-		Timestamp end = TimeUtils.now();
+	private long getNumberOfEvents() throws Exception {
+        Instant start = TimeUtils.convertFromEpochSeconds(TimeUtils.getStartOfYearInSeconds(TimeUtils.getCurrentYear() - 2), 0);
+        Instant end = TimeUtils.now();
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp obtainedFirstSample = null;
+        Instant obtainedFirstSample = null;
 		long eventCount = 0;
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, start, end, null)) {
 			if(stream != null) {

@@ -7,15 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB.utils;
 
-import java.io.BufferedOutputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -23,10 +18,14 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
+import java.io.BufferedOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
+import java.util.LinkedList;
 
 /**
  * Make a copy of the specified PB file only including the samples between the specified timestamps.
@@ -80,10 +79,10 @@ public class SlicePBFile {
 			logger.error("Source path " + srcPath.toString() + " does not seem to exist or is not a regular file.");
 			return;
 		}
-		
-		Timestamp startTs = TimeUtils.convertFromISO8601String(startTime);
-		Timestamp endTs = TimeUtils.convertFromISO8601String(endTime);
-		if(!startTs.before(endTs)) { 
+
+        Instant startTs = TimeUtils.convertFromISO8601String(startTime);
+        Instant endTs = TimeUtils.convertFromISO8601String(endTime);
+        if (!startTs.isBefore(endTs)) {
 			logger.error("Start time " + startTime + " is not before " + endTime);
 			return;
 		}
@@ -109,8 +108,8 @@ public class SlicePBFile {
 		System.out.println();
 		System.out.println();
 	}
-	
-	public static void slicePBFile(Path srcPath, Timestamp startTs, Timestamp endTs, Path destPath) {
+
+    public static void slicePBFile(Path srcPath, Instant startTs, Instant endTs, Path destPath) {
 		logger.info("Slicing " + srcPath.toString() + " from " + TimeUtils.convertToISO8601String(startTs) + " to " + TimeUtils.convertToISO8601String(endTs) + " into " + destPath);
 		try (ArchPaths contexts = new ArchPaths()) {
 			try { 
@@ -127,8 +126,8 @@ public class SlicePBFile {
 					int eventNumber = 0;
 					for(Event ev : strm) {
 						try {
-							Timestamp eventTs = ev.getEventTimeStamp();
-							if((eventTs.equals(startTs) || eventTs.after(startTs)) && eventTs.before(endTs)) { 
+                            Instant eventTs = ev.getEventTimeStamp();
+                            if ((eventTs.equals(startTs) || eventTs.isAfter(startTs)) && eventTs.isBefore(endTs)) {
 								ByteArray val = ev.getRawForm();
 								os.write(val.data, val.off, val.len);
 								os.write(LineEscaper.NEWLINE_CHAR);

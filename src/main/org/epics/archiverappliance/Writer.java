@@ -7,9 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance;
 
-import java.io.IOException;
-
 import org.epics.archiverappliance.common.BasicContext;
+
+import java.io.IOException;
 
 /**
  * The main data consumption interface, this represents objects which take an event stream and write it to a (potentially permanent) store.
@@ -17,7 +17,7 @@ import org.epics.archiverappliance.common.BasicContext;
  *
  */
 public interface Writer {
-	boolean appendData(BasicContext context, String pvName, EventStream stream) throws IOException;
+    int appendData(BasicContext context, String pvName, EventStream stream) throws IOException;
 
 	/**
 	 * Gets the last known event in this destination. 

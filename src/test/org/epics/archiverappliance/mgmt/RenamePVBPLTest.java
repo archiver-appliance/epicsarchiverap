@@ -1,13 +1,6 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -32,16 +25,20 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * Test rename PV with data at the backend.
@@ -184,14 +181,14 @@ public class RenamePVBPLTest {
 	private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		 Timestamp now = TimeUtils.now();
-		 Timestamp start = TimeUtils.minusDays(now, 3*366);
-		 Timestamp end = now;
+        Instant now = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(now, 3 * 366);
+        Instant end = now;
 		 int eventCount = 0;
 
 		 final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		 // Make sure we get the EGU as part of a regular VAL call.
-		 try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			 PayloadInfo info = null;
 			 Assertions.assertTrue(strm != null, "We should get some data, we are getting a null stream back");
 			 info =  strm.getPayLoadInfo();

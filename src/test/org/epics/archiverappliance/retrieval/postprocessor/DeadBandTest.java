@@ -1,17 +1,7 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.nio.file.Paths;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Iterator;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,11 +23,18 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Michael DavidSaver supplied the data for this test.
@@ -99,23 +96,23 @@ public class DeadBandTest {
 
 		logger.info("Sample file copied to " + destFile.getAbsolutePath());
 
-		Timestamp start = TimeUtils.convertFromISO8601String("2014-12-10T19:10:00.000Z");
-		Timestamp end   = TimeUtils.convertFromISO8601String("2014-12-10T19:15:55.000Z");
+        Instant start = TimeUtils.convertFromISO8601String("2014-12-10T19:10:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String("2014-12-10T19:15:55.000Z");
 		
 		checkRetrieval(newPVName, start, end, 37, true);
 		try(FileBackedPBEventStream compareStream = new FileBackedPBEventStream("TST-CT{}Sig:2-I", Paths.get("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/deadband/sig2-w-adel.pb"), ArchDBRTypes.DBR_SCALAR_DOUBLE)) { 
 			compareStreams("deadBand_2.0(" + newPVName + ")", start, end, compareStream);
 		}
 	}
-	
-	private int checkRetrieval(String retrievalPVName, Timestamp start, Timestamp end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
+
+    private int checkRetrieval(String retrievalPVName, Instant start, Instant end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
 		int eventCount = 0;
 
 		final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		// Make sure we get the EGU as part of a regular VAL call.
-		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			PayloadInfo info = null;
 			Assertions.assertTrue(strm != null, "We should get some data for " + retrievalPVName + " , we are getting a null stream back");
 			info =  strm.getPayLoadInfo();
@@ -155,15 +152,15 @@ public class DeadBandTest {
 			 headers.put(headerName, headerValue);
 		 }
 	}
-	
-	private void compareStreams(String retrievalPVName, Timestamp start, Timestamp end, FileBackedPBEventStream compareStream) throws IOException {
+
+    private void compareStreams(String retrievalPVName, Instant start, Instant end, FileBackedPBEventStream compareStream) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
 		int eventCount = 0;
 
 		final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		// Make sure we get the EGU as part of a regular VAL call.
-		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			PayloadInfo info = null;
 			Assertions.assertTrue(strm != null, "We should get some data for " + retrievalPVName + " , we are getting a null stream back");
 			info =  strm.getPayLoadInfo();
@@ -184,7 +181,7 @@ public class DeadBandTest {
 				Assertions.assertTrue(compareIt.hasNext(), "We seem to have run out of events at " + eventCount);
 				Event compareEvent = compareIt.next();
 				Assertions.assertTrue(dbrEvent.getTimestamp().equals(compareEvent.getEventTimeStamp()), "At event " + eventCount + ", from the operator we have an event at "
-						+ TimeUtils.convertToISO8601String(dbrEvent.getTimestamp())
+                        + TimeUtils.convertToISO8601String(TimeUtils.fromSQLTimeStamp(dbrEvent.getTimestamp()))
 						+ " and from the compare stream, we have an event at "
 						+ TimeUtils.convertToISO8601String(compareEvent.getEventTimeStamp()));
 				

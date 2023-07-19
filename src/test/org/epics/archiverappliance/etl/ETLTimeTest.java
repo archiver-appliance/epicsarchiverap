@@ -1,18 +1,6 @@
 package org.epics.archiverappliance.etl;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,10 +20,20 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DecimalFormat;
+import java.time.Instant;
+import java.util.ArrayList;
 
 /**
  * An ETL benchmark. Generate some data for PVs and then time the movement to the next store. 
@@ -122,7 +120,7 @@ public class ETLTimeTest {
 
 		long time1=System.currentTimeMillis();
 		YearSecondTimestamp yts = new YearSecondTimestamp((short) (currentYear+1), 6*60*24*10+100, 0);
-		Timestamp etlTime = TimeUtils.convertFromYearSecondTimestamp(yts);
+        Instant etlTime = TimeUtils.convertFromYearSecondTimestamp(yts);
 		logger.info("Running ETL as if it was " + TimeUtils.convertToHumanReadableString(etlTime));
 		ETLExecutor.runETLs(configService, etlTime);
 		

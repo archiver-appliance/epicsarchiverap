@@ -7,22 +7,21 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Gets some information about PB files.
@@ -38,7 +37,18 @@ public class PBFileInfo {
 	DBRTimeEvent lastEvent = null;
 	long positionOfFirstSample = 0L;
 	long positionOfLastSample = 0;
-	
+
+    @Override
+    public String toString() {
+        return "PBFileInfo{" +
+                "info=" + info +
+                ", positionOfFirstSample=" + positionOfFirstSample +
+                ", positionOfLastSample=" + positionOfLastSample +
+                ", firstEvent=" + firstEvent +
+                ", lastEvent=" + lastEvent +
+                '}';
+    }
+
 	public PBFileInfo(Path path) throws IOException {
 		this(path, true);
 	}
@@ -94,14 +104,6 @@ public class PBFileInfo {
 
 	public DBRTimeEvent getLastEvent() {
 		return lastEvent;
-	}
-	
-	public long getFirstEventEpochSeconds() {
-		return (firstEvent != null) ? firstEvent.getEpochSeconds() : 0;
-	}
-	
-	public long getLastEventEpochSeconds() {
-		return (lastEvent != null) ? lastEvent.getEpochSeconds() : 0;
 	}
 
 	public long getPositionOfFirstSample() {

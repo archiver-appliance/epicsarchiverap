@@ -1,10 +1,6 @@
 package org.epics.archiverappliance.zipfs;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.sql.Timestamp;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,17 +16,19 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.ETLExecutor;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
-import org.epics.archiverappliance.utils.simulation.SimulationEventStreamIterator;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.time.Instant;
+import java.time.Month;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 @Tag("slow")
 public class ZipETLTest {
@@ -60,7 +58,8 @@ public class ZipETLTest {
 		logger.info(etlSrc.getURLRepresentation());
 		ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 		int phasediffindegrees = 10;
-		SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees));
+        short currentYear = TimeUtils.getCurrentYear();
+        SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
 		try(BasicContext context = new BasicContext()) {
 			etlSrc.appendData(context, pvName, simstream);
 		}
@@ -75,10 +74,10 @@ public class ZipETLTest {
 		configService.updateTypeInfoForPV(pvName, typeInfo);
 		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
 		configService.getETLLookup().manualControlForUnitTests();
-		
-		Timestamp timeETLruns = TimeUtils.now();
-		DateTime ts = new DateTime(DateTimeZone.UTC);
-		if(ts.getMonthOfYear() == 1) {
+
+        Instant timeETLruns = TimeUtils.now();
+        ZonedDateTime ts = ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC));
+        if (ts.getMonth() == Month.JANUARY) {
 			// This means that we never test this in Jan but I'd rather have the null check than skip this.
 			timeETLruns = TimeUtils.plusDays(timeETLruns, 35);
 		}
@@ -109,6 +108,6 @@ public class ZipETLTest {
 			}
 		}
 		logger.info("Got " + eventCount + " events");
-		Assertions.assertTrue(eventCount >= (SimulationEventStreamIterator.DEFAULT_NUMBER_OF_SAMPLES-1), "Retrieval does not seem to return any events " + eventCount);
+        Assertions.assertTrue(eventCount >= (simstream.getNumberOfEvents() - 1), "Retrieval does not seem to return any events " + eventCount);
 	}
 }

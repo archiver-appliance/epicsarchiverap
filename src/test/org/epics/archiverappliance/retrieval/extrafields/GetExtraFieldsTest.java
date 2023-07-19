@@ -1,11 +1,7 @@
 package org.epics.archiverappliance.retrieval.extrafields;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -26,10 +22,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-
-import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * Generate data for a year with some extra fields sprinkled and test retrieval to make sure we can get at these extra fields..
@@ -81,8 +78,8 @@ public class GetExtraFieldsTest {
 		}
 		
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp start = TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String(currentYear + "-02-02T08:00:00.000Z");
+        Instant start = TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(currentYear + "-02-02T08:00:00.000Z");
 		
 		
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName + ".HIHI" }, start, end, null)) {

@@ -1,19 +1,19 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Returns raw data for the previous two weeks and uses FirstSamplePP for the rest.
@@ -37,7 +37,7 @@ public class TwoWeekRaw implements PostProcessor, TimeSpanDependentProcessing {
 
 	@Override
 	public List<TimeSpanDependentProcessor> generateTimeSpanDependentProcessors(List<TimeSpan> timeSpans) {
-		long twoWeeksAgo = TimeUtils.convertToEpochSeconds(TimeUtils.now()) - 2*7*24*60*60;
+		long twoWeeksAgo = TimeUtils.convertToEpochSeconds(TimeUtils.now()) - 2 * 7 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
 		LinkedList<TimeSpanDependentProcessor> ret = new LinkedList<TimeSpanDependentProcessor>();
 		for(TimeSpan timeSpan : timeSpans) { 
 			long startSeconds =  TimeUtils.convertToEpochSeconds(timeSpan.getStartTime());
@@ -47,7 +47,7 @@ public class TwoWeekRaw implements PostProcessor, TimeSpanDependentProcessing {
 				logger.debug("Returning all sparsified data for pv " + pvName);
 				ret.add(new TimeSpanDependentProcessor(timeSpan, sparsifiedData));
 			} else if(startSeconds < twoWeeksAgo) {
-				Timestamp twoWeeksAgoTs = TimeUtils.convertFromEpochSeconds(twoWeeksAgo, 0);
+				Instant twoWeeksAgoTs = TimeUtils.convertFromEpochSeconds(twoWeeksAgo, 0);
 				logger.debug("Returning sparsified+raw data for pv " + pvName + " breaking at " + TimeUtils.convertToHumanReadableString(twoWeeksAgoTs));
 				ret.add(new TimeSpanDependentProcessor(new TimeSpan(timeSpan.getStartTime(), twoWeeksAgoTs), sparsifiedData));
 				ret.add(new TimeSpanDependentProcessor(new TimeSpan(twoWeeksAgoTs, timeSpan.getEndTime()), rawData));
@@ -61,15 +61,15 @@ public class TwoWeekRaw implements PostProcessor, TimeSpanDependentProcessing {
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
-		long twoWeeksAgo = TimeUtils.convertToEpochSeconds(TimeUtils.now()) - 2*7*24*60*60;
+	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+		long twoWeeksAgo = TimeUtils.convertToEpochSeconds(TimeUtils.now()) - 2 * 7 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
 		long startSeconds =  TimeUtils.convertToEpochSeconds(start);
 		long endSeconds = TimeUtils.convertToEpochSeconds(end);
 		if(endSeconds <= twoWeeksAgo) {
 			// Everything is sparsified
 			return sparsifiedData.estimateMemoryConsumption(pvName, typeInfo, start, end, req);
 		} else if(startSeconds < twoWeeksAgo) {
-			Timestamp twoWeeksAgoTs = TimeUtils.convertFromEpochSeconds(twoWeeksAgo, 0);
+			Instant twoWeeksAgoTs = TimeUtils.convertFromEpochSeconds(twoWeeksAgo, 0);
 			return sparsifiedData.estimateMemoryConsumption(pvName, typeInfo, start, twoWeeksAgoTs, req) 
 					+ rawData.estimateMemoryConsumption(pvName, typeInfo, twoWeeksAgoTs, end, req);
 		} else { 

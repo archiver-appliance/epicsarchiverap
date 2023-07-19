@@ -7,11 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-import java.io.File;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -25,6 +20,11 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.VectorValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+
+import java.io.File;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author mshankar
@@ -51,9 +51,9 @@ public class GenerateLargeVectorData {
 		ConfigService configService = new ConfigServiceForTests(new File("./bin"), 1);
 		String pluginURL = "pb://localhost?name=LTS&rootFolder=" + folder + "&partitionGranularity=PARTITION_DAY";
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(pluginURL, configService);
-		
-		Timestamp end = TimeUtils.minusDays(TimeUtils.now(), 1);
-		Timestamp start = TimeUtils.minusDays(end, 30);
+
+        Instant end = TimeUtils.minusDays(TimeUtils.now(), 1);
+        Instant start = TimeUtils.minusDays(end, 30);
 		long startEpochSeconds = TimeUtils.convertToEpochSeconds(start);
 		long endEpochSeconds = TimeUtils.convertToEpochSeconds(end);
 		

@@ -1,11 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -16,7 +11,10 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.concurrent.Callable;
 
 /**
  * The intent is to mimic ADEL; this is principally targeted at decimation
@@ -57,7 +55,7 @@ public class DeadBand implements PostProcessor {
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 		float storageRate = typeInfo.getComputedStorageRate();
 		long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
 		// Add a fudge factor of 2 for java 

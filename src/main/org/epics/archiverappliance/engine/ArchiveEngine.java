@@ -14,13 +14,6 @@
 
 package org.epics.archiverappliance.engine;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -44,6 +37,13 @@ import org.epics.archiverappliance.engine.pv.PVFactory;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class provides the static methods:
@@ -69,7 +69,7 @@ public class ArchiveEngine {
 	 * @param writer  First destination  
 	 * @param enablement Enablement 
 	 * @param sample_mode SampleMode 
-	 * @param last_sampleTimestamp Timestamp 
+     * @param last_sampleTimestamp Instant
 	 * @param configservice ConfigService 
 	 * @param archdbrtype   ArchDBRTypes
 	 * @param controlPVname  &emsp; 
@@ -78,8 +78,8 @@ public class ArchiveEngine {
 	 * @throws Exception &emsp; 
 	 */
 	private static ArchiveChannel addChannel(final String name, final Writer writer, 
-			final Enablement enablement, final SampleMode sample_mode, 
-			final Timestamp last_sampleTimestamp, 
+			final Enablement enablement, final SampleMode sample_mode,
+                                             final Instant last_sampleTimestamp,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype, 
 			final String controlPVname, final String iocHostName, final boolean usePVAccess) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
@@ -130,7 +130,7 @@ public class ArchiveEngine {
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final Timestamp lastKnownEventTimeStamp, final boolean start, final String controlPVname, final String[] metaFields, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
+                                                       final Instant lastKnownEventTimeStamp, final boolean start, final String controlPVname, final String[] metaFields, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
 
 		if (!engineContext.isWriteThreadStarted()) {
@@ -207,7 +207,7 @@ public class ArchiveEngine {
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final Timestamp lastKnownEventTimeStamp, final String controllingPVName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
+                                 final Instant lastKnownEventTimeStamp, final String controllingPVName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, controllingPVName, null, null, usePVAccess, useDBEProperties);
 	}
 
@@ -229,7 +229,7 @@ public class ArchiveEngine {
 	public static void archivePV(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
-			final ConfigService configservice, final ArchDBRTypes archdbrtype, final Timestamp lastKnownEventTimeStamp, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
+                                 final ConfigService configservice, final ArchDBRTypes archdbrtype, final Instant lastKnownEventTimeStamp, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, null, null, usePVAccess, useDBEProperties);
 	}
 
@@ -253,7 +253,7 @@ public class ArchiveEngine {
 			final float samplingPeriod, final SamplingMethod mode,
 			final int secondstoBuffer, final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final Timestamp lastKnownEventTimeStamp,
+                                 final Instant lastKnownEventTimeStamp,
 			final String[] metaFieldNames, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, metaFieldNames, null, usePVAccess, useDBEProperties);
 	}
@@ -281,7 +281,7 @@ public class ArchiveEngine {
 			final float samplingPeriod, final SamplingMethod mode, 
 			final int secondstoBuffer, final Writer writer, 
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
-			final Timestamp lastKnownEventTimeStamp,
+                                 final Instant lastKnownEventTimeStamp,
 			final String controllingPVName, final String[] metaFieldNames, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 
 		boolean start = true;
@@ -382,7 +382,7 @@ public class ArchiveEngine {
 		float samplingPeriod = typeInfo.getSamplingPeriod();
 		SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
 		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configservice);
-		Timestamp lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(configservice);
+        Instant lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(configservice);
 		if(logger.isDebugEnabled()) logger.debug("Last known timestamp from ETL stores is for pv " + pvName + " is "+ TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
 
 		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configservice, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties()); 

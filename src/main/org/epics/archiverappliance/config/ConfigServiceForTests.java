@@ -54,17 +54,15 @@ public class ConfigServiceForTests extends DefaultConfigService {
     }
 
     String rootFolder = ConfigServiceForTests.DEFAULT_PB_TEST_DATA_FOLDER;
-    public static final int defaultMinutesDisconnect = 1;
-
-
+    public static final int defaultSecondsDisconnect = 10;
     private File webInfClassesFolder;
 
     public ConfigServiceForTests() throws ConfigException {
         super();
     }
 
-    public ConfigServiceForTests(File webInfClassesFolder) throws ConfigException {
-        this(webInfClassesFolder, -1);
+    public ConfigServiceForTests(File WebInfClassesFolder) throws ConfigException {
+        this(WebInfClassesFolder, -1);
     }
     public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
         this.webInfClassesFolder = WebInfClassesFolder;
@@ -130,7 +128,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
         });
 
         this.engineContext = new EngineContext(this);
-        this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+        this.engineContext.setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(defaultSecondsDisconnect);
         this.etlPVLookup = new PBThreeTierETLPVLookup(this);
         this.retrievalState = new SampleRetrievalState(this);
         this.mgmtRuntime = new MgmtRuntimeState(this);
@@ -171,14 +169,14 @@ public class ConfigServiceForTests extends DefaultConfigService {
 
         this.retrievalState = new SampleRetrievalState(this);
         if (this.engineContext != null) {
-            this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+            this.engineContext.setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(defaultSecondsDisconnect);
         }
     }
 
     @Override
     public ApplianceInfo getApplianceForPV(String pvName) {
-	    // We should do the following code only for unit tests (and not for the real config service).
-	    return super.getApplianceForPV(pvName);
+        // We should do the following code only for unit tests (and not for the real config service).
+        return super.getApplianceForPV(pvName);
     }
 
     @Override
@@ -197,7 +195,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
     public InputStream getPolicyText() throws IOException {
         if (webInfClassesFolder != null) {
             String policiesPyPath = this.webInfClassesFolder.getAbsolutePath() + File.separator + "policies.py";
-            return new FileInputStream(policiesPyPath);
+            return new FileInputStream(new File(policiesPyPath));
         }
         return super.getPolicyText();
     }
@@ -218,24 +216,20 @@ public class ConfigServiceForTests extends DefaultConfigService {
                         pvName + " does not follow the testing convention. Defaulting the dbrtype to a scalar double.");
                 namingConventionType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
             }
-            return createArchUnitTestPVTypeInfo(pvName, namingConventionType);
+            PVTypeInfo typeInfo = new PVTypeInfo(pvName, namingConventionType, !namingConventionType.isWaveForm(), 1);
+            typeInfo.setUpperDisplayLimit(1.0);
+            typeInfo.setLowerDisplayLimit(-1.0);
+            typeInfo.setHasReducedDataSet(true);
+            typeInfo.setComputedEventRate(1.0f);
+            typeInfo.setComputedStorageRate(12.0f);
+            typeInfo.setUserSpecifiedEventRate(1.0f);
+            typeInfo.setApplianceIdentity(this.myIdentity);
+            typeInfo.addArchiveField("HIHI");
+            typeInfo.addArchiveField("LOLO");
+            return typeInfo;
         }
 
         return null;
-    }
-
-    private PVTypeInfo createArchUnitTestPVTypeInfo(String pvName, ArchDBRTypes namingConventionType) {
-        PVTypeInfo typeInfo = new PVTypeInfo(pvName, namingConventionType, !namingConventionType.isWaveForm(), 1);
-        typeInfo.setUpperDisplayLimit(1.0);
-        typeInfo.setLowerDisplayLimit(-1.0);
-        typeInfo.setHasReducedDataSet(true);
-        typeInfo.setComputedEventRate(1.0f);
-        typeInfo.setComputedStorageRate(12.0f);
-        typeInfo.setUserSpecifiedEventRate(1.0f);
-        typeInfo.setApplianceIdentity(this.myIdentity);
-        typeInfo.addArchiveField("HIHI");
-        typeInfo.addArchiveField("LOLO");
-        return typeInfo;
     }
 
     /**

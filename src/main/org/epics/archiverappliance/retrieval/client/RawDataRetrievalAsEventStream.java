@@ -8,20 +8,19 @@
 package org.epics.archiverappliance.retrieval.client;
 
 
-import java.io.BufferedInputStream;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
+import edu.stanford.slac.archiverappliance.PBOverHTTP.InputStreamBackedEventStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 
-import edu.stanford.slac.archiverappliance.PBOverHTTP.InputStreamBackedEventStream;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * Client side class for retrieving data from the appliance archiver using the PB over HTTP protocol.
@@ -39,17 +38,17 @@ public class RawDataRetrievalAsEventStream implements DataRetrieval {
 	}
 
 	@Override
-	public EventStream getDataForPVS(String[] pvNames, Timestamp startTime, Timestamp endTime, RetrievalEventProcessor retrievalEventProcessor) {
+    public EventStream getDataForPVS(String[] pvNames, Instant startTime, Instant endTime, RetrievalEventProcessor retrievalEventProcessor) {
 		return getDataForPVS(pvNames, startTime, endTime, retrievalEventProcessor, false, null);
 	}
 
 	@Override
-	public EventStream getDataForPVS(String[] pvNames, Timestamp startTime, Timestamp endTime, RetrievalEventProcessor retrievalEventProcessor, boolean useReducedDataSet) {
+    public EventStream getDataForPVS(String[] pvNames, Instant startTime, Instant endTime, RetrievalEventProcessor retrievalEventProcessor, boolean useReducedDataSet) {
 		return getDataForPVS(pvNames, startTime, endTime, retrievalEventProcessor, useReducedDataSet, null);
 	}
 
 	@Override
-	public EventStream getDataForPVS(String[] pvNames, Timestamp startTime, Timestamp endTime, RetrievalEventProcessor retrievalEventProcessor, boolean useReducedDataSet, HashMap<String, String> otherParams) {
+    public EventStream getDataForPVS(String[] pvNames, Instant startTime, Instant endTime, RetrievalEventProcessor retrievalEventProcessor, boolean useReducedDataSet, HashMap<String, String> otherParams) {
 		StringWriter concatedPVs = new StringWriter();
 		boolean isFirstEntry = true;
 		for(String pvName : pvNames) {

@@ -1,7 +1,5 @@
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -16,8 +14,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
 
 @Tag("localEpics")
 public class PauseAndResumePVwithMetaFieldTest {
@@ -31,7 +30,7 @@ public class PauseAndResumePVwithMetaFieldTest {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
 		testConfigService = new ConfigServiceForTests(new File("./bin"));
-		testConfigService.getEngineContext().setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+		testConfigService.getEngineContext().setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(ConfigServiceForTests.defaultSecondsDisconnect);
 		Thread.sleep(3000);
 	}
 

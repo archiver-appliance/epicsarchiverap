@@ -1,13 +1,5 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
@@ -22,6 +14,13 @@ import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProces
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * Import data using another plugin given the plugin definition URL for a PV and store in the specified store.
@@ -51,9 +50,9 @@ public class ImportDataFromPlugin implements BPLAction {
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
 			return;
 		}
-		
-		Timestamp startTime = TimeUtils.convertFromISO8601String(startTimeStr);
-		Timestamp endTime = TimeUtils.convertFromISO8601String(endTimeStr);
+
+        Instant startTime = TimeUtils.convertFromISO8601String(startTimeStr);
+        Instant endTime = TimeUtils.convertFromISO8601String(endTimeStr);
 		
 		String srcStoragePluginURL = req.getParameter("src");
 		if(srcStoragePluginURL == null || srcStoragePluginURL.equals("")) {

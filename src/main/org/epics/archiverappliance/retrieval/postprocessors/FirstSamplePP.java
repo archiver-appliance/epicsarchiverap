@@ -1,11 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -16,7 +11,10 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.concurrent.Callable;
 
 /**
  * This takes "interval" argument and returns only the first sample in that interval...
@@ -47,7 +45,7 @@ public class FirstSamplePP implements PostProcessor, AfterAllStreams {
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
 		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
 		float storageRate = typeInfo.getComputedStorageRate();

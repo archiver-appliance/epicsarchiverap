@@ -8,10 +8,6 @@
 package org.epics.archiverappliance.retrieval.client;
 
 
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -25,8 +21,10 @@ import org.epics.archiverappliance.retrieval.GenerateData;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 /**
  * Test retrieval for single PVs
@@ -58,8 +56,8 @@ public class SinglePVRetrievalTest {
 	
 	private void testGetOneDaysDataForYear(int year, int expectedCount) throws Exception {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp start = TimeUtils.convertFromISO8601String(year + "-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String(year + "-02-02T08:00:00.000Z");
+        Instant start = TimeUtils.convertFromISO8601String(year + "-02-01T08:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(year + "-02-02T08:00:00.000Z");
 		
 		
 		EventStream stream = null;

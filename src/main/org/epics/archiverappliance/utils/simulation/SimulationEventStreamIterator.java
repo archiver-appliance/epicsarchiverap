@@ -7,11 +7,13 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.simulation;
 
-import java.util.GregorianCalendar;
-import java.util.Iterator;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator for the SimulationEventStream
@@ -19,66 +21,45 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
  *
  */
 public class SimulationEventStreamIterator implements Iterator<Event> {
-	int currentseconds = 0;
-	short currentyear;
-	public static int DEFAULT_NUMBER_OF_SAMPLES = 60*60*24*365; 
-	public static int LEAPYEAR_NUMBER_OF_SAMPLES = 60*60*24*366; 
-	private int numberofsamples = DEFAULT_NUMBER_OF_SAMPLES;
-	private short startyear;
-	private short endyear;
-	private boolean wechoosethenumberofsamples = false;
-	private ArchDBRTypes type;
-	private SimulationValueGenerator valueGenerator;
-	
-	public SimulationEventStreamIterator(ArchDBRTypes type, SimulationValueGenerator valueGenerator, short startyear, short endyear) {
+	private final ArchDBRTypes type;
+	private final SimulationValueGenerator valueGenerator;
+	private final int periodInSeconds;
+	private final Instant end;
+	private Instant currentTime;
+
+	public SimulationEventStreamIterator(ArchDBRTypes type, SimulationValueGenerator valueGenerator, Instant start, Instant end, int periodInSeconds) {
 		this.type = type;
 		this.valueGenerator = valueGenerator;
-		this.numberofsamples = valueGenerator.getNumberOfSamples(type);
-		if(this.numberofsamples < 0) {
-			this.wechoosethenumberofsamples = true;
-			this.numberofsamples = DEFAULT_NUMBER_OF_SAMPLES;
+		if (periodInSeconds <= 0) {
+			throw new IndexOutOfBoundsException(periodInSeconds);
 		}
-		this.startyear = startyear;
-		this.endyear = endyear;
-		setCurrentYear(this.startyear);
-		assert(this.numberofsamples > 0);
+		this.periodInSeconds = periodInSeconds;
+		this.end = end;
+		this.currentTime = start;
 	}
 
 	@Override
 	public boolean hasNext() {
-		boolean moreLeftInCurrentYear = (currentseconds < numberofsamples);
-		if(moreLeftInCurrentYear) return true;
-		if(this.currentyear < this.endyear) {
-			setCurrentYear((short) (this.currentyear+1));
-			currentseconds = 0;
-			return true;
-		}
-		
-		return false;
+		return this.currentTime.isBefore(this.end);
 	}
 
 	@Override
 	public Event next() {
-		return new SimulationEvent(currentseconds++, currentyear, type, valueGenerator);
+		if (!hasNext()) {
+			throw new NoSuchElementException("Iterator finished");
+		}
+
+		SimulationEvent simulationEvent = new SimulationEvent(this.currentTime, type, valueGenerator);
+		currentTime = currentTime.plusSeconds(this.periodInSeconds);
+		return simulationEvent;
 	}
 
 	@Override
 	public void remove() {
 		throw new RuntimeException("Not implemented");
 	}
-	
-	private void setCurrentYear(short year) {
-		this.currentyear = year;
-		if(wechoosethenumberofsamples) {
-			// In this case, we make the decision on the number of samples
-			// This is based on the year.
-			GregorianCalendar cal = new GregorianCalendar();
-			if(cal.isLeapYear(this.currentyear)) {
-				numberofsamples = LEAPYEAR_NUMBER_OF_SAMPLES;
-			} else {
-				numberofsamples = DEFAULT_NUMBER_OF_SAMPLES;
-			}
-		}
-	}
 
+	public long getNumberOfEventsLeft() {
+		return Duration.between(this.currentTime, this.end).getSeconds() / periodInSeconds;
+	}
 }

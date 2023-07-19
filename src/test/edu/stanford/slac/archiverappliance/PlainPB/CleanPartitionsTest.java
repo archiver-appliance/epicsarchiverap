@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -20,6 +19,9 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Instant;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Tests that the PB plugin appendData stores data in clean partitions.
@@ -46,8 +48,12 @@ public class CleanPartitionsTest {
 
             String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "CleanPartition"
                     + pbPlugin.getPartitionGranularity();
-            SimulationEventStream simstream =
-                    new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0));
+            SimulationEventStream simstream = new SimulationEventStream(
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    new SineGenerator(0),
+                    Instant.now(),
+                    Instant.now().plusSeconds(granularity.getApproxSecondsPerChunk() * 3L),
+                    granularity.getApproxSecondsPerChunk() / 3);
             try (BasicContext context = new BasicContext()) {
                 pbPlugin.appendData(context, pvName, simstream);
             }
@@ -58,7 +64,7 @@ public class CleanPartitionsTest {
                     new ArchPaths(),
                     pbPlugin.getRootFolder(),
                     pvName,
-                    ".pb",
+                    pbFileExtension,
                     pbPlugin.getPartitionGranularity(),
                     CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
@@ -72,17 +78,23 @@ public class CleanPartitionsTest {
                 // Make sure that the first and last event in the file as obtained from PBFileInfo fit into the times as
                 // determined from the name
                 Assertions.assertTrue(
-                        (fileInfo.getFirstEventEpochSeconds() >= chunkTimes.chunkStartEpochSeconds),
+                        fileInfo.getFirstEvent().getEventTimeStamp().isAfter(chunkTimes.pathDataStartTime.toInstant())
+                                || fileInfo.getFirstEvent()
+                                .getEventTimeStamp()
+                                .equals(chunkTimes.pathDataStartTime.toInstant()),
                         "Start time as determined by PBFileinfo "
-                                + TimeUtils.convertToHumanReadableString(fileInfo.getFirstEventEpochSeconds())
-                                + "is earlier than earliest time as determined by partition name"
-                                + TimeUtils.convertToHumanReadableString(chunkTimes.chunkStartEpochSeconds));
+                                + fileInfo.getFirstEvent().getEventTimeStamp()
+                                + " is earlier than earliest time as determined by partition name"
+                                + chunkTimes.pathDataStartTime);
                 Assertions.assertTrue(
-                        (fileInfo.getLastEventEpochSeconds() <= chunkTimes.chunkEndEpochSeconds),
+                        fileInfo.getLastEvent().getEventTimeStamp().isBefore(chunkTimes.pathDataEndTime.toInstant())
+                                || fileInfo.getLastEvent()
+                                .getEventTimeStamp()
+                                .equals(chunkTimes.pathDataEndTime.toInstant()),
                         "End time as determined by PBFileinfo "
-                                + TimeUtils.convertToHumanReadableString(fileInfo.getLastEventEpochSeconds())
-                                + "is later than latest time as determined by partition name"
-                                + TimeUtils.convertToHumanReadableString(chunkTimes.chunkEndEpochSeconds));
+                                + fileInfo.getLastEvent().getEventTimeStamp()
+                                + " is later than latest time as determined by partition name "
+                                + chunkTimes.pathDataEndTime);
             }
             srcSetup.deleteTestFolder();
         }

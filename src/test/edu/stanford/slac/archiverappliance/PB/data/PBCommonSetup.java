@@ -8,18 +8,18 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.config.exception.ConfigException;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Some common setup for testing PB files
@@ -30,11 +30,19 @@ public class PBCommonSetup {
 	private static Logger logger = LogManager.getLogger(PBCommonSetup.class.getName());
 	private File tempFolderForTests;
 	private String testSpecificFolder;
-	ConfigServiceForTests configService;
+    static ConfigServiceForTests configService;
 
-	
-	public void setUpRootFolder() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"), 1);
+    static {
+        try {
+            configService = new ConfigServiceForTests(new File("./bin"), 1);
+        } catch (ConfigException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public void setUpRootFolder() throws Exception {
+
 		String rootFolder = System.getProperty("edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.rootFolder");
 		 
 		if(rootFolder != null)  {

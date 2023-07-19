@@ -7,18 +7,17 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.imprt;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.sql.Timestamp;
-
+import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
 
 /**
  * This is the reverse of ImportCSV. This generates a CSV file to stdout
@@ -50,11 +49,11 @@ public class ExportCSV {
 			strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType());
 			for(Event e : strm) {
 				DBRTimeEvent evnt = (DBRTimeEvent) e;
-				Timestamp ts = evnt.getEventTimeStamp();
+                Instant ts = evnt.getEventTimeStamp();
 				long epicsEpochSeconds = e.getEpochSeconds() - TimeUtils.EPICS_EPOCH_2_JAVA_EPOCH_OFFSET;
 
-				System.out.println(epicsEpochSeconds + "," + 
-						ts.getNanos() + "," +
+				System.out.println(epicsEpochSeconds + "," +
+                                ts.getNano() + "," +
 						evnt.getSampleValue().toString() + "," +
 						evnt.getStatus() + "," +
 						evnt.getSeverity()

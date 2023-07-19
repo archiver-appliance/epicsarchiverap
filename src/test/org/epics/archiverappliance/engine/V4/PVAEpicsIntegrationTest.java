@@ -6,7 +6,6 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.SampleValue;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -66,7 +64,7 @@ public class PVAEpicsIntegrationTest {
         GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
         waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, 10);
 
-        Timestamp start = TimeUtils.convertFromInstant(firstInstant);
+        Instant start = firstInstant;
 
         long samplingPeriodMilliSeconds = 100;
 
@@ -81,7 +79,7 @@ public class PVAEpicsIntegrationTest {
         Thread.sleep(samplingPeriodMilliSeconds);
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
-        Timestamp end = TimeUtils.convertFromInstant(Instant.now());
+        Instant end = Instant.now();
 
         RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
@@ -95,7 +93,7 @@ public class PVAEpicsIntegrationTest {
 
             // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
-                actualValues.put(e.getEventTimeStamp().toInstant(), e.getSampleValue());
+                actualValues.put(e.getEventTimeStamp(), e.getSampleValue());
             }
         } finally {
             if (stream != null) try {

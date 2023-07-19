@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.TomcatSetup;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.SampleValue;
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,7 +81,7 @@ public class PVAFlakyIntegrationTest {
 
         GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
 
-        Timestamp start = TimeUtils.convertFromInstant(firstInstant);
+        Instant start = firstInstant;
 
         long samplingPeriodMilliSeconds = 100;
 
@@ -124,7 +122,7 @@ public class PVAFlakyIntegrationTest {
         double secondsToBuffer = 5.0;
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
-        Timestamp end = TimeUtils.convertFromInstant(Instant.now());
+        Instant end = Instant.now();
 
         RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
                 "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
@@ -139,7 +137,7 @@ public class PVAFlakyIntegrationTest {
 
             // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
-                actualValues.put(e.getEventTimeStamp().toInstant(), e.getSampleValue());
+                actualValues.put(e.getEventTimeStamp(), e.getSampleValue());
             }
         } finally {
             if (stream != null) try {

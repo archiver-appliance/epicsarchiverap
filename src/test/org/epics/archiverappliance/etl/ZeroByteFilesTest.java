@@ -42,9 +42,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Occasionally, we seem to get files that are 0 bytes long; this usually happens in unusual circumstances.
@@ -107,7 +109,7 @@ public class ZeroByteFilesTest {
             assert etlDest != null;
             Path zeroDestPath = Paths.get(
                     etlDest.getRootFolder(),
-                    pvNameToKeyConverter.convertPVNameToKey(pvName) + currentYear + ".pb");
+                    pvNameToKeyConverter.convertPVNameToKey(pvName) + currentYear + pbFileExtension);
             logger.info("Creating zero byte file " + zeroDestPath);
             Files.write(zeroDestPath, new byte[0], StandardOpenOption.CREATE);
         };
@@ -134,9 +136,9 @@ public class ZeroByteFilesTest {
                         etlSrc.getRootFolder(),
                         pvNameToKeyConverter.convertPVNameToKey(pvName)
                                 + TimeUtils.getPartitionName(
-                                        TimeUtils.getCurrentEpochSeconds() - day * 86400,
+                                Instant.now().minusSeconds((long) day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk()),
                                         PartitionGranularity.PARTITION_DAY)
-                                + ".pb");
+                                + pbFileExtension);
                 logger.info("Creating zero byte file " + zeroSrcPath);
                 Files.write(zeroSrcPath, new byte[0], StandardOpenOption.CREATE);
             }
@@ -200,20 +202,20 @@ public class ZeroByteFilesTest {
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
 
         // Now do ETL...
-        Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
+        Instant timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
         ETLExecutor.runETLs(configService, timeETLruns);
         logger.info("Done performing ETL as though today is " + TimeUtils.convertToHumanReadableString(timeETLruns));
 
         // Validation starts here
-        Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
-        Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
+        Instant startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
+        Instant endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
 
         // Check that all the files in the destination store are valid files.
         Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlDest.getRootFolder(),
                 pvName,
-                ".pb",
+                pbFileExtension,
                 etlDest.getPartitionGranularity(),
                 CompressionMode.NONE,
                 pvNameToKeyConverter);
@@ -223,6 +225,7 @@ public class ZeroByteFilesTest {
                 "PlainPBFileNameUtility returns empty array for getAllFilesForPV for " + pvName + " when looking in "
                         + etlDest.getRootFolder());
 
+        logger.info("allPaths {}", (Object) allPaths);
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
                     ValidatePBFile.validatePBFile(destPath, false),

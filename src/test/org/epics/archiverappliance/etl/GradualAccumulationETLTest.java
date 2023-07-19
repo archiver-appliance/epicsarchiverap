@@ -33,7 +33,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -139,8 +139,8 @@ public class GradualAccumulationETLTest {
             int eventsgenerated,
             String testDesc)
             throws IOException {
-        Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 2 * 366);
-        Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 2 * 366);
+        Instant startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 2 * 366);
+        Instant endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 2 * 366);
 
         logger.debug(testDesc + "Asking for data between"
                 + TimeUtils.convertToHumanReadableString(startOfRequest)
@@ -154,12 +154,10 @@ public class GradualAccumulationETLTest {
                 EventStream afterDest = new CurrentThreadWorkerEventStream(
                         pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterDest) {
-                Assertions.assertTrue(
-                        (expectedEpochSeconds == e.getEpochSeconds()),
-                        testDesc + "Expected seconds "
-                                + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                                + " is not the same as actual seconds "
-                                + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
+                Assertions.assertEquals(expectedEpochSeconds, e.getEpochSeconds(), testDesc + "Expected seconds "
+                        + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
+                        + " is not the same as actual seconds "
+                        + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
                 expectedEpochSeconds += incrementSeconds;
                 afterCount++;
             }
@@ -170,12 +168,10 @@ public class GradualAccumulationETLTest {
                 EventStream afterSrc = new CurrentThreadWorkerEventStream(
                         pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterSrc) {
-                Assertions.assertTrue(
-                        (expectedEpochSeconds == e.getEpochSeconds()),
-                        testDesc + "Expected seconds "
-                                + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                                + " is not the same as actual seconds "
-                                + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
+                Assertions.assertEquals(expectedEpochSeconds, e.getEpochSeconds(), testDesc + "Expected seconds "
+                        + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
+                        + " is not the same as actual seconds "
+                        + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
                 expectedEpochSeconds += incrementSeconds;
                 afterCount++;
             }

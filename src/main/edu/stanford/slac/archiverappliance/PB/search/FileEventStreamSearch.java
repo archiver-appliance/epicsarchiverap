@@ -7,16 +7,16 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.search;
 
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.YearSecondTimestamp;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent;
 
 
 /**
@@ -95,12 +95,12 @@ public class FileEventStreamSearch {
 	 * starts returning events that satisfy getData's requirements
 	 * @return  <code>true</code> or <code>false</code>
 	 * @param dbrtype ArchDBRType the enumeration type
-	 * @param secondsIntoYear Search seconds into year
+	 * @param yearSecondTimestamp Search seconds into year
 	 * @throws IOException  &emsp;
 	 * @see edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent
 	 */
-	public boolean seekToTime(ArchDBRTypes dbrtype, int secondsIntoYear) throws IOException {
-		ComparePBEvent comparefunction = new ComparePBEvent(dbrtype, secondsIntoYear);
+	public boolean seekToTime(ArchDBRTypes dbrtype, YearSecondTimestamp yearSecondTimestamp) throws IOException {
+		ComparePBEvent comparefunction = new ComparePBEvent(dbrtype, yearSecondTimestamp);
 		return seekToTime(comparefunction);
 	}
 	

@@ -1,7 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
-import java.sql.Timestamp;
-
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -18,6 +16,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.Optimized;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 /**
  * 
@@ -50,9 +50,9 @@ public class OptimizedPostProcessorTest {
         short year = (short)(TimeUtils.getCurrentYear()-1);
         YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z"));
         ArrayListEventStream testData = getData(year);
-         
-        Timestamp start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
-        Timestamp end   = TimeUtils.convertFromISO8601String(year + "-06-02T09:59:59.999Z");
+
+        Instant start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(year + "-06-02T09:59:59.999Z");
         int expectedSamplesInPeriod = 24 * 60;
         PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         pvTypeInfo.setSamplingPeriod(60);
@@ -63,9 +63,9 @@ public class OptimizedPostProcessorTest {
         optimizedPP.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
         EventStream retData = optimizedPP.getConsolidatedEventStream();
         int eventCount = 0;
-        Timestamp previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
+        Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
         for(Event e : retData) {
-            Timestamp eventTs = e.getEventTimeStamp();
+            Instant eventTs = e.getEventTimeStamp();
             Assertions.assertTrue(eventTs.compareTo(previousTimeStamp) >= 0, "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
             Assertions.assertEquals(testData.get(eventCount).getSampleValue().getValue().doubleValue(), e.getSampleValue().getValue().doubleValue(), Double.MIN_VALUE, "Event value should match the n-th value in the test data");
             previousTimeStamp = eventTs;
@@ -83,9 +83,9 @@ public class OptimizedPostProcessorTest {
         short year = (short)(TimeUtils.getCurrentYear()-1);
         YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z"));
         ArrayListEventStream testData = getData(year);
-         
-        Timestamp start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
-        Timestamp end   = TimeUtils.convertFromISO8601String(year + "-06-02T10:00:00.000Z");
+
+        Instant start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(year + "-06-02T10:00:00.000Z");
         int expectedSamplesInPeriod = 161;
         PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         pvTypeInfo.setSamplingPeriod(60);
@@ -96,9 +96,9 @@ public class OptimizedPostProcessorTest {
         optimizedPP.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
         EventStream retData = optimizedPP.getConsolidatedEventStream();
         int eventCount = 0;
-        Timestamp previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
+        Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
         for(Event e : retData) {
-            Timestamp eventTs = e.getEventTimeStamp();
+            Instant eventTs = e.getEventTimeStamp();
             if (eventCount != 0 && eventCount != 160) {
                 //first and last bin are shifted
                 Assertions.assertTrue(eventTs.compareTo(previousTimeStamp) >= 0, "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));

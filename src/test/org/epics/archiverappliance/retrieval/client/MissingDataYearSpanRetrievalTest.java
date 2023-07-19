@@ -8,14 +8,8 @@
 package org.epics.archiverappliance.retrieval.client;
 
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,10 +29,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedList;
 
 /**
  * Test retrieval across year spans when some of the data is missing. 
@@ -63,8 +59,8 @@ public class MissingDataYearSpanRetrievalTest {
 	PBCommonSetup pbSetup = new PBCommonSetup();
 	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	
-	private final LinkedList<Timestamp> generatedTimeStamps = new LinkedList<Timestamp>();
+
+    private final LinkedList<Instant> generatedTimeStamps = new LinkedList<Instant>();
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -78,7 +74,7 @@ public class MissingDataYearSpanRetrievalTest {
 	private void generateData() throws IOException {
 		{
 			// Generate some data for Sep 2011 - Oct 2011, one per day
-			Timestamp sep2011 = TimeUtils.convertFromISO8601String("2011-09-01T00:00:00.000Z");
+            Instant sep2011 = TimeUtils.convertFromISO8601String("2011-09-01T00:00:00.000Z");
 			int sep201101secsIntoYear = TimeUtils.getSecondsIntoYear(TimeUtils.convertToEpochSeconds(sep2011));
 			short year = 2011;
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
@@ -96,7 +92,7 @@ public class MissingDataYearSpanRetrievalTest {
 		
 		{
 			// Generate some data for Jun 2012 - Jul 2012, one per day
-			Timestamp jun2012 = TimeUtils.convertFromISO8601String("2012-06-01T00:00:00.000Z");
+            Instant jun2012 = TimeUtils.convertFromISO8601String("2012-06-01T00:00:00.000Z");
 			int jun201201secsIntoYear = TimeUtils.getSecondsIntoYear(TimeUtils.convertToEpochSeconds(jun2012));
 			short year = 2012;
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
@@ -164,9 +160,9 @@ public class MissingDataYearSpanRetrievalTest {
 	 * @throws IOException
 	 */
 	private void testRetrieval(String startStr, String endStr, int expectedMinEventCount, String firstTimeStampExpectedStr, int firstTSIndex, String msg) throws IOException {
-		Timestamp start = TimeUtils.convertFromISO8601String(startStr);
-		Timestamp end = TimeUtils.convertFromISO8601String(endStr);
-		Timestamp firstTimeStampExpected = null;
+        Instant start = TimeUtils.convertFromISO8601String(startStr);
+        Instant end = TimeUtils.convertFromISO8601String(endStr);
+        Instant firstTimeStampExpected = null;
 		if(firstTimeStampExpectedStr != null) { 
 			firstTimeStampExpected = TimeUtils.convertFromISO8601String(firstTimeStampExpectedStr);
 		}
@@ -174,7 +170,7 @@ public class MissingDataYearSpanRetrievalTest {
 			Assertions.assertTrue(firstTimeStampExpected.equals(generatedTimeStamps.get(firstTSIndex)), "Incorrect specification - Str is " + firstTimeStampExpectedStr + " and from array " + TimeUtils.convertToISO8601String(generatedTimeStamps.get(firstTSIndex)) + " for " + msg);
 		}
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp obtainedFirstSample = null;
+        Instant obtainedFirstSample = null;
 		int eventCount = 0;
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, start, end, null)) {
 			if(stream != null) {

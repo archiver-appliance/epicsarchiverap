@@ -1,25 +1,6 @@
 package org.epics.archiverappliance.retrieval;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,10 +25,25 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 @Tag("integration")
 public class MultiPVClusterRetrievalTest {
@@ -91,7 +87,7 @@ public class MultiPVClusterRetrievalTest {
 		pbplugin.initialize("pb://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR", configService);
 				
 		// Generate an event stream to populate the PB files
-		SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), year);
+        SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), TimeUtils.getStartOfYear(year), TimeUtils.getEndOfYear(year), 1);
 		try(BasicContext context = new BasicContext()) {
 			pbplugin.appendData(context, pvName, simstream);
 			pbplugin.appendData(context, pvName2, simstream);
@@ -139,18 +135,17 @@ public class MultiPVClusterRetrievalTest {
 		short currentYear = TimeUtils.getCurrentYear();
 		String startString = currentYear + "-11-17T16:00:00.000Z";
 		String endString = currentYear + "-11-17T16:01:00.000Z";
-		
-		Timestamp start = TimeUtils.convertFromISO8601String(startString);
-		Timestamp end = TimeUtils.convertFromISO8601String(endString);
-		Timestamp pluginstart = TimeUtils.convertFromEpochMillis(start.getTime() + 1000);
-		
-		Map<String, List<JSONObject>> pvToData = retrieveJsonResults(startString, endString);
+
+        Instant start = TimeUtils.convertFromISO8601String(startString);
+        Instant end = TimeUtils.convertFromISO8601String(endString);
+
+        Map<String, List<JSONObject>> pvToData = retrieveJsonResults(startString, endString);
 		
 		logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + TimeUtils.convertToISO8601String(start) + " End: " + TimeUtils.convertToISO8601String(end));
-		
-		try (BasicContext context = new BasicContext(); 
-				EventStream pv1ResultsStream = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, pluginstart, end));
-				EventStream pv2ResultsStream = new CurrentThreadWorkerEventStream(pvName2, pbplugin.getDataForPV(context, pvName2, pluginstart, end))) {
+
+        try (BasicContext context = new BasicContext();
+             EventStream pv1ResultsStream = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, start, end));
+             EventStream pv2ResultsStream = new CurrentThreadWorkerEventStream(pvName2, pbplugin.getDataForPV(context, pvName2, start, end))) {
 			assert pvToData != null;
 			compareDataAndTimestamps(pvName, pvToData.get(pvName), pv1ResultsStream);
 			compareDataAndTimestamps(pvName2, pvToData.get(pvName2), pv2ResultsStream);
@@ -236,7 +231,7 @@ public class MultiPVClusterRetrievalTest {
 				
 				// Get seconds and nanoseconds for plugin event
 				String pluginSecondsPart = Long.toString(pluginEvent.getEpochSeconds());
-				String pluginNanosPart = Integer.toString(pluginEvent.getEventTimeStamp().getNanos());
+                String pluginNanosPart = Integer.toString(pluginEvent.getEventTimeStamp().getNano());
 				String pluginTimestamp = pluginSecondsPart + ("000000000" + pluginNanosPart).substring(pluginNanosPart.length());
 
 				Assertions.assertEquals(jsonTimestamp, pluginTimestamp, "JSON timestamp, " + jsonTimestamp + ", and plugin event timestamp, " + pluginTimestamp + ", are unequal.");

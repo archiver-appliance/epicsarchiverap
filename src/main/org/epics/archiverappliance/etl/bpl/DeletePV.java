@@ -9,18 +9,10 @@
 
 package org.epics.archiverappliance.etl.bpl;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -30,6 +22,14 @@ import org.epics.archiverappliance.etl.ETLInfo;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
 /**
  * consolidate PB files for one pv before one storage
  * @author Luofeng  Li 
@@ -70,7 +70,7 @@ public class DeletePV implements BPLAction {
 				HashMap<String, String> timingValues = new HashMap<String, String>();
 				infoValues.put("deletes_timing", timingValues);
 				try(ETLContext context = new ETLContext()) {
-					Timestamp tenYearsLaterTimeStamp = TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds()+10*365*24*60*60, 0);
+					Instant tenYearsLaterTimeStamp = TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() + 10 * 365 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 0);
 					for(String dataSource : typeInfo.getDataStores()) {
 						try {
 							ETLSource etlSource = StoragePluginURLParser.parseETLSource(dataSource, configService);

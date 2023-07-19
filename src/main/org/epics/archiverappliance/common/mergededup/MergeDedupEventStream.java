@@ -1,15 +1,14 @@
 package org.epics.archiverappliance.common.mergededup;
 
-import java.io.IOException;
-import java.util.Iterator;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
+
+import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * EventStream that is constructed with two source EventStream's ( for the same PV ) and then return's a merged-deduped stream of Events.
@@ -49,10 +48,10 @@ public class MergeDedupEventStream implements EventStream, RemotableOverRaw {
 		public Event next() {
 			Event ret = null;
 			if (s1next != null && s2next != null ) {
-				if(s1next.getEventTimeStamp().before(s2next.getEventTimeStamp())) {
+                if (s1next.getEventTimeStamp().isBefore(s2next.getEventTimeStamp())) {
 					ret = s1next.makeClone();
 					if(it1.hasNext()) { s1next = it1.next(); } else { s1next = null; }
-				} else if (s1next.getEventTimeStamp().after(s2next.getEventTimeStamp())) {
+                } else if (s1next.getEventTimeStamp().isAfter(s2next.getEventTimeStamp())) {
 					ret = s2next.makeClone();
 					if(it2.hasNext()) { s2next = it2.next(); } else { s2next = null; }
 				} else {

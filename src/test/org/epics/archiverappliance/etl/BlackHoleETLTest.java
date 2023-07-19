@@ -122,7 +122,7 @@ public class BlackHoleETLTest {
                 new ArchPaths(),
                 etlSrc.getRootFolder(),
                 pvName,
-                ".pb",
+                PlainPBStoragePlugin.pbFileExtension,
                 etlSrc.getPartitionGranularity(),
                 CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());

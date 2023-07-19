@@ -7,16 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -24,6 +14,15 @@ import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Creation time and paused status of all PVs in this appliance 
@@ -57,7 +56,7 @@ public class CreationTimeReportForAppliance implements BPLAction {
 				HashMap<String, String> ret = new HashMap<String, String>();
 				ret.put("pvName", pvName);
 				// We approx the earliest sample to be the creation time of the PVTypeInfo.
-				long earliestSample = configService.getTypeInfoForPV(pvName).getCreationTime().getTime()/1000;
+                long earliestSample = configService.getTypeInfoForPV(pvName).getCreationTime().toEpochMilli() / 1000;
 				List<ChannelArchiverDataServerPVInfo> externalServerInfos = configService.getChannelArchiverDataServers(pvName);
 				if(externalServerInfos != null && !externalServerInfos.isEmpty()) {
 					// If we have ChannelArchiver integration, we pick up the timestamp from there...

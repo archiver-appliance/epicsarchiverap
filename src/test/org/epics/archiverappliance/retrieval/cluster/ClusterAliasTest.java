@@ -1,11 +1,5 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +24,10 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
 
 /**
  * Test data retrieval with aliasing and clustering.
@@ -136,8 +134,8 @@ public class ClusterAliasTest {
 	
 	private void testRetrievalCountOnServer(String pvName, String serverRetrievalURL) throws IOException { 
 		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(serverRetrievalURL);
-		 Timestamp end = TimeUtils.plusDays(TimeUtils.now(), 3);
-		 Timestamp start = TimeUtils.minusDays(end, 6);
+        Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
+        Instant start = TimeUtils.minusDays(end, 6);
 		 try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
 			 long previousEpochSeconds = 0;
 			 int eventCount = 0;

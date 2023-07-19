@@ -1,16 +1,5 @@
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.management.ManagementFactory;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -18,15 +7,23 @@ import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.management.ManagementFactory;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
 public class InstanceReport implements BPLAction {
-	private static Logger logger = LogManager.getLogger(InstanceReport.class.getName());
+    private static final Logger logger = LogManager.getLogger(InstanceReport.class.getName());
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp,ConfigService configService) throws IOException {
@@ -66,24 +63,9 @@ public class InstanceReport implements BPLAction {
 				GetUrlContent.combineJSONObjects(applianceInfo, retrievalMetrics);
 				
 				long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
-				Period vmInterval = new Period(vmStartTime, System.currentTimeMillis(), PeriodType.yearMonthDayTime());
-				
-				PeriodFormatter formatter = new PeriodFormatterBuilder()
-				.printZeroNever()
-				.appendYears()
-				.appendSuffix(" year", " years")
-				.appendMonths()
-				.appendSuffix(" month", " months")
-				.appendDays()
-				.appendSuffix(" day", " days")
-				.appendSeparator(" ")
-				.printZeroAlways()
-				.appendHours()
-				.appendSeparator(":")
-				.appendMinutes()
-				.appendSeparator(":")
-				.appendSeconds().toFormatter();
-				applianceInfo.put("MGMT_uptime", formatter.print(new Period(vmInterval)));
+                Duration vmInterval = Duration.between(Instant.ofEpochMilli(vmStartTime), Instant.ofEpochMilli(System.currentTimeMillis()));
+
+                applianceInfo.put("MGMT_uptime", vmInterval.toString());
 
 				applianceInfo.put("errors", Integer.toString(0));
 				applianceInfo.put("capacityUtilized", "N/A");

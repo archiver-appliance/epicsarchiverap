@@ -1,15 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -21,7 +12,14 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Abstract class for various operators that operate on a SummaryStatistics
@@ -50,7 +48,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	
 	private static Logger logger = LogManager.getLogger(SummaryStatsPostProcessor.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
-	private Timestamp previousEventTimestamp = new Timestamp(1);
+    private Instant previousEventTimestamp = Instant.ofEpochMilli(1);
 	
 	static class SummaryValue { 
 		/**
@@ -124,7 +122,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
 		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
 		logger.debug("Expecting " + lastBin + " - " + firstBin + " values " + (lastBin+2 - firstBin)); // Add 2 for the first and last bins..
@@ -149,7 +147,7 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 						try { 
 							DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
 							long epochSeconds = dbrTimeEvent.getEpochSeconds();
-							if(dbrTimeEvent.getEventTimeStamp().after(previousEventTimestamp)) { 
+                            if (dbrTimeEvent.getEventTimeStamp().isAfter(previousEventTimestamp)) {
 								previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
 							} else {
 								// Note that this is expected. ETL is not transactional; so we can get the same event twice from different stores.

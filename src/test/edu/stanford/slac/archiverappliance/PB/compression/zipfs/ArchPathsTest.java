@@ -23,6 +23,43 @@ public class ArchPathsTest {
     private final String rootFolderStr = ConfigServiceForTests.getDefaultPBTestFolder() + "/ArchPathsTest";
     private static final Logger logger = LogManager.getLogger(ArchPathsTest.class.getName());
 
+    private static Thread getReaderThread(String zipFileName, Thread writerThread) {
+
+        Runnable reader = () -> {
+            int exceptionCount = 0;
+            boolean checkedAtLeastOnce = false;
+            while (writerThread.isAlive()) {
+                if (new File(zipFileName).exists()) {
+                    logger.info("Checking concurrent access");
+                    try {
+                        for (int filenum = 1; filenum < 100; filenum++) {
+                            try (ArchPaths paths = new ArchPaths()) {
+                                checkedAtLeastOnce = true;
+                                Path destPath = paths.get(
+                                        "jar:file://" + zipFileName + "!/result/SomeTextFile" + filenum + ".txt");
+                                Files.exists(destPath);
+                            } catch (Exception ex) {
+                                exceptionCount++;
+                                logger.error("Exception reading file", ex);
+                            }
+                        }
+                        Thread.sleep(10);
+                    } catch (Exception ex) {
+                        logger.error(ex);
+                    }
+                } else {
+                    logger.debug("Skipping checking concurrent access");
+                }
+            }
+            Assertions.assertTrue(checkedAtLeastOnce, "We have not check the reader part even once ");
+            Assertions.assertEquals(0, exceptionCount, "The read thread had " + exceptionCount + " exceptions");
+        };
+
+        Thread readerthread = new Thread(reader);
+        readerthread.setName("Reader");
+        return readerthread;
+    }
+
     @BeforeEach
     public void setUp() throws Exception {
         File rootFolder = new File(rootFolderStr);
@@ -31,17 +68,12 @@ public class ArchPathsTest {
         // We create some sample files for testing.
         for (int filenum = 1; filenum < 100; filenum++) {
             try (PrintWriter out = new PrintWriter(
-                    new FileOutputStream(new File(rootFolderStr + File.separator + "text" + filenum + ".txt")))) {
+                    new FileOutputStream(rootFolderStr + File.separator + "text" + filenum + ".txt"))) {
                 for (int i = 0; i < 1000; i++) {
                     out.println("Line " + i);
                 }
             }
         }
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        FileUtils.deleteDirectory(new File(rootFolderStr));
     }
 
     @Test
@@ -82,9 +114,15 @@ public class ArchPathsTest {
         }
     }
 
+    @AfterEach
+    public void tearDown() throws Exception {
+        FileUtils.cleanDirectory(new File(rootFolderStr));
+        FileUtils.deleteDirectory(new File(rootFolderStr));
+    }
+
     @Test
     @Tag("flaky")
-    public void testConcurrentAccess() throws Exception {
+    public void testConcurrentAccess() {
         // Test to see if we can access the zip file concurrently.
         // We launch two threads and see if one can add while the other can read
 
@@ -97,7 +135,7 @@ public class ArchPathsTest {
                         Path sourcePath = paths.get(rootFolderStr + "/text" + filenum + ".txt");
                         Path destPath = paths.get(
                                 "jar:file://" + zipFileName + "!/result/SomeTextFile" + filenum + ".txt", true);
-                        logger.debug("Packing " + sourcePath.toString() + " into " + destPath.toString());
+                        logger.info("Packing " + sourcePath.toString() + " into " + destPath.toString());
                         Files.copy(sourcePath, destPath, REPLACE_EXISTING);
                     } catch (Exception ex) {
                         exceptionCount++;
@@ -110,42 +148,12 @@ public class ArchPathsTest {
             }
             Assertions.assertEquals(0, exceptionCount, "The write thread had " + exceptionCount + " exceptions");
         };
+
         final Thread writerThread = new Thread(writer);
         writerThread.setName("Writer");
         writerThread.start();
 
-        Runnable reader = () -> {
-            int exceptionCount = 0;
-            boolean checkedAtLeastOnce = false;
-            while (writerThread.isAlive()) {
-                if (new File(zipFileName).exists()) {
-                    logger.debug("Checking concurrent access");
-                    try {
-                        for (int filenum = 1; filenum < 100; filenum++) {
-                            try (ArchPaths paths = new ArchPaths()) {
-                                checkedAtLeastOnce = true;
-                                Path destPath = paths.get(
-                                        "jar:file://" + zipFileName + "!/result/SomeTextFile" + filenum + ".txt");
-                                Files.exists(destPath);
-                            } catch (Exception ex) {
-                                exceptionCount++;
-                                logger.error("Exception reading file", ex);
-                            }
-                        }
-                        Thread.sleep(10);
-                    } catch (Exception ex) {
-                        logger.error(ex);
-                    }
-                } else {
-                    logger.debug("Skipping checking concurrent access");
-                }
-            }
-            Assertions.assertTrue(checkedAtLeastOnce, "We have not check the reader part even once ");
-            Assertions.assertEquals(0, exceptionCount, "The read thread had " + exceptionCount + " exceptions");
-        };
-
-        Thread readerthread = new Thread(reader);
-        readerthread.setName("Reader");
+        Thread readerthread = getReaderThread(zipFileName, writerThread);
         readerthread.start();
     }
 }

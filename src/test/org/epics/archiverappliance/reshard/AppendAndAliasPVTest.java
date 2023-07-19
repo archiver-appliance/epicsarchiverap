@@ -1,12 +1,5 @@
 package org.epics.archiverappliance.reshard;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,8 +27,15 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.time.Instant;
 
 /**
  * Simple test to test appending data from an older PV to a newer one.
@@ -88,8 +88,8 @@ public class AppendAndAliasPVTest {
 		FileUtils.deleteDirectory(new File(folderMTS));
 		FileUtils.deleteDirectory(new File(folderLTS));
 	}
-	
-	private void addPVToCluster(String pvName, String appliance, Timestamp creationTime) throws Exception {
+
+    private void addPVToCluster(String pvName, String appliance, Instant creationTime) throws Exception {
 		// Load a sample PVTypeInfo from a prototype file.
 		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
 		PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
@@ -104,19 +104,19 @@ public class AppendAndAliasPVTest {
 		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
 		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&createnew=true", encoder.encode(newPVTypeInfo));
 	}
-	
-	private void generateData(String pvName, Timestamp startTime, Timestamp endTime) throws IOException {		
+
+    private void generateData(String pvName, Instant startTime, Instant endTime) throws IOException {
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR", configService);
 		try(BasicContext context = new BasicContext()) {
-			for(long epoch = startTime.getTime()/1000; epoch < endTime.getTime()/1000; epoch+=60) {
+            for (long epoch = startTime.toEpochMilli() / 1000; epoch < endTime.toEpochMilli() / 1000; epoch += 60) {
 				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(epoch).getYear()));
 				strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, TimeUtils.convertFromEpochSeconds(epoch, 0), new ScalarValue<Double>((double)epoch), 0, 0));
 				plugin.appendData(context, pvName, strm);
 			}			
 		}
 	}
-	
-	private long getEventCountBetween(String pvName, Timestamp startTime, Timestamp endTime) throws IOException {
+
+    private long getEventCountBetween(String pvName, Instant startTime, Instant endTime) throws IOException {
 		logger.info("Looking for data for pv " + pvName + " between " + TimeUtils.convertToHumanReadableString(startTime) + " and " + TimeUtils.convertToHumanReadableString(endTime));
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
 		long totalEvents = 0;

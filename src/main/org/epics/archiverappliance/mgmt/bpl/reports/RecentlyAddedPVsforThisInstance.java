@@ -1,16 +1,5 @@
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -20,6 +9,16 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * Generate a report of PVs recently added to this instance....
@@ -41,9 +40,9 @@ public class RecentlyAddedPVsforThisInstance implements BPLAction {
 		final String identity = configService.getMyApplianceInfo().getIdentity();
 		final class RecentlyAddedPVInfo implements JSONAware {
 			String pvName;
-			Timestamp creationTimeStamp;
+            Instant creationTimeStamp;
 
-			RecentlyAddedPVInfo(String pvName, Timestamp creationTimeStamp) {
+            RecentlyAddedPVInfo(String pvName, Instant creationTimeStamp) {
 				this.pvName = pvName;
 				this.creationTimeStamp = creationTimeStamp;
 			}

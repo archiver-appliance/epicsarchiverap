@@ -7,12 +7,12 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorInt.Builder;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import gov.aps.jca.dbr.DBR;
+import gov.aps.jca.dbr.DBR_TIME_Int;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -25,19 +25,18 @@ import org.epics.archiverappliance.data.VectorValue;
 import org.epics.pva.data.PVAIntArray;
 import org.epics.pva.data.PVAStructure;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorInt.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import gov.aps.jca.dbr.DBR;
-import gov.aps.jca.dbr.DBR_TIME_Int;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A DBRTimeEvent for a vector int. 
  * @author mshankar
  *
  */
-public class PBVectorInt implements DBRTimeEvent, PartionedTime {
+public class PBVectorInt implements DBRTimeEvent {
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.VectorInt dbevent = null;
@@ -53,7 +52,7 @@ public class PBVectorInt implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.VectorInt.newBuilder()
 		.setSecondsintoyear(yst.getSecondsintoyear())
-		.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 		.addAllVal(ev.getSampleValue().getValues());
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -77,7 +76,7 @@ public class PBVectorInt implements DBRTimeEvent, PartionedTime {
 		for(int val : realtype.getIntValue()) vals.add(val);
 		Builder builder = EPICSEvent.VectorInt.newBuilder()
 		.setSecondsintoyear(yst.getSecondsintoyear())
-		.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 		.addAllVal(vals);
 		if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
@@ -99,7 +98,7 @@ public class PBVectorInt implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.VectorInt.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 				.addAllVal(vals);
 		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
 		if(alarm.status != 0) builder.setStatus(alarm.status);
@@ -113,20 +112,9 @@ public class PBVectorInt implements DBRTimeEvent, PartionedTime {
 	}
 	
 	@Override
-	public Timestamp getEventTimeStamp() {
+    public Instant getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
-	}
-	
-	@Override
-	public short getYear() {
-		return year;
-	}
-	
-	@Override
-	public int getSecondsIntoYear() {
-		unmarshallEventIfNull();
-		return dbevent.getSecondsintoyear();
 	}
 
 	@Override

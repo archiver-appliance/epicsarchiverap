@@ -89,7 +89,6 @@ dependencies {
     implementation("org.apache.httpcomponents:httpcore:4.4.16")
     implementation("jdbm:jdbm:2.4") //clojar dependancy
     implementation("redis.clients:jedis:4.4.0")
-    implementation("joda-time:joda-time:2.12.5")
     implementation("com.googlecode.json-simple:json-simple:1.1.1")
     implementation("org.python:jython-standalone:2.7.3")
     runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies

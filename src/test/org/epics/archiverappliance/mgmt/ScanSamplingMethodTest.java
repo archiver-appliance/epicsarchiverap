@@ -1,9 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Timestamp;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,14 +17,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.Select;
+
+import java.time.Instant;
 
 /**
  * Test the SCAN sampling method. These are the test cases
@@ -101,8 +99,8 @@ public class ScanSamplingMethodTest {
 
 	private void testDataRetrieval(String pvName, int expectedCount, long expectedGapBetweenSamples, boolean consecutiveValuesExpected) {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp end = TimeUtils.now();
-		Timestamp start = TimeUtils.minusHours(end, 1);
+        Instant end = TimeUtils.now();
+        Instant start = TimeUtils.minusHours(end, 1);
 
 		EventStream stream = null;
 		try {
@@ -119,7 +117,7 @@ public class ScanSamplingMethodTest {
 				long previousEventMillis = -1;
 				long previousValue = -1;
 				for(Event e : stream) {
-					long currentMillis = e.getEventTimeStamp().getTime();
+                    long currentMillis = e.getEventTimeStamp().toEpochMilli();
 					Assertions.assertTrue(previousEventMillis == -1 || ((currentMillis - previousEventMillis) <= expectedGapBetweenSamples), "Gap between samples " + (currentMillis - previousEventMillis) + " is more than expected " + expectedGapBetweenSamples + " for PV " + pvName);
 					previousEventMillis = currentMillis;
 					eventCount++;
@@ -170,8 +168,8 @@ public class ScanSamplingMethodTest {
 	
 	private void testLastSampleOfManualPV(String pvName, double lastValue) {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 10);
-		Timestamp start = TimeUtils.minusHours(end, 10);
+        Instant end = TimeUtils.plusHours(TimeUtils.now(), 10);
+        Instant start = TimeUtils.minusHours(end, 10);
 
 		EventStream stream = null;
 		try {

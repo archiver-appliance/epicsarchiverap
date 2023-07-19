@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -50,6 +50,7 @@ import java.util.stream.Stream;
 @Tag("slow")
 public class ETLWithRecurringFilesTest {
     private static final Logger logger = LogManager.getLogger(ETLWithRecurringFilesTest.class.getName());
+    int ratio = 5; // size of test
 
     public static Stream<Arguments> provideRecurringFiles() {
         return Arrays.stream(PartitionGranularity.values())
@@ -60,9 +61,10 @@ public class ETLWithRecurringFilesTest {
                                 Arguments.of(g, false, false)));
     }
 
+
     /**
      * @param granularity
-     * @param backUpfiles
+     * @param backUpFiles
      * @param useNewDest - This creates a new ETLDest for the rerun. New dest should hopefully not have any state and should still work.
      * @throws Exception
      */
@@ -70,7 +72,7 @@ public class ETLWithRecurringFilesTest {
     @MethodSource("provideRecurringFiles")
     public void testRecurringFiles(
             PartitionGranularity granularity,
-            boolean backUpfiles,
+            boolean backUpFiles,
             boolean useNewDest)
             throws Exception {
         PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
@@ -80,7 +82,7 @@ public class ETLWithRecurringFilesTest {
         PlainPBStoragePlugin etlNewDest = new PlainPBStoragePlugin();
         PBCommonSetup newDestSetup = new PBCommonSetup();
         ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"), 1);
-        etlDest.setBackupFilesBeforeETL(backUpfiles);
+        etlDest.setBackupFilesBeforeETL(backUpFiles);
 
         srcSetup.setUpRootFolder(etlSrc, "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
@@ -89,15 +91,14 @@ public class ETLWithRecurringFilesTest {
                 etlNewDest, "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
 
         logger.info("Testing recurring files for " + etlSrc.getPartitionGranularity() + " to "
-                + etlDest.getPartitionGranularity() + " with backup = " + backUpfiles
+                + etlDest.getPartitionGranularity() + " with backup = " + backUpFiles
                 + " and newDest = " + useNewDest);
 
         short year = TimeUtils.getCurrentYear();
-        long startOfYearInEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-        long curEpochSeconds = startOfYearInEpochSeconds;
-        int secondsintoyear = 0;
-        int incrementSeconds = 450;
-        int eventsgenerated = 0;
+        Instant start = TimeUtils.getStartOfYear(year);
+        Instant curTime = start;
+        int incrementSeconds = granularity.getApproxSecondsPerChunk() / ratio; // ratio events per granularity
+        int eventsGenerated;
 
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testRecurringFiles"
                 + etlSrc.getPartitionGranularity();
@@ -110,21 +111,20 @@ public class ETLWithRecurringFilesTest {
             configService.getETLLookup().manualControlForUnitTests();
         }
 
-        // Generate 90 days worth of data
-        int eventsPerShot = (60 * 60 * 24 * 90) / incrementSeconds;
+        // Generate 3 times the granularity
+        int eventsPerShot = granularity.getApproxSecondsPerChunk() * 3 / incrementSeconds;
         ArrayListEventStream instream = new ArrayListEventStream(
                 eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
         for (int i = 0; i < eventsPerShot; i++) {
-            instream.add(new SimulationEvent(
-                    secondsintoyear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>((double)
+            int secondsintoyear = TimeUtils.getSecondsIntoYear(curTime.getEpochSecond());
+            instream.add(new SimulationEvent(secondsintoyear
+                    , year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
                             secondsintoyear)));
-            secondsintoyear += incrementSeconds;
-            curEpochSeconds += incrementSeconds;
-            eventsgenerated++;
+            curTime = curTime.plusSeconds(incrementSeconds);
         }
 
         try (BasicContext context = new BasicContext()) {
-            etlSrc.appendData(context, pvName, instream);
+            eventsGenerated = etlSrc.appendData(context, pvName, instream);
         }
 
         // We should now have some data in the src root folder...
@@ -133,28 +133,29 @@ public class ETLWithRecurringFilesTest {
                 new ArchPaths(),
                 etlSrc.getRootFolder(),
                 pvName,
-                ".pb",
+                PlainPBStoragePlugin.pbFileExtension,
                 etlSrc.getPartitionGranularity(),
                 CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         for (Path srcPath : allSrcPaths) {
             Path destPath =
-                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(".pb", ".etltest"));
+                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
             logger.debug("Path for backup is " + destPath);
             Files.copy(srcPath, destPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
         // Run ETL as if it was a week later.
-        long ETLIsRunningAtEpochSeconds = curEpochSeconds + 24 * 60 * 60 * 7;
+        Instant ETLIsRunningAt =
+                curTime.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
         // Now do ETL and the srcFiles should have disappeared.
-        ETLExecutor.runETLs(configService, TimeUtils.convertFromEpochSeconds(ETLIsRunningAtEpochSeconds, 0));
+        ETLExecutor.runETLs(configService, ETLIsRunningAt);
 
         // Restore the files from the backup and run ETL again.
         for (Path srcPath : allSrcPaths) {
             Assertions.assertFalse(
                     srcPath.toFile().exists(), srcPath.toAbsolutePath() + " was not deleted in the last run");
             Path destPath =
-                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(".pb", ".etltest"));
+                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
             Files.copy(destPath, srcPath, StandardCopyOption.COPY_ATTRIBUTES);
         }
 
@@ -169,28 +170,28 @@ public class ETLWithRecurringFilesTest {
 
             logger.debug(
                     "Running ETL again against a new plugin; the debug logs should see a lot of skipping events messages from here on.");
-            ETLExecutor.runETLs(configService, TimeUtils.convertFromEpochSeconds(ETLIsRunningAtEpochSeconds, 0));
+            ETLExecutor.runETLs(configService, ETLIsRunningAt);
             checkDataValidity(
                     pvName,
                     etlSrc,
                     etlNewDest,
-                    startOfYearInEpochSeconds,
+                    start,
                     incrementSeconds,
-                    eventsgenerated,
-                    granularity + "/" + backUpfiles);
+                    eventsGenerated,
+                    granularity + "/" + backUpFiles);
 
         } else {
             logger.debug(
                     "Running ETL again; the debug logs should see a lot of skipping events messages from here on.");
-            ETLExecutor.runETLs(configService, TimeUtils.convertFromEpochSeconds(ETLIsRunningAtEpochSeconds, 0));
+            ETLExecutor.runETLs(configService, ETLIsRunningAt);
             checkDataValidity(
                     pvName,
                     etlSrc,
                     etlDest,
-                    startOfYearInEpochSeconds,
+                    start,
                     incrementSeconds,
-                    eventsgenerated,
-                    granularity + "/" + backUpfiles);
+                    eventsGenerated,
+                    granularity + "/" + backUpFiles);
         }
 
         srcSetup.deleteTestFolder();
@@ -204,58 +205,51 @@ public class ETLWithRecurringFilesTest {
             String pvName,
             PlainPBStoragePlugin etlSrc,
             PlainPBStoragePlugin etlDest,
-            long startOfYearInEpochSeconds,
+            Instant start,
             int incrementSeconds,
-            int eventsgenerated,
+            int eventsGenerated,
             String testDesc)
             throws IOException {
-        Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
-        Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
+        Instant startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
+        Instant endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
 
-        logger.debug(testDesc + "Asking for data between"
+        logger.info(testDesc + "Asking for data between "
                 + TimeUtils.convertToHumanReadableString(startOfRequest)
                 + " and "
                 + TimeUtils.convertToHumanReadableString(endOfRequest));
 
-        long expectedEpochSeconds = startOfYearInEpochSeconds;
+        Instant expectedTime = start;
         int afterCount = 0;
 
         try (BasicContext context = new BasicContext();
                 EventStream afterDest = new CurrentThreadWorkerEventStream(
                         pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterDest) {
-                Assertions.assertTrue(
-                        (expectedEpochSeconds == e.getEpochSeconds()),
-                        testDesc + "Dest Expected seconds "
-                                + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                                + " is not the same as actual seconds "
-                                + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()) + " for afterCount "
-                                + afterCount);
-                expectedEpochSeconds += incrementSeconds;
+                Assertions.assertEquals(
+                        expectedTime,
+                        e.getEventTimeStamp());
+                expectedTime = expectedTime.plusSeconds(incrementSeconds);
                 afterCount++;
             }
-            Assertions.assertTrue((afterCount != 0), testDesc + "Seems like no events were moved by ETL " + afterCount);
+            Assertions.assertTrue(afterCount != 0, testDesc + "Seems like no events were moved by ETL " + afterCount);
         }
 
         try (BasicContext context = new BasicContext();
                 EventStream afterSrc = new CurrentThreadWorkerEventStream(
                         pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterSrc) {
-                Assertions.assertTrue(
-                        (expectedEpochSeconds == e.getEpochSeconds()),
-                        testDesc + "Src Expected seconds "
-                                + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                                + " is not the same as actual seconds "
-                                + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()) + " for afterCount "
-                                + afterCount);
-                expectedEpochSeconds += incrementSeconds;
+                Assertions.assertEquals(
+                        expectedTime,
+                        e.getEventTimeStamp());
+                expectedTime = expectedTime.plusSeconds(incrementSeconds);
                 afterCount++;
             }
         }
 
-        Assertions.assertTrue(
-                (eventsgenerated == afterCount),
-                testDesc + "Expected total events " + eventsgenerated + " is not the same as actual events "
+        Assertions.assertEquals(
+                eventsGenerated,
+                afterCount,
+                testDesc + "Expected total events " + eventsGenerated + " is not the same as actual events "
                         + afterCount);
     }
 }

@@ -7,12 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-
+import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -22,7 +17,11 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 
-import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
+import java.time.Instant;
 
 /**
  * @author mshankar
@@ -40,8 +39,8 @@ public class ConvertGnuplotData {
 		storagePlugin.initialize("http://archiver:15646/retrieval/data/getData.raw", configService);
 
 		// Ask for a days worth of data
-		Timestamp start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
+        Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
 		
 		String pvName = "Sine1";
 		if(args.length > 0) {

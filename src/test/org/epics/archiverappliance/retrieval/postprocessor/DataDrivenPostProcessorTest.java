@@ -1,15 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,10 +20,16 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * This is a framework for various data driven post processor tests from Michael.
@@ -90,23 +87,23 @@ public class DataDrivenPostProcessorTest {
 
 		logger.info("Sample file copied to " + destFile.getAbsolutePath());
 
-		Timestamp start = TimeUtils.convertFromISO8601String("2014-12-08T07:03:55.000Z");
-		Timestamp end   = TimeUtils.convertFromISO8601String("2014-12-08T08:04:00.000Z");
+        Instant start = TimeUtils.convertFromISO8601String("2014-12-08T07:03:55.000Z");
+        Instant end = TimeUtils.convertFromISO8601String("2014-12-08T08:04:00.000Z");
 		
 		checkRetrieval(newPVName, start, end, 1, true);
 		checkRetrieval("firstSample_7(" + newPVName + ")", start, end, 1, true);
 		checkRetrieval("lastSample_7(" + newPVName + ")", start, end, 1, true);
 		checkRetrieval("meanSample_7(" + newPVName + ")", start, end, 1, true);
 	}
-	
-	private int checkRetrieval(String retrievalPVName, Timestamp start, Timestamp end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
+
+    private int checkRetrieval(String retrievalPVName, Instant start, Instant end, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw?param1=abc123&param2=def456");
 		int eventCount = 0;
 
 		final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		// Make sure we get the EGU as part of a regular VAL call.
-		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			PayloadInfo info = null;
 			Assertions.assertTrue(strm != null, "We should get some data for " + retrievalPVName + " , we are getting a null stream back");
 			info =  strm.getPayLoadInfo();

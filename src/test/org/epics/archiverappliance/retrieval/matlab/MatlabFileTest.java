@@ -1,11 +1,14 @@
 package org.epics.archiverappliance.retrieval.matlab;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.LinkedList;
-import java.util.Map;
-
+import com.jmatio.io.MatFileReader;
+import com.jmatio.io.MatFileWriter;
+import com.jmatio.types.MLArray;
+import com.jmatio.types.MLChar;
+import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLStructure;
+import com.jmatio.types.MLUInt64;
+import com.jmatio.types.MLUInt8;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,18 +28,11 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-
-import com.jmatio.io.MatFileReader;
-import com.jmatio.io.MatFileWriter;
-import com.jmatio.types.MLArray;
-import com.jmatio.types.MLChar;
-import com.jmatio.types.MLDouble;
-import com.jmatio.types.MLStructure;
-import com.jmatio.types.MLUInt64;
-import com.jmatio.types.MLUInt8;
-
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Test generation of Matlab files from event streams
@@ -104,7 +100,7 @@ public class MatlabFileTest {
 			MLUInt64 ret = new MLUInt64("nanos", new int[] {dest.size(), 1} );
 			int i = 0;
 			for(Event e : dest) {
-				ret.set((long) e.getEventTimeStamp().getNanos(), i++);
+                ret.set((long) e.getEventTimeStamp().getNano(), i++);
 			}
 			return ret;
 		}

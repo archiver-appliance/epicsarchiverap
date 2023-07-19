@@ -7,10 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import java.io.File;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-
+import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -20,7 +17,9 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 
-import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
+import java.io.File;
+import java.net.URLEncoder;
+import java.time.Instant;
 
 /**
  * Count the number of events in a PB stream given a URL.
@@ -42,8 +41,8 @@ public class CountEventsForURL {
 		String url = args[0];
 		storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode(url, "UTF-8"), configService);
 		String pvName = args[1];
-		Timestamp start = TimeUtils.convertFromISO8601String(args[2]);
-		Timestamp end = TimeUtils.convertFromISO8601String(args[3]);
+        Instant start = TimeUtils.convertFromISO8601String(args[2]);
+        Instant end = TimeUtils.convertFromISO8601String(args[3]);
 		
 		
 		long s = System.currentTimeMillis();
