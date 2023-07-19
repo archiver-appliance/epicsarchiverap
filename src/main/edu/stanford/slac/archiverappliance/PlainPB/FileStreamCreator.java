@@ -19,19 +19,19 @@ import org.epics.archiverappliance.etl.ETLStreamCreator;
  *
  */
 public class FileStreamCreator implements ETLStreamCreator {
-	private String pvName;
-	private Path path;
-	private PBFileInfo info;
-	
-	public FileStreamCreator(String pvName, Path path, PBFileInfo fileinfo) {
-		this.pvName = pvName;
-		this.path = path;
-		this.info = fileinfo;
-	}
+    private String pvName;
+    private Path path;
+    private PBFileInfo info;
 
-	@Override
-	public EventStream getStream() throws IOException {
-		return new FileBackedPBEventStream(pvName, path, info.getType());
-	}
+    public FileStreamCreator(String pvName, Path path, PBFileInfo fileinfo) {
+        this.pvName = pvName;
+        this.path = path;
+        this.info = fileinfo;
+    }
+
+    @Override
+    public EventStream getStream() throws IOException {
+        return new FileBackedPBEventStream(pvName, path, info.getType());
+    }
 
 }

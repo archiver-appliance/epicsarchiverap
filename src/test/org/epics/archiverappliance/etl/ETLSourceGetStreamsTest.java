@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.sql.Timestamp;
@@ -26,11 +25,12 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import org.junit.jupiter.api.Assertions;
 
 /**
  * Test the ETL source funtionality of PlainPBStoragePlugin
@@ -42,14 +42,14 @@ public class ETLSourceGetStreamsTest {
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ETLSrcStreamsTest");
 	private ConfigService configService;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		testFolder.mkdirs();
 		configService = new ConfigServiceForTests(new File("./bin"));
 		pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR", configService);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(testFolder);
 	}
@@ -110,11 +110,12 @@ public class ETLSourceGetStreamsTest {
 				}
 				Timestamp currentTime = TimeUtils.convertFromEpochSeconds(currSecond, 0);
 				List<ETLInfo> ETLFiles = pbplugin.getETLStreams(pvName, currentTime, etlContext);
-				assertTrue("getETLStream failed for " 
+				Assertions.assertTrue((ETLFiles != null) ? (ETLFiles.size() == expectedFiles) : (expectedFiles == 0),
+						"getETLStream failed for "
 				+ TimeUtils.convertToISO8601String(currSecond) 
 				+ " for partition " + partitionGranularity.toString()
-				+ " Expected " + expectedFiles + " got " + (ETLFiles != null ? Integer.toString(ETLFiles.size()) : "null"), 
-						(ETLFiles != null) ? (ETLFiles.size() == expectedFiles) : (expectedFiles == 0));
+				+ " Expected " + expectedFiles + " got " + (ETLFiles != null ? Integer.toString(ETLFiles.size()) : "null")
+						);
 			}
 		}
 	}

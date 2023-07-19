@@ -1,15 +1,7 @@
 package org.epics.archiverappliance.config;
 
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -17,11 +9,16 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.retrieval.DataSourceforPV;
 import org.epics.archiverappliance.retrieval.RetrievalState;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SampleRetrievalState extends RetrievalState {
 	private static Logger logger = LogManager.getLogger(SampleRetrievalState.class.getName());
-	
 	ConfigServiceForTests configService;
 	public SampleRetrievalState(ConfigServiceForTests parentConfigService) {
 		super(parentConfigService);

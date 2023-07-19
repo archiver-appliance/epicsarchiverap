@@ -12,7 +12,6 @@ import java.io.File;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -21,12 +20,11 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-import junit.framework.TestCase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * test for meta data archiving
@@ -34,14 +32,14 @@ import junit.framework.TestCase;
  * @author Luofeng Li
  * 
  */
-@Category(LocalEpicsTests.class)
-public class ArchiveFieldsTest extends TestCase {
+@Tag("localEpics")
+public class ArchiveFieldsTest  {
 	private static Logger logger = LogManager.getLogger(ArchiveFieldsTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
@@ -50,7 +48,7 @@ public class ArchiveFieldsTest extends TestCase {
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 		testConfigService.shutdownNow();
@@ -83,7 +81,7 @@ public class ArchiveFieldsTest extends TestCase {
 			Thread.sleep(15*1000);
 			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
 			Thread.sleep(15*1000);			
-			assertTrue("Not emough delay - metafields still need starting up", !testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp());
+			Assertions.assertTrue(!testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp(), "Not emough delay - metafields still need starting up");
 			logger.info("Changing fields");
 			SIOCSetup.caput(pvName + ".HIHI", 80);
 			SIOCSetup.caput(pvName + ".LOLO", 5);
@@ -109,11 +107,11 @@ public class ArchiveFieldsTest extends TestCase {
 				}
 				totalEvents++;
 			}
-			assertTrue("We should have some events in the current samples " + totalEvents, totalEvents >= 2);
-			assertTrue("the number of value for test_0.HIHI num is " + hihiNum
-					+ " and <3 and" + "it should be >=3", hihiNum >= 2);
-			assertTrue("the number of value for test_0.LOLO num is " + loloNUm
-					+ " and <3 and" + "it should be >=3", loloNUm >= 2);
+			Assertions.assertTrue(totalEvents >= 2, "We should have some events in the current samples " + totalEvents);
+			Assertions.assertTrue(hihiNum >= 2, "the number of value for test_0.HIHI num is " + hihiNum
+					+ " and <3 and" + "it should be >=3");
+			Assertions.assertTrue(loloNUm >= 2, "the number of value for test_0.LOLO num is " + loloNUm
+					+ " and <3 and" + "it should be >=3");
 			Thread.sleep(3000);
 
 		} catch (Exception e) {
@@ -149,18 +147,18 @@ public class ArchiveFieldsTest extends TestCase {
 			Thread.sleep(15*1000);
 			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
 			Thread.sleep(15*1000);			
-			assertTrue("Not emough delay - metafields still need starting up", !testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp());
+			Assertions.assertTrue(!testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp(), "Not emough delay - metafields still need starting up");
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
 
 			boolean result = archiveChannel.isConnected()
 					&& archiveChannel.getSampleBuffer().getCurrentSamples()
 							.size() > 0;
-			assertTrue(pvName + "is not started successfully and it shoule be started successfully", result);
+			Assertions.assertTrue(result, pvName + "is not started successfully and it shoule be started successfully");
 
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				assertTrue("the channel for " + pvNameTemp + " should be created and connected but it is not", archiveChannel.isMetaPVConnected(metaFieldTemp));
+				Assertions.assertTrue(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp + " should be created and connected but it is not");
 
 			}
 			Thread.sleep(10000);
@@ -168,15 +166,14 @@ public class ArchiveFieldsTest extends TestCase {
 			testConfigService.getEngineContext().getWriteThead().flushBuffer();
 			Thread.sleep(10000);
 			archiveChannel = testConfigService.getEngineContext().getChannelList().get(pvName);
-			assertTrue(pvName + "is not stopped successfully and it should be stopped successfully", archiveChannel == null || !archiveChannel.isConnected());
-			assertTrue(pvName + "should not have any data", archiveChannel == null || archiveChannel.getSampleBuffer().getCurrentSamples().size() == 0);
+			Assertions.assertTrue(archiveChannel == null || !archiveChannel.isConnected(), pvName + "is not stopped successfully and it should be stopped successfully");
+			Assertions.assertTrue(archiveChannel == null || archiveChannel.getSampleBuffer().getCurrentSamples().size() == 0, pvName + "should not have any data");
 
 			if(archiveChannel != null) { 
 				for (String metaFieldTemp : metaFields) {
 					String pvNameTemp = pvName + "." + metaFieldTemp;
-					assertTrue("the channel for " + pvNameTemp
-							+ " should be not connected but it is ",
-							!archiveChannel.isMetaPVConnected(metaFieldTemp));
+					Assertions.assertTrue(!archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
+							+ " should be not connected but it is ");
 				}
 			}
 
@@ -184,24 +181,21 @@ public class ArchiveFieldsTest extends TestCase {
 			SIOCSetup.caput(controlPVName, 1);
 			Thread.sleep(30000);
 			archiveChannel = testConfigService.getEngineContext().getChannelList().get(pvName);
-			assertTrue("After resuming the control channel, the archive channel for pv " + pvName + " is still null", archiveChannel != null);
+			Assertions.assertTrue(archiveChannel != null, "After resuming the control channel, the archive channel for pv " + pvName + " is still null");
 			boolean result3 = archiveChannel.isConnected();
-			assertTrue(
-					pvName
-							+ "is not started successfully and it should be started successfully",
-					result3);
+			Assertions.assertTrue(result3, pvName
+					+ "is not started successfully and it should be started successfully");
 			
 			Thread.sleep(15*1000);
 			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
 			Thread.sleep(15*1000);			
-			assertTrue("Not emough delay - metafields still need starting up", !testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp());
+			Assertions.assertTrue(!testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp(), "Not emough delay - metafields still need starting up");
 
 			// check meta field is not connected
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be reconnected but it is  not",
-						archiveChannel.isMetaPVConnected(metaFieldTemp));
+				Assertions.assertTrue(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
+						+ " should be reconnected but it is  not");
 
 			}
 

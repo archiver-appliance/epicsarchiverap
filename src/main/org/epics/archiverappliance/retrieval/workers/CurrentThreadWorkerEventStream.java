@@ -20,8 +20,8 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  *
  */
 public class CurrentThreadWorkerEventStream implements EventStream, RemotableOverRaw {
-	private static Logger logger = LogManager.getLogger(CurrentThreadWorkerEventStream.class.getName());
-	private String pvName;
+	private static final Logger logger = LogManager.getLogger(CurrentThreadWorkerEventStream.class.getName());
+	private final String pvName;
 	private List<Callable<EventStream>> theStreams = null;
 	private CurrentThreadWorkerEventStreamIterator theIterator = null;
 	
@@ -59,7 +59,7 @@ public class CurrentThreadWorkerEventStream implements EventStream, RemotableOve
 		
 		public CurrentThreadWorkerEventStreamIterator() {
 			try {
-				if(theStreams != null && theStreams.size() > 0) {
+				if(theStreams != null && !theStreams.isEmpty()) {
 					currStream = theStreams.get(currentStreamIndex).call();
 					currStreamIterator = currStream.iterator();
 				}
@@ -70,7 +70,8 @@ public class CurrentThreadWorkerEventStream implements EventStream, RemotableOve
 		
 		@Override
 		public boolean hasNext() {
-			if(currStream == null || currStreamIterator == null) return false;
+			if(currStream == null || currStreamIterator == null)
+				return false;
 			nextEvent = fetchNextEvent();
 			return (nextEvent != null);
 		}
@@ -88,7 +89,8 @@ public class CurrentThreadWorkerEventStream implements EventStream, RemotableOve
 		@Override
 		public void close() throws IOException {
 			nextEvent = null;
-			if(currStream != null) currStream.close();
+			if(currStream != null)
+				currStream.close();
 			currStream = null;
 			currStreamIterator = null;
 		}

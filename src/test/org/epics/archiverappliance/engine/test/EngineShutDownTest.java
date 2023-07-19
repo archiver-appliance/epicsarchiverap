@@ -12,31 +12,31 @@ import java.util.Iterator;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
-import junit.framework.TestCase;
+
 /**
  * test of engine shuting down
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class EngineShutDownTest extends TestCase {
+@Tag("localEpics")
+public class EngineShutDownTest {
 	private static Logger logger = LogManager.getLogger(EngineShutDownTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
@@ -44,7 +44,7 @@ public class EngineShutDownTest extends TestCase {
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 	
@@ -83,9 +83,8 @@ public class EngineShutDownTest extends TestCase {
 			}
 			
 
-			assertTrue(
-					"there should be no pvs after the engine shut down, but there are "
-							+ num + " pvs", num == 0);
+			Assertions.assertTrue(num == 0, "there should be no pvs after the engine shut down, but there are "
+					+ num + " pvs");
 
 		} catch (Exception e) {
 			//

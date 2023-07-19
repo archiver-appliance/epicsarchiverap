@@ -9,6 +9,7 @@ package org.epics.archiverappliance.retrieval.client;
 
 
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.Timestamp;
@@ -19,27 +20,27 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.GenerateData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Unit test to make sure the client retrieval libraries can retrieval all the DBR types.
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class DBRRetrievalTest {
 	private static final Logger logger = LogManager.getLogger(DBRRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	private final class DataDBR { 
+	private static final class DataDBR {
 		String pvName;
 		ArchDBRTypes type;
 		public DataDBR(String pvName, ArchDBRTypes type) {
@@ -48,10 +49,10 @@ public class DBRRetrievalTest {
 		}
 	}
 	
-	private LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
+	private final LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		
 		for(ArchDBRTypes type : ArchDBRTypes.values()) {
@@ -64,7 +65,7 @@ public class DBRRetrievalTest {
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());	
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -89,16 +90,16 @@ public class DBRRetrievalTest {
 				long previousEpochSeconds = 0; 
 				
 				// Make sure we get the DBR type we expect
-				assertTrue(stream.getDescription().getArchDBRType().equals(dataDBR.type));
+				Assertions.assertEquals(stream.getDescription().getArchDBRType(), dataDBR.type);
 
 				// We are making sure that the stream we get back has times in sequential order...
 				for(Event e : stream) {
 					long actualSeconds = e.getEpochSeconds();
-					assertTrue(actualSeconds >= previousEpochSeconds);
+					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 				}
 			} finally {
-				if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
+				if(stream != null) try { stream.close(); stream = null; } catch(Throwable ignored) { }
 			}
 		}
 	}

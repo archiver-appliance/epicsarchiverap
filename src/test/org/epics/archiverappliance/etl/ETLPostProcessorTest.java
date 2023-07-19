@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.etl;
 
-import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
@@ -33,10 +31,11 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
@@ -48,7 +47,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
-@Category(SlowTests.class)
+@Tag("slow")
 public class ETLPostProcessorTest {
 	private static Logger logger = LogManager.getLogger(ETLPostProcessorTest.class.getName());
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ETLPostProcessorTest";
@@ -61,7 +60,7 @@ public class ETLPostProcessorTest {
 	private ConfigService configService;
 
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		if(new File(rootFolderName).exists()) {
@@ -72,7 +71,7 @@ public class ETLPostProcessorTest {
 		destpbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + rootFolderName + "/dest&partitionGranularity=PARTITION_DAY&pp=" + testPostProcessor.getExtension(), configService);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		// FileUtils.deleteDirectory(new File(rootFolderName));
 	}
@@ -138,9 +137,9 @@ public class ETLPostProcessorTest {
 				int eventCountReduced = countAndValidateEvents(callablesReduced);
 				int expectedReducedCount = eventCountRaw/PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 				logger.info("On day " + day + " we got " + eventCountRaw + " raw events and " + eventCountReduced + " reduced events and an expected reduced event count of " + expectedReducedCount);
-				assertTrue("No reduced events are being produced by ETL", eventCountReduced > 0);
-				assertTrue("We are getting the same (or more) events for raw and reduced. Raw = " + eventCountRaw + " and reduced = " + eventCountReduced, eventCountRaw > eventCountReduced);
-				assertTrue("We expected a reduced eventcount of  " + expectedReducedCount + " and we got " + eventCountReduced, Math.abs(eventCountReduced - expectedReducedCount) < 10);
+				Assertions.assertTrue(eventCountReduced > 0,"No reduced events are being produced by ETL");
+				Assertions.assertTrue(eventCountRaw > eventCountReduced, "We are getting the same (or more) events for raw and reduced. Raw = " + eventCountRaw + " and reduced = " + eventCountReduced);
+				Assertions.assertTrue(Math.abs(eventCountReduced - expectedReducedCount) < 10, "We expected a reduced eventcount of  " + expectedReducedCount + " and we got " + eventCountReduced);
 			}
 		}
 	}
@@ -150,11 +149,12 @@ public class ETLPostProcessorTest {
 		long previousEventEpochSeconds = 0;
 		for(Event e : new CurrentThreadWorkerEventStream(pvName, callables)) {
 			long currentEpochSeconds = e.getEpochSeconds();
-			assertTrue("Timestamps are not sequential current = " 
+			Assertions.assertTrue(currentEpochSeconds > previousEventEpochSeconds,
+					"Timestamps are not sequential current = "
 			+ TimeUtils.convertToHumanReadableString(currentEpochSeconds) 
 			+ " previous = " 
-			+ TimeUtils.convertToHumanReadableString(previousEventEpochSeconds), 
-			currentEpochSeconds > previousEventEpochSeconds);
+			+ TimeUtils.convertToHumanReadableString(previousEventEpochSeconds)
+			);
 			previousEventEpochSeconds = currentEpochSeconds;
 			eventCount++;
 		}

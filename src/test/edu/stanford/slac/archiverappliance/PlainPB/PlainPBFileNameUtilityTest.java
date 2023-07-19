@@ -25,9 +25,10 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 
@@ -43,7 +44,7 @@ public class PlainPBFileNameUtilityTest {
 	private ConfigService configService;
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		File rootFolder = new File(rootFolderStr);
@@ -54,7 +55,7 @@ public class PlainPBFileNameUtilityTest {
 		rootFolder.mkdirs();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		File rootFolder = new File(rootFolderStr);
 		FileUtils.deleteDirectory(rootFolder);
@@ -72,14 +73,14 @@ public class PlainPBFileNameUtilityTest {
 		}
 		
 		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600 - 1, 0), extension, partitionHour, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 4);
+		Assertions.assertTrue(matchingPaths.length == 4, "File count " + matchingPaths.length);
 		
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partitionHour, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 4);
+		Assertions.assertTrue(etlPaths.length == 4, "File count " + etlPaths.length);
 		
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partitionHour, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("03.pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith("03.pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 	}
 	
 	@Test
@@ -94,15 +95,15 @@ public class PlainPBFileNameUtilityTest {
 		}
 		
 		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 10*24*3600 - 1, 0), extension, partitionDay, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 10);
+		Assertions.assertTrue(matchingPaths.length == 10, "File count " + matchingPaths.length);
 
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 10*24*3600, 0), extension, partitionDay, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 10);
+		Assertions.assertTrue(etlPaths.length == 10, "File count " + etlPaths.length);
 		
 		// We have 50 days of data, ask for the 51st day here.
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 51*24*3600, 0), extension, partitionDay, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("19.pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith("19.pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 
 	}
 
@@ -128,21 +129,21 @@ public class PlainPBFileNameUtilityTest {
 				TimeUtils.convertFromEpochSeconds(endMonth.getMillis()/1000, 0), // April
 				extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
 		logger.info("matching Paths " + Arrays.toString(matchingPaths));
-		assertTrue("Matching File count " + matchingPaths.length, matchingPaths.length == 4);
+		Assertions.assertTrue(matchingPaths.length == 4, "Matching File count " + matchingPaths.length);
 
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName,
 				TimeUtils.convertFromEpochSeconds(endMonth.getMillis()/1000, 0), // Before April
 				extension,  partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
 		logger.info("etl Paths " + Arrays.toString(etlPaths));
 
-		assertTrue("ETL File count " + etlPaths.length, etlPaths.length == 3);
+		Assertions.assertTrue(etlPaths.length == 3, "ETL File count " + etlPaths.length);
 		
 		// Ask for the next year here; the last file written out is for Nov so expect 11.pb here
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName,
 				TimeUtils.convertFromEpochSeconds((curr.plusMonths(5).getMillis())/1000, 0),
 				extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("11.pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith("11.pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 
 	}
 
@@ -162,20 +163,20 @@ public class PlainPBFileNameUtilityTest {
 		}
 		
 		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(endYear.getMillis()/1000 - 1, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 8);
+		Assertions.assertTrue(matchingPaths.length == 8, "File count " + matchingPaths.length);
 
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(endYear.getMillis()/1000, 0), extension,  partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 8);
+		Assertions.assertTrue(etlPaths.length == 8, "File count " + etlPaths.length);
 		
 		// Ask for the next year here; the last file written out is for current year plus (20 - 1)
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds((curr.plusYears(1).getMillis())/1000, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith(curr.minusYears(1).getYear() + ".pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith(curr.minusYears(1).getYear() + ".pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 
 		File mostRecentFile2 = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds((endYear.getMillis())/1000, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile2 != null);
+		Assertions.assertTrue(mostRecentFile2 != null, "Most recent file is null?");
 		String expectedEnd2 = endYear.minusYears(1).getYear() + ".pb";
-		assertTrue("Unxpected most recent file " + mostRecentFile2.getAbsolutePath() + " expecting " + expectedEnd2, mostRecentFile2.getName().endsWith(expectedEnd2));
+		Assertions.assertTrue(mostRecentFile2.getName().endsWith(expectedEnd2), "Unxpected most recent file " + mostRecentFile2.getAbsolutePath() + " expecting " + expectedEnd2);
 	}
 	
 	
@@ -191,14 +192,14 @@ public class PlainPBFileNameUtilityTest {
 		}
 		
 		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600 - 1, 0), extension, partition5Min, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 4*12);
+		Assertions.assertTrue(matchingPaths.length == 4*12, "File count " + matchingPaths.length);
 		
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partition5Min, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 4*12);
+		Assertions.assertTrue(etlPaths.length == 4*12, "File count " + etlPaths.length);
 		
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partition5Min, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("03_55.pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith("03_55.pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 	}
 	
 	
@@ -214,14 +215,14 @@ public class PlainPBFileNameUtilityTest {
 		}
 		
 		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600 - 1, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 4*4);
+		Assertions.assertTrue(matchingPaths.length == 4*4, "File count " + matchingPaths.length);
 		
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 4*4);
+		Assertions.assertTrue(etlPaths.length == 4*4, "File count " + etlPaths.length);
 		
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("03_45.pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith("03_45.pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 	}
 
 
@@ -237,14 +238,14 @@ public class PlainPBFileNameUtilityTest {
 		}
 		
 		Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds, 0), TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600 - 1, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + matchingPaths.length, matchingPaths.length == 4*2);
+		Assertions.assertTrue(matchingPaths.length == 4*2, "File count " + matchingPaths.length);
 		
 		Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("File count " + etlPaths.length, etlPaths.length == 4*2);
+		Assertions.assertTrue(etlPaths.length == 4*2, "File count " + etlPaths.length);
 		
 		File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(new ArchPaths(), rootFolderStr, pvName, TimeUtils.convertFromEpochSeconds(startOfYearEpochSeconds + 4*3600, 0), extension, partition, CompressionMode.NONE, configService.getPVNameToKeyConverter()).toFile();
-		assertTrue("Most recent file is null?", mostRecentFile != null);
-		assertTrue("Unxpected most recent file " + mostRecentFile.getAbsolutePath(), mostRecentFile.getName().endsWith("03_30.pb"));
+		Assertions.assertTrue(mostRecentFile != null, "Most recent file is null?");
+		Assertions.assertTrue(mostRecentFile.getName().endsWith("03_30.pb"), "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 	}
 	
 	private static void mkPath(Path nf) throws IOException {

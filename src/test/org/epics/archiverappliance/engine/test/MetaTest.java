@@ -15,30 +15,30 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.metadata.MetaCompletedListener;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
-import junit.framework.TestCase;
+
 /**
  * test of getting meta data
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class MetaTest extends TestCase {
+@Tag("localEpics")
+public class MetaTest {
 	private static Logger logger = LogManager.getLogger(MetaTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
@@ -46,7 +46,7 @@ public class MetaTest extends TestCase {
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		testConfigService.shutdownNow();
 		ioc.stopSIOC();
@@ -77,18 +77,15 @@ public class MetaTest extends TestCase {
 									"ADEL");
 							String RTYPStr = metaInfo.getOtherMetaInfo().get(
 									"RTYP");
-							assertTrue("MDEL of meta data should not be null",
-									MDELStr != null);
-							assertTrue("ADEL of meta data should not be null",
-									ADELStr != null);
-							assertTrue("RTYP of meta data should not be null",
-									RTYPStr != null);
+							Assertions.assertTrue(MDELStr != null, "MDEL of meta data should not be null");
+							Assertions.assertTrue(ADELStr != null, "ADEL of meta data should not be null");
+							Assertions.assertTrue(RTYPStr != null, "RTYP of meta data should not be null");
 							latch.countDown();
 						}
 
 					});
 
-			assertTrue(latch.await(70, TimeUnit.SECONDS));
+			Assertions.assertTrue(latch.await(70, TimeUnit.SECONDS));
 
 		} catch (Exception e) {
 			//
@@ -123,15 +120,15 @@ public class MetaTest extends TestCase {
 		testAliasNamesForPV(latch, "UnitTestNoNamingConvention:sinealias.HIHI", aliasNames);
 
 		try { 
-			assertTrue("MetaGet did not complete for all PV's " + latch.getCount(), latch.await(90, TimeUnit.SECONDS));
+			Assertions.assertTrue(latch.await(90, TimeUnit.SECONDS), "MetaGet did not complete for all PV's " + latch.getCount());
 		} catch(InterruptedException ex) { 
 			logger.error(ex);
 		}
 		
 		for(String pvName : aliasNames.keySet()) {
 			AliasNames aliasName = aliasNames.get(pvName);
-			assertTrue("AliasName for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetAliasName, aliasName.expectedName.equals(aliasName.metaGetAliasName));
-			assertTrue("NAME info hashmap for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetOtherInfoName, aliasName.expectedName.equals(aliasName.metaGetOtherInfoName));
+			Assertions.assertTrue(aliasName.expectedName.equals(aliasName.metaGetAliasName), "AliasName for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetAliasName);
+			Assertions.assertTrue(aliasName.expectedName.equals(aliasName.metaGetOtherInfoName), "NAME info hashmap for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetOtherInfoName);
 		}
 	}
 	
@@ -151,7 +148,7 @@ public class MetaTest extends TestCase {
 				}});
 		} catch(Exception ex) {
 			logger.error(ex);
-			assertTrue("Exception thrown " + ex.getMessage(), false);
+			Assertions.assertTrue(false, "Exception thrown " + ex.getMessage());
 		}
 	}
 	

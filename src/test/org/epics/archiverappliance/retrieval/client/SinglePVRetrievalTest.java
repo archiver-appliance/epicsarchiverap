@@ -17,34 +17,34 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.GenerateData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Test retrieval for single PVs
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class SinglePVRetrievalTest {
 	private static final Logger logger = LogManager.getLogger(SinglePVRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		GenerateData.generateSineForPV(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1", 0, ArchDBRTypes.DBR_SCALAR_DOUBLE);
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -78,13 +78,13 @@ public class SinglePVRetrievalTest {
 			if(stream != null) {
 				for(Event e : stream) {
 					long actualSeconds = e.getEpochSeconds();
-					assertTrue(actualSeconds >= previousEpochSeconds);
+					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 					eventCount++;
 				}
 			}
 			
-			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected " + expectedCount + " for year " + year, eventCount == expectedCount);
+			Assertions.assertTrue(eventCount == expectedCount, "Event count is not what we expect. We got " + eventCount + " and we expected " + expectedCount + " for year " + year);
 		} finally {
 			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
 		}

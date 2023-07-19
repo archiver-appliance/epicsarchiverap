@@ -42,13 +42,6 @@ public class MergeDedupCallablesEventStreamTest {
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	short currentYear = TimeUtils.getCurrentYear();
 	
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
 	
 	private List<Callable<EventStream>> breakStreamIntoChunks(int chunks, ArrayListEventStream strm) {
 		List<Callable<EventStream>> ret = new LinkedList<Callable<EventStream>>();

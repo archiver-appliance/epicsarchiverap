@@ -1,8 +1,5 @@
 package org.epics.archiverappliance.reshard;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
@@ -35,10 +31,11 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Simple test to test appending data from an older PV to a newer one.
@@ -56,7 +53,7 @@ import org.junit.experimental.categories.Category;
  * @author mshankar
  *
  */
-@Category(LocalEpicsTests.class)
+@Tag("localEpics")
 public class AppendAndAliasPVTest {
 	private static Logger logger = LogManager.getLogger(AppendAndAliasPVTest.class.getName());
 	private ConfigServiceForTests configService;
@@ -66,7 +63,7 @@ public class AppendAndAliasPVTest {
 	String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "appendAliasMTS";
 	String folderLTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "appendAliasLTS";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 
@@ -82,7 +79,7 @@ public class AppendAndAliasPVTest {
 		tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
@@ -103,7 +100,7 @@ public class AppendAndAliasPVTest {
 		newPVTypeInfo.setApplianceIdentity(appliance);
 		newPVTypeInfo.setChunkKey(pvName + ":");
 		newPVTypeInfo.setCreationTime(creationTime);
-		assertTrue("Expecting PV typeInfo for " + pvName + "; instead it is " + srcPVTypeInfo.getPvName(), newPVTypeInfo.getPvName().equals(pvName));
+		Assertions.assertTrue(newPVTypeInfo.getPvName().equals(pvName), "Expecting PV typeInfo for " + pvName + "; instead it is " + srcPVTypeInfo.getPvName());
 		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
 		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&createnew=true", encoder.encode(newPVTypeInfo));
 	}
@@ -129,7 +126,7 @@ public class AppendAndAliasPVTest {
 					totalEvents++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}
 		return totalEvents;
@@ -152,12 +149,12 @@ public class AppendAndAliasPVTest {
 			String appendAliasPVURL = "http://localhost:17665/mgmt/bpl/appendAndAliasPV?olderpv=test_1&newerpv=test_2&storage=LTS";
 			JSONObject appendAliasStatus = GetUrlContent.getURLContentAsJSONObject(appendAliasPVURL);
 			logger.info("Append alias response " + appendAliasStatus.toJSONString());
-			assertTrue("Cannot append and alias PV test_1 to test_2", appendAliasStatus.containsKey("status") && appendAliasStatus.get("status").equals("ok"));
+			Assertions.assertTrue(appendAliasStatus.containsKey("status") && appendAliasStatus.get("status").equals("ok"), "Cannot append and alias PV test_1 to test_2");
 
 			long eventCountAfterT1 = getEventCountBetween("test_1", TimeUtils.minusDays(TimeUtils.now(), 2*365), TimeUtils.now());
-			assertTrue("Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT1, Math.abs(eventCountAfterT1 - eventCountBefore) < 10);
+			Assertions.assertTrue(Math.abs(eventCountAfterT1 - eventCountBefore) < 10, "Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT1);
 			long eventCountAfterT2 = getEventCountBetween("test_2", TimeUtils.minusDays(TimeUtils.now(), 2*365), TimeUtils.now());
-			assertTrue("Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT2, Math.abs(eventCountAfterT2 - eventCountBefore) < 10);
+			Assertions.assertTrue(Math.abs(eventCountAfterT2 - eventCountBefore) < 10, "Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT2);
 		}
 		{
 			// Overlap use case
@@ -173,13 +170,13 @@ public class AppendAndAliasPVTest {
 			String appendAliasPVURL = "http://localhost:17665/mgmt/bpl/appendAndAliasPV?olderpv=test_3&newerpv=test_4&storage=LTS";
 			JSONObject appendAliasStatus = GetUrlContent.getURLContentAsJSONObject(appendAliasPVURL);
 			logger.info("Append alias response " + appendAliasStatus.toJSONString());
-			assertTrue("Cannot append and alias PV test_3 to test_4", appendAliasStatus.containsKey("status") && appendAliasStatus.get("status").equals("ok"));
+			Assertions.assertTrue(appendAliasStatus.containsKey("status") && appendAliasStatus.get("status").equals("ok"), "Cannot append and alias PV test_3 to test_4");
 
 			long missingEvents = 2 * 24 * 60; // One per minute for 2 days.
 			long eventCountAfterT1 = getEventCountBetween("test_3", TimeUtils.minusDays(TimeUtils.now(), 2*365), TimeUtils.now());
-			assertTrue("Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT1, Math.abs(eventCountAfterT1 - eventCountBefore) < (missingEvents + 10));
+			Assertions.assertTrue(Math.abs(eventCountAfterT1 - eventCountBefore) < (missingEvents + 10), "Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT1);
 			long eventCountAfterT2 = getEventCountBetween("test_4", TimeUtils.minusDays(TimeUtils.now(), 2*365), TimeUtils.now());
-			assertTrue("Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT2, Math.abs(eventCountAfterT2 - eventCountBefore) < (missingEvents + 10));
+			Assertions.assertTrue(Math.abs(eventCountAfterT2 - eventCountBefore) < (missingEvents + 10), "Different event counts Before " + eventCountBefore + " and after " + eventCountAfterT2);
 		}
 	}
 }

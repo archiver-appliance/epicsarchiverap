@@ -11,8 +11,6 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
@@ -25,11 +23,12 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -44,7 +43,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class Mean600Test {
 	private static Logger logger = LogManager.getLogger(Mean600Test.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
@@ -56,12 +55,12 @@ public class Mean600Test {
 	StoragePlugin storageplugin;
 	private ConfigServiceForTests configService;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		storageplugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR", configService);
@@ -88,7 +87,7 @@ public class Mean600Test {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -114,11 +113,11 @@ public class Mean600Test {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable, pvName.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(pvName.equals(pvNameObtainedFromTable), "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 Thread.sleep(1*60*1000);
 		 
 		 // We have now archived this PV, get some data and validate we got the expected number of events
@@ -138,9 +137,9 @@ public class Mean600Test {
 		 // Make sure we get the EGU as part of a regular VAL call.
 		 try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
 			 PayloadInfo info = null;
-			 assertTrue("We should get some data, we are getting a null stream back", strm != null); 
+			 Assertions.assertTrue(strm != null, "We should get some data, we are getting a null stream back");
 			 info =  strm.getPayLoadInfo();
-			 assertTrue("Stream has no payload info", info != null);
+			 Assertions.assertTrue(info != null, "Stream has no payload info");
 			 mergeHeaders(info, metaFields);
 			 strm.onInfoChange(new InfoChangeHandler() {
 				 @Override
@@ -159,7 +158,7 @@ public class Mean600Test {
 			 logger.info("Retrival for " + retrievalPVName + "=" + (endTimeMillis - startTimeMillis) + "(ms)");
 		 }
 
-		 assertTrue("Expecting " + expectedAtLeastEvents + "events. We got " + eventCount, eventCount >= expectedAtLeastEvents);
+		 Assertions.assertTrue(eventCount >= expectedAtLeastEvents, "Expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
 	}
 	
 	private static void mergeHeaders(PayloadInfo info, HashMap<String, String> headers) { 

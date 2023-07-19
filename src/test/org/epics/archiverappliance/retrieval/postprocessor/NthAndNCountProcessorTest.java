@@ -1,8 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.sql.Timestamp;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +17,8 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.NCount;
 import org.epics.archiverappliance.retrieval.postprocessors.Nth;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -91,14 +89,13 @@ public class NthAndNCountProcessorTest {
     		int n = 0;
     		for(Event e : retData) {
     			Timestamp eventTs = e.getEventTimeStamp();
-    			assertTrue("Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp), 
-    					eventTs.compareTo(previousTimeStamp) >= 0);
-    			assertEquals("Event value should match the n-th value in the test data",testData.get(n).getSampleValue().getValue().doubleValue(),e.getSampleValue().getValue().doubleValue(),Double.MIN_VALUE);
+    			Assertions.assertTrue(eventTs.compareTo(previousTimeStamp) >= 0, "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
+    			Assertions.assertEquals(testData.get(n).getSampleValue().getValue().doubleValue(), e.getSampleValue().getValue().doubleValue(), Double.MIN_VALUE, "Event value should match the n-th value in the test data");
     			n+=sampling[i];
     			previousTimeStamp = eventTs;
     			eventCount++;
     		}
-    		assertEquals("The number of events should be the total number of events in time range divided by sampling number",expectedSamplesInPeriod/sampling[i],eventCount);
+    		Assertions.assertEquals(expectedSamplesInPeriod/sampling[i], eventCount, "The number of events should be the total number of events in time range divided by sampling number");
 		}
 		
 	}
@@ -134,14 +131,13 @@ public class NthAndNCountProcessorTest {
     		int n = 4*24*60;
     		for(Event e : retData) {
     			Timestamp eventTs = e.getEventTimeStamp();
-    			assertTrue("Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp), 
-    					eventTs.compareTo(previousTimeStamp) >= 0);
-    			assertEquals("Event value should match the n-th value in the test data",testData.get(n).getSampleValue().getValue().doubleValue(),e.getSampleValue().getValue().doubleValue(),Double.MIN_VALUE);
+    			Assertions.assertTrue(eventTs.compareTo(previousTimeStamp) >= 0, "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
+    			Assertions.assertEquals(testData.get(n).getSampleValue().getValue().doubleValue(), e.getSampleValue().getValue().doubleValue(), Double.MIN_VALUE, "Event value should match the n-th value in the test data");
     			n+=sampling[i];
     			previousTimeStamp = eventTs;
     			eventCount++;
     		}
-    		assertEquals("The number of events should be the total number of events in the time range divided by sampling number",expectedSamplesInPeriod/sampling[i],eventCount);
+    		Assertions.assertEquals(expectedSamplesInPeriod/sampling[i], eventCount, "The number of events should be the total number of events in the time range divided by sampling number");
 		}
 	}
 		
@@ -174,7 +170,7 @@ public class NthAndNCountProcessorTest {
 		for(@SuppressWarnings("unused") Event e : retData) {
 			eventCount++;
 		}
-		assertEquals("The number of events should be the truncated to the max allowed number of events",Nth.MAX_COUNT,eventCount);
+		Assertions.assertEquals(Nth.MAX_COUNT, eventCount, "The number of events should be the truncated to the max allowed number of events");
 	}
 	
 	/**
@@ -201,11 +197,11 @@ public class NthAndNCountProcessorTest {
     		EventStream retData = nCountProcessor.getConsolidatedEventStream();
     		int eventCount = 0;
     		for(Event e : retData) {
-    			assertEquals("The returned value should be equal to the expected number of samples",expectedSamplesInPeriod,e.getSampleValue().getValue().intValue());
+    			Assertions.assertEquals(expectedSamplesInPeriod, e.getSampleValue().getValue().intValue(), "The returned value should be equal to the expected number of samples");
     			eventCount++;
     		}
     		
-    		assertEquals("Only one sample expected",1,eventCount);
+    		Assertions.assertEquals(1, eventCount, "Only one sample expected");
 		}
 		
 	}

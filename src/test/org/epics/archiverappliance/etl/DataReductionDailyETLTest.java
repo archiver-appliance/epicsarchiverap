@@ -11,14 +11,14 @@ import java.io.File;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 
-import junit.framework.TestCase;
+
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SingleForkTests;
+
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -33,10 +33,11 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
@@ -48,8 +49,8 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
-@Category(SingleForkTests.class)
-public class DataReductionDailyETLTest extends TestCase {
+@Tag("singleFork")
+public class DataReductionDailyETLTest {
 	private static final Logger logger = LogManager.getLogger(DataReductionDailyETLTest.class);
 	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
 	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
@@ -59,7 +60,7 @@ public class DataReductionDailyETLTest extends TestCase {
 	private String reducedPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionDailyETLTest.class.getSimpleName() + "reduced";
 	private String reduceDataUsing = "firstSample_3600";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		if(new File(shortTermFolderName).exists()) {
@@ -73,7 +74,7 @@ public class DataReductionDailyETLTest extends TestCase {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if(new File(shortTermFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(shortTermFolderName));
@@ -171,11 +172,11 @@ public class DataReductionDailyETLTest extends TestCase {
 						if(!reducedTimestamps.isEmpty()) logger.info("Reduced" + TimeUtils.convertToHumanReadableString(reducedTimestamps.pop()));
 					}
 				}
-				assertTrue("For day " + day + " we have " + rawWithPPCount + " rawWithPP events and " + reducedCount + " reduced events", rawWithPPCount == reducedCount);
+				Assertions.assertTrue(rawWithPPCount == reducedCount, "For day " + day + " we have " + rawWithPPCount + " rawWithPP events and " + reducedCount + " reduced events");
 			}
 			if(day > 2) { 
-				assertTrue("For day " + day + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount, (rawWithPPCount != 0));
-				assertTrue("For day " + day + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount, (reducedCount != 0));
+				Assertions.assertTrue((rawWithPPCount != 0), "For day " + day + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount);
+				Assertions.assertTrue((reducedCount != 0), "For day " + day + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount);
 			}
 
 		}        	

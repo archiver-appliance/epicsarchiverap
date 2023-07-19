@@ -12,19 +12,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.PVCaPut;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -36,7 +35,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class VariousPostProcessorTest {
 	private static Logger logger = LogManager.getLogger(VariousPostProcessorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
@@ -52,12 +51,12 @@ public class VariousPostProcessorTest {
 	double expectedJitter = 1.5851;
 	double expectedVariance = 3.0172;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		FileUtils.deleteDirectory(new File(ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "UnitTestNoNamingConvention"));
 		FileUtils.deleteDirectory(new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "UnitTestNoNamingConvention"));
@@ -72,7 +71,7 @@ public class VariousPostProcessorTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -97,11 +96,11 @@ public class VariousPostProcessorTest {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable, pvNameToArchive.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 
 		 // Change the values for the PV
 		 logger.info("Changing pv " + pvName + " and generating " + sampleValues.length + " values");
@@ -132,28 +131,25 @@ public class VariousPostProcessorTest {
 				double previousValue = 0.0;
 				for(Event e : stream) {
 					long actualSeconds = e.getEpochSeconds();
-					assertTrue(actualSeconds >= previousEpochSeconds);
+					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 					if(eventCount == expectedValues.length) { 
-						assertTrue("We are probably running this test on a day that generates two values for the bin size. In this case, we make sure the two values are the same", 
-								e.getSampleValue().getValue().doubleValue() == previousValue);
+						Assertions.assertTrue(e.getSampleValue().getValue().doubleValue() == previousValue, "We are probably running this test on a day that generates two values for the bin size. In this case, we make sure the two values are the same");
 						continue;
 					}
-					assertTrue("Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName, eventCount < expectedValues.length);
+					Assertions.assertTrue(eventCount < expectedValues.length, "Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName);
 					// We check for approx values only.
 					if(Double.isNaN(expectedValues[eventCount])) { 
-						assertTrue("Got " + e.getSampleValue().getValue().doubleValue() + " expecting " +  expectedValues[eventCount] + " at " + eventCount, 
-								Double.isNaN(e.getSampleValue().getValue().doubleValue()));
+						Assertions.assertTrue(Double.isNaN(e.getSampleValue().getValue().doubleValue()), "Got " + e.getSampleValue().getValue().doubleValue() + " expecting " +  expectedValues[eventCount] + " at " + eventCount);
 					} else { 
-						assertTrue("Got " + e.getSampleValue().getValue().doubleValue() + " expecting " +  expectedValues[eventCount] + " at " + eventCount, 
-								Math.abs(Math.abs(e.getSampleValue().getValue().doubleValue()) -  Math.abs(expectedValues[eventCount])) < 0.001);
+						Assertions.assertTrue(Math.abs(Math.abs(e.getSampleValue().getValue().doubleValue()) -  Math.abs(expectedValues[eventCount])) < 0.001, "Got " + e.getSampleValue().getValue().doubleValue() + " expecting " +  expectedValues[eventCount] + " at " + eventCount);
 					}
 					previousValue = e.getSampleValue().getValue().doubleValue();
 					eventCount++;
 				}
 			}
 
-			assertTrue("Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName, eventCount == expectedValues.length);
+			Assertions.assertTrue(eventCount == expectedValues.length, "Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName);
 		}
 	}
 

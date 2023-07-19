@@ -101,10 +101,7 @@ public class PBCommonSetup {
 		return tempFolderForTests;
 	}
 
-	public File getTempFolderForTests() {
-		return tempFolderForTests;
-	}
-	
+
 	public Set<String> listTestFolderContents() {
 		HashSet<String> ret = new HashSet<String>();
 		for(File f : FileUtils.listFiles(tempFolderForTests, new String[] { "*" }, true)) {

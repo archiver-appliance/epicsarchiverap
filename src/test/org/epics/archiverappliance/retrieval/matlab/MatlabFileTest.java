@@ -22,9 +22,9 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
@@ -36,6 +36,7 @@ import com.jmatio.types.MLUInt64;
 import com.jmatio.types.MLUInt8;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test generation of Matlab files from event streams
@@ -49,7 +50,7 @@ public class MatlabFileTest {
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MatlabFileTest";
 	String pvName = "Test_MatlabPV";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		storageplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + rootFolderName + "/&partitionGranularity=PARTITION_YEAR", configService);
@@ -68,7 +69,7 @@ public class MatlabFileTest {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 	
@@ -161,11 +162,11 @@ public class MatlabFileTest {
 			logger.info("Key: " + key);
 		}
 		MLStructure pvDataFileFile = (MLStructure) content.get("data");
-		assertTrue("Cannot find data for pv in file ", pvDataFileFile != null);
+		Assertions.assertTrue(pvDataFileFile != null, "Cannot find data for pv in file ");
 		MLArray epochSecondsArray = pvDataFileFile.getField("epochSeconds");
-		assertTrue("Cannot find epochSeconds for pv in file ", epochSecondsArray != null);
+		Assertions.assertTrue(epochSecondsArray != null, "Cannot find epochSeconds for pv in file ");
 		MLArray valueArray = pvDataFileFile.getField("values");
-		assertTrue("Cannot find value for pv in file ", valueArray != null);
+		Assertions.assertTrue(valueArray != null, "Cannot find value for pv in file ");
 	}
 
 }

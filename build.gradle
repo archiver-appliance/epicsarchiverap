@@ -74,6 +74,7 @@ dependencies {
     testImplementation("org.seleniumhq.selenium:selenium-support:4.9.0")
     testImplementation("io.github.bonigarcia:webdrivermanager:5.3.2")
     testImplementation("org.apache.commons:commons-compress:1.23.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
     implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")// Only needed for tests, but inbuilt to main)
     implementation("org.epics:jca:2.4.7")
     implementation('commons-codec:commons-codec:1.15')
@@ -98,11 +99,12 @@ dependencies {
     implementation("org.apache.logging.log4j:log4j-jul:2.20.0")
     permitUnusedDeclared("org.apache.logging.log4j:log4j-jul:2.20.0")
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
+    runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
     implementation("com.opencsv:opencsv:5.7.1")
     implementation("com.google.protobuf:protobuf-java:3.23.0")
     testImplementation ("commons-cli:commons-cli:1.5.0")
-    permitTestUnusedDeclared("org.junit.vintage:junit-vintage-engine:5.9.3") // TODO upgrade tests to JUNIT 5
-    permitTestUsedUndeclared("junit:junit:4.13.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
     testImplementation('org.awaitility:awaitility:4.2.0')
     implementation("org.phoebus:core-pva:4.7.2")
 }
@@ -395,21 +397,21 @@ tasks.withType(Test).configureEach {
 tasks.register("unitTests", Test) {
     group = "Test"
     description = "Run all unit tests."
-    useJUnit {
-        excludeCategories "org.epics.archiverappliance.FlakyTests",
-                "org.epics.archiverappliance.IntegrationTests",
-                "org.epics.archiverappliance.LocalEpicsTests"
+    useJUnitPlatform {
+        excludeTags "flaky",
+                "integration",
+                "localEpics"
     }
 }
 
 tasks.register("flakyTests", Test) {
     group = "Test"
     description = "Run unit tests that due to timimg or machine specifics, could fail."
-    useJUnit {
-        includeCategories "org.epics.archiverappliance.FlakyTests"
-        excludeCategories "org.epics.archiverappliance.SlowTests",
-                "org.epics.archiverappliance.IntegrationTests",
-                "org.epics.archiverappliance.LocalEpicsTests"
+    useJUnitPlatform {
+        includeTags "flaky"
+        excludeTags "slow",
+                "integration",
+                "localEpics"
     }
 }
 
@@ -451,11 +453,11 @@ tasks.register("integrationTests", Test) {
     dependsOn "integrationSetup"
     forkEvery 1
     maxParallelForks = 1
-    useJUnit {
-        includeCategories "org.epics.archiverappliance.IntegrationTests",
-                "org.epics.archiverappliance.LocalEpicsTests"
-        excludeCategories "org.epics.archiverappliance.SlowTests",
-                "org.epics.archiverappliance.FlakyTests"
+    useJUnitPlatform {
+        includeTags "integration",
+                "localEpics"
+        excludeTags "slow",
+                "flaky"
     }
 }
 
@@ -463,25 +465,26 @@ tasks.register("singleForkTests", Test) {
     group = "Test"
     description = "Run the single fork tests. Ones that require a fork every test."
     forkEvery 1
-    useJUnit {
-        includeCategories "org.epics.archiverappliance.SingleForkTests"
-        excludeCategories "org.epics.archiverappliance.SlowTests",
-                "org.epics.archiverappliance.FlakyTests",
-                "org.epics.archiverappliance.IntegrationTests",
-                "org.epics.archiverappliance.LocalEpicsTests"
+    useJUnitPlatform {
+        includeTags "singleFork"
+        excludeTags "slow",
+                "flaky",
+                "integration",
+                "localEpics"
     }
 }
 
 test {
     group = "Test"
     description = "Run all the fast unit tests."
-    useJUnit {
-        excludeCategories "org.epics.archiverappliance.IntegrationTests",
-                "org.epics.archiverappliance.LocalEpicsTests",
-                "org.epics.archiverappliance.FlakyTests",
-                "org.epics.archiverappliance.SingleForkTests",
-                "org.epics.archiverappliance.SlowTests"
+    useJUnitPlatform {
+        excludeTags "integration",
+                "localEpics",
+                "flaky",
+                "singleFork",
+                "slow"
     }
+
 }
 
 tasks.register("allTests", Test) {

@@ -7,8 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -31,9 +29,10 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 
@@ -50,7 +49,7 @@ public class RenamePVTest {
 	private String oldPVName = "Test:rename:oldPVName";
 	private String newPVName = "Test:rename:newPVName";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		if(rootFolder.exists()) {
@@ -59,7 +58,7 @@ public class RenamePVTest {
 		rootFolder.mkdirs();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(rootFolder);
 	}
@@ -117,9 +116,9 @@ public class RenamePVTest {
 
 		logger.info("Old count " + oldPVEventCount + " and new count " + newPVEventCount);
 		logger.info("Old path count " + oldPathCount + " and new path count " + newPathCount);
-		assertTrue("Event counts before and after the move are not the same. Old count " + oldPVEventCount + " and new count " + newPVEventCount, newPVEventCount==oldPVEventCount);
-		assertTrue("Path counts before and after the move are not the same. Old count " + oldPathCount + " and new count " + newPathCount, oldPathCount==newPathCount);
-		assertTrue("Path counts for the old PV name after the rename " + newPathForOldPVNameCount + " is not the same as before the rename " + oldPathCount, newPathForOldPVNameCount==oldPathCount);
+		Assertions.assertTrue(newPVEventCount==oldPVEventCount, "Event counts before and after the move are not the same. Old count " + oldPVEventCount + " and new count " + newPVEventCount);
+		Assertions.assertTrue(oldPathCount==newPathCount, "Path counts before and after the move are not the same. Old count " + oldPathCount + " and new count " + newPathCount);
+		Assertions.assertTrue(newPathForOldPVNameCount==oldPathCount, "Path counts for the old PV name after the rename " + newPathForOldPVNameCount + " is not the same as before the rename " + oldPathCount);
 	}
 
 }

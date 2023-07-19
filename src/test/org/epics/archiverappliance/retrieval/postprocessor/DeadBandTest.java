@@ -16,7 +16,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -31,10 +30,11 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
@@ -50,7 +50,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class DeadBandTest {
 	private static Logger logger = LogManager.getLogger(DeadBandTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
@@ -58,7 +58,7 @@ public class DeadBandTest {
 	private String ltsFolderName = System.getenv("ARCHAPPL_LONG_TERM_FOLDER"); 
 	private File ltsFolder = new File(ltsFolderName);
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 		
@@ -67,7 +67,7 @@ public class DeadBandTest {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 
@@ -82,14 +82,14 @@ public class DeadBandTest {
 		String srcFile = "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/deadband/sig1-wo-adel.pb";
 		destFile.getParentFile().mkdirs();
 		FileUtils.copyFile(new File(srcFile), destFile);
-		assertTrue(destFile.getAbsolutePath() + "does not exist", destFile.exists());
+		Assertions.assertTrue(destFile.exists(), destFile.getAbsolutePath() + "does not exist");
 		 
 		// Load a sample PVTypeInfo from a prototype file.
 		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
 		PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
 		JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
 		decoder.decode(srcPVTypeInfoJSON, srcPVTypeInfo);
-		assertTrue("Expecting PV typeInfo for " + pvName + "; instead it is " + srcPVTypeInfo.getPvName(), srcPVTypeInfo.getPvName().equals(pvName));
+		Assertions.assertTrue(srcPVTypeInfo.getPvName().equals(pvName), "Expecting PV typeInfo for " + pvName + "; instead it is " + srcPVTypeInfo.getPvName());
 		String newPVName = "TST-CT{}Sig:1-I";
 		PVTypeInfo newPVTypeInfo = new PVTypeInfo(newPVName, srcPVTypeInfo);
 		newPVTypeInfo.setPaused(true);
@@ -117,9 +117,9 @@ public class DeadBandTest {
 		// Make sure we get the EGU as part of a regular VAL call.
 		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
 			PayloadInfo info = null;
-			assertTrue("We should get some data for " + retrievalPVName + " , we are getting a null stream back", strm != null); 
+			Assertions.assertTrue(strm != null, "We should get some data for " + retrievalPVName + " , we are getting a null stream back");
 			info =  strm.getPayLoadInfo();
-			assertTrue("Stream has no payload info", info != null);
+			Assertions.assertTrue(info != null, "Stream has no payload info");
 			mergeHeaders(info, metaFields);
 			strm.onInfoChange(new InfoChangeHandler() {
 				@Override
@@ -139,9 +139,9 @@ public class DeadBandTest {
 		}
 
 		logger.info("For " + retrievalPVName + "we were expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
-		assertTrue("Expecting " + expectedAtLeastEvents + "events for " + retrievalPVName + ". We got " + eventCount, eventCount >= expectedAtLeastEvents);
+		Assertions.assertTrue(eventCount >= expectedAtLeastEvents, "Expecting " + expectedAtLeastEvents + "events for " + retrievalPVName + ". We got " + eventCount);
 		if(exactMatch) { 
-			assertTrue("Expecting " + expectedAtLeastEvents + "events for " + retrievalPVName + ". We got " + eventCount, eventCount == expectedAtLeastEvents);
+			Assertions.assertTrue(eventCount == expectedAtLeastEvents, "Expecting " + expectedAtLeastEvents + "events for " + retrievalPVName + ". We got " + eventCount);
 		}
 		return eventCount;
 	}
@@ -165,9 +165,9 @@ public class DeadBandTest {
 		// Make sure we get the EGU as part of a regular VAL call.
 		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
 			PayloadInfo info = null;
-			assertTrue("We should get some data for " + retrievalPVName + " , we are getting a null stream back", strm != null); 
+			Assertions.assertTrue(strm != null, "We should get some data for " + retrievalPVName + " , we are getting a null stream back");
 			info =  strm.getPayLoadInfo();
-			assertTrue("Stream has no payload info", info != null);
+			Assertions.assertTrue(info != null, "Stream has no payload info");
 			mergeHeaders(info, metaFields);
 			strm.onInfoChange(new InfoChangeHandler() {
 				@Override
@@ -181,13 +181,12 @@ public class DeadBandTest {
 			Iterator<Event> compareIt = compareStream.iterator();
 
 			for(EpicsMessage dbrEvent : strm) {
-				assertTrue("We seem to have run out of events at " + eventCount, compareIt.hasNext());
+				Assertions.assertTrue(compareIt.hasNext(), "We seem to have run out of events at " + eventCount);
 				Event compareEvent = compareIt.next();
-				assertTrue("At event " + eventCount + ", from the operator we have an event at " 
+				Assertions.assertTrue(dbrEvent.getTimestamp().equals(compareEvent.getEventTimeStamp()), "At event " + eventCount + ", from the operator we have an event at "
 						+ TimeUtils.convertToISO8601String(dbrEvent.getTimestamp())
 						+ " and from the compare stream, we have an event at "
-						+ TimeUtils.convertToISO8601String(compareEvent.getEventTimeStamp()),
-						dbrEvent.getTimestamp().equals(compareEvent.getEventTimeStamp()));
+						+ TimeUtils.convertToISO8601String(compareEvent.getEventTimeStamp()));
 				
 				eventCount++;
 			}

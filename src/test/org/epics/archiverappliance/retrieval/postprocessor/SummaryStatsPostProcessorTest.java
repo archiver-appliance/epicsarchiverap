@@ -17,7 +17,8 @@ import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.Mean;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * The SummaryStatsPostProcessor provides the framework code for computing average, sigma etc on the server side.
@@ -62,12 +63,11 @@ public class SummaryStatsPostProcessorTest {
 				for(Event e : meanProcessor.getConsolidatedEventStream()) {
 					logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "=" + e.getSampleValue().toString());
 					Timestamp eventTs = e.getEventTimeStamp();
-					assertTrue("Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp), 
-							eventTs.after(previousTimeStamp));
+					Assertions.assertTrue(eventTs.after(previousTimeStamp), "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
 					previousTimeStamp = eventTs;
 					eventCount++;
 				}
-				assertTrue("Expected around 21 events got " + eventCount, eventCount >= 19 && eventCount <= 22);
+				Assertions.assertTrue(eventCount >= 19 && eventCount <= 22, "Expected around 21 events got " + eventCount);
 			}
 
 			// Test where we are missing the starting bin.
@@ -84,12 +84,11 @@ public class SummaryStatsPostProcessorTest {
 				for(Event e : meanProcessor.getConsolidatedEventStream()) {
 					logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "=" + e.getSampleValue().toString());
 					Timestamp eventTs = e.getEventTimeStamp();
-					assertTrue("Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp), 
-							eventTs.after(previousTimeStamp));
+					Assertions.assertTrue(eventTs.after(previousTimeStamp), "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
 					previousTimeStamp = eventTs;
 					eventCount++;
 				}
-				assertTrue("Expected around 20 events got " + eventCount, eventCount >= 17 && eventCount <= 22);
+				Assertions.assertTrue(eventCount >= 17 && eventCount <= 22, "Expected around 20 events got " + eventCount);
 			}
 			
 			// Test where we are missing data in the start.
@@ -106,12 +105,11 @@ public class SummaryStatsPostProcessorTest {
 				for(Event e : meanProcessor.getConsolidatedEventStream()) {
 					logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "=" + e.getSampleValue().toString());
 					Timestamp eventTs = e.getEventTimeStamp();
-					assertTrue("Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp), 
-							eventTs.after(previousTimeStamp));
+					Assertions.assertTrue(eventTs.after(previousTimeStamp), "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
 					previousTimeStamp = eventTs;
 					eventCount++;
 				}
-				assertTrue("Expected around 21 events got " + eventCount, eventCount >= 17 && eventCount <= 23);
+				Assertions.assertTrue(eventCount >= 17 && eventCount <= 23, "Expected around 21 events got " + eventCount);
 			}
 
 		}

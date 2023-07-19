@@ -7,9 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.simulation;
 
+import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.HashMap;
 
+import com.google.protobuf.Message;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -28,13 +30,13 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
  *
  */
 public class SimulationEvent implements DBRTimeEvent {
-	private int secondsIntoYear;
+	private final int secondsIntoYear;
 	private int nanos = 0;
 	short yearofdata;
-	private ArchDBRTypes type;
-	private DBR2PBTypeMapping mapping;
+	private final ArchDBRTypes type;
+	private final DBR2PBTypeMapping mapping;
 	SampleValue sampleValue;
-	private static Logger logger = LogManager.getLogger(SimulationEvent.class.getName());
+	private static final Logger logger = LogManager.getLogger(SimulationEvent.class.getName());
 
 	public SimulationEvent(int secondsIntoYear, short yearofdata, ArchDBRTypes type, SimulationValueGenerator valueGenerator) {
 		this.secondsIntoYear = secondsIntoYear;
@@ -102,7 +104,6 @@ public class SimulationEvent implements DBRTimeEvent {
 	
 	@Override
 	public void setRepeatCount(int repeatCount) {
-		return;
 	}
 
 
@@ -113,19 +114,27 @@ public class SimulationEvent implements DBRTimeEvent {
 
 	@Override
 	public ByteArray getRawForm() {
+
+		DBRTimeEvent ev= getDbrTimeEvent();
+		return ev.getRawForm();
+    }
+
+	private DBRTimeEvent getDbrTimeEvent() {
 		// We do have a mechanism to avoid inclusion of DBR2PBTypeMapping by going thru the config service.
 		// But as the simulation events are mainly for unit tests, we stick to raw PB..
 		// In the future, if you need to break the dependency on DBR2PBTypeMapping, please do so....
-		try { 
-			DBRTimeEvent ev = mapping.getSerializingConstructor().newInstance(this);
-			return ev.getRawForm();
-		} catch(Exception ex) {
-			logger.error("Exception creating event object", ex);
-			throw new RuntimeException("Unable to serialize a simulation event stream");
-		}
+		DBRTimeEvent ev = null;
+		try {
+			ev = mapping.getSerializingConstructor().newInstance(this);
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+
+			logger.error("Exception creating event object", e);
+			throw new RuntimeException("Unable to serialize a simulation event stream");	    }
+		return ev;
 	}
 
-	
+
+
 	@Override
 	public boolean hasFieldValues() {
 		return false;

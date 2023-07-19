@@ -7,9 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.sql.Timestamp;
 
@@ -18,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -30,23 +26,24 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test EventStreams that span multiple PB files.
  * @author mshankar
  *
  */
-@Category(SlowTests.class)
+@Tag("slow")
 public class MultiFilePBEventStreamTest {
 	private static final Logger logger = LogManager.getLogger(MultiFilePBEventStreamTest.class);
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MultiFilePBEventStream/";
 	File rootFolder = new File(rootFolderName);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(rootFolder.exists()) {
 			FileUtils.deleteDirectory(rootFolder);
@@ -54,7 +51,7 @@ public class MultiFilePBEventStreamTest {
 		rootFolder.mkdirs();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		// FileUtils.deleteDirectory(rootFolder);
 	}
@@ -97,20 +94,18 @@ public class MultiFilePBEventStreamTest {
 					// The PlainPBStorage plugin will also yield the last event of the previous partition.
 					// We skip checking that as part of this test
 					if(currEpochSeconds < (startEpochSeconds-1)) continue;
-					assertTrue("Expected " 
+					Assertions.assertEquals(currEpochSeconds, expectedEpochSeconds, "Expected "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(expectedEpochSeconds, 0))
-							+ " Got " 
+							+ " Got "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
-							+ " at eventCount " 
-							+ eventCount, 
-							currEpochSeconds == expectedEpochSeconds);
-					assertTrue("Less than " 
+							+ " at eventCount "
+							+ eventCount);
+					Assertions.assertTrue(currEpochSeconds <= endEpochSeconds, "Less than "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(endEpochSeconds, 0))
-							+ " Got " 
+							+ " Got "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
-							+ " at eventCount " 
-							+ eventCount, 
-							currEpochSeconds <= endEpochSeconds);
+							+ " at eventCount "
+							+ eventCount);
 					expectedEpochSeconds++;
 					eventCount++;
 				}

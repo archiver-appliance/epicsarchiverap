@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.FlakyTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -22,10 +21,8 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.model.SampleBuffer;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -36,7 +33,7 @@ import org.junit.runners.Parameterized;
  *
  */
 @RunWith(Parameterized.class)
-@Category(FlakyTests.class)
+@Tag("flaky")
 public class DoubleBufferTest {
 	private static Logger logger = LogManager.getLogger(DoubleBufferTest.class.getName());
 	private int eventsAdded = 0;
@@ -45,13 +42,6 @@ public class DoubleBufferTest {
 	private int bufferSize;
 	private StoredState allStored;
 
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
 
 	enum StoredState { ALL_STORED, SOME_LOSS, MAYBE_SOME_LOSS}
 

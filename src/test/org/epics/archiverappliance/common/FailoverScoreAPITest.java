@@ -21,7 +21,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -38,10 +37,11 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Test the getDataAtTime API when using the merge dedup plugin.
@@ -49,7 +49,7 @@ import org.junit.experimental.categories.Category;
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class FailoverScoreAPITest {
 	private static Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
 	private ConfigServiceForTests configService;
@@ -57,7 +57,7 @@ public class FailoverScoreAPITest {
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
@@ -112,20 +112,20 @@ public class FailoverScoreAPITest {
 				for(Event e : stream) {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events more than " + 86400 + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch), (evEpoch - lastEvEpoch) == 86400);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == 86400, "We got events more than " + 86400 + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch));
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
+		Assertions.assertTrue(genEventCount == rtvlEventCount, "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
 		return rtvlEventCount;
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -153,18 +153,18 @@ public class FailoverScoreAPITest {
 		JSONArray array = new JSONArray();
 		array.add(pvName);
 		Map<String, Map<String, Object>> ret = (Map<String, Map<String, Object>>) GetUrlContent.postDataAndGetContentAsJSONArray(scoreURL, array);
-		assertTrue("We expected some data back from getDataAtTime", ret.size() > 0);
+		Assertions.assertTrue(ret.size() > 0, "We expected some data back from getDataAtTime");
 		for(String retpvName : ret.keySet()) {
 			Map<String, Object> val = ret.get(retpvName);
 			if(retpvName.equals(pvName)) {
 				logger.info("Asking for value at " + TimeUtils.convertToISO8601String(epochSecs) + " got value at " + TimeUtils.convertToISO8601String((long)val.get("secs")));
-				assertTrue("We expected a morning value for " + TimeUtils.convertToISO8601String(epochSecs) 
-				+ " instead we got " + TimeUtils.convertToISO8601String((long)val.get("secs")), (double) val.get("val") == (morningp ? 10 : 20 ));
+				Assertions.assertTrue((double) val.get("val") == (morningp ? 10 : 20 ), "We expected a morning value for " + TimeUtils.convertToISO8601String(epochSecs)
+				+ " instead we got " + TimeUtils.convertToISO8601String((long)val.get("secs")));
 				return;
 			}
 		}
 		
-		assertTrue("We did not receive a value for PV ", false);
+		Assertions.assertTrue(false, "We did not receive a value for PV ");
 	}
 
 	@Test

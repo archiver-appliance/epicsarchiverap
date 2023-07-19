@@ -12,18 +12,17 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
@@ -37,7 +36,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class VALNoVALTest {
 	private static Logger logger = LogManager.getLogger(VALNoVALTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
@@ -47,12 +46,12 @@ public class VALNoVALTest {
 	String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardMTS";
 	String folderLTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardLTS";
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", folderSTS);
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", folderMTS);
@@ -67,7 +66,7 @@ public class VALNoVALTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -115,11 +114,11 @@ public class VALNoVALTest {
 		{
 			 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowNum + ") td:nth-child(1)"));
 			 String pvNameObtainedFromTable = statusPVName.getText();
-			 assertTrue("PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable, pvNameToArchive.equals(pvNameObtainedFromTable));
+			 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
 			 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowNum + ") td:nth-child(2)"));
 			 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 			 String expectedPVStatus = "Being archived";
-			 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+			 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 }
 	}
 	
@@ -141,14 +140,14 @@ public class VALNoVALTest {
 			 if(stream != null) {
 				 for(Event e : stream) {
 					 long actualSeconds = e.getEpochSeconds();
-					 assertTrue(actualSeconds >= previousEpochSeconds);
+					 Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					 previousEpochSeconds = actualSeconds;
 					 eventCount++;
 				 }
 			 }
 
 			 logger.info("Got " + eventCount + " event for pv " + pvName);
-			 assertTrue("When asking for data using " + pvName + ", event count is incorrect We got " + eventCount + " and we were expecting at least " + expectedEventCount, eventCount > expectedEventCount);
+			 Assertions.assertTrue(eventCount > expectedEventCount, "When asking for data using " + pvName + ", event count is incorrect We got " + eventCount + " and we were expecting at least " + expectedEventCount);
 		 }
 	}
 

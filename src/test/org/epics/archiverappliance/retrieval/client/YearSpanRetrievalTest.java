@@ -21,7 +21,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -32,10 +31,11 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
@@ -46,7 +46,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class YearSpanRetrievalTest {
 	private static final Logger logger = LogManager.getLogger(YearSpanRetrievalTest.class.getName());
 	private ConfigService configService;
@@ -54,19 +54,19 @@ public class YearSpanRetrievalTest {
 	PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
 	TomcatSetup tomcatSetup = new TomcatSetup();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		pbSetup.setUpRootFolder(pbplugin);
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		generateDataForYears(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan", (short) 2010, (short) 2013);
+		generateDataForYears();
 	}
 	
-	private void generateDataForYears(String pvName, short startyear, short endyear) throws IOException {
+	private void generateDataForYears() throws IOException {
 		// We skip generation of the file only if all the files exist.
 		boolean deletefilesandgeneratedata = false;
-		for(short currentyear = startyear; currentyear <= endyear; currentyear++) {
-			if(!PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYearInSeconds(currentyear), new ArchPaths(), configService.getPVNameToKeyConverter()).toFile().exists()) {
+		for(short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
+			if(!PlainPBPathNameUtility.getPathNameForTime(pbplugin, "--ArchUnitTestyspan", TimeUtils.getStartOfYearInSeconds(currentyear), new ArchPaths(), configService.getPVNameToKeyConverter()).toFile().exists()) {
 				logger.info("File for year " + currentyear + " does not exist. Generating data for all the years.");
 				deletefilesandgeneratedata = true;
 				break;
@@ -74,19 +74,19 @@ public class YearSpanRetrievalTest {
 		}
 		// Delete all the files for the specified span
 		if(deletefilesandgeneratedata) {
-			for(short currentyear = startyear; currentyear <= endyear; currentyear++) {
-				Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYearInSeconds(currentyear), new ArchPaths(), configService.getPVNameToKeyConverter())); 
+			for(short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
+				Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, "--ArchUnitTestyspan", TimeUtils.getStartOfYearInSeconds(currentyear), new ArchPaths(), configService.getPVNameToKeyConverter()));
 			}
 
-			SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), startyear, endyear);
+			SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), (short) 2010, (short) 2013);
 			// The pbplugin should handle all the rotation etc.
 			try(BasicContext context = new BasicContext()) {
-				pbplugin.appendData(context, pvName, simstream);
+				pbplugin.appendData(context, "--ArchUnitTestyspan", simstream);
 			}
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -119,22 +119,22 @@ public class YearSpanRetrievalTest {
 			
 			for(Event e : stream) {
 				long actualSeconds = e.getEpochSeconds();
-				assertTrue(actualSeconds >= previousEpochSeconds);
+				Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 				previousEpochSeconds = actualSeconds;
 				
 				YearSecondTimestamp actualYST = TimeUtils.convertToYearSecondTimestamp(actualSeconds);
-				YearCount ycount = counts.get(Short.valueOf(actualYST.getYear()));
+				YearCount ycount = counts.get(actualYST.getYear());
 				if(ycount == null) {
 					ycount = new YearCount();
-					counts.put(Short.valueOf(actualYST.getYear()), ycount);
+					counts.put(actualYST.getYear(), ycount);
 				}
 				ycount.count++;
 			}
 			
-			assertTrue(counts.get(Short.valueOf((short)2011)).count > 20000);
-			assertTrue(counts.get(Short.valueOf((short)2012)).count > 20000);
+			Assertions.assertTrue(counts.get((short) 2011).count > 20000);
+			Assertions.assertTrue(counts.get((short) 2012).count > 20000);
 		} finally {
-			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
+			if(stream != null) try { stream.close(); stream = null; } catch(Throwable ignored) { }
 		}
 	}	
 }

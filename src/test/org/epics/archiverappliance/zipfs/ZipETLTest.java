@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -25,20 +24,21 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStreamIterato
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import org.junit.jupiter.api.Test;
 
-@Category(SlowTests.class)
+@Tag("slow")
 public class ZipETLTest {
 	private static Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipETLTest");
 	private ConfigService configService;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		if(testFolder.exists()) { 
@@ -47,7 +47,7 @@ public class ZipETLTest {
 		testFolder.mkdirs();		
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(testFolder);
 	}
@@ -88,7 +88,7 @@ public class ZipETLTest {
 		
 		
 		File expectedZipFile = new File(destRootFolder + File.separator + configService.getPVNameToKeyConverter().convertPVNameToKey(pvName) + "_pb.zip");
-		assertTrue("Zip file does not seem to exist " + expectedZipFile, expectedZipFile.exists());
+		Assertions.assertTrue(expectedZipFile.exists(), "Zip file does not seem to exist " + expectedZipFile);
 
 		logger.info("Testing retrieval for zip per pv");
 		int eventCount = 0;
@@ -109,6 +109,6 @@ public class ZipETLTest {
 			}
 		}
 		logger.info("Got " + eventCount + " events");
-		assertTrue("Retrieval does not seem to return any events " + eventCount, eventCount >= (SimulationEventStreamIterator.DEFAULT_NUMBER_OF_SAMPLES-1));		
+		Assertions.assertTrue(eventCount >= (SimulationEventStreamIterator.DEFAULT_NUMBER_OF_SAMPLES-1), "Retrieval does not seem to return any events " + eventCount);
 	}
 }

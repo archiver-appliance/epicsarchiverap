@@ -13,7 +13,6 @@ import java.io.File;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -21,25 +20,26 @@ import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
-import junit.framework.TestCase;
+
 /**
  * test for changing archiving parameters of pvs.
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class changeArchivalParametersTest extends TestCase {
-	private static Logger logger = LogManager.getLogger(changeArchivalParametersTest.class.getName());
+@Tag("localEpics")
+public class ChangeArchivalParametersTest  {
+	private static Logger logger = LogManager.getLogger(ChangeArchivalParametersTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
@@ -47,7 +47,7 @@ public class changeArchivalParametersTest extends TestCase {
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 		testConfigService.shutdownNow();
@@ -88,17 +88,14 @@ public class changeArchivalParametersTest extends TestCase {
 					testConfigService);
 			double period = tempPVMetrics.getSamplingPeriod();
 			boolean isMonitor = tempPVMetrics.isMonitor();
-			assertTrue(
-					"the "
-							+ pvName
-							+ " should be archived in scan mode but it is monitor mode",
-					!isMonitor);
-			assertTrue("the new sample period is " + period + " that is not 8",
-					(period - 8) == 0);
+			Assertions.assertTrue(!isMonitor, "the "
+					+ pvName
+					+ " should be archived in scan mode but it is monitor mode");
+			Assertions.assertTrue((period - 8) == 0, "the new sample period is " + period + " that is not 8");
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
 			int valueNumber = archiveChannel.getSampleBuffer().getCurrentSamples().size();
-			assertTrue("there is no data in sample buffer", valueNumber > 0);
+			Assertions.assertTrue(valueNumber > 0, "there is no data in sample buffer");
 
 		} catch (Exception e) {
 			//
@@ -128,16 +125,14 @@ public class changeArchivalParametersTest extends TestCase {
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
 			boolean isMonitor = tempPVMetrics.isMonitor();
-			assertTrue(
-					"the "
-							+ pvName
-							+ " should be archived in monitor mode but it is scan mode",
-					isMonitor);
+			Assertions.assertTrue(isMonitor, "the "
+					+ pvName
+					+ " should be archived in monitor mode but it is scan mode");
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
 			int valueNumber = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size();
-			assertTrue("there is no data in sample buffer", valueNumber > 0);
+			Assertions.assertTrue(valueNumber > 0, "there is no data in sample buffer");
 
 		} catch (Exception e) {
 			//
@@ -165,16 +160,14 @@ public class changeArchivalParametersTest extends TestCase {
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
 			boolean isMonitor = tempPVMetrics.isMonitor();
-			assertTrue(
-					"the "
-							+ pvName
-							+ " should be archived in scan mode but it is monitor mode",
-					!isMonitor);
+			Assertions.assertTrue(!isMonitor, "the "
+					+ pvName
+					+ " should be archived in scan mode but it is monitor mode");
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
 			int valueNumber = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size();
-			assertTrue("there is no data in sample buffer", valueNumber > 0);
+			Assertions.assertTrue(valueNumber > 0, "there is no data in sample buffer");
 
 		} catch (Exception e) {
 			//
@@ -202,16 +195,14 @@ public class changeArchivalParametersTest extends TestCase {
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
 			boolean isMonitor = tempPVMetrics.isMonitor();
-			assertTrue(
-					"the "
-							+ pvName
-							+ " should be archived in monitor mode but it is scan mode",
-					isMonitor);
+			Assertions.assertTrue(isMonitor, "the "
+					+ pvName
+					+ " should be archived in monitor mode but it is scan mode");
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
 			int valueNumber = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size();
-			assertTrue("there is no data in sample buffer", valueNumber > 0);
+			Assertions.assertTrue(valueNumber > 0, "there is no data in sample buffer");
 
 		} catch (Exception e) {
 			//

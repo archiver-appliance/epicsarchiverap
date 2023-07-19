@@ -9,7 +9,7 @@ package org.epics.archiverappliance.engine.test;
 
 import java.io.IOException;
 
-import junit.framework.TestCase;
+
 
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -27,7 +27,7 @@ import org.junit.Test;
  * @author Murali Shankar
  *
  */
-public class MemBufWriter extends TestCase implements Writer {
+public class MemBufWriter implements Writer {
 	private ArrayListEventStream buf;
 	
 	public MemBufWriter(String pvName, ArchDBRTypes dbrType) { 

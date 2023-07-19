@@ -23,7 +23,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -41,17 +40,18 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test basic failover - test the ETL side of things.
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class FailoverETLTest {
 	private static Logger logger = LogManager.getLogger(FailoverETLTest.class.getName());
 	private ConfigServiceForTests configService;
@@ -61,7 +61,7 @@ public class FailoverETLTest {
 	long tCount = 0;
 	long stepSeconds = 2;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "../sts"); 
@@ -105,16 +105,16 @@ public class FailoverETLTest {
 				for(Event e : stream) {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch), (evEpoch - lastEvEpoch) == stepSeconds);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == stepSeconds, "We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch));
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
+		Assertions.assertTrue(genEventCount == rtvlEventCount, "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
 		return rtvlEventCount;
 	}
 
@@ -135,7 +135,7 @@ public class FailoverETLTest {
 		return genEventCount;
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -166,7 +166,7 @@ public class FailoverETLTest {
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
 		try(BasicContext context = new BasicContext()) {
 			List<Callable<EventStream>> callables = plugin.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
-			assertTrue("We got zero callables" , callables.size() > 0);
+			Assertions.assertTrue(callables.size() > 0, "We got zero callables");
 			for(Callable<EventStream> callable : callables) {
 				EventStream ev = callable.call();
 				logger.error("Event Stream " + ev.getDescription());
@@ -174,8 +174,8 @@ public class FailoverETLTest {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					logger.debug("Current event " + TimeUtils.convertToHumanReadableString(evEpoch) + " Previous: " + TimeUtils.convertToHumanReadableString(lastEvEpoch));
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, evEpoch > lastEvEpoch);
-						assertTrue("We got events more than a second apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, (evEpoch - lastEvEpoch) == 1);
+						Assertions.assertTrue(evEpoch > lastEvEpoch, "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == 1, "We got events more than a second apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
@@ -207,7 +207,7 @@ public class FailoverETLTest {
     	
     	logger.info("Checking merged data after running ETL");
 		long rCount = testMergedRetrieval("dest_appliance", TimeUtils.minusDays(TimeUtils.now(), 365*2), TimeUtils.plusDays(TimeUtils.now(), 365*2));		
-		assertTrue("We expected event count  " + tCount + " but got  " + rCount, tCount == rCount);
+		Assertions.assertTrue(tCount == rCount, "We expected event count  " + tCount + " but got  " + rCount);
 
 	}	
 }

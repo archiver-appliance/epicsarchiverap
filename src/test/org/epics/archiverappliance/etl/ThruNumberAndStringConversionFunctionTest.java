@@ -44,13 +44,6 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 public class ThruNumberAndStringConversionFunctionTest {
 	private static Logger logger = LogManager.getLogger(ThruNumberAndStringConversionFunctionTest.class.getName());
 
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
 
 	@Test
 	public void testThruNumberConversion() throws Exception {

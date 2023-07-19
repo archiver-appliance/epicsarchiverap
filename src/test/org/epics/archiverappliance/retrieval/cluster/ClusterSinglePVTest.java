@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -23,10 +22,11 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -44,9 +44,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
-import static org.junit.Assert.assertEquals;
 
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class ClusterSinglePVTest {
     private static final Logger logger = LogManager.getLogger(ClusterSinglePVTest.class.getName());
     private final TomcatSetup tomcatSetup = new TomcatSetup();
@@ -57,7 +56,7 @@ public class ClusterSinglePVTest {
     private final File ltsPVFolder = new File(ltsFolder + File.separator + prefixPvName);
     short year = TimeUtils.getCurrentYear();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
 
@@ -66,7 +65,7 @@ public class ClusterSinglePVTest {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         tomcatSetup.tearDown();
         if (ltsPVFolder.exists()) {
@@ -107,7 +106,7 @@ public class ClusterSinglePVTest {
         decoder.decode(srcPVTypeInfoJSON, srcPVTypeInfo);
 
         PVTypeInfo pvTypeInfo1 = new PVTypeInfo(pvName, srcPVTypeInfo);
-        assertEquals(pvTypeInfo1.getPvName(), pvName);
+        Assertions.assertEquals(pvTypeInfo1.getPvName(), pvName);
 
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
 
@@ -211,8 +210,8 @@ public class ClusterSinglePVTest {
                 String pluginNanosPart = Integer.toString(pluginEvent.getEventTimeStamp().getNanos());
                 String pluginTimestamp = pluginSecondsPart + ("000000000" + pluginNanosPart).substring(pluginNanosPart.length());
 
-                assertEquals("JSON timestamp, " + jsonTimestamp + ", and plugin event timestamp, " + pluginTimestamp + ", are unequal.", jsonTimestamp, pluginTimestamp);
-                assertEquals("JSON value, " + jsonValue + ", and plugin event value, " + pluginValue + ", are unequal.", jsonValue, pluginValue, 0.0);
+                Assertions.assertEquals(jsonTimestamp, pluginTimestamp, "JSON timestamp, " + jsonTimestamp + ", and plugin event timestamp, " + pluginTimestamp + ", are unequal.");
+                Assertions.assertEquals(jsonValue, pluginValue, 0.0, "JSON value, " + jsonValue + ", and plugin event value, " + pluginValue + ", are unequal.");
             }
         } catch (IndexOutOfBoundsException e) {
             throw new IndexOutOfBoundsException("The data obtained from JSON and the plugin class for PV " + pvName + " are unequal in length.");

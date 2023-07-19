@@ -4,25 +4,38 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.client.PVAClient;
-import org.epics.pva.data.*;
+import org.epics.pva.data.PVAAnyArray;
+import org.epics.pva.data.PVAData;
+import org.epics.pva.data.PVADouble;
+import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVAString;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVAStructureArray;
+import org.epics.pva.data.PVAny;
 import org.epics.pva.data.nt.MustBeArrayException;
 import org.epics.pva.data.nt.PVATable;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.data.nt.PVAURI;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.*;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -33,7 +46,8 @@ import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 import static org.epics.archiverappliance.retrieval.pva.PvaDataRetrievalService.PVA_DATA_SERVICE;
 
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class PvaGetPVDataTest {
 
     private static final Logger logger = LogManager.getLogger(PvaGetPVDataTest.class.getName());
@@ -43,7 +57,7 @@ public class PvaGetPVDataTest {
     private static PVAChannel pvaMgmtChannel;
     private static PVAChannel pvaRetrievalChannel;
 
-    @BeforeClass
+    @BeforeAll
     public static void setup() throws Exception {
 
         tomcatSetup.setUpWebApps(PvaGetPVDataTest.class.getSimpleName());
@@ -56,7 +70,7 @@ public class PvaGetPVDataTest {
         pvaRetrievalChannel.connect().get(5, TimeUnit.SECONDS);
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         pvaMgmtChannel.close();
         pvaRetrievalChannel.close();
@@ -73,6 +87,25 @@ public class PvaGetPVDataTest {
         String[] subArray = ArrayUtils.subarray(splitStrings, 2, splitStrings.length);
 
         return String.join("", subArray);
+    }
+
+    private static void archivePVsViaPVAccess(List<String> pvNames) throws MustBeArrayException, InterruptedException, ExecutionException, TimeoutException {
+        PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
+                .descriptor(PvaArchivePVAction.NAME)
+                .addColumn(new PVAStringArray("pv",  pvNames.stream().map(n -> "pva://" + n).toArray(String[]::new)))
+                .build();
+        pvaMgmtChannel.invoke(archivePvStatusReqTable).get(30, TimeUnit.SECONDS);
+        Map<String, String> archivingStatus = new HashMap<>();
+        for (String pvName: pvNames) {
+            archivingStatus.put(pvName, "Being archived");
+        }
+
+        Awaitility.await()
+                .pollInterval(fibonacci(TimeUnit.SECONDS))
+                .atMost(5, TimeUnit.MINUTES)
+                .untilAsserted(() ->
+                        Assertions.assertEquals(archivingStatus, PVAccessUtil.getStatuses(pvNames, pvaMgmtChannel))
+                );
     }
 
     @Test
@@ -129,29 +162,7 @@ public class PvaGetPVDataTest {
         }
 
         // Check data is expected
-        Assert.assertEquals(expectedData, actualData);
-    }
-
-    private static void archivePVsViaPVAccess(List<String> pvNames) throws MustBeArrayException, InterruptedException, ExecutionException, TimeoutException {
-        PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
-                .descriptor(PvaArchivePVAction.NAME)
-                .addColumn(new PVAStringArray("pv",  pvNames.stream().map(n -> "pva://" + n).toArray(String[]::new)))
-                .build();
-        pvaMgmtChannel.invoke(archivePvStatusReqTable).get(30, TimeUnit.SECONDS);
-        Map<String, String> archivingStatus = new HashMap<>();
-        for (String pvName: pvNames) {
-            archivingStatus.put(pvName, "Being archived");
-        }
-
-        Awaitility.await()
-                .pollInterval(fibonacci(TimeUnit.SECONDS))
-                .atMost(5, TimeUnit.MINUTES)
-                .untilAsserted(() ->
-                        Assert.assertEquals(
-                                archivingStatus,
-                                PVAccessUtil.getStatuses(pvNames, pvaMgmtChannel)
-                        )
-                );
+        Assertions.assertEquals(expectedData, actualData);
     }
 
     private static PVAStructure getRetrievalPvaAnyArray(List<String> pvNames) throws InterruptedException, ExecutionException, TimeoutException {
@@ -165,7 +176,7 @@ public class PvaGetPVDataTest {
     }
 
     @Test
-    public void testMultiRequest() throws InterruptedException, MustBeArrayException, ExecutionException, TimeoutException {
+    public void testMultiRequest() throws Exception {
 
         // Create a set of pvs
 
@@ -242,6 +253,6 @@ public class PvaGetPVDataTest {
         }
 
         // Check data is expected
-        Assert.assertEquals(expectedData, actualData);
+        Assertions.assertEquals(expectedData, actualData);
     }
 }

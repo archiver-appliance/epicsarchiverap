@@ -16,17 +16,18 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class PVTypeInfoExportImportTest {
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -54,10 +55,10 @@ public class PVTypeInfoExportImportTest {
         PVTypeInfo unmarshalledTypeInfo = new PVTypeInfo();
         JSONDecoder<PVTypeInfo> typeInfoDecoder = JSONDecoder.getDecoder(PVTypeInfo.class);
         typeInfoDecoder.decode((JSONObject) unmarshalledJSONObject, unmarshalledTypeInfo);
-        assertTrue("Expecting pvName to be " + typeInfo.getPvName() + "; instead it is " + unmarshalledTypeInfo.getPvName(), typeInfo.getPvName().equals(unmarshalledTypeInfo.getPvName()));
-        assertTrue("Expecting samplingPeriod to be " + typeInfo.getSamplingPeriod() + "; instead it is " + unmarshalledTypeInfo.getSamplingPeriod(), typeInfo.getSamplingPeriod() == unmarshalledTypeInfo.getSamplingPeriod());
-        assertTrue("Expecting samplingMethod to be " + typeInfo.getSamplingMethod() + "; instead it is " + unmarshalledTypeInfo.getSamplingMethod(), typeInfo.getSamplingMethod().equals(unmarshalledTypeInfo.getSamplingMethod()));
-        assertTrue("Expecting dataStores to be " + Arrays.toString(typeInfo.getDataStores()) + "; instead it is " + Arrays.toString(unmarshalledTypeInfo.getDataStores()), Arrays.equals(typeInfo.getDataStores(), unmarshalledTypeInfo.getDataStores()));
+        Assertions.assertTrue(typeInfo.getPvName().equals(unmarshalledTypeInfo.getPvName()), "Expecting pvName to be " + typeInfo.getPvName() + "; instead it is " + unmarshalledTypeInfo.getPvName());
+        Assertions.assertTrue(typeInfo.getSamplingPeriod() == unmarshalledTypeInfo.getSamplingPeriod(), "Expecting samplingPeriod to be " + typeInfo.getSamplingPeriod() + "; instead it is " + unmarshalledTypeInfo.getSamplingPeriod());
+        Assertions.assertTrue(typeInfo.getSamplingMethod().equals(unmarshalledTypeInfo.getSamplingMethod()), "Expecting samplingMethod to be " + typeInfo.getSamplingMethod() + "; instead it is " + unmarshalledTypeInfo.getSamplingMethod());
+        Assertions.assertTrue(Arrays.equals(typeInfo.getDataStores(), unmarshalledTypeInfo.getDataStores()), "Expecting dataStores to be " + Arrays.toString(typeInfo.getDataStores()) + "; instead it is " + Arrays.toString(unmarshalledTypeInfo.getDataStores()));
 	}
 	
 	@Test
@@ -71,6 +72,6 @@ public class PVTypeInfoExportImportTest {
         MetaInfo unmarshalledMetaInfo = new MetaInfo();
         JSONDecoder<MetaInfo> metaInfoDecoder = JSONDecoder.getDecoder(MetaInfo.class);
         metaInfoDecoder.decode((JSONObject) unmarshalledJSONObject, unmarshalledMetaInfo);
-        assertTrue("Expecting DBRType to be " + metaInfo.getArchDBRTypes() + "; instead it is " + unmarshalledMetaInfo.getArchDBRTypes(), metaInfo.getArchDBRTypes().equals(unmarshalledMetaInfo.getArchDBRTypes()));
+        Assertions.assertTrue(metaInfo.getArchDBRTypes().equals(unmarshalledMetaInfo.getArchDBRTypes()), "Expecting DBRType to be " + metaInfo.getArchDBRTypes() + "; instead it is " + unmarshalledMetaInfo.getArchDBRTypes());
 	}
 }

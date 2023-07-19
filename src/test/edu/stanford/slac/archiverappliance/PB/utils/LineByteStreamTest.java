@@ -7,8 +7,16 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerator;
+import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -16,20 +24,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.SlowTests;
-import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerator;
 
 /**
  * Test the LineByteStream
@@ -37,19 +34,42 @@ import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerat
  *
  */
 public class LineByteStreamTest {
-	private static Logger logger = LogManager.getLogger(LineByteStreamTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(LineByteStreamTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + LineByteStreamTest.class.getName());
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		Files.createDirectories(testFolder.toPath());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(testFolder);
 	}
 
+	private static void seekandCheck(File f, long position, String expectedNumberStr) throws IOException {
+		try(LineByteStream lis = new LineByteStream(f.toPath(), position)) {
+			lis.seekToFirstNewLine();
+			byte[] lineread = lis.readLine();
+			String gotNumberStr = null;
+			if(lineread != null) {
+				gotNumberStr = new String(lineread, StandardCharsets.UTF_8);
+			}
+			if(gotNumberStr != null && expectedNumberStr != null) {
+				if(!gotNumberStr.equals(expectedNumberStr)) {
+					Assertions.fail("Expected " + expectedNumberStr + " got " + gotNumberStr);
+				}  // Success; do nothing.
+
+			} else {
+				if(gotNumberStr == null && expectedNumberStr == null) {
+					// Success; do nothing.
+				} else {
+					Assertions.fail("Expected " + expectedNumberStr + " got " + gotNumberStr);
+				}
+			}
+		}
+	}
+	
 	@Test
 	public void testLineByteStream() throws Exception {
 		String fileName = testFolder.getAbsolutePath() + "/" + "LineByteStream.txt";
@@ -57,18 +77,18 @@ public class LineByteStreamTest {
 		if(f.exists()) {
 			f.delete();
 		}
-		
+
 		EvenNumberSampleFileGenerator.generateSampleFile(fileName);
-		
-		try(LineByteStream lis = new LineByteStream(f.toPath())) { 
+
+		try(LineByteStream lis = new LineByteStream(f.toPath())) {
 			byte[] line = lis.readLine();
 			int expectedNumber = 0;
 			try {
 				while(line != null) {
 					if(line.length > 0) {
-						int gotNumber = Integer.parseInt(new String(line, "UTF-8"));
+						int gotNumber = Integer.parseInt(new String(line, StandardCharsets.UTF_8));
 						if(gotNumber != expectedNumber) {
-							fail("Expected " + expectedNumber + " got " + gotNumber);
+							Assertions.fail("Expected " + expectedNumber + " got " + gotNumber);
 						}
 					}
 					expectedNumber=expectedNumber+2;
@@ -82,8 +102,8 @@ public class LineByteStreamTest {
 
 			lis.seekToBeforeLastLine();
 			line = lis.readLine();
-			int lastNumber = Integer.parseInt(new String(line, "UTF-8"));
-			assertTrue("Testing last line number Got " + lastNumber, lastNumber == EvenNumberSampleFileGenerator.MAXSAMPLEINT);
+			int lastNumber = Integer.parseInt(new String(line, StandardCharsets.UTF_8));
+			Assertions.assertEquals(EvenNumberSampleFileGenerator.MAXSAMPLEINT, lastNumber, "Testing last line number Got " + lastNumber);
 
 			seekandCheck(f, 0x0, "0");  // Positioned at start of file
 			seekandCheck(f, 0x1, "2");  // Boundary conditions
@@ -109,30 +129,6 @@ public class LineByteStreamTest {
 		}
 	}
 	
-	private static void seekandCheck(File f, long position, String expectedNumberStr) throws IOException {
-		try(LineByteStream lis = new LineByteStream(f.toPath(), position)) { 
-			lis.seekToFirstNewLine();
-			byte[] lineread = lis.readLine();
-			String gotNumberStr = null;
-			if(lineread != null) {
-				gotNumberStr = new String(lineread, "UTF-8");
-			}
-			if(gotNumberStr != null && expectedNumberStr != null) {
-				if(!gotNumberStr.equals(expectedNumberStr)) {
-					fail("Expected " + expectedNumberStr + " got " + gotNumberStr);
-				} else {
-					// Success; do nothing.
-				}
-			} else {
-				if(gotNumberStr == null && expectedNumberStr == null) {
-					// Success; do nothing.
-				} else {
-					fail("Expected " + expectedNumberStr + " got " + gotNumberStr);
-				}
-			}
-		}
-	}
-	
 	
 	@Test
 	public void testSmallFileSeekToLastLine() throws Exception {
@@ -151,7 +147,7 @@ public class LineByteStreamTest {
 			lis.seekToBeforeLastLine();
 			byte[] line = lis.readLine();
 			int lastNumber = Integer.parseInt(new String(line, "UTF-8"));
-			assertTrue("Testing last line number Got " + lastNumber, lastNumber == 8);
+			Assertions.assertTrue(lastNumber == 8, "Testing last line number Got " + lastNumber);
 			f.delete();
 		}
 	}
@@ -190,8 +186,8 @@ public class LineByteStreamTest {
 			int expectedNum = start;
 			while(line != null) {
 				int gotNum = Integer.parseInt(new String(line));
-				assertTrue("Expected " + expectedNum + " obtained " + gotNum, gotNum == expectedNum);
-				assertTrue("Maximum expected " + end + " obtained " + gotNum, gotNum <= end);
+				Assertions.assertTrue(gotNum == expectedNum, "Expected " + expectedNum + " obtained " + gotNum);
+				Assertions.assertTrue(gotNum <= end, "Maximum expected " + end + " obtained " + gotNum);
 				expectedNum++;
 				line = lis.readLine();
 			}
@@ -205,12 +201,12 @@ public class LineByteStreamTest {
 			int expectedNum = expectedStart;
 			while(line != null) {
 				int gotNum = Integer.parseInt(new String(line));
-				assertTrue("Expected " + expectedNum + " obtained " + gotNum, gotNum == expectedNum);
-				assertTrue("Maximum expected " + expectedEnd + " obtained " + gotNum, gotNum <= expectedEnd);
+				Assertions.assertTrue(gotNum == expectedNum, "Expected " + expectedNum + " obtained " + gotNum);
+				Assertions.assertTrue(gotNum <= expectedEnd, "Maximum expected " + expectedEnd + " obtained " + gotNum);
 				expectedNum++;
 				line = lis.readLine();
 			}
-			assertTrue("Expected until " + expectedEnd + " obtained until " + expectedNum, expectedNum >= expectedEnd);
+			Assertions.assertTrue(expectedNum >= expectedEnd, "Expected until " + expectedEnd + " obtained until " + expectedNum);
 		}
 	}
 	
@@ -241,8 +237,8 @@ public class LineByteStreamTest {
 					continue;
 				}
 				int gotNum = Integer.parseInt(new String(line));
-				assertTrue("Expected " + expectedNum + " obtained " + gotNum, gotNum == expectedNum);
-				assertTrue("Maximum expected " + 100000 + " obtained " + gotNum, gotNum <=100000);
+				Assertions.assertTrue(gotNum == expectedNum, "Expected " + expectedNum + " obtained " + gotNum);
+				Assertions.assertTrue(gotNum <=100000, "Maximum expected " + 100000 + " obtained " + gotNum);
 				expectedNum++;
 				line = lis.readLine();
 			}
@@ -276,12 +272,12 @@ public class LineByteStreamTest {
 			int expectedLineLength = 1;
 			byte[] line = lis.readLine();
 			while(line != null) {
-				assertTrue("Expected line length " + expectedLineLength + " obtained " + line.length, expectedLineLength == line.length);
+				Assertions.assertTrue(expectedLineLength == line.length, "Expected line length " + expectedLineLength + " obtained " + line.length);
 				line = lis.readLine();
 				expectedLineLength++;
 			}
 
-			assertTrue("Expected line length " + expectedLineLength + " should be greater than  " + LineByteStream.MAX_LINE_SIZE, expectedLineLength > LineByteStream.MAX_LINE_SIZE);
+			Assertions.assertTrue(expectedLineLength > LineByteStream.MAX_LINE_SIZE, "Expected line length " + expectedLineLength + " should be greater than  " + LineByteStream.MAX_LINE_SIZE);
 
 			f.delete();
 		}
@@ -292,7 +288,7 @@ public class LineByteStreamTest {
 	 * @throws Exception
 	 */
 	@Test
-	@Category(SlowTests.class)
+	@Tag("slow")
 	public void testLargeLinesSeekToLastLine() throws Exception {
 		for(int linesize=3; linesize < LineByteStream.MAX_LINE_SIZE*3; linesize++) {
 			String fileName = testFolder.getAbsolutePath() + "/" + "LargeLineByteStreamSeekToLast.txt";
@@ -314,9 +310,9 @@ public class LineByteStreamTest {
 			try(LineByteStream lis = new LineByteStream(f.toPath())) {
 				lis.seekToBeforeLastLine();
 				byte[] line = lis.readLine();
-				assertTrue("Expected line length " + linesize + " obtained " + line.length, linesize == line.length);
+				Assertions.assertTrue(linesize == line.length, "Expected line length " + linesize + " obtained " + line.length);
 			} catch (IOException ex) {
-				fail("Exception " + ex.getMessage() + " when testing testLargeLinesSeekToLastLine for linesize " + linesize);
+				Assertions.fail("Exception " + ex.getMessage() + " when testing testLargeLinesSeekToLastLine for linesize " + linesize);
 			}
 
 			f.delete();
@@ -346,10 +342,10 @@ public class LineByteStreamTest {
 					if(line.length > 0) {
 						int gotNumber = Integer.parseInt(new String(line, "UTF-8"));
 						if(gotNumber != expectedNumber) {
-							fail("Expected " + expectedNumber + " got " + gotNumber + " in count " + linecount + " lastReadPointer " + lis.lastReadPointer + " currentReadPosition " + lis.currentReadPosition);
+							Assertions.fail("Expected " + expectedNumber + " got " + gotNumber + " in count " + linecount + " lastReadPointer " + lis.lastReadPointer + " currentReadPosition " + lis.currentReadPosition);
 						}
 					} else { 
-						fail("We got an empty line for linecount " + linecount);
+						Assertions.fail("We got an empty line for linecount " + linecount);
 					}
 					expectedNumber=expectedNumber-2;
 					lis.seekToBeforePreviousLine(posn);
@@ -373,7 +369,7 @@ public class LineByteStreamTest {
 	 * @throws Exception
 	 */
 	@Test
-	@Category(SlowTests.class)
+	@Tag("slow")
 	public void testLastAndFirstLinesWithBoundedStream() throws Exception {
 		logger.info("testLastAndFirstLinesWithBoundedStream");
 		// Generate the sample file.
@@ -404,8 +400,8 @@ public class LineByteStreamTest {
 					int expectedLineNumber = (int) (start/17);
 					while(line != null) {
 						String val = new String(line);
-						assertTrue("Length should be 17; instead it is " + line.length + " for start=" + start + " and end=" + end, line.length  == 17);
-						assertTrue("Expecting " + formatter.format(expectedLineNumber) + " instead got " + val, val.equals(formatter.format(expectedLineNumber)));
+						Assertions.assertTrue(line.length  == 17, "Length should be 17; instead it is " + line.length + " for start=" + start + " and end=" + end);
+						Assertions.assertTrue(val.equals(formatter.format(expectedLineNumber)), "Expecting " + formatter.format(expectedLineNumber) + " instead got " + val);
 						try {
 							line = lis.readLine();
 							linenumber++;
@@ -430,14 +426,14 @@ public class LineByteStreamTest {
 					// The 18 in this case is to deal with the extra newline character.
 					int expectedLineNumber = (int) (start/18) + 1;
 					while(line != null) { 
-						assertTrue("Length should be 17; instead it is " + line.length + " for start=" + start + " and end=" + end, line.length == 17);
+						Assertions.assertTrue(line.length == 17, "Length should be 17; instead it is " + line.length + " for start=" + start + " and end=" + end);
 						String val = new String(line);
-						assertTrue("Expecting " + formatter.format(expectedLineNumber) + " instead got " + val  + " for start " + start + " and line number " + linenumber, val.equals(formatter.format(expectedLineNumber)));
+						Assertions.assertTrue(val.equals(formatter.format(expectedLineNumber)), "Expecting " + formatter.format(expectedLineNumber) + " instead got " + val  + " for start " + start + " and line number " + linenumber);
 						line = lis.readLine();
 						linenumber++;
 						expectedLineNumber++;
 					}
-					assertTrue("Expected to read last line " + lineCount + " instead could only read " + (expectedLineNumber - 1), expectedLineNumber == lineCount);
+					Assertions.assertTrue(expectedLineNumber == lineCount, "Expected to read last line " + lineCount + " instead could only read " + (expectedLineNumber - 1));
 				}				
 			}
 		}

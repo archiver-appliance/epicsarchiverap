@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -23,20 +22,21 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import org.junit.jupiter.api.Test;
 
 /**
  * Generate data for a year with some extra fields sprinkled and test retrieval to make sure we can get at these extra fields..
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class GetExtraFieldsTest {
 	private static Logger logger = LogManager.getLogger(GetExtraFieldsTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder());
@@ -44,13 +44,13 @@ public class GetExtraFieldsTest {
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	private ConfigService configService;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -95,13 +95,13 @@ public class GetExtraFieldsTest {
 				for(Event e : stream) {
 					long actualSeconds = e.getEpochSeconds();
 					logger.info("Event at " + TimeUtils.convertToISO8601String(actualSeconds));
-					assertTrue(actualSeconds >= previousEpochSeconds);
+					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 					eventCount++;
 				}
 			}
 			
-			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected " + expectedCount + " for year " + currentYear, eventCount == expectedCount);
+			Assertions.assertTrue(eventCount == expectedCount, "Event count is not what we expect. We got " + eventCount + " and we expected " + expectedCount + " for year " + currentYear);
 		}
 		
 		start = TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z");
@@ -116,7 +116,7 @@ public class GetExtraFieldsTest {
 			if(stream != null) {
 				for(Event e : stream) {
 					long actualSeconds = e.getEpochSeconds();
-					assertTrue(actualSeconds >= previousEpochSeconds);
+					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 					eventCount++;
 				}
@@ -124,7 +124,7 @@ public class GetExtraFieldsTest {
 			long st1 = System.currentTimeMillis();
 			logger.info("Time taken to retrieve " + eventCount + " events " + (st1-st0) + "ms");
 			
-			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected at least " + expectedCount + " for year " + currentYear, eventCount > expectedCount);
+			Assertions.assertTrue(eventCount > expectedCount, "Event count is not what we expect. We got " + eventCount + " and we expected at least " + expectedCount + " for year " + currentYear);
 		}
 	}	
 }

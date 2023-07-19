@@ -25,13 +25,14 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 
 import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test performance and some functionality of fetching a single days worth of data from a ZIP_PER_PV
@@ -46,7 +47,7 @@ public class ZipSingleDayRawFetchTest {
 	short currentYear = TimeUtils.getCurrentYear();
 	private ConfigService configService;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
@@ -66,7 +67,7 @@ public class ZipSingleDayRawFetchTest {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(new File(rootFolderName));
 	}
@@ -96,7 +97,7 @@ public class ZipSingleDayRawFetchTest {
 					// We skip checking that as part of this test
 					if(actualEpochSeconds < startEpochSeconds-1) continue;
 					if(expectedEpochSeconds != actualEpochSeconds) {
-						fail("Expected timestamp " + TimeUtils.convertToHumanReadableString(expectedEpochSeconds) + " got " + TimeUtils.convertToHumanReadableString(actualEpochSeconds));
+						Assertions.fail("Expected timestamp " + TimeUtils.convertToHumanReadableString(expectedEpochSeconds) + " got " + TimeUtils.convertToHumanReadableString(actualEpochSeconds));
 					}
 					eventCount++;
 					expectedEpochSeconds++;
@@ -123,7 +124,7 @@ public class ZipSingleDayRawFetchTest {
 				// We skip checking that as part of this test
 				if(actualEpochSeconds < startTime-1) continue;
 				if(expectedEpochSeconds != actualEpochSeconds) {
-					fail("Expected timestamp " + TimeUtils.convertToHumanReadableString(expectedEpochSeconds) + " got " + TimeUtils.convertToHumanReadableString(actualEpochSeconds));
+					Assertions.fail("Expected timestamp " + TimeUtils.convertToHumanReadableString(expectedEpochSeconds) + " got " + TimeUtils.convertToHumanReadableString(actualEpochSeconds));
 				}
 				eventCount++;
 				expectedEpochSeconds++;

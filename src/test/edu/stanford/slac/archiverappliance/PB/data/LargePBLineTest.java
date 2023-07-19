@@ -7,13 +7,12 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.nio.file.Path;
-import java.util.Collections;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
+import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,16 +25,14 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
-import gov.aps.jca.dbr.DBR_TIME_Double;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Collections;
 
 /**
  * Test storage and retrieval of events whose serialized sizes are large.
@@ -43,58 +40,68 @@ import gov.aps.jca.dbr.DBR_TIME_Double;
  *
  */
 public class LargePBLineTest {
-	private ConfigService configService;
-	PlainPBStoragePlugin largeLineTest = new PlainPBStoragePlugin();
-	PBCommonSetup largeLineSetup = new PBCommonSetup();
-	private static Logger logger = LogManager.getLogger(LargePBLineTest.class.getName());
+    private ConfigService configService;
+    PBCommonSetup largeLineSetup = new PBCommonSetup();
+    private static final Logger logger = LogManager.getLogger(LargePBLineTest.class.getName());
 
-	@Before
-	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
-		largeLineSetup.setUpRootFolder(largeLineTest, "largeLineTest", PartitionGranularity.PARTITION_HOUR);
-	}
+    @BeforeEach
+    public void setUp() throws Exception {
+        configService = new ConfigServiceForTests(new File("./bin"));
+    }
 
-	@After
-	public void tearDown() throws Exception {
-		largeLineSetup.deleteTestFolder();
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        largeLineSetup.deleteTestFolder();
+    }
+    @Test
+    public void testLargeLines() throws Exception {
+        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        largeLineSetup.setUpRootFolder(storagePlugin, "largeLineTest", PartitionGranularity.PARTITION_HOUR);
 
-	@Test
-	public void testLargeLines() throws Exception {
-		// We create vector doubles with a large number of elements; write it out and then test the read.
-		String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "LargeLineTest" + largeLineTest.getPartitionGranularity();
-		ArchDBRTypes type = ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
-		short year = TimeUtils.getCurrentYear();
-		for(int i = 1; i < 7200; i++) {
-			try(BasicContext context = new BasicContext()) {
-				ArrayListEventStream strm = new ArrayListEventStream(1024, new RemotableEventStreamDesc(type, pvName, year));
-				DBR_TIME_Double retvd = new DBR_TIME_Double(ArrayUtils.toPrimitive(Collections.nCopies(i, Math.sin(i*Math.PI/3600)).toArray(new Double[0])));
-				retvd.setTimeStamp(new gov.aps.jca.dbr.TimeStamp(TimeUtils.getStartOfCurrentYearInSeconds() + i));
-				retvd.setSeverity(1);
-				retvd.setStatus(0);
-				strm.add(new PBVectorDouble(retvd));
-				largeLineTest.appendData(context, pvName, strm);
-			} catch(Exception ex) {
-				logger.error("Exception appending data " + i, ex);
-				fail(ex.getMessage());
-			}
-		}
-		
-		Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(new ArchPaths(), largeLineTest.getRootFolder(), pvName, ".pb", largeLineTest.getPartitionGranularity(), CompressionMode.NONE, configService.getPVNameToKeyConverter());
-		assertTrue("testLargeLines returns null for getAllFilesForPV for " + pvName, allPaths != null);
-		assertTrue("testLargeLines returns empty array for getAllFilesForPV for " + pvName, allPaths.length > 0);
-		
-		for(Path destPath : allPaths) {
-			try {
-				PBFileInfo info = new PBFileInfo(destPath);
-				info.getLastEventEpochSeconds();
-				assertTrue("File validation failed for " + destPath.toAbsolutePath().toString(), ValidatePBFile.validatePBFile(destPath, false));
-			} catch(Exception ex) {
-				logger.error("Exception parsing file" + destPath.toAbsolutePath().toString(), ex);
-				fail(ex.getMessage());
-			}
-		}
-		
-	}
+        // We create vector doubles with a large number of elements; write it out and then test the read.
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "LargeLineTest"
+                + storagePlugin.getPartitionGranularity();
+        ArchDBRTypes type = ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
+        short year = TimeUtils.getCurrentYear();
+        ArrayListEventStream strm = new ArrayListEventStream(1024, new RemotableEventStreamDesc(type, pvName, year));
+        for (int i = 1; i < 7200; i++) {
+            DBR_TIME_Double retvd = new DBR_TIME_Double(ArrayUtils.toPrimitive(
+                    Collections.nCopies(i, Math.sin(i * Math.PI / 3600)).toArray(new Double[0])));
+            retvd.setTimeStamp(new gov.aps.jca.dbr.TimeStamp(TimeUtils.getStartOfCurrentYearInSeconds() + i));
+            retvd.setSeverity(1);
+            retvd.setStatus(0);
+            strm.add(new PBVectorDouble(retvd));
+        }
+        try (BasicContext context = new BasicContext()) {
+            storagePlugin.appendData(context, pvName, strm);
+        } catch (Exception ex) {
+            logger.error("Exception appending data " +strm, ex);
+            Assertions.fail(ex.getMessage());
+        }
 
+        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+                new ArchPaths(),
+                storagePlugin.getRootFolder(),
+                pvName,
+                ".pb",
+                storagePlugin.getPartitionGranularity(),
+                CompressionMode.NONE,
+                configService.getPVNameToKeyConverter());
+        Assertions.assertNotNull(allPaths, "testLargeLines returns null for getAllFilesForPV for " + pvName);
+        Assertions.assertTrue(
+                allPaths.length > 0, "testLargeLines returns empty array for getAllFilesForPV for " + pvName);
+
+        for (Path destPath : allPaths) {
+            try {
+                PBFileInfo info =new PBFileInfo(destPath);
+                info.getLastEventEpochSeconds();
+                Assertions.assertTrue(
+                        ValidatePBFile.validatePBFile(destPath, false),
+                        "File validation failed for " + destPath.toAbsolutePath());
+            } catch (Exception ex) {
+                logger.error("Exception parsing file" + destPath.toAbsolutePath(), ex);
+                Assertions.fail(ex.getMessage());
+            }
+        }
+    }
 }

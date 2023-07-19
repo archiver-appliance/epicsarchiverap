@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -28,12 +27,11 @@ import org.epics.pva.data.nt.PVAEnum;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -47,12 +45,11 @@ import java.util.function.Function;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.fromGenericSampleValueToPVAData;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
-import static org.junit.Assert.assertEquals;
 
 /**
  * A basic integration test of using pvAccess to archive a pv
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class PVAccessIntegrationTest {
 
     private static final Logger logger = LogManager.getLogger(PVAccessIntegrationTest.class.getName());
@@ -67,13 +64,13 @@ public class PVAccessIntegrationTest {
         }
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
 
         tomcatSetup.setUpWebApps(PVAccessIntegrationTest.class.getSimpleName());
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         tomcatSetup.tearDown();
         pvaServer.close();
@@ -283,7 +280,7 @@ public class PVAccessIntegrationTest {
             stream = rawDataRetrieval.getDataForPVS(new String[]{pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
             // Make sure we get the DBR type we expect
-            assertEquals(type, stream.getDescription().getArchDBRType());
+            Assertions.assertEquals(type, stream.getDescription().getArchDBRType());
 
             // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
@@ -296,6 +293,6 @@ public class PVAccessIntegrationTest {
             }
         }
 
-        assertEquals(expectedValues, actualValues);
+        Assertions.assertEquals(expectedValues, actualValues);
     }
 }

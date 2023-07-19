@@ -23,7 +23,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -41,10 +40,11 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 /**
  * A more complex test for testing ETL for failover.
@@ -54,7 +54,7 @@ import org.junit.experimental.categories.Category;
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class FailoverMultiStepETLTest {
 	private static Logger logger = LogManager.getLogger(FailoverMultiStepETLTest.class.getName());
 	private ConfigServiceForTests configService;
@@ -63,7 +63,7 @@ public class FailoverMultiStepETLTest {
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	long stepSeconds = 3600;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "../sts"); 
@@ -72,7 +72,7 @@ public class FailoverMultiStepETLTest {
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());		
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -112,16 +112,16 @@ public class FailoverMultiStepETLTest {
 				for(Event e : stream) {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch), (evEpoch - lastEvEpoch) == stepSeconds);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == stepSeconds, "We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch));
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
+		Assertions.assertTrue(genEventCount == rtvlEventCount, "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
 		return rtvlEventCount;
 	}
 
@@ -176,7 +176,7 @@ public class FailoverMultiStepETLTest {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					logger.debug("Current event " + TimeUtils.convertToHumanReadableString(evEpoch) + " Previous: " + TimeUtils.convertToHumanReadableString(lastEvEpoch));
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, evEpoch > lastEvEpoch);
+						Assertions.assertTrue(evEpoch > lastEvEpoch, "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
@@ -221,9 +221,9 @@ public class FailoverMultiStepETLTest {
 	    	ETLExecutor.runETLs(configService, timeETLruns);
 			long rCount = testMergedRetrieval("dest_appliance", queryStart, queryEnd, false);
 			logger.info("Got " + rCount + " events between " + TimeUtils.convertToHumanReadableString(queryStart) + " and " + TimeUtils.convertToHumanReadableString(queryEnd));
-			assertTrue("We expected more than what we got last time " + lastCount + " . This time we got " + rCount, (rCount >= lastCount));
+			Assertions.assertTrue((rCount >= lastCount), "We expected more than what we got last time " + lastCount + " . This time we got " + rCount);
 			lastCount = rCount;			
 		}
-		assertTrue("We expected event count  " + totCount + " but got  " + lastCount, lastCount == totCount);
+		Assertions.assertTrue(lastCount == totCount, "We expected event count  " + totCount + " but got  " + lastCount);
 	}	
 }
