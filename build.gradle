@@ -100,6 +100,7 @@ dependencies {
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
     implementation("com.opencsv:opencsv:5.7.1")
     implementation("com.google.protobuf:protobuf-java:3.23.0")
+    testImplementation ("commons-cli:commons-cli:1.5.0")
     permitTestUnusedDeclared("org.junit.vintage:junit-vintage-engine:5.9.3") // TODO upgrade tests to JUNIT 5
     permitTestUsedUndeclared("junit:junit:4.13.2")
     testImplementation('org.awaitility:awaitility:4.2.0')
@@ -418,11 +419,10 @@ tasks.register("shutdownAllTomcats", Exec) {
             " if they didn't shut down correctly."
     commandLine "pkill", "-9", "-f", "tomcat"
 }
-tasks.register("integrationTests", Test) {
+
+tasks.register("integrationSetup") {
     group = "Test"
-    description = "Run the integration tests, ones that require a tomcat installation."
-    forkEvery 1
-    maxParallelForks = 1
+    description = "Setup for Integration Tests."
     dependsOn "buildRelease"
     doFirst {
         copy {
@@ -442,6 +442,15 @@ tasks.register("integrationTests", Test) {
             }
         }
     }
+
+}
+
+tasks.register("integrationTests", Test) {
+    group = "Test"
+    description = "Run the integration tests, ones that require a tomcat installation."
+    dependsOn "integrationSetup"
+    forkEvery 1
+    maxParallelForks = 1
     useJUnit {
         includeCategories "org.epics.archiverappliance.IntegrationTests",
                 "org.epics.archiverappliance.LocalEpicsTests"
@@ -482,6 +491,17 @@ tasks.register("allTests", Test) {
     dependsOn "singleForkTests"
     dependsOn "integrationTests"
     dependsOn "flakyTests"
+}
+
+tasks.register("testRun", JavaExec) {
+    group = "test"
+    description = "Runs the application same as for integration tests."
+    dependsOn "integrationSetup"
+
+    mainClass = "org.epics.archiverappliance.TestRun"
+
+    classpath = sourceSets.test.runtimeClasspath
+    args "-c2"
 }
 
 defaultTasks "buildRelease"
