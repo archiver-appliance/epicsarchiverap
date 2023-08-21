@@ -18,13 +18,12 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.VectorValue;
-import org.epics.pvdata.pv.PVShortArray;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
-import org.epics.pvdata.pv.ShortArrayData;
+import org.epics.pva.data.PVAShortArray;
+import org.epics.pva.data.PVAStructure;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
@@ -89,22 +88,13 @@ public class PBVectorShort implements DBRTimeEvent, PartionedTime {
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
-	public PBVectorShort(PVStructure v4Data) {
-		PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
-		long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
-		int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
-		Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
-		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+	public PBVectorShort(PVAStructure v4Data) {
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+		DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
-		PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
-		int severity = alarmPVStructure.getIntField("severity").get();
-		int status = alarmPVStructure.getIntField("status").get();
-
-		PVShortArray pvArray = (PVShortArray) v4Data.getScalarArrayField("value", ScalarType.pvShort);
-		ShortArrayData arrayData = new ShortArrayData();
-		pvArray.get(0, pvArray.getLength(), arrayData);
+		PVAShortArray pvArray = v4Data.get("value");
 		ArrayList<Integer> vals = new ArrayList<Integer>();
-		short[] data = arrayData.data;
+		short[] data = pvArray.get();
 		for(short dataitem : data) { 
 			vals.add((int) dataitem);
 		}
@@ -114,8 +104,8 @@ public class PBVectorShort implements DBRTimeEvent, PartionedTime {
 				.setSecondsintoyear(yst.getSecondsintoyear())
 				.setNano(yst.getNanos())
 				.addAllVal(vals);
-		if(severity != 0) builder.setSeverity(severity);
-		if(status != 0) builder.setStatus(status);
+		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
+		if(alarm.status != 0) builder.setStatus(alarm.status);
 		dbevent = builder.build();
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}

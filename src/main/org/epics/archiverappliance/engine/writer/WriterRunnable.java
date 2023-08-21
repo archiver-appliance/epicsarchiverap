@@ -32,7 +32,7 @@ import org.epics.archiverappliance.engine.model.YearListener;
 public class WriterRunnable implements Runnable {
 	private static final Logger logger = LogManager.getLogger(WriterRunnable.class);
 	/** Minimum write period [seconds] */
-	private static final double MIN_WRITE_PERIOD = 10.0;
+	private static final double MIN_WRITE_PERIOD = 1.0;
     /**the sample buffer hash map*/
 	final private ConcurrentHashMap<String, SampleBuffer> buffers = new ConcurrentHashMap<String, SampleBuffer>();
 

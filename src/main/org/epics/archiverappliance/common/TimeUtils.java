@@ -8,12 +8,16 @@
 package org.epics.archiverappliance.common;
 
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVALong;
+import org.epics.pva.data.PVAInt;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -50,7 +54,13 @@ public class TimeUtils {
 		ts.setNanos(nanos);
 		return ts;
 	}
-	
+
+	public static java.sql.Timestamp convertFromInstant(Instant instant) {
+		Timestamp ts = new Timestamp(instant.getEpochSecond()*1000);
+		ts.setNanos(instant.getNano());
+		return ts;
+	}
+
 	public static java.sql.Timestamp convertFromEpochMillis(long epochMillis) {
 		Timestamp ts = new Timestamp(epochMillis);
 		return ts;
@@ -161,14 +171,19 @@ public class TimeUtils {
 		String retval = fmt.print(dateTime);
 		return retval;
 	}
-	
+
 	public static long convertToLocalEpochMillis(long epochMillis) {
 		if(epochMillis == 0) return 0;
 		return epochMillis + DateTimeZone.getDefault().getOffset(epochMillis);
 	}
 
-	
-	
+
+	public static Instant convertTimestampToInstant(Timestamp timestamp) {
+		return Instant.ofEpochSecond(timestamp.getTime()/1000, timestamp.getNanos());
+	}
+
+
+
 	public static long getStartOfCurrentYearInSeconds() {
 		DateTime now = new DateTime(DateTimeZone.UTC);
 		DateTime startoftheYear = new DateTime(now.getYear(), 1, 1, 0, 0, 0, 0, DateTimeZone.UTC);
@@ -509,7 +524,17 @@ public class TimeUtils {
 		return !DateTimeZone.getDefault().isStandardOffset(ts.getTime());
 	}
 	
-	
+	/**
+	 * Convert the timeStamp from a pvAccess normative type to YearSecondTimestamp
+	 * @param timeStampPVStructure
+	 * @return Timestamp
+	 */
+    public static YearSecondTimestamp convertFromPVTimeStamp(PVAStructure timeStampPVStructure) {
+        long secondsPastEpoch = ((PVALong)timeStampPVStructure.get("secondsPastEpoch")).get();
+        int nanoSeconds = ((PVAInt) timeStampPVStructure.get("nanoseconds")).get();
+        Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
+        return TimeUtils.convertToYearSecondTimestamp(timestamp);
+    }
 	
 	/**
 	 * Break a time span into smaller time spans according to binSize

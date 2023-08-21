@@ -76,9 +76,6 @@ dependencies {
     testImplementation("org.apache.commons:commons-compress:1.23.0")
     implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")// Only needed for tests, but inbuilt to main)
     implementation("org.epics:jca:2.4.7")
-    implementation("org.epics:epics-ntypes:0.3.7")
-    implementation("org.epics:epics-pvaccess:5.1.7")
-    implementation("org.epics:epics-pvdata:6.1.7")
     implementation('commons-codec:commons-codec:1.15')
     implementation('commons-fileupload:commons-fileupload:1.5')
     implementation('commons-io:commons-io:2.11.0')
@@ -96,11 +93,17 @@ dependencies {
     implementation("org.python:jython-standalone:2.7.3")
     runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies
     implementation("org.apache.logging.log4j:log4j-api:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+    permitUnusedDeclared("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+    implementation("org.apache.logging.log4j:log4j-jul:2.20.0")
+    permitUnusedDeclared("org.apache.logging.log4j:log4j-jul:2.20.0")
     runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
     implementation("com.opencsv:opencsv:5.7.1")
     implementation("com.google.protobuf:protobuf-java:3.23.0")
     permitTestUnusedDeclared("org.junit.vintage:junit-vintage-engine:5.9.3") // TODO upgrade tests to JUNIT 5
     permitTestUsedUndeclared("junit:junit:4.13.2")
+    testImplementation('org.awaitility:awaitility:4.2.0')
+    implementation("org.phoebus:core-pva:4.7.2")
 }
 
 tasks.register("cleanWars", Delete) {
@@ -235,11 +238,6 @@ tasks.withType(War).configureEach {
     dependsOn "stage"
     from("${stageDir}/org/epics/archiverappliance/staticcontent") {
         into "ui/comm"
-    }
-    if (archapplsite == "tests") {
-        from("src/resources/test/log4j2.xml") {
-            into "WEB-INF/classes"
-        }
     }
     from("src/sitespecific/${archapplsite}/classpathfiles") {
         into "WEB-INF/classes"
@@ -379,7 +377,8 @@ tasks.withType(Test).configureEach {
         includeTestsMatching "*Test"
     }
     maxHeapSize = "1G"
-    jvmArgs = ["-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver", "-Dlog4j1.compatibility=\"true\"" ]
+    jvmArgs = ["-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver",
+               "-Dlog4j1.compatibility=\"true\""]
 
     environment "ARCHAPPL_SHORT_TERM_FOLDER", "${temporaryDir}/sts"
     environment "ARCHAPPL_MEDIUM_TERM_FOLDER", "${temporaryDir}/mts"

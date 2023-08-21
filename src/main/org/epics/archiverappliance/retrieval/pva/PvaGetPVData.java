@@ -10,16 +10,13 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -41,6 +38,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
+import org.epics.archiverappliance.mgmt.pva.actions.PvaActionException;
 import org.epics.archiverappliance.retrieval.DataSourceResolution;
 import org.epics.archiverappliance.retrieval.MismatchedDBRTypeException;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -55,18 +53,11 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithCon
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadExecutorService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
-import org.epics.nt.NTURI;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvdata.factory.FieldFactory;
-import org.epics.pvdata.factory.PVDataFactory;
-import org.epics.pvdata.factory.StatusFactory;
-import org.epics.pvdata.pv.Field;
-import org.epics.pvdata.pv.FieldCreate;
-import org.epics.pvdata.pv.PVString;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
-import org.epics.pvdata.pv.Status.StatusType;
-import org.epics.pvdata.pv.Structure;
+import org.epics.pva.data.PVAAnyArray;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.NotValueException;
+import org.epics.pva.data.nt.PVAURI;
 import org.json.simple.JSONObject;
 
 public class PvaGetPVData implements PvaAction {
@@ -74,8 +65,6 @@ public class PvaGetPVData implements PvaAction {
 	private static final Logger logger = LogManager.getLogger(PvaGetPVData.class.getName());
 	public static final String NAME = "getPVsData";
 
-	static FieldCreate fieldCreate = FieldFactory.getFieldCreate();
-	
 	ConfigService configService;
 
 	@Override
@@ -84,43 +73,38 @@ public class PvaGetPVData implements PvaAction {
 	}
 
 	@Override
-	public void request(PVStructure pvArgs, RPCResponseCallback callback, ConfigService configService) {
+	public PVAStructure request(PVAStructure pvArgs, ConfigService configService) throws PvaActionException {
 		this.configService = configService;
 		try {
 			Map<String, String> args = extractQuery(pvArgs);
 			// TODO a better check is needed.
 			if (args.containsKey("pv")) {
 				if (args.get("pv").split(";").length == 1) {
-					doGetSinglePV(args, callback, configService);
+					return doGetSinglePV(args, configService);
 				} else {
-					doGetMultiPV(args, callback, configService);
+					return doGetMultiPV(args, configService);
 				}
 			}
-		} catch (ServletException | IOException e) {
+		} catch (ServletException | IOException | NotValueException e) {
 			e.printStackTrace();
 		}
+		return null;
 	}
 
 	/**
 	 * Extract the query parameters into a {@link HashMap}
-	 * 
+	 *
 	 * @param args
-	 *            request PVStructure - must be of type {@link NTURI}
+	 *            request PVAStructure - must be of type {@link PVAURI}
 	 * @return map of the query parameters
 	 */
-	private Map<String, String> extractQuery(PVStructure args) {
-		Map<String, String> reqParameters = new HashMap<>();
-		NTURI uri = NTURI.wrap(args);
-		reqParameters = Arrays.asList(uri.getQueryNames()).stream().collect(Collectors.toMap(queryName -> {
-			return queryName;
-		}, queryName -> {
-			return uri.getQueryField(PVString.class, queryName).get();
-		}));
-		return reqParameters;
+	private Map<String, String> extractQuery(PVAStructure args) throws NotValueException {
+		PVAURI uri = PVAURI.fromStructure(args);
+		return uri.getQuery();
 	}
 
-	private void doGetSinglePV(Map<String, String> reqParameters, RPCResponseCallback resp, ConfigService configService)
-			throws ServletException, IOException {
+	private PVAStructure doGetSinglePV(Map<String, String> reqParameters, ConfigService configService)
+			throws ServletException, IOException, PvaActionException {
 
 		PoorMansProfiler pmansProfiler = new PoorMansProfiler();
 		String pvName = reqParameters.get("pv");
@@ -129,8 +113,8 @@ public class PvaGetPVData implements PvaAction {
 			String msg = "Cannot process data retrieval requests for PV " + pvName
 					+ " until the appliance has completely started up.";
 			logger.error(msg);
-			sendError(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg, Optional.empty());
-			return;
+			throw new PvaActionException(msg);
+			
 		}
 
 		String startTimeStr = reqParameters.get("from");
@@ -146,11 +130,9 @@ public class PvaGetPVData implements PvaAction {
 			}
 		}
 
-		boolean useChunkedEncoding = true;
 		String doNotChunkStr = reqParameters.get("donotchunk");
 		if (doNotChunkStr != null && !doNotChunkStr.equals("false")) {
 			logger.info("Turning off HTTP chunked encoding");
-			useChunkedEncoding = false;
 		}
 
 		boolean fetchLatestMetadata = false;
@@ -169,8 +151,8 @@ public class PvaGetPVData implements PvaAction {
 
 		if (pvName == null) {
 			String msg = "PV name is null.";
-			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-			return;
+			throw new PvaActionException(msg);
+			
 		}
 
 		if (pvName.endsWith(".VAL")) {
@@ -189,8 +171,8 @@ public class PvaGetPVData implements PvaAction {
 					end = TimeUtils.convertFromDateTimeStringWithOffset(endTimeStr);
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time" + endTimeStr;
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.of(ex2));
-					return;
+					throw new PvaActionException(msg, ex2);
+					
 				}
 			}
 		}
@@ -206,8 +188,8 @@ public class PvaGetPVData implements PvaAction {
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time " + startTimeStr;
 					logger.warn(msg, ex2);
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.of(ex2));
-					return;
+					throw new PvaActionException(msg, ex2);
+					
 				}
 			}
 		}
@@ -216,8 +198,8 @@ public class PvaGetPVData implements PvaAction {
 			String msg = "For request, end " + end.toString() + " is before start " + start.toString() + " for pv "
 					+ pvName;
 			logger.error(msg);
-			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-			return;
+			throw new PvaActionException(msg);
+			
 		}
 
 		LinkedList<TimeSpan> requestTimes = new LinkedList<TimeSpan>();
@@ -226,11 +208,7 @@ public class PvaGetPVData implements PvaAction {
 		// parameter
 		String timeRangesStr = reqParameters.get("timeranges");
 		if (timeRangesStr != null) {
-			boolean continueWithRequest = parseTimeRanges(resp, pvName, requestTimes, timeRangesStr);
-			if (!continueWithRequest) {
-				// Cannot parse the time ranges properly; we so abort the request.
-				return;
-			}
+			parseTimeRanges(pvName, requestTimes, timeRangesStr);
 
 			// Override the start and the end so that the mergededup consumer works
 			// correctly.
@@ -241,14 +219,14 @@ public class PvaGetPVData implements PvaAction {
 			requestTimes.add(new TimeSpan(start, end));
 		}
 
-		assert (requestTimes.size() > 0);
+		assert (!requestTimes.isEmpty());
 
 		String postProcessorUserArg = reqParameters.get("pp");
 		if (pvName.contains("(")) {
 			if (!pvName.contains(")")) {
 				logger.error("Unbalanced paran " + pvName);
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Unbalanced paran " + pvName, Optional.empty());
-				return;
+				throw new PvaActionException("Unbalanced paran " + pvName);
+				
 			}
 			String[] components = pvName.split("[(,)]");
 			postProcessorUserArg = components[0];
@@ -282,9 +260,8 @@ public class PvaGetPVData implements PvaAction {
 
 		if (typeInfo == null) {
 			logger.error("Unable to find typeinfo for pv " + pvName);
-			sendError(resp, HttpServletResponse.SC_NOT_FOUND, "Unable to find typeinfo for pv " + pvName,
-					Optional.empty());
-			return;
+			throw new PvaActionException("Unable to find typeinfo for pv " + pvName);
+			
 		}
 
 		if (postProcessor == null) {
@@ -332,24 +309,18 @@ public class PvaGetPVData implements PvaAction {
 			postProcessor.initialize(postProcessorUserArg, pvName);
 		} catch (Exception ex) {
 			logger.error("Postprocessor threw an exception during initialization for " + pvName, ex);
-			sendError(resp, HttpServletResponse.SC_NOT_FOUND,
-					"Postprocessor threw an exception during initialization for " + pvName, Optional.of(ex));
-			return;
+			throw new PvaActionException(
+					"Postprocessor threw an exception during initialization for " + pvName, ex);
+			
 		}
 
 		// TODO creating the result structure that will be sent over the wire.
-		Structure resultStructure = fieldCreate.createStructure("NTComplexTable", 
-				new String[] { "labels", "value" },
-				new Field[2]);
-		Field[] fields = resultStructure.getFields();
-		fields[0] = PVDataFactory.getPVDataCreate().createPVScalarArray(ScalarType.pvString).getScalarArray();
-		fields[1] = PVDataFactory.getPVDataCreate().createPVVariantUnionArray().getUnionArray();
+		PVAStructure result = new PVAStructure("result", "NTComplexTable",
+				new PVAStringArray("labels"), new PVAAnyArray("value"));
 
-		PVStructure result = PVDataFactory.getPVDataCreate().createPVStructure(resultStructure);
-		
 		try (BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest);
-				PvaMergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, result, useChunkedEncoding, typeInfo);
-				RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, postProcessor)) {
+		     PvaMergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(result);
+		     RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, postProcessor)) {
 			HashMap<String, String> engineMetadata = null;
 			if (fetchLatestMetadata) {
 				// Make a call to the engine to fetch the latest metadata.
@@ -481,10 +452,11 @@ public class PvaGetPVData implements PvaAction {
 			logger.error("Retrieval time for " + pvName + " from " + startTimeStr + " to " + endTimeStr
 					+ pmansProfiler.toString());
 		}
+		return result;
 	}
 
-	private void doGetMultiPV(Map<String, String> reqParameters, RPCResponseCallback resp, ConfigService configService)
-			throws ServletException, IOException {
+	private PVAStructure doGetMultiPV(Map<String, String> reqParameters, ConfigService configService)
+			throws ServletException, IOException, PvaActionException {
 
 		PoorMansProfiler pmansProfiler = new PoorMansProfiler();
 
@@ -498,8 +470,8 @@ public class PvaGetPVData implements PvaAction {
 			String msg = "Cannot process data retrieval requests for specified PVs (" + StringUtils.join(pvNames, ", ")
 					+ ") until the appliance has completely started up.";
 			logger.error(msg);
-			sendError(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg, Optional.empty());
-			return;
+			throw new PvaActionException(msg);
+			
 		}
 
 		// Getting various fields from arguments
@@ -545,9 +517,8 @@ public class PvaGetPVData implements PvaAction {
 			}
 			if (nullPVs > 0) {
 				logger.warn("Some PVs are null in the request.");
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, "Some PVs are null in the request.",
-						Optional.empty());
-				return;
+				throw new PvaActionException( "Some PVs are null in the request.");
+				
 			}
 		}
 
@@ -569,8 +540,8 @@ public class PvaGetPVData implements PvaAction {
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time " + endTimeStr;
 					logger.warn(msg, ex2);
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.of(ex2));
-					return;
+					throw new PvaActionException(msg, ex2);
+					
 				}
 			}
 		}
@@ -586,8 +557,8 @@ public class PvaGetPVData implements PvaAction {
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time " + startTimeStr;
 					logger.warn(msg, ex2);
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.of(ex2));
-					return;
+					throw new PvaActionException(msg, ex2);
+					
 				}
 			}
 		}
@@ -596,8 +567,8 @@ public class PvaGetPVData implements PvaAction {
 			String msg = "For request, end " + end.toString() + " is before start " + start.toString() + " for pvs "
 					+ StringUtils.join(pvNames, ", ");
 			logger.error(msg);
-			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-			return;
+			throw new PvaActionException(msg);
+			
 		}
 
 		LinkedList<TimeSpan> requestTimes = new LinkedList<TimeSpan>();
@@ -606,15 +577,8 @@ public class PvaGetPVData implements PvaAction {
 		// parameter
 		String timeRangesStr = reqParameters.get("timeranges");
 		if (timeRangesStr != null) {
-			boolean continueWithRequest = parseTimeRanges(resp, "[" + StringUtils.join(pvNames, ", ") + "]",
+			parseTimeRanges("[" + StringUtils.join(pvNames, ", ") + "]",
 					requestTimes, timeRangesStr);
-			if (!continueWithRequest) {
-				// Cannot parse the time ranges properly; we so abort the request.
-				String msg = "The specified time ranges could not be processed appropriately. Aborting.";
-				logger.info(msg);
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-				return;
-			}
 
 			// Override the start and the end so that the mergededup consumer works
 			// correctly.
@@ -639,8 +603,8 @@ public class PvaGetPVData implements PvaAction {
 				if (!pvNames.get(i).contains(")")) {
 					String msg = "Unbalanced paren " + pvNames.get(i);
 					logger.error(msg);
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-					return;
+					throw new PvaActionException(msg);
+					
 				}
 				String[] components = pvNames.get(i).split("[(,)]");
 				postProcessorUserArg = components[0];
@@ -690,8 +654,8 @@ public class PvaGetPVData implements PvaAction {
 			if (typeInfos.get(i) == null) {
 				String msg = "Unable to find typeinfo for pv " + pvNames.get(i);
 				logger.error(msg);
-				sendError(resp, HttpServletResponse.SC_NOT_FOUND, msg, Optional.empty());
-				return;
+				throw new PvaActionException(msg);
+				
 			}
 
 			if (postProcessors.get(i) == null) {
@@ -760,13 +724,12 @@ public class PvaGetPVData implements PvaAction {
 				try {
 					// TODO the http request is needed to process
 					List<List<Future<EventStream>>> resultFromForeignAppliances = retrieveEventStreamFromForeignAppliance(
-							pvInfos, requestTimes, useChunkedEncoding, retrievalURL + "/../data/getDataForPVs.raw",
-							start, end);
+							pvInfos, requestTimes, useChunkedEncoding);
 					listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
 				} catch (Exception ex) {
 					logger.error(
 							"Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
-					return;
+					
 				}
 			}
 		}
@@ -799,8 +762,8 @@ public class PvaGetPVData implements PvaAction {
 			} catch (Exception ex) {
 				String msg = "Postprocessor threw an exception during initialization for " + pvName;
 				logger.error(msg, ex);
-				sendError(resp, HttpServletResponse.SC_NOT_FOUND, msg, Optional.of(ex));
-				return;
+				throw new PvaActionException(msg, ex);
+				
 			}
 		}
 
@@ -808,33 +771,27 @@ public class PvaGetPVData implements PvaAction {
 		 * MergeDedupConsumer is what writes PB data in its respective format to the
 		 * HTML response. The response, after the MergeDedupConsumer is created,
 		 * contains the following:
-		 * 
+		 *
 		 * 1) The content type for the response. 2) Any additional headers for the
 		 * particular MIME response.
-		 * 
+		 *
 		 * Additionally, the MergeDedupConsumer instance holds a reference to the output
 		 * stream that is used to write to the HTML response. It is stored under the
 		 * name `os`.
 		 */
 
 		// TODO creating the result structure that will be sent over the wire.
-		Structure resultStructure = fieldCreate.createStructure("NTComplexTable", 
-				new String[] { "labels", "value" },
-				new Field[2]);
-		Field[] fields = resultStructure.getFields();
-		fields[0] = PVDataFactory.getPVDataCreate().createPVScalarArray(ScalarType.pvString).getScalarArray();
-		fields[1] = PVDataFactory.getPVDataCreate().createPVVariantUnionArray().getUnionArray();
+		PVAStructure result = new PVAStructure("result", "NTComplexTable",
+				new PVAStringArray("labels"), new PVAAnyArray("value"));
 
-		PVStructure result = PVDataFactory.getPVDataCreate().createPVStructure(resultStructure);
-		
 		PvaMergeDedupConsumer mergeDedupCountingConsumer;
 		try {
-			mergeDedupCountingConsumer = createMergeDedupConsumer(resp, result, useChunkedEncoding, null);
+			mergeDedupCountingConsumer = createMergeDedupConsumer(result);
 		} catch (ServletException se) {
 			String msg = "Exception when retrieving data " + "-->" + se.toString();
 			logger.error(msg, se);
-			sendError(resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg, Optional.of(se));
-			return;
+			throw new PvaActionException(msg, se);
+			
 		}
 
 		/*
@@ -893,7 +850,7 @@ public class PvaGetPVData implements PvaAction {
 		/*
 		 * The following try bracket goes through each of the streams in the list of
 		 * event stream futures.
-		 * 
+		 *
 		 * It is intended that the process goes through one PV at a time.
 		 */
 
@@ -1038,46 +995,26 @@ public class PvaGetPVData implements PvaAction {
 		mergeDedupCountingConsumer.send();
 
 		mergeDedupCountingConsumer.close();
-	}
-
-	/**
-	 * Handle error conditionals and send the appropriate response to the requesting
-	 * client
-	 * 
-	 * @param resp
-	 * @param scServiceUnavailable
-	 * @param msg
-	 * @param ex
-	 */
-	private void sendError(RPCResponseCallback resp, int scServiceUnavailable, String msg, Optional<Exception> ex) {
-		if (ex.isPresent()) {
-			resp.requestDone(StatusFactory.getStatusCreate().createStatus(StatusType.ERROR, msg, ex.get()), null);
-		} else {
-			resp.requestDone(StatusFactory.getStatusCreate().createStatus(StatusType.ERROR, msg, null), null);
-		}
+		return result;
 	}
 
 	/**
 	 * Parse the timeranges parameter and generate a list of TimeSpans.
-	 * 
-	 * @param resp
+	 *
 	 * @param pvName
 	 * @param requestTimes
 	 *            - list of timespans that we add the valid times to.
 	 * @param timeRangesStr
-	 * @return
-	 * @throws IOException
 	 */
-	private boolean parseTimeRanges(RPCResponseCallback resp, String pvName, LinkedList<TimeSpan> requestTimes,
-			String timeRangesStr) throws IOException {
+	private void parseTimeRanges(String pvName, LinkedList<TimeSpan> requestTimes,
+	                                String timeRangesStr) throws PvaActionException {
 		String[] timeRangesStrList = timeRangesStr.split(",");
 
 		if (timeRangesStrList.length % 2 != 0) {
 			String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have "
 					+ timeRangesStrList.length + " times";
 			logger.error(msg);
-			sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-			return false;
+			throw new PvaActionException(msg);
 		}
 
 		LinkedList<Timestamp> timeRangesList = new LinkedList<Timestamp>();
@@ -1092,8 +1029,7 @@ public class PvaGetPVData implements PvaAction {
 				} catch (IllegalArgumentException ex2) {
 					String msg = "Cannot parse time " + timeRangesStrItem;
 					logger.warn(msg, ex2);
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.of(ex2));
-					return false;
+					throw new PvaActionException(msg, ex2);
 				}
 			}
 		}
@@ -1108,8 +1044,7 @@ public class PvaGetPVData implements PvaAction {
 				String msg = "For request, end " + t1.toString() + " is before start " + t0.toString() + " for pv "
 						+ pvName;
 				logger.error(msg);
-				sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-				return false;
+				throw new PvaActionException(msg);
 			}
 
 			if (prevEnd != null) {
@@ -1117,21 +1052,19 @@ public class PvaGetPVData implements PvaAction {
 					String msg = "For request, start time " + t0.toString() + " is before previous end time "
 							+ prevEnd.toString() + " for pv " + pvName;
 					logger.error(msg);
-					sendError(resp, HttpServletResponse.SC_BAD_REQUEST, msg, Optional.empty());
-					return false;
+					throw new PvaActionException(msg);
 				}
 			}
 			prevEnd = t1;
 			requestTimes.add(new TimeSpan(t0, t1));
 		}
-		return true;
 	}
 
 	/**
 	 * Used when we are constructing a TypeInfo from a template. We want to look at
 	 * the actual data and see if we can set the DBR type correctly. Return true if
 	 * we are able to do this.
-	 * 
+	 *
 	 * @param typeInfo
 	 * @return
 	 * @throws IOException
@@ -1160,22 +1093,18 @@ public class PvaGetPVData implements PvaAction {
 	 * Create a merge dedup consumer that will merge/dedup multiple event streams.
 	 * This basically makes sure that we are serving up events in monotonically
 	 * increasing timestamp order.
-	 * 
-	 * @param resp
-	 * @param result 
-	 * @param extension
-	 * @param useChunkedEncoding
+	 *
+	 * @param result
 	 * @return
 	 * @throws ServletException
 	 */
-	private PvaMergeDedupConsumer createMergeDedupConsumer(RPCResponseCallback resp, PVStructure result, boolean useChunkedEncoding,
-			PVTypeInfo typeInfo) throws ServletException {
+	private PvaMergeDedupConsumer createMergeDedupConsumer(PVAStructure result) throws ServletException {
 		PvaMergeDedupConsumer mergeDedupCountingConsumer = null;
 		try {
 			PvaMimeResponse mimeresponse = PvaMimeResponse.class.getConstructor().newInstance();
 			HashMap<String, String> extraHeaders = mimeresponse.getExtraHeaders();
 			logger.info(extraHeaders);
-			mergeDedupCountingConsumer = new PvaMergeDedupConsumer(mimeresponse, resp, result, typeInfo);
+			mergeDedupCountingConsumer = new PvaMergeDedupConsumer(mimeresponse, result);
 		} catch (Exception ex) {
 			throw new ServletException(ex);
 
@@ -1186,7 +1115,7 @@ public class PvaGetPVData implements PvaAction {
 	/**
 	 * Make a call to the engine to fetch the latest metadata and then add it to the
 	 * mergeConsumer
-	 * 
+	 *
 	 * @param pvName
 	 * @param applianceForPV
 	 */
@@ -1197,7 +1126,7 @@ public class PvaGetPVData implements PvaAction {
 					+ URLEncoder.encode(pvName, "UTF-8");
 			logger.debug("Getting metadata from the engine using " + metadataURL);
 			JSONObject metadata = GetUrlContent.getURLContentAsJSONObject(metadataURL);
-			return (HashMap<String, String>) metadata;
+			return metadata;
 		} catch (Exception ex) {
 			logger.warn("Exception fetching latest metadata for pv " + pvName, ex);
 		}
@@ -1210,7 +1139,7 @@ public class PvaGetPVData implements PvaAction {
 	 * components One is an executor to use The other is a list of timespans that we
 	 * have broken the request into - the timespans will most likely be the time
 	 * spans of the individual bins in the request.
-	 * 
+	 *
 	 * @author mshankar
 	 *
 	 */
@@ -1238,7 +1167,7 @@ public class PvaGetPVData implements PvaAction {
 	 * characteristics of the request The plugins will yield a list of callables
 	 * that could potentially be evaluated in parallel Whether we evaluate in
 	 * parallel is made here.
-	 * 
+	 *
 	 * @param pvName
 	 * @param postProcessor
 	 * @return
@@ -1270,7 +1199,7 @@ public class PvaGetPVData implements PvaAction {
 	 * Given a list of retrievalResult futures, we loop thru these; execute them
 	 * (basically calling the reader getData) and then sumbit the returned callables
 	 * to the executorResult's executor. We return a list of eventstream futures.
-	 * 
+	 *
 	 * @param executorResult
 	 * @param retrievalResultFutures
 	 * @return
@@ -1310,7 +1239,7 @@ public class PvaGetPVData implements PvaAction {
 	/**
 	 * Merges info from pvTypeTnfo that comes from the config database into the
 	 * remote description that gets sent over the wire.
-	 * 
+	 *
 	 * @param typeInfo
 	 * @param eventDesc
 	 * @param engineMetaData
@@ -1331,15 +1260,13 @@ public class PvaGetPVData implements PvaAction {
 	/**
 	 * Resolve all data sources and submit them to the executor in the
 	 * executorResult This returns a list of futures of retrieval results.
-	 * 
+	 *
 	 * @param pvName
 	 * @param typeInfo
 	 * @param postProcessor
 	 * @param applianceForPV
 	 * @param retrievalContext
 	 * @param executorResult
-	 * @param req
-	 * @param resp
 	 * @return
 	 * @throws IOException
 	 */
@@ -1373,20 +1300,16 @@ public class PvaGetPVData implements PvaAction {
 	/**
 	 * If multiple pvs are hosted on another appliance, a retrieval request is made
 	 * to that appliance and the event stream is returned.
-	 * 
+	 *
 	 * @param requestTimes
-	 * @param pvInfo
+	 * @param pvInfos
 	 * @param useChunkedEncoding
-	 * @param dataRetrievalURLForPV
-	 * @param start
-	 * @param end
 	 * @throws IOException
 	 * @throws ExecutionException
 	 * @throws InterruptedException
 	 */
 	private List<List<Future<EventStream>>> retrieveEventStreamFromForeignAppliance(
-			ArrayList<PVInfoForClusterRetrieval> pvInfos, LinkedList<TimeSpan> requestTimes, boolean useChunkedEncoding,
-			String dataRetrievalURLForPV, Timestamp start, Timestamp end)
+			ArrayList<PVInfoForClusterRetrieval> pvInfos, LinkedList<TimeSpan> requestTimes, boolean useChunkedEncoding)
 			throws IOException, InterruptedException, ExecutionException {
 
 		// Get the executors for the PVs in other clusters
@@ -1429,19 +1352,19 @@ public class PvaGetPVData implements PvaAction {
 	 * unprocessed PV name as opposed to the PV name stored by the PVTypeInfo
 	 * object, which has been processed.
 	 * </p>
-	 * 
+	 *
 	 * @author Michael Kenning
-	 * 
+	 *
 	 */
-	private class PVInfoForClusterRetrieval {
+	private static class PVInfoForClusterRetrieval {
 
-		private String pvName;
-		private PVTypeInfo typeInfo;
-		private PostProcessor postProcessor;
-		private ApplianceInfo applianceInfo;
+		private final String pvName;
+		private final PVTypeInfo typeInfo;
+		private final PostProcessor postProcessor;
+		private final ApplianceInfo applianceInfo;
 
 		private PVInfoForClusterRetrieval(String pvName, PVTypeInfo typeInfo, PostProcessor postProcessor,
-				ApplianceInfo applianceInfo) {
+		                                  ApplianceInfo applianceInfo) {
 			this.pvName = pvName;
 			this.typeInfo = typeInfo;
 			this.postProcessor = postProcessor;

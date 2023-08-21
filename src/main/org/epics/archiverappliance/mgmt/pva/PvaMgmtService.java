@@ -12,18 +12,18 @@ import org.epics.archiverappliance.mgmt.pva.actions.PvaGetArchivedPVs;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
-import org.epics.nt.NTTable;
-import org.epics.nt.NTURI;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvaccess.server.rpc.RPCServiceAsync;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.PVATable;
+import org.epics.pva.data.nt.PVAURI;
+import org.epics.pva.server.RPCService;
 
 /**
- * 
+ * PVAccess API to the Mgmt Service
+ *
  * @author Kunal Shroff
  *
  */
-public class PvaMgmtService implements RPCServiceAsync {
+public class PvaMgmtService implements RPCService {
 
 	private static Logger logger = LogManager.getLogger(PvaMgmtService.class.getName());
 	private final ConfigService configService;
@@ -35,6 +35,11 @@ public class PvaMgmtService implements RPCServiceAsync {
 	 */
 	Map<String, PvaAction> actions = new HashMap<String, PvaAction>();
 
+	/**
+	 * Construct the mgmt service.
+	 *
+	 * @param configService
+	 */
 	public PvaMgmtService(ConfigService configService) {
 		this.configService = configService;
 		logger.info("Creating an instance of PvaMgmtService");
@@ -45,25 +50,22 @@ public class PvaMgmtService implements RPCServiceAsync {
 		actions.put(PvaGetPVStatus.NAME, new PvaGetPVStatus());
 	}
 
-	/**
-	 * 
-	 */
 	@Override
-	public void request(PVStructure args, RPCResponseCallback callback) {
-		if (NTURI.isCompatible(args)) {
-			NTURI uri = NTURI.wrap(args);
-			if (actions.get(uri.getPath().get()) != null) {
-				actions.get(uri.getPath().get()).request(args, callback, configService);
+	public PVAStructure call(PVAStructure args) throws Exception {
+		PVAURI uri = PVAURI.fromStructure(args);
+		PVATable table = PVATable.fromStructure(args);
+		if (uri != null) {
+			if (actions.get(uri.getPath()) != null) {
+				return actions.get(uri.getPath()).request(args, configService);
 			} else {
-				throw new UnsupportedOperationException("The requested operation is not supported " + uri.getPath().get());
+				throw new UnsupportedOperationException("The requested operation is not supported " + uri.getPath());
 			}
-		} else if (NTTable.isCompatible(args)) {
-			NTTable ntTable = NTTable.wrap(args);
-			if (actions.get(ntTable.getDescriptor().get()) != null) {
-				actions.get(ntTable.getDescriptor().get()).request(args, callback, configService);
+		} else if (table != null) {
+			if (actions.get(table.getDescriptor().get()) != null) {
+				return actions.get(table.getDescriptor().get()).request(args,  configService);
 			} else {
 				throw new UnsupportedOperationException(
-						"The requested operation is not supported " + ntTable.getDescriptor().get());
+						"The requested operation is not supported " + table.getDescriptor().get());
 			}
 		} else {
 			// Unable to handle the request args

@@ -7,25 +7,27 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
-import org.epics.nt.NTTable;
-import org.epics.pvdata.pv.PVStringArray;
+import org.epics.archiverappliance.mgmt.pva.actions.ResponseConstructionException;
+import org.epics.pva.data.nt.PVATable;
 import org.junit.Test;
 
 public class PvaParserTest {
 
-	private static Logger logger = LogManager.getLogger(PvaParserTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaParserTest.class.getName());
 
 	@Test
-	public void test() {
-		String json = "{ \"pvName\": \"mshankar:arch:sine\", \"status\": \"Archive request submitted\" }\r\n"
-				+ "{ \"pvName\": \"mshankar:arch:cosine\", \"status\": \"Archive request submitted\" }\r\n" + "";
-		NTTable result = PvaArchivePVAction.parseArchivePvResult(json);
+	public void test() throws ResponseConstructionException {
+		String json = """
+				{ "pvName": "mshankar:arch:sine", "status": "Archive request submitted" }\r
+				{ "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }\r
+				""";
+		PVATable result = PvaArchivePVAction.parseArchivePvResult(json);
 
 		String[] expextedKePvNames = new String[] { "mshankar:arch:sine", "mshankar:arch:cosine" };
 		String[] expectedStatus = new String[] { "Archive request submitted", "Archive request submitted" };
-		logger.info("results" + result.toString());
-		assertArrayEquals(expextedKePvNames, extractStringArray(result.getColumn(PVStringArray.class, "pvName")));
-		assertArrayEquals(expectedStatus, extractStringArray(result.getColumn(PVStringArray.class, "status")));
+		logger.info("results" + result);
+		assertArrayEquals(expextedKePvNames, extractStringArray(result.getColumn("pvName")));
+		assertArrayEquals(expectedStatus, extractStringArray(result.getColumn("status")));
 
 	}
 }

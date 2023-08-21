@@ -1,23 +1,19 @@
 package org.epics.archiverappliance.mgmt.pva.actions;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.mgmt.bpl.GetApplianceInfo;
-import org.epics.nt.NTTable;
-import org.epics.nt.NTURI;
-import org.epics.pvaccess.server.rpc.RPCResponseCallback;
-import org.epics.pvdata.factory.StatusFactory;
-import org.epics.pvdata.pv.PVString;
-import org.epics.pvdata.pv.PVStringArray;
-import org.epics.pvdata.pv.PVStructure;
-import org.epics.pvdata.pv.ScalarType;
-import org.epics.pvdata.pv.Status.StatusType;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.nt.MustBeArrayException;
+import org.epics.pva.data.nt.NotValueException;
+import org.epics.pva.data.nt.PVATable;
+import org.epics.pva.data.nt.PVAURI;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Based on {@link GetApplianceInfo}
@@ -37,16 +33,21 @@ public class PvaGetApplianceInfo implements PvaAction {
 	}
 
 	@Override
-	public void request(PVStructure args, RPCResponseCallback callback, ConfigService configService) {
+	public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
 		String id = null;
 		LinkedHashMap<String, String> applianceInfoMap;
-		NTURI uri = NTURI.wrap(args);
-		List<String> queryName = Arrays.asList(uri.getQueryNames());
-		if (queryName.contains("id")) {
-			id = uri.getQueryField(PVString.class, "id").get();
+		PVAURI uri = PVAURI.fromStructure(args);
+		Map<String, String> queryName;
+		try {
+			queryName = uri.getQuery();
+			if (queryName.containsKey("id")) {
+				id = queryName.get("id");
+			}
+		} catch (NotValueException e) {
+			logger.error("Failed to parse input args: " + args, e);
 		}
 
-		ApplianceInfo applianceInfo = null;
+		ApplianceInfo applianceInfo;
 		if (id == null || id.equals("")) {
 			applianceInfo = configService.getMyApplianceInfo();
 			logger.debug("No id specified, returning the id of this appliance " + applianceInfo.getIdentity());
@@ -57,9 +58,7 @@ public class PvaGetApplianceInfo implements PvaAction {
 
 		if (applianceInfo == null) {
 			logger.warn("Cannot find appliance info for " + id);
-			callback.requestDone(StatusFactory.getStatusCreate().createStatus(StatusType.ERROR,
-					"Cannot find appliance info for " + id, null), null);
-			return;
+			throw new PvaActionException("Cannot find appliance info for " + id);
 		} else {
 			applianceInfoMap = new LinkedHashMap<String, String>();
 			applianceInfoMap.put("identity", applianceInfo.getIdentity());
@@ -69,12 +68,14 @@ public class PvaGetApplianceInfo implements PvaAction {
 			applianceInfoMap.put("etlURL", applianceInfo.getEtlURL());
 		}
 
-		NTTable ntTable = NTTable.createBuilder().addColumn("Key", ScalarType.pvString)
-				.addColumn("Value", ScalarType.pvString).create();
-		ntTable.getColumn(PVStringArray.class, "Key").put(0, applianceInfoMap.size(),
-				applianceInfoMap.keySet().toArray(new String[applianceInfoMap.size()]), 0);
-		ntTable.getColumn(PVStringArray.class, "Value").put(0, applianceInfoMap.size(),
-				applianceInfoMap.values().toArray(new String[applianceInfoMap.size()]), 0);
-		callback.requestDone(StatusFactory.getStatusCreate().getStatusOK(), ntTable.getPVStructure());
+		try {
+			return PVATable.PVATableBuilder.aPVATable()
+					.name(NAME)
+					.addColumn(new PVAStringArray("Key", applianceInfoMap.keySet().toArray(new String[applianceInfoMap.size()])))
+					.addColumn(new PVAStringArray("Value", applianceInfoMap.values().toArray(new String[applianceInfoMap.size()])))
+					.build();
+		} catch (MustBeArrayException e) {
+			throw new ResponseConstructionException(e);
+		}
 	}
 }

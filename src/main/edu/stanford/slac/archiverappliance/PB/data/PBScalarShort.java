@@ -17,10 +17,12 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAShort;
+import org.epics.pva.data.PVAStructure;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
@@ -80,26 +82,19 @@ public class PBScalarShort implements DBRTimeEvent, PartionedTime {
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 	}
 
-    public PBScalarShort(PVStructure v4Data) {
-        PVStructure timeStampPVStructure = v4Data.getStructureField("timeStamp");
-        long secondsPastEpoch = timeStampPVStructure.getLongField("secondsPastEpoch").get();
-        int nanoSeconds = timeStampPVStructure.getIntField("nanoseconds").get();
-        Timestamp timestamp = TimeUtils.convertFromEpochSeconds(secondsPastEpoch, nanoSeconds);
-        YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(timestamp);
+    public PBScalarShort(PVAStructure v4Data) {
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+		DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
-        PVStructure alarmPVStructure = v4Data.getStructureField("alarm");
-        int severity = alarmPVStructure.getIntField("severity").get();
-        int status = alarmPVStructure.getIntField("status").get();
-
-        short value = v4Data.getShortField("value").get();
+        short value = ((PVAShort) v4Data.get("value")).get();
         
         year = yst.getYear();
         Builder builder = EPICSEvent.ScalarShort.newBuilder()
                         .setSecondsintoyear(yst.getSecondsintoyear())
                         .setNano(yst.getNanos())
                         .setVal(value);
-        if(severity != 0) builder.setSeverity(severity);
-        if(status != 0) builder.setStatus(status);
+		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
+		if(alarm.status != 0) builder.setStatus(alarm.status);
         dbevent = builder.build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
     }

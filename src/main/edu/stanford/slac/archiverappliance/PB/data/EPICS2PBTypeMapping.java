@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.pvdata.pv.PVStructure;
+import org.epics.pva.data.PVAStructure;
 
 /**
  * Separate out the JCA/EPICS v4 =&gt; PB mapping into a separate class so that clients (read ArchiveViewer) do not have to include the entire JCA/EPICS v4 jars.
@@ -41,7 +41,7 @@ public class EPICS2PBTypeMapping {
 		}
 
 		try {
-			EPICSV4DBRConstructor = pbClass.getConstructor(PVStructure.class);
+			EPICSV4DBRConstructor = pbClass.getConstructor(PVAStructure.class);
 		} catch (Exception ex) {
 		}
 		

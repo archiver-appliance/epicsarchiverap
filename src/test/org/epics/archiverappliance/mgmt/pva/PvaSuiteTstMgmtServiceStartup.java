@@ -5,10 +5,12 @@ import static org.junit.Assert.assertTrue;
 
 import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.LocalEpicsTests;
-import org.epics.pvaccess.client.rpc.RPCClient;
-import org.epics.pvaccess.client.rpc.RPCClientFactory;
+import org.epics.pva.client.PVAChannel;
+import org.epics.pva.client.PVAClient;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Check if the pva management rpc service has started and is accessible.
@@ -19,14 +21,14 @@ import org.junit.experimental.categories.Category;
 @Category({IntegrationTests.class, LocalEpicsTests.class})
 public class PvaSuiteTstMgmtServiceStartup {
 
-	private static RPCClient client;
-
 	/**
 	 * Check that the client was able to connect to the pva RPC service for the archiver mgmt
 	 */
 	@Test
-	public void testSerivceStartup() {
-		client = RPCClientFactory.create(PVA_MGMT_SERVICE);
-		assertTrue(client.waitConnect(30));
+	public void testSerivceStartup() throws Exception {
+		PVAClient pvaClient = new PVAClient();
+		PVAChannel pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
+		pvaChannel.connect().get(30, TimeUnit.SECONDS);
+		assertTrue(pvaChannel.isConnected());
 	}
 }
