@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +41,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.TimeSpanDependentPro
  * Class for resolving data sources
  */
 public class DataSourceResolution {
-	private static Logger logger = LogManager.getLogger(DataSourceResolution.class.getName());
-	private ConfigService configService;
+	private static final Logger logger = LogManager.getLogger(DataSourceResolution.class.getName());
+	private final ConfigService configService;
 	
 	public DataSourceResolution(ConfigService configService) {
 		this.configService = configService;
@@ -67,7 +66,6 @@ public class DataSourceResolution {
 	 * @param context BasicContext
 	 * @param postProcessor PostProcessor
 	 * @param req HttpServletRequest
-	 * @param resp HttpServletResponse
 	 * @param applianceForPV ApplianceInfo
 	 * @return UnitOfRetrieval 
 	 * @throws IOException  &emsp; 
@@ -77,7 +75,7 @@ public class DataSourceResolution {
 	 * @throws IOException
 	 * Thrown if there is a syntax error in the URI.
 	 */
-	public LinkedList<UnitOfRetrieval> resolveDataSources(String pvName, Timestamp start, Timestamp end, PVTypeInfo typeInfo, BasicContext context, PostProcessor postProcessor, HttpServletRequest req, HttpServletResponse resp, ApplianceInfo applianceForPV) throws IOException {
+	public LinkedList<UnitOfRetrieval> resolveDataSources(String pvName, Timestamp start, Timestamp end, PVTypeInfo typeInfo, BasicContext context, PostProcessor postProcessor, HttpServletRequest req, ApplianceInfo applianceForPV) throws IOException {
 		LinkedList<UnitOfRetrieval> unitsofretrieval = new LinkedList<UnitOfRetrieval>();
 		if(!applianceForPV.equals(configService.getMyApplianceInfo())) {
 			logger.debug("Data for pv " + pvName + " is on appliance " + applianceForPV.getIdentity() + ". Remoting it thru this appliance.");
@@ -96,7 +94,7 @@ public class DataSourceResolution {
 
 			List<TimeSpan> yearlySpans = TimeUtils.breakIntoYearlyTimeSpans(start, end);
 			List<TimeSpanDependentProcessor> spannedProcessors = null;
-			if(postProcessor != null && postProcessor instanceof TimeSpanDependentProcessing) {
+			if(postProcessor instanceof TimeSpanDependentProcessing) {
 				logger.debug("Giving the chance for the post processor to alter the time spans");
 				spannedProcessors = ((TimeSpanDependentProcessing)postProcessor).generateTimeSpanDependentProcessors(yearlySpans);
 			} else {
@@ -149,8 +147,8 @@ public class DataSourceResolution {
 						ArrayListEventStream cacheStream = null;
 						int sampleCount = 0;
 						for(Callable<EventStream> failoverStrm : failoverStrms) {
-							try {
-								EventStream ev = failoverStrm.call();
+							try (EventStream ev = failoverStrm.call()){
+
 								if(cacheStream == null) {
 									cacheStream = new ArrayListEventStream(10000, (RemotableEventStreamDesc) ev.getDescription());
 								}

@@ -1285,7 +1285,7 @@ public class PvaGetPVData implements PvaAction {
 		for (TimeSpan timespan : executorResult.requestTimespans) {
 			// Resolve data sources for the given PV and the given time frames
 			LinkedList<UnitOfRetrieval> unitsofretrieval = datasourceresolver.resolveDataSources(pvName,
-					timespan.getStartTime(), timespan.getEndTime(), typeInfo, retrievalContext, postProcessor, null,
+					timespan.getStartTime(), timespan.getEndTime(), typeInfo, retrievalContext, postProcessor,
 					null, applianceForPV);
 			// Submit the units of retrieval to the executor service. This will give us a
 			// bunch of Futures.

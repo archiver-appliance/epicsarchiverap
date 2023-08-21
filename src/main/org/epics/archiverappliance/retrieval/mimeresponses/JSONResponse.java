@@ -12,6 +12,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.epics.archiverappliance.Event;
@@ -99,18 +100,18 @@ public class JSONResponse implements MimeResponse {
 		StringWriter buf = new StringWriter();
 		buf.append("{ \"meta\": { \"name\": \"").append(pv).append("\" ");
 		if(streamDesc != null) {
-			HashMap<String, String> headers = remoteDesc.getHeaders();
+			Map<String, String> headers = remoteDesc.getHeaders();
 			if(!headers.isEmpty()) { 
 				for(String fieldName : headers.keySet()) {
 					String fieldValue = headers.get(fieldName);
 					if(fieldValue != null && !fieldValue.isEmpty()) { 
-						buf.append(", \"" + fieldName + "\": \"").append(fieldValue).append("\" ");
+						buf.append(", \"").append(fieldName).append("\": \"").append(fieldValue).append("\" ");
 					}
 				}
 			}
 		}
 		buf.append("},\n\"data\": [ ");
-		out.println(buf.toString());
+		out.println(buf);
 		closePV = true;
 	}
 	

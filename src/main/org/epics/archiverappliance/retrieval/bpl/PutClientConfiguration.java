@@ -37,7 +37,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class PutClientConfiguration implements BPLAction {
-	private static Logger logger = LogManager.getLogger(PutClientConfiguration.class.getName());
+	private static final Logger logger = LogManager.getLogger(PutClientConfiguration.class.getName());
 
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
@@ -62,10 +62,9 @@ public class PutClientConfiguration implements BPLAction {
 		logger.debug("New configuraiton is of size " + newConfigBytes.length);
 		
 		String configFileName = req.getParameter("configFile");
-		if(configFileName == null 
-				|| configFileName.equals("") 
-				|| configFileName.contains("..") 
-				|| configFileName.startsWith("/") 
+		if(configFileName == null
+				|| configFileName.contains("..")
+				|| configFileName.startsWith("/")
 				|| !configFileName.endsWith(".json")) { 
 			logger.error("The config file has not been specified (correctly) " + configFileName);
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -103,8 +102,7 @@ public class PutClientConfiguration implements BPLAction {
 			try (OutputStream out = resp.getOutputStream()) {
 				out.write(newConfigBytes);
 			}
-			return;
-		} else { 
+		} else {
 			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			try(FileOutputStream fos = new FileOutputStream(configFilePath.toFile(), false)) { 

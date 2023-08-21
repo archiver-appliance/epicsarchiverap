@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.utils.ui;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,7 +17,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,7 +24,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -53,30 +52,9 @@ import org.json.simple.parser.ParseException;
 public class GetUrlContent {
 	public static final String ARCHAPPL_COMPONENT = "ARCHAPPL_COMPONENT";
 	private static final Logger logger = LogManager.getLogger(GetUrlContent.class);
-	
-	/**
-	 * Small utility method for getting the content of an URL as a string
-	 * Returns null in case of an exception.
-	 * @param urlStr URL
-	 * @return URL content 
-	 */
-	public static String getURLContent(String urlStr) {
-		try {
-			logger.debug("Getting the contents of " + urlStr + " as a string.");
-			try (InputStream is = getURLContentAsStream(urlStr)) {
-				ByteArrayOutputStream bos = new ByteArrayOutputStream();
-				IOUtils.copy(is, bos);
-				bos.close();
-				return new String(bos.toByteArray(), "UTF-8");
-			}
-		} catch (IOException ex) {
-			logger.error("Exception getting contents of internal URL " + urlStr, ex);
-		}
-		return null;
-	}
-	
+	private GetUrlContent() {}
 	public static JSONArray getURLContentAsJSONArray(String urlStr) {
-		return getURLContentAsJSONArray(urlStr, true);
+		return getURLContentAsJSONArray(urlStr, true, true);
 	}
 	
 	/**
@@ -85,15 +63,15 @@ public class GetUrlContent {
 	 * @param logErrors If false, do not log any exceptions (they are expected)
 	 * @return URL content as JSONArray 
 	 */
-	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors) {
+	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors, boolean redirect) {
 		try {
 			logger.debug("Getting the contents of " + urlStr + " as a JSON array.");
 			JSONParser parser=new JSONParser();
-			try (InputStream is = getURLContentAsStream(urlStr)) {
+			try (InputStream is = getURLContentAsStream(urlStr, redirect)) {
 				return (JSONArray) parser.parse(new InputStreamReader(is));
 			}
 		} catch (IOException ex) {
-			if (logErrors) { logger.error("Exception getting contents of internal URL " + urlStr, ex); }
+			if (logErrors) { logger.error("Exception getting contents of internal URL {}", urlStr, ex); }
 		} catch (ParseException pex) {
 			if (logErrors) { logger.error("Parse exception getting contents of internal URL " + urlStr + " at " + pex.getPosition(), pex); }
 		}
@@ -202,7 +180,7 @@ public class GetUrlContent {
 	 * @param additionalDetails JSONObject
 	 */
 	@SuppressWarnings("unchecked")
-	public static void combineJSONObjects(HashMap<String, String> dest, JSONObject additionalDetails) {
+	public static void combineJSONObjects(Map<String, String> dest, JSONObject additionalDetails) {
 		if(additionalDetails != null) dest.putAll(additionalDetails);
 	}
 	
@@ -212,13 +190,13 @@ public class GetUrlContent {
 	 * @param additionalDetails JSONArray
 	 */
 	@SuppressWarnings("unchecked")
-	public static void combineJSONArrays(LinkedList<Map<String, String>> dest, JSONArray additionalDetails) {
+	public static void combineJSONArrays(List<Map<String, String>> dest, JSONArray additionalDetails) {
 		if(additionalDetails != null) dest.addAll(additionalDetails);
 	}
 	
 	
 	@SuppressWarnings("unchecked")
-	public static void combineJSONObjectsWithArrays(HashMap<String, Object> dest, JSONObject additionalDetails) {
+	public static void combineJSONObjectsWithArrays(Map<String, Object> dest, JSONObject additionalDetails) {
 		if(additionalDetails != null) dest.putAll(additionalDetails);
 	}
 	
@@ -231,28 +209,28 @@ public class GetUrlContent {
 	 * @return JSONObject  &emsp; 
 	 * @throws IOException  &emsp; 
 	 */
-	public static JSONObject postDataAndGetContentAsJSONObject(String url, LinkedList<JSONObject> array) throws IOException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpPost postMethod = new HttpPost(url);
-		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
-		postMethod.setEntity(archiverValues);
-		if(logger.isDebugEnabled()) {
-			logger.debug("About to make a POST with " + url);
-		}
-		HttpResponse response = httpclient.execute(postMethod);
-		HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-			// ArchiverValuesHandler takes over the burden of closing the input stream.
-			try(InputStream is = entity.getContent()) {
-				JSONObject retval = (JSONObject) JSONValue.parse(new InputStreamReader(is));
-				return retval;
+	public static JSONObject postDataAndGetContentAsJSONObject(String url, List<JSONObject> array) throws IOException {
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpPost postMethod = new HttpPost(url);
+			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
+			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
+			postMethod.setEntity(archiverValues);
+			if (logger.isDebugEnabled()) {
+				logger.debug("About to make a POST with " + url);
 			}
-		} else {
-			throw new IOException("HTTP response did not have an entity associated with it");
+			HttpResponse response = httpclient.execute(postMethod);
+			HttpEntity entity = response.getEntity();
+			if (entity != null) {
+				logger.debug("Obtained a HTTP entity of length {}", entity.getContentLength());
+				// ArchiverValuesHandler takes over the burden of closing the input stream.
+				try (InputStream is = entity.getContent()) {
+					return (JSONObject) JSONValue.parse(new InputStreamReader(is));
+				}
+			} else {
+				throw new IOException("HTTP response did not have an entity associated with it");
+			}
 		}
 	}
 	
@@ -264,27 +242,27 @@ public class GetUrlContent {
 	 * @throws IOException  &emsp; 
 	 */
 	public static JSONArray postDataAndGetContentAsJSONArray(String url, LinkedList<JSONObject> array) throws IOException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpPost postMethod = new HttpPost(url);
-		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
-		postMethod.setEntity(archiverValues);
-		if(logger.isDebugEnabled()) {
-			logger.debug("About to make a POST with " + url);
-		}
-		HttpResponse response = httpclient.execute(postMethod);
-		HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-			// ArchiverValuesHandler takes over the burden of closing the input stream.
-			try(InputStream is = entity.getContent()) {
-				JSONArray retval = (JSONArray) JSONValue.parse(new InputStreamReader(is));
-				return retval;
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpPost postMethod = new HttpPost(url);
+			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
+			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
+			postMethod.setEntity(archiverValues);
+			if (logger.isDebugEnabled()) {
+				logger.debug("About to make a POST with " + url);
 			}
-		} else {
-			throw new IOException("HTTP response did not have an entity associated with it");
+			HttpResponse response = httpclient.execute(postMethod);
+			HttpEntity entity = response.getEntity();
+			if (entity != null) {
+				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+				// ArchiverValuesHandler takes over the burden of closing the input stream.
+				try (InputStream is = entity.getContent()) {
+					return (JSONArray) JSONValue.parse(new InputStreamReader(is));
+				}
+			} else {
+				throw new IOException("HTTP response did not have an entity associated with it");
+			}
 		}
 	}
 	
@@ -296,27 +274,28 @@ public class GetUrlContent {
 	 * @throws IOException  &emsp; 
 	 */
 	public static JSONObject postDataAndGetContentAsJSONArray(String url, JSONArray array) throws IOException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpPost postMethod = new HttpPost(url);
-		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
-		postMethod.setEntity(archiverValues);
-		if(logger.isDebugEnabled()) {
-			logger.debug("About to make a POST with " + url);
-		}
-		HttpResponse response = httpclient.execute(postMethod);
-		HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-			// ArchiverValuesHandler takes over the burden of closing the input stream.
-			try(InputStream is = entity.getContent()) {
-				JSONObject retval = (JSONObject) JSONValue.parse(new InputStreamReader(is));
-				return retval;
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpPost postMethod = new HttpPost(url);
+			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
+			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
+			postMethod.setEntity(archiverValues);
+			if(logger.isDebugEnabled()) {
+				logger.debug("About to make a POST with " + url);
 			}
-		} else {
-			throw new IOException("HTTP response did not have an entity associated with it");
+			HttpResponse response = httpclient.execute(postMethod);
+			HttpEntity entity = response.getEntity();
+			if (entity != null) {
+				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+				// ArchiverValuesHandler takes over the burden of closing the input stream.
+				try(InputStream is = entity.getContent()) {
+					return (JSONObject) JSONValue.parse(new InputStreamReader(is));
+				}
+			} else {
+				throw new IOException("HTTP response did not have an entity associated with it");
+			}
+
 		}
 	}
 
@@ -328,31 +307,31 @@ public class GetUrlContent {
 	 * @throws IOException  &emsp;  
 	 */
 	public static JSONObject postObjectAndGetContentAsJSONObject(String url, JSONObject object) throws IOException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpPost postMethod = new HttpPost(url);
-		postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(object), ContentType.APPLICATION_JSON);
-		postMethod.setEntity(archiverValues);
-		if(logger.isDebugEnabled()) {
-			logger.debug("About to make a POST with " + url);
-		}
-		HttpResponse response = httpclient.execute(postMethod);
-		HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-			// ArchiverValuesHandler takes over the burden of closing the input stream.
-			try(InputStream is = entity.getContent()) {
-				JSONObject retval = (JSONObject) JSONValue.parse(new InputStreamReader(is));
-				return retval;
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpPost postMethod = new HttpPost(url);
+			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
+			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
+			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(object), ContentType.APPLICATION_JSON);
+			postMethod.setEntity(archiverValues);
+			if (logger.isDebugEnabled()) {
+				logger.debug("About to make a POST with " + url);
 			}
-		} else {
-			throw new IOException("HTTP response did not have an entity associated with it");
+			HttpResponse response = httpclient.execute(postMethod);
+			HttpEntity entity = response.getEntity();
+			if (entity != null) {
+				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+				// ArchiverValuesHandler takes over the burden of closing the input stream.
+				try (InputStream is = entity.getContent()) {
+					return (JSONObject) JSONValue.parse(new InputStreamReader(is));
+				}
+			} else {
+				throw new IOException("HTTP response did not have an entity associated with it");
+			}
 		}
 	}
-	
-	
+
+
 	/**
 	 * Post a list of strings to the remove server as a CSV and return the results as a array of JSONObjects
 	 * @param url URL
@@ -361,7 +340,7 @@ public class GetUrlContent {
 	 * @return JSONArray  &emsp; 
 	 * @throws IOException  &emsp; 
 	 */
-	public static <T> T postStringListAndGetJSON(String url, String paramName, LinkedList<String> params) throws IOException {
+	public static <T> T postStringListAndGetJSON(String url, String paramName, List<String> params) throws IOException {
 		StringWriter buf = new StringWriter();
 		buf.append(paramName);
 		buf.append("=");
@@ -371,27 +350,28 @@ public class GetUrlContent {
 			buf.append(param);
 		}
 		
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpPost postMethod = new HttpPost(url);
-		postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_FORM_URLENCODED);
-		postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		StringEntity archiverValues = new StringEntity(buf.toString(), ContentType.APPLICATION_FORM_URLENCODED);
-		postMethod.setEntity(archiverValues);
-		if(logger.isDebugEnabled()) {
-			logger.debug("About to make a POST with " + url);
-		}
-		HttpResponse response = httpclient.execute(postMethod);
-		HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-			// ArchiverValuesHandler takes over the burden of closing the input stream.
-			try(InputStream is = entity.getContent()) {
-				@SuppressWarnings("unchecked")
-				T retval = (T) JSONValue.parse(new InputStreamReader(is));
-				return retval;
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpPost postMethod = new HttpPost(url);
+			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_FORM_URLENCODED);
+			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			StringEntity archiverValues = new StringEntity(buf.toString(), ContentType.APPLICATION_FORM_URLENCODED);
+			postMethod.setEntity(archiverValues);
+			if(logger.isDebugEnabled()) {
+				logger.debug("About to make a POST with " + url);
 			}
-		} else {
-			throw new IOException("HTTP response did not have an entity associated with it");
+			HttpResponse response = httpclient.execute(postMethod);
+			HttpEntity entity = response.getEntity();
+			if (entity != null) {
+				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+				// ArchiverValuesHandler takes over the burden of closing the input stream.
+				try(InputStream is = entity.getContent()) {
+					@SuppressWarnings("unchecked")
+					T retval = (T) JSONValue.parse(new InputStreamReader(is));
+					return retval;
+				}
+			} else {
+				throw new IOException("HTTP response did not have an entity associated with it");
+			}
 		}
 	}
 
@@ -399,40 +379,44 @@ public class GetUrlContent {
 	
 	/**
 	 * Check if we get a valid response from this URL
+	 *
 	 * @param urlStr URL
- 	 * @return boolean True or False
 	 */
-	public static boolean checkURL(String urlStr) {
+	public static void checkURL(String urlStr) {
 		try {
 			logger.debug("Testing if " + urlStr + " is valid");
-			try (InputStream is = getURLContentAsStream(urlStr)) {
-				return true;
+			try (InputStream ignored = getURLContentAsStream(urlStr)) {
 			}
 		} catch (IOException ex) {
 			// Ignore any exceptions here as we are only testing if this is a valid URL.
 		}
-		return false;
 	}
-	
-	
+
+
 	public static InputStream getURLContentAsStream(String serverURL) throws IOException {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpGet getMethod = new HttpGet(serverURL);
-		getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		getMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-		HttpResponse response = httpclient.execute(getMethod);
-		if(response.getStatusLine().getStatusCode() == 200) {
-			HttpEntity entity = response.getEntity();
-			if (entity != null) {
-				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-				// ArchiverValuesHandler takes over the burden of closing the input stream.
-				InputStream is = entity.getContent();
-				return is;
+		return getURLContentAsStream(serverURL, true);
+	}
+
+	public static InputStream getURLContentAsStream(String serverURL, boolean redirect) throws IOException {
+		try(CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpGet getMethod = new HttpGet(serverURL);
+			getMethod.addHeader("Connection", "close");
+			if (!redirect) getMethod.addHeader("redirect", "false");
+			getMethod.addHeader(ARCHAPPL_COMPONENT, "true");
+			HttpResponse response = httpclient.execute(getMethod);
+			if(response.getStatusLine().getStatusCode() == 200) {
+				HttpEntity entity = response.getEntity();
+				if (entity != null) {
+					logger.debug("Obtained a HTTP entity of length {}", entity.getContentLength());
+					// ArchiverValuesHandler takes over the burden of closing the input stream.
+					return new ByteArrayInputStream(entity.getContent().readAllBytes());
+
+				} else {
+					throw new IOException("HTTP response did not have an entity associated with it");
+				}
 			} else {
-				throw new IOException("HTTP response did not have an entity associated with it");
+				throw new IOException("Invalid status calling " + serverURL + ". Got " + response.getStatusLine().getStatusCode() + " " + response.getStatusLine().getReasonPhrase() + response.getEntity().getContent());
 			}
-		} else {
-			throw new IOException("Invalid status calling " + serverURL + ". Got " + response.getStatusLine().getStatusCode() + response.getStatusLine().getReasonPhrase());
 		}
 	}
 	
@@ -446,50 +430,50 @@ public class GetUrlContent {
 	 * @throws IOException  &emsp; 
 	 */
 	public static void proxyURL(String redirectURIStr, HttpServletResponse resp) throws IOException { 
-		CloseableHttpClient httpclient = HttpClients.createDefault();
-		HttpGet getMethod = new HttpGet(redirectURIStr);
-		getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-		try(CloseableHttpResponse response = httpclient.execute(getMethod)) {
-			if(response.getStatusLine().getStatusCode() == 200) {
-				HttpEntity entity = response.getEntity();
-				
-				HashSet<String> proxiedHeaders = new HashSet<String>();
-				proxiedHeaders.addAll(Arrays.asList(MimeResponse.PROXIED_HEADERS));
-				Header[] headers = response.getAllHeaders();
-				for(Header header : headers) {
-					if(proxiedHeaders.contains(header.getName())) {
-						logger.debug("Adding headerName " + header.getName() + " and value " + header.getValue() + " when proxying request");
-						resp.addHeader(header.getName(), header.getValue());
-					}
-				}
+		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+			HttpGet getMethod = new HttpGet(redirectURIStr);
+			getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+			try(CloseableHttpResponse response = httpclient.execute(getMethod)) {
+				if(response.getStatusLine().getStatusCode() == 200) {
+					HttpEntity entity = response.getEntity();
 
-				if (entity != null) {
-					logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-					try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(entity.getContent())) {
-						byte buf[] = new byte[10*1024];
-						int bytesRead = is.read(buf);
-						while(bytesRead > 0) {
-							os.write(buf, 0, bytesRead);
-							resp.flushBuffer();
-							bytesRead = is.read(buf);
+					HashSet<String> proxiedHeaders = new HashSet<>(Arrays.asList(MimeResponse.PROXIED_HEADERS));
+					Header[] headers = response.getAllHeaders();
+					for(Header header : headers) {
+						if(proxiedHeaders.contains(header.getName())) {
+							logger.debug("Adding headerName " + header.getName() + " and value " + header.getValue() + " when proxying request");
+							resp.addHeader(header.getName(), header.getValue());
 						}
+					}
+
+					if (entity != null) {
+						logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
+						try(OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(entity.getContent())) {
+							byte[] buf = new byte[10*1024];
+							int bytesRead = is.read(buf);
+							while(bytesRead > 0) {
+								os.write(buf, 0, bytesRead);
+								resp.flushBuffer();
+								bytesRead = is.read(buf);
+							}
+						}
+					} else {
+						throw new IOException("HTTP response did not have an entity associated with it");
 					}
 				} else {
-					throw new IOException("HTTP response did not have an entity associated with it");
-				}
-			} else {
-				logger.error("Invalid status code " + response.getStatusLine().getStatusCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
-				try (ByteArrayOutputStream os = new ByteArrayOutputStream()) { 
-					try(InputStream is = new BufferedInputStream(response.getEntity().getContent())) {
-						byte buf[] = new byte[10*1024];
-						int bytesRead = is.read(buf);
-						while(bytesRead > 0) {
-							os.write(buf, 0, bytesRead);
-							bytesRead = is.read(buf);
+					logger.error("Invalid status code " + response.getStatusLine().getStatusCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
+					try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+						try(InputStream is = new BufferedInputStream(response.getEntity().getContent())) {
+							byte[] buf = new byte[10*1024];
+							int bytesRead = is.read(buf);
+							while(bytesRead > 0) {
+								os.write(buf, 0, bytesRead);
+								bytesRead = is.read(buf);
+							}
 						}
+						resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+						resp.sendError(response.getStatusLine().getStatusCode(), os.toString());
 					}
-					resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-					resp.sendError(response.getStatusLine().getStatusCode(), new String(os.toByteArray()));
 				}
 			}
 		}
