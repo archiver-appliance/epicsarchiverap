@@ -24,7 +24,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.*;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForIsConnected;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -37,7 +40,7 @@ public class FlakyPVTest {
 
     private ConfigService configService;
     private PVAServer pvaServer;
-    private static final long disconnectTime = 60 * 1000;
+    private static final long disconnectTime = ConfigServiceForTests.defaultMinutesDisconnect * 60 * 1000;
 
     @Before
     public void setUp() throws Exception {

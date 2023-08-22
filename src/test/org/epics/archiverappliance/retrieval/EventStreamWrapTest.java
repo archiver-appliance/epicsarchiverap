@@ -1,19 +1,6 @@
 package org.epics.archiverappliance.retrieval;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +22,19 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Tests strategies for wrapping event streams
@@ -153,7 +152,7 @@ public class EventStreamWrapTest {
 		try(BasicContext context = new BasicContext()) {
 			List<Future<EventStream>> futures = new ArrayList<>();
 			long t0 = System.currentTimeMillis();
-			ExecutorService executors = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+			ExecutorService executors = Executors.newFixedThreadPool(2);
 
 
 				List<Callable<EventStream>> callables = storageplugin.getDataForPV(context, pvName, start, end, mean_86400);

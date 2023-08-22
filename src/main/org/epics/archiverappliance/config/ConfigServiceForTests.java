@@ -1,5 +1,15 @@
 package org.epics.archiverappliance.config;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
+import org.epics.archiverappliance.config.exception.ConfigException;
+import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
+import org.epics.archiverappliance.engine.pv.EngineContext;
+import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
+import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
+
+import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -12,17 +22,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
-
-import javax.servlet.ServletContext;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
-import org.epics.archiverappliance.config.exception.ConfigException;
-import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
-import org.epics.archiverappliance.engine.pv.EngineContext;
-import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
-import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
 
 public class ConfigServiceForTests extends DefaultConfigService {
 	private static Logger logger = LogManager.getLogger(ConfigServiceForTests.class.getName());
@@ -65,6 +64,8 @@ public class ConfigServiceForTests extends DefaultConfigService {
 	public ConfigServiceForTests(File WebInfClassesFolder) throws ConfigException {
 		this(WebInfClassesFolder, -1);
 	}
+
+	public static final int defaultMinutesDisconnect = 1;
 	public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
 		this.webInfClassesFolder = WebInfClassesFolder;
 		configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
@@ -128,7 +129,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 		});
 
 		this.engineContext=new EngineContext(this);
-		this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+		this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(defaultMinutesDisconnect);
 		this.etlPVLookup = new PBThreeTierETLPVLookup(this);
 		this.retrievalState = new SampleRetrievalState(this);
 		this.mgmtRuntime = new MgmtRuntimeState(this);
@@ -144,7 +145,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
 
 		this.retrievalState = new SampleRetrievalState(this);
 		if(this.engineContext != null) {
-			this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+			this.engineContext.setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(defaultMinutesDisconnect);
 		}
 	}
 
