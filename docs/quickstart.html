@@ -114,9 +114,15 @@ Note it takes about 5 minutes for the archiver appliance to measure the event ra
 <section>
 Notes
 <ul>
-<li>We set the Log4j root logging level to <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#ERROR">ERROR</a> by default. You should not see any exceptions or ERROR messages in the console on startup.</li>
+	<li>We set the Log4j root logging level to <a
+			href="https://logging.apache.org/log4j/2.x/javadoc/log4j-api/org/apache/logging/log4j/Level.html#ERROR">ERROR</a>
+		by default. You should not see any exceptions or ERROR messages in the console on startup.
+	</li>
 <li>We do not persist configuration in this setup. That is, if you kill the Tomcat process, you'll need to resubmit your PV's to the archiver on restart.</li>
-<li>You can increase the verbosity of console messages by passing in a <code>-v</code> <i>(for verbose)</i> argument to startup script. The sets the Log4j root logging level to <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/Level.html#DEBUG">DEBUG</a>.</li>
+	<li>You can increase the verbosity of console messages by passing in a <code>-v</code> <i>(for verbose)</i> argument
+		to startup script. The sets the Log4j root logging level to <a
+				href="https://logging.apache.org/log4j/2.x/javadoc/log4j-api/org/apache/logging/log4j/Level.html#DEBUG">DEBUG</a>.
+	</li>
 </ul>
 </section>
 
