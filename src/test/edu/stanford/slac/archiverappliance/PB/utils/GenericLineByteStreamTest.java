@@ -9,8 +9,10 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -20,18 +22,17 @@ import org.junit.Test;
 
 public class GenericLineByteStreamTest {
 	private static Logger logger = LogManager.getLogger(GenericLineByteStreamTest.class.getName());
-	private String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LineByteStream.txt";
+	private File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + GenericLineByteStreamTest.class.getName());
+	private String fileName =  testFolder.getAbsolutePath() + "/" + "LineByteStream.txt";
 
 	@Before
 	public void setUp() throws Exception {
+		Files.createDirectories(testFolder.toPath());
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		File f = new File(fileName);
-		if(f.exists()) {
-			f.delete();
-		}
+		FileUtils.deleteDirectory(testFolder);
 	}
 	
 	private static class LisRet { 

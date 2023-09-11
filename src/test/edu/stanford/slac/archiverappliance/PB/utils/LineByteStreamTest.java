@@ -16,8 +16,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SlowTests;
@@ -36,18 +38,21 @@ import edu.stanford.slac.archiverappliance.PB.search.EvenNumberSampleFileGenerat
  */
 public class LineByteStreamTest {
 	private static Logger logger = LogManager.getLogger(LineByteStreamTest.class.getName());
+	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + LineByteStreamTest.class.getName());
 
 	@Before
 	public void setUp() throws Exception {
+		Files.createDirectories(testFolder.toPath());
 	}
 
 	@After
 	public void tearDown() throws Exception {
+		FileUtils.deleteDirectory(testFolder);
 	}
 
 	@Test
 	public void testLineByteStream() throws Exception {
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LineByteStream.txt";
+		String fileName = testFolder.getAbsolutePath() + "/" + "LineByteStream.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();
@@ -131,7 +136,7 @@ public class LineByteStreamTest {
 	
 	@Test
 	public void testSmallFileSeekToLastLine() throws Exception {
-		String smallFileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "SmallLineByteStream.txt";
+		String smallFileName = testFolder.getAbsolutePath() + "/" + "SmallLineByteStream.txt";
 		File f = new File(smallFileName);
 		if(f.exists()) {
 			f.delete();
@@ -153,7 +158,7 @@ public class LineByteStreamTest {
 	
 	@Test
 	public void testEndPosition() throws Exception {
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "EndPositionLineByteStream.txt";
+		String fileName = testFolder.getAbsolutePath() + "/" + "EndPositionLineByteStream.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();
@@ -212,7 +217,7 @@ public class LineByteStreamTest {
 	
 	@Test
 	public void testEmptyLines() throws Exception {
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "Empty1LineByteStream.txt";
+		String fileName = testFolder.getAbsolutePath() + "/" + "Empty1LineByteStream.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();
@@ -251,7 +256,7 @@ public class LineByteStreamTest {
 	 */
 	@Test
 	public void testLargeLines() throws Exception {
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LargeLineByteStream.txt";
+		String fileName = testFolder.getAbsolutePath() + "/" + "LargeLineByteStream.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();
@@ -290,7 +295,7 @@ public class LineByteStreamTest {
 	@Category(SlowTests.class)
 	public void testLargeLinesSeekToLastLine() throws Exception {
 		for(int linesize=3; linesize < LineByteStream.MAX_LINE_SIZE*3; linesize++) {
-			String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LargeLineByteStreamSeekToLast.txt";
+			String fileName = testFolder.getAbsolutePath() + "/" + "LargeLineByteStreamSeekToLast.txt";
 			File f = new File(fileName);
 			if(f.exists()) {
 				f.delete();
@@ -322,7 +327,7 @@ public class LineByteStreamTest {
 	
 	@Test
 	public void testSeekToPreviousLine() throws Exception {
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LineByteStream.txt";
+		String fileName = testFolder.getAbsolutePath() + "/" + "LineByteStream.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();
@@ -372,7 +377,7 @@ public class LineByteStreamTest {
 	public void testLastAndFirstLinesWithBoundedStream() throws Exception {
 		logger.info("testLastAndFirstLinesWithBoundedStream");
 		// Generate the sample file.
-		String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "LastAndFirstLinesWithBoundedStream.txt";
+		String fileName = testFolder.getAbsolutePath() + "/" + "LastAndFirstLinesWithBoundedStream.txt";
 		File f = new File(fileName);
 		if(f.exists()) {
 			f.delete();
