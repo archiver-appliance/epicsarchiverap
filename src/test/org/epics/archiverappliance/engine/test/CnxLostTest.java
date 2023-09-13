@@ -5,9 +5,9 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
@@ -235,7 +235,7 @@ public class CnxLostTest {
 
 	private static ConnectionLossType determineConnectionLossType(EpicsMessage dbrevent) throws IOException { 
 		ConnectionLossType retVal = ConnectionLossType.NONE;
-		HashMap<String, String> extraFields = dbrevent.getFieldValues();
+		Map<String, String> extraFields = dbrevent.getFieldValues();
 		if(!extraFields.keySet().contains("cnxlostepsecs")) { 
 			retVal = ConnectionLossType.NONE;
 		} else { 

@@ -97,10 +97,10 @@ public class TomcatSetup {
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts");
 		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", "../lts");
 
-		createAndStartTomcatInstance(testName, "dest_appliance", ConfigServiceForTests.RETRIEVAL_TEST_PORT, DEFAULT_SERVER_STARTUP_PORT, Path.of("../webapps/mgmt/WEB-INF/classes/failover_dest.xml"));
+		createAndStartTomcatInstance(testName, "dest_appliance", ConfigServiceForTests.RETRIEVAL_TEST_PORT, DEFAULT_SERVER_STARTUP_PORT, Path.of("src/sitespecific/tests/classpathfiles/failover_dest.xml"));
 		logger.info("Done starting up dest appliance");
 		logger.info("Starting up other appliance");
-		createAndStartTomcatInstance(testName, "other_appliance", ConfigServiceForTests.RETRIEVAL_TEST_PORT + 4, DEFAULT_SERVER_STARTUP_PORT + 4, Path.of("../webapps/mgmt/WEB-INF/classes/failover_other.xml"));
+		createAndStartTomcatInstance(testName, "other_appliance", ConfigServiceForTests.RETRIEVAL_TEST_PORT + 4, DEFAULT_SERVER_STARTUP_PORT + 4, Path.of("src/sitespecific/tests/classpathfiles/failover_other.xml"));
 		logger.info("Done starting up other appliance");
 	}
 	
