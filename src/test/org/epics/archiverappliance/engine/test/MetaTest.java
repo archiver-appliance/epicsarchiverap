@@ -144,10 +144,10 @@ public class MetaTest extends TestCase {
 			ArchiveEngine.getArchiveInfo(pvName, testConfigService, metaFied, false, new MetaCompletedListener() {
 				@Override
 				public void completed(MetaInfo metaInfo) {
-					latch.countDown();
 					logger.info("Metadata completed for " + pvName + "aliasName " + metaInfo.getAliasName() + "Name: " + metaInfo.getOtherMetaInfo().get("NAME"));
 					aliasNames.get(pvName).metaGetAliasName = metaInfo.getAliasName();
 					aliasNames.get(pvName).metaGetOtherInfoName = metaInfo.getOtherMetaInfo().get("NAME");
+					latch.countDown();
 				}});
 		} catch(Exception ex) {
 			logger.error(ex);
