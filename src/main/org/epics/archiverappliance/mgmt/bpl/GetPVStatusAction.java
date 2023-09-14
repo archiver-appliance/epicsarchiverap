@@ -50,11 +50,11 @@ public class GetPVStatusAction implements BPLAction {
 		LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, true, -1);
 		
 		
-		HashMap<String, Map<String, String>> pvStatuses = new HashMap<>();
-		HashMap<String, LinkedList<String>> pvNamesToAskEngineForStatus = new HashMap<String, LinkedList<String>>();
-		HashMap<String, PVTypeInfo> typeInfosForEngineRequests = new HashMap<String, PVTypeInfo>();
+		HashMap<String, Map<String, String>> pvStatuses = new LinkedHashMap<>();
+		HashMap<String, LinkedList<String>> pvNamesToAskEngineForStatus = new LinkedHashMap<String, LinkedList<String>>();
+		HashMap<String, PVTypeInfo> typeInfosForEngineRequests = new LinkedHashMap<String, PVTypeInfo>();
 
-		HashMap<String, LinkedList<String>> realName2NameFromRequest = new HashMap<String, LinkedList<String>>();
+		HashMap<String, LinkedList<String>> realName2NameFromRequest = new LinkedHashMap<String, LinkedList<String>>();
 
 		getPVStatuses(configService, pvNames, pvStatuses, pvNamesToAskEngineForStatus, typeInfosForEngineRequests, realName2NameFromRequest);
 
@@ -112,7 +112,7 @@ public class GetPVStatusAction implements BPLAction {
 				logger.warn("Exception getting status from engine " + engineURL, ex);
 			}
 			// Convert list of statuses from engine to hashmap
-			HashMap<String, JSONObject> computedEngineStatueses = new HashMap<String, JSONObject>();
+			HashMap<String, JSONObject> computedEngineStatueses = new LinkedHashMap<String, JSONObject>();
 			if(engineStatuses != null) {
 				for(Object engineStatusObj : engineStatuses) {
 					JSONObject engineStatus = (JSONObject) engineStatusObj;
@@ -132,7 +132,7 @@ public class GetPVStatusAction implements BPLAction {
 					pvNamesForResult.addAll(realName2NameFromRequest.get(pvNameToAskEngine));
 				}
 				for(String pvNameForResult : pvNamesForResult) {
-					Map<String, String> pvStatusInfo = new HashMap<String, String>();
+					Map<String, String> pvStatusInfo = new LinkedHashMap<String, String>();
 					if(pvStatus != null && !pvStatus.isEmpty()) {
 						logger.debug("Found status from engine for " + pvNameToAskEngine);
 						pvStatus.forEach((k, v) -> {
@@ -145,7 +145,7 @@ public class GetPVStatusAction implements BPLAction {
 					} else {
 						logger.debug("Did not find status from engine for " + pvNameToAskEngine);
 						if(typeInfo != null && typeInfo.isPaused()) {
-							HashMap<String, String> tempStatus = new HashMap<String, String>();
+							HashMap<String, String> tempStatus = new LinkedHashMap<String, String>();
 							tempStatus.put("appliance", typeInfo.getApplianceIdentity());
 							tempStatus.put("pvName", pvNameForResult);
 							tempStatus.put("pvNameOnly", pvNameToAskEngine);
