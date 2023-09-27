@@ -1,0 +1,11 @@
+<appliances>
+    <appliance>
+        <identity>archappl0</identity>
+        <cluster_inetport>localhost:16001</cluster_inetport>
+        <mgmt_url>http://localhost:8080/mgmt/bpl</mgmt_url>
+        <engine_url>http://localhost:8080/engine/bpl</engine_url>
+        <etl_url>http://localhost:8080/etl/bpl</etl_url>
+        <retrieval_url>http://localhost:8080/retrieval/bpl</retrieval_url>
+        <data_retrieval_url>http://localhost:8080/retrieval</data_retrieval_url>
+    </appliance>
+</appliances>

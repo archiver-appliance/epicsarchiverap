@@ -7,16 +7,16 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.epics;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.exception.ConfigException;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Properties;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.exception.ConfigException;
 
 /**
  * Read the system environment and generate a JCA config stream
@@ -37,17 +37,14 @@ public class JCAConfigGen {
 	 * @throws ConfigException &emsp;
 	 */
 	public static ByteArrayInputStream generateJCAConfig(ConfigService configService) throws ConfigException {
-		String JCACAJContext = "gov.aps.jca.jni.SingleThreadedContext";
+		String JCACAJContext = "com.cosylab.epics.caj.CAJContext";
 		
 		Properties props = configService.getInstallationProperties();
 		configlogger.info("JCA/CAJ prop from archappl.properties is " + props.get(JCA_CONFIG_GEN_USE_CAJ));
-		if(props != null 
-				&& props.containsKey(JCA_CONFIG_GEN_USE_CAJ) 
-				&& Boolean.parseBoolean((String) props.get(JCA_CONFIG_GEN_USE_CAJ))) { 
+		if (props.containsKey(JCA_CONFIG_GEN_USE_CAJ) && Boolean.parseBoolean((String) props.get(JCA_CONFIG_GEN_USE_CAJ))) {
 			JCACAJContext = "com.cosylab.epics.caj.CAJContext";
 		} else {
-			configlogger.fatal("We no longer support the native version of JCA in the EPICS archiver appliance. Please use CAJ instead.");
-			throw new ConfigException("We no longer support the native version of JCA in the EPICS archiver appliance. Please use CAJ instead.");
+			configlogger.info("We no longer support the native version of JCA in the EPICS archiver appliance. Reseting to use CAJ.");
 		}
 		
 		
