@@ -1,0 +1,99 @@
+version: '3.7'
+services:
+  mariadb:
+    hostname: mariadb
+    image: mariadb
+    networks:
+      - archapplnet
+    environment:
+      MYSQL_ROOT_PASSWORD: archappl
+      MYSQL_DATABASE: archappl
+      MYSQL_USER: archappl
+      MYSQL_PASSWORD: archappl
+    volumes:
+      - archappldata:/var/lib/mysql
+      - mariainit:/docker-entrypoint-initdb.d
+  mgmt:
+    hostname: mgmt
+    networks:
+      - archapplnet
+    ports:
+      - 8080:8080
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: mgmt
+    image: localhost:5000/mgmt  ## goes to local registry
+    volumes:
+        - archapplconfig:/usr/local/tomcat/archappl_conf
+        - archapplstorage:/usr/local/tomcat/storage/
+  engine:
+    hostname: engine
+    networks:
+      - archapplnet
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: engine
+    image: localhost:5000/engine  ## goes to local registry
+    volumes:
+        - archapplconfig:/usr/local/tomcat/archappl_conf
+        - archapplstorage:/usr/local/tomcat/storage/
+  etl:
+    hostname: etl
+    networks:
+      - archapplnet
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: etl
+    image: localhost:5000/etl  ## goes to local registry
+    volumes:
+        - archapplconfig:/usr/local/tomcat/archappl_conf
+        - archapplstorage:/usr/local/tomcat/storage/
+  retrieval:
+    hostname: retrieval
+    networks:
+      - archapplnet
+    ports:
+      - 8081:8080
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: retrieval
+    image: localhost:5000/retrieval  ## goes to local registry
+    volumes:
+        - archapplconfig:/usr/local/tomcat/archappl_conf
+        - archapplstorage:/usr/local/tomcat/storage/
+  example-ioc:
+    image: pklaus/epics_base:7.0.2.2_debian
+    networks:
+      - archapplnet
+    stdin_open: true
+    tty: true
+    working_dir: /epics/iocs/example/iocBoot/iocEXAMPLE
+    restart: always
+    command: ./st.cmd
+networks:
+  archapplnet:
+    enable_ipv6: true
+    ipam:
+      config:
+       - subnet: 2001:0DB8::/112
+
+volumes:
+  archappldata:
+    driver: local
+  archapplstorage:
+  mariainit:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./archappl/conf/sql
+      o: bind
+  archapplconfig:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./archappl/conf
+      o: bind

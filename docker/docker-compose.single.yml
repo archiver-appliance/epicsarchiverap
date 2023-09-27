@@ -1,0 +1,58 @@
+version: '3.7'
+services:
+  mariadb:
+    hostname: mariadb
+    image: mariadb
+    networks:
+      - archapplnet
+    environment:
+      MYSQL_ROOT_PASSWORD: archappl
+      MYSQL_DATABASE: archappl
+      MYSQL_USER: archappl
+      MYSQL_PASSWORD: archappl
+    volumes:
+      - archappldata:/var/lib/mysql
+      - mariainit:/docker-entrypoint-initdb.d
+  archappl:
+    hostname: archappl
+    networks:
+      - archapplnet
+    ports:
+      - 8080:8080
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: singletomcat
+    environment:
+      ARCHAPPL_APPLIANCES: /usr/local/tomcat/archappl_conf/singleappliances.xml
+    volumes:
+        - archapplconfig:/usr/local/tomcat/archappl_conf
+        - archapplstorage:/usr/local/tomcat/storage/
+  example-ioc:
+    image: pklaus/epics_base:7.0.2.2_debian
+    networks:
+      - archapplnet
+    stdin_open: true
+    tty: true
+    working_dir: /epics/iocs/example/iocBoot/iocEXAMPLE
+    restart: always
+    command: ./st.cmd
+networks:
+  archapplnet:
+
+volumes:
+  archappldata:
+    driver: local
+  archapplstorage:
+  mariainit:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./archappl/conf/sql
+      o: bind
+  archapplconfig:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./archappl/conf
+      o: bind

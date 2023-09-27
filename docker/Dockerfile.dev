@@ -1,3 +1,4 @@
+
 # Download Epics
 FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS epics-download-extract
 SHELL ["/bin/bash", "-c"]
@@ -70,3 +71,6 @@ ENV EPICS_BASE_BIN=${EPICS_BASE}/bin/${EPICS_HOST_ARCH} \
     EPICS_BASE_LIB=${EPICS_BASE}/lib/${EPICS_HOST_ARCH} \
     LD_LIBRARY_PATH=${EPICS_BASE_LIB}:${LD_LIBRARY_PATH}
 ENV PATH=${PATH}:${EPICS_BASE_BIN}
+
+LABEL org.opencontainers.image.source=https://github.com/archiver-appliance/epicsarchiverap
+LABEL org.opencontainers.image.description="Docker image for building and testing the Archiver Appliance."
