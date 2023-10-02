@@ -120,7 +120,7 @@ public class PVMetrics {
 	 * Murali added this to show in PVMetrics. 
 	 * Feel free to remove if not needed anymore
 	 */
-	private boolean lastConnectionEventState;
+	private PVConnectionState lastConnectionEventState;
 	
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
@@ -508,7 +508,7 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "What's the engine's sampling period?", ""+ (float)this.samplingPeriod);
 		addDetailedStatus(statuses, "The SCAN period (ms) after applying the jitter factor", ""+ this.scanPeriodMillis);
 		addDetailedStatus(statuses, "Is this PV currently connected?", this.isConnected ? "yes" : "no");
-		addDetailedStatus(statuses, "Connection state at last connection changed event", this.lastConnectionEventState ? "Connected" : "Not connected");
+		addDetailedStatus(statuses, "Connection state at last connection changed event", String.valueOf(this.lastConnectionEventState));
 		addDetailedStatus(statuses, "When did we receive the last event?", TimeUtils.convertToHumanReadableString(this.secondsOfLastEvent));
 		addDetailedStatus(statuses, "What did we last push the data to the short term store?", TimeUtils.convertToHumanReadableString(this.lastRotateLogsEpochSeconds));
 		addDetailedStatus(statuses, "When did we request CA to make a connection to this PV?", TimeUtils.convertToHumanReadableString(connectionRequestMadeEpochSeconds));
@@ -577,11 +577,11 @@ public class PVMetrics {
 		this.lastEventFromIOCTimeStamp = lastEventFromIOCTimeStamp;
 	}
 
-	public boolean isLastConnectionEventState() {
+	public PVConnectionState lastConnectionEventState() {
 		return lastConnectionEventState;
 	}
 
-	public void setLastConnectionEventState(boolean lastConnectionEventState) {
+	public void setLastConnectionEventState(PVConnectionState lastConnectionEventState) {
 		this.lastConnectionEventState = lastConnectionEventState;
 	}
 
