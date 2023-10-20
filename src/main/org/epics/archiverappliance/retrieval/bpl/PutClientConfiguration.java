@@ -88,8 +88,6 @@ public class PutClientConfiguration implements BPLAction {
 
 		if(req.getParameter("download") != null) {
 			logger.info("Sending back the incoming data as a content dispositon");
-			// Allow applications served from other URL's to access the JSON data from this server.
-			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			
 			resp.setContentType("application/force-download");
 			resp.setContentLength(newConfigBytes.length);
@@ -104,7 +102,6 @@ public class PutClientConfiguration implements BPLAction {
 			}
 		} else {
 			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			try(FileOutputStream fos = new FileOutputStream(configFilePath.toFile(), false)) { 
 				fos.write(newConfigBytes);
 			}

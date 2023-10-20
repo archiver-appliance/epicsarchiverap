@@ -68,8 +68,6 @@ public class GetClientConfiguration implements BPLAction {
 		}
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		// Allow applications served from other URL's to access the JSON data from this server.
-		resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 
 		try (OutputStream out = resp.getOutputStream()) {
 			try(FileInputStream fis = new FileInputStream(configFilePath.toFile())) { 

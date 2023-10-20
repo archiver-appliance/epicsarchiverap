@@ -471,7 +471,6 @@ public class GetUrlContent {
 								bytesRead = is.read(buf);
 							}
 						}
-						resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 						resp.sendError(response.getStatusLine().getStatusCode(), os.toString());
 					}
 				}

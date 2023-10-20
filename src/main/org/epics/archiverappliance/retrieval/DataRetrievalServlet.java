@@ -281,7 +281,6 @@ public class DataRetrievalServlet extends HttpServlet {
             doGetMultiPV(req, resp);
         } else {
             String msg = "\"" + requestName + "\" is not a valid API method.";
-            resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
         }
     }
@@ -313,7 +312,6 @@ public class DataRetrievalServlet extends HttpServlet {
             }
             default -> {
                 String msg = "\"" + requestName + "\" is not a valid API method.";
-                resp.setHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, msg);
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
             }
         }
@@ -430,7 +428,6 @@ public class DataRetrievalServlet extends HttpServlet {
             postProcessor.initialize(postProcessorUserArg.toString(), pvName);
         } catch (Exception ex) {
             logger.error("Postprocessor threw an exception during initialization for " + pvName, ex);
-            resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
@@ -696,7 +693,6 @@ public class DataRetrievalServlet extends HttpServlet {
             }
             if (nullPVs > 0) {
                 logger.warn("Some PVs are null in the request.");
-                resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
             }
@@ -842,7 +838,6 @@ public class DataRetrievalServlet extends HttpServlet {
             } catch (Exception ex) {
                 String msg = "Postprocessor threw an exception during initialization for " + pvName;
                 logger.error(msg, ex);
-                resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                 resp.sendError(HttpServletResponse.SC_NOT_FOUND, msg);
                 return;
             }
@@ -864,7 +859,6 @@ public class DataRetrievalServlet extends HttpServlet {
         } catch (ServletException se) {
             String msg = "Exception when retrieving data " + "-->" + se;
             logger.error(msg, se);
-            resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
             resp.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
             return;
         }
@@ -1063,12 +1057,6 @@ public class DataRetrievalServlet extends HttpServlet {
                 resp.setContentType(ctype);
                 logger.debug("Using {} as the mime response sending {}", mimemappinginfo.mimeresponseClass.getName(), ctype);
                 MimeResponse mimeresponse = mimemappinginfo.mimeresponseClass.getConstructor().newInstance();
-                HashMap<String, String> extraHeaders = mimeresponse.getExtraHeaders();
-                if (extraHeaders != null) {
-                    for (Entry<String, String> kv : extraHeaders.entrySet()) {
-                        resp.addHeader(kv.getKey(), kv.getValue());
-                    }
-                }
                 OutputStream os = resp.getOutputStream();
                 mergeDedupCountingConsumer = new MergeDedupConsumer(mimeresponse, os);
             } catch (Exception ex) {
@@ -1290,7 +1278,6 @@ public class DataRetrievalServlet extends HttpServlet {
                                         bytesRead = is.read(buf);
                                     }
                                 }
-                                resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                                 resp.sendError(response.getStatusLine().getStatusCode(), new String(os.toByteArray()));
                             }
                         }
@@ -1358,7 +1345,6 @@ public class DataRetrievalServlet extends HttpServlet {
         if (timeRangesStrList.length % 2 != 0) {
             String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have " + timeRangesStrList.length + " times";
             logger.error(msg);
-            resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
             return false;
         }
@@ -1375,7 +1361,6 @@ public class DataRetrievalServlet extends HttpServlet {
                 } catch (IllegalArgumentException ex2) {
                     String msg = "Cannot parse time " + timeRangesStrItem;
                     logger.warn(msg, ex2);
-                    resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
                     return false;
                 }
@@ -1391,7 +1376,6 @@ public class DataRetrievalServlet extends HttpServlet {
             if (t1.before(t0)) {
                 String msg = "For request, end " + t1 + " is before start " + t0.toString() + " for pv " + pvName;
                 logger.error(msg);
-                resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
                 return false;
             }
@@ -1400,7 +1384,6 @@ public class DataRetrievalServlet extends HttpServlet {
                 if (t0.before(prevEnd)) {
                     String msg = "For request, start time " + t0 + " is before previous end time " + prevEnd + " for pv " + pvName;
                     logger.error(msg);
-                    resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
                     return false;
                 }

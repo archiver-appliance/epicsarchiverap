@@ -174,10 +174,4 @@ public class MatlabResponse implements MimeResponse {
 			return ret;
 		}
 	}
-
-	@Override
-	public HashMap<String, String> getExtraHeaders() {
-		return null;
-	}
-
 }

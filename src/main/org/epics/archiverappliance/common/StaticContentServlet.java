@@ -114,7 +114,6 @@ public class StaticContentServlet extends HttpServlet {
 		if(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE) { 
 			String msg = "Cannot process static content request for " + requestedFile + " until the appliance has completely started up.";
 			logger.error(msg);
-			response.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 			response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, msg);
 			return;
 		}

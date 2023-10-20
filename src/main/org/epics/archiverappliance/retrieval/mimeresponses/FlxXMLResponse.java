@@ -53,9 +53,4 @@ public class FlxXMLResponse implements MimeResponse {
 	
 	public void swicthingToStream(EventStream strm) {
 	}
-
-	@Override
-	public HashMap<String, String> getExtraHeaders() {
-		return null;
-	}
 }

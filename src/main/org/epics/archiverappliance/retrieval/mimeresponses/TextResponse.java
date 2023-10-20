@@ -57,11 +57,6 @@ public class TextResponse implements MimeResponse, ExceptionCommunicator {
 	}
 
 	@Override
-	public HashMap<String, String> getExtraHeaders() {
-		return null;
-	}
-
-	@Override
 	public void comminucateException(Throwable t) {
 		out.println(t.getMessage());
 		t.printStackTrace(out);

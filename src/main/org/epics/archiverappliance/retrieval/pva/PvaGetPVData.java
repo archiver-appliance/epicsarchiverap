@@ -1102,8 +1102,6 @@ public class PvaGetPVData implements PvaAction {
 		PvaMergeDedupConsumer mergeDedupCountingConsumer = null;
 		try {
 			PvaMimeResponse mimeresponse = PvaMimeResponse.class.getConstructor().newInstance();
-			HashMap<String, String> extraHeaders = mimeresponse.getExtraHeaders();
-			logger.info(extraHeaders);
 			mergeDedupCountingConsumer = new PvaMergeDedupConsumer(mimeresponse, result);
 		} catch (Exception ex) {
 			throw new ServletException(ex);

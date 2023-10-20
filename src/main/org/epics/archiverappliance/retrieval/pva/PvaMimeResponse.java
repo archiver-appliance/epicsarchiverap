@@ -169,16 +169,6 @@ public class PvaMimeResponse implements MimeResponse {
 		// Not much to do here for now.
 	}
 
-	@Override
-	public HashMap<String, String> getExtraHeaders() {
-		HashMap<String, String> ret = new HashMap<String, String>();
-		// Allow applications served from other URL's to access the JSON data from this
-		// server.
-		ret.put(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
-		return ret;
-	}
-
-
     public void setOutputStruct(PVAStructure resultStruct) {
         this.resultStruct = resultStruct;
     }
