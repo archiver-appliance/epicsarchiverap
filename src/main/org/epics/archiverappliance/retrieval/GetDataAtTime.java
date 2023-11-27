@@ -1,22 +1,5 @@
 package org.epics.archiverappliance.retrieval;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -38,6 +21,22 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class GetDataAtTime {
 	private static final Logger logger = LogManager.getLogger(GetDataAtTime.class);
@@ -67,8 +66,8 @@ public class GetDataAtTime {
 		}
 		return gatherer;
 	}
-	
-	private static Appliance2PVs getDataFromEngine(Appliance2PVs gatherer, Timestamp atTime) {
+
+    private static Appliance2PVs getDataFromEngine(Appliance2PVs gatherer, Instant atTime) {
 		try {
 			if(gatherer.remainingPVs.size() <= 0) return gatherer;
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(gatherer.applianceInfo.getEngineURL() + "/getDataAtTime?at="+TimeUtils.convertToISO8601String(atTime), "pv", gatherer.remainingPVs);
@@ -85,8 +84,8 @@ public class GetDataAtTime {
 		}
 		return gatherer;
 	}
-	
-	private static Appliance2PVs getDataFromRetrieval(Appliance2PVs gatherer, Timestamp atTime) {
+
+    private static Appliance2PVs getDataFromRetrieval(Appliance2PVs gatherer, Instant atTime) {
 		try {
 			if(gatherer.remainingPVs.size() <= 0) return gatherer;
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(gatherer.applianceInfo.getRetrievalURL() + "/../data/getDataAtTimeForAppliance?at="+TimeUtils.convertToISO8601String(atTime), "pv", gatherer.remainingPVs);
@@ -103,8 +102,8 @@ public class GetDataAtTime {
 		}
 		return gatherer;
 	}
-	
-	private static HashMap<String, HashMap<String, Object>>  getDataFromRemoteArchApplicance(String applianceRetrievalURL, LinkedList<String> remainingPVs, Timestamp atTime) {
+
+    private static HashMap<String, HashMap<String, Object>> getDataFromRemoteArchApplicance(String applianceRetrievalURL, LinkedList<String> remainingPVs, Instant atTime) {
 		try {
 			if(remainingPVs.size() <= 0) { return null; } 
 			HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(applianceRetrievalURL + "?at="+TimeUtils.convertToISO8601String(atTime)+"&includeProxies=false", "pv", remainingPVs);
@@ -145,7 +144,7 @@ public class GetDataAtTime {
 		if(timeStr == null) {
 			timeStr = TimeUtils.convertToISO8601String(TimeUtils.getCurrentEpochSeconds());
 		}
-		Timestamp atTime = TimeUtils.convertFromISO8601String(timeStr);
+        Instant atTime = TimeUtils.convertFromISO8601String(timeStr);
 		
 		boolean fetchFromExternalAppliances = req.getParameter("includeProxies") != null && Boolean.parseBoolean(req.getParameter("includeProxies"));		
 
@@ -257,9 +256,9 @@ public class GetDataAtTime {
 	 * @param configService
 	 * @return
 	 */
-	private static PVWithData getDataAtTimeForPVFromStores(String pvName, Timestamp atTime, ConfigService configService) {
+    private static PVWithData getDataAtTimeForPVFromStores(String pvName, Instant atTime, ConfigService configService) {
 		String nameFromUser = pvName;
-		Timestamp startTime = atTime;
+        Instant startTime = atTime;
 		String fieldName = PVNames.getFieldName(pvName);
 		
 		PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
@@ -288,9 +287,9 @@ public class GetDataAtTime {
 							try(EventStream stream = stcl.call()) {
 								for(Event e : stream) {
 									dEv = (DBRTimeEvent) e;
-									if(dEv.getEventTimeStamp().before(atTime) || dEv.getEventTimeStamp().equals(atTime)) {
+                                    if (dEv.getEventTimeStamp().isBefore(atTime) || dEv.getEventTimeStamp().equals(atTime)) {
 										if(potentialEvent != null) {
-											if(dEv.getEventTimeStamp().after(potentialEvent.getEventTimeStamp())) {
+                                            if (dEv.getEventTimeStamp().isAfter(potentialEvent.getEventTimeStamp())) {
 												potentialEvent = (DBRTimeEvent) dEv.makeClone();							
 											}
 										} else {
@@ -300,7 +299,7 @@ public class GetDataAtTime {
 										if(potentialEvent != null) {
 											HashMap<String, Object> evnt = new HashMap<String, Object>();
 											evnt.put("secs", potentialEvent.getEpochSeconds());
-											evnt.put("nanos", potentialEvent.getEventTimeStamp().getNanos());
+                                            evnt.put("nanos", potentialEvent.getEventTimeStamp().getNano());
 											evnt.put("severity", potentialEvent.getSeverity());
 											evnt.put("status", potentialEvent.getStatus());
 											evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
@@ -318,7 +317,7 @@ public class GetDataAtTime {
 			if(potentialEvent != null) {
 				HashMap<String, Object> evnt = new HashMap<String, Object>();
 				evnt.put("secs", potentialEvent.getEpochSeconds());
-				evnt.put("nanos", potentialEvent.getEventTimeStamp().getNanos());
+                evnt.put("nanos", potentialEvent.getEventTimeStamp().getNano());
 				evnt.put("severity", potentialEvent.getSeverity());
 				evnt.put("status", potentialEvent.getStatus());
 				evnt.put("val", JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
@@ -341,7 +340,7 @@ public class GetDataAtTime {
 		if(timeStr == null) {
 			timeStr = TimeUtils.convertToISO8601String(TimeUtils.getCurrentEpochSeconds());
 		}
-		Timestamp atTime = TimeUtils.convertFromISO8601String(timeStr);
+        Instant atTime = TimeUtils.convertFromISO8601String(timeStr);
 		
 		logger.debug("Getting data from instance for " + pvNames.size() + " PVs at " + TimeUtils.convertToHumanReadableString(atTime));
 

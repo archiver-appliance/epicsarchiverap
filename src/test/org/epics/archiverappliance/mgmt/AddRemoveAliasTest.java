@@ -1,17 +1,10 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-
+import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -19,17 +12,20 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.Instant;
 
 /**
  * Check addAlias and removeAlias functionality.
@@ -38,26 +34,27 @@ import io.github.bonigarcia.wdm.WebDriverManager;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class AddRemoveAliasTest {
 	private static Logger logger = LogManager.getLogger(AddRemoveAliasTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -82,11 +79,11 @@ public class AddRemoveAliasTest {
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
 		 String expectedPVName = "UnitTestNoNamingConvention:sine";
-		 assertTrue("Expecting PV name to be " + expectedPVName + "; instead we get " + pvNameObtainedFromTable, expectedPVName.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(expectedPVName.equals(pvNameObtainedFromTable), "Expecting PV name to be " + expectedPVName + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 
 		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
 		 Thread.sleep(2*1000);
@@ -139,8 +136,8 @@ public class AddRemoveAliasTest {
 	 */
 	private void testRetrievalCount(String pvName, boolean expectingData) throws IOException {
 		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		 Timestamp end = TimeUtils.plusDays(TimeUtils.now(), 3);
-		 Timestamp start = TimeUtils.minusDays(end, 6);
+		Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
+		Instant start = TimeUtils.minusDays(end, 6);
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
 			 long previousEpochSeconds = 0;
 			 int eventCount = 0;
@@ -149,7 +146,7 @@ public class AddRemoveAliasTest {
 			 if(stream != null) {
 				 for(Event e : stream) {
 					 long actualSeconds = e.getEpochSeconds();
-					 assertTrue(actualSeconds >= previousEpochSeconds);
+					 Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					 previousEpochSeconds = actualSeconds;
 					 eventCount++;
 				 }
@@ -157,9 +154,9 @@ public class AddRemoveAliasTest {
 
 			 logger.info("Got " + eventCount + " event for pv " + pvName);
 			 if(expectingData) { 
-				 assertTrue("When asking for data using " + pvName + ", event count is 0. We got " + eventCount, eventCount > 0);
+				 Assertions.assertTrue(eventCount > 0, "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
 			 } else { 
-				 assertTrue("When asking for data using " + pvName + ", event count is 0. We got " + eventCount, eventCount == 0);
+				 Assertions.assertTrue(eventCount == 0, "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
 			 }
 		 }
 	}

@@ -7,14 +7,14 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.model;
 
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import java.time.Instant;
 
 /**
  * An ArchiveChannel that stores each incoming value that differs from the
@@ -55,7 +55,7 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 	 */
 	public DeltaArchiveChannel(final String name, final Writer writer,
 			final Enablement enablement, final int buffer_capacity,
-			final Timestamp last_timeestamp, final double period_estimate,
+                               final Instant last_timeestamp, final double period_estimate,
 			final double delta, final ConfigService configservice,
 			final ArchDBRTypes archdbrtype, final String controlPVname,
 			final int commandThreadID, final boolean usePVAccess) throws Exception {

@@ -13,7 +13,6 @@ import java.io.File;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -23,25 +22,25 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
-import junit.framework.TestCase;
 /**
  * test of creating channels
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class ChannelTest extends TestCase {
+@Tag("localEpics")
+public class ChannelTest  {
 	private static Logger logger = LogManager.getLogger(ChannelTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
@@ -49,7 +48,7 @@ public class ChannelTest extends TestCase {
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 		testConfigService.shutdownNow();
@@ -79,13 +78,12 @@ public class ChannelTest extends TestCase {
 			Thread.sleep(62000);
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
-			assertTrue("the channel for " + pvName
-					+ " should be created but it is not",
-					archiveChannel != null);
+			Assertions.assertTrue(archiveChannel != null, "the channel for " + pvName
+					+ " should be created but it is not");
 			boolean hasData = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should have data but it don't", hasData);
+			Assertions.assertTrue(hasData, "the channel for " + pvName
+					+ " should have data but it don't");
 			
 			ArchiveEngine.destoryPv(pvName, testConfigService);
 
@@ -106,13 +104,12 @@ public class ChannelTest extends TestCase {
 			Thread.sleep(5000);
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
-			assertTrue("the channel for " + pvName
-					+ " should be created but it is not",
-					archiveChannel != null);
+			Assertions.assertTrue(archiveChannel != null, "the channel for " + pvName
+					+ " should be created but it is not");
 			boolean hasData = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should have data but it don't", hasData);
+			Assertions.assertTrue(hasData, "the channel for " + pvName
+					+ " should have data but it don't");
 
 			ArchiveEngine.destoryPv(pvName, testConfigService);
 		} catch (Exception e) {
@@ -139,38 +136,35 @@ public class ChannelTest extends TestCase {
 			Thread.sleep(2000);
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
-			assertTrue("the channel for " + pvName
-					+ " should be created but it is not",
-					archiveChannel != null);
+			Assertions.assertTrue(archiveChannel != null, "the channel for " + pvName
+					+ " should be created but it is not");
 			boolean hasData = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should have data but it don't", hasData);
+			Assertions.assertTrue(hasData, "the channel for " + pvName
+					+ " should have data but it don't");
 			ArchiveEngine.pauseArchivingPV(pvName, testConfigService);
 			Thread.sleep(2000);
 			archiveChannel.getSampleBuffer().getCurrentSamples().clear();
 			Thread.sleep(2000);
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
-			assertTrue("the channel for " + pvName
-					+ " should be stopped but it is not",
-					tempPVMetrics == null || !tempPVMetrics.isConnected());
+			Assertions.assertTrue(tempPVMetrics == null || !tempPVMetrics.isConnected(), "the channel for " + pvName
+					+ " should be stopped but it is not");
 			boolean hasData2 = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should not have data but it has", !hasData2);
+			Assertions.assertTrue(!hasData2, "the channel for " + pvName
+					+ " should not have data but it has");
 
 			ArchiveEngine.resumeArchivingPV(pvName, testConfigService);
 			Thread.sleep(62000);
 			PVMetrics tempPVMetrics3 = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
-			assertTrue("the channel for " + pvName
-					+ " should be restarted but it is not",
-					tempPVMetrics3.isConnected());
+			Assertions.assertTrue(tempPVMetrics3.isConnected(), "the channel for " + pvName
+					+ " should be restarted but it is not");
 			archiveChannel = testConfigService.getEngineContext().getChannelList().get(pvName);
 			boolean hasData3 = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should have data but it don't", hasData3);
+			Assertions.assertTrue(hasData3, "the channel for " + pvName
+					+ " should have data but it don't");
 
 		} catch (Exception e) {
 			//
@@ -201,11 +195,9 @@ public class ChannelTest extends TestCase {
 					num++;
 
 			}
-			assertTrue(
-					"Only "
-							+ num
-							+ " of 1000 of channels in scan mode connected successfully",
-					num == 1000);
+			Assertions.assertTrue(num == 1000, "Only "
+					+ num
+					+ " of 1000 of channels in scan mode connected successfully");
 			for (int m = 0; m < 1000; m++) {
 				String pvName = "test_" + m;
 				ArchiveEngine.destoryPv(pvName, testConfigService);
@@ -240,11 +232,9 @@ public class ChannelTest extends TestCase {
 					num++;
 
 			}
-			assertTrue(
-					"Only "
-							+ num
-							+ " of 1000 of channels in monitor mode  connected successfully",
-					num == 1000);
+			Assertions.assertTrue(num == 1000, "Only "
+					+ num
+					+ " of 1000 of channels in monitor mode  connected successfully");
 
 			for (int m = 0; m < 1000; m++) {
 				String pvName = "test_" + m;
@@ -267,7 +257,7 @@ public class ChannelTest extends TestCase {
 			Thread.sleep(2000);
 			ArrayListEventStream samples = testConfigService.getEngineContext().getChannelList().get(pvName).getPVData();
 
-			assertTrue("there is no data in sample buffer", samples.size() > 0);
+			Assertions.assertTrue(samples.size() > 0, "there is no data in sample buffer");
 			ArchiveEngine.destoryPv(pvName, testConfigService);
 		} catch (Exception e) {
 			//

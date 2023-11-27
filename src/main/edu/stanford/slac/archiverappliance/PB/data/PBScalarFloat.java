@@ -7,11 +7,13 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.protobuf.Message;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarFloat.Builder;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import gov.aps.jca.dbr.DBR;
+import gov.aps.jca.dbr.DBR_TIME_Float;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,19 +26,17 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.pva.data.PVAFloat;
 import org.epics.pva.data.PVAStructure;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarFloat.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import gov.aps.jca.dbr.DBR;
-import gov.aps.jca.dbr.DBR_TIME_Float;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A DBRTimeEvent for a scalar float. 
  * @author mshankar
  *
  */
-public class PBScalarFloat implements DBRTimeEvent, PartionedTime {
+public class PBScalarFloat implements DBRTimeEvent {
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.ScalarFloat dbevent = null;
@@ -46,13 +46,18 @@ public class PBScalarFloat implements DBRTimeEvent, PartionedTime {
 		this.bar = bar;
 		this.year = year;
 	}
-	
+
+	public PBScalarFloat(short year, Message.Builder message) {
+		this.dbevent = (EPICSEvent.ScalarFloat) message.build();
+		this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+		this.year = year;
+	}
 	public PBScalarFloat(DBRTimeEvent ev) {
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarFloat.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+				.setNano(yst.getNano())
 				.setVal(ev.getSampleValue().getValue().floatValue());
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -74,7 +79,7 @@ public class PBScalarFloat implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarFloat.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+				.setNano(yst.getNano())
 				.setVal(realtype.getFloatValue()[0]);
 		if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
@@ -91,7 +96,7 @@ public class PBScalarFloat implements DBRTimeEvent, PartionedTime {
         year = yst.getYear();
         Builder builder = EPICSEvent.ScalarFloat.newBuilder()
                         .setSecondsintoyear(yst.getSecondsintoyear())
-                        .setNano(yst.getNanos())
+		        .setNano(yst.getNano())
                         .setVal(value);
 		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
 		if(alarm.status != 0) builder.setStatus(alarm.status);
@@ -105,22 +110,17 @@ public class PBScalarFloat implements DBRTimeEvent, PartionedTime {
 	}
 
 	@Override
-	public Timestamp getEventTimeStamp() {
+	public Instant getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
 	}
-	
-	@Override
-	public short getYear() {
-		return year;
-	}
-	
-	@Override
-	public int getSecondsIntoYear() {
-		unmarshallEventIfNull();
-		return dbevent.getSecondsintoyear();
-	}
 
+
+	@Override
+	public YearSecondTimestamp getYearSecondTimestamp() {
+		unmarshallEventIfNull();
+		return new YearSecondTimestamp(this.year, dbevent.getSecondsintoyear(), dbevent.getNano());
+	}
 	@Override
 	public long getEpochSeconds() {
 		unmarshallEventIfNull();

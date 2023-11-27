@@ -1,23 +1,9 @@
 package org.epics.archiverappliance.etl;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-
-import junit.framework.TestCase;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
@@ -31,12 +17,23 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.etl.bpl.reports.ApplianceMetricsDetails;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DecimalFormat;
+import java.time.Instant;
+import java.util.ArrayList;
 
 /**
  * An ETL benchmark. Generate some data for PVs and then time the movement to the next store. 
@@ -49,8 +46,8 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
-@Category(SlowTests.class)
-public class ETLTimeTest extends TestCase{
+@Tag("slow")
+public class ETLTimeTest {
 	private static Logger logger = LogManager.getLogger(ETLTimeTest.class.getName());
 	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
 	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
@@ -61,7 +58,7 @@ public class ETLTimeTest extends TestCase{
 	ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	private  ConfigServiceForTests configService;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		if(new File(shortTermFolderName).exists()) {
@@ -79,7 +76,7 @@ public class ETLTimeTest extends TestCase{
 		storageplugin2 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR", configService);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		configService.shutdownNow();
 	}
@@ -123,7 +120,7 @@ public class ETLTimeTest extends TestCase{
 
 		long time1=System.currentTimeMillis();
 		YearSecondTimestamp yts = new YearSecondTimestamp((short) (currentYear+1), 6*60*24*10+100, 0);
-		Timestamp etlTime = TimeUtils.convertFromYearSecondTimestamp(yts);
+        Instant etlTime = TimeUtils.convertFromYearSecondTimestamp(yts);
 		logger.info("Running ETL as if it was " + TimeUtils.convertToHumanReadableString(etlTime));
 		ETLExecutor.runETLs(configService, etlTime);
 		
@@ -132,7 +129,7 @@ public class ETLTimeTest extends TestCase{
 			ProcessBuilder pBuilder = new ProcessBuilder("sync");
 			pBuilder.inheritIO();
 			int exitValue = pBuilder.start().waitFor();
-			assertTrue("Nonzero exit from sync " + exitValue, exitValue == 0);
+			Assertions.assertEquals(0, exitValue, "Nonzero exit from sync " + exitValue);
 		}
 		
 	
@@ -156,8 +153,8 @@ public class ETLTimeTest extends TestCase{
 		Files.walkFileTree(Paths.get(shortTermFolderName), postETLSrcVisitor);
 		CountFiles postETLDestVisitor = new CountFiles();
 		Files.walkFileTree(Paths.get(mediumTermFolderName), postETLDestVisitor);
-		assertTrue("We have some files that have not moved " + postETLSrcVisitor.filesPresent, postETLSrcVisitor.filesPresent == 0);
-		assertTrue("Dest file count " + postETLDestVisitor.filesPresent + " is not the same as PV count " + pvs.size(), postETLDestVisitor.filesPresent == pvs.size());
+		Assertions.assertEquals(0, postETLSrcVisitor.filesPresent, "We have some files that have not moved " + postETLSrcVisitor.filesPresent);
+		Assertions.assertEquals(postETLDestVisitor.filesPresent, pvs.size(), "Dest file count " + postETLDestVisitor.filesPresent + " is not the same as PV count " + pvs.size());
 		
 		if(postETLSrcVisitor.filesPresent == 0) { 
 			FileUtils.deleteDirectory(new File(shortTermFolderName));

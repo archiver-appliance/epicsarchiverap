@@ -1,14 +1,13 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.concurrent.Callable;
 
 /**
  * This is the "default" post processor that does nothing to the underlying event stream.
@@ -24,7 +23,7 @@ public class DefaultRawPostProcessor implements PostProcessor {
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 		float storageRate = typeInfo.getComputedStorageRate();
 		long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
 		// Add a fudge factor of 2 for java 

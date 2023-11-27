@@ -8,17 +8,6 @@
 package org.epics.archiverappliance.retrieval;
 
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -35,6 +24,17 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.TimeSpanDependentProcessing;
 import org.epics.archiverappliance.retrieval.postprocessors.TimeSpanDependentProcessor;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * @author mshankar
@@ -60,8 +60,8 @@ public class DataSourceResolution {
 	 * stored in the UnitOfRetrieval object will be a PBOverHTTPStoragePlugin object.
 	 * </p>
 	 * @param pvName The name of PV.
-	 * @param start  Timestamp
-	 * @param end Timestamp
+     * @param start  Instant
+     * @param end Instant
 	 * @param typeInfo PVTypeInf 
 	 * @param context BasicContext
 	 * @param postProcessor PostProcessor
@@ -75,7 +75,7 @@ public class DataSourceResolution {
 	 * @throws IOException
 	 * Thrown if there is a syntax error in the URI.
 	 */
-	public LinkedList<UnitOfRetrieval> resolveDataSources(String pvName, Timestamp start, Timestamp end, PVTypeInfo typeInfo, BasicContext context, PostProcessor postProcessor, HttpServletRequest req, ApplianceInfo applianceForPV) throws IOException {
+	public LinkedList<UnitOfRetrieval> resolveDataSources(String pvName, Instant start, Instant end, PVTypeInfo typeInfo, BasicContext context, PostProcessor postProcessor, HttpServletRequest req, ApplianceInfo applianceForPV) throws IOException {
 		LinkedList<UnitOfRetrieval> unitsofretrieval = new LinkedList<UnitOfRetrieval>();
 		if(!applianceForPV.equals(configService.getMyApplianceInfo())) {
 			logger.debug("Data for pv " + pvName + " is on appliance " + applianceForPV.getIdentity() + ". Remoting it thru this appliance.");
@@ -83,7 +83,7 @@ public class DataSourceResolution {
 				URI redirectURI = new URI(applianceForPV.getRetrievalURL() + "/../data/getData.raw");
 				String redirectURIStr = redirectURI.normalize().toString();
 				logger.debug("Raw URL on remote appliance for pv " + pvName + " is " + redirectURIStr);
-				String remoteRawURL = URLEncoder.encode(redirectURIStr, "UTF-8");
+				String remoteRawURL = URLEncoder.encode(redirectURIStr, StandardCharsets.UTF_8);
 				StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + remoteRawURL, configService);
 				unitsofretrieval.add(new UnitOfRetrieval(storagePlugin.getDescription(), storagePlugin, typeInfo.getPvName(), pvName, start, end, postProcessor, context));
 			} catch (URISyntaxException e) {
@@ -140,7 +140,7 @@ public class DataSourceResolution {
 				String failoverServer = configService.getFailoverApplianceURL(pvName);
 				if(failoverServer != null) {
 					logger.debug("Including the failover server " + failoverServer + " during data retrieval for PV " + pvName);
-					String pluginDefString = "pbraw://localhost?name=failover&rawURL=" + URLEncoder.encode(failoverServer.split("\\?")[0] + "/data/getData.raw", "UTF-8"); 
+					String pluginDefString = "pbraw://localhost?name=failover&rawURL=" + URLEncoder.encode(failoverServer.split("\\?")[0] + "/data/getData.raw", StandardCharsets.UTF_8);
 					StoragePlugin failoverPlugin = StoragePluginURLParser.parseStoragePlugin(pluginDefString, configService);
 					List<Callable<EventStream>> failoverStrms = failoverPlugin.getDataForPV(context, pvName, start, end, postProcessor);
 					if(failoverStrms != null && !failoverStrms.isEmpty()) {

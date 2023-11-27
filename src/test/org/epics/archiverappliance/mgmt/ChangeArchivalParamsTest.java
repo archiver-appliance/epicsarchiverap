@@ -7,39 +7,39 @@ import java.util.List;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class ChangeArchivalParamsTest {
 	private static Logger logger = LogManager.getLogger(ChangeArchivalParamsTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -80,7 +80,7 @@ public class ChangeArchivalParamsTest {
 				 WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 				 String obtainedSamplingPeriod = pvDetailsTableSecondCol.getText();
 				 String expectedSamplingPeriod = "11.0";
-				 assertTrue("Expecting sampling period to be " + expectedSamplingPeriod + "; instead it is " + obtainedSamplingPeriod, expectedSamplingPeriod.equals(obtainedSamplingPeriod));
+				 Assertions.assertTrue(expectedSamplingPeriod.equals(obtainedSamplingPeriod), "Expecting sampling period to be " + expectedSamplingPeriod + "; instead it is " + obtainedSamplingPeriod);
 				 break;
 			 }
 		 }

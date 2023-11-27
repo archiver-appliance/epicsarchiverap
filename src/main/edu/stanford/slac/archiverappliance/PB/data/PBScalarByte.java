@@ -7,11 +7,14 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarByte.Builder;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import gov.aps.jca.dbr.DBR;
+import gov.aps.jca.dbr.DBR_TIME_Byte;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,36 +27,39 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.pva.data.PVAByte;
 import org.epics.pva.data.PVAStructure;
 
-import com.google.protobuf.ByteString;
-
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarByte.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import gov.aps.jca.dbr.DBR;
-import gov.aps.jca.dbr.DBR_TIME_Byte;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A DBRTimeEvent for a scalar byte. 
  * @author mshankar
  *
  */
-public class PBScalarByte implements DBRTimeEvent, PartionedTime {
+public class PBScalarByte implements DBRTimeEvent {
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.ScalarByte dbevent = null;
+
 
 	public PBScalarByte(short year, ByteArray bar) {
 		this.bar = bar;
 		this.year = year;
 	}
-	
+
+	public PBScalarByte(short year, Message.Builder message) {
+		this.dbevent = (EPICSEvent.ScalarByte) message.build();
+		this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+		this.year = year;
+	}
+
 	public PBScalarByte(DBRTimeEvent ev) {
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarByte.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+				.setNano(yst.getNano())
 				.setVal(ByteString.copyFrom(new byte[] { ev.getSampleValue().getValue().byteValue()}));
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -75,7 +81,7 @@ public class PBScalarByte implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarByte.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+				.setNano(yst.getNano())
 				.setVal(ByteString.copyFrom(realtype.getByteValue()));
 		if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
@@ -92,34 +98,31 @@ public class PBScalarByte implements DBRTimeEvent, PartionedTime {
         year = yst.getYear();
         Builder builder = EPICSEvent.ScalarByte.newBuilder()
                         .setSecondsintoyear(yst.getSecondsintoyear())
-                        .setNano(yst.getNanos())
+		        .setNano(yst.getNano())
                         .setVal(ByteString.copyFrom(bytes));
 		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
 		if(alarm.status != 0) builder.setStatus(alarm.status);
         dbevent = builder.build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 }
-	
+
+
 	@Override
 	public Event makeClone() {
 		return new PBScalarByte(this);
 	}
 	
 	@Override
-	public Timestamp getEventTimeStamp() {
+	public Instant getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
 	}
 
+
 	@Override
-	public short getYear() {
-		return year;
-	}
-	
-	@Override
-	public int getSecondsIntoYear() {
+	public YearSecondTimestamp getYearSecondTimestamp() {
 		unmarshallEventIfNull();
-		return dbevent.getSecondsintoyear();
+		return new YearSecondTimestamp(this.year, dbevent.getSecondsintoyear(), dbevent.getNano());
 	}
 
 	@Override

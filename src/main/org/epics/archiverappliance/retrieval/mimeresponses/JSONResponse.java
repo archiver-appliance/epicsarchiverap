@@ -7,14 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -22,6 +14,14 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.json.simple.JSONValue;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * @author mshankar
@@ -45,7 +45,7 @@ public class JSONResponse implements MimeResponse {
 		}
 		out.print("{ \"secs\": " + evnt.getEpochSeconds() 
 				+ ", \"val\": " + evnt.getSampleValue().toJSONString()
-				+ ", \"nanos\": " + Integer.toString(evnt.getEventTimeStamp().getNanos())
+                + ", \"nanos\": " + Integer.toString(evnt.getEventTimeStamp().getNano())
 				+ ", \"severity\":" + Integer.toString(evnt.getSeverity())
 				+ ", \"status\":" + Integer.toString(evnt.getStatus())
 				+ consumeMetadata(evnt)
@@ -89,7 +89,7 @@ public class JSONResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
 		if(firstPV) {
 			firstPV = false;
 		} else {

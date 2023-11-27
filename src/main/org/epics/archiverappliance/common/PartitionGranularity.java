@@ -8,52 +8,48 @@
 package org.epics.archiverappliance.common;
 
 /**
- * A small enum for defining the granularity of the partition. 
+ * A small enum for defining the granularity of the partition.
  * Used principally by the PB storage plugin.
  * The time intervals here have to fit within each other for certain optimizations to work.
- * That is, 5 minutes completely fits within all the granularities larger than it (15,30,60,day,month,year) and 15 minutes completely fits within all the granularities larger than it and so on... 
+ * That is, 5 minutes completely fits within all the granularities larger than it (15,30,60,day,month,year)
+ * and 15 minutes completely fits within all the granularities larger than it and so on...
  * @author mshankar
  *
  */
 public enum PartitionGranularity {
-	PARTITION_5MIN(5*60),
-	PARTITION_15MIN(15*60),
-	PARTITION_30MIN(30*60),
-	PARTITION_HOUR(60*60),
-	PARTITION_DAY(24*60*60),
-	PARTITION_MONTH(31*24*60*60),
-	PARTITION_YEAR(366*24*60*60);
-	
-	int approxSecondsPerChunk;
-	int approxMinutesPerChunk;
-	
-	PartitionGranularity(int approxSecondsPerChunk) {
-		this.approxSecondsPerChunk = approxSecondsPerChunk;
-		this.approxMinutesPerChunk = this.approxSecondsPerChunk/60;
-	}
-	
-	public boolean isSmallerThan(PartitionGranularity other) {
-		return this.approxSecondsPerChunk < other.approxSecondsPerChunk;
-	}
+    PARTITION_5MIN(5 * 60),
+    PARTITION_15MIN(15 * 60),
+    PARTITION_30MIN(30 * 60),
+    PARTITION_HOUR(60 * 60),
+    PARTITION_DAY(24 * 60 * 60),
+    PARTITION_MONTH(31 * 24 * 60 * 60),
+    PARTITION_YEAR(366 * 24 * 60 * 60);
 
-	public int getApproxSecondsPerChunk() {
-		return approxSecondsPerChunk;
-	}
-	
-	public PartitionGranularity getNextLargerGranularity() {
-		switch(this) {
-		case PARTITION_5MIN :  return PARTITION_15MIN;
-		case PARTITION_15MIN : return PARTITION_30MIN;
-		case PARTITION_30MIN : return PARTITION_HOUR;
-		case PARTITION_HOUR : return PARTITION_DAY;
-		case PARTITION_DAY : return PARTITION_MONTH;
-		case PARTITION_MONTH: return PARTITION_YEAR;
-		case PARTITION_YEAR: return null;
-		default: return null;
-		}
-	}
+    final int approxSecondsPerChunk;
+    final int approxMinutesPerChunk;
 
-	public int getApproxMinutesPerChunk() {
-		return approxMinutesPerChunk;
-	}
+    PartitionGranularity(int approxSecondsPerChunk) {
+        this.approxSecondsPerChunk = approxSecondsPerChunk;
+        this.approxMinutesPerChunk = this.approxSecondsPerChunk / 60;
+    }
+
+    public int getApproxSecondsPerChunk() {
+        return approxSecondsPerChunk;
+    }
+
+    public PartitionGranularity getNextLargerGranularity() {
+        return switch (this) {
+            case PARTITION_5MIN -> PARTITION_15MIN;
+            case PARTITION_15MIN -> PARTITION_30MIN;
+            case PARTITION_30MIN -> PARTITION_HOUR;
+            case PARTITION_HOUR -> PARTITION_DAY;
+            case PARTITION_DAY -> PARTITION_MONTH;
+            case PARTITION_MONTH -> PARTITION_YEAR;
+            case PARTITION_YEAR -> null;
+        };
+    }
+
+    public int getApproxMinutesPerChunk() {
+        return approxMinutesPerChunk;
+    }
 }

@@ -7,7 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.pva;
 
-import com.google.common.primitives.*;
+import com.google.common.primitives.Bytes;
+import com.google.common.primitives.Doubles;
+import com.google.common.primitives.Floats;
+import com.google.common.primitives.Ints;
+import com.google.common.primitives.Shorts;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,19 +19,25 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
-import org.epics.pva.data.*;
+import org.epics.pva.data.ElementTypeException;
+import org.epics.pva.data.PVAAnyArray;
+import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVAString;
+import org.epics.pva.data.PVAStringArray;
+import org.epics.pva.data.PVAStructure;
+import org.epics.pva.data.PVAStructureArray;
+import org.epics.pva.data.PVAny;
 import org.epics.pva.data.nt.PVAAlarm;
 import org.epics.pva.data.nt.PVAEnum;
 import org.epics.pva.data.nt.PVAScalar;
 import org.epics.pva.data.nt.PVATimeStamp;
 
 import java.io.OutputStream;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 
@@ -116,7 +126,7 @@ public class PvaMimeResponse implements MimeResponse {
 
     private PVATimeStamp timeInfo(DBRTimeEvent evnt) {
         // convert the time info
-        return new PVATimeStamp(TimeUtils.convertTimestampToInstant(evnt.getEventTimeStamp()));
+        return new PVATimeStamp(evnt.getEventTimeStamp());
     }
 
     @Override
@@ -129,7 +139,7 @@ public class PvaMimeResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
 		if (firstPV) {
 			firstPV = false;
 		}

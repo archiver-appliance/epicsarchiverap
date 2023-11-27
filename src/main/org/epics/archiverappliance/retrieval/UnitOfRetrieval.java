@@ -8,11 +8,6 @@
 package org.epics.archiverappliance.retrieval;
 
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
@@ -21,6 +16,11 @@ import org.epics.archiverappliance.Reader;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.mergededup.MergeDedupWithCallablesEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * @author mshankar
@@ -34,14 +34,14 @@ public class UnitOfRetrieval implements Callable<RetrievalResult> {
 	private final Reader reader;
 	private final String pvName;
 	private final String pvNameFromRequest;
-	private final Timestamp start;
-	private final Timestamp end;
+	private final Instant start;
+	private final Instant end;
 	private final PostProcessor postProcessor;
 	private final BasicContext context;
 	private List<Callable<EventStream>> failoverStrms;
 
-	
-	public UnitOfRetrieval(String desc, Reader reader, String pvName, String pvNameFromRequest, Timestamp start, Timestamp end, PostProcessor postProcessor, BasicContext context) {
+
+    public UnitOfRetrieval(String desc, Reader reader, String pvName, String pvNameFromRequest, Instant start, Instant end, PostProcessor postProcessor, BasicContext context) {
 		this.description = desc;
 		this.reader = reader;
 		this.pvName = pvName;
@@ -90,12 +90,12 @@ public class UnitOfRetrieval implements Callable<RetrievalResult> {
 	}
 
 
-	public Timestamp getStart() {
+    public Instant getStart() {
 		return start;
 	}
 
 
-	public Timestamp getEnd() {
+    public Instant getEnd() {
 		return end;
 	}
 

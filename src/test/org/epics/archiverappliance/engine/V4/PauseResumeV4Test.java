@@ -1,30 +1,28 @@
 package org.epics.archiverappliance.engine.V4;
 
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 
 /**
  * Checks pausing and resuming a pv keeps it using the pvaccess protocol.
  */
-@Category({LocalEpicsTests.class , IntegrationTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class PauseResumeV4Test {
     
 
@@ -32,7 +30,7 @@ public class PauseResumeV4Test {
     private SIOCSetup ioc;
     TomcatSetup tomcatSetup = new TomcatSetup();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         ioc = new SIOCSetup();
         ioc.startSIOCWithDefaultDB();
@@ -40,7 +38,7 @@ public class PauseResumeV4Test {
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         ioc.stopSIOC();
         tomcatSetup.tearDown();
@@ -64,13 +62,13 @@ public class PauseResumeV4Test {
         // Let's pause the PV.
         String pausePVURL = mgmtUrl + "pauseArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
-        assertTrue("Pause PV", pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"));
+        Assertions.assertTrue(pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Pause PV");
         waitForStatusChange(pvName, "Paused", 20, mgmtUrl);
 
         // Resume PV
         String resumePVURL = mgmtUrl + "resumeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         JSONObject pvResumeStatus = GetUrlContent.getURLContentAsJSONObject(resumePVURL);
-        assertTrue("Resume PV", pvResumeStatus.containsKey("status") && pvResumeStatus.get("status").equals("ok"));
+        Assertions.assertTrue(pvResumeStatus.containsKey("status") && pvResumeStatus.get("status").equals("ok"), "Resume PV");
         waitForStatusChange(pvName, "Being archived", 20, mgmtUrl);
 
         usingPvAccessCheck(pvURLName, mgmtUrl);
@@ -82,8 +80,8 @@ public class PauseResumeV4Test {
         String pvDetailsURL = mgmtUrl + "getPVDetails?pv=";
         JSONArray pvInfo = GetUrlContent.getURLContentAsJSONArray(pvDetailsURL + pvURLName);
         JSONObject pvAccessInfo = (JSONObject) pvInfo.get(12);
-        assertEquals("Are we using PVAccess?", pvAccessInfo.get("name"));
-        assertEquals("Yes", pvAccessInfo.get("value"));
+        Assertions.assertEquals("Are we using PVAccess?", pvAccessInfo.get("name"));
+        Assertions.assertEquals("Yes", pvAccessInfo.get("value"));
     }
 
 }

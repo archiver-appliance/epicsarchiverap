@@ -7,12 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.nio.file.Path;
-import java.sql.Timestamp;
-
+import com.google.protobuf.InvalidProtocolBufferException;
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -21,11 +19,11 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.NoSuchElementException;
 
 /**
  * An iterator for a FileBackedPBEventStream.
@@ -33,170 +31,133 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
  *
  */
 public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEventStreamIterator {
-	private static Logger logger = LogManager.getLogger(FileBackedPBEventStreamTimeBasedIterator.class.getName());
-	private long startTimeEpochSeconds = 0;
-	private long endTimeEpochSeconds = 0;
-	private short year;
-	private LineByteStream lbs = null;
-	private ArchDBRTypes type;
-	private DBR2PBTypeMapping mapping;
-	private Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
-	Events events = new Events();
-	
-	private class Events { 
-		private ByteArray line1 = new ByteArray(LineByteStream.MAX_LINE_SIZE);
-		private Event event1 = null;
-		private ByteArray line2 = new ByteArray(LineByteStream.MAX_LINE_SIZE);
-		private Event event2 = null;
-		
-		void readEvents(LineByteStream lbs) throws Exception {
-			if(event1 == null) {
-				boolean done = false;
-				while(!done) {
-					try { 
-						lbs.readLine(line1);
-						if(!line1.isEmpty()) {
-							event1 = (Event) unmarshallingConstructor.newInstance(year, line1);
-							long event1EpochSeconds = event1.getEpochSeconds();
-							done = true;
-							if(event1EpochSeconds >= endTimeEpochSeconds) { 
-								event1 = null;
-								line1.reset();
-								return;
-							}
-						}
-						done = true;
-					} catch(InvalidProtocolBufferException|PBParseException ex) { 
-						logger.error("InvalidProtocolBufferException|PBParseException processing PB event near " + lbs.getCurrentPosition() + "//0");
-					}
-				}
-			}
-			
-			if(event2 == null) {
-				boolean done = false;
-				while(!done) {
-					try { 
-						lbs.readLine(line2);
-						if(!line2.isEmpty()) {
-							event2 = (Event) unmarshallingConstructor.newInstance(year, line2);
-							long event2EpochSeconds = event2.getEpochSeconds();
-							done = true;
-							if(event2EpochSeconds >= endTimeEpochSeconds) { 
-								event2 = null;
-								line2.reset();
-								return;
-							}
-						}
-						done = true;
-					} catch(InvalidProtocolBufferException|PBParseException ex) { 
-						logger.error("InvalidProtocolBufferException|PBParseException processing PB event near " + lbs.getCurrentPosition() + "//1");
-					}
-				}
-			}
-		}
-		
-		boolean startFound() {
-			if(event1 != null && event2 != null) {
-				long event1EpochSeconds = event1.getEpochSeconds();
-				long event2EpochSeconds = event2.getEpochSeconds();
-				if(event1EpochSeconds >= startTimeEpochSeconds) {
-					logger.debug("We have reached an event whose start time is greater than the requested start already. Terminating the search.");
-					return true;
-				}
-				if(event1EpochSeconds < startTimeEpochSeconds && event2EpochSeconds >= startTimeEpochSeconds) return true;
-				return false;
-			}
-			
-			if(event1 != null) {
-				assert(event2 == null);
-				long event1EpochSeconds = event1.getEpochSeconds();
-				logger.debug("Only one event found. As long as this is before the end time, we claim we found something.");
-				if(event1EpochSeconds <= endTimeEpochSeconds) return true;
-				return false;
-			}
-			
-			return false;
-		}
-		
-		Event popEvent() {
-			Event previousEvent = event1;
-			ByteArray previousByteArray = line1;
-			if(event2 != null) { 
-				event1 = event2;
-				line1 = line2;
-				event2 = null;
-				line2 = previousByteArray;
-			} else { 
-				event1 = null;
-			}
-			return previousEvent;
-		}
-		
-		boolean isEmpty() { 
-			return event1 == null;
-		}
-		
-		void clear() { 
-			event1 = null;
-			event2 = null;
-			line1.reset();
-			line2.reset();
-		}
-	}
-	
+    private static final Logger logger = LogManager.getLogger(FileBackedPBEventStreamTimeBasedIterator.class.getName());
+    private final long startTimeEpochSeconds;
+    private final long endTimeEpochSeconds;
+    private final short year;
+    private final LineByteStream lbs;
+    private final Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
+    Events events = new Events();
+    /**
+     * A flag indicating if the iterator has been fully read.
+     */
+    private boolean finished = false;
 
-	public FileBackedPBEventStreamTimeBasedIterator(Path path, Timestamp startTime, Timestamp endTime, short year, ArchDBRTypes type) throws IOException {
-		this.startTimeEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
-		this.endTimeEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
-		this.type = type;
-		mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
-		unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
-		assert(startTimeEpochSeconds >= 0);
-		assert(endTimeEpochSeconds >= 0);
-		assert(endTimeEpochSeconds >= startTimeEpochSeconds);
-		this.year = year;
-		lbs = new LineByteStream(path);
-		try {
-			lbs.readLine(events.line1); // This should read the header..
-			events.readEvents(lbs);
-			while(!events.isEmpty() && !events.startFound()) {
-				events.popEvent();
-				events.readEvents(lbs);
-			}
-		} catch(Exception ex) {
-			logger.error("Exception getting next event from path " + path.toString(), ex);
-			events.clear();
-		}
-	}
+    public FileBackedPBEventStreamTimeBasedIterator(
+            Path path, Instant startTime, Instant endTime, short year, ArchDBRTypes type) throws IOException {
+        this.startTimeEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
+        this.endTimeEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
+        DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(type);
+        unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
+        assert (startTimeEpochSeconds >= 0);
+        assert (endTimeEpochSeconds >= 0);
+        assert (endTimeEpochSeconds >= startTimeEpochSeconds);
+        this.year = year;
+        lbs = new LineByteStream(path);
+        try {
+            // This should read the header
+            lbs.readLine(events.line1);
+            events.readEvents(lbs);
+            while (!events.isEmpty() && !events.startFound()) {
+                events.popEvent();
+                events.readEvents(lbs);
+            }
+            logger.info("after start search event1 {}", events.event1.getEventTimeStamp());
+        } catch (Exception ex) {
+            logger.error("Exception getting next event from path " + path.toString(), ex);
+            events.clear();
+        }
+    }
 
-	
-	@Override
-	public boolean hasNext() {
-		if(!events.isEmpty()) return true;
-		
-		try {
-			events.readEvents(lbs);
-			if(!events.isEmpty()) return true;
-		} catch(Exception ex) {
-			logger.error("Exception creating event object", ex);
-		}
-		return false;
-	}
+    @Override
+    public boolean hasNext() {
+        if (!events.isEmpty()) return true;
+        if (finished) return false;
+        try {
+            events.readEvents(lbs);
+            if (!events.isEmpty()) return true;
+            if (finished) return false;
+        } catch (Exception ex) {
+            logger.error("Exception creating event object", ex);
+        }
+        return false;
+    }
 
+    @Override
+    public Event next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException("No more lines");
+        }
+        return events.popEvent();
+    }
 
-	@Override
-	public Event next() {
-		Event retVal = events.popEvent();
-		return retVal;
-	}
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
 
+    public void close() {
+        lbs.safeClose();
+    }
 
-	@Override
-	public void remove() {
-		throw new UnsupportedOperationException();
-	}
+    private class Events {
+        private final ByteArray line1 = new ByteArray(LineByteStream.MAX_LINE_SIZE);
+        private Event event1 = null;
 
-	public void close() {
-		lbs.safeClose();
-	}
+        void readEvents(LineByteStream lbs) throws Exception {
+            if (event1 == null) {
+                boolean done = false;
+                while (!done) {
+                    try {
+                        lbs.readLine(line1);
+                        if (!line1.isEmpty()) {
+                            event1 = unmarshallingConstructor.newInstance(year, line1);
+                            long event1EpochSeconds = event1.getEpochSeconds();
+                            done = true;
+                            if (event1EpochSeconds > endTimeEpochSeconds) {
+                                event1 = null;
+                                line1.reset();
+                                finished = true;
+                                return;
+                            }
+                        }
+                        done = true;
+                    } catch (InvalidProtocolBufferException | PBParseException ex) {
+                        logger.error("InvalidProtocolBufferException|PBParseException processing PB event near "
+                                + lbs.getCurrentPosition() + "//0");
+                    }
+                }
+            }
+        }
+
+        boolean startFound() {
+            if (event1 != null) {
+                long event1EpochSeconds = event1.getEpochSeconds();
+                if (event1EpochSeconds >= startTimeEpochSeconds) {
+                    logger.debug(
+                            "We have reached an event whose start time is greater than the requested start already. Terminating the search.");
+                    return true;
+                }
+                return false;
+            }
+
+            return false;
+        }
+
+        Event popEvent() {
+            Event previousEvent = event1;
+            this.clear();
+
+            return previousEvent;
+        }
+
+        boolean isEmpty() {
+            return event1 == null;
+        }
+
+        void clear() {
+            event1 = null;
+            line1.reset();
+        }
+    }
 }

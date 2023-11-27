@@ -7,6 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB.utils;
 
+import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
+
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -16,25 +18,20 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.LinkedList;
 
-import org.epics.archiverappliance.common.TimeUtils;
-
-import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
-
 /**
  * Print the timestamp of the first and last sample in a PB files/PB files in a directory
  * @author mshankar
  *
  */
 public class PrintFirstAndLastTimes {
-	
-	public static boolean printFirstAndLastTimes(Path path, boolean verboseMode) throws IOException {
+
+    public static void printFirstAndLastTimes(Path path) throws IOException {
 		PBFileInfo info = new PBFileInfo(path);
-		System.out.println("File " + path.getFileName().toString() + "for PV " + info.getPVName() +  " has data ranging from " 
-				+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(info.getFirstEventEpochSeconds(),0))
+		System.out.println("File " + path.getFileName().toString() + "for PV " + info.getPVName() +  " has data ranging from "
+                        + info.getFirstEvent().getEventTimeStamp()
 				+ " to "
-				+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(info.getLastEventEpochSeconds(),0))
+                        + info.getLastEvent().getEventTimeStamp()
 				);
-		return true;
 	}
 
 	/**
@@ -78,7 +75,7 @@ public class PrintFirstAndLastTimes {
 
 					@Override
 					public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-						printFirstAndLastTimes(file, verboseMode);
+                        printFirstAndLastTimes(file);
 						return FileVisitResult.CONTINUE;
 					}
 
@@ -92,8 +89,8 @@ public class PrintFirstAndLastTimes {
 						return FileVisitResult.CONTINUE;
 					}
 				}.init(verboseMode));
-			} else { 
-				printFirstAndLastTimes(path, verboseMode);
+			} else {
+                printFirstAndLastTimes(path);
 			}
 		}
 	}

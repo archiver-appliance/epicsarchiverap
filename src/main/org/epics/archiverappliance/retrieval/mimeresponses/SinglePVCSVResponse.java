@@ -7,16 +7,16 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * Implementation of a CSV response for a single PV
@@ -34,7 +34,7 @@ public class SinglePVCSVResponse implements MimeResponse {
 				+ "," + e.getSampleValue().toString()
 				+ "," + (((DBRTimeEvent)e).getSeverity())
 				+ "," + (((DBRTimeEvent)e).getStatus())
-				+ "," + (((DBRTimeEvent)e).getEventTimeStamp().getNanos())
+                        + "," + (((DBRTimeEvent) e).getEventTimeStamp().getNano())
 				);
 	}
 
@@ -49,7 +49,7 @@ public class SinglePVCSVResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
 		// Not much to do here for now.
 	}
 	

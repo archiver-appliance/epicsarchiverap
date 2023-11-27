@@ -1,10 +1,7 @@
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -13,30 +10,31 @@ import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import junit.framework.TestCase;
+import java.io.File;
 
-@Category(LocalEpicsTests.class)
-public class PauseAndResumePVwithMetaFieldTest extends TestCase {
+@Tag("localEpics")
+public class PauseAndResumePVwithMetaFieldTest {
 	private static Logger logger = LogManager.getLogger(PauseAndResumePVwithMetaFieldTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
 		testConfigService = new ConfigServiceForTests(new File("./bin"));
-		testConfigService.getEngineContext().setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(1);
+		testConfigService.getEngineContext().setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(ConfigServiceForTests.defaultSecondsDisconnect);
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 		testConfigService.shutdownNow();
@@ -72,27 +70,25 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			Thread.sleep((8)*60*1000);
 			ArchiveChannel archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
-			assertTrue("the channel for " + pvName
-					+ " should be created but it is not",
-					archiveChannel != null);
+			Assertions.assertTrue(archiveChannel != null, "the channel for " + pvName
+					+ " should be created but it is not");
 			// Clear the sample buffers and then wait for part of the engine write thread period.
 			archiveChannel.getSampleBuffer().getCurrentSamples().clear();
 			Thread.sleep(5*1000);
 			
 			boolean hasData = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should have data but it don't", hasData);
+			Assertions.assertTrue(hasData, "the channel for " + pvName
+					+ " should have data but it don't");
 			// check the archive field archived
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be connected but it is not",
-						archiveChannel.isMetaPVConnected(metaFieldTemp));
+				Assertions.assertTrue(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
+						+ " should be connected but it is not");
 
 			}
 			
-			assertTrue("We should have some CAJ channels for this PV", !testConfigService.getEngineContext().getAllChannelsForPV(pvName).isEmpty());
+			Assertions.assertTrue(!testConfigService.getEngineContext().getAllChannelsForPV(pvName).isEmpty(), "We should have some CAJ channels for this PV");
 
 			
 			logger.info("Before call to pausePV");
@@ -101,24 +97,22 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			Thread.sleep(5000);
 			// Make sure that we have closed all the channels associated with this PV
 			
-			assertTrue("All CAJ channels for this PV should be closed but it is not", testConfigService.getEngineContext().getAllChannelsForPV(pvName).isEmpty());
+			Assertions.assertTrue(testConfigService.getEngineContext().getAllChannelsForPV(pvName).isEmpty(), "All CAJ channels for this PV should be closed but it is not");
 			
 			
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
-			assertTrue("the channel for " + pvName
-					+ " should be stopped but it is not",
-					tempPVMetrics == null || !tempPVMetrics.isConnected());
+			Assertions.assertTrue(tempPVMetrics == null || !tempPVMetrics.isConnected(), "the channel for " + pvName
+					+ " should be stopped but it is not");
 			boolean hasData2 = archiveChannel.getSampleBuffer()
 					.getCurrentSamples().size() > 0;
-			assertTrue("the channel for " + pvName
-					+ " should not have data but it has", !hasData2);
+			Assertions.assertTrue(!hasData2, "the channel for " + pvName
+					+ " should not have data but it has");
 			// check meta field
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be not connected but it is ",
-						!archiveChannel.isMetaPVConnected(metaFieldTemp));
+				Assertions.assertTrue(!archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
+						+ " should be not connected but it is ");
 
 			}
 
@@ -128,22 +122,20 @@ public class PauseAndResumePVwithMetaFieldTest extends TestCase {
 			Thread.sleep((8)*60*1000);
 			PVMetrics tempPVMetrics3 = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
-			assertTrue("the channel for " + pvName
-					+ " should be restarted but it is not",
-					tempPVMetrics3.isConnected());
+			Assertions.assertTrue(tempPVMetrics3.isConnected(), "the channel for " + pvName
+					+ " should be restarted but it is not");
 			archiveChannel = testConfigService
 					.getEngineContext().getChannelList().get(pvName);
 
 			// check meta field
 			for (String metaFieldTemp : metaFields) {
 				String pvNameTemp = pvName + "." + metaFieldTemp;
-				assertTrue("the channel for " + pvNameTemp
-						+ " should be reconnected but it is not",
-						archiveChannel.isMetaPVConnected(metaFieldTemp));
+				Assertions.assertTrue(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
+						+ " should be reconnected but it is not");
 
 			}
 
-			assertTrue("We should have some CAJ channels for this PV", !testConfigService.getEngineContext().getAllChannelsForPV(pvName).isEmpty());
+			Assertions.assertTrue(!testConfigService.getEngineContext().getAllChannelsForPV(pvName).isEmpty(), "We should have some CAJ channels for this PV");
 
 		} catch (Exception e) {
 			//

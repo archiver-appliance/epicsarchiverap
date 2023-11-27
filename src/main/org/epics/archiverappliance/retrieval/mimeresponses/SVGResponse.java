@@ -7,15 +7,15 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * @author mshankar
@@ -45,9 +45,9 @@ public class SVGResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
-		viewboxX = start.getTime()/1000;
-		viewboxW = (end.getTime()/1000) - viewboxX;
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
+        viewboxX = start.toEpochMilli() / 1000;
+        viewboxW = (end.toEpochMilli() / 1000) - viewboxX;
 		double minY = -1.0;
 		if(!writtenHeader) {
 			writtenHeader = true;

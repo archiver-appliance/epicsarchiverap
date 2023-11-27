@@ -7,27 +7,24 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB.utils;
 
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ByteArray;
+import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.common.mergededup.MergeDedupEventStream;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
+
 import java.io.BufferedOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.sql.Timestamp;
 import java.util.LinkedList;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
-import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.common.mergededup.MergeDedupEventStream;
-import org.epics.archiverappliance.utils.nio.ArchPaths;
-
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 
 /**
  * Merge two PB files for the same PV and year into the third file.

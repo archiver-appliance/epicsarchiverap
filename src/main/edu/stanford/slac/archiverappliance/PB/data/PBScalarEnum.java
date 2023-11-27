@@ -7,11 +7,12 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarEnum.Builder;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import gov.aps.jca.dbr.DBR;
+import gov.aps.jca.dbr.DBR_TIME_Enum;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,19 +25,17 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAStructure;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarEnum.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import gov.aps.jca.dbr.DBR;
-import gov.aps.jca.dbr.DBR_TIME_Enum;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A DBRTimeEvent for a scalar enum. 
  * @author mshankar
  *
  */
-public class PBScalarEnum implements DBRTimeEvent, PartionedTime {
+public class PBScalarEnum implements DBRTimeEvent {
 	ByteArray bar = null;
 	short year = 0;
 	EPICSEvent.ScalarEnum dbevent = null;
@@ -52,7 +51,7 @@ public class PBScalarEnum implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarEnum.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 				.setVal(ev.getSampleValue().getValue().intValue());
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -74,7 +73,7 @@ public class PBScalarEnum implements DBRTimeEvent, PartionedTime {
 		year = yst.getYear();
 		Builder builder = EPICSEvent.ScalarEnum.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 				.setVal(realtype.getEnumValue()[0]);
 		if(realtype.getSeverity().getValue() != 0) builder.setSeverity(realtype.getSeverity().getValue());
 		if(realtype.getStatus().getValue() != 0) builder.setStatus(realtype.getStatus().getValue());
@@ -85,13 +84,13 @@ public class PBScalarEnum implements DBRTimeEvent, PartionedTime {
 	public PBScalarEnum(PVAStructure v4Data) {
         YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
 		DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
-        
+
         int value = ((PVAInt) ((PVAStructure) v4Data.get("value")).get("index")).get();
         
         year = yst.getYear();
         Builder builder = EPICSEvent.ScalarEnum.newBuilder()
                         .setSecondsintoyear(yst.getSecondsintoyear())
-                        .setNano(yst.getNanos())
+                .setNano(yst.getNano())
                         .setVal(value);
 		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
 		if(alarm.status != 0) builder.setStatus(alarm.status);
@@ -105,20 +104,9 @@ public class PBScalarEnum implements DBRTimeEvent, PartionedTime {
 	}
 	
 	@Override
-	public Timestamp getEventTimeStamp() {
+    public Instant getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
-	}
-	
-	@Override
-	public short getYear() {
-		return year;
-	}
-	
-	@Override
-	public int getSecondsIntoYear() {
-		unmarshallEventIfNull();
-		return dbevent.getSecondsintoyear();
 	}
 
 	@Override

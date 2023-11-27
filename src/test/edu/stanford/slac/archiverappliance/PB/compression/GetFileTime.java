@@ -1,11 +1,13 @@
 package edu.stanford.slac.archiverappliance.PB.compression;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 public class GetFileTime {
 	private static Logger logger = LogManager.getLogger(GetFileTime.class.getName());
@@ -50,7 +52,7 @@ public class GetFileTime {
                         File zipFile =new File("/scratch/morepvsforoneday/result/2012_01_0"+i+".zip");
                         InputStream in=GZIPUtil.unpackZip(zipFile,"pv0:2012_01_01.pb.gz");
                         //String filename=
-                                        GZIPUtil.unGZFile(in, "/scratch/morepvsforoneday/result/", "pv0:2012_01_0"+i+".pb");
+                            GZIPUtil.unGZFile(in, "/scratch/morepvsforoneday/result/", "pv0:2012_01_0" + i + pbFileExtension);
                         //System.out.println(filename);
                         }
                         //GZIPUtil.unziptarFile(in, "pv54:2012_03_31_11.pb", "/scratch/", "new_pv54:2012_03_31_11.pb");
@@ -73,7 +75,7 @@ public class GetFileTime {
                         {
                         InputStream in=GZIPUtil.unpackZip(zipFile,"pv:2012_06_0"+i+".pb.gz");
                         //String filename=
-                                        GZIPUtil.unGZFile(in, "/scratch/onepvperday/result/", "pv:2012_06_0"+i+".pb");
+                            GZIPUtil.unGZFile(in, "/scratch/onepvperday/result/", "pv:2012_06_0" + i + pbFileExtension);
                         //System.out.println(filename);
                         }
                         //GZIPUtil.unziptarFile(in, "pv54:2012_03_31_11.pb", "/scratch/", "new_pv54:2012_03_31_11.pb");

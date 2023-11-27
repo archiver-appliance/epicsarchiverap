@@ -11,33 +11,32 @@ import java.io.File;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.DefaultConfigService;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
+
 /**
  * test of year changing.
  * When year changes, we should create a new ArrayListEventStream
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class YearListenerTest  extends TestCase{
+@Tag("localEpics")
+public class YearListenerTest {
 	private static Logger logger = LogManager.getLogger(YearListenerTest.class.getName());
 	private SIOCSetup ioc = null;
 	private DefaultConfigService testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		ioc = new SIOCSetup();
 		ioc.startSIOCWithDefaultDB();
@@ -45,7 +44,7 @@ public class YearListenerTest  extends TestCase{
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 		testConfigService.shutdownNow();

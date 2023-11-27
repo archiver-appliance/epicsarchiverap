@@ -7,10 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.IOException;
-
-import junit.framework.TestCase;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.Writer;
@@ -22,12 +18,14 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
 /**
  * Store all samples in a buffer
  * @author Murali Shankar
  *
  */
-public class MemBufWriter extends TestCase implements Writer {
+public class MemBufWriter implements Writer {
 	private ArrayListEventStream buf;
 	
 	public MemBufWriter(String pvName, ArchDBRTypes dbrType) { 
@@ -50,11 +48,13 @@ public class MemBufWriter extends TestCase implements Writer {
 	}
 
 	@Override
-	public boolean appendData(BasicContext context, String arg0, EventStream arg1) throws IOException {
+    public int appendData(BasicContext context, String arg0, EventStream arg1) throws IOException {
+        int eventsAppended = 0;
 		for(Event e : arg1) {
 			buf.add(e);
+            eventsAppended++;
 		}
-		return true;
+        return eventsAppended;
 	}
 
 	@Override

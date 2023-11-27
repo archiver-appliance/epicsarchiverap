@@ -1,17 +1,5 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -19,6 +7,7 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -30,6 +19,17 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Callable;
 
 /**
  * <div>Appends the data for an older PV into a newer PV. The older PV is deleted and an alias is added mapping the older PV into the newer PV.</div>
@@ -256,9 +256,9 @@ public class AppendAndAliasPV implements BPLAction {
 		}
 		
 		// Get the first known timestamp for newer PV.
-		long distantFutureEpochSeconds = System.currentTimeMillis()/1000 + 2*365*24*60*60;
-		Timestamp distantFuture = TimeUtils.convertFromEpochSeconds(distantFutureEpochSeconds, 0);
-		Timestamp distantPast = TimeUtils.minusDays(olderTypeInfo.getCreationTime(), 5*366);
+		long distantFutureEpochSeconds = System.currentTimeMillis() / 1000 + 2 * 365 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+		Instant distantFuture = TimeUtils.convertFromEpochSeconds(distantFutureEpochSeconds, 0);
+		Instant distantPast = TimeUtils.minusDays(olderTypeInfo.getCreationTime(), 5 * 366);
 
 		long epochForFirstEvent = distantFutureEpochSeconds;
 		for(String store : newerTypeInfo.getDataStores()) {
@@ -280,8 +280,8 @@ public class AppendAndAliasPV implements BPLAction {
 		} else {
 			logger.info("Copying over data from older PV " + olderPVName + " upto " + TimeUtils.convertToHumanReadableString(epochForFirstEvent));
 		}
-		
-		Timestamp firstEventTS = TimeUtils.convertFromEpochSeconds(epochForFirstEvent, 0);
+
+		Instant firstEventTS = TimeUtils.convertFromEpochSeconds(epochForFirstEvent, 0);
 		
 		long beforeEventCountOlder = getEventCount(configService, olderApplianceInfo, olderPVName, distantPast, firstEventTS);
 		long beforeEventCountNewer = getEventCount(configService, newerApplianceInfo, olderPVName, firstEventTS, distantFuture);
@@ -449,7 +449,7 @@ public class AppendAndAliasPV implements BPLAction {
 	 * @param to
 	 * @return
 	 */
-	private long getEventCount(ConfigService configService, ApplianceInfo info, String pvName, Timestamp from, Timestamp to) { 
+	private long getEventCount(ConfigService configService, ApplianceInfo info, String pvName, Instant from, Instant to) {
 		long eventCount = 0;
 		String dataRetrievalURL = info.getRetrievalURL().replace("/bpl", "") + "/data/getData.raw";
 		try { 

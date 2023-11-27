@@ -7,14 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.config;
 
-import java.io.IOException;
-import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -26,6 +18,14 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 
 /**
  * Somewhat static information about a PV like it's type info, graphic limits, event rates etc.
@@ -126,8 +126,8 @@ public class PVTypeInfo implements Serializable {
 	 */
 	private int computedBytesPerEvent;
 	private float userSpecifiedEventRate;
-	private Timestamp creationTime;
-	private Timestamp modificationTime;
+    private Instant creationTime;
+    private Instant modificationTime;
 	private boolean paused = false;
 	private SamplingMethod samplingMethod;
 	private float samplingPeriod;
@@ -219,20 +219,20 @@ public class PVTypeInfo implements Serializable {
 		return userSpecifiedEventRate;
 	}
 
-	public Timestamp getCreationTime() {
+    public Instant getCreationTime() {
 		return creationTime;
 	}
 
-	public void setCreationTime(Timestamp creationTime) {
+    public void setCreationTime(Instant creationTime) {
 		this.creationTime = creationTime;
 		this.modificationTime = creationTime;
 	}
 
-	public Timestamp getModificationTime() {
+    public Instant getModificationTime() {
 		return modificationTime;
 	}
 
-	public void setModificationTime(Timestamp modificationTime) {
+    public void setModificationTime(Instant modificationTime) {
 		this.modificationTime = modificationTime;
 	}
 
@@ -544,9 +544,9 @@ public class PVTypeInfo implements Serializable {
 	 * Loop thru the stores outlined in this typeinfo and determine the most recent event for this pv
 	 * @param configService ConfigService
 	 * @throws IOException  &emsp;
-	 * @return Timestamp  &emsp;
+     * @return Instant  &emsp;
 	 */
-	public Timestamp determineLastKnownEventFromStores(ConfigService configService) throws IOException {
+    public Instant determineLastKnownEventFromStores(ConfigService configService) throws IOException {
 		try(BasicContext context = new BasicContext()) {
 			for(String storeUrl : this.dataStores) {
 				try {

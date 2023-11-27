@@ -1,11 +1,5 @@
 package org.epics.archiverappliance.common.mergededup;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -15,6 +9,12 @@ import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * This is almost idential to the MergeDedupEventStream; expect it takes as its first argument a list of EventStream callables 
@@ -73,10 +73,10 @@ public class MergeDedupWithCallablesEventStream implements EventStream, Remotabl
 			Event ret = null;
 			if (s1next != null && s2next != null ) {
 				logger.debug("Still merging both streams " + TimeUtils.convertToHumanReadableString(s1next.getEventTimeStamp()) + " and " + TimeUtils.convertToHumanReadableString(s2next.getEventTimeStamp()));
-				if(s1next.getEventTimeStamp().before(s2next.getEventTimeStamp())) {
+                if (s1next.getEventTimeStamp().isBefore(s2next.getEventTimeStamp())) {
 					ret = s1next.makeClone();
 					moveIt1();
-				} else if (s1next.getEventTimeStamp().after(s2next.getEventTimeStamp())) {
+                } else if (s1next.getEventTimeStamp().isAfter(s2next.getEventTimeStamp())) {
 					ret = s2next.makeClone();
 					moveIt2();
 				} else {

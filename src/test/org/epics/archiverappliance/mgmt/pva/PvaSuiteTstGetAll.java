@@ -1,23 +1,21 @@
 package org.epics.archiverappliance.mgmt.pva;
 
-import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
+import org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.client.PVAClient;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVAURI;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs;
-import static org.junit.Assert.*;
 
 /**
  * Test the pvAccess mgmt service's ability to start archiving a pv
@@ -25,7 +23,7 @@ import static org.junit.Assert.*;
  * @author Kunal Shroff
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class PvaSuiteTstGetAll {
 
 	private static final Logger logger = LogManager.getLogger(PvaSuiteTstGetAll.class.getName());
@@ -33,7 +31,7 @@ public class PvaSuiteTstGetAll {
 	private static PVAClient pvaClient;
 	private static PVAChannel pvaChannel;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setup() throws Exception {
 		pvaClient = new PVAClient();
 		pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
@@ -41,7 +39,7 @@ public class PvaSuiteTstGetAll {
 
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanup() {
 
 		pvaChannel.close();
@@ -56,11 +54,11 @@ public class PvaSuiteTstGetAll {
 		PVAURI uri = new PVAURI("uri", "pva", PvaGetAllPVs.NAME);
 		try {
 			PVAStructure result = pvaChannel.invoke(uri).get(30, TimeUnit.SECONDS);
-			assertNotNull(result);
+			Assertions.assertNotNull(result);
 			logger.info("results" + result);
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail(e.getMessage());
+			Assertions.fail(e.getMessage());
 		}
 	}
 }

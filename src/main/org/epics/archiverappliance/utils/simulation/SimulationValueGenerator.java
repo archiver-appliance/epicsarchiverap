@@ -16,13 +16,6 @@ import org.epics.archiverappliance.data.SampleValue;
  *
  */
 public interface SimulationValueGenerator {
-	/**
-	 * Get the number of events in the stream; this can be based on the incoming DBR_type.
-	 * If you want the simulation stream decide on the number of samples (perhaps based on the year), return -1 here and an appropriate default is chosen. 
-	 * @param type ArchDBRTypes  
-	 * @return The number of samples 
-	 */
-	public int getNumberOfSamples(ArchDBRTypes type);
 
 	/**
 	 * Get the value at a particular point in time. 

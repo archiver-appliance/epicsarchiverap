@@ -1,21 +1,12 @@
 package org.epics.archiverappliance.etl;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
-import org.apache.logging.log4j.Level;
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -31,194 +22,243 @@ import org.epics.archiverappliance.etl.conversion.ThruNumberAndStringConversion;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.AppendDataStateData;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /**
  * Test the conversion implementation in the PlainPBStoragePlugin.
  * We generate a standard data set into a PB file, convert and make sure the data is as expected (timestamps remain the same, values are converted appropriately).
- *  
+ *
  * @author mshankar
  *
  */
 public class PlainPBConversionTest {
-	private static Logger logger = LogManager.getLogger(PlainPBConversionTest.class.getName());
-	PlainPBStoragePlugin storagePlugin;
-	PBCommonSetup setup;
+    private static final Logger logger = LogManager.getLogger(PlainPBConversionTest.class.getName());
+    private static final int ratio = 5;
+    private final int addFieldValues = 10;
+    private final int markFieldValuesChanged = 20;
 
-	@Test
-	@Category(SlowTests.class)
-	public void testPlainPBConversion() throws Exception {
-		testConversionForGranularity(PartitionGranularity.PARTITION_HOUR, 24*60*60);
-		testConversionForGranularity(PartitionGranularity.PARTITION_DAY, 7*24*60*60);
-		testConversionForGranularity(PartitionGranularity.PARTITION_MONTH, 2*31*24*60*60);
-	}
-	
-	private void testConversionForGranularity(PartitionGranularity granularity, int numEvents) throws Exception {
-		storagePlugin = new PlainPBStoragePlugin();
-		setup = new PBCommonSetup();
-		setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_FLOAT, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_INT, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_ENUM, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_ENUM, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_INT, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_FLOAT, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_INT, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_FLOAT, numEvents);
-		testThruNumberConversionForDBRType(ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_DOUBLE, numEvents);
-		testFailedConversionForDBRType(ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_WAVEFORM_STRING, numEvents);
-		setup.deleteTestFolder();
-		
-	}
+    @BeforeAll
+    public static void setup() {
+    }
 
-	private void testThruNumberConversionForDBRType(ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType, int numEvents) throws Exception {
-		logger.info("Testing conversion from " + srcDBRType.toString() + " to " + destDBRType.toString());
-		String pvName = "PlainPBConversionTest_" + srcDBRType.toString() + "_" + destDBRType.toString();
-		generateDataForArchDBRType(pvName, srcDBRType, numEvents);
-		validateStream(pvName, numEvents, srcDBRType);
-		Set<String> bflist = setup.listTestFolderContents();		
-		convertToType(pvName, destDBRType);
-		validateStream(pvName, numEvents, destDBRType);
-		Set<String> aflist = setup.listTestFolderContents();
-		assertTrue("The contents of the test folder have changed; probably something remained", bflist.equals(aflist));
-	}
-	
-	private void testFailedConversionForDBRType(ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType, int numEvents) throws Exception {
-		logger.info("Testing failed conversion from " + srcDBRType.toString() + " to " + destDBRType.toString() + ". You could see an exception here; ignore it. It is expected");
-		String pvName = "PlainPBConversionTest_" + srcDBRType.toString() + "_" + destDBRType.toString();
-		generateDataForArchDBRType(pvName, srcDBRType, numEvents);
-		
-		validateStream(pvName, numEvents, srcDBRType);
-		try {
-			convertToType(pvName, destDBRType);
-		} catch(Exception ex) {
-			assertTrue("Expecting a Conversion Exception, instead got a " + ex, ex.getCause() instanceof ConversionException);
-		}
-		validateStream(pvName, numEvents, srcDBRType);
-	}
-	
-	private void generateDataForArchDBRType(String pvName, ArchDBRTypes dbrType, int numEvents) throws Exception { 
-		ArrayListEventStream ret = new ArrayListEventStream(numEvents, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
-		int eventsAdded = 0;
-		Constructor<? extends DBRTimeEvent> serializingConstructor = DBR2PBTypeMapping.getPBClassFor(dbrType).getSerializingConstructor();
-		try(SimulationEventStream simstream = new SimulationEventStream(dbrType, new ValueGenerator(dbrType, numEvents))) {
-			for(Event simEvent : simstream) {
-				DBRTimeEvent genEvent = (DBRTimeEvent) serializingConstructor.newInstance(simEvent);
-				if(eventsAdded % 1000 == 0) { 
-					genEvent.addFieldValue("HIHI", "Test");
-					genEvent.addFieldValue("LOLO", "13:40:12");
-					if(eventsAdded % 2000 == 0) {
-						genEvent.markAsActualChange();
-					}
-				}
-				ret.add(genEvent);
-				if(eventsAdded++ > numEvents) break;
-			}
-			try(BasicContext context = new BasicContext()) { 
-				storagePlugin.appendData(context, pvName, ret);
-			}
-		}
-	}
-	
-	private void convertToType(String pvName, ArchDBRTypes destDBRType) throws IOException { 
-		try(BasicContext context = new BasicContext()) { 
-			storagePlugin.convert(context, pvName, new ThruNumberAndStringConversion(destDBRType));
-		}
-	}
-	
-	private void validateStream(String pvName, int numEvents, ArchDBRTypes destDBRType) throws Exception {
-		long expectedCurrentEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-		int eventCount = 0;
-		try(BasicContext context = new BasicContext()) { 
-			Timestamp startTime = TimeUtils.minusDays(TimeUtils.now(), 2*266);
-			Timestamp endTime = TimeUtils.plusDays(TimeUtils.now(), 2*266);
-			List<Callable<EventStream>> callables = storagePlugin.getDataForPV(context, pvName, startTime, endTime);
-			for(Callable<EventStream> callable : callables) { 
-				try(EventStream strm = callable.call()) { 
-					assertTrue("Expecting pvName to be " + pvName + " instead it is " + strm.getDescription().getPvName(), pvName.equals(strm.getDescription().getPvName()));
-					assertTrue("Expecting DBR type to be " + destDBRType.toString() + " instead it is " + strm.getDescription().getArchDBRType(), strm.getDescription().getArchDBRType() == destDBRType);
-					for(Event e : strm) { 
-						DBRTimeEvent dbr = (DBRTimeEvent) e;
-						long epochSeconds = dbr.getEpochSeconds();
-						assertTrue("Timestamp is different at event count " + eventCount + " Expected " + TimeUtils.convertToHumanReadableString(expectedCurrentEpochSeconds) + " got " + TimeUtils.convertToHumanReadableString(epochSeconds), epochSeconds == expectedCurrentEpochSeconds);
-						if(eventCount % 1000 == 0) { 
-							assertTrue("Expecting field values at event count " + eventCount, dbr.hasFieldValues());
-							assertTrue("Expecting HIHI as Test at " + eventCount, dbr.getFieldValue("HIHI").equals("Test"));
-							assertTrue("Expecting LOLO as 13:40:12 at " + eventCount, dbr.getFieldValue("LOLO").equals("13:40:12"));
-							if(eventCount % 2000 == 0) {
-								assertTrue("Expecting field values to be actual change " + eventCount, dbr.isActualChange());
-							}
-						}
-						expectedCurrentEpochSeconds++;
-						eventCount++;
-					}
-				}
-			}
-		}
-		assertTrue("Expecting some events " + eventCount, eventCount == numEvents);
-	}
-	
-	
-	private class ValueGenerator implements SimulationValueGenerator {
-		private int numSamples;
-		private ArchDBRTypes dbrType;
-		public ValueGenerator(ArchDBRTypes dbrType, int numSamples) { 
-			this.numSamples = numSamples;
-			this.dbrType = dbrType;
-		}
+    public static Stream<Arguments> providePlainPBConversion() {
+        return Stream.of(
+                        provideConversionForGranularity(PartitionGranularity.PARTITION_HOUR),
+                        provideConversionForGranularity(PartitionGranularity.PARTITION_DAY),
+                        provideConversionForGranularity(PartitionGranularity.PARTITION_MONTH))
+                .flatMap(a -> a);
+    }
 
-		@Override
-		public int getNumberOfSamples(ArchDBRTypes type) {
-			return numSamples;
-		}
+    private static Stream<Arguments> provideConversionForGranularity(PartitionGranularity granularity) {
+        return Stream.of(
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_DOUBLE),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_DOUBLE),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_FLOAT, ArchDBRTypes.DBR_SCALAR_DOUBLE),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_ENUM, ArchDBRTypes.DBR_SCALAR_INT),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_INT, ArchDBRTypes.DBR_SCALAR_ENUM),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_ENUM),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_INT),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_SCALAR_FLOAT),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_INT),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_FLOAT),
+                Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_DOUBLE));
+    }
 
-		@Override
-		public SampleValue getSampleValue(ArchDBRTypes type, int secondsIntoYear) {
-			switch(dbrType) {
-			case DBR_SCALAR_BYTE:
-				return new ScalarValue<Byte>((byte) secondsIntoYear);
-			case DBR_SCALAR_DOUBLE:
-				return new ScalarValue<Double>((double) secondsIntoYear);
-			case DBR_SCALAR_ENUM:
-				return new ScalarValue<Short>((short) secondsIntoYear);
-			case DBR_SCALAR_FLOAT:
-				return new ScalarValue<Float>((float) secondsIntoYear);
-			case DBR_SCALAR_INT:
-				return new ScalarValue<Integer>((int) secondsIntoYear);
-			case DBR_SCALAR_SHORT:
-				return new ScalarValue<Short>((short) secondsIntoYear);
-			case DBR_SCALAR_STRING:
-				return new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
-			case DBR_V4_GENERIC_BYTES:
-				return new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
-			case DBR_WAVEFORM_BYTE:
-				return new VectorValue<Byte>(Collections.nCopies(10*secondsIntoYear, ((byte)(secondsIntoYear%255))));
-			case DBR_WAVEFORM_DOUBLE:
-				return new VectorValue<Double>(Collections.nCopies(10*secondsIntoYear, ((double)secondsIntoYear)));
-			case DBR_WAVEFORM_ENUM:
-				return new VectorValue<Short>(Collections.nCopies(10*secondsIntoYear, ((short)secondsIntoYear)));
-			case DBR_WAVEFORM_FLOAT:
-				return new VectorValue<Float>(Collections.nCopies(10*secondsIntoYear, ((float)secondsIntoYear)));
-			case DBR_WAVEFORM_INT:
-				return new VectorValue<Integer>(Collections.nCopies(10*secondsIntoYear, ((int)secondsIntoYear)));
-			case DBR_WAVEFORM_SHORT:
-				return new VectorValue<Short>(Collections.nCopies(10*secondsIntoYear, ((short)secondsIntoYear)));
-			case DBR_WAVEFORM_STRING:
-				return new VectorStringSampleValue(Collections.nCopies(10*secondsIntoYear, Integer.toString(secondsIntoYear)));
-			default:
-				throw new UnsupportedOperationException(); 
-			}
-		} 
-		
-	}
+    public static Stream<PartitionGranularity> provideFailedConversionForDBRType() {
+        return Stream.of(
+                PartitionGranularity.PARTITION_HOUR,
+                PartitionGranularity.PARTITION_DAY,
+                PartitionGranularity.PARTITION_MONTH);
+    }
 
-	
+    @ParameterizedTest
+    @MethodSource("providePlainPBConversion")
+    public void testThruNumberConversionForDBRType(
+            PartitionGranularity granularity, ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType) throws Exception {
+        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PBCommonSetup setup = new PBCommonSetup();
+        setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
+        logger.info("Testing conversion from " + srcDBRType.toString() + " to " + destDBRType.toString());
+        String pvName = "PlainPBConversionTest_" + srcDBRType + "_" + destDBRType;
+        int periodInSeconds = granularity.getApproxSecondsPerChunk() / ratio;
+        int totalTimePeriodInSeconds = granularity.getApproxSecondsPerChunk() * ratio;
+        Instant startTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
+        int numEvents = generateDataForArchDBRType(
+                pvName, srcDBRType, totalTimePeriodInSeconds, periodInSeconds, startTime, storagePlugin);
+        validateStream(pvName, numEvents, periodInSeconds, startTime, srcDBRType, storagePlugin);
+        Set<String> bflist = setup.listTestFolderContents();
+        convertToType(pvName, destDBRType, storagePlugin);
+        validateStream(pvName, numEvents, periodInSeconds, startTime, destDBRType, storagePlugin);
+        Set<String> aflist = setup.listTestFolderContents();
+        Assertions.assertEquals(
+                bflist, aflist, "The contents of the test folder have changed; probably something remained");
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideFailedConversionForDBRType")
+    public void testFailedConversionForDBRType(PartitionGranularity granularity) throws Exception {
+        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PBCommonSetup setup = new PBCommonSetup();
+        setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
+        logger.info("Testing failed conversion from " + ArchDBRTypes.DBR_SCALAR_DOUBLE + " to "
+                + ArchDBRTypes.DBR_WAVEFORM_STRING + ". You could see an exception here; ignore it. It is expected");
+        String pvName =
+                "PlainPBConversionTest_" + ArchDBRTypes.DBR_SCALAR_DOUBLE + "_" + ArchDBRTypes.DBR_WAVEFORM_STRING;
+        int periodInSeconds = granularity.getApproxSecondsPerChunk() / ratio;
+        int totalTimePeriodInSeconds = granularity.getApproxSecondsPerChunk() * ratio;
+        Instant startTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
+        int numEvents = generateDataForArchDBRType(
+                pvName,
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                totalTimePeriodInSeconds,
+                periodInSeconds,
+                startTime,
+                storagePlugin);
+
+        validateStream(pvName, numEvents, periodInSeconds, startTime, ArchDBRTypes.DBR_SCALAR_DOUBLE, storagePlugin);
+        try {
+            convertToType(pvName, ArchDBRTypes.DBR_WAVEFORM_STRING, storagePlugin);
+        } catch (Exception ex) {
+            Assertions.assertTrue(
+                    ex.getCause() instanceof ConversionException,
+                    "Expecting a Conversion Exception, instead got a " + ex);
+        }
+        validateStream(pvName, numEvents, periodInSeconds, startTime, ArchDBRTypes.DBR_SCALAR_DOUBLE, storagePlugin);
+    }
+
+    private int generateDataForArchDBRType(
+            String pvName,
+            ArchDBRTypes dbrType,
+            int totalTimePeriodInSeconds,
+            int periodInSeconds,
+            Instant startTime,
+            PlainPBStoragePlugin storagePlugin)
+            throws Exception {
+        ArrayListEventStream ret = new ArrayListEventStream(
+                100, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
+        int eventsAdded = 0;
+        Constructor<? extends DBRTimeEvent> serializingConstructor =
+                DBR2PBTypeMapping.getPBClassFor(dbrType).getSerializingConstructor();
+        Instant endTime = startTime.plusSeconds(totalTimePeriodInSeconds);
+        try (SimulationEventStream simstream =
+                     new SimulationEventStream(dbrType, new ValueGenerator(dbrType), startTime, endTime, periodInSeconds)) {
+            for (Event simEvent : simstream) {
+                DBRTimeEvent genEvent = serializingConstructor.newInstance(simEvent);
+                if (eventsAdded % addFieldValues == 0) {
+                    genEvent.addFieldValue("HIHI", "Test");
+                    genEvent.addFieldValue("LOLO", "13:40:12");
+                    if (eventsAdded % markFieldValuesChanged == 0) {
+                        genEvent.markAsActualChange();
+                    }
+                }
+                ret.add(genEvent);
+                eventsAdded++;
+            }
+            try (BasicContext context = new BasicContext()) {
+                return storagePlugin.appendData(context, pvName, ret);
+            }
+        }
+    }
+
+    private void convertToType(String pvName, ArchDBRTypes destDBRType, PlainPBStoragePlugin storagePlugin)
+            throws IOException {
+        try (BasicContext context = new BasicContext()) {
+            storagePlugin.convert(context, pvName, new ThruNumberAndStringConversion(destDBRType));
+        }
+    }
+
+    private void validateStream(
+            String pvName,
+            int numEvents,
+            int periodInSeconds,
+            Instant expectedStartTime,
+            ArchDBRTypes destDBRType,
+            PlainPBStoragePlugin storagePlugin)
+            throws Exception {
+        Instant expectedTime = expectedStartTime;
+        int eventCount = 0;
+        try (BasicContext context = new BasicContext()) {
+            Instant startTime = TimeUtils.minusDays(TimeUtils.now(), 2 * 266);
+            Instant endTime = TimeUtils.plusDays(TimeUtils.now(), 2 * 266);
+            List<Callable<EventStream>> callables = storagePlugin.getDataForPV(context, pvName, startTime, endTime);
+            for (Callable<EventStream> callable : callables) {
+                try (EventStream strm = callable.call()) {
+                    Assertions.assertEquals(
+                            pvName,
+                            strm.getDescription().getPvName(),
+                            "Expecting pvName to be " + pvName + " instead it is "
+                                    + strm.getDescription().getPvName());
+                    Assertions.assertSame(
+                            strm.getDescription().getArchDBRType(),
+                            destDBRType,
+                            "Expecting DBR type to be " + destDBRType.toString() + " instead it is "
+                                    + strm.getDescription().getArchDBRType());
+                    for (Event e : strm) {
+                        DBRTimeEvent dbr = (DBRTimeEvent) e;
+                        Instant actualTime = dbr.getEventTimeStamp();
+                        Assertions.assertEquals(expectedTime, actualTime);
+                        if (eventCount % addFieldValues == 0) {
+                            Assertions.assertTrue(
+                                    dbr.hasFieldValues(), "Expecting field values at event count " + eventCount);
+                            Assertions.assertEquals(
+                                    "Test", dbr.getFieldValue("HIHI"), "Expecting HIHI as Test at " + eventCount);
+                            Assertions.assertEquals(
+                                    "13:40:12",
+                                    dbr.getFieldValue("LOLO"),
+                                    "Expecting LOLO as 13:40:12 at " + eventCount);
+                            if (eventCount % markFieldValuesChanged == 0) {
+                                Assertions.assertTrue(
+                                        dbr.isActualChange(),
+                                        "Expecting field values to be actual change " + eventCount);
+                            }
+                        }
+                        expectedTime = expectedTime.plusSeconds(periodInSeconds);
+                        eventCount++;
+                    }
+                }
+            }
+        }
+        Assertions.assertEquals(eventCount, numEvents, "Expecting some events " + eventCount);
+    }
+
+    private record ValueGenerator(ArchDBRTypes dbrType) implements SimulationValueGenerator {
+
+        @Override
+        public SampleValue getSampleValue(ArchDBRTypes type, int secondsIntoYear) {
+            return switch (dbrType) {
+                case DBR_SCALAR_BYTE -> new ScalarValue<Byte>((byte) secondsIntoYear);
+                case DBR_SCALAR_DOUBLE -> new ScalarValue<Double>((double) secondsIntoYear);
+                case DBR_SCALAR_ENUM, DBR_SCALAR_SHORT -> new ScalarValue<Short>((short) secondsIntoYear);
+                case DBR_SCALAR_FLOAT -> new ScalarValue<Float>((float) secondsIntoYear);
+                case DBR_SCALAR_INT -> new ScalarValue<Integer>(secondsIntoYear);
+                case DBR_SCALAR_STRING, DBR_V4_GENERIC_BYTES -> new ScalarStringSampleValue(
+                        Integer.toString(secondsIntoYear));
+                case DBR_WAVEFORM_BYTE -> new VectorValue<Byte>(
+                        Collections.nCopies(10 * secondsIntoYear, ((byte) (secondsIntoYear % 255))));
+                case DBR_WAVEFORM_DOUBLE -> new VectorValue<Double>(
+                        Collections.nCopies(10 * secondsIntoYear, ((double) secondsIntoYear)));
+                case DBR_WAVEFORM_ENUM, DBR_WAVEFORM_SHORT -> new VectorValue<Short>(
+                        Collections.nCopies(10 * secondsIntoYear, ((short) secondsIntoYear)));
+                case DBR_WAVEFORM_FLOAT -> new VectorValue<Float>(
+                        Collections.nCopies(10 * secondsIntoYear, ((float) secondsIntoYear)));
+                case DBR_WAVEFORM_INT -> new VectorValue<Integer>(
+                        Collections.nCopies(10 * secondsIntoYear, secondsIntoYear));
+                case DBR_WAVEFORM_STRING -> new VectorStringSampleValue(
+                        Collections.nCopies(10 * secondsIntoYear, Integer.toString(secondsIntoYear)));
+            };
+        }
+    }
 }

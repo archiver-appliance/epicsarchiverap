@@ -7,11 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.List;
-
 import org.epics.archiverappliance.common.PartitionGranularity;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
 
 /**
  * An ETL source is data source that can act as a source for ETL.
@@ -31,7 +31,7 @@ public interface ETLSource {
 	 * @return List ETLinfo
 	 * @throws IOException &emsp;
 	 */
-	public List<ETLInfo> getETLStreams(String pv, Timestamp currentTime, ETLContext context) throws IOException;
+    public List<ETLInfo> getETLStreams(String pv, Instant currentTime, ETLContext context) throws IOException;
 	
 	/**
 	 * Delete the ETLStream identifier by info when you can as it has already been consumed by the ETL destination.

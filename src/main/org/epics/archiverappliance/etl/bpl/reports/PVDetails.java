@@ -7,17 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.DecimalFormat;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -26,6 +15,16 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.DecimalFormat;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Gets the ETL details of a PV.
@@ -76,7 +75,7 @@ public class PVDetails implements BPLAction {
 				addDetailedStatus(statuses, "ETL " + lookupItem.getLifetimeorder() + " last completed", TimeUtils.convertToHumanReadableString(lookupItem.getLastETLCompleteEpochSeconds()));
 				addDetailedStatus(statuses, "ETL " + lookupItem.getLifetimeorder() + " last job took (ms)", Long.toString(lookupItem.getLastETLTimeWeSpentInETLInMilliSeconds()));
 			}
-			addDetailedStatus(statuses, "ETL " + lookupItem.getLifetimeorder() + " next job runs at", TimeUtils.convertToHumanReadableString(lookupItem.getCancellingFuture().getDelay(TimeUnit.SECONDS) + (TimeUtils.now().getTime()/1000)));
+            addDetailedStatus(statuses, "ETL " + lookupItem.getLifetimeorder() + " next job runs at", TimeUtils.convertToHumanReadableString(lookupItem.getCancellingFuture().getDelay(TimeUnit.SECONDS) + (TimeUtils.now().toEpochMilli() / 1000)));
 			if(lookupItem.getNumberofTimesWeETLed() != 0) {
 				addDetailedStatus(statuses, "ETL " + lookupItem.getLifetimeorder() + " total time performing ETL(ms)", Long.toString(lookupItem.getTotalTimeWeSpentInETLInMilliSeconds()));
 				addDetailedStatus(statuses, "ETL " + lookupItem.getLifetimeorder() + " average time performing ETL(ms)", Long.toString(lookupItem.getTotalTimeWeSpentInETLInMilliSeconds()/lookupItem.getNumberofTimesWeETLed()));

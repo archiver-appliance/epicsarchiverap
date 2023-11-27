@@ -8,13 +8,11 @@
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -26,11 +24,12 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Mimeresponse for PB over HTTP.
@@ -54,7 +53,7 @@ public class PBRAWResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
 		// We don't need this data for the raw response.
 		this.pvName = pv;
 	}

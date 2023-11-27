@@ -1,19 +1,11 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -24,15 +16,21 @@ import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.time.Instant;
 
 /**
  * Test data retrieval with aliasing and clustering.
@@ -40,7 +38,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category(LocalEpicsTests.class)
+@Tag("localEpics")
 public class ClusterAliasSpanApplianceTest {
 	private static Logger logger = LogManager.getLogger(ClusterAliasSpanApplianceTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ClusterAliasSpanApplianceTest");
@@ -48,12 +46,12 @@ public class ClusterAliasSpanApplianceTest {
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(persistenceFolder.exists()) {
 			FileUtils.deleteDirectory(persistenceFolder);
@@ -66,7 +64,7 @@ public class ClusterAliasSpanApplianceTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -92,14 +90,14 @@ public class ClusterAliasSpanApplianceTest {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable, pvNameToArchive.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 String aapl0 = checkInPersistence("UnitTestNoNamingConvention:sine", 0);
 		 String aapl1 = checkInPersistence("UnitTestNoNamingConvention:sine", 1);
-		 assertTrue("Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1", aapl0.equals(aapl1));
+		 Assertions.assertTrue(aapl0.equals(aapl1), "Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1");
 		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
 		 Thread.sleep(2*1000);
 		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
@@ -125,7 +123,7 @@ public class ClusterAliasSpanApplianceTest {
 		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFileForMember);
 		JDBM2Persistence persistenceLayer = new JDBM2Persistence();
 		PVTypeInfo typeInfo = persistenceLayer.getTypeInfo(pvName);
-		assertTrue("Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex, typeInfo != null);
+		Assertions.assertTrue(typeInfo != null, "Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex);
 		return typeInfo.getApplianceIdentity();
 	}
 	
@@ -136,8 +134,8 @@ public class ClusterAliasSpanApplianceTest {
 	 */
 	private void testRetrievalCount(String pvName) throws IOException {
 		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		 Timestamp end = TimeUtils.plusDays(TimeUtils.now(), 3);
-		 Timestamp start = TimeUtils.minusDays(end, 6);
+        Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
+        Instant start = TimeUtils.minusDays(end, 6);
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
 			 long previousEpochSeconds = 0;
 			 int eventCount = 0;
@@ -146,14 +144,14 @@ public class ClusterAliasSpanApplianceTest {
 			 if(stream != null) {
 				 for(Event e : stream) {
 					 long actualSeconds = e.getEpochSeconds();
-					 assertTrue(actualSeconds >= previousEpochSeconds);
+					 Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					 previousEpochSeconds = actualSeconds;
 					 eventCount++;
 				 }
 			 }
 
 			 logger.info("Got " + eventCount + " event for pv " + pvName);
-			 assertTrue("When asking for data using " + pvName + ", event count is 0. We got " + eventCount, eventCount > 0);
+			 Assertions.assertTrue(eventCount > 0, "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
 		 }
 	}
 	
@@ -186,6 +184,6 @@ public class ClusterAliasSpanApplianceTest {
 		String persistenceFileForMember = persistenceFile.replace(".jdbm2", "_appliance" + clusterIndex + ".jdbm2");
 		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFileForMember);
 		JDBM2Persistence persistenceLayer = new JDBM2Persistence();
-		assertTrue("Alias " + aliasName + " does not have entry in persistence in cluster file " + persistenceFile, pvName.equals(persistenceLayer.getAliasNamesToRealName(aliasName)));
+		Assertions.assertTrue(pvName.equals(persistenceLayer.getAliasNamesToRealName(aliasName)), "Alias " + aliasName + " does not have entry in persistence in cluster file " + persistenceFile);
 	}	
 }

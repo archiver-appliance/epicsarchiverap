@@ -8,11 +8,8 @@
 package edu.stanford.slac.archiverappliance.PBOverHTTP;
 
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Timestamp;
-import java.util.Iterator;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -22,8 +19,10 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 import org.epics.archiverappliance.retrieval.client.RetrievalEventProcessor;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.Instant;
+import java.util.Iterator;
 
 /**
  * An EventStream that is backed by an arbitrary input stream.
@@ -37,10 +36,10 @@ public class InputStreamBackedEventStream implements EventStream, RemotableOverR
 	private RemotableEventStreamDesc descFromFirstLine;
 	private RetrievalEventProcessor retrievalEventProcessor;
 	InputStream is = null;
-	Timestamp startTime;
+    Instant startTime;
 	private InputStreamBackedEventStreamIterator theIterator;
 
-	public InputStreamBackedEventStream(InputStream is, Timestamp startTime) throws IOException {
+    public InputStreamBackedEventStream(InputStream is, Instant startTime) throws IOException {
 		this.is = is;
 		this.startTime = startTime;
 		assert(is.markSupported());
@@ -62,8 +61,8 @@ public class InputStreamBackedEventStream implements EventStream, RemotableOverR
 			try { is.reset(); } catch (Throwable t) { logger.error("Exception resetting mark in input stream", t); } 
 		}
 	}
-	
-	public InputStreamBackedEventStream(InputStream is, Timestamp startTime, RetrievalEventProcessor retrievalEventProcessor) throws IOException {
+
+    public InputStreamBackedEventStream(InputStream is, Instant startTime, RetrievalEventProcessor retrievalEventProcessor) throws IOException {
 		this(is, startTime);
 		this.retrievalEventProcessor = retrievalEventProcessor;
 	}

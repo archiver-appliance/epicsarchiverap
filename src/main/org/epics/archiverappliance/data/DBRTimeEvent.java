@@ -7,12 +7,20 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import edu.stanford.slac.archiverappliance.PB.data.PartionedTime;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.YearSecondTimestamp;
 
 /**
  * A catch all interface that contains the attributes in a EPICS DBR_TIME_XXX from db_access.h.
  * @author mshankar
  */
-public interface DBRTimeEvent extends Event, SamplingInfo, AlarmInfo, FieldValues {
+public interface DBRTimeEvent extends Event, SamplingInfo, AlarmInfo, FieldValues, PartionedTime {
+
+    @Override
+    public default YearSecondTimestamp getYearSecondTimestamp() {
+        return TimeUtils.convertToYearSecondTimestamp(this.getEventTimeStamp());
+    }
 
 }

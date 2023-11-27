@@ -7,16 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.imprt;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
@@ -25,6 +19,13 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorStringSampleValue;
 import org.epics.archiverappliance.data.VectorValue;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+
 
 /**
  * 
@@ -32,7 +33,7 @@ import org.epics.archiverappliance.data.VectorValue;
  *
  */
 public class CSVEvent implements DBRTimeEvent {
-	Timestamp timestamp;
+    Instant timestamp;
 	int status;
 	int severity;
 	SampleValue sampleValue;
@@ -205,7 +206,7 @@ public class CSVEvent implements DBRTimeEvent {
 
 
 	@Override
-	public Timestamp getEventTimeStamp() {
+    public Instant getEventTimeStamp() {
 		return timestamp;
 	}
 
@@ -318,8 +319,12 @@ public class CSVEvent implements DBRTimeEvent {
 	@Override
 	public void setSeverity(int severity) {
 		this.severity = severity;
-	}
+    }
 
+    @Override
+    public YearSecondTimestamp getYearSecondTimestamp() {
+        return TimeUtils.convertToYearSecondTimestamp(this.getEventTimeStamp());
+    }
 }
 
 

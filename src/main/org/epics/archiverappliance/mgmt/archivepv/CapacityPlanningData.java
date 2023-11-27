@@ -1,10 +1,5 @@
 package org.epics.archiverappliance.mgmt.archivepv;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -14,6 +9,11 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Data from various appliances that is used for capacity planning.
@@ -112,35 +112,36 @@ public class CapacityPlanningData {
 		}
 	}
 	
-	public static class CPStaticData {
-		public ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> cpApplianceMetrics;
-		Timestamp timeofData;
-		public CPStaticData(ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> cpApplianceMetrics, Timestamp timeofData) {
-			this.cpApplianceMetrics = cpApplianceMetrics;
-			this.timeofData = timeofData;
-		}
-	}
-	
 	public static CPStaticData getMetricsForAppliances(ConfigService configService) throws IOException {
-		Timestamp now = TimeUtils.now();
+        Instant now = TimeUtils.now();
 		if(cachedCPStaticData != null) {
-			if((now.getTime() - cachedCPStaticData.timeofData.getTime()) > MEASURED_DATA_CACHE_TIME) {
-				logger.debug("Refetching static data for capacity planning as it is stale " + (now.getTime() - cachedCPStaticData.timeofData.getTime()));
+            if ((now.toEpochMilli() - cachedCPStaticData.timeofData.toEpochMilli()) > MEASURED_DATA_CACHE_TIME) {
+                logger.debug("Refetching static data for capacity planning as it is stale " + (now.toEpochMilli() - cachedCPStaticData.timeofData.toEpochMilli()));
 			} else {
 				logger.debug("Using cached copy of measured data");
 				return cachedCPStaticData;
 			}
 		}
-		
+
 		logger.debug("Fetching new capacity planning static data");
-		ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> capacityMetrics = new ConcurrentHashMap<ApplianceInfo, CapacityPlanningData>(); 
+		ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> capacityMetrics = new ConcurrentHashMap<ApplianceInfo, CapacityPlanningData>();
 		for(ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
 			capacityMetrics.put(applianceInfo, new CapacityPlanningData(configService, applianceInfo));
 		}
-		
+
 		CPStaticData newStaticData = new CPStaticData(capacityMetrics, now);
 		cachedCPStaticData = newStaticData;
 		return cachedCPStaticData;
+	}
+	
+	public static class CPStaticData {
+		public ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> cpApplianceMetrics;
+        Instant timeofData;
+
+        public CPStaticData(ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> cpApplianceMetrics, Instant timeofData) {
+			this.cpApplianceMetrics = cpApplianceMetrics;
+			this.timeofData = timeofData;
+		}
 	}
 
 

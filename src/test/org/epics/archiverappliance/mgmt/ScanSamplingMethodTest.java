@@ -1,17 +1,11 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Timestamp;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.PVCaPut;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
@@ -19,17 +13,20 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.retrieval.client.RetrievalEventProcessor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.support.ui.Select;
+
+import java.time.Instant;
 
 /**
  * Test the SCAN sampling method. These are the test cases
@@ -40,25 +37,25 @@ import org.openqa.selenium.support.ui.Select;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class ScanSamplingMethodTest {
 	private static Logger logger = LogManager.getLogger(ScanSamplingMethodTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -102,8 +99,8 @@ public class ScanSamplingMethodTest {
 
 	private void testDataRetrieval(String pvName, int expectedCount, long expectedGapBetweenSamples, boolean consecutiveValuesExpected) {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp end = TimeUtils.now();
-		Timestamp start = TimeUtils.minusHours(end, 1);
+        Instant end = TimeUtils.now();
+        Instant start = TimeUtils.minusHours(end, 1);
 
 		EventStream stream = null;
 		try {
@@ -120,19 +117,18 @@ public class ScanSamplingMethodTest {
 				long previousEventMillis = -1;
 				long previousValue = -1;
 				for(Event e : stream) {
-					long currentMillis = e.getEventTimeStamp().getTime();
-					assertTrue("Gap between samples " + (currentMillis - previousEventMillis) + " is more than expected " + expectedGapBetweenSamples + " for PV " + pvName, previousEventMillis == -1 || ((currentMillis - previousEventMillis) <= expectedGapBetweenSamples));
+                    long currentMillis = e.getEventTimeStamp().toEpochMilli();
+					Assertions.assertTrue(previousEventMillis == -1 || ((currentMillis - previousEventMillis) <= expectedGapBetweenSamples), "Gap between samples " + (currentMillis - previousEventMillis) + " is more than expected " + expectedGapBetweenSamples + " for PV " + pvName);
 					previousEventMillis = currentMillis;
 					eventCount++;
 					if(consecutiveValuesExpected) { 
 						long currentValue = e.getSampleValue().getValue().longValue();
-						assertTrue("We expect not to miss any value. Current " + currentValue + " and previous " + previousValue + " for pv " + pvName, 
-								previousValue == -1 || (currentValue == (previousValue + 1)));
+						Assertions.assertTrue(previousValue == -1 || (currentValue == (previousValue + 1)), "We expect not to miss any value. Current " + currentValue + " and previous " + previousValue + " for pv " + pvName);
 						previousValue = currentValue;
 					}
 				}
 			}
-			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected at least " + expectedCount + " for pv " + pvName, eventCount >= expectedCount);
+			Assertions.assertTrue(eventCount >= expectedCount, "Event count is not what we expect. We got " + eventCount + " and we expected at least " + expectedCount + " for pv " + pvName);
 		} finally {
 			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
 		}
@@ -172,8 +168,8 @@ public class ScanSamplingMethodTest {
 	
 	private void testLastSampleOfManualPV(String pvName, double lastValue) {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp end = TimeUtils.plusHours(TimeUtils.now(), 10);
-		Timestamp start = TimeUtils.minusHours(end, 10);
+        Instant end = TimeUtils.plusHours(TimeUtils.now(), 10);
+        Instant start = TimeUtils.minusHours(end, 10);
 
 		EventStream stream = null;
 		try {
@@ -192,9 +188,9 @@ public class ScanSamplingMethodTest {
 					eventValue = e.getSampleValue().getValue().doubleValue();
 					eventCount++;
 				}
-				assertTrue("We expected the last value to be " + lastValue + ". Instead it is " + eventValue, eventValue == lastValue);
+				Assertions.assertTrue(eventValue == lastValue, "We expected the last value to be " + lastValue + ". Instead it is " + eventValue);
 			}
-			assertTrue("Event count is not what we expect. We got " + eventCount + " and we expected at least one event", eventCount >= 1);
+			Assertions.assertTrue(eventCount >= 1, "Event count is not what we expect. We got " + eventCount + " and we expected at least one event");
 		} finally {
 			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
 		}

@@ -1,13 +1,5 @@
 package org.epics.archiverappliance.mgmt.archivepv;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -25,6 +17,14 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * State for the archive PV workflow
  * @author mshankar
@@ -40,8 +40,8 @@ public class ArchivePVState {
 	private ConfigService configService;
 	private List<String> fieldsArchivedAsPartOfStream;
 	private String applianceIdentityAfterCapacityPlanning;
-	private Timestamp startOfWorkflow = TimeUtils.now();
-	private Timestamp metaInfoRequestedSubmitted = null;
+    private Instant startOfWorkflow = TimeUtils.now();
+    private Instant metaInfoRequestedSubmitted = null;
 	private String myIdentity;
 	private MetaInfo metaInfo = null;
 
@@ -300,7 +300,7 @@ public class ArchivePVState {
 		configService.getEventBus().post(pubSubEvent);
 	}
 
-	public Timestamp getStartOfWorkflow() {
+    public Instant getStartOfWorkflow() {
 		return startOfWorkflow;
 	}
 	
@@ -435,7 +435,7 @@ public class ArchivePVState {
 		return pvName;
 	}
 
-	public Timestamp getMetaInfoRequestedSubmitted() {
+    public Instant getMetaInfoRequestedSubmitted() {
 		return metaInfoRequestedSubmitted;
 	}
 

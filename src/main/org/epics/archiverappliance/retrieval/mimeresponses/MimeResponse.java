@@ -7,14 +7,14 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
-import java.io.OutputStream;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.retrieval.EventConsumer;
+
+import java.io.OutputStream;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * A set of events for classes that convert event streams to mime specific responses.
@@ -38,11 +38,11 @@ public interface MimeResponse extends EventConsumer {
 	/**
 	 * Called when we swich to a new PV. 
 	 * @param pv The name of PV 
-	 * @param start Timestamp
-	 * @param end Timestamp
+     * @param start Instant
+     * @param end Instant
 	 * @param streamDesc  Could be null if we have no data in first store we hit.
 	 */
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc);
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc);
 	public void swicthingToStream(EventStream strm);
 	public void close();
 	

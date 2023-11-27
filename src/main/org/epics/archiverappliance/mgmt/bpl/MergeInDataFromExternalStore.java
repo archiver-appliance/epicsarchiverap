@@ -1,16 +1,6 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import edu.stanford.slac.archiverappliance.PBOverHTTP.InputStreamBackedEventStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -32,7 +22,15 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import edu.stanford.slac.archiverappliance.PBOverHTTP.InputStreamBackedEventStream;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * 
@@ -125,7 +123,7 @@ public class MergeInDataFromExternalStore implements BPLAction {
 
 		class MergeInData implements ConversionFunction {
 			@Override
-			public EventStream convertStream(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
+            public EventStream convertStream(EventStream srcEventStream, Instant streamStartTime, Instant streamEndTime) throws IOException {
 				if(srcEventStream.getDescription() instanceof RemotableEventStreamDesc) {
 					RemotableEventStreamDesc desc = (RemotableEventStreamDesc) srcEventStream.getDescription();
 					String serverURL = other + "/data/getData.raw" 
@@ -147,7 +145,7 @@ public class MergeInDataFromExternalStore implements BPLAction {
 			}
 
 			@Override
-			public boolean shouldConvert(EventStream srcEventStream, Timestamp streamStartTime, Timestamp streamEndTime) throws IOException {
+            public boolean shouldConvert(EventStream srcEventStream, Instant streamStartTime, Instant streamEndTime) throws IOException {
 				if(srcEventStream.getDescription() instanceof RemotableEventStreamDesc) {
 					RemotableEventStreamDesc desc = (RemotableEventStreamDesc) srcEventStream.getDescription();
 					String serverURL = other + "/data/getData.raw" 

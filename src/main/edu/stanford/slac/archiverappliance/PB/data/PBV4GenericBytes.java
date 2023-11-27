@@ -1,13 +1,8 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.sql.Timestamp;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
+import com.google.protobuf.ByteString;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -19,15 +14,16 @@ import org.epics.archiverappliance.data.ByteBufSampleValue;
 import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
-import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVAStructure;
 
-import com.google.protobuf.ByteString;
-
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.V4GenericBytes.Builder;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A DBRTimeEvent that wraps a V4 struct. We store the val as a bunch of bytes
@@ -49,16 +45,16 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
 		year = yst.getYear();
 		ByteString byteString = ByteString.copyFrom(ev.getSampleValue().getValueAsBytes());
-		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
+		EPICSEvent.V4GenericBytes.Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+                .setNano(yst.getNano())
 				.setVal(byteString);
 		if(ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
 		if(ev.getStatus() != 0) builder.setStatus(ev.getStatus());
 		if(ev.hasFieldValues()) {
 			HashMap<String, String> fields = ev.getFields();
 			for(String fieldName : fields.keySet()) {
-				FieldValue fv = EPICSEvent.FieldValue.newBuilder().setName(fieldName).setVal(fields.get(fieldName)).build();
+				EPICSEvent.FieldValue fv = EPICSEvent.FieldValue.newBuilder().setName(fieldName).setVal(fields.get(fieldName)).build();
 				builder.addFieldvalues(fv);
 			}
 			builder.setFieldactualchange(ev.isActualChange());
@@ -86,9 +82,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 		ByteString byteString = ByteString.copyFrom(buffer, buffer.limit());
 
 		year = yst.getYear();
-		Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
+		EPICSEvent.V4GenericBytes.Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
-				.setNano(yst.getNanos())
+                    .setNano(yst.getNano())
 				.setUserTag(userTag)
 				.setVal(byteString);
 
@@ -108,20 +104,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 
 
 	@Override
-	public Timestamp getEventTimeStamp() {
+    public Instant getEventTimeStamp() {
 		unmarshallEventIfNull();
 		return TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
-	}
-
-	@Override
-	public short getYear() {
-		return year;
-	}
-
-	@Override
-	public int getSecondsIntoYear() {
-		unmarshallEventIfNull();
-		return dbevent.getSecondsintoyear();
 	}
 
 	@Override
@@ -216,9 +201,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	public HashMap<String, String> getFields() {
 		unmarshallEventIfNull();
 		HashMap<String, String> ret = new HashMap<String, String>();
-		List<FieldValue> fieldValues = dbevent.getFieldvaluesList();
+		List<EPICSEvent.FieldValue> fieldValues = dbevent.getFieldvaluesList();
 		if(fieldValues != null && !fieldValues.isEmpty()) {
-			for(FieldValue fieldValue : fieldValues) {
+			for (EPICSEvent.FieldValue fieldValue : fieldValues) {
 				ret.put(fieldValue.getName(), fieldValue.getVal());
 			}
 		}
@@ -228,9 +213,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	@Override
 	public String getFieldValue(String fieldName) {
 		unmarshallEventIfNull();
-		List<FieldValue> fieldValues = dbevent.getFieldvaluesList();
+		List<EPICSEvent.FieldValue> fieldValues = dbevent.getFieldvaluesList();
 		if(fieldValues != null && !fieldValues.isEmpty()) {
-			for(FieldValue fieldValue : fieldValues) {
+			for (EPICSEvent.FieldValue fieldValue : fieldValues) {
 				if(fieldValue.getName().equals(fieldName)) {
 					return fieldValue.getVal();
 				}
@@ -242,7 +227,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	@Override
 	public void addFieldValue(String fieldName, String fieldValue) {
 		unmarshallEventIfNull();
-		FieldValue fv = EPICSEvent.FieldValue.newBuilder().setName(fieldName).setVal(fieldValue).build();
+		EPICSEvent.FieldValue fv = EPICSEvent.FieldValue.newBuilder().setName(fieldName).setVal(fieldValue).build();
 		dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).addFieldvalues(fv).build();
 		bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
 		return;
@@ -259,7 +244,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 	@Override
 	public void setFieldValues(HashMap<String, String> fieldValues, boolean markAsActualChange) {
 		unmarshallEventIfNull();
-		LinkedList<FieldValue> fieldValuesList = new LinkedList<FieldValue>();
+		LinkedList<EPICSEvent.FieldValue> fieldValuesList = new LinkedList<EPICSEvent.FieldValue>();
 		for(String fieldName : fieldValues.keySet()) {
 			fieldValuesList.add(EPICSEvent.FieldValue.newBuilder().setName(fieldName).setVal(fieldValues.get(fieldName)).build());
 		}

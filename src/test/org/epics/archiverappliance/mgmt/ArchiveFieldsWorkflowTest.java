@@ -5,15 +5,14 @@ import static org.junit.Assert.assertTrue;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -25,25 +24,26 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class ArchiveFieldsWorkflowTest {
 	private static Logger logger = LogManager.getLogger(ArchiveFieldsWorkflowTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -76,14 +76,14 @@ public class ArchiveFieldsWorkflowTest {
 			 int rowWithInfo = i+1;
 			 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(1)"));
 			 String pvNameObtainedFromTable = statusPVName.getText();
-			 assertTrue("PV Name is not " + fieldsToArchive[i] + "; instead we get " + pvNameObtainedFromTable, fieldsToArchive[i].equals(pvNameObtainedFromTable));
+			 Assertions.assertTrue(fieldsToArchive[i].equals(pvNameObtainedFromTable), "PV Name is not " + fieldsToArchive[i] + "; instead we get " + pvNameObtainedFromTable);
 			 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(2)"));
 			 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 			 String expectedPVStatus = "Being archived";
 			 if(fieldsToArchive[i].equals("UnitTestNoNamingConvention:sine.YYZ")) { 
-				 assertTrue("Expecting PV archive status to NOT be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i], !expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+				 Assertions.assertTrue(!expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to NOT be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i]);
 			 } else { 
-				 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i], expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+				 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i]);
 			 }
 		 }
 	}

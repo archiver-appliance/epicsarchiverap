@@ -1,14 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +11,13 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * 
@@ -100,8 +98,8 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
     }
     
     @Override
-    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
-        int intervalSecs = (int)((end.getTime() - start.getTime())/(1000 * numberOfPoints));
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+        int intervalSecs = (int) ((end.toEpochMilli() - start.toEpochMilli()) / (1000 * numberOfPoints));
         try {
             statisticsPostProcessor.initialize(getIdentity() + "_" + Integer.toString(intervalSecs),pvName);
         } catch (IOException e) {

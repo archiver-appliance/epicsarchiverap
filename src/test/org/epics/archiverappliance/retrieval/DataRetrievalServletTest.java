@@ -7,18 +7,14 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.net.URLEncoder;
-import java.nio.file.Files;
-import java.sql.Timestamp;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -30,22 +26,24 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStr
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.time.Instant;
 
 /**
  * Test the simple data retrieval case.  
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class DataRetrievalServletTest {
 	
 	private static Logger logger = LogManager.getLogger(DataRetrievalServletTest.class.getName());
@@ -57,18 +55,18 @@ public class DataRetrievalServletTest {
 	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
 	short year = (short) 2011;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		configService = new ConfigServiceForTests(new File("./bin"));
 		pbSetup.setUpRootFolder(pbplugin);
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 
-		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYearInSeconds(year), new ArchPaths(), configService.getPVNameToKeyConverter()));
+		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYear(year), new ArchPaths(), configService.getPVNameToKeyConverter()));
 	}
 	
 	
@@ -79,17 +77,17 @@ public class DataRetrievalServletTest {
 	public void testTimesAreSequential() throws Exception {
 		PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
 		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
-		storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw", "UTF-8"), configService);
-		
-		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYearInSeconds(year), new ArchPaths(), configService.getPVNameToKeyConverter()));
-		SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), year);
+		storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw", StandardCharsets.UTF_8), configService);
+
+		Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(pbplugin, pvName, TimeUtils.getStartOfYear(year), new ArchPaths(), configService.getPVNameToKeyConverter()));
+		SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), TimeUtils.getStartOfYear(year), TimeUtils.getEndOfYear(year), 1);
 		try(BasicContext context = new BasicContext()) {
 			pbplugin.appendData(context, pvName, simstream);
 		}
 
 		// Ask for a days worth of data
-		Timestamp start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
+		Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
+		Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
 		
 		long starttimeinseconds = TimeUtils.convertToEpochSeconds(start);
 		
@@ -102,13 +100,12 @@ public class DataRetrievalServletTest {
 				System.out.println(e.getRawForm());
 				long actualSeconds = e.getEpochSeconds();
 				long desired = starttimeinseconds + next++;
-				assertTrue("Expecting " 
-				+ TimeUtils.convertToISO8601String(desired) 
-				+ " got " 
-				+ TimeUtils.convertToISO8601String(actualSeconds) 
-				+ " at eventcount " + 
-				totalEvents,
-				actualSeconds >= desired);
+				Assertions.assertTrue(actualSeconds >= desired, "Expecting "
+				+ TimeUtils.convertToISO8601String(desired)
+				+ " got "
+				+ TimeUtils.convertToISO8601String(actualSeconds)
+				+ " at eventcount " +
+				totalEvents);
 				totalEvents++;
 			}
 			long e = System.currentTimeMillis();

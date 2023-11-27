@@ -15,6 +15,9 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 /**
  * Buffer for the samples of one channel.
  * <p>
@@ -184,7 +187,7 @@ public class SampleBuffer {
 		}
 		
 		@SuppressWarnings("deprecation")
-		short yearTemp = (short) (value.getEventTimeStamp().getYear() + 1900);
+        short yearTemp = (short) (ZonedDateTime.ofInstant(value.getEventTimeStamp(), ZoneId.of("UTC")).getYear());
 		// value.getEventTimeStamp().
 		if (currentSamples.getYear() == 0) {
 			currentSamples.setYear(yearTemp);

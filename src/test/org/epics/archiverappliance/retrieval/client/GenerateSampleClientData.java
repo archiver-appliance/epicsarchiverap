@@ -1,22 +1,22 @@
 package org.epics.archiverappliance.retrieval.client;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.sql.Timestamp;
-import java.util.Random;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
-import org.epics.archiverappliance.common.POJOEvent;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.data.ScalarValue;
-
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadType;
 import edu.stanford.slac.archiverappliance.PB.data.BoundaryConditionsSimulationValueGenerator;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ByteArray;
+import org.epics.archiverappliance.common.POJOEvent;
+import org.epics.archiverappliance.common.PartitionGranularity;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.ScalarValue;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.time.Instant;
+import java.util.Random;
 
 /**
  * Generates sample data used for testing the pb raw client interface...
@@ -61,13 +61,13 @@ public class GenerateSampleClientData {
 		logger.info("Generating one file will well known points into " + destFile.getPath());
 		try(FileOutputStream fos = new FileOutputStream(destFile)) { 
 			writeHeader(destFileName, ArchDBRTypes.DBR_SCALAR_DOUBLE, (short) 2012, fos);
-			Timestamp ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
+			Instant ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
 			for(int day = 0; day < 366; day++) { 
 				POJOEvent event = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>((double)day), 0, 0);
 				ByteArray val = event.getRawForm();
 				fos.write(val.data, val.off, val.len);
 				fos.write(LineEscaper.NEWLINE_CHAR);
-				ts = new Timestamp(ts.getTime() + 86400*1000);
+				ts = Instant.ofEpochMilli(ts.toEpochMilli() + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 1000);
 			}
 		}
 	}
@@ -95,7 +95,7 @@ public class GenerateSampleClientData {
 		logger.info("Generating multiple chunks in same year into " + destFile.getPath());
 		try(FileOutputStream fos = new FileOutputStream(destFile)) { 
 			writeHeader(destFileName, ArchDBRTypes.DBR_SCALAR_DOUBLE, (short) 2012, fos);
-			Timestamp ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
+			Instant ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
 			for(int day = 0; day < 366; day++) { 
 				POJOEvent event = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>((double)day), 0, 0);
 				ByteArray val = event.getRawForm();
@@ -104,7 +104,7 @@ public class GenerateSampleClientData {
 				// Now insert an empty line followed by a header.
 				fos.write(LineEscaper.NEWLINE_CHAR);
 				writeHeader(destFileName, ArchDBRTypes.DBR_SCALAR_DOUBLE, (short) 2012, fos);
-				ts = new Timestamp(ts.getTime() + 86400*1000);
+				ts = Instant.ofEpochMilli(ts.toEpochMilli() + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 1000);
 			}
 		}
 	}
@@ -118,8 +118,8 @@ public class GenerateSampleClientData {
 		String destFileName = "multipleChunksOfRandomSizeInSameYear";
 		File destFile = new File(destFolder, destFileName);
 		logger.info("Generating multiple chunks of random size in same year into " + destFile.getPath());
-		try(FileOutputStream fos = new FileOutputStream(destFile)) { 
-			Timestamp ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
+		try(FileOutputStream fos = new FileOutputStream(destFile)) {
+			Instant ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
 			Random rand = new Random();
 			for(int day = 0; day < 366; ) { 
 				int chunkSize = rand.nextInt(5);
@@ -130,7 +130,7 @@ public class GenerateSampleClientData {
 					ByteArray val = event.getRawForm();
 					fos.write(val.data, val.off, val.len);
 					fos.write(LineEscaper.NEWLINE_CHAR);
-					ts = new Timestamp(ts.getTime() + 86400*1000);
+					ts = Instant.ofEpochMilli(ts.toEpochMilli() + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 1000);
 				}
 				fos.write(LineEscaper.NEWLINE_CHAR);
 			}
@@ -149,13 +149,13 @@ public class GenerateSampleClientData {
 		try(FileOutputStream fos = new FileOutputStream(destFile)) { 
 			for(short year = 1970; year < 1970+2000; year++) { 
 				writeHeader(destFileName, ArchDBRTypes.DBR_SCALAR_DOUBLE, (short) year, fos);
-				Timestamp ts = TimeUtils.convertFromISO8601String(year+"-01-01T09:43:37.000Z");
+				Instant ts = TimeUtils.convertFromISO8601String(year + "-01-01T09:43:37.000Z");
 				for(int day = 0; day < 365; day++) { 
 					POJOEvent event = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>((double)day), 0, 0);
 					ByteArray val = event.getRawForm();
 					fos.write(val.data, val.off, val.len);
 					fos.write(LineEscaper.NEWLINE_CHAR);
-					ts = new Timestamp(ts.getTime() + 86400*1000);
+					ts = Instant.ofEpochMilli(ts.toEpochMilli() + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 1000);
 				}
 				fos.write(LineEscaper.NEWLINE_CHAR);
 			}
@@ -176,7 +176,7 @@ public class GenerateSampleClientData {
 			logger.info("Generating file for " + payloadType + " into " + destFile.getPath());
 			try(FileOutputStream fos = new FileOutputStream(destFile)) { 
 				writeHeader(destFileName, dbrType, (short) 2012, fos);
-				Timestamp ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
+				Instant ts = TimeUtils.convertFromISO8601String("2012-01-01T09:43:37.000Z");
 				int totalDataPoints = 366;
 				if(dbrType.isWaveForm()) { 
 					totalDataPoints = 2;
@@ -186,7 +186,7 @@ public class GenerateSampleClientData {
 					ByteArray val = event.getRawForm();
 					fos.write(val.data, val.off, val.len);
 					fos.write(LineEscaper.NEWLINE_CHAR);
-					ts = new Timestamp(ts.getTime() + 86400*1000);
+					ts = Instant.ofEpochMilli(ts.toEpochMilli() + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 1000);
 				}
 			}
 		}
@@ -204,13 +204,13 @@ public class GenerateSampleClientData {
 		logger.info("Generating a days worth of data into " + destFile.getPath());
 		try(FileOutputStream fos = new FileOutputStream(destFile)) { 
 			writeHeader(destFileName, ArchDBRTypes.DBR_SCALAR_DOUBLE, (short) 2011, fos);
-			Timestamp ts = TimeUtils.convertFromISO8601String("2011-02-01T00:00:00.000Z");
-			for(int seconds = 0; seconds < 86400; seconds++) { 
+			Instant ts = TimeUtils.convertFromISO8601String("2011-02-01T00:00:00.000Z");
+			for (int seconds = 0; seconds < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(); seconds++) {
 				POJOEvent event = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>((double)seconds), 0, 0);
 				ByteArray val = event.getRawForm();
 				fos.write(val.data, val.off, val.len);
 				fos.write(LineEscaper.NEWLINE_CHAR);
-				ts = new Timestamp(ts.getTime() + 1000);
+				ts = Instant.ofEpochMilli(ts.toEpochMilli() + 1000);
 			}
 		}
 	}

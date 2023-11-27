@@ -7,22 +7,19 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB.utils;
 
-import java.util.HashSet;
-import java.sql.Timestamp;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-
+import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
+import java.util.HashSet;
 
 /**
  * @author mshankar
@@ -75,18 +72,18 @@ public class IsSubset {
 			System.exit(-1);
 		}
 
-		HashSet<Timestamp> ts0 = getTimes(srcPath0), ts1 = getTimes(srcPath1);
+        HashSet<Instant> ts0 = getTimes(srcPath0), ts1 = getTimes(srcPath1);
 		if(!ts1.containsAll(ts0)) {
 			ts0.removeAll(ts1);
-			for(Timestamp ts : ts0) {
+            for (Instant ts : ts0) {
 				System.out.println("Missing sample at " + TimeUtils.convertToHumanReadableString(ts));
 			}
 			System.exit(-1);
 		}
 	}
 
-	private static HashSet<Timestamp> getTimes(Path path) throws Exception {
-		HashSet<Timestamp> ret = new HashSet<Timestamp>();
+    private static HashSet<Instant> getTimes(Path path) throws Exception {
+        HashSet<Instant> ret = new HashSet<Instant>();
 		PBFileInfo info = new PBFileInfo(path);
 		try (FileBackedPBEventStream strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType())) {
 			for(Event ev : strm) {

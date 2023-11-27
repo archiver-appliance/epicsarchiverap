@@ -6,7 +6,8 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.DefaultConfigService;
 import org.epics.archiverappliance.mgmt.policy.ExecutePolicy;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.HashMap;
@@ -26,8 +27,8 @@ public class PolicyExecutionTest {
         pvInfo.put("RTYP", "ai");
         try (ExecutePolicy executePolicy = new ExecutePolicy(configService)) {
             PolicyConfig policyConfig = executePolicy.computePolicyForPV("test", pvInfo);
-            assertNotNull("policyConfig is null", policyConfig);
-            assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+            Assertions.assertNotNull(policyConfig, "policyConfig is null");
+            Assertions.assertTrue(policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1, "dataStores is null");
         }
     }
 
@@ -41,8 +42,8 @@ public class PolicyExecutionTest {
             pvInfo.put("RTYP", "ai");
             try (ExecutePolicy executePolicy = new ExecutePolicy(configService)) {
                 PolicyConfig policyConfig = executePolicy.computePolicyForPV("test" + i, pvInfo);
-                assertNotNull("policyConfig is null", policyConfig);
-                assertTrue("dataStores is null", policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1);
+                Assertions.assertNotNull(policyConfig, "policyConfig is null");
+                Assertions.assertTrue(policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1, "dataStores is null");
             }
         }
     }

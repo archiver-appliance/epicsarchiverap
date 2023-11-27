@@ -38,13 +38,6 @@ public class MergeDedupEventStreamTest {
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	short currentYear = TimeUtils.getCurrentYear();
 	
-	@Before
-	public void setUp() throws Exception {
-	}
-
-	@After
-	public void tearDown() throws Exception {
-	}
 
 	@Test
 	public void testMergeDedup() throws Exception {

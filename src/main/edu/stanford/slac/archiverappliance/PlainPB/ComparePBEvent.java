@@ -7,16 +7,17 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-
-import org.epics.archiverappliance.ByteArray;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.data.DBRTimeEvent;
-
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.data.PartionedTime;
 import edu.stanford.slac.archiverappliance.PB.search.CompareEventLine;
+import org.epics.archiverappliance.ByteArray;
+import org.epics.archiverappliance.common.PartitionGranularity;
+import org.epics.archiverappliance.common.YearSecondTimestamp;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import java.io.IOException;
+import java.lang.reflect.Constructor;
 
 /**
  * A comparator for PB events that is used in searching.
@@ -24,11 +25,12 @@ import edu.stanford.slac.archiverappliance.PB.search.CompareEventLine;
  *
  */
 public class ComparePBEvent implements CompareEventLine {
-	private int searchsecondsintoyear;
-	private ArchDBRTypes type;
-	public ComparePBEvent(ArchDBRTypes type, int secondsintoyear) {
+	private final YearSecondTimestamp yearSecondTimestamp;
+	private final ArchDBRTypes type;
+
+	public ComparePBEvent(ArchDBRTypes type, YearSecondTimestamp yearSecondTimestamp) {
 		this.type = type;
-		this.searchsecondsintoyear = secondsintoyear;
+		this.yearSecondTimestamp = yearSecondTimestamp;
 	}
 	
 
@@ -36,41 +38,41 @@ public class ComparePBEvent implements CompareEventLine {
 	public NextStep compare(byte[] line1, byte[] line2) throws IOException  {
 		// The year does not matter here as we are driving solely off secondsintoyear. So we set it to 0.
 		Constructor<? extends DBRTimeEvent> constructor = DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
-		short year = (short) 1970;
-		int line1InputSecondsIntoYear = -1;
-		int line2InputSecondsIntoYear = Integer.MAX_VALUE;
+		YearSecondTimestamp line1Timestamp = new YearSecondTimestamp(this.yearSecondTimestamp.getYear(), 0, 0);
+		YearSecondTimestamp line2Timestamp = new YearSecondTimestamp(
+				this.yearSecondTimestamp.getYear(),
+				PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() + 1,
+				0);
 		try {
-			// The raw forms for all the DBR types implement the PartionedTime interface 
-			PartionedTime e = (PartionedTime) constructor.newInstance(year, new ByteArray(line1));
-			line1InputSecondsIntoYear = e.getSecondsIntoYear();
+			// The raw forms for all the DBR types implement the PartionedTime interface
+			PartionedTime e =
+					(PartionedTime) constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
+			line1Timestamp = e.getYearSecondTimestamp();
 			if(line2 != null) {
-				PartionedTime e2 = (PartionedTime) constructor.newInstance(year, new ByteArray(line2));
-				line2InputSecondsIntoYear = e2.getSecondsIntoYear();
+				PartionedTime e2 = (PartionedTime)
+						constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line2));
+				line2Timestamp = e2.getYearSecondTimestamp();
 			}
 		} catch(Exception ex) {
 			throw new IOException(ex);
 		}
-		if(line1InputSecondsIntoYear < 0) {
-			throw new IOException("We cannot have a negative seconds into year " + line1InputSecondsIntoYear);
+		if (line1Timestamp.getSecondsintoyear() < 0) {
+			throw new IOException("We cannot have a negative seconds into year " + line1Timestamp);
 		}
-		if(line1InputSecondsIntoYear >= searchsecondsintoyear) {
-			// System.out.println("When searching for " + searchsecondsintoyear + ", comparing with " + line1InputSecondsIntoYear + " sayz GO_LEFT");
+		if (line1Timestamp.compareTo(this.yearSecondTimestamp) > 0) {
 			return NextStep.GO_LEFT;
-		} else if(line2InputSecondsIntoYear < searchsecondsintoyear) {
-			// System.out.println("When searching for " + searchsecondsintoyear + ", comparing with " + line2InputSecondsIntoYear + " sayz GO_RIGHT");
+		} else if (line2Timestamp.compareTo(this.yearSecondTimestamp) <= 0) {
 			return NextStep.GO_RIGHT;
 		} else {
-			// If we are here, line1 < SS < line2
+			// If we are here, line1 < SS <= line2
 			if(line2 != null) {
-				if(line1InputSecondsIntoYear < searchsecondsintoyear && line2InputSecondsIntoYear >= searchsecondsintoyear) {
-					// System.out.println("When searching for " + searchsecondsintoyear + ", comparing with " + line1InputSecondsIntoYear + " and " + line2InputSecondsIntoYear + " sayz STAY_WHERE_YOU_ARE");
+				if (line1Timestamp.compareTo(this.yearSecondTimestamp) <= 0
+						&& line2Timestamp.compareTo(this.yearSecondTimestamp) > 0) {
 					return NextStep.STAY_WHERE_YOU_ARE;
 				} else {
-					// System.out.println("When searching for " + searchsecondsintoyear + ", comparing with " + line1InputSecondsIntoYear + " and " + line2InputSecondsIntoYear + " sayz GO_LEFT");
 					return NextStep.GO_LEFT;
 				}
 			} else {
-				// System.out.println("When searching for " + searchsecondsintoyear + ", line 2 is null; so sayz STAY_WHERE_YOU_ARE");
 				return NextStep.STAY_WHERE_YOU_ARE;
 			}
 		}

@@ -1,14 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +16,13 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.concurrent.Callable;
 
 /**
  * Approx implementation of ChannelArchiver plotbinning for Michael Davidsaver
@@ -77,94 +75,7 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 	private static Logger logger = LogManager.getLogger(CAPlotBinning.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 	
-	class PlotBin { 
-		Event firstSample;
-		Event lastSample;
-		SummaryStatistics stats = new SummaryStatistics();
-		long binNumber = 0;
-		/**
-		 * Maximize severity
-		 */
-		int maximizedSeverity = 0;
-		/**
-		 * Do we have any connection changed events
-		 */
-		boolean connectionChanged = false;
-
-		
-		PlotBin(long binNumber) { 
-			this.binNumber = binNumber;
-		}
-		
-		void addEvent(Event e) { 
-			if(firstSample == null) { 
-				firstSample = e.makeClone();
-				stats.addValue(firstSample.getSampleValue().getValue().doubleValue());
-				return;
-			}
-			if(lastSample == null) { 
-				lastSample = e.makeClone();
-				stats.addValue(lastSample.getSampleValue().getValue().doubleValue());
-				return;
-				
-			}
-			// We have more than two samples
-			if(e.getEventTimeStamp().after(lastSample.getEventTimeStamp())) { 
-				lastSample = e.makeClone();
-				stats.addValue(lastSample.getSampleValue().getValue().doubleValue());
-				return;
-			}
-		}
-		
-
-		public void outputEvents(ArrayListEventStream ret) {
-			// If there is no sample for the time span of a bin, the bin remains empty
-			if(firstSample == null) { 
-				return;
-			}
-
-			if(ret.getDescription().getYear() == -1) {
-				short curYear = TimeUtils.computeYearForEpochSeconds(firstSample.getEpochSeconds());
-				logger.debug("Initialize the current year as the year of the first bin with a value it it " + curYear);
-				ret.getDescription().setYear(curYear);
-			}
-			
-			// If there is one sample, it is placed in the bin
-			if(lastSample == null) { 
-				ret.add(makeEvent(SampleLocation.ASIS, firstSample.getEpochSeconds(), firstSample.getSampleValue().getValue().doubleValue()));
-				return;
-			}
-			// If there are two samples, they are placed in the bin
-			if(stats.getN() == 2) { 
-				ret.add(makeEvent(SampleLocation.ASIS, firstSample.getEpochSeconds(), firstSample.getSampleValue().getValue().doubleValue()));
-				ret.add(makeEvent(SampleLocation.ASIS, lastSample.getEpochSeconds(), lastSample.getSampleValue().getValue().doubleValue()));
-				return;
-			}
-
-			// If there are more than two samples...
-			// presented to the user in the sequence initial, minimum, maximum, final
-			long binStartEpochSeconds = binNumber*intervalSecs;
-			ret.add(makeEvent(SampleLocation.FIRSTSAMPLE, binStartEpochSeconds, firstSample.getSampleValue().getValue().doubleValue()));
-			ret.add(makeEvent(SampleLocation.MINSAMPLE, binStartEpochSeconds, stats.getMin()));
-			ret.add(makeEvent(SampleLocation.MAXSAMPLE, binStartEpochSeconds, stats.getMax()));
-			ret.add(makeEvent(SampleLocation.LASTSAMPLE, binStartEpochSeconds, lastSample.getSampleValue().getValue().doubleValue()));
-		}
-		
-		
-		private Event makeEvent(SampleLocation location, long binStartEpochSeconds, double value) {
-			long epochSeconds = location.getLocationEpochSeconds(binStartEpochSeconds, binNumber, intervalSecs);
-			// logger.info("Location " + location.toString() + " epochSeconds " + epochSeconds + " for bin " + binNumber + " and intervalSecs " + intervalSecs);
-			POJOEvent pojoEvent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE,
-					TimeUtils.convertFromEpochSeconds(epochSeconds, 0), 
-					new ScalarValue<Double>(value), 
-					0, this.maximizedSeverity);
-			DBRTimeEvent pbevent = (DBRTimeEvent) pojoEvent.makeClone();
-			if(this.connectionChanged) { 
-				pbevent.addFieldValue("connectionChange", "true");
-			}
-			return pbevent;
-		}
-	}
+    private Instant previousEventTimestamp = Instant.ofEpochMilli(1);
 	
 	LinkedHashMap<Long, PlotBin> consolidatedData = new LinkedHashMap<Long, PlotBin>();
 	
@@ -175,7 +86,18 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 
 	Event lastSampleBeforeStart = null;
 	boolean lastSampleBeforeStartAdded = false;
-	private Timestamp previousEventTimestamp = new Timestamp(1);
+
+	@Override
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
+		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
+		logger.debug("Expecting " + lastBin + " - " + firstBin + " values " + (lastBin+2 - firstBin)); // Add 2 for the first and last bins..
+		float storageRate = typeInfo.getComputedStorageRate();
+		long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
+		// Add a fudge factor of 2 for java
+		long estimatedMemoryConsumption = (long) (storageRate*4*numSeconds*2/intervalSecs);
+		return estimatedMemoryConsumption;
+	}
 	private PlotBin currentPlotBin = null;
 	
 	@Override
@@ -190,20 +112,6 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 		}
 	}
 	
-	
-
-	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
-		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
-		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
-		logger.debug("Expecting " + lastBin + " - " + firstBin + " values " + (lastBin+2 - firstBin)); // Add 2 for the first and last bins..
-		float storageRate = typeInfo.getComputedStorageRate();
-		long numSeconds = TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start);
-		// Add a fudge factor of 2 for java 
-		long estimatedMemoryConsumption = (long) (storageRate*4*numSeconds*2/intervalSecs);
-		return estimatedMemoryConsumption;
-	}
-
 	@Override
 	public Callable<EventStream> wrap(final Callable<EventStream> callable) {
 		return new Callable<EventStream>() {
@@ -214,55 +122,55 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 					RemotableEventStreamDesc strmDesc = (RemotableEventStreamDesc) strm.getDescription();
 					if(srcDesc == null) srcDesc = new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, strmDesc.getPvName(), strmDesc.getYear());
 					for(Event e : strm) {
-						try { 
+						try {
 							DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
 							long epochSeconds = dbrTimeEvent.getEpochSeconds();
-							if(dbrTimeEvent.getEventTimeStamp().after(previousEventTimestamp)) { 
+                            if (dbrTimeEvent.getEventTimeStamp().isAfter(previousEventTimestamp)) {
 								previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
 							} else {
 								// Note that this is expected. ETL is not transactional; so we can get the same event twice from different stores.
-								if(logger.isDebugEnabled()) { 
+								if(logger.isDebugEnabled()) {
 									logger.debug("Skipping older event " + TimeUtils.convertToHumanReadableString(dbrTimeEvent.getEventTimeStamp()) + " previous " + TimeUtils.convertToHumanReadableString(previousEventTimestamp));
 								}
 								continue;
 							}
 							long binNumber = epochSeconds/intervalSecs;
 							if(binNumber >= firstBin && binNumber <= lastBin) {
-								// We only add bins for the specified time frame. 
+								// We only add bins for the specified time frame.
 								// The ArchiveViewer depends on the number of values being the same and because of different rates for PVs, the bin number for the starting bin could be different...
 								// We could add a firstbin-1 and put all values before the starting timestamp in that bin but that would give incorrect summaries.
-								if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
+								if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) {
 									switchToNewBin(firstBin-1);
 									currentPlotBin.addEvent(lastSampleBeforeStart);
-									lastSampleBeforeStartAdded = true; 
+									lastSampleBeforeStartAdded = true;
 								}
 
 								if(binNumber != currentBin) {
 									switchToNewBin(binNumber);
 								}
-								
+
 								currentPlotBin.addEvent(e);
-								
-								if(dbrTimeEvent.getSeverity() > currentPlotBin.maximizedSeverity) { 
+
+								if(dbrTimeEvent.getSeverity() > currentPlotBin.maximizedSeverity) {
 									currentPlotBin.maximizedSeverity = dbrTimeEvent.getSeverity();
 								}
-								
-								if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) { 
+
+								if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) {
 									currentPlotBin.connectionChanged= true;
 								}
-								
-							} else if(binNumber < firstBin) { 
-								if(!lastSampleBeforeStartAdded) { 
-									if(lastSampleBeforeStart != null) { 
-										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
+
+							} else if(binNumber < firstBin) {
+								if(!lastSampleBeforeStartAdded) {
+									if(lastSampleBeforeStart != null) {
+										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) {
 											lastSampleBeforeStart = e.makeClone();
 										}
-									} else { 
+									} else {
 										lastSampleBeforeStart = e.makeClone();
 									}
 								}
 							}
-						} catch(PBParseException ex) { 
+						} catch(PBParseException ex) {
 							logger.error("Skipping possible corrupted event for pv " + strmDesc);
 						}
 					}
@@ -276,6 +184,95 @@ public class CAPlotBinning implements PostProcessor, PostProcessorWithConsolidat
 				consolidatedData.put(currentBin, currentPlotBin);
 			}
 		};
+	}
+
+	class PlotBin {
+		Event firstSample;
+		Event lastSample;
+		SummaryStatistics stats = new SummaryStatistics();
+		long binNumber = 0;
+		/**
+		 * Maximize severity
+		 */
+		int maximizedSeverity = 0;
+		/**
+		 * Do we have any connection changed events
+		 */
+		boolean connectionChanged = false;
+
+
+		PlotBin(long binNumber) {
+			this.binNumber = binNumber;
+		}
+
+		void addEvent(Event e) {
+			if(firstSample == null) {
+				firstSample = e.makeClone();
+				stats.addValue(firstSample.getSampleValue().getValue().doubleValue());
+				return;
+			}
+			if(lastSample == null) {
+				lastSample = e.makeClone();
+				stats.addValue(lastSample.getSampleValue().getValue().doubleValue());
+				return;
+
+			}
+			// We have more than two samples
+            if (e.getEventTimeStamp().isAfter(lastSample.getEventTimeStamp())) {
+				lastSample = e.makeClone();
+				stats.addValue(lastSample.getSampleValue().getValue().doubleValue());
+				return;
+			}
+		}
+
+
+		public void outputEvents(ArrayListEventStream ret) {
+			// If there is no sample for the time span of a bin, the bin remains empty
+			if(firstSample == null) {
+				return;
+			}
+
+			if(ret.getDescription().getYear() == -1) {
+				short curYear = TimeUtils.computeYearForEpochSeconds(firstSample.getEpochSeconds());
+				logger.debug("Initialize the current year as the year of the first bin with a value it it " + curYear);
+				ret.getDescription().setYear(curYear);
+			}
+
+			// If there is one sample, it is placed in the bin
+			if(lastSample == null) {
+				ret.add(makeEvent(SampleLocation.ASIS, firstSample.getEpochSeconds(), firstSample.getSampleValue().getValue().doubleValue()));
+				return;
+			}
+			// If there are two samples, they are placed in the bin
+			if(stats.getN() == 2) {
+				ret.add(makeEvent(SampleLocation.ASIS, firstSample.getEpochSeconds(), firstSample.getSampleValue().getValue().doubleValue()));
+				ret.add(makeEvent(SampleLocation.ASIS, lastSample.getEpochSeconds(), lastSample.getSampleValue().getValue().doubleValue()));
+				return;
+			}
+
+			// If there are more than two samples...
+			// presented to the user in the sequence initial, minimum, maximum, final
+			long binStartEpochSeconds = binNumber*intervalSecs;
+			ret.add(makeEvent(SampleLocation.FIRSTSAMPLE, binStartEpochSeconds, firstSample.getSampleValue().getValue().doubleValue()));
+			ret.add(makeEvent(SampleLocation.MINSAMPLE, binStartEpochSeconds, stats.getMin()));
+			ret.add(makeEvent(SampleLocation.MAXSAMPLE, binStartEpochSeconds, stats.getMax()));
+			ret.add(makeEvent(SampleLocation.LASTSAMPLE, binStartEpochSeconds, lastSample.getSampleValue().getValue().doubleValue()));
+		}
+
+
+		private Event makeEvent(SampleLocation location, long binStartEpochSeconds, double value) {
+			long epochSeconds = location.getLocationEpochSeconds(binStartEpochSeconds, binNumber, intervalSecs);
+			// logger.info("Location " + location.toString() + " epochSeconds " + epochSeconds + " for bin " + binNumber + " and intervalSecs " + intervalSecs);
+			POJOEvent pojoEvent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE,
+					TimeUtils.convertFromEpochSeconds(epochSeconds, 0),
+					new ScalarValue<Double>(value),
+					0, this.maximizedSeverity);
+			DBRTimeEvent pbevent = (DBRTimeEvent) pojoEvent.makeClone();
+			if(this.connectionChanged) {
+				pbevent.addFieldValue("connectionChange", "true");
+			}
+			return pbevent;
+		}
 	}
 
 

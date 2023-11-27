@@ -8,40 +8,38 @@
 package org.epics.archiverappliance.retrieval.client;
 
 
-import static org.junit.Assert.assertTrue;
-
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.GenerateData;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.time.Instant;
 
 /**
  * Test retrieval for multiple PVs
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class MultiplePVSimpleRetrievalTest {
 	private static final Logger logger = LogManager.getLogger(MultiplePVSimpleRetrievalTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
-	private static int TOTAL_NUMBER_OF_PVS = 10;
-	private static String[] pvs = new String[TOTAL_NUMBER_OF_PVS];
+	private static final int TOTAL_NUMBER_OF_PVS = 10;
+	private static final String[] pvs = new String[TOTAL_NUMBER_OF_PVS];
 
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		int phasediff = 360/TOTAL_NUMBER_OF_PVS;
 		for(int i = 0; i < TOTAL_NUMBER_OF_PVS; i++) {
@@ -51,7 +49,7 @@ public class MultiplePVSimpleRetrievalTest {
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -60,8 +58,8 @@ public class MultiplePVSimpleRetrievalTest {
 	@Test
 	public void testGetDataForMultiplePVs() {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
-		Timestamp end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
+        Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
 		EventStream stream = null;
 		try {
 			stream = rawDataRetrieval.getDataForPVS(pvs, start, end, new RetrievalEventProcessor() {
@@ -77,12 +75,12 @@ public class MultiplePVSimpleRetrievalTest {
 			if(stream != null) {
 				for(Event e : stream) {
 					long actualSeconds = e.getEpochSeconds();
-					assertTrue(actualSeconds >= previousEpochSeconds);
+					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
 					previousEpochSeconds = actualSeconds;
 				}
 			}
 		} finally {
-			if(stream != null) try { stream.close(); stream = null; } catch(Throwable t) { }
+			if(stream != null) try { stream.close(); stream = null; } catch(Throwable ignored) { }
 		}
 	}	
 }

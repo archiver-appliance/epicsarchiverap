@@ -8,15 +8,7 @@
 package org.epics.archiverappliance.utils.ui;
 
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.sql.Timestamp;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
@@ -25,7 +17,13 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.Instant;
 
 /**
  * This is currently the code that remotes an event stream, for example from the engine etc.
@@ -52,9 +50,9 @@ public class RetrievalServlet  extends HttpServlet {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
-		
-		Timestamp start = TimeUtils.convertFromISO8601String(startTimeStr);
-		Timestamp end = TimeUtils.convertFromISO8601String(endTimeStr);
+
+		Instant start = TimeUtils.convertFromISO8601String(startTimeStr);
+		Instant end = TimeUtils.convertFromISO8601String(endTimeStr);
 		// resp.addHeader("Transfer-Encoding", "chunked");
 		
 		try(OutputStream os = resp.getOutputStream(); 

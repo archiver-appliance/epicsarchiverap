@@ -7,10 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.ui;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.sql.Timestamp;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
+import edu.stanford.slac.archiverappliance.PB.data.PartionedTime;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -20,10 +20,9 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
-import edu.stanford.slac.archiverappliance.PB.data.PartionedTime;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.Instant;
 
 /**
  * Utility class with method to push an EventStream into an OutputStream
@@ -44,7 +43,7 @@ public class StreamPBIntoOutput {
 	 * @return totalEvents  &emsp; 
 	 * @throws IOException  &emsp; 
 	 */
-	public static int streamPBIntoOutputStream(EventStream st, OutputStream os, Timestamp start, Timestamp end) throws IOException {
+    public static int streamPBIntoOutputStream(EventStream st, OutputStream os, Instant start, Instant end) throws IOException {
 		long startTimeInEpochSeconds = 0;
 		if(start != null)
 			startTimeInEpochSeconds = TimeUtils.convertToEpochSeconds(start);
@@ -98,7 +97,7 @@ public class StreamPBIntoOutput {
 		short currentYear = -1;
 		if(e != null) {
 			if(e instanceof PartionedTime) {
-				currentYear = ((PartionedTime)e).getYear();
+                currentYear = ((PartionedTime) e).getYearSecondTimestamp().getYear();
 			} else {
 				currentYear = TimeUtils.computeYearForEpochSeconds(e.getEpochSeconds());
 			}

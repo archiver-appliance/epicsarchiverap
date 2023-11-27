@@ -1,12 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -18,6 +11,12 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.AlarmInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.concurrent.Callable;
 
 /**
  * 
@@ -38,7 +37,7 @@ public class Nth implements PostProcessor, PostProcessorWithConsolidatedEventStr
 	private long startTime;
 	private long endTime;
 	private ArrayListEventStream data;
-	private Timestamp previousEventTimestamp = new Timestamp(1);
+    private Instant previousEventTimestamp = Instant.ofEpochMilli(1);
 	private int i = 0;
 	
 	@Override
@@ -70,9 +69,9 @@ public class Nth implements PostProcessor, PostProcessorWithConsolidatedEventStr
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
-		this.startTime = start.getTime();
-		this.endTime = end.getTime();
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+        this.startTime = start.toEpochMilli();
+        this.endTime = end.toEpochMilli();
 		long startTime = TimeUtils.convertToEpochSeconds(start);
 		long endTime = TimeUtils.convertToEpochSeconds(end);
 		count = (int)((endTime - startTime)/typeInfo.getSamplingPeriod())/everyNth;
@@ -99,7 +98,7 @@ public class Nth implements PostProcessor, PostProcessorWithConsolidatedEventStr
 						data = new ArrayListEventStream(count,(RemotableEventStreamDesc)strm.getDescription());
 					}
 					for(Event e : strm) {
-						if(e.getEventTimeStamp().after(previousEventTimestamp)) { 
+                        if (e.getEventTimeStamp().isAfter(previousEventTimestamp)) {
 							previousEventTimestamp = e.getEventTimeStamp();
 						} else {
 							if(logger.isDebugEnabled()) { 
@@ -107,7 +106,7 @@ public class Nth implements PostProcessor, PostProcessorWithConsolidatedEventStr
 							}
 							continue;
 						}
-						long s = e.getEventTimeStamp().getTime();
+                        long s = e.getEventTimeStamp().toEpochMilli();
 						if (s < startTime || s > endTime) {
 							logger.debug("Skipping event that is out of selected boundaries. Time: " + TimeUtils.convertToHumanReadableString(s));
 						} else {
@@ -150,11 +149,11 @@ public class Nth implements PostProcessor, PostProcessorWithConsolidatedEventStr
 	
 	@Override
 	public long getEndBinEpochSeconds() {
-		return TimeUtils.convertToEpochSeconds(new Timestamp(endTime));
+        return TimeUtils.convertToEpochSeconds(Instant.ofEpochMilli(endTime));
 	}
 	
 	@Override
 	public long getStartBinEpochSeconds() {
-		return TimeUtils.convertToEpochSeconds(new Timestamp(startTime));
+        return TimeUtils.convertToEpochSeconds(Instant.ofEpochMilli(startTime));
 	}
 }
