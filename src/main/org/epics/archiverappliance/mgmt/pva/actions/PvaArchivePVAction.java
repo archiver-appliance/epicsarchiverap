@@ -1,11 +1,5 @@
 package org.epics.archiverappliance.mgmt.pva.actions;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
@@ -19,6 +13,12 @@ import org.epics.pva.data.nt.PVATable;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * Add one or more pvs to the archiver.
@@ -81,23 +81,23 @@ public class PvaArchivePVAction implements PvaAction {
 		for (int i = 0; i < pvNames.length; i++) {
 			String pvName = pvNames[i];
 			String samplingPeriodStr = null;
-			if (samplingperiods != null && samplingperiods[i] != null) {
+			if (samplingperiods != null && samplingperiods.length == pvNames.length && samplingperiods[i] != null) {
 				samplingPeriodStr = samplingperiods[i];
 			}
-			boolean samplingPeriodSpecified = samplingPeriodStr != null && !samplingPeriodStr.equals("");
+			boolean samplingPeriodSpecified = samplingPeriodStr != null && !samplingPeriodStr.isEmpty();
 			float samplingPeriod = PolicyConfig.DEFAULT_MONITOR_SAMPLING_PERIOD;
 			if(samplingPeriodSpecified) {
 				samplingPeriod = Float.parseFloat(samplingPeriodStr);
 			}
 
 			SamplingMethod samplingMethod = SamplingMethod.MONITOR;
-			if(samplingmethods != null && samplingmethods[i] != null) {
+			if (samplingmethods != null && samplingmethods.length == pvNames.length && samplingmethods[i] != null) {
 				samplingMethod = SamplingMethod.valueOf(samplingmethods[i]);
 			}
 			String controllingPV = null;
 			if (controllingPVs != null && controllingPVs.length == pvNames.length) {
 				controllingPV = controllingPVs[i];
-				if (controllingPV != null && !controllingPV.equals("")) {
+				if (controllingPV != null && !controllingPV.isEmpty()) {
 					logger.debug("We are conditionally archiving using controlling PV " + controllingPV);
 				}
 			}
