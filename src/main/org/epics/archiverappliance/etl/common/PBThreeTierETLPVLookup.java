@@ -319,8 +319,8 @@ public final class PBThreeTierETLPVLookup {
 	 */
 	public void manualControlForUnitTests() { 
 		logger.error("Shutting down ETL for unit tests...");
-		for(ScheduledThreadPoolExecutor scheduledThreadPoolExecutor : this.etlLifeTimeThreadPoolExecutors) { 
-			scheduledThreadPoolExecutor.shutdown();
+        for (ScheduledThreadPoolExecutor scheduledThreadPoolExecutor : this.etlLifeTimeThreadPoolExecutors) {
+            scheduledThreadPoolExecutor.shutdownNow();
 		}
 	}
 	
@@ -331,7 +331,7 @@ public final class PBThreeTierETLPVLookup {
 	
 	
 	public void addETLJobsForUnitTests(String pvName, PVTypeInfo typeInfo) {
-		logger.warn("This message should only be called from the unit tests.");
+        logger.warn("addETLJobsForUnitTests This message should only be called from the unit tests.");
 		addETLJobs(pvName, typeInfo);
 	}
 

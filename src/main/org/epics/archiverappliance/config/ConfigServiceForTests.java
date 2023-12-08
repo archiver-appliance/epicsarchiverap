@@ -179,11 +179,20 @@ public class ConfigServiceForTests extends DefaultConfigService {
         return super.getApplianceForPV(pvName);
     }
 
+    /**
+     * Register the pv to the appliance
+     * Note this restarts any ETL JOBs in unit tests, so you'll need to call manualControlForUnitTests(); again
+     * if they should be stopped.
+     *
+     * @param pvName The name of PV.
+     * @param applianceInfo ApplianceInfo
+     * @throws AlreadyRegisteredException pv already registered.
+     */
     @Override
     public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
         super.registerPVToAppliance(pvName, applianceInfo);
         if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
-            logger.debug("Adding pv " + pvName + " to this appliance's pvs and to ETL");
+            logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");
             this.pvsForThisAppliance.add(pvName);
             if (this.getETLLookup() != null) {
                 this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));

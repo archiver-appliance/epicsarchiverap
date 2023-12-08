@@ -7,14 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -39,6 +31,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
 
 /**
  * Test retrieval after the dest appserver has been upgraded.
@@ -71,7 +68,7 @@ import org.junit.jupiter.api.Test;
 public class FailoverUpgradeTest {
 	private static Logger logger = LogManager.getLogger(FailoverUpgradeTest.class.getName());
 	private ConfigServiceForTests configService;
-	String pvName = "FailoverRetrievalTest";
+    String pvName = "FailoverUpgradeTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	

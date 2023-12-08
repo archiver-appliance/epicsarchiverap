@@ -55,7 +55,7 @@ import java.util.concurrent.Callable;
 public class FailoverMultiStepETLTest {
 	private static Logger logger = LogManager.getLogger(FailoverMultiStepETLTest.class.getName());
 	private ConfigServiceForTests configService;
-	String pvName = "FailoverETLTest";
+    String pvName = "FailoverMultiStepETLTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	long stepSeconds = 3600;
@@ -126,15 +126,22 @@ public class FailoverMultiStepETLTest {
 		int genEventCount = 0;
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
-            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(ts, PartitionGranularity.PARTITION_DAY).plusSeconds(1 + startingOffset); // We generate a months worth of data.
-                 s.isBefore(TimeUtils.getNextPartitionFirstSecond(ts, PartitionGranularity.PARTITION_DAY));
-                 s = s.plusSeconds(stepSeconds)) {
-				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
+            ArrayListEventStream strm = new ArrayListEventStream(
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(ts).getYear()));
+
+            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(ts, PartitionGranularity.PARTITION_DAY)
+                            .plusSeconds(1 + startingOffset); // We generate a months worth of data.
+                    s.isBefore(TimeUtils.getNextPartitionFirstSecond(ts, PartitionGranularity.PARTITION_DAY));
+                    s = s.plusSeconds(stepSeconds)) {
                 POJOEvent genEvent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0);
 				strm.add(genEvent);
 				genEventCount++;
-				plugin.appendData(context, pvName, strm);
-			}			
+            }
+            plugin.appendData(context, pvName, strm);
 		}		
 		return genEventCount;
 	}
@@ -158,6 +165,7 @@ public class FailoverMultiStepETLTest {
 				+ "&other=" + URLEncoder.encode(otherURL, "UTF-8");
 		configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
 		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
+        configService.getETLLookup().manualControlForUnitTests();
 	}
 
     private long testMergedRetrieval(String applianceName, Instant startTime, Instant endTime, boolean expectContinous) throws Exception {

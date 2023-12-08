@@ -50,7 +50,7 @@ import java.util.Map;
 @Tag("integration")
 public class FailoverScoreAPITest {
     private static final Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
-    String pvName = "FailoverRetrievalTest";
+    String pvName = "FailoverScoreAPITest";
     ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
     TomcatSetup tomcatSetup = new TomcatSetup();
     private ConfigServiceForTests configService;
@@ -80,16 +80,17 @@ public class FailoverScoreAPITest {
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
+            ArrayListEventStream strm = new ArrayListEventStream(
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(theMonth).getYear()));
             for (Instant s = TimeUtils.getPreviousPartitionLastSecond(theMonth, PartitionGranularity.PARTITION_DAY)
                     .plusSeconds(1);
                  s.isBefore(TimeUtils.now());
                  s = s.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())) {
-                ArrayListEventStream strm = new ArrayListEventStream(
-                        0,
-                        new RemotableEventStreamDesc(
-                                ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                                pvName,
-                                TimeUtils.convertToYearSecondTimestamp(s).getYear()));
+
                 POJOEvent pojoEvent = new POJOEvent(
                         ArchDBRTypes.DBR_SCALAR_DOUBLE,
                         s.plusSeconds(
@@ -103,8 +104,9 @@ public class FailoverScoreAPITest {
                         "Generating event at " + TimeUtils.convertToHumanReadableString(pojoEvent.getEventTimeStamp()));
                 strm.add(pojoEvent);
                 genEventCount++;
-                plugin.appendData(context, pvName, strm);
             }
+            plugin.appendData(context, pvName, strm);
+
         }
         logger.info("Done generating data for appliance " + applianceName);
 
@@ -210,7 +212,7 @@ public class FailoverScoreAPITest {
     @Test
     public void testRetrieval() throws Exception {
         // Register the PV with both appliances and generate data.
-        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2*31);
         generateMTSData("http://localhost:17665", "dest_appliance", lastMonth, true);
         generateMTSData("http://localhost:17669", "other_appliance", lastMonth, false);
 

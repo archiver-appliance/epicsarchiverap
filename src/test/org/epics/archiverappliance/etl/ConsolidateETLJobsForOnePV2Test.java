@@ -40,11 +40,11 @@ import java.time.Instant;
 public class ConsolidateETLJobsForOnePV2Test {
 
     private static final Logger logger = LogManager.getLogger(ConsolidateETLJobsForOnePV2Test.class.getName());
-    String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ConsolidateETLJobsForOnePVTest";
+    String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ConsolidateETLJobsForOnePV2Test";
     String shortTermFolderName = rootFolderName + "/shortTerm";
     String mediumTermFolderName = rootFolderName + "/mediumTerm";
     String longTermFolderName = rootFolderName + "/longTerm";
-    String pvName = "ArchUnitTest" + "ConsolidateETLJobsForOnePVTest";
+    String pvName = "ArchUnitTest" + "ConsolidateETLJobsForOnePV2Test";
     PlainPBStoragePlugin storageplugin1;
     PlainPBStoragePlugin storageplugin2;
     PlainPBStoragePlugin storageplugin3;
