@@ -17,9 +17,9 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -27,12 +27,10 @@ import org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -44,11 +42,9 @@ import java.util.stream.Stream;
  */
 public class BlackHoleETLTest {
     private static final Logger logger = LogManager.getLogger(BlackHoleETLTest.class.getName());
-    private ConfigService configService;
+    ConfigServiceForTests configService = new ConfigServiceForTests(-1);
 
-    @BeforeEach
-    public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+    public BlackHoleETLTest() throws ConfigException {
     }
 
     /**
@@ -67,7 +63,7 @@ public class BlackHoleETLTest {
         PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
         BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
-        ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+        ConfigServiceForTests configService = new ConfigServiceForTests(-1);
 
         srcSetup.setUpRootFolder(etlSrc, "BlackholeETLTestSrc_" + granularity, granularity);
 

@@ -43,6 +43,18 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.concurrent.Callable;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * A more complex test for testing ETL for failover.
  * "Other" generates even data for multiple months
@@ -55,14 +67,14 @@ import java.util.concurrent.Callable;
 public class FailoverMultiStepETLTest {
 	private static Logger logger = LogManager.getLogger(FailoverMultiStepETLTest.class.getName());
 	private ConfigServiceForTests configService;
-	String pvName = "FailoverETLTest";
+    String pvName = "FailoverMultiStepETLTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	long stepSeconds = 3600;
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "../sts"); 
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts"); 
 		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "../lts"); 
@@ -124,17 +136,24 @@ public class FailoverMultiStepETLTest {
 
     private int generateData(String applianceName, Instant ts, int startingOffset) throws IOException {
 		int genEventCount = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
-            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(ts, PartitionGranularity.PARTITION_DAY).plusSeconds(1 + startingOffset); // We generate a months worth of data.
-                 s.isBefore(TimeUtils.getNextPartitionFirstSecond(ts, PartitionGranularity.PARTITION_DAY));
-                 s = s.plusSeconds(stepSeconds)) {
-				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
+            ArrayListEventStream strm = new ArrayListEventStream(
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(ts).getYear()));
+
+            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(ts, PartitionGranularity.PARTITION_DAY)
+                            .plusSeconds(1 + startingOffset); // We generate a months worth of data.
+                    s.isBefore(TimeUtils.getNextPartitionFirstSecond(ts, PartitionGranularity.PARTITION_DAY));
+                    s = s.plusSeconds(stepSeconds)) {
                 POJOEvent genEvent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0);
 				strm.add(genEvent);
 				genEventCount++;
-				plugin.appendData(context, pvName, strm);
-			}			
+            }
+            plugin.appendData(context, pvName, strm);
 		}		
 		return genEventCount;
 	}
@@ -158,12 +177,13 @@ public class FailoverMultiStepETLTest {
 				+ "&other=" + URLEncoder.encode(otherURL, "UTF-8");
 		configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
 		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
+        configService.getETLLookup().manualControlForUnitTests();
 	}
 
     private long testMergedRetrieval(String applianceName, Instant startTime, Instant endTime, boolean expectContinous) throws Exception {
 		long rtvlEventCount = 0;
 		long lastEvEpoch = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
 		try(BasicContext context = new BasicContext()) {
 			logger.info("Looking for data " + plugin.getDescription() + " from " + TimeUtils.convertToHumanReadableString(startTime) + " and " + TimeUtils.convertToHumanReadableString(endTime));
 			List<Callable<EventStream>> callables = plugin.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
@@ -196,9 +216,9 @@ public class FailoverMultiStepETLTest {
 		}
 		registerPVForOther("http://localhost:17665", ConfigServiceForTests.TESTAPPLIANCE0, TimeUtils.minusDays(TimeUtils.now(), 5*365), TimeUtils.plusDays(TimeUtils.now(), 10), oCount);
 
-		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts"); 
-		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"); 
-		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts"); 
+		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts"); 
+		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"); 
+		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts"); 
 
 		long dCount = 0;
         for (Instant ts = startTime; ts.isBefore(endTime); ts = TimeUtils.plusDays(ts, 1)) {

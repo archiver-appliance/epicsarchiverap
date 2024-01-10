@@ -1,9 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -18,18 +14,21 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
 
 /**
  * Test archiving using a simple cluster of tomcat servers.
  * @author mshankar
  *
  */
+@Tag("integration")
 @Tag("localEpics")
 public class ArchivePVClusterTest {
 	private static Logger logger = LogManager.getLogger(ArchivePVClusterTest.class.getName());

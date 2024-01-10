@@ -60,7 +60,7 @@ public class MultiFilePBEventStreamTest {
 	public void testMultiFileEventStream() throws Exception {
 		// We generate a years worth of data into a PlainPBStoragePlugin with different granularity. 
 		// We then retrieve data and make sure that we get what we expect
-		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
+		ConfigService configService = new ConfigServiceForTests(-1);
 		
 		for(PartitionGranularity granularity : PartitionGranularity.values()) {
 			logger.debug("Generating sample data for granularity " + granularity);

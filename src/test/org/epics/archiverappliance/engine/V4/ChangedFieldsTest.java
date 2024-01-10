@@ -36,7 +36,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +44,9 @@ import java.util.stream.Collectors;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedEvents;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test to check the metadata stored with the pv as it changes
@@ -60,7 +61,7 @@ public class ChangedFieldsTest {
 
     @Before
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 

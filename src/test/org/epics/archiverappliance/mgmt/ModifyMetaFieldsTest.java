@@ -1,13 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.StringWriter;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.List;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -24,18 +16,25 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.StringWriter;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Modify the metafields across the cluster. We archive and then send the modifyMetaFields to the other appliance.
  * @author mshankar
  *
  */
+@Tag("integration")
 @Tag("localEpics")
 public class ModifyMetaFieldsTest {
 	private static Logger logger = LogManager.getLogger(ModifyMetaFieldsTest.class.getName());

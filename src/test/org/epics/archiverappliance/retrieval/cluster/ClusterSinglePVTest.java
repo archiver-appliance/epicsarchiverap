@@ -81,7 +81,7 @@ public class ClusterSinglePVTest {
      */
     @Test
     public void singlePvsAcrossCluster() throws Exception {
-        ConfigService configService = new ConfigServiceForTests(new File("./bin"));
+        ConfigService configService = new ConfigServiceForTests(-1);
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize("pb://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR", configService);

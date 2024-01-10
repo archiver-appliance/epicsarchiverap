@@ -25,7 +25,13 @@ public class SIOCSetup {
 	Process watchedProcess;
 	PipedOutputStream osforstdin = new PipedOutputStream();
 	PrintWriter writerforstdin = new PrintWriter(new OutputStreamWriter(osforstdin));
-	
+	String prefix;
+	public SIOCSetup() {
+		this("");
+	}
+	public SIOCSetup(String prefix) {
+		this.prefix = prefix;
+	}
 	/**
 	 * We start the SIOC with the UnitTestPVs.db. 
 	 * This assumes that are run in the root folder of the workspace.
@@ -38,7 +44,7 @@ public class SIOCSetup {
 		
 		logger.info("Starting SIOC with DB file " + f.getAbsolutePath());
 		
-		ProcessBuilder pb = new ProcessBuilder("softIocPVA", "-d", f.getAbsolutePath());
+		ProcessBuilder pb = new ProcessBuilder("softIocPVA", "-m", "P=" + prefix, "-d", f.getAbsolutePath());
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(ProcessBuilder.Redirect.INHERIT);
 		pb.redirectInput(ProcessBuilder.Redirect.PIPE);

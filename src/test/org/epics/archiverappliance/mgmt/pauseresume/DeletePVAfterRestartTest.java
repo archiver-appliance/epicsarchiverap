@@ -1,9 +1,5 @@
 package org.epics.archiverappliance.mgmt.pauseresume;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -20,12 +16,14 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
 
 /**
  * Create a paused PV in persistence; start the appserver and make sure we can delete
@@ -35,12 +33,14 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 @Tag("integration")
 @Tag("localEpics")
 public class DeletePVAfterRestartTest {
-	private static Logger logger = LogManager.getLogger(DeletePVAfterRestartTest.class.getName());
-	private File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
-	private String pvNameToArchive = "UnitTestNoNamingConvention:sine";
-	TomcatSetup tomcatSetup = new TomcatSetup();
-	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
+    private static final Logger logger = LogManager.getLogger(DeletePVAfterRestartTest.class.getName());
+    private final File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
+
+    private final String pvPrefix = DeletePVAfterRestartTest.class.getSimpleName();
+    private final String pvNameToArchive = pvPrefix + "UnitTestNoNamingConvention:sine";
+    TomcatSetup tomcatSetup = new TomcatSetup();
+    SIOCSetup siocSetup = new SIOCSetup(pvPrefix);
+    WebDriver driver;
 
 	@BeforeAll
 	public static void setupClass() {
@@ -91,21 +91,21 @@ public class DeletePVAfterRestartTest {
 		 logger.info("Let's go to the details page and resume the PV");
 		 driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvNameToArchive);
 		 { 
-			 Thread.sleep(2*1000);
+			 Thread.sleep(2 * 1000);
 			 WebElement deletePVButn = driver.findElement(By.id("pvDetailsStopArchiving"));
 			 logger.info("Clicking on the button to delete/stop archiving the PV");
 			 deletePVButn.click();
-			 Thread.sleep(2*1000);
+			 Thread.sleep(2 * 1000);
 			 WebElement dialogOkButton = driver.findElement(By.id("pvStopArchivingOk"));
 			 logger.info("About to submit");
 			 dialogOkButton.click();
-			 Thread.sleep(10*1000);
+			 Thread.sleep(10 * 1000);
 		 }
 		 { 
 			 driver.get("http://localhost:17665/mgmt/ui/index.html");
 			 checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 			 checkStatusButton.click();
-			 Thread.sleep(2*1000);
+			 Thread.sleep(2 * 1000);
 			 statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 			 pvNameObtainedFromTable = statusPVName.getText();
 			 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);

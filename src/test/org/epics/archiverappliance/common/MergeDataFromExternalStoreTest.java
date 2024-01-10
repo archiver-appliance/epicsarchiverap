@@ -38,6 +38,15 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.time.Instant;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.sql.Timestamp;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 /**
  * Test merging in data from an external store. 
  * @author mshankar
@@ -55,7 +64,7 @@ public class MergeDataFromExternalStoreTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
 	}
 
@@ -70,16 +79,23 @@ public class MergeDataFromExternalStoreTest {
     private long generateMTSData(String applURL, String applianceName, Instant lastMonth, int startingOffset)
 			throws Exception {
 		int genEventCount = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
-            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH).plusSeconds(1 + startingOffset); // We generate a months worth of data.
-                 s.isBefore(TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH));
-                 s = s.plusSeconds(stepSeconds)) {
-				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
+            ArrayListEventStream strm = new ArrayListEventStream(
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(lastMonth).getYear()));
+
+            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
+                            .plusSeconds(1 + startingOffset); // We generate a months worth of data.
+                    s.isBefore(TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH));
+                    s = s.plusSeconds(stepSeconds)) {
                 strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0));
 				genEventCount++;
-				plugin.appendData(context, pvName, strm);
-			}			
+            }
+            plugin.appendData(context, pvName, strm);
 		}		
 		logger.info("Done generating dest data");
 		
@@ -164,8 +180,8 @@ public class MergeDataFromExternalStoreTest {
 
 	@Test
 	public void testRetrieval() throws Exception {
-		// Register the PV with both appliances and generate data.
-        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);
+        // Register the PV with both appliances and generate data.
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2 * 31);
 		long dCount = generateMTSData("http://localhost:17665", "dest_appliance", lastMonth, 0);
 		long oCount = generateMTSData("http://localhost:17669", "other_appliance", lastMonth, 1);
 		tCount = dCount + oCount;

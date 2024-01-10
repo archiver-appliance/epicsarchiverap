@@ -1,10 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.Arrays;
-
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -21,6 +16,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
+import static org.junit.Assert.assertTrue;
+
 public class PVTypeInfoExportImportTest {
 
 	@BeforeEach
@@ -33,7 +32,7 @@ public class PVTypeInfoExportImportTest {
 
 	@Test
 	public void testEncodePVTypeInfo() throws Exception {
-		ConfigServiceForTests configService = new ConfigServiceForTests(new File("./src/sitespecific/tests/classpathfiles"));
+        ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         String pvName = "UnitTestNoNamingConvention:sine";
         MetaInfo info = new MetaInfo();
         info.addOtherMetaInfo("RTYP", "ai");

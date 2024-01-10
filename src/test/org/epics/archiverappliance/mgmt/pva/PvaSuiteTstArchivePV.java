@@ -21,6 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+import static org.epics.archiverappliance.mgmt.pva.PvaTest.pvPrefix;
 import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 
 
@@ -32,7 +33,7 @@ import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringA
 @Tag("integration")@Tag("localEpics")
 public class PvaSuiteTstArchivePV {
 
-	private static Logger logger = LogManager.getLogger(PvaSuiteTstArchivePV.class.getName());
+	private static final Logger logger = LogManager.getLogger(PvaSuiteTstArchivePV.class.getName());
 
 	private static PVAClient pvaClient;
 	private static PVAChannel pvaChannel;
@@ -60,7 +61,7 @@ public class PvaSuiteTstArchivePV {
 		PVATable archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
 				.name(PvaArchivePVAction.NAME)
 				.descriptor(PvaArchivePVAction.NAME)
-				.addColumn(new PVAStringArray("pv", "UnitTestNoNamingConvention:sine","UnitTestNoNamingConvention:cosine"))
+				.addColumn(new PVAStringArray("pv", pvPrefix + "UnitTestNoNamingConvention:sine",pvPrefix + "UnitTestNoNamingConvention:cosine"))
 				.addColumn(new PVAStringArray("samplingperiod", "1.0","2.0"))
 				.addColumn(new PVAStringArray("samplingmethod", "SCAN","MONITOR"))
 				.build();
@@ -72,7 +73,7 @@ public class PvaSuiteTstArchivePV {
 			  { "pvName": "mshankar:arch:sine", "status": "Archive request submitted" }
 			  { "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }
 			 */
-			String[] expextedKePvNames = new String[] { "UnitTestNoNamingConvention:sine", "UnitTestNoNamingConvention:cosine" };
+			String[] expextedKePvNames = new String[] { pvPrefix + "UnitTestNoNamingConvention:sine", pvPrefix + "UnitTestNoNamingConvention:cosine" };
 			String[] expectedStatus = new String[] { "Archive request submitted", "Archive request submitted" };
 			logger.info("results" + result.toString());
             Assertions.assertArrayEquals(expextedKePvNames,

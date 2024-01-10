@@ -24,7 +24,7 @@ import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusCh
 @Tag("integration")
 @Tag("localEpics")
 public class PauseResumeV4Test {
-    
+
 
     private static final Logger logger = LogManager.getLogger(SampleV4PVAClientTest.class.getName());
     private SIOCSetup ioc;

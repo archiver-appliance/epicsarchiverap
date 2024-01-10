@@ -48,7 +48,7 @@ public class MatlabFileTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		storageplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + rootFolderName + "/&partitionGranularity=PARTITION_YEAR", configService);
 		if(new File(rootFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(rootFolderName));

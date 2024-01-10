@@ -52,8 +52,7 @@ public class EventStreamWrapTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        logger.info("Start setup");
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(1);
         if (new File(shortTermFolderName).exists()) {
             FileUtils.deleteDirectory(new File(shortTermFolderName));
         }

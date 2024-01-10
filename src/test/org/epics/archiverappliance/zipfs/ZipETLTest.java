@@ -38,7 +38,7 @@ public class ZipETLTest {
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		if(testFolder.exists()) { 
 			FileUtils.deleteDirectory(testFolder);
 		}

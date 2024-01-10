@@ -7,8 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -20,8 +18,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-
-
 import org.junit.jupiter.api.Test;
 
 /**
@@ -31,16 +27,18 @@ import org.junit.jupiter.api.Test;
  */
 @Tag("localEpics")
 public class SampleBufferOverFlowTest {
-	private static Logger logger = LogManager.getLogger(SampleBufferOverFlowTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(SampleBufferOverFlowTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
 	private FakeWriter writer = new FakeWriter();
 
-	@BeforeEach
+    private final String pvPrefix = SampleBufferOverFlowTest.class.getSimpleName().substring(0, 10);
+
+    @BeforeEach
 	public void setUp() throws Exception {
-		ioc = new SIOCSetup();
+		ioc = new SIOCSetup(pvPrefix);
 		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(new File("./bin"));
+        testConfigService = new ConfigServiceForTests(-1);
 		Thread.sleep(3000);
 	}
 
@@ -51,14 +49,10 @@ public class SampleBufferOverFlowTest {
 	}
 
 	@Test
-	public void testAll() {
-		sampleBufferOverflow();
-	}
-
-	private void sampleBufferOverflow() {
-		String pvName = "test_1000";
+	public void sampleBufferOverflow() {
+		String pvName = pvPrefix + "test_1000";
 		try {
-			ArchiveEngine.archivePV(pvName, 5F, SamplingMethod.MONITOR, 10,
+			ArchiveEngine.archivePV(pvName, 5F, SamplingMethod.MONITOR,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
 					null, false, false);
 

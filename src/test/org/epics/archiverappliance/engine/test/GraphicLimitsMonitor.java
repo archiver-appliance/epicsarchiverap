@@ -12,15 +12,13 @@ import gov.aps.jca.dbr.DBRType;
 import gov.aps.jca.dbr.DBR_GR_Double;
 import gov.aps.jca.event.MonitorEvent;
 import gov.aps.jca.event.MonitorListener;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
 import org.xml.sax.SAXException;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
 
 /**
  * Establish a graphic limits monitor on a known PV and print each change.
@@ -32,7 +30,7 @@ public class GraphicLimitsMonitor {
 	private JCALibrary jca =null;
 
 	private void initialize() throws CAException, SAXException, IOException, ConfigurationException, ConfigException {
-		ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+		ConfigServiceForTests configService = new ConfigServiceForTests(-1);
 		jca = JCALibrary.getInstance();
 		ByteArrayInputStream bis = JCAConfigGen.generateJCAConfig(configService);
 		DefaultConfigurationBuilder configBuilder = new DefaultConfigurationBuilder();

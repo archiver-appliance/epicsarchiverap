@@ -78,7 +78,7 @@ public class ArchiveEngine {
 	 * @throws Exception &emsp; 
 	 */
 	private static ArchiveChannel addChannel(final String name, final Writer writer, 
-			final Enablement enablement, final SampleMode sample_mode,
+			                                 final SampleMode sample_mode,
                                              final Instant last_sampleTimestamp,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype, 
 			final String controlPVname, final String iocHostName, final boolean usePVAccess) throws Exception {
@@ -111,12 +111,12 @@ public class ArchiveEngine {
 		// Create new channel
 		if (sample_mode.isMonitor()) {
 			if (sample_mode.getDelta() > 0) {
-				channel = new DeltaArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(),configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
-			} else { 
-				channel = new MonitoredArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
+				channel = new DeltaArchiveChannel(name, writer, Enablement.Enabling, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(), configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
+			} else {
+				channel = new MonitoredArchiveChannel(name, writer, Enablement.Enabling, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 			}
 		} else {
-			channel = new ScannedArchiveChannel(name, writer, enablement, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
+			channel = new ScannedArchiveChannel(name, writer, Enablement.Enabling, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 		}
 
 		configservice.getEngineContext().getChannelList().put(channel.getName(), channel);
@@ -128,7 +128,7 @@ public class ArchiveEngine {
 
 	private static void createChannels4PVWithMetaField(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
-			final int secondstoBuffer, final Writer writer,
+													   final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
                                                        final Instant lastKnownEventTimeStamp, final boolean start, final String controlPVname, final String[] metaFields, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
 		EngineContext engineContext = configservice.getEngineContext();
@@ -140,7 +140,7 @@ public class ArchiveEngine {
 		if (mode == SamplingMethod.SCAN) {
 			SampleMode scan_mode2 = new SampleMode(false, 0, samplingPeriod);
 			ArchiveChannel channel = ArchiveEngine.addChannel(pvName, writer,
-					Enablement.Enabling, scan_mode2, lastKnownEventTimeStamp,
+					scan_mode2, lastKnownEventTimeStamp,
 					configservice, archdbrtype, controlPVname, iocHostName, usePVAccess);
 
 			if (start) {
@@ -156,7 +156,7 @@ public class ArchiveEngine {
 		} else if (mode == SamplingMethod.MONITOR) {
 			SampleMode scan_mode2 = new SampleMode(true, 0, samplingPeriod);
 			ArchiveChannel channel = ArchiveEngine.addChannel(pvName, writer,
-					Enablement.Enabling, scan_mode2, lastKnownEventTimeStamp,
+					scan_mode2, lastKnownEventTimeStamp,
 					configservice, archdbrtype, controlPVname, iocHostName, usePVAccess);
 
 			if (start) { 
@@ -193,8 +193,7 @@ public class ArchiveEngine {
 	 * @param pvName Name of the channel (PV)
 	 * @param samplingPeriod The minimal sample period for channel in scan mode.  Attention: the same data with same value and timestamp is not saved again in scan mode. This period is meanlingless for channel in monitor mode.
 	 * @param mode scan or monitor
-	 * @param secondstoBuffer Not really used
-	 * @param writer First destination 
+	 * @param writer First destination
 	 * @param configservice ConfigService 
 	 * @param archdbrtype Expected DBR type. 
 	 * @param lastKnownEventTimeStamp Last known event from all the stores.
@@ -205,10 +204,10 @@ public class ArchiveEngine {
 	 */
 	public static void archivePV(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
-			final int secondstoBuffer, final Writer writer,
+								 final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
                                  final Instant lastKnownEventTimeStamp, final String controllingPVName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
-		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, controllingPVName, null, null, usePVAccess, useDBEProperties);
+		archivePV(pvName, samplingPeriod, mode, writer, configservice, archdbrtype, lastKnownEventTimeStamp, controllingPVName, null, null, usePVAccess, useDBEProperties);
 	}
 
 
@@ -217,8 +216,7 @@ public class ArchiveEngine {
 	 * @param pvName Name of the channel (PV)
 	 * @param samplingPeriod The minimal sample period for channel in scan mode.  Attention: the same data with same value and timestamp is not saved again in scan mode. This period is meanlingless for channel in monitor mode.
 	 * @param mode scan or monitor
-	 * @param secondstoBuffer Not really used
-	 * @param writer First destination 
+	 * @param writer First destination
 	 * @param configservice ConfigService 
 	 * @param archdbrtype Expected DBR type. 
 	 * @param lastKnownEventTimeStamp Last known event from all the stores.
@@ -228,9 +226,9 @@ public class ArchiveEngine {
 	 */
 	public static void archivePV(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
-			final int secondstoBuffer, final Writer writer,
+			final Writer writer,
                                  final ConfigService configservice, final ArchDBRTypes archdbrtype, final Instant lastKnownEventTimeStamp, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
-		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, null, null, usePVAccess, useDBEProperties);
+		archivePV(pvName, samplingPeriod, mode, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, null, null, usePVAccess, useDBEProperties);
 	}
 
 
@@ -239,8 +237,7 @@ public class ArchiveEngine {
 	 * @param pvName Name of the channel (PV)
 	 * @param samplingPeriod The minimal sample period for channel in scan mode.  Attention: the same data with same value and timestamp is not saved again in scan mode. This period is meanlingless for channel in monitor mode.
 	 * @param mode scan or monitor
-	 * @param secondstoBuffer Not really used
-	 * @param writer First destination 
+	 * @param writer First destination
 	 * @param configservice ConfigService 
 	 * @param archdbrtype Expected DBR type. 
 	 * @param lastKnownEventTimeStamp Last known event from all the stores.
@@ -251,11 +248,11 @@ public class ArchiveEngine {
 	 */
 	public static void archivePV(final String pvName,
 			final float samplingPeriod, final SamplingMethod mode,
-			final int secondstoBuffer, final Writer writer,
+								 final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
                                  final Instant lastKnownEventTimeStamp,
 			final String[] metaFieldNames, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
-		archivePV(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, metaFieldNames, null, usePVAccess, useDBEProperties);
+		archivePV(pvName, samplingPeriod, mode, writer, configservice, archdbrtype, lastKnownEventTimeStamp, null, metaFieldNames, null, usePVAccess, useDBEProperties);
 	}
 
 
@@ -265,8 +262,7 @@ public class ArchiveEngine {
 	 * @param pvName Name of the channel (PV)
 	 * @param samplingPeriod The minimal sample period for channel in scan mode.  Attention: the same data with same value and timestamp is not saved again in scan mode. This period is meanlingless for channel in monitor mode.
 	 * @param mode scan or monitor
-	 * @param secondstoBuffer - Not really used
-	 * @param writer First destination 
+	 * @param writer First destination
 	 * @param configservice   ConfigService 
 	 * @param archdbrtype Expected DBR type. 
 	 * @param lastKnownEventTimeStamp Last known event from all the stores.
@@ -277,9 +273,9 @@ public class ArchiveEngine {
 	 * @param useDBEProperties  &emsp;
 	 * @throws Exception &emsp; 
 	 */
-	public static void archivePV(final String pvName, 
-			final float samplingPeriod, final SamplingMethod mode, 
-			final int secondstoBuffer, final Writer writer, 
+	public static void archivePV(final String pvName,
+								 final float samplingPeriod, final SamplingMethod mode,
+								 final Writer writer,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
                                  final Instant lastKnownEventTimeStamp,
 			final String controllingPVName, final String[] metaFieldNames, final String iocHostName, final boolean usePVAccess, final boolean useDBEProperties) throws Exception {
@@ -290,27 +286,23 @@ public class ArchiveEngine {
 			ControllingPV controllingPV = controlingPVList.get(controllingPVName);
 
 			if (controllingPV == null) {
-				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, secondstoBuffer, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName, usePVAccess, useDBEProperties);
+				ArchiveEngine.createChannels4PVWithMetaField(pvName, samplingPeriod, mode, writer, configservice, archdbrtype, lastKnownEventTimeStamp, start, controllingPVName, metaFieldNames, iocHostName, usePVAccess, useDBEProperties);
 				controllingPV = PVFactory.createControllingPV(controllingPVName, configservice, true, archdbrtype, configservice.getEngineContext().assignJCACommandThread(controllingPVName, null), false);
 				controlingPVList.put(controllingPVName, controllingPV);
 				controllingPV.addControledPV(pvName);
 				controllingPV.start();
 			} else {
 				controllingPV.addControledPV(pvName);
-				if (controllingPV.isEnableAllPV()) {
-					start = true;
-				} else {
-					start = false;
-				}
+				start = controllingPV.isEnableAllPV();
 
 				ArchiveEngine.createChannels4PVWithMetaField(pvName,
-						samplingPeriod, mode, secondstoBuffer, writer,
+						samplingPeriod, mode, writer,
 						configservice, archdbrtype, lastKnownEventTimeStamp,
 						start, controllingPVName, metaFieldNames, iocHostName, usePVAccess, useDBEProperties);
 			}
 		} else {
 			ArchiveEngine.createChannels4PVWithMetaField(pvName,
-					samplingPeriod, mode, secondstoBuffer, writer,
+					samplingPeriod, mode, writer,
 					configservice, archdbrtype, lastKnownEventTimeStamp, start,
 					null, metaFieldNames, iocHostName, usePVAccess, useDBEProperties);
 		}
@@ -338,7 +330,7 @@ public class ArchiveEngine {
 
 	/**
 	 * restart the pv
-	 * 
+	 *
 	 * @param pvName
 	 *            Name of the channel (PV)
 	 * @param configservice  ConfigService
@@ -352,11 +344,34 @@ public class ArchiveEngine {
 		if (channel != null) {
 			channel.stop();
 			channel.start();
-		} else { 
+		} else {
 			// We have not created the channel on startup.
 			// We should start it up
 			logger.debug("We had not created the channel on startup. Creating it " + pvName);
 			startChannelsForPV(pvName, configservice);
+		}
+	}
+
+
+	/**
+	 * restart the pv
+	 *
+	 * @param pvName        Name of the channel (PV)
+	 * @param configservice ConfigService
+	 * @throws Exception error in restarting the channel .
+	 */
+
+	public static void resumeArchivingPV(final String pvName, ConfigService configservice, Writer writer) throws Exception {
+		EngineContext engineContext = configservice.getEngineContext();
+		ArchiveChannel channel = engineContext.getChannelList().get(pvName);
+		if (channel != null) {
+			channel.stop();
+			channel.start();
+		} else {
+			// We have not created the channel on startup.
+			// We should start it up
+			logger.debug("We had not created the channel on startup. Creating it " + pvName);
+			startChannelsForPV(pvName, configservice, configservice.getTypeInfoForPV(pvName), writer);
 		}
 	}
 
@@ -373,19 +388,35 @@ public class ArchiveEngine {
 	public static void startChannelsForPV(final String pvName, ConfigService configservice) throws IOException, Exception {
 		logger.debug("Starting up channels for pv " + pvName);
 		PVTypeInfo typeInfo = configservice.getTypeInfoForPV(pvName);
-		int secondsToBuffer = PVTypeInfo.getSecondsToBuffer(configservice);
-		if(typeInfo == null) { 
+		if(typeInfo == null) {
+			logger.error("Cannot resume PV for which we cannot typeinfo " + pvName);
+			return;
+		}
+		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configservice);
+		startChannelsForPV(pvName, configservice, typeInfo, firstDest);
+	}
+
+	/**
+	 * Start up the channels for a PV.
+	 * Should be called on startup or on resume of a PV that was paused on startup.
+	 * @param pvName The Name of PV.
+	 * @param configservice  ConfigService
+	 * @throws IOException  &emsp;
+	 * @throws Exception  &emsp;
+	 */
+	public static void startChannelsForPV(final String pvName, ConfigService configservice, PVTypeInfo typeInfo, Writer writer) throws IOException, Exception {
+		logger.debug("Starting up channels for pv " + pvName);
+		if (typeInfo == null) {
 			logger.error("Cannot resume PV for which we cannot typeinfo " + pvName);
 			return;
 		}
 		ArchDBRTypes dbrType = typeInfo.getDBRType();
 		float samplingPeriod = typeInfo.getSamplingPeriod();
 		SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
-		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configservice);
         Instant lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(configservice);
 		if(logger.isDebugEnabled()) logger.debug("Last known timestamp from ETL stores is for pv " + pvName + " is "+ TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
 
-		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configservice, dbrType,lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties()); 
+		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, writer, configservice, dbrType, lastKnownTimestamp, typeInfo.getControllingPV(), typeInfo.getArchiveFields(), typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties());
 	}
 
 
@@ -464,7 +495,7 @@ public class ArchiveEngine {
 				// add new channel in scan mode
 				ArchiveEngine.archivePV(pvName, samplingPeriod,
 						SamplingMethod.SCAN,
-						(int) engineContext.getWritePeriod(), writer,
+						writer,
 						configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
 			} else {
 				// mode is not changed the mode is still scan
@@ -483,7 +514,7 @@ public class ArchiveEngine {
 					engineContext.getWriteThead().removeChannel(pvName);
 					engineContext.getChannelList().remove(pvName);
 					// add new channel in scan mode
-					ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.SCAN, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
+					ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.SCAN, writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
 				}
 			}
 		} else if (mode == SamplingMethod.MONITOR) {
@@ -494,7 +525,7 @@ public class ArchiveEngine {
 				engineContext.getWriteThead().removeChannel(pvName);
 				engineContext.getChannelList().remove(pvName);
 				// add new channel in monitor mode
-				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
+				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
 			} else {
 				// mode is changed from scan to monitor ,new mode is monitor
 				engineContext.getScanScheduler().remove((ScannedArchiveChannel) channel);
@@ -504,7 +535,7 @@ public class ArchiveEngine {
 				engineContext.getChannelList().remove(pvName);
 
 				// add new channel in monitor mode
-				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, (int) engineContext.getWritePeriod(), writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
+				ArchiveEngine.archivePV(pvName, samplingPeriod, SamplingMethod.MONITOR, writer, configservice, pvMetrics.getArchDBRTypes(), null, usePVAccess, useDBEPropeties);
 			}
 		}
 	}
@@ -530,17 +561,14 @@ public class ArchiveEngine {
 		if (isMonitor) {
 			// pv is in monitor mode
 			// remove the channel in monitor mode
-			channel.stop();
-			engineContext.getWriteThead().removeChannel(pvName);
-			engineContext.getChannelList().remove(pvName);
 		} else {
 			// pv is in scan mode
 			// remove the channel in scan mode
 			engineContext.getScanScheduler().remove((ScannedArchiveChannel) channel);
 			engineContext.getScanScheduler().purge();
-			channel.stop();
-			engineContext.getWriteThead().removeChannel(pvName);
-			engineContext.getChannelList().remove(pvName);
-		}
+        }
+        channel.stop();
+		engineContext.getWriteThead().removeChannel(pvName);
+		engineContext.getChannelList().remove(pvName);
 	}
 }

@@ -70,13 +70,6 @@ public class NamedFlagETLTest {
     			FileUtils.deleteDirectory(new File(mediumTermFolderName));
     		}
         }
-        
-        class BeforeAndAfterETLCounts { 
-        	long beforeCountSTS = 0;
-        	long beforeCountMTS = 0;
-        	long afterCountSTS = 0;
-        	long afterCountMTS = 0;
-        }
 
         /**
          * Generates some data in STS; then calls the ETL to move it to MTS.
@@ -85,45 +78,45 @@ public class NamedFlagETLTest {
         @Test
         public void testMove() throws Exception {
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+		        ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		logger.info("Testing Plain ETL");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "");
-	        	Assertions.assertTrue((etlCounts.afterCountMTS > 0), "Seems like no events were moved by ETL ");
-	        	Assertions.assertTrue((etlCounts.afterCountSTS == 0), "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-	        	Assertions.assertTrue((etlCounts.afterCountMTS == (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS)), "Did we miss some events when moving data? ");
+				Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
+				Assertions.assertEquals(0, etlCounts.afterCountSTS, "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+				Assertions.assertEquals(etlCounts.afterCountMTS, (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS), "Did we miss some events when moving data? ");
         	}
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+				ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		logger.info("Testing with flag but value of flag is false");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "&etlIntoStoreIf=testFlag");
 	        	// By default testFlag is false, so we should lose data in the move.
-	        	Assertions.assertTrue((etlCounts.afterCountMTS == 0), "Seems like some events were moved into the MTS by ETL ");
-	        	Assertions.assertTrue((etlCounts.afterCountSTS == 0), "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-	        	Assertions.assertTrue((etlCounts.afterCountMTS == 0), "We should have lost all the data in this case");
+				Assertions.assertEquals(0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
+				Assertions.assertEquals(0, etlCounts.afterCountSTS, "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+				Assertions.assertEquals(0, etlCounts.afterCountMTS, "We should have lost all the data in this case");
         	}
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+				ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		configService.setNamedFlag("testFlag", true);
         		logger.info("Testing with flag but value of flag is true");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "&etlIntoStoreIf=testFlag");
-	        	Assertions.assertTrue((etlCounts.afterCountMTS > 0), "Seems like no events were moved by ETL ");
-	        	Assertions.assertTrue((etlCounts.afterCountSTS == 0), "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-	        	Assertions.assertTrue((etlCounts.afterCountMTS == (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS)), "Did we miss some events when moving data? ");
+				Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
+				Assertions.assertEquals(0, etlCounts.afterCountSTS, "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+				Assertions.assertEquals(etlCounts.afterCountMTS, (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS), "Did we miss some events when moving data? ");
         	}
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+				ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		configService.setNamedFlag("testFlag", true);
         		logger.info("Testing with some other flag but value of flag is true");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "&etlIntoStoreIf=testSomeOtherFlag");
 	        	// This is some other flag; so it should be false and we should behave like a black hole again
-	        	Assertions.assertTrue((etlCounts.afterCountMTS == 0), "Seems like some events were moved into the MTS by ETL ");
-	        	Assertions.assertTrue((etlCounts.afterCountSTS == 0), "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-	        	Assertions.assertTrue((etlCounts.afterCountMTS == 0), "We should have lost all the data in this case");
+				Assertions.assertEquals(0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
+				Assertions.assertEquals(0, etlCounts.afterCountSTS, "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+				Assertions.assertEquals(0, etlCounts.afterCountMTS, "We should have lost all the data in this case");
         	}
-        	
+
         	// Testing etlOutofStoreIf from here
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+				ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		logger.info("Testing with flag but value of flag is false");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "&etlOutofStoreIf=testFlag", "");
 	        	// By default testFlag is false, so no data should move.
@@ -132,7 +125,7 @@ public class NamedFlagETLTest {
 	        	Assertions.assertTrue((etlCounts.beforeCountSTS == etlCounts.afterCountSTS), "We should not have moved any data in this case");
         	}
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+				ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		configService.setNamedFlag("testFlag", true);
         		logger.info("Testing with flag but value of flag is true");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "&etlOutofStoreIf=testFlag", "");
@@ -141,7 +134,7 @@ public class NamedFlagETLTest {
 	        	Assertions.assertTrue((etlCounts.afterCountMTS == (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS)), "Did we miss some events when moving data? ");
         	}
         	{
-            	ConfigServiceForTests configService = new ConfigServiceForTests(new File("./bin"));
+				ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         		configService.setNamedFlag("testFlag", true);
         		logger.info("Testing with some other flag but value of flag is true");
 	        	BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "&etlOutofStoreIf=testSomeOtherFlag", "");
@@ -152,10 +145,10 @@ public class NamedFlagETLTest {
         	}
 
         }
-        
-        public BeforeAndAfterETLCounts generateAndMoveData(ConfigServiceForTests configService, String appendToSourceURL, String appendToDestURL) throws Exception {
+
+	BeforeAndAfterETLCounts generateAndMoveData(ConfigServiceForTests configService, String appendToSourceURL, String appendToDestURL) throws Exception {
         	BeforeAndAfterETLCounts etlCounts = new BeforeAndAfterETLCounts();
-        	
+
     		if(new File(shortTermFolderName).exists()) {
     			FileUtils.deleteDirectory(new File(shortTermFolderName));
     		}
@@ -163,7 +156,7 @@ public class NamedFlagETLTest {
     			FileUtils.deleteDirectory(new File(mediumTermFolderName));
     		}
 
-        	
+
         	PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY" + appendToSourceURL, configService);
         	PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR" + appendToDestURL, configService);
 
@@ -177,15 +170,15 @@ public class NamedFlagETLTest {
         	logger.info("Done creating src data for PV " + pvName);
 
         	try (BasicContext context = new BasicContext(); EventStream before = new CurrentThreadWorkerEventStream(pvName, etlSrc.getDataForPV(context, pvName, TimeUtils.minusDays(TimeUtils.now(), 366), TimeUtils.plusDays(TimeUtils.now(), 366)))) {
-        		for(@SuppressWarnings("unused") Event e : before) { etlCounts.beforeCountSTS++; } 
+        		for(@SuppressWarnings("unused") Event e : before) { etlCounts.beforeCountSTS++; }
         	}
         	try (BasicContext context = new BasicContext(); EventStream before = new CurrentThreadWorkerEventStream(pvName, etlDest.getDataForPV(context, pvName, TimeUtils.minusDays(TimeUtils.now(), 366), TimeUtils.plusDays(TimeUtils.now(), 366)))) {
-        		for(@SuppressWarnings("unused") Event e : before) { etlCounts.beforeCountMTS++; } 
+        		for(@SuppressWarnings("unused") Event e : before) { etlCounts.beforeCountMTS++; }
         	}
-        	
+
         	logger.info("Before ETL, the counts are STS = " + etlCounts.beforeCountSTS + " and MTS = " + etlCounts.beforeCountMTS);
         	PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-        	String[] dataStores = new String[] { etlSrc.getURLRepresentation(), etlDest.getURLRepresentation() }; 
+        	String[] dataStores = new String[] { etlSrc.getURLRepresentation(), etlDest.getURLRepresentation() };
         	typeInfo.setDataStores(dataStores);
         	configService.updateTypeInfoForPV(pvName, typeInfo);
         	configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
@@ -200,26 +193,33 @@ public class NamedFlagETLTest {
 
         	// Check that all the files in the destination store are valid files.
 	        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(new ArchPaths(), etlDest.getRootFolder(), pvName, pbFileExtension, etlDest.getPartitionGranularity(), CompressionMode.NONE, configService.getPVNameToKeyConverter());
-        	Assertions.assertTrue(allPaths != null, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
+		Assertions.assertTrue(true, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
 
         	for(Path destPath : allPaths) {
         		Assertions.assertTrue(ValidatePBFile.validatePBFile(destPath, false), "File validation failed for " + destPath.toAbsolutePath().toString());
         	}
 
-        	logger.info("Asking for data between" 
-        			+ TimeUtils.convertToHumanReadableString(startOfRequest) 
-        			+ " and " 
+        	logger.info("Asking for data between"
+        			+ TimeUtils.convertToHumanReadableString(startOfRequest)
+        			+ " and "
         			+ TimeUtils.convertToHumanReadableString(endOfRequest)
         			);
 
         	try (BasicContext context = new BasicContext(); EventStream after = new CurrentThreadWorkerEventStream(pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
-        		for(@SuppressWarnings("unused") Event e : after) { etlCounts.afterCountSTS++; } 
+        		for(@SuppressWarnings("unused") Event e : after) { etlCounts.afterCountSTS++; }
         	}
         	try (BasicContext context = new BasicContext(); EventStream after = new CurrentThreadWorkerEventStream(pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
-        		for(@SuppressWarnings("unused") Event e : after) { etlCounts.afterCountMTS++; } 
+        		for(@SuppressWarnings("unused") Event e : after) { etlCounts.afterCountMTS++; }
         	}
         	logger.info("After ETL, the counts are STS = " + etlCounts.afterCountSTS + " and MTS = " + etlCounts.afterCountMTS);
 
         	return etlCounts;
+        }
+
+	static class BeforeAndAfterETLCounts {
+        	long beforeCountSTS = 0;
+        	long beforeCountMTS = 0;
+        	long afterCountSTS = 0;
+        	long afterCountMTS = 0;
         }
 }

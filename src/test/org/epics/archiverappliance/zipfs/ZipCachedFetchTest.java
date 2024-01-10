@@ -81,7 +81,7 @@ public class ZipCachedFetchTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",

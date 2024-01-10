@@ -16,7 +16,6 @@ import org.epics.pva.server.ServerPV;
 import org.junit.Test;
 import org.python.google.common.collect.Lists;
 
-import java.io.File;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -101,7 +100,7 @@ public class MultiPVTest {
     @Test
     public void multiPVTest() throws Exception {
         // Setup
-        ConfigService configService = new ConfigServiceForTests(new File("./bin"));
+        ConfigService configService = new ConfigServiceForTests(-1);
         PVAServer server = new PVAServer();
 
         // Create PVs

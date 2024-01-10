@@ -7,14 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -39,6 +31,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
 
 /**
  * Test retrieval after the dest appserver has been upgraded.
@@ -71,13 +68,13 @@ import org.junit.jupiter.api.Test;
 public class FailoverUpgradeTest {
 	private static Logger logger = LogManager.getLogger(FailoverUpgradeTest.class.getName());
 	private ConfigServiceForTests configService;
-	String pvName = "FailoverRetrievalTest";
+    String pvName = "FailoverUpgradeTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
 	}
 
@@ -92,7 +89,7 @@ public class FailoverUpgradeTest {
 	private long generateData(String applURL, String applianceName, long sampleStart)
 			throws Exception {
 		int genEventCount = 0;
-		StoragePlugin mts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin mts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(sampleStart).getYear()));
 			for(int i = 0; i < 3; i++) {
@@ -105,7 +102,7 @@ public class FailoverUpgradeTest {
 			mts.appendData(context, pvName, strm);
 		}
 		
-		StoragePlugin sts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/sts" + "&partitionGranularity=PARTITION_HOUR", configService);
+		StoragePlugin sts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/sts" + "&partitionGranularity=PARTITION_HOUR", configService);
 		try(BasicContext context = new BasicContext()) {
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(sampleStart).getYear()));
 			for(int i = 3; i <= 10; i++) {

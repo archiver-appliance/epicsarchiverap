@@ -66,7 +66,7 @@ public class ZeroByteFilesTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         configService.getETLLookup().manualControlForUnitTests();
 
         cleanUpDataFolders();
@@ -92,7 +92,7 @@ public class ZeroByteFilesTest {
     public interface VoidFunction {
         void apply() throws IOException;
     }
-@Test
+    @Test
     public void testZeroByteFileInDest() throws Exception {
 
         PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(

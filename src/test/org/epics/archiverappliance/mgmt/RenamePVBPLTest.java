@@ -72,7 +72,7 @@ public class RenamePVBPLTest {
 			FileUtils.deleteDirectory(ltsFolderForNewPVName);
 		}
 
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		storageplugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR", configService);
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());

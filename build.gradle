@@ -41,10 +41,10 @@ java {
 }
 
 version gitVersion()
-def stageDir = layout.projectDir.file("stage")
-def warDir = layout.projectDir.file("build")
-def srcDir = layout.projectDir.file("src/main")
-def libDir = layout.projectDir.file("lib")
+def stageDir = layout.projectDirectory.file("build/stage")
+def srcDir = layout.projectDirectory.file("src/main")
+def libDir = layout.projectDirectory.file("lib")
+def apiDocsDir = layout.projectDirectory.file("docs/api")
 def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
 
 
@@ -108,36 +108,21 @@ dependencies {
     implementation("org.phoebus:core-pva:4.7.2")
 }
 
-tasks.register("cleanWars", Delete) {
+tasks.register("cleanApiDocs", Delete) {
     group = "Clean"
-    description = "Remove any war files created, and the staging directory"
-    delete file(stageDir)
-    delete file("${warDir}/retrieval.war")
-    delete file("${warDir}/engine.war")
-    delete file("${warDir}/etl.war")
-    delete file("${warDir}/mgmt.war")
-    delete file("${warDir}/archappl_v${version}.tar.gz")
-    delete file("RELEASE_NOTES")
+    description = "Remove the generated java api docs."
+    delete file(apiDocsDir)
 }
 
-Collection getListOfFolders(String dir, String pattern) {
-    file(dir).listFiles({ file -> !file.isFile() && file.name ==~ pattern } as FileFilter)
-}
-
-tasks.register("cleanTestData", Delete) {
-    group = "Clean"
-    description = "Remove any integration test folders created, and the staging directory"
-    delete getListOfFolders("./", /tomcat_*/)
-}
-clean.dependsOn("cleanTestData")
-clean.dependsOn "cleanWars"
+clean.dependsOn("cleanApiDocs")
 
 tasks.register("generateBPLActionsMappings", JavaExec) {
     group = "Documentation"
     description = "Generates the rest api documentation."
+    it.outputs.file("${apiDocsDir}/mgmtpathmappings.txt")
     doFirst {
-        mkdir "docs/api"
-        standardOutput new FileOutputStream("${projectDir}/docs/api/mgmtpathmappings.txt")
+        mkdir apiDocsDir
+        standardOutput = new FileOutputStream("${apiDocsDir}/mgmtpathmappings.txt")
     }
     mainClass = "org.epics.archiverappliance.mgmt.BPLServlet"
 
@@ -146,8 +131,10 @@ tasks.register("generateBPLActionsMappings", JavaExec) {
 
 tasks.register("generateJavaDocTagletScriptables", JavaExec) {
     group = "Documentation"
+    dependsOn "generateBPLActionsMappings"
     mainClass = "org.epics.archiverappliance.common.taglets.ProcessMgmtScriptables"
-
+    it.inputs.file("${apiDocsDir}/mgmt_scriptables.txt")
+    it.outputs.file("${apiDocsDir}/mgmt_scriptables.html")
     classpath = sourceSets.main.runtimeClasspath
     workingDir = project.projectDir
 }
@@ -159,10 +146,11 @@ javadoc {
     doFirst {
         copy {
             from layout.projectDirectory.file("LICENSE"),
-                    file("${srcDir}/main/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
+                    file("${srcDir}/edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
             into layout.projectDirectory.dir("docs")
         }
     }
+    it.outputs.file("${apiDocsDir}/mgmt_scriptables.txt")
     source = sourceSets.main.allJava
     failOnError = false
     options {
@@ -182,8 +170,8 @@ tasks.register("syncStaticContentHeaderFooters", JavaExec) {
     group = "Staging"
     dependsOn "compileJava"
     mainClass = "org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters"
-    args "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/index.html",
-            "${srcDir}/main/org/epics/archiverappliance/mgmt/staticcontent/"
+    args "${srcDir}/org/epics/archiverappliance/mgmt/staticcontent/index.html",
+            "${srcDir}/org/epics/archiverappliance/mgmt/staticcontent/"
 
     classpath = sourceSets.main.runtimeClasspath
 }
@@ -206,9 +194,14 @@ tasks.register("zipSvgViewer", Zip) {
 tasks.register("stage") {
     group = "Staging"
     description = "Copy static content from each of the projects into the staging directory."
+    dependsOn javadoc
     finalizedBy "zipSvgViewer"
     mkdir stageDir
 
+    copy {
+        from "${docsDir}/*.*"
+        into apiDocsDir
+    }
     copy {
         from file("${srcDir}/org/epics/archiverappliance/staticcontent")
         into file("${stageDir}/org/epics/archiverappliance/staticcontent")
@@ -227,8 +220,9 @@ tasks.register("stage") {
 tasks.register("generateReleaseNotes", Exec) {
     group = "Staging"
     description = "Generate the Release Notes."
+    it.outputs.file("${stageDir}/RELEASE_NOTES")
     doFirst {
-        standardOutput new FileOutputStream("${projectDir}/RELEASE_NOTES")
+        standardOutput new FileOutputStream("${stageDir}/RELEASE_NOTES")
     }
     commandLine "git", "log", "--oneline", "remotes/origin/master"
 }
@@ -241,6 +235,11 @@ tasks.withType(War).configureEach {
     from("${stageDir}/org/epics/archiverappliance/staticcontent") {
         into "ui/comm"
     }
+    if (archapplsite == "tests") {
+        from("src/resources/test/log4j2.xml") {
+            into "WEB-INF/classes"
+        }
+    }
     from("src/sitespecific/${archapplsite}/classpathfiles") {
         into "WEB-INF/classes"
     }
@@ -249,7 +248,7 @@ tasks.withType(War).configureEach {
 
 tasks.register("mgmtWar", War) {
     group = "Wars"
-    dependsOn javadoc
+    dependsOn "generateJavaDocTagletScriptables"
     from("${stageDir}/org/epics/archiverappliance/mgmt/staticcontent") {
         into "ui"
     }
@@ -418,46 +417,52 @@ tasks.register("shutdownAllTomcats", Exec) {
     group = "test"
     description "task to shut down all tomcats after running integration tests," +
             " if they didn't shut down correctly."
+    ignoreExitValue true
     commandLine "pkill", "-9", "-f", "tomcat"
 }
 
-tasks.register("integrationSetup") {
+tasks.register("integrationTestSetup", Copy) {
     group = "Test"
     description = "Setup for Integration Tests."
-    dependsOn "buildRelease"
-    doFirst {
+    dependsOn("buildRelease")
+    it.inputs.dir("$System.env.TOMCAT_HOME/conf")
+    it.outputs.dir("$System.env.TOMCAT_HOME/conf_original")
+    // backup the original tomcat conf folder
+    // if not already done. See org.epics.archiverappliance.TomcatSetup
+    def catalinaConf = file("$System.env.TOMCAT_HOME/conf_original")
+    if (!catalinaConf.exists()) {
         copy {
-            from layout.buildDirectory.file("libs/mgmt.war")
-            from layout.buildDirectory.file("libs/engine.war")
-            from layout.buildDirectory.file("libs/etl.war")
-            from layout.buildDirectory.file("libs/retrieval.war")
-            into file("${warDir}")
-        }
-        // backup the original tomcat conf folder
-        // if not already done. See org.epics.archiverappliance.TomcatSetup
-        def catalinaConf = file("$System.env.TOMCAT_HOME/conf_original")
-        if (!catalinaConf.exists()) {
-            copy {
-                from file("$System.env.TOMCAT_HOME/conf")
-                into file("$System.env.TOMCAT_HOME/conf_original")
-            }
+            from "$System.env.TOMCAT_HOME/conf"
+            into "$System.env.TOMCAT_HOME/conf_original"
         }
     }
-
 }
 
 tasks.register("integrationTests", Test) {
     group = "Test"
     description = "Run the integration tests, ones that require a tomcat installation."
-    dependsOn "integrationSetup"
     forkEvery 1
     maxParallelForks = 1
+    dependsOn("integrationTestSetup")
     useJUnitPlatform {
-        includeTags "integration",
-                "localEpics"
+        includeTags "integration"
         excludeTags "slow",
                 "flaky"
     }
+    finalizedBy "shutdownAllTomcats"
+}
+
+tasks.register("epicsTests", Test) {
+    group = "Test"
+    description = "Run the epics integration tests with parallel iocs."
+    dependsOn "integrationTestSetup"
+    useJUnitPlatform {
+        includeTags "localEpics"
+        excludeTags "slow",
+                "flaky",
+                "integration"
+    }
+    finalizedBy "shutdownAllTomcats"
 }
 
 tasks.register("singleForkTests", Test) {
@@ -475,7 +480,6 @@ tasks.register("singleForkTests", Test) {
 
 test {
     group = "Test"
-    description = "Run all the fast unit tests."
     useJUnitPlatform {
         excludeTags "integration",
                 "localEpics",
@@ -483,7 +487,6 @@ test {
                 "singleFork",
                 "slow"
     }
-
 }
 
 tasks.register("allTests", Test) {
@@ -498,7 +501,7 @@ tasks.register("allTests", Test) {
 tasks.register("testRun", JavaExec) {
     group = "test"
     description = "Runs the application same as for integration tests."
-    dependsOn "integrationSetup"
+    dependsOn "integrationTestSetup"
 
     mainClass = "org.epics.archiverappliance.TestRun"
 

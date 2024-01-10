@@ -7,9 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-import java.util.Iterator;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -32,65 +29,60 @@ import org.junit.jupiter.api.Tag;
 @Tag("localEpics")
 public class EngineShutDownTest {
 	private static Logger logger = LogManager.getLogger(EngineShutDownTest.class.getName());
-	private SIOCSetup ioc = null;
+    private final String pvPrefix = EngineShutDownTest.class.getSimpleName().substring(0, 10);
+    private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
 	private FakeWriter writer = new FakeWriter();
 
 	@BeforeEach
 	public void setUp() throws Exception {
-		ioc = new SIOCSetup();
+        ioc = new SIOCSetup(pvPrefix);
 		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(new File("./bin"));
+        testConfigService = new ConfigServiceForTests(-1);
 		Thread.sleep(3000);
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
 
-	
-		ioc.stopSIOC();
 
-	}
+        ioc.stopSIOC();
 
-	@Test
-	public void testAll() {
-		engineShutDown();
-	}
-/**
- * test of engine shutting down
- */
-	private void engineShutDown()
+    }
 
-	{
+    /**
+     * test of engine shutting down
+     */
 
-		try {
-			for (int m = 0; m < 100; m++) {
-				ArchiveEngine.archivePV("test_" + m, 0.1F, SamplingMethod.SCAN,
-						5, writer, testConfigService,
-						ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
-				Thread.sleep(10);
-			}
-			Thread.sleep(2000);
+    @Test
+    public void engineShutDown() {
 
-			testConfigService.shutdownNow();
-			Thread.sleep(2000);
-			int num = 0;
-			Iterator<String> allpvs = testConfigService
-					.getPVsForThisAppliance().iterator();
-			while (allpvs.hasNext()) {
-				allpvs.next();
-				num++;
-			}
-			
+        try {
+            for (int m = 0; m < 100; m++) {
+                ArchiveEngine.archivePV(pvPrefix + "test_" + m, 0.1F, SamplingMethod.SCAN,
+                        writer, testConfigService,
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
+                Thread.sleep(10);
+            }
+            Thread.sleep(2000);
+
+            testConfigService.shutdownNow();
+            Thread.sleep(2000);
+            int num = 0;
+            for (String s : testConfigService
+                    .getPVsForThisAppliance()) {
+                num++;
+            }
+
 
 			Assertions.assertTrue(num == 0, "there should be no pvs after the engine shut down, but there are "
 					+ num + " pvs");
 
-		} catch (Exception e) {
-			//
-			logger.error("Exception", e);
-		}
+        } catch (Exception e) {
+            //
+            logger.error("Exception", e);
+        }
 
-	}
+    }
 
 }
