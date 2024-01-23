@@ -16,8 +16,16 @@ import org.epics.archiverappliance.retrieval.postprocessors.Optimized;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 
@@ -122,5 +130,96 @@ public class OptimizedPostProcessorTest {
             eventCount++;
         }
         Assertions.assertEquals(expectedSamplesInPeriod, eventCount, "The number of events should match the expected");
+    }
+
+    /**
+     * Test for inclusion of last value before first bin into first bin
+     * @throws Exception
+     */
+    @ParameterizedTest
+    @MethodSource("testInclusionOfLastValueBeforeFirstBinIntoFirstBin_generateData")
+    public void testInclusionOfLastValueBeforeFirstBinIntoFirstBin(int millisToAddToStart,
+                                                                   int millisToAddToEnd,
+                                                                   List<Double> expectedValues) {
+        String optimizedTestPVName = "Test_OptimizedInclusionOfLastValueBeforeFirstBinIntoFirstBin";
+        YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String("2024-06-01T10:00:00.000Z"));
+        ArrayListEventStream testData = new ArrayListEventStream(0,
+                new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                        optimizedTestPVName,
+                        startOfSamples.getYear()));
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear(),
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(0.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 10,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(10.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 20,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(20.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 30,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(30.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 40,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(40.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 50,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(50.0)));
+
+            Optimized optimizedPostProcessor = new Optimized();
+            try {
+                optimizedPostProcessor.initialize("optimized_9", optimizedTestPVName);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Instant start = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToStart);
+            Instant end = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToEnd);
+            optimizedPostProcessor.estimateMemoryConsumption(optimizedTestPVName, new PVTypeInfo(optimizedTestPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+            var callableEventStream = CallableEventStream.makeOneStreamCallable(testData, null, false);
+            try {
+                optimizedPostProcessor.wrap(callableEventStream).call();
+            } catch (Exception e) {
+                Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
+            }
+
+            List<Event> events = new LinkedList<>();
+            for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
+                events.add(event);
+            }
+
+            for (Event event : events) {
+                double valueReceived = event.getSampleValue().getValue().doubleValue();
+                if (!expectedValues.stream().anyMatch(expectedValue -> expectedValue == valueReceived)) {
+                    Assertions.fail("Received value is not expected!");
+                }
+            }
+
+            Assertions.assertEquals(expectedValues.size(), events.size());
+
+    }
+
+    static Stream<Arguments> testInclusionOfLastValueBeforeFirstBinIntoFirstBin_generateData() {
+        return Stream.of(Arguments.of(-2, -1, Arrays.asList()),
+                         Arguments.of(-2, 0, Arrays.asList(0.0)),
+                         Arguments.of(-2, 1, Arrays.asList(0.0)),
+                         Arguments.of(0, 9999, Arrays.asList(0.0)),
+                         Arguments.of(29999, 29999, Arrays.asList(20.0)),
+                         Arguments.of(29999, 30020, Arrays.asList(20.0, 30.0)),
+                         Arguments.of(30000, 30020, Arrays.asList(30.0)),
+                         Arguments.of(31000, 32000, Arrays.asList(30.0)),
+                         Arguments.of(49999, 51000, Arrays.asList(40.0, 50.0)),
+                         Arguments.of(50000, 51000, Arrays.asList(50.0)),
+                         Arguments.of(51000, 52000, Arrays.asList(50.0)));
     }
 }
