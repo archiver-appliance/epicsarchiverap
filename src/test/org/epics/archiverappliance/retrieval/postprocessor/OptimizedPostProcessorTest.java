@@ -1,7 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.apache.logging.log4j.util.TriConsumer;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -17,12 +16,16 @@ import org.epics.archiverappliance.retrieval.postprocessors.Optimized;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 
@@ -133,8 +136,11 @@ public class OptimizedPostProcessorTest {
      * Test for inclusion of last value before first bin into first bin
      * @throws Exception
      */
-    @Test
-    public void testInclusionOfLastValueBeforeFirstBinIntoFirstBin() throws Exception {
+    @ParameterizedTest
+    @MethodSource("testInclusionOfLastValueBeforeFirstBinIntoFirstBin_generateData")
+    public void testInclusionOfLastValueBeforeFirstBinIntoFirstBin(int millisToAddToStart,
+                                                                   int millisToAddToEnd,
+                                                                   List<Double> expectedValues) {
         String optimizedTestPVName = "Test_OptimizedInclusionOfLastValueBeforeFirstBinIntoFirstBin";
         YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String("2024-06-01T10:00:00.000Z"));
         ArrayListEventStream testData = new ArrayListEventStream(0,
@@ -170,7 +176,7 @@ public class OptimizedPostProcessorTest {
                 startOfSamples.getYear(),
                 ArchDBRTypes.DBR_SCALAR_DOUBLE,
                 new ScalarValue<>(50.0)));
-        TriConsumer<Integer, Integer, List<Double>> runTest = (millisToAddToStart, millisToAddToEnd, expectedValues) -> {
+
             Optimized optimizedPostProcessor = new Optimized();
             try {
                 optimizedPostProcessor.initialize("optimized_9", optimizedTestPVName);
@@ -200,18 +206,20 @@ public class OptimizedPostProcessorTest {
             }
 
             Assertions.assertEquals(expectedValues.size(), events.size());
-        };
 
-        runTest.accept(-2, -1, Arrays.asList());
-        runTest.accept(-2, 0, Arrays.asList(0.0));
-        runTest.accept(-2, 1, Arrays.asList(0.0));
-        runTest.accept(0, 9999, Arrays.asList(0.0));
-        runTest.accept(29999, 29999, Arrays.asList(20.0));
-        runTest.accept(29999, 30020, Arrays.asList(20.0, 30.0));
-        runTest.accept(30000, 30020, Arrays.asList(30.0));
-        runTest.accept(31000, 32000, Arrays.asList(30.0));
-        runTest.accept(49999, 51000, Arrays.asList(40.0, 50.0));
-        runTest.accept(50000, 51000, Arrays.asList(50.0));
-        runTest.accept(51000, 52000, Arrays.asList(50.0));
+    }
+
+    static Stream<Arguments> testInclusionOfLastValueBeforeFirstBinIntoFirstBin_generateData() {
+        return Stream.of(Arguments.of(-2, -1, Arrays.asList()),
+                         Arguments.of(-2, 0, Arrays.asList(0.0)),
+                         Arguments.of(-2, 1, Arrays.asList(0.0)),
+                         Arguments.of(0, 9999, Arrays.asList(0.0)),
+                         Arguments.of(29999, 29999, Arrays.asList(20.0)),
+                         Arguments.of(29999, 30020, Arrays.asList(20.0, 30.0)),
+                         Arguments.of(30000, 30020, Arrays.asList(30.0)),
+                         Arguments.of(31000, 32000, Arrays.asList(30.0)),
+                         Arguments.of(49999, 51000, Arrays.asList(40.0, 50.0)),
+                         Arguments.of(50000, 51000, Arrays.asList(50.0)),
+                         Arguments.of(51000, 52000, Arrays.asList(50.0)));
     }
 }
