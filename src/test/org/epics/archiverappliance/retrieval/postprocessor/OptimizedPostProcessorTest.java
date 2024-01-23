@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -17,7 +18,11 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * 
@@ -122,5 +127,90 @@ public class OptimizedPostProcessorTest {
             eventCount++;
         }
         Assertions.assertEquals(expectedSamplesInPeriod, eventCount, "The number of events should match the expected");
+    }
+
+    /**
+     * Test for inclusion of last value before first bin into first bin
+     * @throws Exception
+     */
+    @Test
+    public void testInclusionOfLastValueBeforeFirstBinIntoFirstBin() throws Exception {
+        String optimizedTestPVName = "Test_OptimizedInclusionOfLastValueBeforeFirstBinIntoFirstBin";
+        YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String("2024-06-01T10:00:00.000Z"));
+        ArrayListEventStream testData = new ArrayListEventStream(0,
+                new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                        optimizedTestPVName,
+                        startOfSamples.getYear()));
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear(),
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(0.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 10,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(10.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 20,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(20.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 30,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(30.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 40,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(40.0)));
+
+        testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + 50,
+                startOfSamples.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(50.0)));
+        TriConsumer<Integer, Integer, List<Double>> runTest = (millisToAddToStart, millisToAddToEnd, expectedValues) -> {
+            Optimized optimizedPostProcessor = new Optimized();
+            try {
+                optimizedPostProcessor.initialize("optimized_9", optimizedTestPVName);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Instant start = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToStart);
+            Instant end = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToEnd);
+            optimizedPostProcessor.estimateMemoryConsumption(optimizedTestPVName, new PVTypeInfo(optimizedTestPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+            try {
+                optimizedPostProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            List<Event> events = new LinkedList<>();
+            for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
+                events.add(event);
+            }
+
+            for (Event event : events) {
+                double valueReceived = event.getSampleValue().getValue().doubleValue();
+                if (!expectedValues.stream().anyMatch(expectedValue -> expectedValue == valueReceived)) {
+                    Assertions.fail("Received value is not expected!");
+                }
+            }
+
+            Assertions.assertEquals(expectedValues.size(), events.size());
+        };
+
+        runTest.accept(-2, -1, Arrays.asList());
+        runTest.accept(-2, 0, Arrays.asList(0.0));
+        runTest.accept(-2, 1, Arrays.asList(0.0));
+        runTest.accept(0, 9999, Arrays.asList(0.0));
+        runTest.accept(29999, 29999, Arrays.asList(20.0));
+        runTest.accept(29999, 30020, Arrays.asList(20.0, 30.0));
+        runTest.accept(30000, 30020, Arrays.asList(30.0));
+        runTest.accept(31000, 32000, Arrays.asList(30.0));
+        runTest.accept(49999, 51000, Arrays.asList(40.0, 50.0));
+        runTest.accept(50000, 51000, Arrays.asList(50.0));
+        runTest.accept(51000, 52000, Arrays.asList(50.0));
     }
 }
