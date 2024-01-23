@@ -180,10 +180,11 @@ public class OptimizedPostProcessorTest {
             Instant start = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToStart);
             Instant end = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToEnd);
             optimizedPostProcessor.estimateMemoryConsumption(optimizedTestPVName, new PVTypeInfo(optimizedTestPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+            var callableEventStream = CallableEventStream.makeOneStreamCallable(testData, null, false);
             try {
-                optimizedPostProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
+                optimizedPostProcessor.wrap(callableEventStream).call();
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
             }
 
             List<Event> events = new LinkedList<>();
