@@ -99,7 +99,8 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
     
     @Override
     public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
-        int intervalSecs = (int) ((end.toEpochMilli() - start.toEpochMilli()) / (1000 * numberOfPoints));
+        long intervalSecsLong = ((end.getEpochSecond() - start.getEpochSecond()) / ((long) numberOfPoints));
+        int intervalSecs = intervalSecsLong > Integer.MAX_VALUE ? Integer.MAX_VALUE : Math.max(1, (int) intervalSecsLong);
         try {
             statisticsPostProcessor.initialize(getIdentity() + "_" + Integer.toString(intervalSecs),pvName);
         } catch (IOException e) {

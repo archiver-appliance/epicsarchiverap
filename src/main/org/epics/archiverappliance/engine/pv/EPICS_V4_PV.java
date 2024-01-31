@@ -169,10 +169,18 @@ public class EPICS_V4_PV implements PV,  ClientChannelListener, MonitorListener 
         return connected;
     }
 
+    /**
+     * @return
+     */
     @Override
-    public ArchDBRTypes getArchDBRTypes() {
-        return archDBRType;
+    public PVConnectionState connectionState() {
+        return this.state;
     }
+
+	@Override
+	public ArchDBRTypes getArchDBRTypes() {
+		return archDBRType;
+	}
 
     @Override
     public HashMap<String, String> getLatestMetadata() {

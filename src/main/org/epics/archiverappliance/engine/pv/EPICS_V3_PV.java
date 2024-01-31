@@ -501,7 +501,15 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
 	public boolean isConnected() {
 		return connected;
 	}
-	
+
+	/**
+	 * @return
+	 */
+	@Override
+	public PVConnectionState connectionState() {
+		return this.state;
+	}
+
 	/** {@inheritDoc} */
 	@Override
 	public void stop() {

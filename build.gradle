@@ -47,6 +47,7 @@ def libDir = layout.projectDirectory.file("lib")
 def apiDocsDir = layout.projectDirectory.file("docs/api")
 def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
 
+ant.importBuild("build.xml")
 
 repositories {
 	flatDir {
