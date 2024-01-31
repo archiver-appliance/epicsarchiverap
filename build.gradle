@@ -47,6 +47,7 @@ def libDir = layout.projectDirectory.file("lib")
 def apiDocsDir = layout.projectDirectory.file("docs/api")
 def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
 
+ant.importBuild("build.xml")
 
 repositories {
     flatDir {
@@ -232,6 +233,7 @@ tasks.register("generateReleaseNotes", Exec) {
  */
 tasks.withType(War).configureEach {
     dependsOn "stage"
+    dependsOn "sitespecificbuild"
     from("${stageDir}/org/epics/archiverappliance/staticcontent") {
         into "ui/comm"
     }
