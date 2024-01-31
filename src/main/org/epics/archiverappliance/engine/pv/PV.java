@@ -7,15 +7,14 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import gov.aps.jca.CAException;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
-import gov.aps.jca.CAException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 
@@ -73,11 +72,17 @@ public interface PV
     /** @return Returns <code>true</code> between <code>start()</code> and <code>stop()</code>. */
     public boolean isRunning();
 
-    /** @return Returns <code>true</code> when connected.
-     *  While <code>isRunning</code>, we are subscribed for value updates,
-     *  but we might still be disconnected, at least temporarily.
-     */
-    public boolean isConnected();
+	/**
+	 * @return Returns <code>true</code> when connected. While <code>isRunning</code>, we are subscribed for value
+	 * updates, but we might still be disconnected, at least temporarily.
+	 */
+	public boolean isConnected();
+
+	/**
+	 * @return Returns <code>true</code> when connected. While <code>isRunning</code>, we are subscribed for value
+	 * updates, but we might still be disconnected, at least temporarily.
+	 */
+	public PVConnectionState connectionState();
     
    /***
     * get the archive DBR types for this pv

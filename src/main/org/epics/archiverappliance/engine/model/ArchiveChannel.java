@@ -282,6 +282,7 @@ public abstract class ArchiveChannel {
     public PVMetrics getPVMetrics() {
         this.pvMetrics.setConnected(this.pv.isConnected());
         this.pvMetrics.setArchving(this.pv.isRunning());
+        this.pvMetrics.setLastConnectionEventState(this.pv.connectionState());
         return pvMetrics;
     }
 

@@ -13,6 +13,7 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.ArchiveEngine;
+import org.epics.archiverappliance.engine.pv.PVConnectionState;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.junit.jupiter.api.AfterEach;
@@ -88,9 +89,36 @@ public void PVMetricsForSingleMonitorChannel() {
 			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
 					testConfigService);
 			// System.out.println(tempPVMetrics.getDetailedStatus());
-			Assertions.assertTrue(tempPVMetrics != null, "PVMetrics for " + pvName + " should not be null");
-			Assertions.assertTrue(tempPVMetrics.isConnected(), pvName + " should not be connected");
-			Assertions.assertTrue(tempPVMetrics.isMonitor(), pvName + " should  be in monitor mode");
+            Assertions.assertTrue(tempPVMetrics != null, "PVMetrics for " + pvName + " should not be null");
+            Assertions.assertTrue(tempPVMetrics.isConnected(), pvName + " should not be connected");
+            Assertions.assertTrue(tempPVMetrics.isMonitor(), pvName + " should  be in monitor mode");
+
+        } catch (Exception e) {
+			//
+			logger.error("Exception", e);
+		}
+
+	}
+
+	/**
+	 * test of getting pv metrics of one pv in monitor mode
+	 */
+    @Test
+	void notExistsPVMetrics() {
+		String pvName = "not_exists_test_1";
+		try {
+
+			ArchiveEngine.archivePV(pvName, 2, SamplingMethod.MONITOR,
+					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
+					null, false, false);
+			Thread.sleep(2000);
+			PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName,
+					testConfigService);
+			// System.out.println(tempPVMetrics.getDetailedStatus());
+            Assertions.assertNotNull(tempPVMetrics, "PVMetrics for " + pvName + " should not be null");
+            Assertions.assertFalse(tempPVMetrics.isConnected(), pvName + " should not be connected");
+            Assertions.assertTrue(tempPVMetrics.isMonitor(), pvName + " should  be in monitor mode");
+            Assertions.assertEquals(PVConnectionState.Connecting, tempPVMetrics.lastConnectionEventState());
 
 		} catch (Exception e) {
 			//
