@@ -134,7 +134,6 @@ public class GetDataAtTimeEngine implements BPLAction {
 		}
 
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		try(PrintWriter out = resp.getWriter()) {
 			JSONObject.writeJSONString(values, out);
 		}

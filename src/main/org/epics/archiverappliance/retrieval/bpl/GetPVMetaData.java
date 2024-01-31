@@ -38,7 +38,6 @@ public class GetPVMetaData implements BPLAction {
 		String pvName = req.getParameter("pv");
 		logger.debug("Getting metadata for PV " + pvName);
 		
-		resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 
 		if(pvName == null || pvName.equals("")) {

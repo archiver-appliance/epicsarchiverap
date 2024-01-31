@@ -39,7 +39,6 @@ public class GetMatchingPVs implements BPLAction {
 	@Override
 	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
 		
-		resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 
 		int limit = 500;

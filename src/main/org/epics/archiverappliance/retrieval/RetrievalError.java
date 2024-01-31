@@ -28,7 +28,6 @@ public class RetrievalError {
         } else {
             logger.warn(msg, ex);
         }
-        resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
         resp.sendError(sc, msg);
     }
 }

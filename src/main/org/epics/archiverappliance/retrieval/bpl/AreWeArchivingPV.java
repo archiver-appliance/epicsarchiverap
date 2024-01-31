@@ -33,7 +33,6 @@ public class AreWeArchivingPV implements BPLAction {
 		String pvName = req.getParameter("pv");
 		logger.debug("Checking to see if we are archiving PV " + pvName);
 		
-		resp.addHeader(MimeResponse.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
 
 		if(pvName == null || pvName.equals("")) {

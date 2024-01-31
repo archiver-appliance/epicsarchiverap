@@ -56,9 +56,4 @@ public class SinglePVCSVResponse implements MimeResponse {
 	public void swicthingToStream(EventStream strm) {
 		// Not much to do here for now.
 	}
-	
-	@Override
-	public HashMap<String, String> getExtraHeaders() {
-		return null;
-	}
 }

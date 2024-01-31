@@ -152,9 +152,4 @@ public class PBRAWResponse implements MimeResponse {
 		}
 		return builder;
 	}
-
-	@Override
-	public HashMap<String, String> getExtraHeaders() {
-		return null;
-	}
 }
