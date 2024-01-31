@@ -10,15 +10,15 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -29,19 +29,19 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class IPApplianceXMLTest {
 	private static Logger logger = LogManager.getLogger(IPApplianceXMLTest.class.getName());
 	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ApplianceXMLTest");
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(testFolder.exists()) { 
 			FileUtils.deleteDirectory(testFolder);
@@ -49,7 +49,7 @@ public class IPApplianceXMLTest {
 		testFolder.mkdirs();		
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		FileUtils.deleteDirectory(testFolder);
 	}
@@ -75,7 +75,7 @@ public class IPApplianceXMLTest {
 
 		driver.get("http://localhost:17665/mgmt/ui/index.html");
 		WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		assertTrue("Cannot get to the home page...", pvstextarea != null);
+		Assertions.assertTrue(pvstextarea != null, "Cannot get to the home page...");
 		
 		driver.quit();
 		tomcatSetup.tearDown();

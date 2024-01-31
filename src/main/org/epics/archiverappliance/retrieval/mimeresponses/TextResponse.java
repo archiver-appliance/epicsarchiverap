@@ -7,17 +7,17 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.HashMap;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * A human readable text response; mostly to be used for debugging etc.
@@ -34,7 +34,7 @@ public class TextResponse implements MimeResponse, ExceptionCommunicator {
 				+ "\t" + e.getSampleValue().toString()
 				+ "\t" + (((DBRTimeEvent)e).getSeverity())
 				+ "\t" + (((DBRTimeEvent)e).getStatus())
-				+ "\t" + (((DBRTimeEvent)e).getEventTimeStamp().getNanos())
+                        + "\t" + (((DBRTimeEvent) e).getEventTimeStamp().getNano())
 				);
 	}
 
@@ -48,7 +48,7 @@ public class TextResponse implements MimeResponse, ExceptionCommunicator {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
 		out.println("Beginning data for " + pv);
 	}
 	

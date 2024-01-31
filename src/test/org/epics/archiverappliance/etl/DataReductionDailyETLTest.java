@@ -7,20 +7,15 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import java.io.File;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-
-import junit.framework.TestCase;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SingleForkTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -33,12 +28,15 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.time.Instant;
+import java.util.LinkedList;
 
 /**
  * More complicated data reduction test case.
@@ -48,8 +46,8 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
-@Category(SingleForkTests.class)
-public class DataReductionDailyETLTest extends TestCase {
+@Tag("singleFork")
+public class DataReductionDailyETLTest {
 	private static final Logger logger = LogManager.getLogger(DataReductionDailyETLTest.class);
 	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
 	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
@@ -59,9 +57,9 @@ public class DataReductionDailyETLTest extends TestCase {
 	private String reducedPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionDailyETLTest.class.getSimpleName() + "reduced";
 	private String reduceDataUsing = "firstSample_3600";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		if(new File(shortTermFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(shortTermFolderName));
 		}
@@ -73,7 +71,7 @@ public class DataReductionDailyETLTest extends TestCase {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		if(new File(shortTermFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(shortTermFolderName));
@@ -119,11 +117,11 @@ public class DataReductionDailyETLTest extends TestCase {
 
 		for(int day = 0; day < 365; day++) { 
 			// Generate data into the STS on a daily basis
-			ArrayListEventStream genDataRaw = new ArrayListEventStream(86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
-			ArrayListEventStream genDataReduced = new ArrayListEventStream(86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
-			for(int second = 0; second < 86400; second++) { 
-				YearSecondTimestamp ysts = new YearSecondTimestamp(currentYear, day*86400 + second, 0);
-				Timestamp ts = TimeUtils.convertFromYearSecondTimestamp(ysts);
+			ArrayListEventStream genDataRaw = new ArrayListEventStream(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
+			ArrayListEventStream genDataReduced = new ArrayListEventStream(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
+			for (int second = 0; second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(); second++) {
+				YearSecondTimestamp ysts = new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + second, 0);
+				Instant ts = TimeUtils.convertFromYearSecondTimestamp(ysts);
 				genDataRaw.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>(second*1.0),0, 0));
 				genDataReduced.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>(second*1.0),0, 0));
 			}
@@ -135,7 +133,7 @@ public class DataReductionDailyETLTest extends TestCase {
 			logger.debug("Done generating data into the STS for day " + day);
 
 			// Run ETL at the end of the day
-			Timestamp timeETLruns = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(currentYear, day*86400 + 86399, 0));
+			Instant timeETLruns = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 86399, 0));
 			ETLExecutor.runETLs(configService, timeETLruns);
 			logger.debug("Done performing ETL as though today is " + TimeUtils.convertToHumanReadableString(timeETLruns));
 
@@ -146,11 +144,11 @@ public class DataReductionDailyETLTest extends TestCase {
 			int rawWithPPCount = 0;
 			int reducedCount = 0;
 
-			try (BasicContext context = new BasicContext()) { 
-				Timestamp startTime = TimeUtils.minusDays(TimeUtils.now(), 10*366);
-				Timestamp endTime = TimeUtils.plusDays(TimeUtils.now(), 10*366);
-				LinkedList<Timestamp> rawTimestamps = new LinkedList<Timestamp>();
-				LinkedList<Timestamp> reducedTimestamps = new LinkedList<Timestamp>();
+			try (BasicContext context = new BasicContext()) {
+				Instant startTime = TimeUtils.minusDays(TimeUtils.now(), 10 * 366);
+				Instant endTime = TimeUtils.plusDays(TimeUtils.now(), 10 * 366);
+				LinkedList<Instant> rawTimestamps = new LinkedList<Instant>();
+				LinkedList<Instant> reducedTimestamps = new LinkedList<Instant>();
 				try(EventStream rawWithPP = new CurrentThreadWorkerEventStream(rawPVName, etlLTS.getDataForPV(context, rawPVName, startTime, endTime, postProcessor))) {
 					for(Event e : rawWithPP) {
 						rawTimestamps.add(e.getEventTimeStamp());
@@ -171,11 +169,11 @@ public class DataReductionDailyETLTest extends TestCase {
 						if(!reducedTimestamps.isEmpty()) logger.info("Reduced" + TimeUtils.convertToHumanReadableString(reducedTimestamps.pop()));
 					}
 				}
-				assertTrue("For day " + day + " we have " + rawWithPPCount + " rawWithPP events and " + reducedCount + " reduced events", rawWithPPCount == reducedCount);
+				Assertions.assertTrue(rawWithPPCount == reducedCount, "For day " + day + " we have " + rawWithPPCount + " rawWithPP events and " + reducedCount + " reduced events");
 			}
 			if(day > 2) { 
-				assertTrue("For day " + day + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount, (rawWithPPCount != 0));
-				assertTrue("For day " + day + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount, (reducedCount != 0));
+				Assertions.assertTrue((rawWithPPCount != 0), "For day " + day + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = " + rawWithPPCount);
+				Assertions.assertTrue((reducedCount != 0), "For day " + day + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = " + reducedCount);
 			}
 
 		}        	

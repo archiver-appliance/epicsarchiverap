@@ -1,13 +1,12 @@
 package org.epics.archiverappliance.retrieval.mimeresponses;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-
+import com.jmatio.io.MatFileWriter;
+import com.jmatio.types.MLArray;
+import com.jmatio.types.MLChar;
+import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLStructure;
+import com.jmatio.types.MLUInt64;
+import com.jmatio.types.MLUInt8;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -20,13 +19,13 @@ import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import com.jmatio.io.MatFileWriter;
-import com.jmatio.types.MLArray;
-import com.jmatio.types.MLChar;
-import com.jmatio.types.MLDouble;
-import com.jmatio.types.MLStructure;
-import com.jmatio.types.MLUInt64;
-import com.jmatio.types.MLUInt8;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * Generate a ".mat" matlab file
@@ -74,7 +73,7 @@ public class MatlabResponse implements MimeResponse {
 	}
 
 	@Override
-	public void processingPV(BasicContext retrievalContext, String pv, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+    public void processingPV(BasicContext retrievalContext, String pv, Instant start, Instant end, EventStreamDesc streamDesc) {
 		headerStruct.setField("source", new MLChar("source", "Archiver appliance"));
 		headerStruct.setField("pvName", new MLChar("pvName", pv));
 		headerStruct.setField("from", new MLChar("from", TimeUtils.convertToISO8601String(start)));
@@ -169,7 +168,7 @@ public class MatlabResponse implements MimeResponse {
 			MLUInt64 ret = new MLUInt64("nanos", new int[] {dest.size(), 1} );
 			int i = 0;
 			for(Event e : dest) {
-				ret.set((long) e.getEventTimeStamp().getNanos(), i++);
+                ret.set((long) e.getEventTimeStamp().getNano(), i++);
 			}
 			return ret;
 		}

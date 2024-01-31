@@ -11,9 +11,10 @@ import java.util.concurrent.Future;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import com.google.common.base.Ascii;
 
@@ -32,7 +33,7 @@ public class ZipFetchTest {
 	private static final int LINE_SIZE = 32;
 	private byte[] data = new byte[SAMPLE_SIZE];
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		byte[] line = new byte[LINE_SIZE];
 		for(int i = 0; i < LINE_SIZE-1; i++) {
@@ -45,7 +46,7 @@ public class ZipFetchTest {
 		
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		
 	}
@@ -134,7 +135,7 @@ public class ZipFetchTest {
 			if(firstTaskFinish == 0) {
 				firstTaskFinish = System.currentTimeMillis();
 			}
-			assertTrue("Day had no lines ", numLines > 1);
+			Assertions.assertTrue(numLines > 1, "Day had no lines ");
 			totallinecount += numLines;
 		}
 		long st1 = System.currentTimeMillis();

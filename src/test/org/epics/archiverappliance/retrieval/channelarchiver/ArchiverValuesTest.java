@@ -17,9 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Simple unit test using a sample from LCLS production for DBR_SCALAR_DOUBLE.
@@ -29,11 +30,11 @@ import org.junit.Test;
 public class ArchiverValuesTest {
 	private static Logger logger = LogManager.getLogger(ArchiverValuesTest.class.getName());
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
@@ -47,17 +48,17 @@ public class ArchiverValuesTest {
 			for(String key : handler.getMetaInformation().keySet()) {
 				logger.debug(key + "=" + handler.getMetaInformation().get(key));
 			}
-			assertTrue("Could not determine " + "disp_low", (metaInfo.get("disp_low") != null));
-			assertTrue("Could not determine " + "disp_high", (metaInfo.get("disp_high") != null));
-			assertTrue("Could not determine " + "alarm_low", (metaInfo.get("alarm_low") != null));
-			assertTrue("Could not determine " + "alarm_high", (metaInfo.get("alarm_high") != null));
-			assertTrue("Could not determine " + "warn_high", (metaInfo.get("warn_high") != null));
-			assertTrue("Could not determine " + "warn_low", (metaInfo.get("warn_low") != null));
-			assertTrue("Could not determine " + "units", (metaInfo.get("units") != null));
-			assertTrue("Could not determine " + "prec", (metaInfo.get("prec") != null));
+			Assertions.assertTrue((metaInfo.get("disp_low") != null), "Could not determine " + "disp_low");
+			Assertions.assertTrue((metaInfo.get("disp_high") != null), "Could not determine " + "disp_high");
+			Assertions.assertTrue((metaInfo.get("alarm_low") != null), "Could not determine " + "alarm_low");
+			Assertions.assertTrue((metaInfo.get("alarm_high") != null), "Could not determine " + "alarm_high");
+			Assertions.assertTrue((metaInfo.get("warn_high") != null), "Could not determine " + "warn_high");
+			Assertions.assertTrue((metaInfo.get("warn_low") != null), "Could not determine " + "warn_low");
+			Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
+			Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-			assertTrue("Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_DOUBLE", handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_DOUBLE);
-			assertTrue("Element Count is " + handler.getElementCount(), handler.getElementCount() == 1);
+			Assertions.assertTrue(handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_DOUBLE, "Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_DOUBLE");
+			Assertions.assertTrue(handler.getElementCount() == 1, "Element Count is " + handler.getElementCount());
 
 			int expectedEventCount = 100;
 			int eventCount = 0;
@@ -68,7 +69,7 @@ public class ArchiverValuesTest {
 				eventCount++;
 			}
 
-			assertTrue("Expected " + expectedEventCount + " and got " + eventCount, eventCount == expectedEventCount);
+			Assertions.assertTrue(eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
 		}
 	}
 	
@@ -83,17 +84,17 @@ public class ArchiverValuesTest {
 			for(String key : handler.getMetaInformation().keySet()) {
 				logger.debug(key + "=" + handler.getMetaInformation().get(key));
 			}
-			assertTrue("Could not determine " + "disp_low", (metaInfo.get("disp_low") != null));
-			assertTrue("Could not determine " + "disp_high", (metaInfo.get("disp_high") != null));
-			assertTrue("Could not determine " + "alarm_low", (metaInfo.get("alarm_low") != null));
-			assertTrue("Could not determine " + "alarm_high", (metaInfo.get("alarm_high") != null));
-			assertTrue("Could not determine " + "warn_high", (metaInfo.get("warn_high") != null));
-			assertTrue("Could not determine " + "warn_low", (metaInfo.get("warn_low") != null));
-			assertTrue("Could not determine " + "units", (metaInfo.get("units") != null));
-			assertTrue("Could not determine " + "prec", (metaInfo.get("prec") != null));
+			Assertions.assertTrue((metaInfo.get("disp_low") != null), "Could not determine " + "disp_low");
+			Assertions.assertTrue((metaInfo.get("disp_high") != null), "Could not determine " + "disp_high");
+			Assertions.assertTrue((metaInfo.get("alarm_low") != null), "Could not determine " + "alarm_low");
+			Assertions.assertTrue((metaInfo.get("alarm_high") != null), "Could not determine " + "alarm_high");
+			Assertions.assertTrue((metaInfo.get("warn_high") != null), "Could not determine " + "warn_high");
+			Assertions.assertTrue((metaInfo.get("warn_low") != null), "Could not determine " + "warn_low");
+			Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
+			Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-			assertTrue("Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_WAVEFORM_DOUBLE", handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_WAVEFORM_DOUBLE);
-			assertTrue("Element Count is " + handler.getElementCount(), handler.getElementCount() > 1);
+			Assertions.assertTrue(handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_WAVEFORM_DOUBLE, "Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_WAVEFORM_DOUBLE");
+			Assertions.assertTrue(handler.getElementCount() > 1, "Element Count is " + handler.getElementCount());
 
 			int expectedEventCount = 5;
 			int eventCount = 0;
@@ -101,12 +102,12 @@ public class ArchiverValuesTest {
 				StringBuilder eventStr = new StringBuilder();
 				eventStr.append(event.getEpochSeconds() + "," + event.getSampleValue().toString());
 				logger.debug(eventStr.toString());
-				assertTrue("Invalid event count, we got " + event.getSampleValue().getElementCount(), (event.getSampleValue().getElementCount() == 7200));
+				Assertions.assertTrue((event.getSampleValue().getElementCount() == 7200), "Invalid event count, we got " + event.getSampleValue().getElementCount());
 				logger.info("We got " + event.getSampleValue().getElementCount() + " events.");
 				eventCount++;
 			}
 
-			assertTrue("Expected " + expectedEventCount + " and got " + eventCount, eventCount == expectedEventCount);
+			Assertions.assertTrue(eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
 		}
 	}
 	
@@ -121,17 +122,17 @@ public class ArchiverValuesTest {
 			for(String key : handler.getMetaInformation().keySet()) {
 				logger.debug(key + "=" + handler.getMetaInformation().get(key));
 			}
-			assertTrue("Could not determine " + "disp_low", (metaInfo.get("disp_low") != null));
-			assertTrue("Could not determine " + "disp_high", (metaInfo.get("disp_high") != null));
-			assertTrue("Could not determine " + "alarm_low", (metaInfo.get("alarm_low") != null));
-			assertTrue("Could not determine " + "alarm_high", (metaInfo.get("alarm_high") != null));
-			assertTrue("Could not determine " + "warn_high", (metaInfo.get("warn_high") != null));
-			assertTrue("Could not determine " + "warn_low", (metaInfo.get("warn_low") != null));
-			assertTrue("Could not determine " + "units", (metaInfo.get("units") != null));
-			assertTrue("Could not determine " + "prec", (metaInfo.get("prec") != null));
+			Assertions.assertTrue((metaInfo.get("disp_low") != null), "Could not determine " + "disp_low");
+			Assertions.assertTrue((metaInfo.get("disp_high") != null), "Could not determine " + "disp_high");
+			Assertions.assertTrue((metaInfo.get("alarm_low") != null), "Could not determine " + "alarm_low");
+			Assertions.assertTrue((metaInfo.get("alarm_high") != null), "Could not determine " + "alarm_high");
+			Assertions.assertTrue((metaInfo.get("warn_high") != null), "Could not determine " + "warn_high");
+			Assertions.assertTrue((metaInfo.get("warn_low") != null), "Could not determine " + "warn_low");
+			Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
+			Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-			assertTrue("Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_SCALAR_ENUM", handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_ENUM);
-			assertTrue("Element Count is " + handler.getElementCount(), handler.getElementCount() == 1);
+			Assertions.assertTrue(handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_ENUM, "Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_SCALAR_ENUM");
+			Assertions.assertTrue(handler.getElementCount() == 1, "Element Count is " + handler.getElementCount());
 
 			int expectedEventCount = 0;
 			int eventCount = 0;
@@ -142,7 +143,7 @@ public class ArchiverValuesTest {
 				eventCount++;
 			}
 
-			assertTrue("Expected " + expectedEventCount + " and got " + eventCount, eventCount == expectedEventCount);
+			Assertions.assertTrue(eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
 		}
 	}
 	
@@ -156,17 +157,17 @@ public class ArchiverValuesTest {
 			for(String key : handler.getMetaInformation().keySet()) {
 				logger.debug(key + "=" + handler.getMetaInformation().get(key));
 			}
-			assertTrue("Could not determine " + "disp_low", (metaInfo.get("disp_low") != null));
-			assertTrue("Could not determine " + "disp_high", (metaInfo.get("disp_high") != null));
-			assertTrue("Could not determine " + "alarm_low", (metaInfo.get("alarm_low") != null));
-			assertTrue("Could not determine " + "alarm_high", (metaInfo.get("alarm_high") != null));
-			assertTrue("Could not determine " + "warn_high", (metaInfo.get("warn_high") != null));
-			assertTrue("Could not determine " + "warn_low", (metaInfo.get("warn_low") != null));
-			assertTrue("Could not determine " + "units", (metaInfo.get("units") != null));
-			assertTrue("Could not determine " + "prec", (metaInfo.get("prec") != null));
+			Assertions.assertTrue((metaInfo.get("disp_low") != null), "Could not determine " + "disp_low");
+			Assertions.assertTrue((metaInfo.get("disp_high") != null), "Could not determine " + "disp_high");
+			Assertions.assertTrue((metaInfo.get("alarm_low") != null), "Could not determine " + "alarm_low");
+			Assertions.assertTrue((metaInfo.get("alarm_high") != null), "Could not determine " + "alarm_high");
+			Assertions.assertTrue((metaInfo.get("warn_high") != null), "Could not determine " + "warn_high");
+			Assertions.assertTrue((metaInfo.get("warn_low") != null), "Could not determine " + "warn_low");
+			Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
+			Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-			assertTrue("Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_DOUBLE", handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_DOUBLE);
-			assertTrue("Element Count is " + handler.getElementCount(), handler.getElementCount() == 1);
+			Assertions.assertTrue(handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_DOUBLE, "Type is " + handler.getValueType().getDBRType(handler.getElementCount()) + " expecting DBR_DOUBLE");
+			Assertions.assertTrue(handler.getElementCount() == 1, "Element Count is " + handler.getElementCount());
 
 			int expectedEventCount = 2;
 			int eventCount = 0;
@@ -177,7 +178,7 @@ public class ArchiverValuesTest {
 				eventCount++;
 			}
 
-			assertTrue("Expected " + expectedEventCount + " and got " + eventCount, eventCount == expectedEventCount);
+			Assertions.assertTrue(eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
 		}
 	}
 

@@ -1,24 +1,12 @@
 package org.epics.archiverappliance.retrieval.client;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.SeekableByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.Random;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
@@ -32,20 +20,29 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import java.io.File;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Random;
+
+import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Generate known amount of data for a PV; corrupt known number of the values.
@@ -57,28 +54,28 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.Compress
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class PostProcessorWithPBErrorDailyTest {
-	private static Logger logger = LogManager.getLogger(PostProcessorWithPBErrorDailyTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(PostProcessorWithPBErrorDailyTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
-	private String pvName = "UnitTestNoNamingConvention:inactive1";
-	private short currentYear = TimeUtils.getCurrentYear();
-	private String mtsFolderName = System.getenv("ARCHAPPL_MEDIUM_TERM_FOLDER"); 
-	private File mtsFolder = new File(mtsFolderName + "/UnitTestNoNamingConvention");
+	private final String pvName = "UnitTestNoNamingConvention:inactive1";
+	private final short currentYear = TimeUtils.getCurrentYear();
+	private final String mtsFolderName = System.getenv("ARCHAPPL_MEDIUM_TERM_FOLDER");
+	private final File mtsFolder = new File(mtsFolderName + "/UnitTestNoNamingConvention");
 	StoragePlugin storageplugin;
 	private ConfigServiceForTests configService;
-	private short dataGeneratedForYears = 5;
+	private final short dataGeneratedForYears = 5;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		storageplugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY", configService);
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
@@ -103,7 +100,7 @@ public class PostProcessorWithPBErrorDailyTest {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -129,12 +126,12 @@ public class PostProcessorWithPBErrorDailyTest {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable, pvName.equals(pvNameObtainedFromTable));
+		Assertions.assertEquals(pvName, pvNameObtainedFromTable, "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
-		 Thread.sleep(1*60*1000);
+		Assertions.assertEquals(expectedPVStatus, pvArchiveStatusObtainedFromTable, "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
+		 Thread.sleep(60 * 1000);
 		 
 		 int totalCount = checkRetrieval(pvName, dataGeneratedForYears*365*24*60, true);
 		 corruptSomeData();
@@ -151,18 +148,17 @@ public class PostProcessorWithPBErrorDailyTest {
 	private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
 		long startTimeMillis = System.currentTimeMillis();
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		 Timestamp now = TimeUtils.now();
-		 Timestamp start = TimeUtils.minusDays(now, (dataGeneratedForYears+1)*366);
-		 Timestamp end = now;
-		 int eventCount = 0;
+        Instant now = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
+		int eventCount = 0;
 
 		 final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		 // Make sure we get the EGU as part of a regular VAL call.
-		 try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
 			 PayloadInfo info = null;
-			 assertTrue("We should get some data, we are getting a null stream back", strm != null); 
+			 Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
 			 info =  strm.getPayLoadInfo();
-			 assertTrue("Stream has no payload info", info != null);
+			 Assertions.assertNotNull(info, "Stream has no payload info");
 			 mergeHeaders(info, metaFields);
 			 strm.onInfoChange(new InfoChangeHandler() {
 				 @Override
@@ -182,9 +178,9 @@ public class PostProcessorWithPBErrorDailyTest {
 		 }
 
 		 logger.info("For " + retrievalPVName + " we were expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
-		 assertTrue("For " + retrievalPVName + ", expecting " + expectedAtLeastEvents + "events. We got " + eventCount, eventCount >= expectedAtLeastEvents);
-		 if(exactMatch) { 
-			 assertTrue("For " + retrievalPVName + ", Expecting " + expectedAtLeastEvents + "events. We got " + eventCount, eventCount == expectedAtLeastEvents);
+		 Assertions.assertTrue(eventCount >= expectedAtLeastEvents, "For " + retrievalPVName + ", expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
+		 if(exactMatch) {
+			 Assertions.assertEquals(eventCount, expectedAtLeastEvents, "For " + retrievalPVName + ", Expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
 		 }
 		 
 		 return eventCount;
@@ -202,10 +198,17 @@ public class PostProcessorWithPBErrorDailyTest {
 	
 	
 	private void corruptSomeData() throws Exception { 
-		try(BasicContext context = new BasicContext()) { 
-			Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), mtsFolderName, pvName, PlainPBStoragePlugin.PB_EXTENSION, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter());
-			assertTrue(paths != null);
-			assertTrue(paths.length > 0);
+		try(BasicContext context = new BasicContext()) {
+            Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(
+                    context.getPaths(),
+                    mtsFolderName,
+                    pvName,
+		            pbFileExtension,
+                    PartitionGranularity.PARTITION_DAY,
+                    CompressionMode.NONE,
+                    configService.getPVNameToKeyConverter());
+			Assertions.assertNotNull(paths);
+			Assertions.assertTrue(paths.length > 0);
 			// Corrupt each file
 			for(Path path : paths) { 
 				try(SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {

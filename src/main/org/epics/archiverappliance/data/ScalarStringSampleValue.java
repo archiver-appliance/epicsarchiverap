@@ -7,10 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import org.json.simple.JSONValue;
+
 import java.nio.ByteBuffer;
 import java.util.List;
-
-import org.json.simple.JSONValue;
 
 
 /**
@@ -19,7 +19,7 @@ import org.json.simple.JSONValue;
  *
  */
 public class ScalarStringSampleValue implements SampleValue {
-	private String value;
+    private final String value;
 
 	public ScalarStringSampleValue(String val) {
 		this.value = val;

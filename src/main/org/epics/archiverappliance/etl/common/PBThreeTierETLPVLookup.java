@@ -7,8 +7,23 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.common;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.StoragePlugin;
+import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.StoragePluginURLParser;
+import org.epics.archiverappliance.etl.ETLDest;
+import org.epics.archiverappliance.etl.ETLSource;
+import org.epics.archiverappliance.etl.StorageMetrics;
+
 import java.io.IOException;
-import java.sql.Timestamp;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,19 +34,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.StoragePlugin;
-import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.PVTypeInfo;
-import org.epics.archiverappliance.config.StoragePluginURLParser;
-import org.epics.archiverappliance.etl.ETLDest;
-import org.epics.archiverappliance.etl.ETLSource;
-import org.epics.archiverappliance.etl.StorageMetrics;
-
 /**
  * Holds runtime state for ETL.
  * For now, gets all of the info from PVTypeInfo.
@@ -41,10 +43,8 @@ import org.epics.archiverappliance.etl.StorageMetrics;
  */
 
 public final class PBThreeTierETLPVLookup {
-	private static Logger logger = LogManager.getLogger(PBThreeTierETLPVLookup.class.getName());
-	private static Logger configlogger = LogManager.getLogger("config." + PBThreeTierETLPVLookup.class.getName());
-	private static int DEFAULT_ETL_PERIOD = 60*5; // Seconds; needs to be the smallest time interval in the PartitionGranularity.
-	private static int DEFAULT_ETL_INITIAL_DELAY = 60*1; // Seconds.
+	private static final Logger logger = LogManager.getLogger(PBThreeTierETLPVLookup.class.getName());
+	private static final Logger configlogger = LogManager.getLogger("config." + PBThreeTierETLPVLookup.class.getName());
 
 	private ConfigService configService = null;
 	
@@ -56,32 +56,26 @@ public final class PBThreeTierETLPVLookup {
 	/**
 	 * PVs for whom we have already added etl jobs
 	 */
-	private ConcurrentSkipListSet<String> pvsForWhomWeHaveAddedETLJobs = new ConcurrentSkipListSet<String>();
+	private final ConcurrentSkipListSet<String> pvsForWhomWeHaveAddedETLJobs = new ConcurrentSkipListSet<String>();
 
 	/**
 	 * Metrics and state for each lifetimeid transition for a pv
 	 * The first level index is the source lifetimeid
 	 * The seconds level index is the pv name.
 	 */
-	private HashMap<Integer, ConcurrentHashMap<String, ETLPVLookupItems>> lifetimeId2PVName2LookupItem = new HashMap<Integer, ConcurrentHashMap<String, ETLPVLookupItems>>();
+	private final HashMap<Integer, ConcurrentHashMap<String, ETLPVLookupItems>> lifetimeId2PVName2LookupItem = new HashMap<Integer, ConcurrentHashMap<String, ETLPVLookupItems>>();
 	
 	/**
 	 * We have a thread pool for each lifetime id transition.
 	 * Adding a pv to ETL involves scheduling an ETLPVLookupItem into each of the appropriate lifetimeid transitions with a period appropriate to the source partition granularity
 	 */
-	private List<ScheduledThreadPoolExecutor> etlLifeTimeThreadPoolExecutors = new LinkedList<ScheduledThreadPoolExecutor>();
-	
-	private List<ETLMetricsForLifetime> applianceMetrics = new LinkedList<ETLMetricsForLifetime>();
+	private final List<ScheduledThreadPoolExecutor> etlLifeTimeThreadPoolExecutors = new LinkedList<ScheduledThreadPoolExecutor>();
+
+	private final List<ETLMetricsForLifetime> applianceMetrics = new LinkedList<ETLMetricsForLifetime>();
 	
 	public PBThreeTierETLPVLookup(ConfigService configService) {
 		this.configService = configService;
-		configServiceSyncThread = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread ret = new Thread(r, "Config service sync thread");
-				return ret;
-			}
-		});
+		configServiceSyncThread = new ScheduledThreadPoolExecutor(1, r -> new Thread(r, "Config service sync thread"));
 		
 		configService.addShutdownHook(new ETLShutdownThread(this));
 	}
@@ -91,28 +85,29 @@ public final class PBThreeTierETLPVLookup {
 	 */
 	public void postStartup() {
 		configlogger.info("Beginning ETL post startup; scheduling the configServiceSyncThread to keep the local ETL lifetimeId2PVName2LookupItem in sync");
-		configServiceSyncThread.scheduleWithFixedDelay(new Runnable() {
-			@Override
-			public void run() {
-				try { 
-					Iterable<String> pVsForThisAppliance = configService.getPVsForThisAppliance();
-					if(pVsForThisAppliance != null) { 
-						for(String pvName : pVsForThisAppliance) { 
-							if(!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) { 
-								PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-								if(!typeInfo.isPaused()) { 
-									addETLJobs(pvName, typeInfo);
-								} else { 
-									logger.info("Skipping adding ETL jobs for paused PV " + pvName);
-								}
+		// Seconds; needs to be the smallest time interval in the PartitionGranularity.
+		int DEFAULT_ETL_PERIOD = 60 * 5;
+		// Seconds.
+		int DEFAULT_ETL_INITIAL_DELAY = 60;
+		configServiceSyncThread.scheduleWithFixedDelay(() -> {
+			try {
+				Iterable<String> pVsForThisAppliance = configService.getPVsForThisAppliance();
+				if (pVsForThisAppliance != null) {
+					for (String pvName : pVsForThisAppliance) {
+						if (!pvsForWhomWeHaveAddedETLJobs.contains(pvName)) {
+							PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+							if (!typeInfo.isPaused()) {
+								addETLJobs(pvName, typeInfo);
+							} else {
+								logger.info("Skipping adding ETL jobs for paused PV " + pvName);
 							}
 						}
-					} else { 
-						configlogger.info("There are no PVs on this appliance yet");
 					}
-				} catch(Throwable t) { 
-					configlogger.error("Excepting syncing ETL jobs with config service", t);
+				} else {
+					configlogger.info("There are no PVs on this appliance yet");
 				}
+			} catch (Throwable t) {
+				configlogger.error("Excepting syncing ETL jobs with config service", t);
 			}
 		}, DEFAULT_ETL_INITIAL_DELAY, DEFAULT_ETL_PERIOD, TimeUnit.SECONDS);
 		configlogger.debug("Done initializing ETL post startup.");
@@ -139,7 +134,7 @@ public final class PBThreeTierETLPVLookup {
 					if(etlLifeTimeThreadPoolExecutors.size() < (etllifetimeid+1)) { 
 						configlogger.info("Adding ETL schedulers and metrics for lifetimeid " + etllifetimeid);
 						etlLifeTimeThreadPoolExecutors.add(new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(etllifetimeid)));
-						lifetimeId2PVName2LookupItem.put(Integer.valueOf(etllifetimeid), new ConcurrentHashMap<String, ETLPVLookupItems>());
+						lifetimeId2PVName2LookupItem.put(etllifetimeid, new ConcurrentHashMap<String, ETLPVLookupItems>());
 						applianceMetrics.add(new ETLMetricsForLifetime(etllifetimeid));
 					}
 					
@@ -157,13 +152,13 @@ public final class PBThreeTierETLPVLookup {
 					lifetimeId2PVName2LookupItem.get(etllifetimeid).put(pvName, etlpvLookupItems);
 					// We schedule using the source granularity or a shift (8 hours) whichever is smaller.
 					int delaybetweenETLJobs = Math.min(etlSource.getPartitionGranularity().getApproxSecondsPerChunk(), 8*60*60);
-					long epochSeconds = TimeUtils.getCurrentEpochSeconds();
+					Instant currentTime = Instant.now();
 					// We then compute the start of the next partition.
-					long nextPartitionFirstSec = TimeUtils.getNextPartitionFirstSecond(epochSeconds, etlSource.getPartitionGranularity());
+					Instant nextPartitionFirstSec = TimeUtils.getNextPartitionFirstSecond(currentTime, etlSource.getPartitionGranularity());
 					// Add a small buffer to this
-					long nextExpectedETLRunInSecs = nextPartitionFirstSec + 5*60*(etllifetimeid+1);
+					Instant nextExpectedETLRunInSecs = nextPartitionFirstSec.plusSeconds(5L * 60 * (etllifetimeid + 1));
 					// We compute the initial delay so that the ETL jobs run at a predictable time. 
-					long initialDelay = nextExpectedETLRunInSecs - epochSeconds;
+					long initialDelay = Duration.between(nextExpectedETLRunInSecs, currentTime).getSeconds();
 
 					if(System.getenv().containsKey("ARCHAPPL_SKIP_ETL_FOR_STORE")) {
 						// Temporarily set the initial delay to a distant future; meant for emergencies only.
@@ -212,7 +207,7 @@ public final class PBThreeTierETLPVLookup {
 					
 					if(lookupItem.getETLSource().consolidateOnShutdown()) { 
 						logger.debug("Need to consolidate data from etl source " + ((StoragePlugin) lookupItem.getETLSource()).getName() + " for pv " + pvName + " for storage " + ((StorageMetrics) lookupItem.getETLDest()).getName());
-						Timestamp oneYearLaterTimeStamp=TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds()+365*24*60*60, 0);
+						Instant oneYearLaterTimeStamp = TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() + 365L * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 0);
 						new ETLJob(lookupItem, oneYearLaterTimeStamp).run();
 					}
 				} else { 
@@ -268,7 +263,7 @@ public final class PBThreeTierETLPVLookup {
 		return null;
 	}
 
-	private final class ETLShutdownThread implements Runnable {
+	private static final class ETLShutdownThread implements Runnable {
 		private PBThreeTierETLPVLookup theLookup = null;
 		public ETLShutdownThread(PBThreeTierETLPVLookup theLookup) { 
 			this.theLookup = theLookup;
@@ -293,7 +288,7 @@ public final class PBThreeTierETLPVLookup {
 							String identifyDest=storageMetricsAPIDest.getName();
 							logger.debug("Need to consolidate data from etl source " + ((StoragePlugin) etlitem.getETLSource()).getName() + " for pv " + pvName + " for storage " + identifyDest);
 
-							Timestamp oneYearLaterTimeStamp=TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds()+365*24*60*60, 0);
+							Instant oneYearLaterTimeStamp = TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() + 365L * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 0);
 							new ETLJob(etlitem, oneYearLaterTimeStamp).run();
 						}
 					}  catch (Throwable t) {
@@ -305,15 +300,10 @@ public final class PBThreeTierETLPVLookup {
 	}
 
 
-	private final class ETLLifeTimeThreadFactory implements ThreadFactory {
-		private int lifetimeid;
-		ETLLifeTimeThreadFactory(int lifetimeid) {
-			this.lifetimeid = lifetimeid;
-		}
+	private record ETLLifeTimeThreadFactory(int lifetimeid) implements ThreadFactory {
 		@Override
 		public Thread newThread(Runnable r) {
-			Thread ret = new Thread(r, "ETL - " + lifetimeid);
-			return ret;
+			return new Thread(r, "ETL - " + lifetimeid);
 		}
 	}
 
@@ -329,8 +319,8 @@ public final class PBThreeTierETLPVLookup {
 	 */
 	public void manualControlForUnitTests() { 
 		logger.error("Shutting down ETL for unit tests...");
-		for(ScheduledThreadPoolExecutor scheduledThreadPoolExecutor : this.etlLifeTimeThreadPoolExecutors) { 
-			scheduledThreadPoolExecutor.shutdown();
+        for (ScheduledThreadPoolExecutor scheduledThreadPoolExecutor : this.etlLifeTimeThreadPoolExecutors) {
+            scheduledThreadPoolExecutor.shutdownNow();
 		}
 	}
 	
@@ -341,7 +331,7 @@ public final class PBThreeTierETLPVLookup {
 	
 	
 	public void addETLJobsForUnitTests(String pvName, PVTypeInfo typeInfo) {
-		logger.warn("This message should only be called from the unit tests.");
+        logger.warn("addETLJobsForUnitTests This message should only be called from the unit tests.");
 		addETLJobs(pvName, typeInfo);
 	}
 

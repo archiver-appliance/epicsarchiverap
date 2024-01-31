@@ -18,7 +18,7 @@ import java.util.List;
  * @param <T>  &emsp;
  */
 public class VectorValue <T extends Number> implements SampleValue {
-	private List<T> values;
+    private final List<T> values;
 	
 	public VectorValue(List<T> vals) {
 		this.values = vals;

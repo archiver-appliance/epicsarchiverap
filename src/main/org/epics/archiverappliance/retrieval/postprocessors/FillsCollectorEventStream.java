@@ -1,12 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Set;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -18,6 +11,13 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Set;
 
 /**
  * This is similar to the summary stats collector except we keep aspects of the original event stream like dbr_type and so on.
@@ -101,7 +101,7 @@ public class FillsCollectorEventStream implements EventStream, RemotableOverRaw 
 				}
 				if(currentEvent != null) { 
 					long epochSeconds = binNum*intervalSecs + intervalSecs/2;
-					Timestamp eventTs = null;
+                    Instant eventTs = null;
 					if(fillOperator) {
 						logger.debug("For fill operators, we put the event time stamp in the center of the bin.");
 						eventTs = TimeUtils.convertFromEpochSeconds(epochSeconds, 0);

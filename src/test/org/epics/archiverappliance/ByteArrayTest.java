@@ -5,9 +5,9 @@ import static org.junit.Assert.fail;
 import java.util.Arrays;
 import java.util.Random;
 
-import org.junit.Test;
-
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ByteArrayTest {
 
@@ -25,17 +25,17 @@ public class ByteArrayTest {
 				ByteArray bar = new ByteArray(escapedData);
 				bar.doubleBufferSize();
 				if(!Arrays.equals(escapedData, Arrays.copyOfRange(bar.data, bar.off, bar.len))) { 
-					fail("Test failed");
+					Assertions.fail("Test failed");
 				}				
 				bar.inPlaceUnescape();
 				long end = System.currentTimeMillis();
 				exectime += (end-start);
 				if(!Arrays.equals(startBytes, Arrays.copyOfRange(bar.unescapedData, bar.off, bar.unescapedLen))) { 
-					fail("Test failed");
+					Assertions.fail("Test failed");
 				}
 				
 			} catch(Exception ex) {
-				fail("Test failed with exception " + ex.getMessage());
+				Assertions.fail("Test failed with exception " + ex.getMessage());
 			}
 		}
 		System.out.println("Time to escape/unescape " + total + " byte sequences is " + (exectime)/1000 + "(s) yielding " + (((float)total)/((exectime)/1000)) + " sequences per second");

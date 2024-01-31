@@ -7,19 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -35,10 +26,16 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
 
 /**
  * Test retrieval after the dest appserver has been upgraded.
@@ -67,17 +64,17 @@ import org.junit.experimental.categories.Category;
  *  To cater to this, either use a mergededup for the STS as well or simply ask for data that is certain to start from the MTS.  
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class FailoverUpgradeTest {
 	private static Logger logger = LogManager.getLogger(FailoverUpgradeTest.class.getName());
 	private ConfigServiceForTests configService;
-	String pvName = "FailoverRetrievalTest";
+    String pvName = "FailoverUpgradeTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
 	}
 
@@ -92,7 +89,7 @@ public class FailoverUpgradeTest {
 	private long generateData(String applURL, String applianceName, long sampleStart)
 			throws Exception {
 		int genEventCount = 0;
-		StoragePlugin mts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin mts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(sampleStart).getYear()));
 			for(int i = 0; i < 3; i++) {
@@ -105,7 +102,7 @@ public class FailoverUpgradeTest {
 			mts.appendData(context, pvName, strm);
 		}
 		
-		StoragePlugin sts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/sts" + "&partitionGranularity=PARTITION_HOUR", configService);
+		StoragePlugin sts = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/sts" + "&partitionGranularity=PARTITION_HOUR", configService);
 		try(BasicContext context = new BasicContext()) {
 			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(sampleStart).getYear()));
 			for(int i = 3; i <= 10; i++) {
@@ -143,20 +140,20 @@ public class FailoverUpgradeTest {
 				for(Event e : stream) {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, evEpoch > lastEvEpoch);
+						Assertions.assertTrue(evEpoch > lastEvEpoch, "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
+		Assertions.assertTrue(genEventCount == rtvlEventCount, "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
 		return genEventCount;
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -208,18 +205,17 @@ public class FailoverUpgradeTest {
 					logger.info("Current event " + TimeUtils.convertToISO8601String(evEpoch)
 							+ " for start " + TimeUtils.convertToISO8601String(start) + " and end " + TimeUtils.convertToISO8601String(end));
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, evEpoch > lastEvEpoch);
+						Assertions.assertTrue(evEpoch > lastEvEpoch, "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + expectedCount + " but got  " + rtvlEventCount
-				+ " for start " + TimeUtils.convertToISO8601String(start) + " and end " + TimeUtils.convertToISO8601String(end) 
-				, expectedCount == rtvlEventCount);
+		Assertions.assertTrue(expectedCount == rtvlEventCount, "We expected event count  " + expectedCount + " but got  " + rtvlEventCount
+				+ " for start " + TimeUtils.convertToISO8601String(start) + " and end " + TimeUtils.convertToISO8601String(end));
 	}
 
 	@Test

@@ -7,10 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-import java.sql.Timestamp;
-
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.TimeSpan;
+
+import java.time.Instant;
 
 /**
  * Represents a data source for data for a PV
@@ -21,11 +21,11 @@ public class DataSourceforPV implements Comparable<DataSourceforPV> {
 	private String pvName;
 	private StoragePlugin storagePlugin;
 	private int lifetimeId;
-	private Timestamp dataStartTime;
-	private Timestamp dataEndTime;
+    private Instant dataStartTime;
+    private Instant dataEndTime;
 	
 	public DataSourceforPV(String pvName, StoragePlugin storagePlugin, int lifetimeid,
-			Timestamp dataStartTime, Timestamp dataEndTime) {
+                           Instant dataStartTime, Instant dataEndTime) {
 		super();
 		this.pvName = pvName;
 		this.storagePlugin = storagePlugin;
@@ -38,10 +38,11 @@ public class DataSourceforPV implements Comparable<DataSourceforPV> {
 		return pvName;
 	}
 
-	public Timestamp getDataStartTime() {
+    public Instant getDataStartTime() {
 		return dataStartTime;
 	}
-	public Timestamp getDataEndTime() {
+
+    public Instant getDataEndTime() {
 		return dataEndTime;
 	}
 	public StoragePlugin getStoragePlugin() {

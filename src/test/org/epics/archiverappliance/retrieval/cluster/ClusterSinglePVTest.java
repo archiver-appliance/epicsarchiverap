@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -23,10 +22,11 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -36,7 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,9 +44,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
-import static org.junit.Assert.assertEquals;
 
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class ClusterSinglePVTest {
     private static final Logger logger = LogManager.getLogger(ClusterSinglePVTest.class.getName());
     private final TomcatSetup tomcatSetup = new TomcatSetup();
@@ -57,7 +56,7 @@ public class ClusterSinglePVTest {
     private final File ltsPVFolder = new File(ltsFolder + File.separator + prefixPvName);
     short year = TimeUtils.getCurrentYear();
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
 
@@ -66,7 +65,7 @@ public class ClusterSinglePVTest {
         }
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         tomcatSetup.tearDown();
         if (ltsPVFolder.exists()) {
@@ -82,13 +81,20 @@ public class ClusterSinglePVTest {
      */
     @Test
     public void singlePvsAcrossCluster() throws Exception {
-        ConfigService configService = new ConfigServiceForTests(new File("./bin"));
+        ConfigService configService = new ConfigServiceForTests(-1);
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize("pb://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR", configService);
 
+        short currentYear = TimeUtils.getCurrentYear();
+        String startString = currentYear + "-11-17T16:00:00.000Z";
+        String endString = currentYear + "-11-17T16:01:00.000Z";
+
+        Instant start = TimeUtils.convertFromISO8601String(startString);
+        Instant end = TimeUtils.convertFromISO8601String(endString);
+
         // Generate an event stream to populate the PB files
-        SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), year);
+        SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), start, end, 1);
         try (BasicContext context = new BasicContext()) {
             pbplugin.appendData(context, pvName, simstream);
         }
@@ -107,7 +113,7 @@ public class ClusterSinglePVTest {
         decoder.decode(srcPVTypeInfoJSON, srcPVTypeInfo);
 
         PVTypeInfo pvTypeInfo1 = new PVTypeInfo(pvName, srcPVTypeInfo);
-        assertEquals(pvTypeInfo1.getPvName(), pvName);
+        Assertions.assertEquals(pvTypeInfo1.getPvName(), pvName);
 
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
 
@@ -125,29 +131,23 @@ public class ClusterSinglePVTest {
         } catch (Exception ignored) {
         }
 
-        short currentYear = TimeUtils.getCurrentYear();
-        String startString = currentYear + "-11-17T16:00:00.000Z";
-        String endString = currentYear + "-11-17T16:01:00.000Z";
-
-        Timestamp start = TimeUtils.convertFromISO8601String(startString);
-        Timestamp end = TimeUtils.convertFromISO8601String(endString);
-        Timestamp pluginstart = TimeUtils.convertFromEpochMillis(start.getTime() + 1000);
+        Instant pluginstart = start.plusMillis(1000);
 
         Map<String, List<JSONObject>> pvToData = retrieveJsonResults(startString, endString, true);
 
-        logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + TimeUtils.convertToISO8601String(start) + " End: " + TimeUtils.convertToISO8601String(end));
+        logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + start + " End: " + end);
 
         try (BasicContext context = new BasicContext();
              EventStream pv1ResultsStream = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, pluginstart, end))) {
-            compareDataAndTimestamps(pvName, pvToData.get(pvName), pv1ResultsStream);
+            compareDataAndInstants(pvName, pvToData.get(pvName), pv1ResultsStream);
         }
         Map<String, List<JSONObject>> pvToDataNoRedirect = retrieveJsonResults(startString, endString, false);
 
-        logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + TimeUtils.convertToISO8601String(start) + " End: " + TimeUtils.convertToISO8601String(end));
+        logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + start + " End: " + end);
 
         try (BasicContext context = new BasicContext();
              EventStream pv1ResultsStream = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, pluginstart, end))) {
-            compareDataAndTimestamps(pvName, pvToDataNoRedirect.get(pvName), pv1ResultsStream);
+            compareDataAndInstants(pvName, pvToDataNoRedirect.get(pvName), pv1ResultsStream);
         }
     }
 
@@ -190,7 +190,7 @@ public class ClusterSinglePVTest {
         return pvToData;
     }
 
-    private void compareDataAndTimestamps(String pvName, List<JSONObject> pvJsonData, EventStream pv1ResultsStream) throws NoSuchElementException {
+    private void compareDataAndInstants(String pvName, List<JSONObject> pvJsonData, EventStream pv1ResultsStream) throws NoSuchElementException {
         logger.info("Comparing data for pv " + pvName);
         int counter = 0;
         try {
@@ -204,15 +204,15 @@ public class ClusterSinglePVTest {
                 // Get seconds and nanoseconds for JSON
                 String jsonSecondsPart = jsonEvent.get("secs").toString();
                 String jsonNanosPart = jsonEvent.get("nanos").toString();
-                String jsonTimestamp = jsonSecondsPart + ("000000000" + jsonNanosPart).substring(jsonNanosPart.length());
+                String jsonInstant = jsonSecondsPart + ("000000000" + jsonNanosPart).substring(jsonNanosPart.length());
 
                 // Get seconds and nanoseconds for plugin event
                 String pluginSecondsPart = Long.toString(pluginEvent.getEpochSeconds());
-                String pluginNanosPart = Integer.toString(pluginEvent.getEventTimeStamp().getNanos());
-                String pluginTimestamp = pluginSecondsPart + ("000000000" + pluginNanosPart).substring(pluginNanosPart.length());
+                String pluginNanosPart = Integer.toString(pluginEvent.getEventTimeStamp().getNano());
+                String pluginInstant = pluginSecondsPart + ("000000000" + pluginNanosPart).substring(pluginNanosPart.length());
 
-                assertEquals("JSON timestamp, " + jsonTimestamp + ", and plugin event timestamp, " + pluginTimestamp + ", are unequal.", jsonTimestamp, pluginTimestamp);
-                assertEquals("JSON value, " + jsonValue + ", and plugin event value, " + pluginValue + ", are unequal.", jsonValue, pluginValue, 0.0);
+                Assertions.assertEquals(jsonInstant, pluginInstant, "JSON timestamp, " + jsonInstant + ", and plugin event timestamp, " + pluginInstant + ", are unequal.");
+                Assertions.assertEquals(jsonValue, pluginValue, 0.0, "JSON value, " + jsonValue + ", and plugin event value, " + pluginValue + ", are unequal.");
             }
         } catch (IndexOutOfBoundsException e) {
             throw new IndexOutOfBoundsException("The data obtained from JSON and the plugin class for PV " + pvName + " are unequal in length.");

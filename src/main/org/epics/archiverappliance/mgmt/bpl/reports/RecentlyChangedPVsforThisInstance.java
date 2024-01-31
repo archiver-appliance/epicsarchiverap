@@ -1,16 +1,5 @@
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.sql.Timestamp;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedList;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -20,6 +9,16 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONValue;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 public class RecentlyChangedPVsforThisInstance implements BPLAction {
 	private static Logger logger = LogManager.getLogger(RecentlyChangedPVsforThisInstance.class.getName());
@@ -36,9 +35,9 @@ public class RecentlyChangedPVsforThisInstance implements BPLAction {
 		final String identity = configService.getMyApplianceInfo().getIdentity();
 		final class RecentlyChangedPVInfo implements JSONAware {
 			String pvName;
-			Timestamp modificationTimeStamp;
+            Instant modificationTimeStamp;
 
-			RecentlyChangedPVInfo(String pvName, Timestamp creationTimeStamp) {
+            RecentlyChangedPVInfo(String pvName, Instant creationTimeStamp) {
 				this.pvName = pvName;
 				this.modificationTimeStamp = creationTimeStamp;
 			}

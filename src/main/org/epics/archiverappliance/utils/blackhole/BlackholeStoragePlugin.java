@@ -7,17 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.blackhole;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -33,6 +22,17 @@ import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.utils.ui.URIUtils;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Callable;
+
 /**
  * A storage plugin that deletes all data that goes into it.
  * Use this as an ETL dest for policies that eliminate data after a certain period.
@@ -43,14 +43,14 @@ public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
 	private static Logger logger = LogManager.getLogger(BlackholeStoragePlugin.class.getName());
 
 	@Override
-	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor)  throws IOException {
+    public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Instant startTime, Instant endTime, PostProcessor postProcessor) throws IOException {
 		// A blackhole plugin has no data
 		return null;
 	}
 
 	@Override
-	public boolean appendData(BasicContext context, String pvName, EventStream stream) {
-		return true;
+    public int appendData(BasicContext context, String pvName, EventStream stream) {
+        return 1;
 	}
 
 	@Override

@@ -4,9 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.SampleValue;
@@ -18,14 +16,14 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,26 +31,25 @@ import java.util.UUID;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.convertBytesToPVAStructure;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Checks reconnects after connection drops as an integration test.
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class PVAFlakyIntegrationTest {
 
     private static final Logger logger = LogManager.getLogger(PVAFlakyIntegrationTest.class.getName());
     TomcatSetup tomcatSetup = new TomcatSetup();
     private PVAServer pvaServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
         pvaServer = new PVAServer();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         tomcatSetup.tearDown();
         pvaServer.close();
@@ -84,7 +81,7 @@ public class PVAFlakyIntegrationTest {
 
         GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
 
-        Timestamp start = TimeUtils.convertFromInstant(firstInstant);
+        Instant start = firstInstant;
 
         long samplingPeriodMilliSeconds = 100;
 
@@ -125,7 +122,7 @@ public class PVAFlakyIntegrationTest {
         double secondsToBuffer = 5.0;
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
-        Timestamp end = TimeUtils.convertFromInstant(Instant.now());
+        Instant end = Instant.now();
 
         RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
                 "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
@@ -136,11 +133,11 @@ public class PVAFlakyIntegrationTest {
             stream = rawDataRetrieval.getDataForPVS(new String[]{pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
             // Make sure we get the DBR type we expect
-            assertEquals(stream.getDescription().getArchDBRType(), ArchDBRTypes.DBR_V4_GENERIC_BYTES);
+            Assertions.assertEquals(ArchDBRTypes.DBR_V4_GENERIC_BYTES, stream.getDescription().getArchDBRType());
 
             // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
-                actualValues.put(e.getEventTimeStamp().toInstant(), e.getSampleValue());
+                actualValues.put(e.getEventTimeStamp(), e.getSampleValue());
             }
         } finally {
             if (stream != null) try {
@@ -149,7 +146,7 @@ public class PVAFlakyIntegrationTest {
             }
         }
 
-        assertEquals(expectedValues, convertBytesToPVAStructure(actualValues));
+        Assertions.assertEquals(expectedValues, convertBytesToPVAStructure(actualValues));
     }
 
 

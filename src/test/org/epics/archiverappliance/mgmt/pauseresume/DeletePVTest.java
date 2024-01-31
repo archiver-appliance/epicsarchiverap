@@ -9,18 +9,17 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -32,7 +31,8 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class DeletePVTest {
 	private static Logger logger = LogManager.getLogger(DeletePVTest.class.getName());
 	private File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
@@ -40,12 +40,12 @@ public class DeletePVTest {
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(persistenceFolder.exists()) {
 			FileUtils.deleteDirectory(persistenceFolder);
@@ -59,7 +59,7 @@ public class DeletePVTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -82,11 +82,11 @@ public class DeletePVTest {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable, pvNameToArchive.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 
 		 logger.info("We are now archiving the PV; let's go into the details page; pause and delete");
 		 driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvNameToArchive);
@@ -104,7 +104,7 @@ public class DeletePVTest {
 					 WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 					 String obtainedPauseStatus = pvDetailsTableSecondCol.getText();
 					 String expectedPauseStatus = "Yes";
-					 assertTrue("Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus, expectedPauseStatus.equals(obtainedPauseStatus));
+					 Assertions.assertTrue(expectedPauseStatus.equals(obtainedPauseStatus), "Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus);
 					 break;
 				 }
 			 }
@@ -123,7 +123,7 @@ public class DeletePVTest {
 					 WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 					 String obtainedPauseStatus = pvDetailsTableSecondCol.getText();
 					 String expectedPauseStatus = "No";
-					 assertTrue("Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus, expectedPauseStatus.equals(obtainedPauseStatus));
+					 Assertions.assertTrue(expectedPauseStatus.equals(obtainedPauseStatus), "Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus);
 					 break;
 				 }
 			 }
@@ -142,7 +142,7 @@ public class DeletePVTest {
 					 WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 					 String obtainedPauseStatus = pvDetailsTableSecondCol.getText();
 					 String expectedPauseStatus = "Yes";
-					 assertTrue("Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus, expectedPauseStatus.equals(obtainedPauseStatus));
+					 Assertions.assertTrue(expectedPauseStatus.equals(obtainedPauseStatus), "Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus);
 					 break;
 				 }
 			 }
@@ -165,11 +165,11 @@ public class DeletePVTest {
 			 Thread.sleep(2*1000);
 			 statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 			 pvNameObtainedFromTable = statusPVName.getText();
-			 assertTrue("PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable, pvNameToArchive.equals(pvNameObtainedFromTable));
+			 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
 			 statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 			 pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 			 expectedPVStatus = "Not being archived";
-			 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+			 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 }
 	}
 }

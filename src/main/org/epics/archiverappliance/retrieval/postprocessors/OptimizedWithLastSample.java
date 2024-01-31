@@ -1,31 +1,28 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeSpan;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.common.TimeUtils;
-
 import org.epics.archiverappliance.retrieval.postprocessors.SummaryStatsPostProcessor.SummaryValue;
-import org.epics.archiverappliance.data.DBRTimeEvent;
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 
 /**
@@ -50,8 +47,8 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
     private ArrayListEventStream transformedRawEvents;
     private int numberOfPoints = DEFAULT_NUMBER_OF_POINTS;
     private double lastValue = 0;
-    
-    private Timestamp previousEventTimestamp = new Timestamp(1);
+
+    private Instant previousEventTimestamp = Instant.ofEpochMilli(1);
     private int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
     protected LinkedHashMap<Long, SummaryValue> consolidatedData = new LinkedHashMap<Long, SummaryValue>();
     long firstBin = 0;
@@ -129,9 +126,9 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
     }
     
     @Override
-    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
-      
-        intervalSecs = (int)((end.getTime() - start.getTime())/(1000 * numberOfPoints));
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+
+        intervalSecs = (int) ((end.toEpochMilli() - start.toEpochMilli()) / (1000 * numberOfPoints));
         
         firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
         lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
@@ -255,7 +252,7 @@ public class OptimizedWithLastSample implements PostProcessor, PostProcessorWith
               try {
                 DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
                 long epochSeconds = dbrTimeEvent.getEpochSeconds();
-                if (dbrTimeEvent.getEventTimeStamp().after(previousEventTimestamp)) {
+                  if (dbrTimeEvent.getEventTimeStamp().isAfter(previousEventTimestamp)) {
                   previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
                 } else {
                   // Note that this is expected. ETL is not transactional; so we

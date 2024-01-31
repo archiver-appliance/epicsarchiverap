@@ -7,14 +7,14 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.model;
 
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import java.time.Instant;
 
 /**
  * An ArchiveChannel that stores value in a periodic scan.
@@ -50,7 +50,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	 */
 	public ScannedArchiveChannel(final String name, final Writer writer,
 			Enablement enablement, final int buffer_capacity,
-			final Timestamp last_timeestamp, final double scan_period,
+                                 final Instant last_timeestamp, final double scan_period,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
 			final String controlPVname, final int commandThreadID, final boolean usePVAccess)
 			throws Exception {
@@ -162,9 +162,9 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	 * @return true if they have the same time stamps. Other wise ,false
 	 */
 	private boolean isMatchingTimeStamp(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) {
-		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) { 
-			Timestamp time1 = tempEvent1.getEventTimeStamp();
-			Timestamp time2 = tempEvent2.getEventTimeStamp();
+		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) {
+            Instant time1 = tempEvent1.getEventTimeStamp();
+            Instant time2 = tempEvent2.getEventTimeStamp();
 			return time1.equals(time2);
 		} else { 
 			return false;
@@ -178,11 +178,11 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	 * @return
 	 */
 	private boolean isLessThanScanPeriod(final DBRTimeEvent tempEvent1, final DBRTimeEvent tempEvent2) { 
-		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) { 
-			Timestamp time1 = tempEvent1.getEventTimeStamp();
-			Timestamp time2 = tempEvent2.getEventTimeStamp();
-			// logger.debug("Diff = " + (time2.getTime() - time1.getTime()) + " and scanPeriodMillis " + scanPeriodMillis);
-			return (time2.getTime() - time1.getTime()) < this.scanPeriodMillis;
+		if(tempEvent1 != null && tempEvent2 != null && tempEvent1.getEventTimeStamp() != null && tempEvent2.getEventTimeStamp() != null) {
+            Instant time1 = tempEvent1.getEventTimeStamp();
+            Instant time2 = tempEvent2.getEventTimeStamp();
+            // logger.debug("Diff = " + (time2.toEpochMilli() - time1.toEpochMilli()) + " and scanPeriodMillis " + scanPeriodMillis);
+            return (time2.toEpochMilli() - time1.toEpochMilli()) < this.scanPeriodMillis;
 		} else { 
 			return false;
 		}

@@ -4,9 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.TomcatSetup;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.SampleValue;
@@ -28,16 +26,14 @@ import org.epics.pva.data.nt.PVAEnum;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -47,12 +43,11 @@ import java.util.function.Function;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.fromGenericSampleValueToPVAData;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
-import static org.junit.Assert.assertEquals;
 
 /**
  * A basic integration test of using pvAccess to archive a pv
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class PVAccessIntegrationTest {
 
     private static final Logger logger = LogManager.getLogger(PVAccessIntegrationTest.class.getName());
@@ -67,13 +62,13 @@ public class PVAccessIntegrationTest {
         }
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() throws Exception {
 
         tomcatSetup.setUpWebApps(PVAccessIntegrationTest.class.getSimpleName());
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() throws Exception {
         tomcatSetup.tearDown();
         pvaServer.close();
@@ -82,7 +77,7 @@ public class PVAccessIntegrationTest {
     @Test
     public void testPVAccessGenericJsonApi() throws Exception {
 
-        String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName()  + ":testPVAccessGenericJsonApi:" + UUID.randomUUID();
+        String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName() + ":testPVAccessGenericJsonApi:" + UUID.randomUUID();
 
         var level1 = new PVAString("level 1", "level 1 0");
         var level2 = new PVAInt("level 2", 16);
@@ -160,13 +155,13 @@ public class PVAccessIntegrationTest {
     public void testPVAccessUnsignedBytes() throws Exception {
         String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName() + ":testPVAccessUnsignedBytes:" + UUID.randomUUID();
 
-        var value = new PVAByteArray("value", true, Integer.valueOf(1).byteValue(),Integer.valueOf(-1).byteValue() );
+        var value = new PVAByteArray("value", true, Integer.valueOf(1).byteValue(), Integer.valueOf(-1).byteValue());
         var value2 = new PVAByteArray("value", true, Integer.valueOf(255).byteValue(), Integer.valueOf(1).byteValue());
 
         testPVData(ArchDBRTypes.DBR_WAVEFORM_BYTE,
                 List.of(value, value2), (sampleValue) -> {
                     var values = sampleValue.getValues();
-                    return new PVAByteArray("value", true, ((Number)values.get(0)).byteValue(), ((Number)values.get(1)).byteValue());
+                    return new PVAByteArray("value", true, ((Number) values.get(0)).byteValue(), ((Number) values.get(1)).byteValue());
                 }, "epics:nt/NTScalarArray:1.0", pvName);
 
     }
@@ -187,13 +182,13 @@ public class PVAccessIntegrationTest {
     public void testPVAccessUnsignedShorts() throws Exception {
         String pvName = "PV:" + PVAccessIntegrationTest.class.getSimpleName() + ":testPVAccessUnsignedShorts:" + UUID.randomUUID();
 
-        var value = new PVAShortArray("value", true, Integer.valueOf(1).shortValue(),Integer.valueOf(-1).shortValue() );
+        var value = new PVAShortArray("value", true, Integer.valueOf(1).shortValue(), Integer.valueOf(-1).shortValue());
         var value2 = new PVAShortArray("value", true, Integer.valueOf(255).shortValue(), Integer.valueOf(1).shortValue());
 
         testPVData(ArchDBRTypes.DBR_WAVEFORM_SHORT,
                 List.of(value, value2), (sampleValue) -> {
                     var values = sampleValue.getValues();
-                    return new PVAShortArray("value", true, ((Number)values.get(0)).shortValue(), ((Number)values.get(1)).shortValue());
+                    return new PVAShortArray("value", true, ((Number) values.get(0)).shortValue(), ((Number) values.get(1)).shortValue());
                 }, "epics:nt/NTScalarArray:1.0", pvName);
 
     }
@@ -221,13 +216,13 @@ public class PVAccessIntegrationTest {
         testPVData(ArchDBRTypes.DBR_WAVEFORM_INT,
                 List.of(value, value2), (sampleValue) -> {
                     var values = sampleValue.getValues();
-                    return new PVAIntArray("value", true, ((Number)values.get(0)).intValue(), ((Number)values.get(1)).intValue());
+                    return new PVAIntArray("value", true, ((Number) values.get(0)).intValue(), ((Number) values.get(1)).intValue());
                 }, "epics:nt/NTScalarArray:1.0", pvName);
 
     }
 
     public <PVA extends PVAData> void testPVData(ArchDBRTypes type,
-        List<PVA> inputPvaDataList, Function<SampleValue, PVA> expectedDataMapping,
+                                                 List<PVA> inputPvaDataList, Function<SampleValue, PVA> expectedDataMapping,
                                                  String structName, String pvName)
             throws Exception {
 
@@ -257,7 +252,7 @@ public class PVAccessIntegrationTest {
         GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
         waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, 10);
 
-        Timestamp start = TimeUtils.convertFromInstant(firstInstant);
+        Instant start = firstInstant;
 
         long samplingPeriodMilliSeconds = 100;
 
@@ -273,7 +268,7 @@ public class PVAccessIntegrationTest {
         double secondsToBuffer = 5.0;
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
-        Timestamp end = TimeUtils.convertFromInstant(Instant.now());
+        Instant end = Instant.now();
 
         RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
@@ -283,11 +278,11 @@ public class PVAccessIntegrationTest {
             stream = rawDataRetrieval.getDataForPVS(new String[]{pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
             // Make sure we get the DBR type we expect
-            assertEquals(type, stream.getDescription().getArchDBRType());
+            Assertions.assertEquals(type, stream.getDescription().getArchDBRType());
 
             // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
-                actualValues.put(e.getEventTimeStamp().toInstant(), expectedDataMapping.apply(e.getSampleValue()));
+                actualValues.put(e.getEventTimeStamp(), expectedDataMapping.apply(e.getSampleValue()));
             }
         } finally {
             if (stream != null) try {
@@ -296,6 +291,6 @@ public class PVAccessIntegrationTest {
             }
         }
 
-        assertEquals(expectedValues, actualValues);
+        Assertions.assertEquals(expectedValues, actualValues);
     }
 }

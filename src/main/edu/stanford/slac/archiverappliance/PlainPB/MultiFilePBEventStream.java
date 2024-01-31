@@ -7,12 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Timestamp;
-import java.util.Iterator;
-
+import edu.stanford.slac.archiverappliance.PB.search.FileEventStreamSearch;
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -23,8 +19,11 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
-import edu.stanford.slac.archiverappliance.PB.search.FileEventStreamSearch;
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.Iterator;
 
 /**
  * An eventstream that spans multiple PB files.
@@ -40,15 +39,13 @@ public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
 	private ArchDBRTypes type;
 	private RemotableEventStreamDesc desc;
 	private MultiFilePBEventStreamIterator theIterator = null;
-	
-	public MultiFilePBEventStream(Path[] paths, String pvName, ArchDBRTypes dbrtype, Timestamp startTime, Timestamp endTime) throws IOException {
+
+    public MultiFilePBEventStream(Path[] paths, String pvName, ArchDBRTypes dbrtype, Instant startTime, Instant endTime) throws IOException {
 		this.pvName = pvName;
 		this.type = dbrtype;
 		
-		YearSecondTimestamp startYTS = TimeUtils.convertToYearSecondTimestamp(startTime); 
-		YearSecondTimestamp endYTS = TimeUtils.convertToYearSecondTimestamp(endTime); 
-		int startSecondsIntoYear = startYTS.getSecondsintoyear();
-		int endSecondsIntoYear = endYTS.getSecondsintoyear();
+		YearSecondTimestamp startYTS = TimeUtils.convertToYearSecondTimestamp(startTime);
+	    YearSecondTimestamp endYTS = TimeUtils.convertToYearSecondTimestamp(endTime);
 		
 		// We need at least two files for this event stream to work correctly.
 		assert(paths.length > 1);
@@ -62,13 +59,13 @@ public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
 			try {
 				if(i == 0) {
 					if(pbinfo.getDataYear() == startYTS.getYear()) {
-						logger.debug("Looking for start position in file " + path.toAbsolutePath().toString());
+						logger.debug("Looking for start position in file " + path.toAbsolutePath());
 						FileEventStreamSearch bsstart = new FileEventStreamSearch(path, pbinfo.getPositionOfFirstSample());
-						boolean startfound = bsstart.seekToTime(dbrtype, startSecondsIntoYear);
+						boolean startfound = bsstart.seekToTime(dbrtype, startYTS);
 						long startPosition = 0;
 						if(startfound) {
 							startPosition = bsstart.getFoundPosition();
-							logger.debug("Found start position " + startPosition + " in file " + path.toAbsolutePath().toString());
+							logger.debug("Found start position " + startPosition + " in file " + path.toAbsolutePath());
 							LineByteStream lis  = new LineByteStream(path, startPosition);
 							if(startPosition == 0L)  { 
 								lis.readLine();
@@ -87,7 +84,7 @@ public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
 				} else if (i == (paths.length-1)) {
 					if(pbinfo.getDataYear() == endYTS.getYear()) {
 						FileEventStreamSearch bsend = new FileEventStreamSearch(path, pbinfo.positionOfFirstSample);
-						boolean endfound = bsend.seekToTime(dbrtype, endSecondsIntoYear);
+						boolean endfound = bsend.seekToTime(dbrtype, endYTS);
 						long endPosition = Files.size(path);
 						if(endfound) {
 							endPosition = bsend.getFoundPosition();

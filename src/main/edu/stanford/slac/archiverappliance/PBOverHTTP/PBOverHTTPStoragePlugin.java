@@ -7,18 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PBOverHTTP;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.Callable;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -37,7 +26,17 @@ import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.utils.ui.URIUtils;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * A read-only storage plugin that gets data using the PB/http protocol from a server. 
@@ -52,8 +51,8 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 	private boolean skipExternalServers = false;
 
 	@Override
-	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, 
-			Timestamp endTime, PostProcessor postProcessor)  throws IOException {
+    public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Instant startTime,
+                                                    Instant endTime, PostProcessor postProcessor) throws IOException {
 		String getURL = accessURL + "?pv=" + pvName 
 				+ "&from=" + TimeUtils.convertToISO8601String(startTime) 
 				+ "&to=" + TimeUtils.convertToISO8601String(endTime) 
@@ -62,9 +61,9 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 		logger.info("URL to fetch data is " + getURL);
 		return getDataBehindURL(getURL, startTime, postProcessor);
 	}
-	
-	public List<Callable<EventStream>> getDataForMultiPVs(BasicContext context, List<String> pvNames, Timestamp startTime,
-			Timestamp endTime, PostProcessor postProcessor) throws IOException {
+
+    public List<Callable<EventStream>> getDataForMultiPVs(BasicContext context, List<String> pvNames, Instant startTime,
+                                                          Instant endTime, PostProcessor postProcessor) throws IOException {
 		String getURL = accessURL;
 		for (int i = 0; i < pvNames.size(); i++)
 			if (i == 0) getURL += "?pv=" + pvNames.get(i);
@@ -76,8 +75,8 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 		logger.info("URL to fetch data is " + getURL);
 		return getDataBehindURL(getURL, startTime, postProcessor);
 	}
-	
-	private List<Callable<EventStream>> getDataBehindURL(String getURL, Timestamp startTime, PostProcessor postProcessor) {
+
+    private List<Callable<EventStream>> getDataBehindURL(String getURL, Instant startTime, PostProcessor postProcessor) {
 		try {
 			CloseableHttpClient httpclient = HttpClients.createDefault();
 			HttpGet getMethod = new HttpGet(getURL);
@@ -123,7 +122,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
 	
 
 	@Override
-	public boolean appendData(BasicContext context, String pvName, EventStream stream) {
+    public int appendData(BasicContext context, String pvName, EventStream stream) {
 		throw new RuntimeException("Append Data is not available for HTTP streams");
 	}
 

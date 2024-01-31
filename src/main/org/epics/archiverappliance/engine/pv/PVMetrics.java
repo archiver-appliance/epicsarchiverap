@@ -14,17 +14,17 @@
 
 package org.epics.archiverappliance.engine.pv;
 
-import java.sql.Timestamp;
-import java.text.DecimalFormat;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+
+import java.text.DecimalFormat;
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
 /***
  * PVMetrics includes the dynamic information of the pv
  * @author Luofeng Li
@@ -113,14 +113,14 @@ public class PVMetrics {
 	 * This is the timestamp of the last event from the IOC regardless of whether the timestamp is accurate or not 
 	 * Note this may not be what's written out into the archive that we used to compare against to enforce monotonically increasing eventstreams
 	 */
-	private Timestamp lastEventFromIOCTimeStamp = null;
+    private Instant lastEventFromIOCTimeStamp = null;
 
 	/**
 	 * The state of the connection at the last connectionChangedEvent.
 	 * Murali added this to show in PVMetrics. 
 	 * Feel free to remove if not needed anymore
 	 */
-	private boolean lastConnectionEventState;
+	private PVConnectionState lastConnectionEventState;
 	
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
@@ -153,7 +153,7 @@ public class PVMetrics {
     * @param incorrectTimeStamp  &emsp;
     */
 
-	public void addTimestampWrongEventCount(Timestamp incorrectTimeStamp) {
+   public void addTimestampWrongEventCount(Instant incorrectTimeStamp) {
 		if(lastEventFromIOCTimeStamp != null && incorrectTimeStamp != null && incorrectTimeStamp.equals(lastEventFromIOCTimeStamp)) { 
 			return;
 		}
@@ -508,7 +508,7 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "What's the engine's sampling period?", ""+ (float)this.samplingPeriod);
 		addDetailedStatus(statuses, "The SCAN period (ms) after applying the jitter factor", ""+ this.scanPeriodMillis);
 		addDetailedStatus(statuses, "Is this PV currently connected?", this.isConnected ? "yes" : "no");
-		addDetailedStatus(statuses, "Connection state at last connection changed event", this.lastConnectionEventState ? "Connected" : "Not connected");
+		addDetailedStatus(statuses, "Connection state at last connection changed event", String.valueOf(this.lastConnectionEventState));
 		addDetailedStatus(statuses, "When did we receive the last event?", TimeUtils.convertToHumanReadableString(this.secondsOfLastEvent));
 		addDetailedStatus(statuses, "What did we last push the data to the short term store?", TimeUtils.convertToHumanReadableString(this.lastRotateLogsEpochSeconds));
 		addDetailedStatus(statuses, "When did we request CA to make a connection to this PV?", TimeUtils.convertToHumanReadableString(connectionRequestMadeEpochSeconds));
@@ -519,7 +519,7 @@ public class PVMetrics {
 		addDetailedStatus(statuses, "How many events so far?", Long.toString(this.eventCounts));
 		addDetailedStatus(statuses, "How many raw scan events so far?", Long.toString(this.scanRawEventCount));
 		addDetailedStatus(statuses, "How many events lost because the timestamp is in the far future or past so far?", Long.toString(this.timestampWrongEventCount));
-		addDetailedStatus(statuses, "Timestamp of last event from the IOC - correct or not.", this.getLastEventFromIOCTimeStampStr());
+        addDetailedStatus(statuses, "Instant of last event from the IOC - correct or not.", this.getLastEventFromIOCTimeStampStr());
 		addDetailedStatus(statuses, "How many events lost because the sample buffer is full so far?", Long.toString(this.sampleBufferFullLostEventCount));
 		addDetailedStatus(statuses, "How many events lost because the DBR_Type of the PV has changed from what it used to be?", Long.toString(this.invalidTypeLostEventCount));
 		addDetailedStatus(statuses, "How many events lost totally so far?", Long.toString(this.timestampWrongEventCount + this.sampleBufferFullLostEventCount + this.invalidTypeLostEventCount));
@@ -573,15 +573,15 @@ public class PVMetrics {
 	}
 
 
-	public void setLastEventFromIOCTimeStamp(Timestamp lastEventFromIOCTimeStamp) {
+    public void setLastEventFromIOCTimeStamp(Instant lastEventFromIOCTimeStamp) {
 		this.lastEventFromIOCTimeStamp = lastEventFromIOCTimeStamp;
 	}
 
-	public boolean isLastConnectionEventState() {
+	public PVConnectionState lastConnectionEventState() {
 		return lastConnectionEventState;
 	}
 
-	public void setLastConnectionEventState(boolean lastConnectionEventState) {
+	public void setLastConnectionEventState(PVConnectionState lastConnectionEventState) {
 		this.lastConnectionEventState = lastConnectionEventState;
 	}
 

@@ -7,20 +7,15 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import java.io.File;
-import java.nio.file.Path;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-
-import junit.framework.TestCase;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SingleForkTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -33,31 +28,33 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStr
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
+import java.io.File;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Test data reduction as part of ETL.
  * @author mshankar
  *
  */
-@Category(SingleForkTests.class)
-public class DataReductionTest extends TestCase {
+@Tag("singleFork")
+public class DataReductionTest {
         private static final Logger logger = LogManager.getLogger(DataReductionTest.class);
     	String shortTermFolderName=ConfigServiceForTests.getDefaultShortTermFolder()+"/shortTerm";
     	String mediumTermFolderName=ConfigServiceForTests.getDefaultPBTestFolder()+"/mediumTerm";
     	private  ConfigServiceForTests configService;
 
-        @Before
+        @BeforeEach
         public void setUp() throws Exception {
-    		configService = new ConfigServiceForTests(new File("./bin"));
+	        configService = new ConfigServiceForTests(-1);
     		if(new File(shortTermFolderName).exists()) {
     			FileUtils.deleteDirectory(new File(shortTermFolderName));
     		}
@@ -66,7 +63,7 @@ public class DataReductionTest extends TestCase {
     		}
         }
 
-        @After
+        @AfterEach
         public void tearDown() throws Exception {
     		if(new File(shortTermFolderName).exists()) {
     			FileUtils.deleteDirectory(new File(shortTermFolderName));
@@ -88,7 +85,9 @@ public class DataReductionTest extends TestCase {
         	logger.info("Testing data reduction for " + etlSrc.getPartitionGranularity() + " to " + etlDest.getPartitionGranularity());
 
         	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testMove" + etlSrc.getPartitionGranularity();
-        	SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0));
+            short currentYear = TimeUtils.getCurrentYear();
+
+            SimulationEventStream simstream = new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
         	try(BasicContext context = new BasicContext()) {
         		etlSrc.appendData(context, pvName, simstream);
         	}
@@ -118,20 +117,20 @@ public class DataReductionTest extends TestCase {
         	configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
         	configService.getETLLookup().manualControlForUnitTests();
 
-        	Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365*10);
+            Instant timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
         	ETLExecutor.runETLs(configService, timeETLruns);
         	logger.info("Done performing ETL as though today is " + TimeUtils.convertToHumanReadableString(timeETLruns));
 
-        	Timestamp startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
-        	Timestamp endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
+            Instant startOfRequest = TimeUtils.minusDays(TimeUtils.now(), 366);
+            Instant endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
 
         	// Check that all the files in the destination store are valid files.
-        	Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(new ArchPaths(), etlDest.getRootFolder(), pvName, ".pb", etlDest.getPartitionGranularity(), CompressionMode.NONE, configService.getPVNameToKeyConverter());
-        	assertTrue("PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName, allPaths != null);
-        	assertTrue("PlainPBFileNameUtility returns empty array for getAllFilesForPV for " + pvName + " when looking in " + etlDest.getRootFolder() , allPaths.length > 0);
+	        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(new ArchPaths(), etlDest.getRootFolder(), pvName, PlainPBStoragePlugin.pbFileExtension, etlDest.getPartitionGranularity(), CompressionMode.NONE, configService.getPVNameToKeyConverter());
+        	Assertions.assertTrue(allPaths != null, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
+        	Assertions.assertTrue(allPaths.length > 0, "PlainPBFileNameUtility returns empty array for getAllFilesForPV for " + pvName + " when looking in " + etlDest.getRootFolder());
 
         	for(Path destPath : allPaths) {
-        		assertTrue("File validation failed for " + destPath.toAbsolutePath().toString(), ValidatePBFile.validatePBFile(destPath, false));
+        		Assertions.assertTrue(ValidatePBFile.validatePBFile(destPath, false), "File validation failed for " + destPath.toAbsolutePath().toString());
 
         	}
 
@@ -143,31 +142,31 @@ public class DataReductionTest extends TestCase {
 
         	long afterCount = 0;
         	try (BasicContext context = new BasicContext(); EventStream afterDest = new CurrentThreadWorkerEventStream(pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
-        		assertNotNull(afterDest);
+        		Assertions.assertNotNull(afterDest);
         		for(@SuppressWarnings("unused") Event e : afterDest) { afterCount++; }
         	}
         	logger.info("Of the " + beforeCount + " events, " + afterCount + " events were moved into the dest store.");
-        	assertTrue("Seems like no events were moved by ETL " + afterCount, (afterCount != 0));
+        	Assertions.assertTrue((afterCount != 0), "Seems like no events were moved by ETL " + afterCount);
 
         	long afterSourceCount = 0;
         	try (BasicContext context = new BasicContext(); EventStream afterSrc = new CurrentThreadWorkerEventStream(pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
         		for(@SuppressWarnings("unused") Event e : afterSrc) { afterSourceCount++; }
         	}
-        	assertTrue("Seems like we still have " + afterSourceCount + " events in the source ", (afterSourceCount == 0));
+        	Assertions.assertTrue((afterSourceCount == 0), "Seems like we still have " + afterSourceCount + " events in the source ");
 
         	// Now compare the events itself
         	try (BasicContext context = new BasicContext(); EventStream afterDest = new CurrentThreadWorkerEventStream(pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             	int index = 0;
         		for(Event afterEvent : afterDest) {
         			Event beforeEvent = reducedEvents.get(index);
-        			assertTrue("Before timestamp " + TimeUtils.convertToHumanReadableString(beforeEvent.getEventTimeStamp()) 
-        					+ " After timestamp " + TimeUtils.convertToHumanReadableString(afterEvent.getEventTimeStamp()), beforeEvent.getEventTimeStamp().equals(afterEvent.getEventTimeStamp()));
-        			assertTrue("Before value " + beforeEvent.getSampleValue().getValue() 
-        					+ " After value " + afterEvent.getSampleValue().getValue(), beforeEvent.getSampleValue().getValue().equals(afterEvent.getSampleValue().getValue()));
+        			Assertions.assertTrue(beforeEvent.getEventTimeStamp().equals(afterEvent.getEventTimeStamp()), "Before timestamp " + TimeUtils.convertToHumanReadableString(beforeEvent.getEventTimeStamp())
+        					+ " After timestamp " + TimeUtils.convertToHumanReadableString(afterEvent.getEventTimeStamp()));
+        			Assertions.assertTrue(beforeEvent.getSampleValue().getValue().equals(afterEvent.getSampleValue().getValue()), "Before value " + beforeEvent.getSampleValue().getValue()
+        					+ " After value " + afterEvent.getSampleValue().getValue());
         			index++;
         		}
         	}
 
-        	assertTrue("Of the total " + beforeCount  + " event, we should have moved " + beforeReducedCount + ". Instead we seem to have moved " +  afterCount, beforeReducedCount == afterCount);
+        	Assertions.assertTrue(beforeReducedCount == afterCount, "Of the total " + beforeCount  + " event, we should have moved " + beforeReducedCount + ". Instead we seem to have moved " +  afterCount);
         }
 }

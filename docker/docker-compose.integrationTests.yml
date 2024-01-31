@@ -1,0 +1,18 @@
+version: '3.7'
+name: epicsarchiver
+services:
+  epicsarchiver-test:
+    build:
+      dockerfile: docker/Dockerfile
+      context: ..
+    container_name: epicsarchiver-test
+    image: epicsarchiver-test
+    command:
+      - /bin/sh
+      - -c
+      - git config --global --add safe.directory /home/gradle && ./gradlew integrationTests --no-daemon # hack for doing git operations on mount
+    working_dir: /home/gradle
+    volumes:
+      - type: bind
+        source: ../
+        target: /home/gradle

@@ -7,13 +7,13 @@
  *******************************************************************************/
 package org.epics.archiverappliance;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * The main data retrieval interface; this is used to get an EventStream for events for one PV between a start and an end time.
@@ -23,8 +23,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  *
  */
 public interface Reader {
-	List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor) throws IOException;
-	
+	List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Instant startTime, Instant endTime, PostProcessor postProcessor) throws IOException;
+
 	/**
 	 * Get the first event for this PV.
 	 * This call is used to optimize away calls to other readers that have older data.

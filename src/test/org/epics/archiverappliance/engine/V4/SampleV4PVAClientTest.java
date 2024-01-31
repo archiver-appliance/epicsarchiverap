@@ -1,11 +1,5 @@
 package org.epics.archiverappliance.engine.V4;
 
-import static org.junit.Assert.assertFalse;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.client.PVAClient;
@@ -13,27 +7,32 @@ import org.epics.pva.data.PVADouble;
 import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.server.PVAServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Integration test of the pvAccess library
  */
-@Category(LocalEpicsTests.class )
+@Tag("localEpics")
 public class SampleV4PVAClientTest {
+    private static final String pvPrefix = SampleV4PVAClientTest.class.getSimpleName();
 
     private SIOCSetup ioc;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        ioc = new SIOCSetup();
+        ioc = new SIOCSetup(pvPrefix);
         ioc.startSIOCWithDefaultDB();
 
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         ioc.stopSIOC();
     }
@@ -41,10 +40,10 @@ public class SampleV4PVAClientTest {
     @Test
     public void testGet() throws Exception {
         PVAClient client = new PVAClient();
-        PVAChannel channel = client.getChannel("UnitTestNoNamingConvention:sine:calc");
+        PVAChannel channel = client.getChannel(pvPrefix + "UnitTestNoNamingConvention:sine:calc");
         channel.connect().get(5, TimeUnit.SECONDS);
         PVAStructure value = channel.read("").get(5, TimeUnit.SECONDS);
-        assertFalse(new PVADouble("value", Double.NaN) == value.get("value"));
+        Assertions.assertFalse(new PVADouble("value", Double.NaN) == value.get("value"));
         channel.close();
         client.close();
     }

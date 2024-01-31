@@ -1,8 +1,6 @@
 package org.epics.archiverappliance.common;
 
-import java.sql.Timestamp;
-import java.util.HashMap;
-
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -11,7 +9,9 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import java.lang.reflect.InvocationTargetException;
+import java.time.Instant;
+import java.util.HashMap;
 
 /**
  * A simple POJO that implements the event interface.
@@ -22,12 +22,12 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 public class POJOEvent implements DBRTimeEvent {
 	public static Logger logger = LogManager.getLogger(POJOEvent.class.getName());
 	private ArchDBRTypes dbrType;
-	private Timestamp recordProcessingTime;
+	private Instant recordProcessingTime;
 	private SampleValue sampleValue;
 	private int status;
 	private int severity;
-	
-	public POJOEvent(ArchDBRTypes dbrType, Timestamp recordProcessingTime, SampleValue sampleValue, int status, int severity) {
+
+	public POJOEvent(ArchDBRTypes dbrType, Instant recordProcessingTime, SampleValue sampleValue, int status, int severity) {
 		super();
 		this.dbrType = dbrType;
 		this.recordProcessingTime = recordProcessingTime;
@@ -35,8 +35,8 @@ public class POJOEvent implements DBRTimeEvent {
 		this.status = status;
 		this.severity = severity;
 	}
-	
-	public POJOEvent(ArchDBRTypes dbrType, Timestamp recordProcessingTime, String sampleValueStr, int status, int severity) {
+
+	public POJOEvent(ArchDBRTypes dbrType, Instant recordProcessingTime, String sampleValueStr, int status, int severity) {
 		this(dbrType, recordProcessingTime, ArchDBRTypes.sampleValueFromString(dbrType, sampleValueStr), status, severity);
 	}
 
@@ -59,7 +59,7 @@ public class POJOEvent implements DBRTimeEvent {
 
 
 	@Override
-	public Timestamp getEventTimeStamp() {
+	public Instant getEventTimeStamp() {
 		return recordProcessingTime;
 	}
 
@@ -81,7 +81,6 @@ public class POJOEvent implements DBRTimeEvent {
 	
 	@Override
 	public void setRepeatCount(int repeatCount) {
-		return;
 	}
 
 
@@ -92,13 +91,21 @@ public class POJOEvent implements DBRTimeEvent {
 
 	@Override
 	public ByteArray getRawForm() {
-		try { 
-			DBRTimeEvent ev = DBR2PBTypeMapping.getPBClassFor(dbrType).getSerializingConstructor().newInstance(this);
-			return ev.getRawForm();
-		} catch(Exception ex) {
-			logger.error("Exception creating event object", ex);
+		DBRTimeEvent ev = getDbrTimeEvent();
+		return ev.getRawForm();
+	}
+
+
+	private DBRTimeEvent getDbrTimeEvent() {
+		DBRTimeEvent ev = null;
+		try {
+			ev = DBR2PBTypeMapping.getPBClassFor(dbrType).getSerializingConstructor().newInstance(this);
+		} catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+
+			logger.error("Exception creating event object", e);
 			throw new RuntimeException("Unable to serialize a simulation event stream");
 		}
+		return ev;
 	}
 
 

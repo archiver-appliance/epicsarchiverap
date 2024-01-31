@@ -1,20 +1,9 @@
 package org.epics.archiverappliance.engine.test;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -25,22 +14,31 @@ import org.epics.archiverappliance.mgmt.ArchiveWorkflowCompleted;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Start an appserver with persistence; start archiving a PV; then start and restart the SIOC and make sure we get the expected cnxlost headers.
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class CnxLostTest {
 	private static Logger logger = LogManager.getLogger(CnxLostTest.class.getName());
 	private File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "CnxLostTest");
@@ -48,12 +46,12 @@ public class CnxLostTest {
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(persistenceFolder.exists()) {
 			FileUtils.deleteDirectory(persistenceFolder);
@@ -67,7 +65,7 @@ public class CnxLostTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -112,11 +110,11 @@ public class CnxLostTest {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable, pvNameToArchive.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 
 		 // UnitTestNoNamingConvention:inactive1 is SCAN passive without autosave so it should have an invalid timestamp.
 		 // We caput something to generate a valid timestamp..
@@ -146,7 +144,7 @@ public class CnxLostTest {
 					 WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 					 String obtainedPauseStatus = pvDetailsTableSecondCol.getText();
 					 String expectedPauseStatus = "Yes";
-					 assertTrue("Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus, expectedPauseStatus.equals(obtainedPauseStatus));
+					 Assertions.assertTrue(expectedPauseStatus.equals(obtainedPauseStatus), "Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus);
 					 break;
 				 }
 			 }
@@ -169,7 +167,7 @@ public class CnxLostTest {
 					 WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
 					 String obtainedPauseStatus = pvDetailsTableSecondCol.getText();
 					 String expectedPauseStatus = "No";
-					 assertTrue("Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus, expectedPauseStatus.equals(obtainedPauseStatus));
+					 Assertions.assertTrue(expectedPauseStatus.equals(obtainedPauseStatus), "Expecting paused status to be " + expectedPauseStatus + "; instead it is " + obtainedPauseStatus);
 					 break;
 				 }
 			 }
@@ -206,28 +204,28 @@ public class CnxLostTest {
 	
 	private void checkRetrieval(String retrievalPVName, ExpectedEventType[] expectedEvents) throws IOException {
 		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp now = TimeUtils.now();
-		Timestamp start = TimeUtils.minusDays(now, 366);
-		Timestamp end = now;
+        Instant now = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(now, 366);
+        Instant end = now;
 
 		LinkedList<EpicsMessage> retrievedData = new LinkedList<EpicsMessage>();
-		try(GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, start, end, false, null)) { 
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			int eventCount = 0;
-			assertTrue("We should get some data, we are getting a null stream back", strm != null);
+			Assertions.assertTrue(strm != null, "We should get some data, we are getting a null stream back");
 				for(EpicsMessage dbrevent : strm) {
 					logger.info("Adding event with value " + dbrevent.getNumberValue().doubleValue()
-							+ " at time " + TimeUtils.convertToHumanReadableString(dbrevent.getTimestamp()));
+                            + " at time " + TimeUtils.convertToHumanReadableString(TimeUtils.fromSQLTimeStamp(dbrevent.getTimestamp())));
 					retrievedData.add(dbrevent);
 					eventCount++;
 				}
-				assertTrue("Expecting at least one event. We got " + eventCount, eventCount >= 1);
+				Assertions.assertTrue(eventCount >= 1, "Expecting at least one event. We got " + eventCount);
 		}
 		int eventIndex = 0;
 		for(ExpectedEventType expectedEvent : expectedEvents) {
 			for(int i = 0; i < expectedEvent.numberOfEvents; i++) {
-				assertTrue("Ran out of events at " + eventIndex + " processed " + i + " expecting " + (expectedEvent.numberOfEvents-i) + "more", !retrievedData.isEmpty());
+				Assertions.assertTrue(!retrievedData.isEmpty(), "Ran out of events at " + eventIndex + " processed " + i + " expecting " + (expectedEvent.numberOfEvents-i) + "more");
 				EpicsMessage message = retrievedData.poll();
-				assertTrue("Expecting event at " + eventIndex + " to be of type " + expectedEvent.lossType, expectedEvent.lossType == determineConnectionLossType(message));
+				Assertions.assertTrue(expectedEvent.lossType == determineConnectionLossType(message), "Expecting event at " + eventIndex + " to be of type " + expectedEvent.lossType);
 				eventIndex++;
 			}
 		}
@@ -241,7 +239,7 @@ public class CnxLostTest {
 		} else { 
 			String connectionLostSecs = extraFields.get("cnxlostepsecs");
 			if(Long.parseLong(connectionLostSecs) == 0) { 
-				assertTrue("At least for now, we should have a startup field as well", extraFields.keySet().contains("startup"));
+				Assertions.assertTrue(extraFields.keySet().contains("startup"), "At least for now, we should have a startup field as well");
 				retVal = ConnectionLossType.STARTUP_OR_PAUSE_RESUME;
 			} else { 
 				retVal = ConnectionLossType.IOC_RESTART;

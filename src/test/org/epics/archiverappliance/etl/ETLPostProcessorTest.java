@@ -1,22 +1,14 @@
 package org.epics.archiverappliance.etl;
 
-import static org.junit.Assert.assertTrue;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -33,12 +25,18 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Test the postprocessor caching functionality in ETL.
@@ -48,7 +46,7 @@ import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
  * @author mshankar
  *
  */
-@Category(SlowTests.class)
+@Tag("slow")
 public class ETLPostProcessorTest {
 	private static Logger logger = LogManager.getLogger(ETLPostProcessorTest.class.getName());
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ETLPostProcessorTest";
@@ -61,9 +59,9 @@ public class ETLPostProcessorTest {
 	private ConfigService configService;
 
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		if(new File(rootFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(rootFolderName));
 		}
@@ -72,7 +70,7 @@ public class ETLPostProcessorTest {
 		destpbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + rootFolderName + "/dest&partitionGranularity=PARTITION_DAY&pp=" + testPostProcessor.getExtension(), configService);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		// FileUtils.deleteDirectory(new File(rootFolderName));
 	}
@@ -88,9 +86,9 @@ public class ETLPostProcessorTest {
 
 		for(int day = 0; day < 30; day++) {
 			logger.debug("Generating data for day " + 1);
-			int startofdayinseconds = day*24*60*60;
+			int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
 			int runsperday = 12;
-			int eventsperrun = 24*60*60/runsperday;
+			int eventsperrun = PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() / runsperday;
 			for(int currentrun = 0; currentrun < runsperday; currentrun++) {
 				try(BasicContext context = new BasicContext()) {
 					logger.debug("Generating data for run " + currentrun);
@@ -99,8 +97,8 @@ public class ETLPostProcessorTest {
 						testData.add(new SimulationEvent(startofdayinseconds + currentrun*eventsperrun + secondsinrun, currentYear, type, new ScalarValue<Double>((double) secondsinrun)));
 					}
 					srcpbplugin.appendData(context, pvName, testData);
-					YearSecondTimestamp yts = new YearSecondTimestamp(currentYear, (day+1)*24*60*60 + 30, 0);
-					Timestamp etlTime = TimeUtils.convertFromYearSecondTimestamp(yts);
+					YearSecondTimestamp yts = new YearSecondTimestamp(currentYear, (day + 1) * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 30, 0);
+					Instant etlTime = TimeUtils.convertFromYearSecondTimestamp(yts);
 					logger.debug("Running ETL as if it were " + TimeUtils.convertToHumanReadableString(etlTime));
 					ETLExecutor.runETLs(configService, etlTime);
 				}
@@ -131,16 +129,16 @@ public class ETLPostProcessorTest {
 						return testPostProcessor.getIdentity();
 					}
 					@Override
-					public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+					public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 						return 0;
 					}
 				});
 				int eventCountReduced = countAndValidateEvents(callablesReduced);
 				int expectedReducedCount = eventCountRaw/PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
 				logger.info("On day " + day + " we got " + eventCountRaw + " raw events and " + eventCountReduced + " reduced events and an expected reduced event count of " + expectedReducedCount);
-				assertTrue("No reduced events are being produced by ETL", eventCountReduced > 0);
-				assertTrue("We are getting the same (or more) events for raw and reduced. Raw = " + eventCountRaw + " and reduced = " + eventCountReduced, eventCountRaw > eventCountReduced);
-				assertTrue("We expected a reduced eventcount of  " + expectedReducedCount + " and we got " + eventCountReduced, Math.abs(eventCountReduced - expectedReducedCount) < 10);
+				Assertions.assertTrue(eventCountReduced > 0, "No reduced events are being produced by ETL");
+				Assertions.assertTrue(eventCountRaw > eventCountReduced, "We are getting the same (or more) events for raw and reduced. Raw = " + eventCountRaw + " and reduced = " + eventCountReduced);
+				Assertions.assertTrue(Math.abs(eventCountReduced - expectedReducedCount) < 10, "We expected a reduced eventcount of  " + expectedReducedCount + " and we got " + eventCountReduced);
 			}
 		}
 	}
@@ -150,11 +148,10 @@ public class ETLPostProcessorTest {
 		long previousEventEpochSeconds = 0;
 		for(Event e : new CurrentThreadWorkerEventStream(pvName, callables)) {
 			long currentEpochSeconds = e.getEpochSeconds();
-			assertTrue("Timestamps are not sequential current = " 
-			+ TimeUtils.convertToHumanReadableString(currentEpochSeconds) 
-			+ " previous = " 
-			+ TimeUtils.convertToHumanReadableString(previousEventEpochSeconds), 
-			currentEpochSeconds > previousEventEpochSeconds);
+			Assertions.assertTrue(currentEpochSeconds > previousEventEpochSeconds, "Timestamps are not sequential current = "
+					+ TimeUtils.convertToHumanReadableString(currentEpochSeconds)
+					+ " previous = "
+					+ TimeUtils.convertToHumanReadableString(previousEventEpochSeconds));
 			previousEventEpochSeconds = currentEpochSeconds;
 			eventCount++;
 		}

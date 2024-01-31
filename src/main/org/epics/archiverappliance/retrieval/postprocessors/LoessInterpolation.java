@@ -1,13 +1,13 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.sql.Timestamp;
-import java.util.LinkedList;
-
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
+
+import java.time.Instant;
+import java.util.LinkedList;
 
 /**
  * Implements the arithmetic mean across an interval
@@ -71,8 +71,8 @@ public class LoessInterpolation extends SummaryStatsPostProcessor implements Pos
 			
 			@Override
 			public void addEvent(Event e) {
-				Timestamp ts = e.getEventTimeStamp();
-				double time = e.getEpochSeconds() + ts.getNanos()/1000000000.0;
+                Instant ts = e.getEventTimeStamp();
+                double time = e.getEpochSeconds() + ts.getNano() / 1000000000.0;
 				vals.add(new InterpolationValues(time, e.getSampleValue().getValue().doubleValue()));
 			}
 		};

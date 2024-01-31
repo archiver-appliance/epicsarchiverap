@@ -1,12 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -17,6 +10,12 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.concurrent.Callable;
 
 /**
  * A post processor that looks for fields
@@ -38,7 +37,7 @@ public class ExtraFieldsPostProcessor implements PostProcessor {
 	}
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 		// We do not expect the extra fields to change that much.
 		// The engine adds an entry once a day and we use that to estimate
 		int estimatedDays = 1 + ((int) (TimeUtils.convertToEpochSeconds(end) - TimeUtils.convertToEpochSeconds(start))/86400);

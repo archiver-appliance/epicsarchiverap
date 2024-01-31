@@ -7,18 +7,11 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.sql.Timestamp;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.SlowTests;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -30,23 +23,27 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.time.Instant;
 
 /**
  * Test EventStreams that span multiple PB files.
  * @author mshankar
  *
  */
-@Category(SlowTests.class)
+@Tag("slow")
 public class MultiFilePBEventStreamTest {
 	private static final Logger logger = LogManager.getLogger(MultiFilePBEventStreamTest.class);
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MultiFilePBEventStream/";
 	File rootFolder = new File(rootFolderName);
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(rootFolder.exists()) {
 			FileUtils.deleteDirectory(rootFolder);
@@ -54,7 +51,7 @@ public class MultiFilePBEventStreamTest {
 		rootFolder.mkdirs();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		// FileUtils.deleteDirectory(rootFolder);
 	}
@@ -63,7 +60,7 @@ public class MultiFilePBEventStreamTest {
 	public void testMultiFileEventStream() throws Exception {
 		// We generate a years worth of data into a PlainPBStoragePlugin with different granularity. 
 		// We then retrieve data and make sure that we get what we expect
-		ConfigService configService = new ConfigServiceForTests(new File("./bin"));
+		ConfigService configService = new ConfigServiceForTests(-1);
 		
 		for(PartitionGranularity granularity : PartitionGranularity.values()) {
 			logger.debug("Generating sample data for granularity " + granularity);
@@ -85,8 +82,8 @@ public class MultiFilePBEventStreamTest {
 				}
 			}
 			logger.info("Done generating sample data for granularity " + granularity);
-			Timestamp startTime = TimeUtils.convertFromISO8601String(currentYear + "-09-11T08:12:48.000Z");
-			Timestamp endTime = TimeUtils.convertFromISO8601String(currentYear + "-10-04T22:53:31.000Z");
+            Instant startTime = TimeUtils.convertFromISO8601String(currentYear + "-09-11T08:12:48.000Z");
+            Instant endTime = TimeUtils.convertFromISO8601String(currentYear + "-10-04T22:53:31.000Z");
 			long startEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
 			long endEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
 			long expectedEpochSeconds = startEpochSeconds-1;
@@ -97,20 +94,18 @@ public class MultiFilePBEventStreamTest {
 					// The PlainPBStorage plugin will also yield the last event of the previous partition.
 					// We skip checking that as part of this test
 					if(currEpochSeconds < (startEpochSeconds-1)) continue;
-					assertTrue("Expected " 
+					Assertions.assertEquals(currEpochSeconds, expectedEpochSeconds, "Expected "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(expectedEpochSeconds, 0))
-							+ " Got " 
+							+ " Got "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
-							+ " at eventCount " 
-							+ eventCount, 
-							currEpochSeconds == expectedEpochSeconds);
-					assertTrue("Less than " 
+							+ " at eventCount "
+							+ eventCount);
+					Assertions.assertTrue(currEpochSeconds <= endEpochSeconds, "Less than "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(endEpochSeconds, 0))
-							+ " Got " 
+							+ " Got "
 							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
-							+ " at eventCount " 
-							+ eventCount, 
-							currEpochSeconds <= endEpochSeconds);
+							+ " at eventCount "
+							+ eventCount);
 					expectedEpochSeconds++;
 					eventCount++;
 				}

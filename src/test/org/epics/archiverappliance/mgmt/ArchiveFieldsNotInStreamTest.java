@@ -1,18 +1,10 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.List;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -20,16 +12,21 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.List;
 
 /**
  * This relates to issue - https://github.com/slacmshankar/epicsarchiverap/issues/69
@@ -76,18 +73,19 @@ import org.openqa.selenium.firefox.FirefoxDriver;
  * @author mshankar
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")
+@Tag("localEpics")
 public class ArchiveFieldsNotInStreamTest {
 	private static Logger logger = LogManager.getLogger(ArchiveFieldsNotInStreamTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		System.getProperties().put("ARCHAPPL_POLICIES", System.getProperty("user.dir") + "/src/test/org/epics/archiverappliance/mgmt/ArchiveFieldsNotInStream.py");
 		siocSetup.startSIOCWithDefaultDB();
@@ -95,7 +93,7 @@ public class ArchiveFieldsNotInStreamTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -123,11 +121,11 @@ public class ArchiveFieldsNotInStreamTest {
 			 int rowWithInfo = i+1;
 			 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(1)"));
 			 String pvNameObtainedFromTable = statusPVName.getText();
-			 assertTrue("PV Name is not " + fieldsToArchive[i] + "; instead we get " + pvNameObtainedFromTable, fieldsToArchive[i].equals(pvNameObtainedFromTable));
+			 Assertions.assertTrue(fieldsToArchive[i].equals(pvNameObtainedFromTable), "PV Name is not " + fieldsToArchive[i] + "; instead we get " + pvNameObtainedFromTable);
 			 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(2)"));
 			 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 			 String expectedPVStatus = "Being archived";
-			 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i], expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+			 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i]);
 		 }
 		 
 		 // Check that we have PVTypeInfo's for the main PV. Also check the archiveFields.
@@ -135,13 +133,13 @@ public class ArchiveFieldsNotInStreamTest {
 		 logger.debug(valInfo.toJSONString());
 		 @SuppressWarnings("unchecked")
 		 List<String> archiveFields = (List<String>) valInfo.get("archiveFields");
-		 assertTrue("TypeInfo should contain the HIHI field but it does not",   archiveFields.contains("HIHI"));
-		 assertTrue("TypeInfo should contain the LOLO field but it does not",   archiveFields.contains("LOLO"));
-		 assertTrue("TypeInfo should not contain the DESC field but it does",   !archiveFields.contains("DESC"));
-		 assertTrue("TypeInfo should not contain the C field but it does",      !archiveFields.contains("C"));
+		 Assertions.assertTrue(archiveFields.contains("HIHI"), "TypeInfo should contain the HIHI field but it does not");
+		 Assertions.assertTrue(archiveFields.contains("LOLO"), "TypeInfo should contain the LOLO field but it does not");
+		 Assertions.assertTrue(!archiveFields.contains("DESC"), "TypeInfo should not contain the DESC field but it does");
+		 Assertions.assertTrue(!archiveFields.contains("C"), "TypeInfo should not contain the C field but it does");
 
 		 JSONObject C_Info = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=ArchUnitTest:fieldtst.C", true);
-		 assertTrue("Did not find a typeinfo for ArchUnitTest:fieldtst.C",      C_Info != null);
+		 Assertions.assertTrue(C_Info != null, "Did not find a typeinfo for ArchUnitTest:fieldtst.C");
 		 logger.debug(C_Info.toJSONString());
 		 
 		 testRetrievalCount("ArchUnitTest:fieldtst", new double[] { 0.0 } );
@@ -155,23 +153,22 @@ public class ArchiveFieldsNotInStreamTest {
 	
 	private void testRetrievalCount(String pvName, double[] expectedValues) throws IOException {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Timestamp end = TimeUtils.plusDays(TimeUtils.now(), 1);
-		Timestamp start = TimeUtils.minusDays(end, 2);
+        Instant end = TimeUtils.plusDays(TimeUtils.now(), 1);
+        Instant start = TimeUtils.minusDays(end, 2);
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, start, end, null)) {
 			long previousEpochSeconds = 0;
 			int eventCount = 0;
-			assertTrue("Got a null event stream for PV " + pvName,   stream != null);
+			Assertions.assertTrue(stream != null, "Got a null event stream for PV " + pvName);
 			for(Event e : stream) {
 				long actualSeconds = e.getEpochSeconds();
 				logger.debug("For " + pvName + " got value " + e.getSampleValue().getValue().doubleValue());
-				assertTrue("Got a sample at or before the previous sample " + actualSeconds + " ! >= " + previousEpochSeconds, actualSeconds > previousEpochSeconds);
+				Assertions.assertTrue(actualSeconds > previousEpochSeconds, "Got a sample at or before the previous sample " + actualSeconds + " ! >= " + previousEpochSeconds);
 				previousEpochSeconds = actualSeconds;
-				assertTrue("Got " + e.getSampleValue().getValue().doubleValue() + " expecting " +  expectedValues[eventCount] + " at " + eventCount, 
-						Math.abs(Math.abs(e.getSampleValue().getValue().doubleValue()) -  Math.abs(expectedValues[eventCount])) < 0.001);
+				Assertions.assertTrue(Math.abs(Math.abs(e.getSampleValue().getValue().doubleValue()) -  Math.abs(expectedValues[eventCount])) < 0.001, "Got " + e.getSampleValue().getValue().doubleValue() + " expecting " +  expectedValues[eventCount] + " at " + eventCount);
 				eventCount++;
 			}
 
-			assertTrue("Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName, eventCount == expectedValues.length);
+			Assertions.assertTrue(eventCount == expectedValues.length, "Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName);
 		}
 	}
 }

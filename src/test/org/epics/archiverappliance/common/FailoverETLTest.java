@@ -7,23 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -41,19 +28,29 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Test basic failover - test the ETL side of things.
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class FailoverETLTest {
-	private static Logger logger = LogManager.getLogger(FailoverETLTest.class.getName());
+	private static final Logger logger = LogManager.getLogger(FailoverETLTest.class.getName());
 	private ConfigServiceForTests configService;
 	String pvName = "FailoverETLTest";
 	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
@@ -61,9 +58,9 @@ public class FailoverETLTest {
 	long tCount = 0;
 	long stepSeconds = 2;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "../sts"); 
 		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts"); 
 		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "../lts"); 
@@ -78,16 +75,14 @@ public class FailoverETLTest {
 	 * @param startingOffset - Use 0 for even seconds; 1 for odd seconds. When merged, we test to make sure; we get data one second apart.
 	 * @throws Exception
 	 */
-	private long generateDataAndRegisterPV(String applURL, String applianceName, Timestamp lastMonth, int startingOffset)
+    private long generateDataAndRegisterPV(String applURL, String applianceName, Instant lastMonth, int startingOffset)
 			throws Exception {
-		int genEventCount = generateData(applianceName, lastMonth, startingOffset);
-		
 		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
 		PVTypeInfo destPVTypeInfo = new PVTypeInfo();
 		JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
 		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
 		decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
-		
+
 		destPVTypeInfo.setPaused(true);
 		destPVTypeInfo.setPvName(pvName);
 		destPVTypeInfo.setApplianceIdentity(applianceName);
@@ -96,7 +91,10 @@ public class FailoverETLTest {
 		destPVTypeInfo.setModificationTime(TimeUtils.now());
 		GetUrlContent.postObjectAndGetContentAsJSONObject(applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
 		logger.info("Added " + pvName + " to the appliance " + applianceName);
-		
+
+		int genEventCount = generateData(applianceName, lastMonth, startingOffset);
+
+
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");
 		long rtvlEventCount = 0;
 		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, TimeUtils.minusDays(TimeUtils.now(), 90), TimeUtils.plusDays(TimeUtils.now(), 31), null)) {
@@ -105,37 +103,40 @@ public class FailoverETLTest {
 				for(Event e : stream) {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch), (evEpoch - lastEvEpoch) == stepSeconds);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == stepSeconds, "We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch));
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
+		Assertions.assertTrue(genEventCount == rtvlEventCount, "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
 		return rtvlEventCount;
 	}
 
-	private int generateData(String applianceName, Timestamp lastMonth, int startingOffset) throws IOException {
+    private int generateData(String applianceName, Instant lastMonth, long startingOffset) throws IOException {
 		int genEventCount = 0;
 		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
-			for(long s = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(lastMonth), PartitionGranularity.PARTITION_MONTH) + 1 + startingOffset; // We generate a months worth of data.
-					s < TimeUtils.getNextPartitionFirstSecond(TimeUtils.convertToEpochSeconds(lastMonth), PartitionGranularity.PARTITION_MONTH); 
-					s = s + stepSeconds) {
-				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
-				strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, TimeUtils.convertFromEpochSeconds(s, 0), new ScalarValue<Double>((double)s), 0, 0));
+			ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(lastMonth).getYear()));
+			Instant start = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH).plusSeconds(stepSeconds / 2 + startingOffset);
+			Instant end = TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH);
+			for (Instant s = start; // We generate a months worth of data.
+                 s.isBefore(end);
+                 s = s.plusSeconds(stepSeconds)) {
+                strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0));
 				genEventCount++;
-				plugin.appendData(context, pvName, strm);
-			}			
+			}
+			plugin.appendData(context, pvName, strm);
+
 		}		
 		logger.info("Done generating dest data");
 		return genEventCount;
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -158,15 +159,17 @@ public class FailoverETLTest {
 				+ "&other=" + URLEncoder.encode(otherURL, "UTF-8");
 		configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
 		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
+		configService.getETLLookup().manualControlForUnitTests();
+
 	}
-	
-	private long testMergedRetrieval(String applianceName, Timestamp startTime, Timestamp endTime) throws Exception {
+
+    private long testMergedRetrieval(String applianceName, Instant startTime, Instant endTime) throws Exception {
 		long rtvlEventCount = 0;
 		long lastEvEpoch = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/lts" + "&partitionGranularity=PARTITION_YEAR", configService);
 		try(BasicContext context = new BasicContext()) {
 			List<Callable<EventStream>> callables = plugin.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
-			assertTrue("We got zero callables" , callables.size() > 0);
+			Assertions.assertTrue(callables.size() > 0, "We got zero callables");
 			for(Callable<EventStream> callable : callables) {
 				EventStream ev = callable.call();
 				logger.error("Event Stream " + ev.getDescription());
@@ -174,8 +177,8 @@ public class FailoverETLTest {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					logger.debug("Current event " + TimeUtils.convertToHumanReadableString(evEpoch) + " Previous: " + TimeUtils.convertToHumanReadableString(lastEvEpoch));
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, evEpoch > lastEvEpoch);
-						assertTrue("We got events more than a second apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, (evEpoch - lastEvEpoch) == 1);
+						Assertions.assertTrue(evEpoch > lastEvEpoch, "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == stepSeconds / 2, "We got events more than a second apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
@@ -185,29 +188,31 @@ public class FailoverETLTest {
 		return rtvlEventCount;
 	}
 
+
 	@Test
 	public void testETL() throws Exception {
 		configService.getETLLookup().manualControlForUnitTests();
+
 		// Register the PV with both appliances and generate data.
-		Timestamp lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);		
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2*31);
 		long oCount = generateDataAndRegisterPV("http://localhost:17665", ConfigServiceForTests.TESTAPPLIANCE0, lastMonth, 0);
 
-		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts"); 
-		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"); 
-		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts"); 
+		System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER",  "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts");
+		System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts");
+		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER",   "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts");
 		long dCount = generateData("dest_appliance", lastMonth, 1);
 
 		tCount = dCount + oCount;
 		
 		changeMTSForDest();
-		Timestamp timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365*10);
+        Instant timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
     	logger.info("Running ETL now as if it is " + TimeUtils.convertToHumanReadableString(timeETLruns));
     	ETLExecutor.runETLs(configService, timeETLruns);
     	
     	
     	logger.info("Checking merged data after running ETL");
 		long rCount = testMergedRetrieval("dest_appliance", TimeUtils.minusDays(TimeUtils.now(), 365*2), TimeUtils.plusDays(TimeUtils.now(), 365*2));		
-		assertTrue("We expected event count  " + tCount + " but got  " + rCount, tCount == rCount);
+		Assertions.assertTrue(tCount == rCount, "We expected event count  " + tCount + " but got  " + rCount);
 
 	}	
 }

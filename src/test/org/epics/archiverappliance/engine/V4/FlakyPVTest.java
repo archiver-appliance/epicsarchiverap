@@ -13,11 +13,11 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,8 +28,6 @@ import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForIsConnected;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Checks reconnects after connection drops
@@ -40,15 +38,15 @@ public class FlakyPVTest {
 
     private ConfigService configService;
     private PVAServer pvaServer;
-    private static final long disconnectTime = ConfigServiceForTests.defaultMinutesDisconnect * 60 * 1000;
+    private static final long disconnectTime = ConfigServiceForTests.defaultSecondsDisconnect * 1000;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(new File("./bin"));
+        configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         configService.shutdownNow();
         pvaServer.close();
@@ -94,7 +92,7 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         // Disconnect the pv
@@ -117,14 +115,14 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Thread.sleep(5000);
 
         Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
                 .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
-        assertEquals(expectedData, actualValues);
+        Assertions.assertEquals(expectedData, actualValues);
     }
     /**
      * Test that disconnecting a pv doesn't cause any issues.
@@ -166,7 +164,7 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         // close pv the pv
@@ -187,14 +185,14 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Thread.sleep(5000);
 
         Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
                 .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
-        assertEquals(expectedData, actualValues);
+        Assertions.assertEquals(expectedData, actualValues);
     }
     /**
      * Test that disconnecting a pv doesn't cause any issues.
@@ -236,7 +234,7 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         // close pv the pv
@@ -257,14 +255,14 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Thread.sleep(5000);
 
         Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
                 .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
-        assertEquals(expectedData, actualValues);
+        Assertions.assertEquals(expectedData, actualValues);
     }
 
     /**
@@ -300,7 +298,7 @@ public class FlakyPVTest {
             var meta = configService.getEngineContext().getChannelList().get(pvName).getCurrentCopyOfMetaFields();
         } catch (Exception e) {
             e.printStackTrace();
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         long samplingPeriodMilliSeconds = 100;
@@ -313,7 +311,7 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Thread.sleep(samplingPeriodMilliSeconds);
 
@@ -337,7 +335,7 @@ public class FlakyPVTest {
         try {
             serverPV.update(data);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Thread.sleep(5000);
 
@@ -345,7 +343,7 @@ public class FlakyPVTest {
         Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
                 .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
-        assertEquals(expectedData, actualValues);
+        Assertions.assertEquals(expectedData, actualValues);
     }
 
 }

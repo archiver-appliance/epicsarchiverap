@@ -10,21 +10,11 @@
 
 package org.epics.archiverappliance.engine.pv;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
+import com.cosylab.epics.caj.CAJChannel;
+import com.cosylab.epics.caj.CAJContext;
+import com.google.common.eventbus.Subscribe;
+import gov.aps.jca.Channel;
+import gov.aps.jca.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -51,12 +41,20 @@ import org.epics.pva.client.PVAClient;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.cosylab.epics.caj.CAJChannel;
-import com.cosylab.epics.caj.CAJContext;
-import com.google.common.eventbus.Subscribe;
-
-import gov.aps.jca.Channel;
-import gov.aps.jca.Context;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 /***
  * the context for the Archiver Engine
  * @author Luofeng Li
@@ -106,13 +104,13 @@ public class EngineContext {
 	 * Ideally, Channel Access is supposed to take care of this but occasionally, we do see connections not reconnecting for a long time.
 	 * This tries to address that problem. 
 	 */
-	private int disconnectCheckTimeoutInMinutes = 20;
+	private int disconnectCheckTimeoutInSeconds = 20 * 60;
 	
 	/**
 	 * The disconnectChecker thread runs in this time frame.
 	 * Note this controls both the connect/disconnect checks and the metafields connection initiations.
 	 */
-	private int disconnectCheckerPeriodInMinutes = 20;
+	private int disconnectCheckerPeriodInSeconds = 20 * 60;
 	
 	private ScheduledFuture<?> disconnectFuture = null;
 	
@@ -249,9 +247,9 @@ public class EngineContext {
 		if(configService.getInstallationProperties() != null) { 
 			try {
 				String disConnStr = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.util.EngineContext.disconnectCheckTimeoutInMinutes", "10");
-				if(disConnStr != null) { 
-					this.disconnectCheckTimeoutInMinutes = Integer.parseInt(disConnStr);
-					logger.debug("Setting disconnectCheckTimeoutInMinutes to " + this.disconnectCheckTimeoutInMinutes);
+				if(disConnStr != null) {
+					this.disconnectCheckTimeoutInSeconds = Integer.parseInt(disConnStr);
+					logger.debug("Setting disconnectCheckTimeoutInMinutes to " + this.disconnectCheckTimeoutInSeconds);
 				}
 			} catch(Throwable t) { 
 				logger.error("Exception initializing disconnectCheckTimeoutInMinutes", t);
@@ -317,8 +315,8 @@ public class EngineContext {
 		});
 
 		// Add an assertion in case we accidentally set this to 0 from the props file.
-		assert(disconnectCheckerPeriodInMinutes > 0);
-		disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(new DisconnectChecker(configService), disconnectCheckerPeriodInMinutes, disconnectCheckerPeriodInMinutes, TimeUnit.MINUTES);
+		assert (disconnectCheckerPeriodInSeconds > 0);
+		disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(new DisconnectChecker(configService), disconnectCheckerPeriodInSeconds, disconnectCheckerPeriodInSeconds, TimeUnit.SECONDS);
 		
 		// Add a task to update the metadata fields for each PV
 		// We start this at a well known time; this code was previously suspected of a small memory leak.
@@ -493,6 +491,80 @@ public class EngineContext {
 	}
 	
 	/**
+	 * @param newDisconnectCheckTimeoutSeconds
+	 * This is to be used only for unit testing purposes...
+	 * There are no guarantees that using this on a running server will be benign.
+	 */
+	public void setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(int newDisconnectCheckTimeoutSeconds) {
+		logger.error("Changing the disconnect timer to {} seconds - this should be done only in the unit tests.", newDisconnectCheckTimeoutSeconds);
+		disconnectFuture.cancel(false);
+		this.disconnectCheckTimeoutInSeconds = newDisconnectCheckTimeoutSeconds;
+		this.disconnectCheckerPeriodInSeconds = newDisconnectCheckTimeoutSeconds;
+		if(this.miscTasksScheduler != null) {
+			logger.info("Shutting down the engine scheduler for misc tasks.");
+			miscTasksScheduler.shutdown();
+			this.miscTasksScheduler = null;
+		}
+		this.startMiscTasksScheduler(configService);
+	}
+
+	static class ArchivePVMetaCompletedListener implements MetaCompletedListener {
+		String pvName;
+		ConfigService configService;
+		String myIdentity;
+		ArchivePVMetaCompletedListener(String pvName, ConfigService configService, String myIdentity) {
+			this.pvName = pvName;
+			this.configService = configService;
+			this.myIdentity = myIdentity;
+		}
+
+
+		@Override
+		public void completed(MetaInfo metaInfo) {
+			try {
+				logger.debug("Completed computing archive info for pv " + pvName);
+				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
+				JSONEncoder<MetaInfo> encoder = JSONEncoder.getEncoder(MetaInfo.class);
+				JSONObject metaInfoObj = encoder.encode(metaInfo);
+				confirmationEvent.setEventData(JSONValue.toJSONString(metaInfoObj));
+				configService.getEventBus().post(confirmationEvent);
+			} catch(Exception ex) {
+				logger.error("Exception sending across metainfo for pv " + pvName, ex);
+			}
+		}
+	}
+
+
+	private void startArchivingPV(String pvName) throws Exception {
+		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+		if(typeInfo == null) {
+			logger.error("Unable to find pvTypeInfo for PV" + pvName + ". This is an error; this method should be called after the pvTypeInfo has been determined and settled in the DHT");
+			throw new IOException("Unable to find pvTypeInfo for PV" + pvName);
+		}
+
+		ArchDBRTypes dbrType = typeInfo.getDBRType();
+		// The first data store in the policy is always the first destination; hence thePolicy.getDataStores()[0]
+		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configService);
+		SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
+		float samplingPeriod = typeInfo.getSamplingPeriod();
+		int secondsToBuffer = PVTypeInfo.getSecondsToBuffer(configService);
+        Instant lastKnownTimeStamp = typeInfo.determineLastKnownEventFromStores(configService);
+		String controllingPV = typeInfo.getControllingPV();
+		String[] archiveFields = typeInfo.getArchiveFields();
+
+		logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "+ samplingPeriod + "(s)");
+		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod,
+				firstDest, configService,
+				dbrType, lastKnownTimeStamp, controllingPV,
+				archiveFields, typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties());
+	}
+
+
+	public boolean abortComputeMetaInfo(String pvName) {
+		return MetaGet.abortMetaGet(pvName);
+	}
+
+	/**
 	 * A class that loops thru the archive channels and checks for connectivity.
 	 * We start connecting up the metachannels only after a certain percentage of channels have connected up.
 	 * @author mshankar
@@ -519,7 +591,7 @@ public class EngineContext {
                 LinkedList<String> disconnectedPVNames = new LinkedList<String>();
                 LinkedList<String> needToStartMetaChannelPVNames = new LinkedList<String>();
                 int totalChannels = EngineContext.this.channelList.size();
-                long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInMinutes * 60L;
+	            long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInSeconds;
                 for (ArchiveChannel channel : EngineContext.this.channelList.values()) {
 	                checkChannelDisconnectTime(disconnectedPVNames,
 			                needToStartMetaChannelPVNames, disconnectTimeoutInSeconds, channel);
@@ -629,77 +701,6 @@ public class EngineContext {
 			}
 			return false;
 		}
-	}
-
-	static class ArchivePVMetaCompletedListener implements MetaCompletedListener {
-		String pvName;
-		ConfigService configService;
-		String myIdentity;
-		ArchivePVMetaCompletedListener(String pvName, ConfigService configService, String myIdentity) {
-			this.pvName = pvName;
-			this.configService = configService;
-			this.myIdentity = myIdentity;
-		}
-		
-		
-		@Override
-		public void completed(MetaInfo metaInfo) {
-			try { 
-				logger.debug("Completed computing archive info for pv " + pvName);
-				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
-				JSONEncoder<MetaInfo> encoder = JSONEncoder.getEncoder(MetaInfo.class);
-				JSONObject metaInfoObj = encoder.encode(metaInfo);
-				confirmationEvent.setEventData(JSONValue.toJSONString(metaInfoObj));
-				configService.getEventBus().post(confirmationEvent);
-			} catch(Exception ex) {
-				logger.error("Exception sending across metainfo for pv " + pvName, ex);
-			}
-		}
-	}
-	
-	
-	private void startArchivingPV(String pvName) throws Exception {
-		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-		if(typeInfo == null) {
-			logger.error("Unable to find pvTypeInfo for PV" + pvName + ". This is an error; this method should be called after the pvTypeInfo has been determined and settled in the DHT");
-			throw new IOException("Unable to find pvTypeInfo for PV" + pvName);
-		}
-
-		ArchDBRTypes dbrType = typeInfo.getDBRType();
-		// The first data store in the policy is always the first destination; hence thePolicy.getDataStores()[0]
-		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configService);
-		SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
-		float samplingPeriod = typeInfo.getSamplingPeriod();
-		int secondsToBuffer = PVTypeInfo.getSecondsToBuffer(configService);
-		Timestamp lastKnownTimeStamp = typeInfo.determineLastKnownEventFromStores(configService);
-		String controllingPV = typeInfo.getControllingPV();
-		String[] archiveFields = typeInfo.getArchiveFields();
-		
-		logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "+ samplingPeriod + "(s)");
-		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod, secondsToBuffer, firstDest, configService, dbrType, lastKnownTimeStamp, controllingPV, archiveFields, typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties()); 
-	}
-	
-	
-	public boolean abortComputeMetaInfo(String pvName) { 
-		return MetaGet.abortMetaGet(pvName);
-	}
-
-	/**
-	 * @param newDisconnectCheckTimeoutMins
-	 * This is to be used only for unit testing purposes...
-	 * There are no guarantees that using this on a running server will be benign.
-	 */
-	public void setDisconnectCheckTimeoutInMinutesForTestingPurposesOnly(int newDisconnectCheckTimeoutMins) { 
-		logger.error("Changing the disconnect timer to {} minutes - this should be done only in the unit tests.", newDisconnectCheckTimeoutMins);
-		disconnectFuture.cancel(false);
-		this.disconnectCheckTimeoutInMinutes = newDisconnectCheckTimeoutMins;
-		this.disconnectCheckerPeriodInMinutes = newDisconnectCheckTimeoutMins;
-		if(this.miscTasksScheduler != null) { 
-			logger.info("Shutting down the engine scheduler for misc tasks.");
-			miscTasksScheduler.shutdown();
-			this.miscTasksScheduler = null;
-		}
-		this.startMiscTasksScheduler(configService);
 	}
 	
 	

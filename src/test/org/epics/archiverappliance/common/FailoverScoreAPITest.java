@@ -7,21 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -38,10 +27,19 @@ import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Map;
 
 /**
  * Test the getDataAtTime API when using the merge dedup plugin.
@@ -49,139 +47,189 @@ import org.junit.experimental.categories.Category;
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class FailoverScoreAPITest {
-	private static Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
-	private ConfigServiceForTests configService;
-	String pvName = "FailoverRetrievalTest";
-	ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-	TomcatSetup tomcatSetup = new TomcatSetup();
-	
-	@Before
-	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
-		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
-	}
+    private static final Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
+    String pvName = "FailoverScoreAPITest";
+    ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+    TomcatSetup tomcatSetup = new TomcatSetup();
+    private ConfigServiceForTests configService;
 
-	/**
-	 * Generate a months worth of data for the given appserver; one per day, a boolean indicating if the sample is in the morning or afternoon.
-	 * @param applURL - The URL for the appliance.
-	 * @param applianceName - The name of the appliance
-	 * @param theMonth - The month we generate data for. We generate a month's worth of MTS data.
-	 * @param morningp - If true; data is generated for the morning else afternoon.
-	 * @throws Exception
-	 */
-	private long generateMTSData(String applURL, String applianceName, Timestamp theMonth, boolean morningp)
-			throws Exception {
-		int genEventCount = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
-		try(BasicContext context = new BasicContext()) {
-			for(long s = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(theMonth), PartitionGranularity.PARTITION_DAY) + 1;
-					s < TimeUtils.convertToEpochSeconds(TimeUtils.now()); 
-					s = s + 86400) {
-				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
-				POJOEvent pojoEvent = new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, TimeUtils.convertFromEpochSeconds(s + (morningp ? 10*60*60 : 20*60*60 ), 0), new ScalarValue<Double>((double)(morningp ? 10 : 20 )), 0, 0);
-				logger.debug("Generating event at " + TimeUtils.convertToHumanReadableString(pojoEvent.getEventTimeStamp()));
-				strm.add(pojoEvent);
-				genEventCount++;
-				plugin.appendData(context, pvName, strm);
-			}			
-		}		
-		logger.info("Done generating data for appliance " + applianceName);
-		
-		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
-		PVTypeInfo destPVTypeInfo = new PVTypeInfo();
-		JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
-		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-		decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
-		
-		destPVTypeInfo.setPaused(true);
-		destPVTypeInfo.setPvName(pvName);
-		destPVTypeInfo.setApplianceIdentity(applianceName);
-		destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
-		destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
-		destPVTypeInfo.setModificationTime(TimeUtils.now());
-		GetUrlContent.postObjectAndGetContentAsJSONObject(applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
-		logger.info("Added " + pvName + " to the appliance " + applianceName);
-		
-		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");
-		long rtvlEventCount = 0;
-		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName }, TimeUtils.minusDays(TimeUtils.now(), 90), TimeUtils.plusDays(TimeUtils.now(), 31), null)) {
-			long lastEvEpoch = 0;
-			if(stream != null) {
-				for(Event e : stream) {
-					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
-					if(lastEvEpoch != 0) {
-						assertTrue("We got events more than " + 86400 + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch), (evEpoch - lastEvEpoch) == 86400);
-					}
-					lastEvEpoch = evEpoch;
-					rtvlEventCount++;
-				}
-			} else { 
-				fail("Stream is null when retrieving data.");
-			}
-		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
-		return rtvlEventCount;
-	}
-	
-	@After
-	public void tearDown() throws Exception {
-		tomcatSetup.tearDown();
-	}
-	
-	private void changeMTSForDest() throws Exception {
-		JSONObject srcPVTypeInfoJSON = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8"));
-		JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
-		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-		PVTypeInfo destPVTypeInfo = new PVTypeInfo();
-		decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
-		String otherURL = "pbraw://localhost?name=MTS&rawURL=" + URLEncoder.encode("http://localhost:17669/retrieval/data/getData.raw", "UTF-8");
-		destPVTypeInfo.getDataStores()[1] = "merge://localhost?name=MTS&dest="
-				+ URLEncoder.encode(destPVTypeInfo.getDataStores()[1], "UTF-8") 
-				+ "&other=" + URLEncoder.encode(otherURL, "UTF-8");
-		logger.info("Data store is " + destPVTypeInfo.getDataStores()[1]);
-		
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
-		logger.info("Changed " + pvName + " to a merge dedup plugin");
+    @BeforeEach
+    public void setUp() throws Exception {
+        configService = new ConfigServiceForTests(-1);
+        tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());
+    }
 
-	}
-	
-	@SuppressWarnings("unchecked")
-	private void testDataAtTime(long epochSecs, boolean morningp) throws Exception {
-		String scoreURL = "http://localhost:17665/retrieval/data/getDataAtTime.json?at=" + TimeUtils.convertToISO8601String(epochSecs);
-		JSONArray array = new JSONArray();
-		array.add(pvName);
-		Map<String, Map<String, Object>> ret = (Map<String, Map<String, Object>>) GetUrlContent.postDataAndGetContentAsJSONArray(scoreURL, array);
-		assertTrue("We expected some data back from getDataAtTime", ret.size() > 0);
-		for(String retpvName : ret.keySet()) {
-			Map<String, Object> val = ret.get(retpvName);
-			if(retpvName.equals(pvName)) {
-				logger.info("Asking for value at " + TimeUtils.convertToISO8601String(epochSecs) + " got value at " + TimeUtils.convertToISO8601String((long)val.get("secs")));
-				assertTrue("We expected a morning value for " + TimeUtils.convertToISO8601String(epochSecs) 
-				+ " instead we got " + TimeUtils.convertToISO8601String((long)val.get("secs")), (double) val.get("val") == (morningp ? 10 : 20 ));
-				return;
-			}
-		}
-		
-		assertTrue("We did not receive a value for PV ", false);
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        tomcatSetup.tearDown();
+    }
 
-	@Test
-	public void testRetrieval() throws Exception {
-		// Register the PV with both appliances and generate data.
-		Timestamp lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);		
-		generateMTSData("http://localhost:17665", "dest_appliance", lastMonth, true);
-		generateMTSData("http://localhost:17669", "other_appliance", lastMonth, false);
-		
-		changeMTSForDest();
+    /**
+     * Generate a months worth of data for the given appserver; one per day, a boolean indicating if the sample is in
+     * the morning or afternoon.
+     *
+     * @param applURL       - The URL for the appliance.
+     * @param applianceName - The name of the appliance
+     * @param theMonth      - The month we generate data for. We generate a month's worth of MTS data.
+     * @param morningp      - If true; data is generated for the morning else afternoon.
+     * @throws Exception
+     */
+    private void generateMTSData(String applURL, String applianceName, Instant theMonth, boolean morningp)
+            throws Exception {
+        int genEventCount = 0;
+        StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
+                "pb://localhost?name=LTS&rootFolder=" + "tomcat_"
+                        + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
+                        + "&partitionGranularity=PARTITION_DAY",
+                configService);
+        try (BasicContext context = new BasicContext()) {
+            ArrayListEventStream strm = new ArrayListEventStream(
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(theMonth).getYear()));
+            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(theMonth, PartitionGranularity.PARTITION_DAY)
+                    .plusSeconds(1);
+                 s.isBefore(TimeUtils.now());
+                 s = s.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())) {
 
-		for(int i = 0; i < 20; i++) {
-			long startOfDay = (TimeUtils.convertToEpochSeconds(TimeUtils.minusDays(TimeUtils.now(), -1*(i-25)))/86400)*86400;
-			for(int h = 0; h < 24; h++) {
-				logger.info("Looking for value of PV at  " + TimeUtils.convertToHumanReadableString(startOfDay + h*60*60));
-				testDataAtTime(startOfDay + h*60*60, ( (h >=10 && h < 20) ? true : false));
-			}			
-		}
-	}	
+                POJOEvent pojoEvent = new POJOEvent(
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                        s.plusSeconds(
+                                morningp
+                                        ? 10L * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk()
+                                        : 20L * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk()),
+                        new ScalarValue<Double>((double) (morningp ? 10 : 20)),
+                        0,
+                        0);
+                logger.debug(
+                        "Generating event at " + TimeUtils.convertToHumanReadableString(pojoEvent.getEventTimeStamp()));
+                strm.add(pojoEvent);
+                genEventCount++;
+            }
+            plugin.appendData(context, pvName, strm);
+
+        }
+        logger.info("Done generating data for appliance " + applianceName);
+
+        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
+        PVTypeInfo destPVTypeInfo = new PVTypeInfo();
+        JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
+        JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
+        decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
+
+        destPVTypeInfo.setPaused(true);
+        destPVTypeInfo.setPvName(pvName);
+        destPVTypeInfo.setApplianceIdentity(applianceName);
+        destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
+        destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
+        destPVTypeInfo.setModificationTime(TimeUtils.now());
+        GetUrlContent.postObjectAndGetContentAsJSONObject(
+                applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
+                        + "&override=true&createnew=true",
+                encoder.encode(destPVTypeInfo));
+        logger.info("Added " + pvName + " to the appliance " + applianceName);
+
+        RawDataRetrievalAsEventStream rawDataRetrieval =
+                new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");
+        long rtvlEventCount = 0;
+        try (EventStream stream = rawDataRetrieval.getDataForPVS(
+                new String[]{pvName},
+                TimeUtils.minusDays(TimeUtils.now(), 90),
+                TimeUtils.plusDays(TimeUtils.now(), 31),
+                null)) {
+            long lastEvEpoch = 0;
+            if (stream != null) {
+                for (Event e : stream) {
+                    long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
+                    if (lastEvEpoch != 0) {
+                        Assertions.assertTrue((evEpoch - lastEvEpoch) == PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), "We got events more than " + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " + TimeUtils.convertToHumanReadableString(evEpoch));
+                    }
+                    lastEvEpoch = evEpoch;
+                    rtvlEventCount++;
+                }
+            } else {
+                Assertions.fail("Stream is null when retrieving data.");
+            }
+        }
+        Assertions.assertEquals(
+                genEventCount,
+                rtvlEventCount,
+                "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
+    }
+
+    private void changeMTSForDest() throws Exception {
+        JSONObject srcPVTypeInfoJSON =
+                GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv="
+                        + URLEncoder.encode(pvName, StandardCharsets.UTF_8));
+        JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
+        JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
+        PVTypeInfo destPVTypeInfo = new PVTypeInfo();
+        decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
+        String otherURL = "pbraw://localhost?name=MTS&rawURL="
+                + URLEncoder.encode("http://localhost:17669/retrieval/data/getData.raw", StandardCharsets.UTF_8);
+        destPVTypeInfo.getDataStores()[1] = "merge://localhost?name=MTS&dest="
+                + URLEncoder.encode(destPVTypeInfo.getDataStores()[1], StandardCharsets.UTF_8)
+                + "&other=" + URLEncoder.encode(otherURL, StandardCharsets.UTF_8);
+        logger.info("Data store is " + destPVTypeInfo.getDataStores()[1]);
+
+        GetUrlContent.postObjectAndGetContentAsJSONObject(
+                "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
+                        + "&override=true&createnew=true",
+                encoder.encode(destPVTypeInfo));
+        logger.info("Changed " + pvName + " to a merge dedup plugin");
+    }
+
+    @SuppressWarnings("unchecked")
+    private void testDataAtTime(long epochSecs, boolean morningp) throws Exception {
+        String scoreURL = "http://localhost:17665/retrieval/data/getDataAtTime.json?at="
+                + TimeUtils.convertToISO8601String(epochSecs);
+        JSONArray array = new JSONArray();
+        array.add(pvName);
+        Map<String, Map<String, Object>> ret =
+                (Map<String, Map<String, Object>>) GetUrlContent.postDataAndGetContentAsJSONArray(scoreURL, array);
+        Assertions.assertTrue(ret.size() > 0, "We expected some data back from getDataAtTime");
+        for (String retpvName : ret.keySet()) {
+            Map<String, Object> val = ret.get(retpvName);
+            if (retpvName.equals(pvName)) {
+                logger.info("Asking for value at " + TimeUtils.convertToISO8601String(epochSecs) + " got value at "
+                        + TimeUtils.convertToISO8601String((long) val.get("secs")));
+                Assertions.assertEquals(
+                        (double) val.get("val"),
+                        (morningp ? 10 : 20),
+                        "We expected a morning value for " + TimeUtils.convertToISO8601String(epochSecs)
+                                + " instead we got " + TimeUtils.convertToISO8601String((long) val.get("secs")));
+                return;
+            }
+        }
+
+        Assertions.fail("We did not receive a value for PV ");
+    }
+
+    @Test
+    public void testRetrieval() throws Exception {
+        // Register the PV with both appliances and generate data.
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2*31);
+        generateMTSData("http://localhost:17665", "dest_appliance", lastMonth, true);
+        generateMTSData("http://localhost:17669", "other_appliance", lastMonth, false);
+
+        changeMTSForDest();
+
+        for (int i = 0; i < 20; i++) {
+            long startOfDay = (TimeUtils.convertToEpochSeconds(TimeUtils.minusDays(TimeUtils.now(), -1 * (i - 25)))
+                    / PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())
+                    * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+            for (int h = 0; h < 24; h++) {
+                logger.info("Looking for value of PV at  "
+                        + TimeUtils.convertToHumanReadableString(startOfDay
+                        + (long) h * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk()));
+                testDataAtTime(
+                        startOfDay + (long) h * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
+                        (h >= 10 && h < 20));
+            }
+        }
+    }
 }

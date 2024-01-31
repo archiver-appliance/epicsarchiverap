@@ -7,12 +7,13 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import org.epics.archiverappliance.common.YearSecondTimestamp;
+
 /**
  * All the PB classes also implement this version of timeinfo.
  * @author mshankar
  *
  */
 public interface PartionedTime {
-	public short getYear();
-	public int getSecondsIntoYear();
+	YearSecondTimestamp getYearSecondTimestamp();
 }

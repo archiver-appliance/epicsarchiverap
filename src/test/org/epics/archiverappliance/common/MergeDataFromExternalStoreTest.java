@@ -7,20 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.sql.Timestamp;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.IntegrationTests;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -36,17 +26,33 @@ import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.time.Instant;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.sql.Timestamp;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Test merging in data from an external store. 
  * @author mshankar
  *
  */
-@Category(IntegrationTests.class)
+@Tag("integration")
 public class MergeDataFromExternalStoreTest {
 	private static Logger logger = LogManager.getLogger(MergeDataFromExternalStoreTest.class.getName());
 	private ConfigServiceForTests configService;
@@ -56,9 +62,9 @@ public class MergeDataFromExternalStoreTest {
 	long tCount = 0;
 	long stepSeconds = 2;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		tomcatSetup.setUpFailoverWithWebApps(this.getClass().getSimpleName());		
 	}
 
@@ -70,19 +76,26 @@ public class MergeDataFromExternalStoreTest {
 	 * @param startingOffset - Use 0 for even seconds; 1 for odd seconds. When merged, we test to make sure; we get data one second apart.
 	 * @throws Exception
 	 */
-	private long generateMTSData(String applURL, String applianceName, Timestamp lastMonth, int startingOffset)
+    private long generateMTSData(String applURL, String applianceName, Instant lastMonth, int startingOffset)
 			throws Exception {
 		int genEventCount = 0;
-		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
+		StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"+ this.getClass().getSimpleName() + "/" + applianceName + "/mts" + "&partitionGranularity=PARTITION_DAY", configService);
 		try(BasicContext context = new BasicContext()) {
-			for(long s = TimeUtils.getPreviousPartitionLastSecond(TimeUtils.convertToEpochSeconds(lastMonth), PartitionGranularity.PARTITION_MONTH) + 1 + startingOffset; // We generate a months worth of data.
-					s < TimeUtils.getNextPartitionFirstSecond(TimeUtils.convertToEpochSeconds(lastMonth), PartitionGranularity.PARTITION_MONTH); 
-					s = s + stepSeconds) {
-				ArrayListEventStream strm = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, TimeUtils.convertToYearSecondTimestamp(s).getYear()));
-				strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, TimeUtils.convertFromEpochSeconds(s, 0), new ScalarValue<Double>((double)s), 0, 0));
+            ArrayListEventStream strm = new ArrayListEventStream(
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(lastMonth).getYear()));
+
+            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
+                            .plusSeconds(1 + startingOffset); // We generate a months worth of data.
+                    s.isBefore(TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH));
+                    s = s.plusSeconds(stepSeconds)) {
+                strm.add(new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0));
 				genEventCount++;
-				plugin.appendData(context, pvName, strm);
-			}			
+            }
+            plugin.appendData(context, pvName, strm);
 		}		
 		logger.info("Done generating dest data");
 		
@@ -109,20 +122,20 @@ public class MergeDataFromExternalStoreTest {
 				for(Event e : stream) {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch), (evEpoch - lastEvEpoch) == stepSeconds);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == stepSeconds, "We got events more than " + stepSeconds + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch));
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + genEventCount + " but got  " + rtvlEventCount, genEventCount == rtvlEventCount);
+		Assertions.assertTrue(genEventCount == rtvlEventCount, "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
 		return rtvlEventCount;
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		tomcatSetup.tearDown();
 	}
@@ -131,14 +144,14 @@ public class MergeDataFromExternalStoreTest {
 		JSONObject cresp = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/consolidateDataForPV" 
 				+ "?pv=" + URLEncoder.encode(pvName, "UTF-8") 
 				+ "&storage=LTS");
-		assertTrue("Invalid response for consolidate data", cresp.get("status").equals("ok"));
+		Assertions.assertTrue(cresp.get("status").equals("ok"), "Invalid response for consolidate data");
 		String otherClientURL = "http://localhost:17669/retrieval";
 		JSONObject resp = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/mergeInData" 
 				+ "?pv=" + URLEncoder.encode(pvName, "UTF-8") 
 				+ "&other=" + URLEncoder.encode(otherClientURL, "UTF-8") 
 				+ "&storage=LTS"
 				+ "&from=" + TimeUtils.convertToISO8601String(TimeUtils.minusDays(TimeUtils.now(), 366*2)));
-		assertTrue("Invalid response for merge data", resp.get("status").equals("ok"));
+		Assertions.assertTrue(resp.get("status").equals("ok"), "Invalid response for merge data");
 		logger.info("Merged data for " + pvName + " into the dest tomcat");
 	}
 	
@@ -152,23 +165,23 @@ public class MergeDataFromExternalStoreTest {
 					long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
 					logger.debug("Current event " + TimeUtils.convertToHumanReadableString(evEpoch) + " Previous: " + TimeUtils.convertToHumanReadableString(lastEvEpoch));
 					if(lastEvEpoch != 0) {
-						assertTrue("We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, evEpoch > lastEvEpoch);
-						assertTrue("We got events more than a second apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount, (evEpoch - lastEvEpoch) == 1);
+						Assertions.assertTrue(evEpoch > lastEvEpoch, "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
+						Assertions.assertTrue((evEpoch - lastEvEpoch) == 1, "We got events more than a second apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " +  TimeUtils.convertToHumanReadableString(evEpoch) + " at event count " + rtvlEventCount);
 					}
 					lastEvEpoch = evEpoch;
 					rtvlEventCount++;
 				}
 			} else { 
-				fail("Stream is null when retrieving data.");
+				Assertions.fail("Stream is null when retrieving data.");
 			}
 		}		
-		assertTrue("We expected event count  " + tCount + " but got  " + rtvlEventCount, tCount == rtvlEventCount);
+		Assertions.assertTrue(tCount == rtvlEventCount, "We expected event count  " + tCount + " but got  " + rtvlEventCount);
 	}
 
 	@Test
 	public void testRetrieval() throws Exception {
-		// Register the PV with both appliances and generate data.
-		Timestamp lastMonth = TimeUtils.minusDays(TimeUtils.now(), 31);		
+        // Register the PV with both appliances and generate data.
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2 * 31);
 		long dCount = generateMTSData("http://localhost:17665", "dest_appliance", lastMonth, 0);
 		long oCount = generateMTSData("http://localhost:17669", "other_appliance", lastMonth, 1);
 		tCount = dCount + oCount;

@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.engine.pv;
 
-enum PVConnectionState {
+public enum PVConnectionState {
 	/** Nothing happened, yet */
 	Idle,
 	/** Trying to connect */

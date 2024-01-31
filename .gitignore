@@ -37,3 +37,6 @@ gradle-app.setting
 
 # Integration tests folders
 tomcat_*
+
+# War files
+wars

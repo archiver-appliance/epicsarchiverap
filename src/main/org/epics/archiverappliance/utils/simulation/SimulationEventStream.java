@@ -7,8 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.simulation;
 
-import java.util.Iterator;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -16,54 +14,50 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Iterator;
+
 /**
- * An EventStream that backed by a generator. 
+ * An EventStream that backed by a generator.
  * @author mshankar
  *
  */
 public class SimulationEventStream implements EventStream, RemotableOverRaw {
-	private ArchDBRTypes type;
-	private SimulationValueGenerator valueGenerator;
-	private short startyear;
-	private short endyear;
-	
-	public SimulationEventStream(ArchDBRTypes type, SimulationValueGenerator valueGenerator) {
-		this.type = type;
-		this.valueGenerator = valueGenerator;
-		this.startyear = TimeUtils.getCurrentYear();
-		this.endyear = this.startyear;
-	}
-	
-	public SimulationEventStream(ArchDBRTypes type, SimulationValueGenerator valueGenerator, short year) {
-		this.type = type;
-		this.valueGenerator = valueGenerator;
-		this.startyear = year;
-		this.endyear = this.startyear;
-	}
-	
-	public SimulationEventStream(ArchDBRTypes type, SimulationValueGenerator valueGenerator, short startyear, short endyear) {
-		this.type = type;
-		this.valueGenerator = valueGenerator;
-		this.startyear = startyear;
-		this.endyear = endyear;
-	}
+    private final ArchDBRTypes type;
+    private final SimulationValueGenerator valueGenerator;
+    private final Instant start;
+    private final Instant end;
+    private final int periodInSeconds;
+
+    public SimulationEventStream(
+            ArchDBRTypes type,
+            SimulationValueGenerator valueGenerator, Instant start, Instant end,
+            int periodInSeconds) {
+        this.type = type;
+        this.valueGenerator = valueGenerator;
+        this.start = start;
+        this.end = end;
+        this.periodInSeconds = periodInSeconds;
+    }
 
 
+    @Override
+    public Iterator<Event> iterator() {
+        return new SimulationEventStreamIterator(type, valueGenerator, start, end, periodInSeconds);
+    }
 
-	@Override
-	public Iterator<Event> iterator() {
-		return new SimulationEventStreamIterator(type, valueGenerator, startyear, endyear);
-	}
-	
-	@Override
-	public void close() {
-		// Nothing to do here...
-	}
+    @Override
+    public void close() {
+        // Nothing to do here...
+    }
 
-	@Override
-	public RemotableEventStreamDesc getDescription() {
-		return new RemotableEventStreamDesc(type, "Simulation", TimeUtils.getCurrentYear());
-	}
-	
-	
+    @Override
+    public RemotableEventStreamDesc getDescription() {
+        return new RemotableEventStreamDesc(type, "Simulation", TimeUtils.getCurrentYear());
+    }
+
+    public long getNumberOfEvents() {
+        return (Duration.between(this.start, this.end).getSeconds() + 1) / periodInSeconds;
+    }
 }

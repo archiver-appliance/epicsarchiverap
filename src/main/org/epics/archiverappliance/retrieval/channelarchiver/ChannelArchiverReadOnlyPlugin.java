@@ -7,20 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.channelarchiver;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -40,6 +26,20 @@ import org.epics.archiverappliance.etl.ConversionFunction;
 import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.utils.ui.URIUtils;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * A storage plugin that can front a Channel Archiver Data Server.
@@ -84,15 +84,15 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 
 
 	@Override
-	public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, PostProcessor postProcessor)  throws IOException {
+    public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Instant startTime, Instant endTime, PostProcessor postProcessor) throws IOException {
 		if(reducedArchiveKey != -1) {
 			return getDataForPV(context, pvName, startTime, endTime, reducedArchiveKey, postProcessor);
 		} else {
 			return getDataForPV(context, pvName, startTime, endTime, archiveKey, postProcessor);
 		}
 	}
-	
-	private List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Timestamp startTime, Timestamp endTime, int archiveKey, PostProcessor postProcessor) throws IOException {
+
+    private List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Instant startTime, Instant endTime, int archiveKey, PostProcessor postProcessor) throws IOException {
 		try {
 			String pvNameForCall = pvName;
 			if(context.getPvNameFromRequest() != null) { 
@@ -108,9 +108,9 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 							+ "<param><value><i4>" + archiveKey + "</i4></value></param>\n"
 							+ "<param><value><array><data><value><string>" + pvNameForCall + "</string></value></data></array></value></param>\n"
 							+ "<param><value><i4>" + TimeUtils.convertToEpochSeconds(startTime)+ "</i4></value></param>\n"
-							+ "<param><value><i4>" + startTime.getNanos() + "</i4></value></param>\n"
+                    + "<param><value><i4>" + startTime.getNano() + "</i4></value></param>\n"
 							+ "<param><value><i4>" + TimeUtils.convertToEpochSeconds(endTime) + "</i4></value></param>\n"
-							+ "<param><value><i4>" + endTime.getNanos() + "</i4></value></param>\n"
+                    + "<param><value><i4>" + endTime.getNano() + "</i4></value></param>\n"
 							+ "<param><value><i4>" + valuesRequested + "</i4></value></param>\n"
 							+ "<param><value><i4>" + howStr + "</i4></value></param>\n"
 							+ "</params>\n"
@@ -170,7 +170,7 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
 	}
 
 	@Override
-	public boolean appendData(BasicContext context, String pvName, EventStream stream) throws IOException {
+    public int appendData(BasicContext context, String pvName, EventStream stream) throws IOException {
 		throw new IOException("The ChannelArchiverReadOnlyPlugin does not support the Writer interface");
 	}
 

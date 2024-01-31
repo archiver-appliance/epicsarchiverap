@@ -1,11 +1,14 @@
 package org.epics.archiverappliance.retrieval.matlab;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.util.LinkedList;
-import java.util.Map;
-
+import com.jmatio.io.MatFileReader;
+import com.jmatio.io.MatFileWriter;
+import com.jmatio.types.MLArray;
+import com.jmatio.types.MLChar;
+import com.jmatio.types.MLDouble;
+import com.jmatio.types.MLStructure;
+import com.jmatio.types.MLUInt64;
+import com.jmatio.types.MLUInt8;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,20 +25,14 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import com.jmatio.io.MatFileReader;
-import com.jmatio.io.MatFileWriter;
-import com.jmatio.types.MLArray;
-import com.jmatio.types.MLChar;
-import com.jmatio.types.MLDouble;
-import com.jmatio.types.MLStructure;
-import com.jmatio.types.MLUInt64;
-import com.jmatio.types.MLUInt8;
-
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import java.io.File;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Test generation of Matlab files from event streams
@@ -49,9 +46,9 @@ public class MatlabFileTest {
 	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MatlabFileTest";
 	String pvName = "Test_MatlabPV";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
+		configService = new ConfigServiceForTests(-1);
 		storageplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + rootFolderName + "/&partitionGranularity=PARTITION_YEAR", configService);
 		if(new File(rootFolderName).exists()) {
 			FileUtils.deleteDirectory(new File(rootFolderName));
@@ -68,7 +65,7 @@ public class MatlabFileTest {
 		}
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 	
@@ -103,7 +100,7 @@ public class MatlabFileTest {
 			MLUInt64 ret = new MLUInt64("nanos", new int[] {dest.size(), 1} );
 			int i = 0;
 			for(Event e : dest) {
-				ret.set((long) e.getEventTimeStamp().getNanos(), i++);
+                ret.set((long) e.getEventTimeStamp().getNano(), i++);
 			}
 			return ret;
 		}
@@ -161,11 +158,11 @@ public class MatlabFileTest {
 			logger.info("Key: " + key);
 		}
 		MLStructure pvDataFileFile = (MLStructure) content.get("data");
-		assertTrue("Cannot find data for pv in file ", pvDataFileFile != null);
+		Assertions.assertTrue(pvDataFileFile != null, "Cannot find data for pv in file ");
 		MLArray epochSecondsArray = pvDataFileFile.getField("epochSeconds");
-		assertTrue("Cannot find epochSeconds for pv in file ", epochSecondsArray != null);
+		Assertions.assertTrue(epochSecondsArray != null, "Cannot find epochSeconds for pv in file ");
 		MLArray valueArray = pvDataFileFile.getField("values");
-		assertTrue("Cannot find value for pv in file ", valueArray != null);
+		Assertions.assertTrue(valueArray != null, "Cannot find value for pv in file ");
 	}
 
 }

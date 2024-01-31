@@ -5,6 +5,6 @@ Proof of concept
 ====================================================================== -->
 <project name="slacedv" default="echo">
 	<target name="echo">
-		<echo message="From within the site specific build for ${archapplsite}. Staging folder is ${stage}"></echo>
+		<echo message="From within the site specific build for ${archapplsite}."></echo>
 	</target>
 </project>

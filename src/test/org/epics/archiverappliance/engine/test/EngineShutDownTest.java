@@ -7,91 +7,82 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-import java.util.Iterator;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Tag;
 
-import junit.framework.TestCase;
+
 /**
  * test of engine shuting down
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class EngineShutDownTest extends TestCase {
+@Tag("localEpics")
+public class EngineShutDownTest {
 	private static Logger logger = LogManager.getLogger(EngineShutDownTest.class.getName());
-	private SIOCSetup ioc = null;
+    private final String pvPrefix = EngineShutDownTest.class.getSimpleName().substring(0, 10);
+    private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
-		ioc = new SIOCSetup();
+        ioc = new SIOCSetup(pvPrefix);
 		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(new File("./bin"));
+        testConfigService = new ConfigServiceForTests(-1);
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
-	
-		ioc.stopSIOC();
 
-	}
+        ioc.stopSIOC();
 
-	@Test
-	public void testAll() {
-		engineShutDown();
-	}
-/**
- * test of engine shutting down
- */
-	private void engineShutDown()
+    }
 
-	{
+    /**
+     * test of engine shutting down
+     */
 
-		try {
-			for (int m = 0; m < 100; m++) {
-				ArchiveEngine.archivePV("test_" + m, 0.1F, SamplingMethod.SCAN,
-						5, writer, testConfigService,
-						ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
-				Thread.sleep(10);
-			}
-			Thread.sleep(2000);
+    @Test
+    public void engineShutDown() {
 
-			testConfigService.shutdownNow();
-			Thread.sleep(2000);
-			int num = 0;
-			Iterator<String> allpvs = testConfigService
-					.getPVsForThisAppliance().iterator();
-			while (allpvs.hasNext()) {
-				allpvs.next();
-				num++;
-			}
-			
+        try {
+            for (int m = 0; m < 100; m++) {
+                ArchiveEngine.archivePV(pvPrefix + "test_" + m, 0.1F, SamplingMethod.SCAN,
+                        writer, testConfigService,
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE, null, false, false);
+                Thread.sleep(10);
+            }
+            Thread.sleep(2000);
 
-			assertTrue(
-					"there should be no pvs after the engine shut down, but there are "
-							+ num + " pvs", num == 0);
+            testConfigService.shutdownNow();
+            Thread.sleep(2000);
+            int num = 0;
+            for (String s : testConfigService
+                    .getPVsForThisAppliance()) {
+                num++;
+            }
 
-		} catch (Exception e) {
-			//
-			logger.error("Exception", e);
-		}
 
-	}
+			Assertions.assertTrue(num == 0, "there should be no pvs after the engine shut down, but there are "
+					+ num + " pvs");
+
+        } catch (Exception e) {
+            //
+            logger.error("Exception", e);
+        }
+
+    }
 
 }

@@ -5,7 +5,7 @@ set -e
 # 
 # It then unpacks the tomcat distribution in the current folder and deploys the four WAR files onto this tomcat instance
 # The server.xml is overwritten with a default server.xml
-# A log4j.properties with DEBUG logging is copied into the tomcat lib folder. 
+# A log4j2.xml with INFO logging is copied into the tomcat lib folder.
 # Finally, the tomcat instance is started using catalina run
 #
 # If all goes well, we should be able to point the browser to tomcat instance and then see the archiver homescreen.
@@ -179,14 +179,20 @@ cat > "${TOMCAT_VERSION_FOLDER}/conf/server.xml" <<EOF
 EOF
 
 # Write a log4.properties file into the lib folder
-cat > "${TOMCAT_VERSION_FOLDER}/lib/log4j.properties" <<EOF
-log4j.rootLogger=${DEFAULT_LOG_LEVEL}, console
-log4j.logger.org.apache.http=ERROR
-log4j.logger.config.org.epics.archiverappliance=DEBUG
-
-log4j.appender.console=org.apache.log4j.ConsoleAppender
-log4j.appender.console.layout=org.apache.log4j.PatternLayout
-log4j.appender.console.layout.ConversionPattern=%-4r [%t] %-5p %c %x - %m%n
+cat > "${TOMCAT_VERSION_FOLDER}/lib/log4j2.xml" <<EOF
+<Configuration>
+   <Appenders>
+       <Console name="STDOUT" target="SYSTEM_OUT">
+           <PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/>
+       </Console>
+   </Appenders>
+   <Loggers>
+       <Logger name="org.apache.log4j.xml" level="${DEFAULT_LOG_LEVEL}"/>
+       <Root level="${DEFAULT_LOG_LEVEL}">
+           <AppenderRef ref="STDOUT"/>
+       </Root>
+   </Loggers>
+</Configuration>
 EOF
 
 # Now, deploy the WAR files. 
@@ -211,8 +217,7 @@ ls -ltr
 if [ -f "$SRCDIR/site_specific_content/template_changes.html" ]
 then
   echo "Modifying static content to cater to site specific information"
-java -cp ${TOMCAT_VERSION_FOLDER}/webapps/mgmt/WEB-INF/classes:${TOMCAT_VERSION_FOLDER}/webapps/mgmt/WEB-INF/lib/log4j-1.2.17.jar \
-   org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters \
+java org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters \
    "$SRCDIR/site_specific_content/template_changes.html" \
    ${TOMCAT_VERSION_FOLDER}/webapps/mgmt/ui
 fi

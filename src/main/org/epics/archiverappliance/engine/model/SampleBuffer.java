@@ -15,6 +15,9 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 /**
  * Buffer for the samples of one channel.
  * <p>
@@ -44,10 +47,7 @@ public class SampleBuffer {
 	 * year listener for this buffer.
 	 */
 	private YearListener yearListener;
-	/**
-	 * pVMetrics kept for this sample buffer
-	 */
-	private PVMetrics pVMetrics;
+	private static final Logger logger = LogManager.getLogger(SampleBuffer.class.getName());
 
 	/**
 	 * Is the buffer in an error state because of RDB write errors? Note that
@@ -63,7 +63,10 @@ public class SampleBuffer {
 	 */
 	final private ArchDBRTypes archdbrtype;
 	private short year;
-	private static Logger logger = LogManager.getLogger(SampleBuffer.class.getName());
+	/**
+	 * pVMetrics kept for this sample buffer
+	 */
+	private final PVMetrics pVMetrics;
 
 	/** Create sample buffer of given capacity 
 	 *
@@ -95,6 +98,7 @@ public class SampleBuffer {
 	public ArrayListEventStream getCurrentSamples() {
 		return currentSamples;
 	}
+
    /**
     * get the combined ArrayListEventStream of the previous and the current
     * @return ArrayListEventStream
@@ -107,17 +111,16 @@ public class SampleBuffer {
 
 		if (previousSamples != null) {
 
-			for (int mm = 0; mm < previousSamples.size(); mm++) {
-				DBRTimeEvent timeEvent = (DBRTimeEvent) previousSamples.get(mm);
+			for (org.epics.archiverappliance.Event previousSample : previousSamples) {
+				DBRTimeEvent timeEvent = (DBRTimeEvent) previousSample;
 				combinedSamples.add(timeEvent);
 			}
 
 		}
 
 		if (currentSamples != null) {
-			for (int mm2 = 0; mm2 < currentSamples.size(); mm2++) {
-				DBRTimeEvent timeEvent22 = (DBRTimeEvent) currentSamples
-						.get(mm2);
+			for (org.epics.archiverappliance.Event currentSample : currentSamples) {
+				DBRTimeEvent timeEvent22 = (DBRTimeEvent) currentSample;
 				combinedSamples.add(timeEvent22);
 			}
 		}
@@ -184,7 +187,7 @@ public class SampleBuffer {
 		}
 		
 		@SuppressWarnings("deprecation")
-		short yearTemp = (short) (value.getEventTimeStamp().getYear() + 1900);
+        short yearTemp = (short) (ZonedDateTime.ofInstant(value.getEventTimeStamp(), ZoneId.of("UTC")).getYear());
 		// value.getEventTimeStamp().
 		if (currentSamples.getYear() == 0) {
 			currentSamples.setYear(yearTemp);

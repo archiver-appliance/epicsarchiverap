@@ -1,17 +1,5 @@
 package org.epics.archiverappliance.utils.ui;
 
-import java.beans.BeanInfo;
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -19,6 +7,18 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Generate something that marshalls JSON into a POJO using bean introspection.
@@ -56,7 +56,7 @@ public class JSONDecoder<T> {
 				decoders.add(new StringConstructor<T>(descriptor));
 			} else if(descriptor.getPropertyType().equals(Double.class)) {
 				decoders.add(new StringConstructor<T>(descriptor));
-			} else if(descriptor.getPropertyType().equals(Timestamp.class)) {
+            } else if (descriptor.getPropertyType().equals(Instant.class)) {
 				decoders.add(new ISO8601Decoder<T>(descriptor));
 			} else if(descriptor.getPropertyType().equals(ArchDBRTypes.class)) {
 				decoders.add(new EnumDecoder<T>(descriptor, ArchDBRTypes.class));
@@ -207,7 +207,7 @@ public class JSONDecoder<T> {
 		public void decode(JSONObject jsonObj, T obj) throws IllegalAccessException, InvocationTargetException, InstantiationException {
 			if(jsonObj.containsKey(propertyName)) {
 				String tsstr = (String) jsonObj.get(propertyName);
-				Timestamp ts = TimeUtils.convertFromISO8601String(tsstr);
+                Instant ts = TimeUtils.convertFromISO8601String(tsstr);
 				writeMethod.invoke(obj, ts);
 			}
 		}

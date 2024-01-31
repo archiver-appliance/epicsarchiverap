@@ -1,15 +1,6 @@
 package org.epics.archiverappliance.retrieval.postprocessors;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
-import javax.servlet.http.HttpServletRequest;
-
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -21,7 +12,14 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Abstract class for various operators that operate on a SummaryStatistics
@@ -47,10 +45,14 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	public int getElementCount() {
 	    return 1;
 	}
-	
+
+
+	private Instant start;
+	private Instant end;
+
 	private static Logger logger = LogManager.getLogger(SummaryStatsPostProcessor.class.getName());
 	int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;
-	private Timestamp previousEventTimestamp = new Timestamp(1);
+    private Instant previousEventTimestamp = Instant.ofEpochMilli(1);
 	
 	static class SummaryValue { 
 		/**
@@ -124,7 +126,9 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 	
 
 	@Override
-	public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Timestamp start, Timestamp end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+		this.start = start;
+		this.end = end;
 		firstBin = TimeUtils.convertToEpochSeconds(start)/intervalSecs;
 		lastBin = TimeUtils.convertToEpochSeconds(end)/intervalSecs;
 		logger.debug("Expecting " + lastBin + " - " + firstBin + " values " + (lastBin+2 - firstBin)); // Add 2 for the first and last bins..
@@ -145,11 +149,12 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 				try(EventStream strm = callable.call()) {
 					// If we cache the mean/sigma etc, then we should add something to the desc telling us that this is cached data and then we can replace the stat value for that bin?
 					if(srcDesc == null) srcDesc = (RemotableEventStreamDesc) strm.getDescription();
+					boolean shouldAddLastSampleBeforeStart = true;
 					for(Event e : strm) {
 						try { 
 							DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
 							long epochSeconds = dbrTimeEvent.getEpochSeconds();
-							if(dbrTimeEvent.getEventTimeStamp().after(previousEventTimestamp)) { 
+                            if (dbrTimeEvent.getEventTimeStamp().isAfter(previousEventTimestamp)) {
 								previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
 							} else {
 								// Note that this is expected. ETL is not transactional; so we can get the same event twice from different stores.
@@ -158,54 +163,56 @@ public abstract class SummaryStatsPostProcessor implements PostProcessor, PostPr
 								}
 								continue;
 							}
+							Instant eventInstant = dbrTimeEvent.getEventTimeStamp();
 							long binNumber = epochSeconds/intervalSecs;
-							if(binNumber >= firstBin && binNumber <= lastBin) {
-								// We only add bins for the specified time frame. 
-								// The ArchiveViewer depends on the number of values being the same and because of different rates for PVs, the bin number for the starting bin could be different...
-								// We could add a firstbin-1 and put all values before the starting timestamp in that bin but that would give incorrect summaries.
-								if(!lastSampleBeforeStartAdded && lastSampleBeforeStart != null) { 
-									switchToNewBin(firstBin-1);
-									currentBinCollector.addEvent(lastSampleBeforeStart);
-									lastSampleBeforeStartAdded = true; 
+							if(eventInstant.isAfter(start) || eventInstant.equals(start)) {
+								if (eventInstant.equals(start)) {
+									shouldAddLastSampleBeforeStart = false;
 								}
-								if(binNumber != currentBin) {
-									if(currentBin != -1) {
-									    SummaryValue summaryValue;
-									    if (vectorType) {
-							                summaryValue = new SummaryValue(((SummaryStatsVectorCollector)currentBinCollector).getVectorValues(), currentMaxSeverity, currentConnectionChangedEvents);
-							            } else {
-    										summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
-    										if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) { 
-    											summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
-    										}
-							            }
-										consolidatedData.put(currentBin, summaryValue);
-									}
-									switchToNewBin(binNumber);
-								}
-								currentBinCollector.addEvent(e);
-								if(dbrTimeEvent.getSeverity() > currentMaxSeverity) { 
-									currentMaxSeverity = dbrTimeEvent.getSeverity();
-								}
-								if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) { 
-									currentConnectionChangedEvents = true;
-								}
-							} else if(binNumber < firstBin) { 
-								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
-								if(!lastSampleBeforeStartAdded) { 
-									if(lastSampleBeforeStart != null) { 
-										if(e.getEpochSeconds() >= lastSampleBeforeStart.getEpochSeconds()) { 
-											lastSampleBeforeStart = e.makeClone();
+								if (eventInstant.isBefore(end) || eventInstant.equals(end)) {
+									if(binNumber != currentBin) {
+										if(currentBin != -1) {
+											SummaryValue summaryValue;
+											if (vectorType) {
+												summaryValue = new SummaryValue(((SummaryStatsVectorCollector)currentBinCollector).getVectorValues(), currentMaxSeverity, currentConnectionChangedEvents);
+											} else {
+												summaryValue = new SummaryValue(currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
+												if(currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) {
+													summaryValue.addAdditionalColumn(((SummaryStatsCollectorAdditionalColumns)currentBinCollector).getAdditionalStats());
+												}
+											}
+											consolidatedData.put(currentBin, summaryValue);
 										}
-									} else { 
-										lastSampleBeforeStart = e.makeClone();
+										switchToNewBin(binNumber);
 									}
+									currentBinCollector.addEvent(e);
+									if(dbrTimeEvent.getSeverity() > currentMaxSeverity) {
+										currentMaxSeverity = dbrTimeEvent.getSeverity();
+									}
+									if(dbrTimeEvent.hasFieldValues() && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) {
+										currentConnectionChangedEvents = true;
+									}
+								}
+							} else if (eventInstant.isBefore(start)) {
+								// Michael Davidsaver's special case; keep track of the last value before the start time and then add that in as a single sample.
+								if (lastSampleBeforeStart == null || e.getEventTimeStamp().isAfter(lastSampleBeforeStart.getEventTimeStamp())) {
+									lastSampleBeforeStart = e.makeClone();
 								}
 							}
 						} catch(PBParseException ex) { 
 							logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
 						}
 					}
+
+					// We only add bins for the specified time frame.
+					// The ArchiveViewer depends on the number of values being the same and because of different rates for PVs, the bin number for the starting bin could be different...
+					// We could add a firstbin-1 and put all values before the starting timestamp in that bin but that would give incorrect summaries.
+					if(lastSampleBeforeStart != null && shouldAddLastSampleBeforeStart) {
+						switchToNewBin(firstBin-1);
+						currentBinCollector.addEvent(lastSampleBeforeStart);
+						lastSampleBeforeStartAdded = true;
+					}
+
 					return new SummaryStatsCollectorEventStream(firstBin, lastBin, intervalSecs, srcDesc, consolidatedData, inheritValuesFromPreviousBins, zeroOutEmptyBins(), vectorType, elementCount);
 				}
 			}

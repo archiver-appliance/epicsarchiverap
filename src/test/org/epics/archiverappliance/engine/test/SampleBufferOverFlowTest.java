@@ -7,58 +7,52 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.File;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-
-import junit.framework.TestCase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 /**
  * test of sample buffer over flow
  * @author Luofeng Li
  *
  */
-@Category(LocalEpicsTests.class)
-public class SampleBufferOverFlowTest extends TestCase {
-	private static Logger logger = LogManager.getLogger(SampleBufferOverFlowTest.class.getName());
+@Tag("localEpics")
+public class SampleBufferOverFlowTest {
+	private static final Logger logger = LogManager.getLogger(SampleBufferOverFlowTest.class.getName());
 	private SIOCSetup ioc = null;
 	private ConfigServiceForTests testConfigService;
-	private WriterTest writer = new WriterTest();
+	private FakeWriter writer = new FakeWriter();
 
-	@Before
+    private final String pvPrefix = SampleBufferOverFlowTest.class.getSimpleName().substring(0, 10);
+
+    @BeforeEach
 	public void setUp() throws Exception {
-		ioc = new SIOCSetup();
+		ioc = new SIOCSetup(pvPrefix);
 		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(new File("./bin"));
+        testConfigService = new ConfigServiceForTests(-1);
 		Thread.sleep(3000);
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		testConfigService.shutdownNow();
 		ioc.stopSIOC();
 	}
 
 	@Test
-	public void testAll() {
-		sampleBufferOverflow();
-	}
-
-	private void sampleBufferOverflow() {
-		String pvName = "test_1000";
+	public void sampleBufferOverflow() {
+		String pvName = pvPrefix + "test_1000";
 		try {
-			ArchiveEngine.archivePV(pvName, 5F, SamplingMethod.MONITOR, 10,
+			ArchiveEngine.archivePV(pvName, 5F, SamplingMethod.MONITOR,
 					writer, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE,
 					null, false, false);
 
@@ -66,14 +60,12 @@ public class SampleBufferOverFlowTest extends TestCase {
 
 			long num = ArchiveEngine.getMetricsforPV(pvName, testConfigService)
 					.getSampleBufferFullLostEventCount();
-			assertTrue(
-					"the number of data lost because of sample buffer overflow of "
-							+ pvName
-							+ "is 0,and maybe "
-							+ "the pv of "
-							+ pvName
-							+ " changes too slow and for this test,it should changes every 1 second",
-					num > 0);
+			Assertions.assertTrue(num > 0, "the number of data lost because of sample buffer overflow of "
+					+ pvName
+					+ "is 0,and maybe "
+					+ "the pv of "
+					+ pvName
+					+ " changes too slow and for this test,it should changes every 1 second");
 
 		} catch (Exception e) {
 			//

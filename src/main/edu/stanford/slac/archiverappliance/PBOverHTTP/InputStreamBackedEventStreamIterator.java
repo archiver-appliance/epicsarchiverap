@@ -8,13 +8,9 @@
 package edu.stanford.slac.archiverappliance.PBOverHTTP;
 
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.sql.Timestamp;
-import java.util.Iterator;
-
+import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -23,9 +19,12 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.RetrievalEventProcessor;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
+import java.time.Instant;
+import java.util.Iterator;
 
 /**
  * The iterator for the InputStreamBackedEventStream
@@ -40,8 +39,8 @@ public class InputStreamBackedEventStreamIterator implements Iterator<Event> {
 	private RetrievalEventProcessor retrievalEventProcessor;
 	private RemotableEventStreamDesc currentEventStreamDesc;
 
-	
-	InputStreamBackedEventStreamIterator(InputStream is, Timestamp startTime) {
+
+    InputStreamBackedEventStreamIterator(InputStream is, Instant startTime) {
 		this.is = is;
 		buf = new byte[BUFFER_SIZE];
 		readNextBatch();

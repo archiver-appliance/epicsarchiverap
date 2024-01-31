@@ -7,23 +7,20 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import static org.junit.Assert.assertTrue;
+import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.retrieval.GenerateData;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.retrieval.GenerateData;
-import org.epics.archiverappliance.utils.nio.ArchPaths;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import java.time.Instant;
 
 /**
  * Test the PBFileInfo.
@@ -31,36 +28,34 @@ import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
  *
  */
 public class PBFileInfoTest {
-	PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
-	PBCommonSetup setup = new PBCommonSetup();
-	Path PBfile;
-	String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PVInfo";
-	private ConfigService configService;
+    PBCommonSetup setup = new PBCommonSetup();
+    Path pBfile;
+    String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PVInfo";
 
-	
-	@Before
-	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(new File("./bin"));
-		setup.setUpRootFolder(storagePlugin);
-		PBfile = PlainPBPathNameUtility.getPathNameForTime(storagePlugin, pvName, TimeUtils.getStartOfCurrentYearInSeconds(), new ArchPaths(), configService.getPVNameToKeyConverter());
-		GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        Files.deleteIfExists(pBfile);
+    }
 
-	@After
-	public void tearDown() throws Exception {
-		Files.deleteIfExists(PBfile);
-	}
-
-	@Test
-	public void testPBInfo() throws Exception {
-		
-		PBFileInfo info = new PBFileInfo(PBfile);
-		assertTrue("PVInfo PV name " + info.getPVName(), info.getPVName().equals(pvName));
-		assertTrue("PVInfo year " + info.getDataYear(), info.getDataYear() == TimeUtils.getCurrentYear());
-		assertTrue("PVInfo type " + info.getType(), info.getType().equals(ArchDBRTypes.DBR_SCALAR_DOUBLE));
-		long firstSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-		assertTrue("PVInfo first event time " + info.getFirstEventEpochSeconds() + "/" + firstSeconds, info.getFirstEventEpochSeconds() == firstSeconds);
-		long lastSeconds = TimeUtils.getStartOfYearInSeconds(TimeUtils.getCurrentYear()+1)-1;
-		assertTrue("PVInfo last event time " + info.getLastEventEpochSeconds() + "!=" + lastSeconds, info.getLastEventEpochSeconds() == lastSeconds);
-	}
+    @Test
+    public void testPBInfo() throws Exception {
+        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        short currentYear = TimeUtils.getCurrentYear();
+        setup.setUpRootFolder(storagePlugin);
+        pBfile = PlainPBPathNameUtility.getPathNameForTime(
+                storagePlugin,
+                pvName,
+                TimeUtils.getStartOfYear(currentYear),
+                new ArchPaths(),
+                (new ConfigServiceForTests(-1).getPVNameToKeyConverter()));
+        Instant start = TimeUtils.getStartOfYear(currentYear);
+        Instant end = start.plusSeconds(10000);
+        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, end);
+        PBFileInfo info = new PBFileInfo(pBfile);
+        Assertions.assertEquals(info.getPVName(), pvName, "PVInfo PV name " + info.getPVName());
+        Assertions.assertEquals(info.getDataYear(), currentYear, "PVInfo year " + info.getDataYear());
+        Assertions.assertEquals(info.getType(), ArchDBRTypes.DBR_SCALAR_DOUBLE, "PVInfo type " + info.getType());
+        Assertions.assertEquals(start, info.getFirstEvent().getEventTimeStamp());
+        Assertions.assertEquals(end.minusSeconds(1), info.getLastEvent().getEventTimeStamp());
+    }
 }

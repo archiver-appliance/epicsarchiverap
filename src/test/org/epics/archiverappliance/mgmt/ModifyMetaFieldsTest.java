@@ -1,18 +1,9 @@
 package org.epics.archiverappliance.mgmt;
 
-import static org.junit.Assert.assertTrue;
-
-import java.io.File;
-import java.io.StringWriter;
-import java.net.URLEncoder;
-import java.util.Arrays;
-import java.util.List;
-
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.LocalEpicsTests;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
@@ -21,22 +12,30 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.firefox.FirefoxDriver;
+
+import java.io.File;
+import java.io.StringWriter;
+import java.net.URLEncoder;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Modify the metafields across the cluster. We archive and then send the modifyMetaFields to the other appliance.
  * @author mshankar
  *
  */
-@Category(LocalEpicsTests.class)
+@Tag("integration")
+@Tag("localEpics")
 public class ModifyMetaFieldsTest {
 	private static Logger logger = LogManager.getLogger(ModifyMetaFieldsTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ModifyMetaFieldsTest");
@@ -44,11 +43,11 @@ public class ModifyMetaFieldsTest {
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
 
-	@BeforeClass
+	@BeforeAll
 	public static void setupClass() {
 		WebDriverManager.firefoxdriver().setup();
 	}
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		if(persistenceFolder.exists()) {
 			FileUtils.deleteDirectory(persistenceFolder);
@@ -61,7 +60,7 @@ public class ModifyMetaFieldsTest {
 		driver = new FirefoxDriver();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		driver.quit();
 		tomcatSetup.tearDown();
@@ -86,19 +85,19 @@ public class ModifyMetaFieldsTest {
 		 Thread.sleep(2*1000);
 		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
 		 String pvNameObtainedFromTable = statusPVName.getText();
-		 assertTrue("PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable, pvName.equals(pvNameObtainedFromTable));
+		 Assertions.assertTrue(pvName.equals(pvNameObtainedFromTable), "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
 		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
 		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
 		 String expectedPVStatus = "Being archived";
-		 assertTrue("Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable, expectedPVStatus.equals(pvArchiveStatusObtainedFromTable));
+		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
 		 String aapl0 = checkInPersistence(pvName, 0);
 		 String aapl1 = checkInPersistence(pvName, 1);
-		 assertTrue("Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1", aapl0.equals(aapl1));
+		 Assertions.assertTrue(aapl0.equals(aapl1), "Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1");
 		 
 		 // Let's pause the PV.
 		 String pausePVURL = "http://localhost:17665/mgmt/bpl/pauseArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
 		 JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
-		 assertTrue("Cannot pause PV", pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"));
+		 Assertions.assertTrue(pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Cannot pause PV");
 		 Thread.sleep(5000);
 		 logger.info("Successfully paused the PV " + pvName);
 		 
@@ -120,8 +119,8 @@ public class ModifyMetaFieldsTest {
 		 String[] expectedFields = new String[] {"HIGH", "LOW", "DESC"};
 		 String[] fields0 = getFieldsFromPersistence(pvName, 0);
 		 String[] fields1 = getFieldsFromPersistence(pvName, 1);
-		 assertTrue("Expecting the fields to be " + fieldsToCSV(expectedFields) + " in cluster member 0 instead it is " + fieldsToCSV(fields0), arrayEquals(fields0, expectedFields));
-		 assertTrue("Expecting the fields to be " + fieldsToCSV(expectedFields) + " in cluster member 1 instead it is " + fieldsToCSV(fields1), arrayEquals(fields1, expectedFields));
+		 Assertions.assertTrue(arrayEquals(fields0, expectedFields), "Expecting the fields to be " + fieldsToCSV(expectedFields) + " in cluster member 0 instead it is " + fieldsToCSV(fields0));
+		 Assertions.assertTrue(arrayEquals(fields1, expectedFields), "Expecting the fields to be " + fieldsToCSV(expectedFields) + " in cluster member 1 instead it is " + fieldsToCSV(fields1));
 
 	}
 	
@@ -158,7 +157,7 @@ public class ModifyMetaFieldsTest {
 		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFileForMember);
 		JDBM2Persistence persistenceLayer = new JDBM2Persistence();
 		PVTypeInfo typeInfo = persistenceLayer.getTypeInfo(pvName);
-		assertTrue("Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex, typeInfo != null);
+		Assertions.assertTrue(typeInfo != null, "Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex);
 		return typeInfo.getApplianceIdentity();
 	}
 	
@@ -169,7 +168,7 @@ public class ModifyMetaFieldsTest {
 		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFileForMember);
 		JDBM2Persistence persistenceLayer = new JDBM2Persistence();
 		PVTypeInfo typeInfo = persistenceLayer.getTypeInfo(pvName);
-		assertTrue("Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex, typeInfo != null);
+		Assertions.assertTrue(typeInfo != null, "Expecting the pv typeinfo to be in persistence for cluster member " + clusterIndex);
 		return typeInfo.getArchiveFields();
 	}
 

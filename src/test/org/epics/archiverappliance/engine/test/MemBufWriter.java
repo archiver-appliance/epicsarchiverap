@@ -7,10 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.test;
 
-import java.io.IOException;
-
-import junit.framework.TestCase;
-
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.Writer;
@@ -19,42 +15,38 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+
+import java.io.IOException;
 /**
  * Store all samples in a buffer
  * @author Murali Shankar
  *
  */
-public class MemBufWriter extends TestCase implements Writer {
+public class MemBufWriter implements Writer {
+    private final String pvName;
+    private final ArchDBRTypes dbrType;
 	private ArrayListEventStream buf;
-	
-	public MemBufWriter(String pvName, ArchDBRTypes dbrType) { 
+
+	public MemBufWriter(String pvName, ArchDBRTypes dbrType) {
+		this.pvName = pvName;
+		this.dbrType = dbrType;
+		buf = initBuffer(pvName, dbrType);
+	}
+
+	private ArrayListEventStream initBuffer(String pvName, ArchDBRTypes dbrType) {
+		final ArrayListEventStream buf;
 		buf = new ArrayListEventStream(1024, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
-	}
-
-	@Before
-	public void setUp() throws Exception {
-
-	}
-
-	@After
-	public void tearDown() throws Exception {
-
-	}
-
-	@Test
-	public void testNothing() {
-
+		return buf;
 	}
 
 	@Override
-	public boolean appendData(BasicContext context, String arg0, EventStream arg1) throws IOException {
+    public int appendData(BasicContext context, String arg0, EventStream arg1) throws IOException {
+        int eventsAppended = 0;
 		for(Event e : arg1) {
 			buf.add(e);
+            eventsAppended++;
 		}
-		return true;
+        return eventsAppended;
 	}
 
 	@Override
@@ -63,8 +55,12 @@ public class MemBufWriter extends TestCase implements Writer {
 		return null;
 	}
 
-	public EventStream getCollectedSamples() throws IOException {
+	public ArrayListEventStream getCollectedSamples() throws IOException {
 		return buf;
+	}
+
+	public void clear() {
+		buf = initBuffer(pvName, dbrType);
 	}
 
 }

@@ -8,9 +8,8 @@
 package org.epics.archiverappliance.retrieval;
 
 
-import java.io.OutputStream;
-import java.sql.Timestamp;
-
+import com.google.protobuf.InvalidProtocolBufferException;
+import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -21,9 +20,8 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.mimeresponses.ExceptionCommunicator;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 
-import com.google.protobuf.InvalidProtocolBufferException;
-
-import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
+import java.io.OutputStream;
+import java.time.Instant;
 
 /**
  * Implementation of the Merge/Dedup algorithm for combining EventStreams into one EventStream.
@@ -32,12 +30,12 @@ import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
  */
 class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 	private static Logger logger = LogManager.getLogger(MergeDedupConsumer.class.getName());
-	private Timestamp startTimeStamp;
+    private Instant startTimeStamp;
 	int totalEvents = 0;
 	int skippedEvents = 0;
 	int comparedEvents = 0;
 	OutputStream os = null;
-	private Timestamp timestampOfLastEvent;
+    private Instant timestampOfLastEvent;
 	boolean amIDeduping = false;
 	boolean haveIpushedTheFirstEvent = false;
 	Event firstEvent = null;
@@ -105,8 +103,8 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 			logger.debug("Exception closing response", t);
 		}
 	}
-	
-	public void processingPV(BasicContext retrievalContext, String PV, Timestamp start, Timestamp end, EventStreamDesc streamDesc) {
+
+    public void processingPV(BasicContext retrievalContext, String PV, Instant start, Instant end, EventStreamDesc streamDesc) {
 		pushRemainingEvents();
 		logNumbersAndCollectTotal();
 		this.startTimeStamp = start;
@@ -128,8 +126,8 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 						continue;
 					}
 					
-					if(!haveIpushedTheFirstEvent) { 
-						if(e.getEventTimeStamp().before(this.startTimeStamp) || e.getEventTimeStamp().equals(this.startTimeStamp)) {
+					if(!haveIpushedTheFirstEvent) {
+                        if (e.getEventTimeStamp().isBefore(this.startTimeStamp) || e.getEventTimeStamp().equals(this.startTimeStamp)) {
 							logger.debug("Making a copy of another event " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 							firstEvent = e.makeClone();
 							continue;
@@ -139,7 +137,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 							mimeresponse.consumeEvent(firstEvent);
 							timestampOfLastEvent = firstEvent.getEventTimeStamp();
 							totalEvents++;
-							if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+                            if (!e.getEventTimeStamp().isAfter(timestampOfLastEvent)) {
 								logger.debug("After sending first event, current event is not after the first event. Skipping " + TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
 								skippedEvents++;
 								continue;
@@ -154,7 +152,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 					
 					if(amIDeduping) {
 						comparedEvents++;
-						if(!e.getEventTimeStamp().after(timestampOfLastEvent)) {
+                        if (!e.getEventTimeStamp().isAfter(timestampOfLastEvent)) {
 							skippedEvents++;
 							continue;
 						} else {
@@ -202,7 +200,7 @@ class MergeDedupConsumer implements EventStreamConsumer, AutoCloseable {
 		totalEvents = 0;
 		skippedEvents = 0;
 		comparedEvents = 0;
-		timestampOfLastEvent = new Timestamp(Long.MIN_VALUE);
+        timestampOfLastEvent = Instant.ofEpochMilli(Long.MIN_VALUE);
 		amIDeduping = false;
 		firstEvent = null;
 		haveIpushedTheFirstEvent = false;

@@ -1,11 +1,5 @@
 package org.epics.archiverappliance.etl;
 
-import java.io.IOException;
-import java.sql.Timestamp;
-import java.util.LinkedList;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
@@ -15,6 +9,12 @@ import org.epics.archiverappliance.etl.common.ETLJob;
 import org.epics.archiverappliance.etl.common.ETLMetricsForLifetime;
 import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.util.LinkedList;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Run ETLs for one PV; mostly for unit tests..
@@ -27,10 +27,10 @@ public class ETLExecutor {
 	/**
 	 * This should only be called from within unit tests...
 	 * @param configService  ConfigService 
-	 * @param timeETLruns Timestamp
+     * @param timeETLruns Instant
 	 * @throws IOException  &emsp;
 	 */
-	public static void runETLs(ConfigService configService, Timestamp timeETLruns) throws IOException {
+    public static void runETLs(ConfigService configService, Instant timeETLruns) throws IOException {
 		for(String pvName : configService.getPVsForThisAppliance()) {
 			logger.debug("Running ETL for " + pvName);
 			LinkedList<ETLPVLookupItems> lookupItems = configService.getETLLookup().getLookupItemsForPV(pvName);
@@ -48,12 +48,12 @@ public class ETLExecutor {
 	 * Run ETL for one PV until one storage; used in consolidate...
 	 * Make sure that the regular ETL has been paused..
 	 * @param configService ConfigService  
-	 * @param timeETLruns Timestamp
+     * @param timeETLruns Instant
 	 * @param pvName The name of PV.
 	 * @param storageName   &emsp;
 	 * @throws IOException  &emsp;
 	 */
-	public static void runPvETLsBeforeOneStorage(final ConfigService configService, final Timestamp timeETLruns,final String pvName,final String storageName) throws IOException {
+    public static void runPvETLsBeforeOneStorage(final ConfigService configService, final Instant timeETLruns, final String pvName, final String storageName) throws IOException {
 		PBThreeTierETLPVLookup etlLookup = configService.getETLLookup();
 		LinkedList<ETLPVLookupItems> lookupItems = etlLookup.getLookupItemsForPV(pvName);
 		if(lookupItems != null && !lookupItems.isEmpty()) { 

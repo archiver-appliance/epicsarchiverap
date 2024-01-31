@@ -7,6 +7,11 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ByteArray;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
+
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
@@ -14,11 +19,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
-import org.epics.archiverappliance.utils.nio.ArchPaths;
 
 /**
  * This class wraps a RandomAccessFile and returns byte arrays separated by lines.
@@ -29,7 +29,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
  *
  */
 public class LineByteStream implements Closeable {
-	private static Logger logger = LogManager.getLogger(LineByteStream.class.getName());
+	private static final Logger logger = LogManager.getLogger(LineByteStream.class.getName());
 	public static int MAX_LINE_SIZE = 16 * 1024;
 	public static int MAX_ITERATIONS_TO_DETERMINE_LINE = 16 * 1024;
 	private SeekableByteChannel byteChannel = null;

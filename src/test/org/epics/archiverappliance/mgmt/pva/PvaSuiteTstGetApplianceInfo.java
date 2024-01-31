@@ -1,10 +1,7 @@
 package org.epics.archiverappliance.mgmt.pva;
 
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-
-import org.epics.archiverappliance.IntegrationTests;
-import org.epics.archiverappliance.LocalEpicsTests;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetApplianceInfo;
 import org.epics.pva.client.PVAChannel;
@@ -12,16 +9,15 @@ import org.epics.pva.client.PVAClient;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATable;
 import org.epics.pva.data.nt.PVAURI;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Test the pvAccess mgmt service's ability to start archiving a pv
@@ -29,14 +25,15 @@ import static org.junit.Assert.fail;
  * @author Kunal Shroff
  *
  */
-@Category({IntegrationTests.class, LocalEpicsTests.class})
+@Tag("integration")@Tag("localEpics")
 public class PvaSuiteTstGetApplianceInfo {
 
 	private static final Logger logger = LogManager.getLogger(PvaSuiteTstGetApplianceInfo.class.getName());
 
 	private static PVAClient pvaClient;
 	private static PVAChannel pvaChannel;
-	@BeforeClass
+
+	@BeforeAll
 	public static void setup() throws Exception {
 		pvaClient = new PVAClient();
 		pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
@@ -44,7 +41,7 @@ public class PvaSuiteTstGetApplianceInfo {
 
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanup() {
 
 		pvaChannel.close();
@@ -76,11 +73,11 @@ public class PvaSuiteTstGetApplianceInfo {
 					"http://localhost:17665/retrieval/bpl",
 					"http://localhost:17665/etl/bpl"};
 			logger.info("results" + result.toString());
-			assertArrayEquals(expextedKeys, NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("Key")));
-			assertArrayEquals(expectedValues, NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("Value")));
+            Assertions.assertArrayEquals(expextedKeys, NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("Key")));
+            Assertions.assertArrayEquals(expectedValues, NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("Value")));
 		} catch (Exception e) {
 			e.printStackTrace();
-			fail(e.getMessage());
+			Assertions.fail(e.getMessage());
 		}
 	}	
 }
