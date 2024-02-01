@@ -214,7 +214,17 @@ function quickChartButton(dataobject) {
 			dataType: 'json',
 			async: false,
 			success: function(data, textStatus, jqXHR) {
-				dataRetrievalURL = data.dataRetrievalURL;
+				if (data.retrievalPublicHostURL != null && data.retrievalPublicHostURL != "") {
+					dataRetrievalURL = data.retrievalPublicHostURL;
+				}
+				else {
+					dataRetrievalURL = data.dataRetrievalURL;
+	                if (dataRetrievalURL.includes('localhost') || dataRetrievalURL.includes('127.0.0.1')) {
+	                    if (window.location.hostname != 'localhost' && window.location.hostname != '127.0.0.1') {
+	                        dataRetrievalURL = dataRetrievalURL.replace('localhost', window.location.hostname);
+	                    }
+	                }
+				}
 			},
 			error: function(jqXHR, textStatus, errorThrown) {
 				alert("An error occured on the server while getting the appliance information -- " + textStatus + " -- " + errorThrown);

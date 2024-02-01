@@ -22,6 +22,7 @@ public class ApplianceInfo implements Serializable {
 	private String engineURL;
 	private String retrievalURL;
 	private String etlURL;
+	private String retrievalPublicHostURL;
 	/**
 	 * Separating out the data retrieval URL that is used by clients (for example, ArchiverViewer) to get archiver data from the system allows us to have load balancers in front of the cluster.
 	 * This is not used for internal business logic and is principally used in data retrieval contexts.  
@@ -29,7 +30,7 @@ public class ApplianceInfo implements Serializable {
 	private String dataRetrievalURL;
 	private String clusterInetPort;
 	
-	public ApplianceInfo(String identity, String mgmtURL, String engineURL, String retrievalURL, String etlURL, String clusterInetPort, String dataRetrievalURL) {
+	public ApplianceInfo(String identity, String mgmtURL, String engineURL, String retrievalURL, String etlURL, String clusterInetPort, String dataRetrievalURL, String retrievalPublicHostURL) {
 		super();
 		this.identity = identity;
 		this.mgmtURL = mgmtURL;
@@ -38,6 +39,11 @@ public class ApplianceInfo implements Serializable {
 		this.etlURL = etlURL;
 		this.clusterInetPort = clusterInetPort;
 		this.dataRetrievalURL = dataRetrievalURL;
+		this.retrievalPublicHostURL = retrievalPublicHostURL;
+	}
+
+	public ApplianceInfo(String identity, String mgmtURL, String engineURL, String retrievalURL, String etlURL, String clusterInetPort, String dataRetrievalURL) {
+		this(identity, mgmtURL, engineURL, retrievalURL, etlURL, clusterInetPort, dataRetrievalURL, "");
 	}
 
 	/**
@@ -62,6 +68,14 @@ public class ApplianceInfo implements Serializable {
 	 */
 	public String getRetrievalURL() {
 		return retrievalURL;
+	}
+	
+	/**
+	 * Get the retrieval URL for this appliance
+	 * @return retrievalURL The retrieval URL
+	 */
+	public String getRetrievalPublicHostURL() {
+		return retrievalPublicHostURL;
 	}
 	
 	/**

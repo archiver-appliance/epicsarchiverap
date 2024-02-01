@@ -56,7 +56,8 @@ public class AppliancesList {
             	String etl_url = getChildNodeTextContent(applianceNode, "etl_url", i);
             	String retrieval_url = getChildNodeTextContent(applianceNode, "retrieval_url", i);
             	String data_retrieval_url = getChildNodeTextContent(applianceNode, "data_retrieval_url", i);
-            	ApplianceInfo applianceInfo = new ApplianceInfo(identity, mgmt_url, engine_url, retrieval_url, etl_url, cluster_inetport, data_retrieval_url);
+            	String retrieval_public_host_url = tryGetChildNodeTextContent(applianceNode, "retrieval_public_host_url", i);
+            	ApplianceInfo applianceInfo = new ApplianceInfo(identity, mgmt_url, engine_url, retrieval_url, etl_url, cluster_inetport, data_retrieval_url, retrieval_public_host_url);
             	if(appliancesList.containsKey(identity)) { 
         			String msg = "We have more than one appliance with identity " + identity + ". This is probably a cut and paste typo; please fix this.";
 					logger.fatal(msg);
@@ -107,7 +108,7 @@ public class AppliancesList {
 	}
 	
 	/**
-	 * Gets the test content of the specified element.
+	 * Gets the text content of the specified element.
 	 * Not super efficient, but serves the purpose for this usecase.
 	 * @param node &emsp;
 	 * @param elementName The name of the specified element
@@ -124,5 +125,25 @@ public class AppliancesList {
 			}
 		}
 		throw new IOException("Cannot determine " + elementName + " for appliance " + applianceNum + " in appliances.xml ");
+	}
+
+	/**
+	 * Try to get the text content of the specified element.
+	 * @param node &emsp;
+	 * @param elementName The name of the specified element
+	 * @param applianceNum The number of appliances
+	 * @return ChildNodeTextContent &emsp;
+	 * @throws IOException &emsp;
+	 */
+	private static String tryGetChildNodeTextContent(Node node, String elementName, int applianceNum) {
+		String text = "";
+		try {
+			text = getChildNodeTextContent(node, elementName, applianceNum);
+		}
+		catch(IOException ex) {
+			logger.info(ex.toString());
+		}
+		
+		return text;
 	}
 }
