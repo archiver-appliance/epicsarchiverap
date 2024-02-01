@@ -37,44 +37,44 @@ public class AppliancesList {
 	public static HashMap<String, ApplianceInfo> loadAppliancesXML(ServletContext servletContext) throws IOException, ConfigException {
 		HashMap<String, ApplianceInfo> appliancesList = new HashMap<String, ApplianceInfo>();
 		try(InputStream appliancesXMLInputStream = determineApplianceXMLFileAndReturnStream(servletContext)) {
-            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Document doc = docBuilder.parse (appliancesXMLInputStream);
+			DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+			DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
+			Document doc = docBuilder.parse (appliancesXMLInputStream);
 
-            NodeList applianceList = doc.getElementsByTagName("appliance");
-            int totalAppliances = applianceList.getLength();
-            logger.debug("Found " + totalAppliances + " appliances in appliances.xml");
-            
-            HashSet<String> allInetPorts = new HashSet<String>();
-            
-            for(int i = 0; i < totalAppliances; i++) {
-            	Node applianceNode = applianceList.item(i);
-            	String identity = getChildNodeTextContent(applianceNode, "identity", i);
-            	String cluster_inetport = getChildNodeTextContent(applianceNode, "cluster_inetport", i);
-            	String mgmt_url = getChildNodeTextContent(applianceNode, "mgmt_url", i);
-            	String engine_url = getChildNodeTextContent(applianceNode, "engine_url", i);
-            	String etl_url = getChildNodeTextContent(applianceNode, "etl_url", i);
-            	String retrieval_url = getChildNodeTextContent(applianceNode, "retrieval_url", i);
-            	String data_retrieval_url = getChildNodeTextContent(applianceNode, "data_retrieval_url", i);
-            	String retrieval_public_host_url = tryGetChildNodeTextContent(applianceNode, "retrieval_public_host_url", i);
-            	ApplianceInfo applianceInfo = new ApplianceInfo(identity, mgmt_url, engine_url, retrieval_url, etl_url, cluster_inetport, data_retrieval_url, retrieval_public_host_url);
-            	if(appliancesList.containsKey(identity)) { 
-        			String msg = "We have more than one appliance with identity " + identity + ". This is probably a cut and paste typo; please fix this.";
+			NodeList applianceList = doc.getElementsByTagName("appliance");
+			int totalAppliances = applianceList.getLength();
+			logger.debug("Found " + totalAppliances + " appliances in appliances.xml");
+			
+			HashSet<String> allInetPorts = new HashSet<String>();
+			
+			for(int i = 0; i < totalAppliances; i++) {
+				Node applianceNode = applianceList.item(i);
+				String identity = getChildNodeTextContent(applianceNode, "identity", i);
+				String cluster_inetport = getChildNodeTextContent(applianceNode, "cluster_inetport", i);
+				String mgmt_url = getChildNodeTextContent(applianceNode, "mgmt_url", i);
+				String engine_url = getChildNodeTextContent(applianceNode, "engine_url", i);
+				String etl_url = getChildNodeTextContent(applianceNode, "etl_url", i);
+				String retrieval_url = getChildNodeTextContent(applianceNode, "retrieval_url", i);
+				String data_retrieval_url = getChildNodeTextContent(applianceNode, "data_retrieval_url", i);
+				String retrieval_public_host_url = tryGetChildNodeTextContent(applianceNode, "retrieval_public_host_url", i);
+				ApplianceInfo applianceInfo = new ApplianceInfo(identity, mgmt_url, engine_url, retrieval_url, etl_url, cluster_inetport, data_retrieval_url, retrieval_public_host_url);
+				if(appliancesList.containsKey(identity)) { 
+					String msg = "We have more than one appliance with identity " + identity + ". This is probably a cut and paste typo; please fix this.";
 					logger.fatal(msg);
 					throw new ConfigException(msg);
-            	}
-            	appliancesList.put(identity, applianceInfo);
-            	
-            	if(!cluster_inetport.startsWith("localhost")) { 
-            		if(allInetPorts.contains(cluster_inetport)) { 
-            			String msg = "When adding appliance with identity " + identity + ", we already have another appliance with the same cluster_inetport " + cluster_inetport + ". This is probably a cut and paste typo.";
+				}
+				appliancesList.put(identity, applianceInfo);
+				
+				if(!cluster_inetport.startsWith("localhost")) { 
+					if(allInetPorts.contains(cluster_inetport)) { 
+						String msg = "When adding appliance with identity " + identity + ", we already have another appliance with the same cluster_inetport " + cluster_inetport + ". This is probably a cut and paste typo.";
 						logger.fatal(msg);
 						throw new ConfigException(msg);
-            		} else { 
-            			allInetPorts.add(cluster_inetport);
-            		}
-            	}
-            }
+					} else { 
+						allInetPorts.add(cluster_inetport);
+					}
+				}
+			}
 		} catch(Exception ex) {
 			throw new IOException("Exception parsing appliance.xml", ex);
 		}
