@@ -11,110 +11,126 @@ import java.io.Serializable;
 
 /**
  * Information specific to an appliance
- * 
+ *
  * @author mshankar
  *
  */
 public class ApplianceInfo implements Serializable {
-	private static final long serialVersionUID = -1271146670886769541L;
-	private String identity;
-	private String mgmtURL;
-	private String engineURL;
-	private String retrievalURL;
-	private String etlURL;
-	private String retrievalPublicHostURL;
-	/**
-	 * Separating out the data retrieval URL that is used by clients (for example, ArchiverViewer) to get archiver data from the system allows us to have load balancers in front of the cluster.
-	 * This is not used for internal business logic and is principally used in data retrieval contexts.  
-	 */
-	private String dataRetrievalURL;
-	private String clusterInetPort;
-	
-	public ApplianceInfo(String identity, String mgmtURL, String engineURL, String retrievalURL, String etlURL, String clusterInetPort, String dataRetrievalURL, String retrievalPublicHostURL) {
-		super();
-		this.identity = identity;
-		this.mgmtURL = mgmtURL;
-		this.engineURL = engineURL;
-		this.retrievalURL = retrievalURL;
-		this.etlURL = etlURL;
-		this.clusterInetPort = clusterInetPort;
-		this.dataRetrievalURL = dataRetrievalURL;
-		this.retrievalPublicHostURL = retrievalPublicHostURL;
-	}
+    private static final long serialVersionUID = -1271146670886769541L;
+    private String identity;
+    private String mgmtURL;
+    private String engineURL;
+    private String retrievalURL;
+    private String etlURL;
+    private String retrievalPublicHostURL;
+    /**
+     * Separating out the data retrieval URL that is used by clients (for example, ArchiverViewer) to get archiver data from the system allows us to have load balancers in front of the cluster.
+     * This is not used for internal business logic and is principally used in data retrieval contexts.
+     */
+    private String dataRetrievalURL;
 
-	public ApplianceInfo(String identity, String mgmtURL, String engineURL, String retrievalURL, String etlURL, String clusterInetPort, String dataRetrievalURL) {
-		this(identity, mgmtURL, engineURL, retrievalURL, etlURL, clusterInetPort, dataRetrievalURL, "");
-	}
+    private String clusterInetPort;
 
-	/**
-	 * Get the management URL for this appliance
-	 * @return mgmtURL The management URL
-	 */
-	public String getMgmtURL() {
-		return mgmtURL;
-	}
+    public ApplianceInfo(
+            String identity,
+            String mgmtURL,
+            String engineURL,
+            String retrievalURL,
+            String etlURL,
+            String clusterInetPort,
+            String dataRetrievalURL,
+            String retrievalPublicHostURL) {
+        super();
+        this.identity = identity;
+        this.mgmtURL = mgmtURL;
+        this.engineURL = engineURL;
+        this.retrievalURL = retrievalURL;
+        this.etlURL = etlURL;
+        this.clusterInetPort = clusterInetPort;
+        this.dataRetrievalURL = dataRetrievalURL;
+        this.retrievalPublicHostURL = retrievalPublicHostURL;
+    }
 
-	/**
-	 * Get the engine URL for this appliance
-	 * @return engineURL The engine URL
-	 */
-	public String getEngineURL() {
-		return engineURL;
-	}
-	
-	/**
-	 * Get the retrieval URL for this appliance
-	 * @return retrievalURL The retrieval URL
-	 */
-	public String getRetrievalURL() {
-		return retrievalURL;
-	}
-	
-	/**
-	 * Get the retrieval URL for this appliance
-	 * @return retrievalURL The retrieval URL
-	 */
-	public String getRetrievalPublicHostURL() {
-		return retrievalPublicHostURL;
-	}
-	
-	/**
-	 * Get the ETL URL for this appliance
-	 * @return etlURL The ETL URL
-	 */
-	public String getEtlURL() {
-		return etlURL;
-	}
+    public ApplianceInfo(
+            String identity,
+            String mgmtURL,
+            String engineURL,
+            String retrievalURL,
+            String etlURL,
+            String clusterInetPort,
+            String dataRetrievalURL) {
+        this(identity, mgmtURL, engineURL, retrievalURL, etlURL, clusterInetPort, dataRetrievalURL, "");
+    }
 
-	/**
-	 * The identity of this appliance.
-	 * @return identify The appliance identity
-	 */
-	public String getIdentity() {
-		return identity;
-	}
+    /**
+     * Get the management URL for this appliance
+     * @return mgmtURL The management URL
+     */
+    public String getMgmtURL() {
+        return mgmtURL;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		ApplianceInfo other = (ApplianceInfo) obj;
-		return this.identity.equals(other.identity);
-	}
+    /**
+     * Get the engine URL for this appliance
+     * @return engineURL The engine URL
+     */
+    public String getEngineURL() {
+        return engineURL;
+    }
 
-	@Override
-	public int hashCode() {
-		return identity.hashCode();
-	}
+    /**
+     * Get the retrieval URL for this appliance
+     * @return retrievalURL The retrieval URL
+     */
+    public String getRetrievalURL() {
+        return retrievalURL;
+    }
 
-	/**
-	 * Returns the IP:port that is used for clustering.
-	 * For example, this could be localhost:16670 or archiver:17670 etc
-	 * @return clusterInetPort The IP:port for cluster
-	 */
-	public String getClusterInetPort() {
-		return clusterInetPort;
-	}
+    /**
+     * Get the retrieval URL for this appliance
+     * @return retrievalURL The retrieval URL
+     */
+    public String getRetrievalPublicHostURL() {
+        return retrievalPublicHostURL;
+    }
 
-	public String getDataRetrievalURL() {
-		return dataRetrievalURL;
-	}
+    /**
+     * Get the ETL URL for this appliance
+     * @return etlURL The ETL URL
+     */
+    public String getEtlURL() {
+        return etlURL;
+    }
+
+    /**
+     * The identity of this appliance.
+     * @return identify The appliance identity
+     */
+    public String getIdentity() {
+        return identity;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        ApplianceInfo other = (ApplianceInfo) obj;
+        return this.identity.equals(other.identity);
+    }
+
+    @Override
+    public int hashCode() {
+        return identity.hashCode();
+    }
+
+    /**
+     * Returns the IP:port that is used for clustering.
+     * For example, this could be localhost:16670 or archiver:17670 etc
+     * @return clusterInetPort The IP:port for cluster
+     */
+    public String getClusterInetPort() {
+        return clusterInetPort;
+    }
+
+    public String getDataRetrievalURL() {
+        return dataRetrievalURL;
+    }
 }
