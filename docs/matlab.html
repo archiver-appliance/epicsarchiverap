@@ -1,58 +1,86 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />	
-<title>EPICS Archiver Appliance - Matlab Integration</title>
-</head>
-<body>
-<!-- Header starts here -->
- <nav class="navbar navbar-inverse">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
-    </div>
-    <div>
-      <ul id="mainNavBar" class="nav navbar-nav">
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-		<li><a href="details.html">Details</a></li>
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-		<li><a href="quickstart.html">Quickstart</a></li>
-		<li><a href="installguide.html">Installation</a></li>
-		<li><a href="userguide.html">User Guide</a></li>
-		<li><a href="customization.html">Customize</a></li>
-		<li><a href="developersguide.html">Developers</a></li>
-		<li><a href="admin.html">Admin</a></li>
-		<li><a href="api/index.html">Javadoc</a></li>
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-		<li><a href="faq.html">FAQ</a></li>
-		<li><a href="license.html">License</a></li>
-	  </ul>
-	  <ul class="nav navbar-nav navbar-right">
-   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
-	  </ul>
-    </div>
-  </div>
-</nav>
-<!-- Header ends here -->
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+    <link type="text/css" href="docs.css" rel="Stylesheet" />
+    <title>EPICS Archiver Appliance - Matlab Integration</title>
+  </head>
+  <body>
+    <!-- Header starts here -->
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="index.html"
+            >The EPICS Archiver Appliance</a
+          >
+        </div>
+        <div>
+          <ul id="mainNavBar" class="nav navbar-nav">
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/wiki"
+                >News</a
+              >
+            </li>
+            <li><a href="details.html">Details</a></li>
+            <li>
+              <a
+                href="https://github.com/slacmshankar/epicsarchiverap/releases/"
+                >Download</a
+              >
+            </li>
+            <li><a href="quickstart.html">Quickstart</a></li>
+            <li><a href="installguide.html">Installation</a></li>
+            <li><a href="userguide.html">User Guide</a></li>
+            <li><a href="customization.html">Customize</a></li>
+            <li><a href="developersguide.html">Developers</a></li>
+            <li><a href="admin.html">Admin</a></li>
+            <li><a href="api/index.html">Javadoc</a></li>
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/issues"
+                >Issues</a
+              >
+            </li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="license.html">License</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <img
+                style="margin-top: -45px"
+                src="images/Icon_Mathematical_Plot.png"
+              />
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <!-- Header ends here -->
 
-<div class="container">
+    <div class="container">
+      <section>
+        <h3>Retrieving data using Matlab</h3>
+        The EPICS Archiver Appliance support multiple MIME-types when retrieving
+        data and one of the supported MIME-types is the Matlab file format. The
+        process of getting archive data into Matlab consists of
+        <ol>
+          <li>
+            Constructing a URL to the server. See
+            <a href="userguide.html#retrieval_url_formula">this</a> section on
+            for the URL format for data retrieval.
+          </li>
+          <li>
+            Using <code>urlwrite</code> to download data from this URL into a
+            file.
+          </li>
+          <li>Loading this file into Matlab.</li>
+        </ol>
 
-<section>
-<h3>Retrieving data using Matlab</h3>
-The EPICS Archiver Appliance support multiple MIME-types when retrieving data and one of the supported MIME-types is the Matlab file format.
-The process of getting archive data into Matlab consists of
-<ol>
-<li>Constructing a URL to the server. See <a href="userguide.html#retrieval_url_formula">this</a> section on for the URL format for data retrieval.</li>
-<li>Using <code>urlwrite</code> to download data from this URL into a file.</li>
-<li>Loading this file into Matlab.</li>
-</ol>
+        Here's some sample code that is used to get the data for PV
+        <code>VPIO:IN20:111:VRAW</code>
 
-Here's some sample code that is used to get the data for PV <code>VPIO:IN20:111:VRAW</code>
-
-<pre>
+        <pre>
 <code>
 urlwrite('http://test-arch.slac.stanford.edu:17668/retrieval/data/getData.mat', ...
 	'temp.mat', 'get', ...
@@ -74,31 +102,55 @@ data
 </code>
 </pre>
 
-Here's a screenshot of this sample code being executed in a Matlab environment.
-<figure>
-<img class="img-responsive" src="images/matlab1.png"/>
-</figure> 
-</section>
-<div>
-The <code>.mat</code> response contains two objects, a header and a data object.
-<ul>
- <li>The header object is indexed by the string <code>header</code> and is a MLStructure with fields containing some provenance information.</li>
- <li>The data object is indexed by the string <code>data</code> and is a MLStructure with these fields.
- <ol>
- <li><code>epochSeconds</code> - contains Java epoch seconds as a 1x1 uint64 array. The times are in UTC; so any conversion to local time needs to happen at the client.</li>
- <li><code>values</code> - contains the values for the samples. All scalars come as a 1x1 double array. Waveforms come as a 1x<i>elementcount</i> double array where <i>elementcount</i> is the EPICS element count of the waveform.</li>
- <li><code>nanos</code> - contains the nano second value of the EPICS record processing timestamp as a 1x1 uint64 array. Some installations embed the beam code/pulse id into this field.</li>
- <li><code>isDST</code> - contains booleans that indicate if the time indicated by <code>epochSeconds</code> was in daylight savings time in the timezone of the server.</li>
- </ol>
- </li>
- </ul>
-</div>
+        Here's a screenshot of this sample code being executed in a Matlab
+        environment.
+        <figure>
+          <img class="img-responsive" src="images/matlab1.png" />
+        </figure>
+      </section>
+      <div>
+        The <code>.mat</code> response contains two objects, a header and a data
+        object.
+        <ul>
+          <li>
+            The header object is indexed by the string <code>header</code> and
+            is a MLStructure with fields containing some provenance information.
+          </li>
+          <li>
+            The data object is indexed by the string <code>data</code> and is a
+            MLStructure with these fields.
+            <ol>
+              <li>
+                <code>epochSeconds</code> - contains Java epoch seconds as a 1x1
+                uint64 array. The times are in UTC; so any conversion to local
+                time needs to happen at the client.
+              </li>
+              <li>
+                <code>values</code> - contains the values for the samples. All
+                scalars come as a 1x1 double array. Waveforms come as a 1x<i
+                  >elementcount</i
+                >
+                double array where <i>elementcount</i> is the EPICS element
+                count of the waveform.
+              </li>
+              <li>
+                <code>nanos</code> - contains the nano second value of the EPICS
+                record processing timestamp as a 1x1 uint64 array. Some
+                installations embed the beam code/pulse id into this field.
+              </li>
+              <li>
+                <code>isDST</code> - contains booleans that indicate if the time
+                indicated by <code>epochSeconds</code> was in daylight savings
+                time in the timezone of the server.
+              </li>
+            </ol>
+          </li>
+        </ul>
+      </div>
+    </div>
 
-</div>
-
-<script src="js/jquery/1.11.3/jquery.min.js"></script>
-<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
-<script src="js/arch/docs.js"></script>
-
-</body>
+    <script src="js/jquery/1.11.3/jquery.min.js"></script>
+    <script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+    <script src="js/arch/docs.js"></script>
+  </body>
 </html>

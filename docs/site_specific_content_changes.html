@@ -1,78 +1,126 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+    <link type="text/css" href="docs.css" rel="Stylesheet" />
 
-<title>EPICS Archiver Appliance - Making simple site-specific content changes</title>
-<style type="text/css">
-span.tag {
-	color: #A65200;
-}
+    <title>
+      EPICS Archiver Appliance - Making simple site-specific content changes
+    </title>
+    <style type="text/css">
+      span.tag {
+        color: #a65200;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header starts here -->
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="index.html"
+            >The EPICS Archiver Appliance</a
+          >
+        </div>
+        <div>
+          <ul id="mainNavBar" class="nav navbar-nav">
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/wiki"
+                >News</a
+              >
+            </li>
+            <li><a href="details.html">Details</a></li>
+            <li>
+              <a
+                href="https://github.com/slacmshankar/epicsarchiverap/releases/"
+                >Download</a
+              >
+            </li>
+            <li><a href="quickstart.html">Quickstart</a></li>
+            <li><a href="installguide.html">Installation</a></li>
+            <li><a href="userguide.html">User Guide</a></li>
+            <li><a href="customization.html">Customize</a></li>
+            <li><a href="developersguide.html">Developers</a></li>
+            <li><a href="admin.html">Admin</a></li>
+            <li><a href="api/index.html">Javadoc</a></li>
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/issues"
+                >Issues</a
+              >
+            </li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="license.html">License</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <img
+                style="margin-top: -45px"
+                src="images/Icon_Mathematical_Plot.png"
+              />
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <!-- Header ends here -->
 
-</style>	
-</head>
-<body>
-<!-- Header starts here -->
- <nav class="navbar navbar-inverse">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
-    </div>
-    <div>
-      <ul id="mainNavBar" class="nav navbar-nav">
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-		<li><a href="details.html">Details</a></li>
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-		<li><a href="quickstart.html">Quickstart</a></li>
-		<li><a href="installguide.html">Installation</a></li>
-		<li><a href="userguide.html">User Guide</a></li>
-		<li><a href="customization.html">Customize</a></li>
-		<li><a href="developersguide.html">Developers</a></li>
-		<li><a href="admin.html">Admin</a></li>
-		<li><a href="api/index.html">Javadoc</a></li>
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-		<li><a href="faq.html">FAQ</a></li>
-		<li><a href="license.html">License</a></li>
-	  </ul>
-	  <ul class="nav navbar-nav navbar-right">
-   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
-	  </ul>
-    </div>
-  </div>
-</nav>
-<!-- Header ends here -->
+    <div class="container">
+      <section>
+        <h3>Making simple site-specific content changes</h3>
+        <div>
+          While the <a href="customization.html">Customization Guide</a> has
+          details on a more flexible mechanism to customize the EPICS archiver
+          appliance on a per-site basis, often what is required is a simple
+          replacement of the images and text that are on the various pages. This
+          can be done after unpacking the WAR file during deployment. The
+          <code>quickstart.sh</code> and
+          <code>single_machine_install.sh</code> scripts has some sample code
+          that does this that can be used as a starting point.
+          <ul>
+            <li>
+              These rely on the presence of a folder
+              <code>site_specific_content</code> in the deployment folder.
+            </li>
+            <li>
+              All images in the folder <code>site_specific_content/img</code> is
+              copied into the mgmt webapp's <code>ui/comm/img</code> folder and
+              can be used for site logos and so on.
+            </li>
+            <li>
+              The
+              <a
+                href="api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html"
+                >SyncStaticContentHeadersFooters</a
+              >
+              is run on a file called <code>template_changes.html</code>
+            </li>
+          </ul>
+        </div>
 
-<div class="container">
-
-<section>
-<h3>Making simple site-specific content changes</h3>
-<div>
-While the <a href="customization.html">Customization Guide</a> has details on a more flexible mechanism to customize the EPICS archiver appliance on a per-site basis, often what is required is a simple replacement of the images and text that are on the various pages. 
-This can be done after unpacking the WAR file during deployment.
-The <code>quickstart.sh</code> and <code>single_machine_install.sh</code> scripts has some sample code that does this that can be used as a starting point.
-<ul>
-<li>These rely on the presence of a folder <code>site_specific_content</code> in the deployment folder.</li>
-<li>All images in the folder <code>site_specific_content/img</code> is copied into the mgmt webapp's <code>ui/comm/img</code> folder and can be used for site logos and so on.</li>
-<li>The <a href="api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html">SyncStaticContentHeadersFooters</a> is run on a file called <code>template_changes.html</code></li>
-</ul> 
-</div>
-
-<div>
-At a high level, after unzipping the <code>mgmt.war</code> into the Tomcat <code>webapps</code> folder, one can replace/modify the files to implement some simple content changes.
-The various HTML files that comprise the UI have sections delimited by special tags. For example, the home page has
-<pre>
+        <div>
+          At a high level, after unzipping the <code>mgmt.war</code> into the
+          Tomcat <code>webapps</code> folder, one can replace/modify the files
+          to implement some simple content changes. The various HTML files that
+          comprise the UI have sections delimited by special tags. For example,
+          the home page has
+          <pre>
 <code>
 <span class="tag">&lt;!-- @begin(site_contact_text) --&gt;</span>
 This is the archiver appliance management console for the ... 
 <span class="tag">&lt;!-- @end(site_contact_text) --&gt;</span>
 </code>
 </pre>
-The simple java utility <a href="api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html">SyncStaticContentHeadersFooters</a> can be used to replace content between these tags based on a master template. 
-For example, create a master temple in <code>/tmp/master_template.html</code> that looks like so
-<pre>
+          The simple java utility
+          <a
+            href="api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html"
+            >SyncStaticContentHeadersFooters</a
+          >
+          can be used to replace content between these tags based on a master
+          template. For example, create a master temple in
+          <code>/tmp/master_template.html</code> that looks like so
+          <pre>
 <code>
 <span class="tag">&lt;!-- @begin(site_header) --&gt;</span>
 &lt;div class="pageheader" style="background-image:url('comm/img/mylab.png'); background-size:1024px 400px;"&gt;
@@ -86,8 +134,9 @@ This is the EPICS archiver appliance management console for my site/beamline/pro
 </code>
 </pre>
 
-Then run <code>SyncStaticContentHeadersFooters</code> using <code>/tmp/master_template.html</code> as the master template like so
-<pre>
+          Then run <code>SyncStaticContentHeadersFooters</code> using
+          <code>/tmp/master_template.html</code> as the master template like so
+          <pre>
 <code>
 java -cp ${TOMCAT_HOME}/webapps/mgmt/WEB-INF/classes:${TOMCAT_HOME}/webapps/mgmt/WEB-INF/lib/log4j-1.2.17.jar \
   org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters \
@@ -95,19 +144,19 @@ java -cp ${TOMCAT_HOME}/webapps/mgmt/WEB-INF/classes:${TOMCAT_HOME}/webapps/mgmt
   ${TOMCAT_HOME}/webapps/mgmt/ui
 </code>
 </pre>
-to generate
-<figure>
-<img class="img-responsive" src="images/simple_static_content.png"/>
-</figure>
-</div>
- 
-</section>
+          to generate
+          <figure>
+            <img
+              class="img-responsive"
+              src="images/simple_static_content.png"
+            />
+          </figure>
+        </div>
+      </section>
+    </div>
 
-</div>
-
-<script src="js/jquery/1.11.3/jquery.min.js"></script>
-<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
-<script src="js/arch/docs.js"></script>
-
-</body>
+    <script src="js/jquery/1.11.3/jquery.min.js"></script>
+    <script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+    <script src="js/arch/docs.js"></script>
+  </body>
 </html>

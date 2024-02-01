@@ -1,135 +1,129 @@
-
-ul.definition { 
-	list-style: none;
+ul.definition {
+  list-style: none;
 }
 
-ul.definition span.definitionterm:after { 
-	content: " --- "; 
+ul.definition span.definitionterm:after {
+  content: " --- ";
 }
 
-figure { 
-	margin-top: 1.0em;
-	margin-bottom: 3.0em;
+figure {
+  margin-top: 1em;
+  margin-bottom: 3em;
 }
 
-figcaption { 
-	margin-top: 1.0em;
-	text-align: center;
-	font-weight: bold;
+figcaption {
+  margin-top: 1em;
+  text-align: center;
+  font-weight: bold;
 }
-
 
 img.imageshowingstep {
-	display: block;
-	margin-top: 0.25em;
-	margin-bottom: 0.25em;
+  display: block;
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
 }
 
 pre.bash_output {
-	background: black;
-	color: cyan;
-	font-family: monospace;
+  background: black;
+  color: cyan;
+  font-family: monospace;
 }
 
 span.rm_txt {
-	text-decoration: line-through;
-	font-style: italic;
-	color: red;
+  text-decoration: line-through;
+  font-style: italic;
+  color: red;
 }
 
 span.add_txt {
-	font-weight: bold; 	
-	color: orange;
+  font-weight: bold;
+  color: orange;
 }
 
-div.noteafterlist { 
-	margin-top: 0.5em;
+div.noteafterlist {
+  margin-top: 0.5em;
 }
 
-
-div.url_formula { 
-	font-size: larger;
-	font-family: monospace;
-	margin-top: 0.25em;	
+div.url_formula {
+  font-size: larger;
+  font-family: monospace;
+  margin-top: 0.25em;
 }
 
-div.url_formula #part1 { 
-	color: Maroon;
+div.url_formula #part1 {
+  color: Maroon;
 }
 
-div.url_formula #part2 { 
-	color: Navy;
+div.url_formula #part2 {
+  color: Navy;
 }
 
-div.url_formula #part3 { 
-	color: Maroon;
+div.url_formula #part3 {
+  color: Maroon;
 }
 
-div.url_formula #part4 { 
-	color: Navy;
+div.url_formula #part4 {
+  color: Navy;
 }
 
-div.para { 
-	padding-top: 1.0em;
+div.para {
+  padding-top: 1em;
 }
 
-
-.reportitle { 
-	color: Navy;
+.reportitle {
+  color: Navy;
 }
 
-span.diff { 
-	font-weight: bold;
-	background: #FFB873;
+span.diff {
+  font-weight: bold;
+  background: #ffb873;
 }
-span.term { 
-	font-weight: bold;	
+span.term {
+  font-weight: bold;
 }
-
 
 #postprocessorops {
-	border-collapse: collapse;
-	margin-top: 1.0em;
+  border-collapse: collapse;
+  margin-top: 1em;
 }
 
-#postprocessorops th, td{
-	border: thin solid black;
-	padding: 0.25em;
-	font-weight: normal;
+#postprocessorops th,
+td {
+  border: thin solid black;
+  padding: 0.25em;
+  font-weight: normal;
 }
 
 #postprocessorops th {
-	text-align: left;
-	background: #99cedb;
-	font-weight: bold;
+  text-align: left;
+  background: #99cedb;
+  font-weight: bold;
 }
 
-
 #postprocessorops tbody tr:nth-child(2n) {
-	background: #99cedb;
+  background: #99cedb;
 }
 
 #postprocessorops tbody tr td:first-child {
-	font-family: monospace;
+  font-family: monospace;
 }
 
-ol.QandA div:first-child { 
-	color: #071D70;
+ol.QandA div:first-child {
+  color: #071d70;
 }
 
 ol.QandA div:nth-child(2) {
-	text-indent: 2.0em;
-	margin-bottom: 1.0em;
+  text-indent: 2em;
+  margin-bottom: 1em;
 }
 
-ol.QandA table { 
-	border-collapse: collapse;
-	margin-top: 10px;
-	margin-bottom: 10px;
+ol.QandA table {
+  border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
-ol.QandA thead tr th { 
-	background: #99cedb;
-	border: thin solid black;
+ol.QandA thead tr th {
+  background: #99cedb;
+  border: thin solid black;
 }
-

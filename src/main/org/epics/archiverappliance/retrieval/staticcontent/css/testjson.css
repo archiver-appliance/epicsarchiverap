@@ -1,29 +1,29 @@
 body {
-	background: white;
-	margin: 0 auto;
-	padding-bottom: 50px;
-	font-family: Helvetica,Arial,'Liberation Sans',FreeSans,sans-serif;
-	font-size: 13px;
+  background: white;
+  margin: 0 auto;
+  padding-bottom: 50px;
+  font-family: Helvetica, Arial, "Liberation Sans", FreeSans, sans-serif;
+  font-size: 13px;
 }
 
 #summary {
-	padding-top: 0.5em;
-	padding-bottom: 0.5em;
-	text-align: center;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  text-align: center;
 }
 
 #pvname {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 #starttime {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 #endtime {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 #chartplaceholder {
-	margin-left: 1.0em;
+  margin-left: 1em;
 }

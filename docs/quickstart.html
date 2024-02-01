@@ -1,79 +1,113 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<link type="text/css" href="docs.css" rel="Stylesheet" />
-<title>EPICS Archiver Appliance -- Quickstart</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+    <link type="text/css" href="docs.css" rel="Stylesheet" />
+    <title>EPICS Archiver Appliance -- Quickstart</title>
+  </head>
+  <body>
+    <!-- Header starts here -->
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="index.html"
+            >The EPICS Archiver Appliance</a
+          >
+        </div>
+        <div>
+          <ul id="mainNavBar" class="nav navbar-nav">
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/wiki"
+                >News</a
+              >
+            </li>
+            <li><a href="details.html">Details</a></li>
+            <li>
+              <a
+                href="https://github.com/slacmshankar/epicsarchiverap/releases/"
+                >Download</a
+              >
+            </li>
+            <li><a href="quickstart.html">Quickstart</a></li>
+            <li><a href="installguide.html">Installation</a></li>
+            <li><a href="userguide.html">User Guide</a></li>
+            <li><a href="customization.html">Customize</a></li>
+            <li><a href="developersguide.html">Developers</a></li>
+            <li><a href="admin.html">Admin</a></li>
+            <li><a href="api/index.html">Javadoc</a></li>
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/issues"
+                >Issues</a
+              >
+            </li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="license.html">License</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <img
+                style="margin-top: -45px"
+                src="images/Icon_Mathematical_Plot.png"
+              />
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <!-- Header ends here -->
 
-</head>
-<body>
-<!-- Header starts here -->
- <nav class="navbar navbar-inverse">
-  <div class="container-fluid">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
-    </div>
-    <div>
-      <ul id="mainNavBar" class="nav navbar-nav">
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-		<li><a href="details.html">Details</a></li>
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-		<li><a href="quickstart.html">Quickstart</a></li>
-		<li><a href="installguide.html">Installation</a></li>
-		<li><a href="userguide.html">User Guide</a></li>
-		<li><a href="customization.html">Customize</a></li>
-		<li><a href="developersguide.html">Developers</a></li>
-		<li><a href="admin.html">Admin</a></li>
-		<li><a href="api/index.html">Javadoc</a></li>
-		<li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-		<li><a href="faq.html">FAQ</a></li>
-		<li><a href="license.html">License</a></li>
-	  </ul>
-	  <ul class="nav navbar-nav navbar-right">
-   	    <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
-	  </ul>
-    </div>
-  </div>
-</nav>
-<!-- Header ends here -->
+    <div class="container">
+      <h3>Quickstart Guide</h3>
+      <div id="intro">
+        The steps outlined here should get you started quickly with evaluating
+        and testing a new archiver appliance. Note,
+        <b>these steps are not meant for production deployments</b>, but are
+        meant for evaluating and getting to know the system. For more details on
+        how to deploy in a cluster or in a production environment, please see
+        the <a href="installguide.html">Installation</a> guide.
+      </div>
 
-<div class="container">
+      <section>
+        For folks familiar with deployment of WAR files, the archiver appliance
+        consists of 4 WAR files. These steps deploy these WAR files on a single
+        Tomcat JVM, set the log levels to ERROR and start the VM. To simplify
+        matters, we are not persisting configuration and therefore there are no
+        steps to define a connection pool for the configuration database.
+      </section>
 
-<h3>Quickstart Guide</h3>
-<div id="intro">
-The steps outlined here should get you started quickly with evaluating and testing a new archiver appliance.
-Note, <b>these steps are not meant for production deployments</b>, but are meant for evaluating and getting to know the system.
-For more details on how to deploy in a cluster or in a production environment, please see the <a href="installguide.html">Installation</a> guide.
-</div>
-
-<section>
-For folks familiar with deployment of WAR files, the archiver appliance consists of 4 WAR files.
-These steps deploy these WAR files on a single Tomcat JVM, set the log levels to ERROR and start the VM.
-To simplify matters, we are not persisting configuration and therefore there are no steps to define a connection pool for the configuration database.
-</section>
-
-
-<section>
-Here are the steps to get started quickly.
-<ol>
-<li>Make sure you have a recent version of JDK by running <code>java -version</code>. You should see something like so
-<pre class="bash_output"><code>[ quickstart_test ]$ java -version
+      <section>
+        Here are the steps to get started quickly.
+        <ol>
+          <li>
+            Make sure you have a recent version of JDK by running
+            <code>java -version</code>. You should see something like so
+            <pre class="bash_output"><code>[ quickstart_test ]$ java -version
 openjdk version "16" 2021-03-16
 OpenJDK Runtime Environment (build 16+36-2231)
 OpenJDK 64-Bit Server VM (build 16+36-2231, mixed mode, sharing)[ quickstart_test ]$ </code></pre>
-</li>
-<li>Download the installation package to a Linux machine into a brand new folder. This should give you a tar.gz file like <code>archappl_vx.x.x.tar.gz</code>.</li>
-<li>Download a recent version of Tomcat 9.x. into the same folder. You should now have two files in this folder like so
-<pre class="bash_output"><code>[ quickstart_test ]$ ls -l
+          </li>
+          <li>
+            Download the installation package to a Linux machine into a brand
+            new folder. This should give you a tar.gz file like
+            <code>archappl_vx.x.x.tar.gz</code>.
+          </li>
+          <li>
+            Download a recent version of Tomcat 9.x. into the same folder. You
+            should now have two files in this folder like so
+            <pre class="bash_output"><code>[ quickstart_test ]$ ls -l
 total 160996
 -rw-r--r-- 1 mshankar cd  10851264 Nov 13 08:08 apache-tomcat-9.0.20.tar.gz
 -rw-r--r-- 1 mshankar cd 154003400 Nov 13 08:08 archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz
 [ quickstart_test ]$ </code></pre>
-</li>
-<li>Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar into 4 WAR files and a bash script like so
-<pre class="bash_output"><code>[ quickstart_test ]$ tar zxf archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz
+          </li>
+          <li>
+            Untar the <code>archappl_vx.x.x.tar.gz</code>. This should untar
+            into 4 WAR files and a bash script like so
+            <pre
+              class="bash_output"
+            ><code>[ quickstart_test ]$ tar zxf archappl_v0.0.1_SNAPSHOT_12-November-2019T21-10-12.tar.gz
 [ quickstart_test ]$ ls -l
 total 312440
 -rw-r--r-- 1 mshankar cd     11358 Sep  9 16:03 Apache_2.0_License.txt
@@ -90,61 +124,114 @@ drwxr-xr-x 2 mshankar cd       148 Nov 13 08:10 install_scripts
 -rw-r--r-- 1 mshankar cd  38045560 Nov 12 21:10 retrieval.war
 drwxr-xr-x 3 mshankar cd        46 Nov 13 08:10 sample_site_specific_content
 [ quickstart_test ]$ </code></pre>
-</li>
-<li>Run the script like so
-<pre class="bash_output"><code>[ quickstart_test ]$ ./quickstart.sh apache-tomcat-9.0.20.tar.gz
+          </li>
+          <li>
+            Run the script like so
+            <pre
+              class="bash_output"
+            ><code>[ quickstart_test ]$ ./quickstart.sh apache-tomcat-9.0.20.tar.gz
 
 </code></pre>
-</li>
-<li>This should start the Tomcat process in the foreground. Once all the webapps have been initialized (it takes about 2-5 minutes), you should see a log message in the console <samp> All components in this appliance have started up. We should be ready to start accepting UI requests</samp> like so
-<pre class="bash_output"><code>... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp ENGINE
+          </li>
+          <li>
+            This should start the Tomcat process in the foreground. Once all the
+            webapps have been initialized (it takes about 2-5 minutes), you
+            should see a log message in the console
+            <samp>
+              All components in this appliance have started up. We should be
+              ready to start accepting UI requests</samp
+            >
+            like so
+            <pre
+              class="bash_output"
+            ><code>... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp ENGINE
 ... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp ETL
 ... INFO  config.org.epics.archiverappliance.config.DefaultConfigService  - Start complete for webapp RETRIEVAL
 ... INFO  config.org.epics.archiverappliance.mgmt.MgmtRuntimeState  - All components in this appliance have started up. We should be ready to start accepting UI requests
 </code></pre>
-</li>
-<li>Open a browser to <code>http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code> and you should see the home screen for your archiver appliance.</li>
-<li>If your EPICS environment variables are set up correctly, you should be able to start archiving PV's right away.
-Note it takes about 5 minutes for the archiver appliance to measure the event rate, storage rate etc and to transition PVs from the <code>Initial sampling</code> state to the <code>Being archived</code> state.
-</li>
-<li>To stop the appliance, use a <code>CTRL-C</code> in the console.</li>
-</ol>
-</section>
+          </li>
+          <li>
+            Open a browser to
+            <code
+              >http://&lt;&lt;<i>machinename</i>&gt;&gt;:17665/mgmt/ui/index.html</code
+            >
+            and you should see the home screen for your archiver appliance.
+          </li>
+          <li>
+            If your EPICS environment variables are set up correctly, you should
+            be able to start archiving PV's right away. Note it takes about 5
+            minutes for the archiver appliance to measure the event rate,
+            storage rate etc and to transition PVs from the
+            <code>Initial sampling</code> state to the
+            <code>Being archived</code> state.
+          </li>
+          <li>
+            To stop the appliance, use a <code>CTRL-C</code> in the console.
+          </li>
+        </ol>
+      </section>
 
-<section>
-Notes
-<ul>
-	<li>We set the Log4j root logging level to <a
-			href="https://logging.apache.org/log4j/2.x/javadoc/log4j-api/org/apache/logging/log4j/Level.html#ERROR">ERROR</a>
-		by default. You should not see any exceptions or ERROR messages in the console on startup.
-	</li>
-<li>We do not persist configuration in this setup. That is, if you kill the Tomcat process, you'll need to resubmit your PV's to the archiver on restart.</li>
-	<li>You can increase the verbosity of console messages by passing in a <code>-v</code> <i>(for verbose)</i> argument
-		to startup script. The sets the Log4j root logging level to <a
-				href="https://logging.apache.org/log4j/2.x/javadoc/log4j-api/org/apache/logging/log4j/Level.html#DEBUG">DEBUG</a>.
-	</li>
-</ul>
-</section>
+      <section>
+        Notes
+        <ul>
+          <li>
+            We set the Log4j root logging level to
+            <a
+              href="https://logging.apache.org/log4j/2.x/javadoc/log4j-api/org/apache/logging/log4j/Level.html#ERROR"
+              >ERROR</a
+            >
+            by default. You should not see any exceptions or ERROR messages in
+            the console on startup.
+          </li>
+          <li>
+            We do not persist configuration in this setup. That is, if you kill
+            the Tomcat process, you'll need to resubmit your PV's to the
+            archiver on restart.
+          </li>
+          <li>
+            You can increase the verbosity of console messages by passing in a
+            <code>-v</code> <i>(for verbose)</i> argument to startup script. The
+            sets the Log4j root logging level to
+            <a
+              href="https://logging.apache.org/log4j/2.x/javadoc/log4j-api/org/apache/logging/log4j/Level.html#DEBUG"
+              >DEBUG</a
+            >.
+          </li>
+        </ul>
+      </section>
 
-<section>
-<h4>Quickstart using predefined VMs</h4>
-An alternate way to quickly get started and test the system is to use the predefined VM's provided by Martin.
-These consists of three repos needed to set up an EPICS Archiver Appliance test environment:
-<ol>
-<li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/vagrant_archiver_appliance">vagrant_archiver_appliance</a></li>
-<li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/puppet_module_archiver_appliance">puppet_module_archiver_appliance</a></li>
-<li><a href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/puppet_module_epics_softioc">puppet_module_epics_softioc</a></li>
-</ol>
-Simply follow the rules in the README of the first repo and the other two repos will be pulled in automatically.
-</section>
+      <section>
+        <h4>Quickstart using predefined VMs</h4>
+        An alternate way to quickly get started and test the system is to use
+        the predefined VM's provided by Martin. These consists of three repos
+        needed to set up an EPICS Archiver Appliance test environment:
+        <ol>
+          <li>
+            <a
+              href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/vagrant_archiver_appliance"
+              >vagrant_archiver_appliance</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/puppet_module_archiver_appliance"
+              >puppet_module_archiver_appliance</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://stash.nscl.msu.edu/projects/DEPLOY/repos/puppet_module_epics_softioc"
+              >puppet_module_epics_softioc</a
+            >
+          </li>
+        </ol>
+        Simply follow the rules in the README of the first repo and the other
+        two repos will be pulled in automatically.
+      </section>
+    </div>
 
-
-
-</div>
-
-<script src="js/jquery/1.11.3/jquery.min.js"></script>
-<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
-<script src="js/arch/docs.js"></script>
-
-</body>
+    <script src="js/jquery/1.11.3/jquery.min.js"></script>
+    <script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+    <script src="js/arch/docs.js"></script>
+  </body>
 </html>
