@@ -48,8 +48,8 @@ public abstract class SummaryStatsPostProcessor
         return 1;
     }
 
-    private Instant start;
-    private Instant end;
+    private Instant start = Instant.MIN;
+    private Instant end = Instant.MAX;
 
     private static Logger logger = LogManager.getLogger(SummaryStatsPostProcessor.class.getName());
     int intervalSecs = PostProcessors.DEFAULT_SUMMARIZING_INTERVAL;

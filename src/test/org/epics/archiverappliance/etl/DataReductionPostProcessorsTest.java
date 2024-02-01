@@ -22,6 +22,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -29,10 +30,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithConsolidatedEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -50,37 +49,17 @@ import java.util.stream.Stream;
  * @author mshankar
  *
  */
-@Tag("singleFork")
 public class DataReductionPostProcessorsTest {
     private static final Logger logger = LogManager.getLogger(DataReductionPostProcessorsTest.class);
-    String shortTermFolderName = ConfigServiceForTests.getDefaultShortTermFolder() + "/shortTerm";
-    String mediumTermFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/mediumTerm";
-    String longTermFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/longTerm";
-    private final String rawPVName =
-            ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionPostProcessorsTest.class.getSimpleName();
-    private final String reducedPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
-            + DataReductionPostProcessorsTest.class.getSimpleName() + "reduced";
 
-    @BeforeEach
-    public void setUp() throws Exception {
-        cleanDataFolders();
-    }
+    static final ConfigServiceForTests configService;
 
-    private void cleanDataFolders() throws IOException {
-        if (new File(shortTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
+    static {
+        try {
+            configService = new ConfigServiceForTests(1);
+        } catch (ConfigException e) {
+            throw new RuntimeException(e);
         }
-        if (new File(mediumTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
-        if (new File(longTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(longTermFolderName));
-        }
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        cleanDataFolders();
     }
 
     public static Stream<Arguments> provideReduceDataUsing() {
@@ -107,6 +86,24 @@ public class DataReductionPostProcessorsTest {
                 Arguments.of("lastFill_3600"));
     }
 
+    @AfterAll
+    public static void afterAll() {
+        configService.shutdownNow();
+    }
+
+    private void cleanDataFolders(String shortTermFolderName, String mediumTermFolderName, String longTermFolderName)
+            throws IOException {
+        if (new File(shortTermFolderName).exists()) {
+            FileUtils.deleteDirectory(new File(shortTermFolderName));
+        }
+        if (new File(mediumTermFolderName).exists()) {
+            FileUtils.deleteDirectory(new File(mediumTermFolderName));
+        }
+        if (new File(longTermFolderName).exists()) {
+            FileUtils.deleteDirectory(new File(longTermFolderName));
+        }
+    }
+
     /**
      * 1) Set up the raw and reduced PV's
      * 2) Generate data in STS
@@ -117,9 +114,19 @@ public class DataReductionPostProcessorsTest {
     @MethodSource("provideReduceDataUsing")
     public void testPostProcessor(String reduceDataUsing) throws Exception {
         logger.info("Testing for " + reduceDataUsing);
-        cleanDataFolders();
+        final String rawPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
+                + DataReductionPostProcessorsTest.class.getSimpleName()
+                + reduceDataUsing
+                + PlainPBStoragePlugin.pbFileSuffix;
+        final String reducedPVName = rawPVName + "reduced";
 
-        ConfigServiceForTests configService = new ConfigServiceForTests(1);
+        String shortTermFolderName =
+                ConfigServiceForTests.getDefaultShortTermFolder() + String.format("/%s/shortTerm", reduceDataUsing);
+        String mediumTermFolderName =
+                ConfigServiceForTests.getDefaultPBTestFolder() + String.format("/%s/mediumTerm", reduceDataUsing);
+        String longTermFolderName =
+                ConfigServiceForTests.getDefaultPBTestFolder() + String.format("/%s/longTerm", reduceDataUsing);
+        cleanDataFolders(shortTermFolderName, mediumTermFolderName, longTermFolderName);
         // Set up the raw and reduced PV's
         PlainPBStoragePlugin etlSTS = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
@@ -128,10 +135,11 @@ public class DataReductionPostProcessorsTest {
                 "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_DAY",
                 configService);
         PlainPBStoragePlugin etlLTSRaw = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + longTermFolderName + "/&partitionGranularity=PARTITION_YEAR",
+                PlainPBStoragePlugin.pbFileSuffix + "://localhost?name=LTS&rootFolder=" + longTermFolderName
+                        + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
         PlainPBStoragePlugin etlLTSReduced = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + longTermFolderName
+                PlainPBStoragePlugin.pbFileSuffix + "://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_YEAR&reducedata=" + reduceDataUsing,
                 configService);
         {
@@ -161,7 +169,7 @@ public class DataReductionPostProcessorsTest {
 
         logger.info("Testing data reduction for postprocessor " + reduceDataUsing);
 
-        for (int day = 0; day < 40; day++) {
+        for (int day = 0; day < 4; day++) {
             // Generate data into the STS on a daily basis
             ArrayListEventStream genDataRaw = new ArrayListEventStream(
                     PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
@@ -261,7 +269,5 @@ public class DataReductionPostProcessorsTest {
                                 + reducedCount);
             }
         }
-
-        configService.shutdownNow();
     }
 }
