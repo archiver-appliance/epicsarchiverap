@@ -91,13 +91,9 @@ drwxr-x---   3 mshankar cd    22 May 22 15:55 work
         By default, Tomcat sets up a HTTP listener on port 8080. You can change
         this in the Tomcat server.xml to avoid collision with other folks
         running Tomcat. For example, here I have changed this to 17665.
-        <pre>
-<code>
-    &lt;Connector port="17665" protocol="HTTP/1.1" 
+        <pre><code>&lt;Connector port="17665" protocol="HTTP/1.1"
                connectionTimeout="20000" 
-               redirectPort="8443" /&gt;
-</code>
-</pre>
+               redirectPort="8443" /&gt;</code></pre>
 
         To run the unit tests, please make a copy of your Tomcat configuration
         (preferably pristine) into a new folder called
@@ -115,15 +111,10 @@ cp -R conf conf_original</code>
         <h3>Building</h3>
         The EPICS archiver appliance is shared on
         <a href="https://github.com/slacmshankar/epicsarchiverap">GitHub</a>
-        using Git as the source control repository. We use Eclipse as the IDE;
-        the Mars version of Eclipse has the support for . We use
-        <a href="http://gradle.org/">Gradle</a> for building. If you have a
-        Eclipse workspace called <code>workspace</code> and the EPICS archiver
-        appliance code checked out into a folder called
-        <code>epicsarchiverap</code>, then the gradle build script is run by
-        calling gradle from within <code>workspace/epicsarchiverap</code>. The
-        default target builds the install package and the various wars and
-        places them into the <code>build/distributions</code>
+        using Git as the source control repository. We use
+        <a href="http://gradle.org/">Gradle</a> for building. The default target
+        builds the install package and the various wars and places them into the
+        <code>build/distributions</code>
         folder.
         <pre class="bash_output"><code>
 [ epicsarchiverap ]$ ls build/distributions
@@ -151,23 +142,15 @@ BUILD SUCCESSFUL in 16s
         folder. Tomcat will expand the war file on startup. It is often more
         convenient to deploy all the WAR's into the same tomcat container for
         development. One can use something like
-        <pre>
-<code>
-pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf retrieval* &amp;&amp; popd &amp;&amp; cp ../retrieval.war ${TOMCAT_HOME}/webapps
+        <pre><code>pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf retrieval* &amp;&amp; popd &amp;&amp; cp ../retrieval.war ${TOMCAT_HOME}/webapps
 pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf engine* &amp;&amp; popd &amp;&amp; cp ../engine.war ${TOMCAT_HOME}/webapps
 pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf etl* &amp;&amp; popd &amp;&amp; cp ../etl.war ${TOMCAT_HOME}/webapps
-pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf mgmt* &amp;&amp; popd &amp;&amp; cp ../mgmt.war ${TOMCAT_HOME}/webapps
-</code>
-</pre>
+pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf mgmt* &amp;&amp; popd &amp;&amp; cp ../mgmt.war ${TOMCAT_HOME}/webapps</code></pre>
         to deploy all the same webapps on the same Tomcat instance. To set the
         locations of the various stores,
-        <pre>
-<code>
-export ARCHAPPL_SHORT_TERM_FOLDER=/arch/sts/ArchiverStore
+        <pre><code>export ARCHAPPL_SHORT_TERM_FOLDER=/arch/sts/ArchiverStore
 export ARCHAPPL_MEDIUM_TERM_FOLDER=/arch/mts/ArchiverStore
-export ARCHAPPL_LONG_TERM_FOLDER=/arch/lts/ArchiverStore
-</code>
-</pre>
+export ARCHAPPL_LONG_TERM_FOLDER=/arch/lts/ArchiverStore</code></pre>
       </section>
 
       <section>
@@ -195,25 +178,42 @@ export ARCHAPPL_LONG_TERM_FOLDER=/arch/lts/ArchiverStore
         Gradle creates temporary directories for all the unit tests. If you wish
         to clean them first you can use <code>gradle clean</code>. You then have
         the following options:
-
-        <pre>
-<code>
-gradle test // Runs all unit tests except slow tests
+        <pre><code>gradle test // Runs all unit tests except slow tests
 gradle unitTests // Runs all unit tests
-gradle integrationTests // Runs all tests that require a tomcat installation and/or epics installation
+gradle epicsTests // Runs all integration tests that require only an epics installation
+gradle integrationTests // Runs all tests that require a tomcat installation and optionally an epics installation
 gradle flakyTests // Runs all tests that can fail due to system resources
-gradle allTests // Runs all tests (not recommended)
-</code>
-</pre>
+gradle allTests // Runs all tests (not recommended)</code></pre>
 
         Or run individual tests with:
+        <pre><code>gradle test -tests PolicyExecutionTest
+gradle integrationTests --tests PvaGetArchivedPVsTest --info</code></pre>
 
-        <pre>
-<code>
-gradle test -tests PolicyExecutionTest
-gradle integrationTests --tests PvaGetArchivedPVsTest --info
-</code>
-</pre>
+        If you cancel an integrationTest early, or it gets stuck for some reason
+        it's possible to kill any tomcats running with
+        <pre><code>gradle shutdownAllTomcats</code></pre>
+
+        If you wish to run the current development version locally for testing,
+        it's possible to use:
+
+        <pre><code>gradle testRun</code></pre>
+      </section>
+      <section>
+        <h3>Formatting with Spotless</h3>
+
+        The gradle build script <code>build.gradle</code> includes the
+        <a href="https://github.com/diffplug/spotless">Spotless Plugin</a> which
+        tracks the formatting of the code. To run the formatter run:
+
+        <pre><code>gradle spotlessApply</code></pre>
+
+        The build script checks that the changes in the current git branch are
+        up-to-date with "origin/master" branch. So make sure your local
+        "origin/master" is up-to-date with the
+        <a href="https://github.com/slacmshankar/epicsarchiverap"
+          >home repository</a
+        >
+        master branch to pass the CI checks.
       </section>
 
       <section>
