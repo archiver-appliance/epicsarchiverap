@@ -1,52 +1,72 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-    <link type="text/css" href="docs.css" rel="Stylesheet"/>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="js/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+    <link type="text/css" href="docs.css" rel="Stylesheet" />
     <title>EPICS Archiver Appliance - Developers Guide</title>
-</head>
-<body>
-<!-- Header starts here -->
-<nav class="navbar navbar-inverse">
-    <div class="container-fluid">
+  </head>
+  <body>
+    <!-- Header starts here -->
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
         <div class="navbar-header">
-            <a class="navbar-brand" href="index.html">The EPICS Archiver Appliance</a>
+          <a class="navbar-brand" href="index.html"
+            >The EPICS Archiver Appliance</a
+          >
         </div>
         <div>
-            <ul id="mainNavBar" class="nav navbar-nav">
-                <li><a href="https://github.com/slacmshankar/epicsarchiverap/wiki">News</a></li>
-                <li><a href="details.html">Details</a></li>
-                <li><a href="https://github.com/slacmshankar/epicsarchiverap/releases/">Download</a></li>
-                <li><a href="quickstart.html">Quickstart</a></li>
-                <li><a href="installguide.html">Installation</a></li>
-                <li><a href="userguide.html">User Guide</a></li>
-                <li><a href="customization.html">Customize</a></li>
-                <li><a href="developersguide.html">Developers</a></li>
-                <li><a href="admin.html">Admin</a></li>
-                <li><a href="api/index.html">Javadoc</a></li>
-                <li><a href="https://github.com/slacmshankar/epicsarchiverap/issues">Issues</a></li>
-                <li><a href="faq.html">FAQ</a></li>
-                <li><a href="license.html">License</a></li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <li><img style="margin-top: -45px" src="images/Icon_Mathematical_Plot.png"/></li>
-            </ul>
+          <ul id="mainNavBar" class="nav navbar-nav">
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/wiki"
+                >News</a
+              >
+            </li>
+            <li><a href="details.html">Details</a></li>
+            <li>
+              <a
+                href="https://github.com/slacmshankar/epicsarchiverap/releases/"
+                >Download</a
+              >
+            </li>
+            <li><a href="quickstart.html">Quickstart</a></li>
+            <li><a href="installguide.html">Installation</a></li>
+            <li><a href="userguide.html">User Guide</a></li>
+            <li><a href="customization.html">Customize</a></li>
+            <li><a href="developersguide.html">Developers</a></li>
+            <li><a href="admin.html">Admin</a></li>
+            <li><a href="api/index.html">Javadoc</a></li>
+            <li>
+              <a href="https://github.com/slacmshankar/epicsarchiverap/issues"
+                >Issues</a
+              >
+            </li>
+            <li><a href="faq.html">FAQ</a></li>
+            <li><a href="license.html">License</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <img
+                style="margin-top: -45px"
+                src="images/Icon_Mathematical_Plot.png"
+              />
+            </li>
+          </ul>
         </div>
-    </div>
-</nav>
-<!-- Header ends here -->
+      </div>
+    </nav>
+    <!-- Header ends here -->
 
-<div class="container">
-
-    <section>
+    <div class="container">
+      <section>
         <h3>Prerequisites</h3>
-        Please see the <a href="details.html#SystemRequirements">details</a> page for prerequisites to build and test
-        the EPICS Archiver Appliance.
-        An installation of Tomcat is required to build successfully; this is located using the environment variable
-        <code>TOMCAT_HOME</code>.
-        Use something like
+        Please see the
+        <a href="details.html#SystemRequirements">details</a> page for
+        prerequisites to build and test the EPICS Archiver Appliance. An
+        installation of Tomcat is required to build successfully; this is
+        located using the environment variable <code>TOMCAT_HOME</code>. Use
+        something like
         <pre class="bash_output"><code>[ epicsarchiverap ]$ echo $TOMCAT_HOME
 /opt/local/tomcat/latest
 [ epicsarchiverap ]$ ls -l $TOMCAT_HOME/
@@ -68,10 +88,9 @@ drwxr-x---  11 mshankar cd   205 Nov 11 16:58 webapps
 drwxr-x---   3 mshankar cd    22 May 22 15:55 work
 [ epicsarchiverap ]$</code></pre>
 
-
-        By default, Tomcat sets up a HTTP listener on port 8080.
-        You can change this in the Tomcat server.xml to avoid collision with other folks running Tomcat.
-        For example, here I have changed this to 17665.
+        By default, Tomcat sets up a HTTP listener on port 8080. You can change
+        this in the Tomcat server.xml to avoid collision with other folks
+        running Tomcat. For example, here I have changed this to 17665.
         <pre>
 <code>
     &lt;Connector port="17665" protocol="HTTP/1.1" 
@@ -80,52 +99,58 @@ drwxr-x---   3 mshankar cd    22 May 22 15:55 work
 </code>
 </pre>
 
-        To run the unit tests, please make a copy of your Tomcat configuration (preferably pristine) into a new folder
-        called <code>conf_original.</code>
-        The unit tests that use Tomcat copy the conf_original folder to generate new configurations for each test.
+        To run the unit tests, please make a copy of your Tomcat configuration
+        (preferably pristine) into a new folder called
+        <code>conf_original.</code>
+        The unit tests that use Tomcat copy the conf_original folder to generate
+        new configurations for each test.
         <pre>
 <code>cd ${TOMCAT_HOME}
 cp -R conf conf_original</code>
 </pre>
         Gradle will do this step for you if you forget.
+      </section>
 
-    </section>
-
-    <section>
+      <section>
         <h3>Building</h3>
-        The EPICS archiver appliance is shared on <a href="https://github.com/slacmshankar/epicsarchiverap">GitHub</a>
-        using Git as the source control repository.
-        We use Eclipse as the IDE; the Mars version of Eclipse has the support for .
-        We use <a href="http://gradle.org/">Gradle</a> for building.
-        If you have a Eclipse workspace called <code>workspace</code> and the EPICS archiver appliance code checked out
-        into a folder called <code>epicsarchiverap</code>,
-        then the gradle build script is run by calling gradle from within <code>workspace/epicsarchiverap</code>.
-
-        The default target builds the install package and the various wars and places them into the <code>build/distributions</code>
+        The EPICS archiver appliance is shared on
+        <a href="https://github.com/slacmshankar/epicsarchiverap">GitHub</a>
+        using Git as the source control repository. We use Eclipse as the IDE;
+        the Mars version of Eclipse has the support for . We use
+        <a href="http://gradle.org/">Gradle</a> for building. If you have a
+        Eclipse workspace called <code>workspace</code> and the EPICS archiver
+        appliance code checked out into a folder called
+        <code>epicsarchiverap</code>, then the gradle build script is run by
+        calling gradle from within <code>workspace/epicsarchiverap</code>. The
+        default target builds the install package and the various wars and
+        places them into the <code>build/distributions</code>
         folder.
         <pre class="bash_output"><code>
 [ epicsarchiverap ]$ ls build/distributions
 archappl_v1.1.0-31-ge02e1f1.dirty.tar.gz
 [ epicsarchiverap ]$ 
 </code></pre>
-    </section>
+      </section>
 
-    The Gradle build script will build into the default build directory <code>build</code>. You don't need to install
-    Gradle, instead you can use the wrapper as <code>./gradlew</code>, or install it
-    and run from the <code>epicsarchiverap</code> folder:
-    <pre class="bash_output"><code>[ epicsarchiverap ]$ gradle
+      The Gradle build script will build into the default build directory
+      <code>build</code>. You don't need to install Gradle, instead you can use
+      the wrapper as <code>./gradlew</code>, or install it and run from the
+      <code>epicsarchiverap</code> folder:
+      <pre class="bash_output"><code>[ epicsarchiverap ]$ gradle
 BUILD SUCCESSFUL in 16s
 12 actionable tasks: 10 executed, 2 up-to-date</code>
 </pre>
-    The build can then be found in <code>epicsarchiverap/build/distributions</code> or the war files in <code>epicsarchiverap/build/libs</code>.
+      The build can then be found in
+      <code>epicsarchiverap/build/distributions</code> or the war files in
+      <code>epicsarchiverap/build/libs</code>.
 
-    <section>
+      <section>
         <h3>Deploying</h3>
-        To deploy the EPICS archiver appliance, you simply have to copy the <code>.war</code> files generated by the
-        build to Tomcat's webapps folder.
-        Tomcat will expand the war file on startup.
-        It is often more convenient to deploy all the WAR's into the same tomcat container for development.
-        One can use something like
+        To deploy the EPICS archiver appliance, you simply have to copy the
+        <code>.war</code> files generated by the build to Tomcat's webapps
+        folder. Tomcat will expand the war file on startup. It is often more
+        convenient to deploy all the WAR's into the same tomcat container for
+        development. One can use something like
         <pre>
 <code>
 pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf retrieval* &amp;&amp; popd &amp;&amp; cp ../retrieval.war ${TOMCAT_HOME}/webapps
@@ -134,9 +159,8 @@ pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf etl* &amp;&amp; popd &amp;&amp; c
 pushd ${TOMCAT_HOME}/webapps &amp;&amp; rm -rf mgmt* &amp;&amp; popd &amp;&amp; cp ../mgmt.war ${TOMCAT_HOME}/webapps
 </code>
 </pre>
-        to deploy all the same webapps on the same Tomcat instance.
-
-        To set the locations of the various stores,
+        to deploy all the same webapps on the same Tomcat instance. To set the
+        locations of the various stores,
         <pre>
 <code>
 export ARCHAPPL_SHORT_TERM_FOLDER=/arch/sts/ArchiverStore
@@ -144,30 +168,33 @@ export ARCHAPPL_MEDIUM_TERM_FOLDER=/arch/mts/ArchiverStore
 export ARCHAPPL_LONG_TERM_FOLDER=/arch/lts/ArchiverStore
 </code>
 </pre>
-    </section>
+      </section>
 
-    <section>
+      <section>
         <h3>Running Tomcat</h3>
         <div>
-            Start Tomcat using the <code>catalina.sh run</code> or the <code>catalina.sh start</code> commands.
-            The <code>catalina.sh</code> startup script is found in the Tomcat bin folder.
-            <code>catalina.sh run</code> starts Tomcat and leaves it running in the console so that you can Ctrl-C to
-            terminate.
-            <code>catalina.sh start</code> starts Tomcat in the background and you will need to run <code>catalina.sh
-            stop</code> to stop the process.
+          Start Tomcat using the <code>catalina.sh run</code> or the
+          <code>catalina.sh start</code> commands. The
+          <code>catalina.sh</code> startup script is found in the Tomcat bin
+          folder. <code>catalina.sh run</code> starts Tomcat and leaves it
+          running in the console so that you can Ctrl-C to terminate.
+          <code>catalina.sh start</code> starts Tomcat in the background and you
+          will need to run <code>catalina.sh stop</code> to stop the process.
         </div>
 
         <div>
-            To bring up the management app, bring up <code>http://<i>YourMachineHere</i>:17665/mgmt/ui/index.html</code>
-            in a recent version of Firefox/Google chrome.
+          To bring up the management app, bring up
+          <code>http://<i>YourMachineHere</i>:17665/mgmt/ui/index.html</code>
+          in a recent version of Firefox/Google chrome.
         </div>
-    </section>
+      </section>
 
-    <section>
+      <section>
         <h3>Running the unit tests</h3>
 
-        Gradle creates temporary directories for all the unit tests. If you wish to clean
-        them first you can use <code>gradle clean</code>. You then have the following options:
+        Gradle creates temporary directories for all the unit tests. If you wish
+        to clean them first you can use <code>gradle clean</code>. You then have
+        the following options:
 
         <pre>
 <code>
@@ -187,94 +214,143 @@ gradle test -tests PolicyExecutionTest
 gradle integrationTests --tests PvaGetArchivedPVsTest --info
 </code>
 </pre>
+      </section>
 
-    </section>
-
-    <section>
+      <section>
         <h3>Side projects</h3>
-        The sources for the <a href="archiveviewer.html">Archive Viewer</a> integration and the client library for the
-        <a href="pb_pbraw.html">PB/HTTP</a> protocol are in separate projects in the same repository.
+        The sources for the
+        <a href="archiveviewer.html">Archive Viewer</a> integration and the
+        client library for the <a href="pb_pbraw.html">PB/HTTP</a> protocol are
+        in separate projects in the same repository.
         <ol>
-            <li><a href="https://github.com/slacmshankar/epicsarchiverap_pbrawclient/">PB/HTTP</a></li>
-            <li><a href="https://github.com/slacmshankar/epicsarchiverap_archiveviewer/">Archive Viewer</a></li>
+          <li>
+            <a
+              href="https://github.com/slacmshankar/epicsarchiverap_pbrawclient/"
+              >PB/HTTP</a
+            >
+          </li>
+          <li>
+            <a
+              href="https://github.com/slacmshankar/epicsarchiverap_archiveviewer/"
+              >Archive Viewer</a
+            >
+          </li>
         </ol>
-    </section>
+      </section>
 
-    <section>
+      <section>
         <h3>Information useful to developers</h3>
         <ol>
-            <li>If you unfamiliar with servlet containers; here's a small overview that a few collaborators found useful
+          <li>
+            If you unfamiliar with servlet containers; here's a small overview
+            that a few collaborators found useful
+            <ul>
+              <li>
+                Reading up on a few basics will help; there are several good
+                sources of information on the net; but don't get bogged down by
+                the details.
+              </li>
+              <li>
+                Please do use Eclipse/Netbeans/Intelij to navigate the code.
+                This makes life so much easier.
+              </li>
+              <li>
+                To get a quick sense of what a class/interface does, you can use
+                the <a href="api/index.html">javadoc</a>. Some attempts have
+                been made to have some Javadoc in most classes and all
+                interfaces
+              </li>
+              <li>
+                We use Tomcat purely as a servlet container; that is, a quick
+                way of servicing HTTP requests using Java code.
+              </li>
+              <li>
+                A WAR file is basically a ZIP file (you can use unzip) with some
+                conventions. For example, all the libraries (.jar's) that the
+                application depends on will be located in the WEB-INF/lib
+                folder.
+              </li>
+              <li>
+                The starting point for servlet's in a WAR file is the file
+                <code>WEB-INF/web.xml</code>. For example, in the mgmt.war's
+                <code>WEB-INF/web.xml</code>, you can see that all HTTP requests
+                matching the pattern <code>/bpl/*</code> are satisfied using the
+                Java class
+                <code>org.epics.archiverappliance.mgmt.BPLServlet</code>.
+              </li>
+              <li>
+                If you navigate to this class in Eclipse, you'll see that it is
+                basically a registry of BPLActions.
+              </li>
+              <li>
+                For example, the HTTP request,
+                <code>/mgmt/bpl/getAllPVs</code> is satisfied using the
+                <code>GetAllPVs</code>
+                class. Breaking this down,
+                <ol>
+                  <li><code>/mgmt</code> gets you into the mgmt.war file.</li>
+                  <li><code>/bpl</code> gets you into the BPLServlet class.</li>
+                  <li>
+                    <code>/getAllPVs</code> gets you into the GetAllPVs class.
+                  </li>
+                </ol>
+              </li>
+              <li>
+                From a very high level
                 <ul>
-                    <li>Reading up on a few basics will help; there are several good sources of information on the net;
-                        but don't get bogged down by the details.
-                    </li>
-                    <li>Please do use Eclipse/Netbeans/Intelij to navigate the code. This makes life so much easier.
-                    </li>
-                    <li>To get a quick sense of what a class/interface does, you can use the <a href="api/index.html">javadoc</a>.
-                        Some attempts have been made to have some Javadoc in most classes and all interfaces
-                    </li>
-                    <li>We use Tomcat purely as a servlet container; that is, a quick way of servicing HTTP requests
-                        using Java code.
-                    </li>
-                    <li>A WAR file is basically a ZIP file (you can use unzip) with some conventions. For example, all
-                        the libraries (.jar's) that the application depends on will be located in the WEB-INF/lib
-                        folder.
-                    </li>
-                    <li>The starting point for servlet's in a WAR file is the file <code>WEB-INF/web.xml</code>. For
-                        example, in the mgmt.war's <code>WEB-INF/web.xml</code>, you can see that all HTTP requests
-                        matching the pattern <code>/bpl/*</code> are satisfied using the Java class <code>org.epics.archiverappliance.mgmt.BPLServlet</code>.
-                    </li>
-                    <li>If you navigate to this class in Eclipse, you'll see that it is basically a registry of
-                        BPLActions.
-                    </li>
-                    <li>For example, the HTTP request, <code>/mgmt/bpl/getAllPVs</code> is satisfied using the <code>GetAllPVs</code>
-                        class.
-                        Breaking this down,
-                        <ol>
-                            <li><code>/mgmt</code> gets you into the mgmt.war file.</li>
-                            <li><code>/bpl</code> gets you into the BPLServlet class.</li>
-                            <li><code>/getAllPVs</code> gets you into the GetAllPVs class.</li>
-                        </ol>
-                    </li>
-                    <li>
-                        From a very high level
-                        <ul>
-                            <li>The engine.war establishes Channel Access monitors and then writes the data into the
-                                short term store (STS).
-                            </li>
-                            <li>The etl.war file moves data between stores - that is from the STS to the MTS and from
-                                the MTS to the LTS and so on.
-                            </li>
-                            <li>The retrieval.war gathers data from all the stores, stitches them together to satisfy
-                                data retrieval requests.
-                            </li>
-                            <li>The mgmt.war manages all the other three and holds configuration state.</li>
-                        </ul>
-                    </li>
-                    <li>In terms of configuration, the most important is the <code>PVTypeInfo</code>; you can see what
-                        one looks like by looking at
-                        <code>http://machine:17665/mgmt/bpl/getPVTypeInfo?pv=MYPV:111:BDES</code></li>
-                    <li>The main interfaces are the ones in the <a
-                            href="api/org/epics/archiverappliance/package-summary.html"><code>org.epics.archiverappliance</code></a>
-                        package.
-                    </li>
-                    <li>The <a href="api/org/epics/archiverappliance/config/ConfigService.html">ConfigService</a> class
-                        does all configuration management.
-                    </li>
-                    <li>The <a href="customization.html">customization guide</a> is also a good guide to way in which
-                        this product can be customized.
-                    </li>
+                  <li>
+                    The engine.war establishes Channel Access monitors and then
+                    writes the data into the short term store (STS).
+                  </li>
+                  <li>
+                    The etl.war file moves data between stores - that is from
+                    the STS to the MTS and from the MTS to the LTS and so on.
+                  </li>
+                  <li>
+                    The retrieval.war gathers data from all the stores, stitches
+                    them together to satisfy data retrieval requests.
+                  </li>
+                  <li>
+                    The mgmt.war manages all the other three and holds
+                    configuration state.
+                  </li>
                 </ul>
-            </li>
+              </li>
+              <li>
+                In terms of configuration, the most important is the
+                <code>PVTypeInfo</code>; you can see what one looks like by
+                looking at
+                <code
+                  >http://machine:17665/mgmt/bpl/getPVTypeInfo?pv=MYPV:111:BDES</code
+                >
+              </li>
+              <li>
+                The main interfaces are the ones in the
+                <a href="api/org/epics/archiverappliance/package-summary.html"
+                  ><code>org.epics.archiverappliance</code></a
+                >
+                package.
+              </li>
+              <li>
+                The
+                <a
+                  href="api/org/epics/archiverappliance/config/ConfigService.html"
+                  >ConfigService</a
+                >
+                class does all configuration management.
+              </li>
+              <li>
+                The <a href="customization.html">customization guide</a> is also
+                a good guide to way in which this product can be customized.
+              </li>
+            </ul>
+          </li>
         </ol>
-    </section>
+      </section>
+    </div>
 
-
-</div>
-
-<script src="js/jquery/1.11.3/jquery.min.js"></script>
-<script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
-<script src="js/arch/docs.js"></script>
-
-</body>
+    <script src="js/jquery/1.11.3/jquery.min.js"></script>
+    <script src="js/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+    <script src="js/arch/docs.js"></script>
+  </body>
 </html>

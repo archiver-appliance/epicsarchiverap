@@ -525,6 +525,10 @@ spotless {
 		indentWithTabs() // or spaces. Takes an integer argument if you don't like 4
 		endWithNewline()
 	}
+	format 'styling', {
+		target 'docs/*.html', 'docs/*.css', 'docs/arch/docs.js', 'src/**/*.html', 'src/**/*.js', 'src/**/*.css'
+		prettier()
+	}
 	java {
 		// Exclude the generated java from the protobuf
 		targetExclude(fileTree("$srcDir") { include("**/EPICSEvent.java") })

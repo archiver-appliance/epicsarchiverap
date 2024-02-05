@@ -1,254 +1,368 @@
 <!DOCTYPE html>
 <html>
-<title>appliance archiver - PV Details</title>
-<head>
-<!-- @begin(main_includes) -->
-<script type="text/javascript" src="comm/js/jquery-1.8.2.min.js"></script>
-<link type="text/css" href="comm/js/jquery-ui-1.9.1.custom/css/cupertino/jquery-ui-1.9.1.custom.css" rel="Stylesheet" />	
-<script type="text/javascript" src="comm/js/jquery-ui-1.9.1.custom/js/jquery-ui-1.9.1.custom.min.js"></script>
-<link type="text/css" href="comm/css/main.css" rel="Stylesheet" />	
-<script type="text/javascript" src="comm/js/common.js"></script>
-<!-- @end(main_includes) -->
-<link type="text/css" href="css/mgmt.css" rel="Stylesheet" />	
-<script type="text/javascript" src="js/mgmt.js"></script>
-</head>
-<body>
-<!-- @begin(site_header) -->
-<div class="pageheader">
-<span class="apptitle" id="archiveInstallationTitle">LCLS Archiver Appliance</span>
-<span id="siteimages"><img src="comm/img/labLogo.png"></img><img src="comm/img/labLogo2.png"></img></span>
-</div>
-<!-- @end(site_header) -->
+  <title>appliance archiver - PV Details</title>
+  <head>
+    <!-- @begin(main_includes) -->
+    <script type="text/javascript" src="comm/js/jquery-1.8.2.min.js"></script>
+    <link
+      type="text/css"
+      href="comm/js/jquery-ui-1.9.1.custom/css/cupertino/jquery-ui-1.9.1.custom.css"
+      rel="Stylesheet"
+    />
+    <script
+      type="text/javascript"
+      src="comm/js/jquery-ui-1.9.1.custom/js/jquery-ui-1.9.1.custom.min.js"
+    ></script>
+    <link type="text/css" href="comm/css/main.css" rel="Stylesheet" />
+    <script type="text/javascript" src="comm/js/common.js"></script>
+    <!-- @end(main_includes) -->
+    <link type="text/css" href="css/mgmt.css" rel="Stylesheet" />
+    <script type="text/javascript" src="js/mgmt.js"></script>
+  </head>
+  <body>
+    <!-- @begin(site_header) -->
+    <div class="pageheader">
+      <span class="apptitle" id="archiveInstallationTitle"
+        >LCLS Archiver Appliance</span
+      >
+      <span id="siteimages"
+        ><img src="comm/img/labLogo.png" /><img src="comm/img/labLogo2.png"
+      /></span>
+    </div>
+    <!-- @end(site_header) -->
 
-<!-- @begin(site_navbar) -->
-<div class="navbar">
-<div class="nav">
-<ul class="mainmenu">
-<li><a href="index.html">Home</a></li>
-<li><a href="reports.html">Reports</a></li>
-<li><a href="metrics.html">Metrics</a></li>
-<li><a href="storage.html">Storage</a></li>
-<li><a href="appliance.html">Appliances</a></li>
-<li><a href="integration.html">Integration</a></li>
-<li><a href="#" id="help">Help</a></li>
-</ul>
-</div>
-</div>
-<!-- @end(site_navbar) -->
+    <!-- @begin(site_navbar) -->
+    <div class="navbar">
+      <div class="nav">
+        <ul class="mainmenu">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="metrics.html">Metrics</a></li>
+          <li><a href="storage.html">Storage</a></li>
+          <li><a href="appliance.html">Appliances</a></li>
+          <li><a href="integration.html">Integration</a></li>
+          <li><a href="#" id="help">Help</a></li>
+        </ul>
+      </div>
+    </div>
+    <!-- @end(site_navbar) -->
 
+    <div id="pvDetailsDiv">
+      <div id="pvDetailsHeaderText">
+        Here are the complete details of the PV
+        <span id="pvDetailsName">PV Name</span>.
+        <ul id="pvDetailsMenu">
+          <li>
+            <a
+              id="pvDetailsParamChange"
+              href="#"
+              title="Change the parameters used in archiving this PV (scan/monitor etc)"
+              >Change archival parameters</a
+            >
+          </li>
+          <li>
+            <a
+              id="pvDetailsPauseArchiving"
+              href="#"
+              title="Pause archiving this PV"
+              >Pause archiving</a
+            >
+          </li>
+          <li>
+            <a
+              id="pvDetailsResumeArchiving"
+              href="#"
+              title="Resume archiving a paused PV"
+              >Resume archiving</a
+            >
+          </li>
+          <li>
+            <a
+              id="pvDetailsStopArchiving"
+              href="#"
+              title="Remove this PV from the cluster"
+              >Delete PV</a
+            >
+          </li>
+          <li>
+            <a
+              id="pvDetailsConsolidateData"
+              href="#"
+              title="Consolidate using ETL all the data for this PV into the specified data store"
+              >Consolidate data</a
+            >
+          </li>
+          <li>
+            <a
+              id="pvDetailsRenamePV"
+              href="#"
+              title="Change the name of this PV"
+              >Rename PV</a
+            >
+          </li>
+        </ul>
+      </div>
+      <table id="pvDetailsTable">
+        <thead>
+          <tr>
+            <th>Attribute</th>
+            <th>Detail</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!--  The table data will go here -->
+          <tr>
+            <td>1</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td>1</td>
+            <td>2</td>
+          </tr>
+        </tbody>
+      </table>
+      <div
+        id="pvDetailsChangeParamDiv"
+        title="Change the archival parameters for PV"
+      >
+        <div id="pvDetailsParams">
+          <div>Choose the sampling mode for these PVs:</div>
+          <div>
+            <select id="pvDetailsSamplingMethod">
+              <option value="MONITOR" selected="selected">Monitor</option>
+              <option value="SCAN">Scan</option>
+            </select>
+          </div>
+          <div>Set the sampling period for the PV to :</div>
+          <div><input type="text" id="pvDetailsSamplingPeriod" />(secs)</div>
+          <div id="pvDetailsParamsOkdiv">
+            <input id="pvDetailsParamsOk" type="button" name="Ok" value="Ok" />
+          </div>
+        </div>
+      </div>
+      <div
+        id="pvConsolidateParamsDiv"
+        title="Consolidate using ETL all the data for PV into the specified data store"
+      >
+        <div id="pvConsolidateParams">
+          <div>Choose the store to consolidate data into:</div>
+          <div><select id="pvConsolidateStore"></select></div>
+          <div id="pvConsolidateStorediv">
+            <input
+              id="pvConsolidateStoreOk"
+              type="button"
+              name="Ok"
+              value="Ok"
+            />
+          </div>
+        </div>
+      </div>
 
-<div id="pvDetailsDiv">
-<div id="pvDetailsHeaderText">Here are the complete details of the PV <span id="pvDetailsName">PV Name</span>.
-<ul id="pvDetailsMenu">
-<li><a id="pvDetailsParamChange" href="#" title="Change the parameters used in archiving this PV (scan/monitor etc)">Change archival parameters</a></li>
-<li><a id="pvDetailsPauseArchiving" href="#" title="Pause archiving this PV">Pause archiving</a></li>
-<li><a id="pvDetailsResumeArchiving" href="#" title="Resume archiving a paused PV">Resume archiving</a></li>
-<li><a id="pvDetailsStopArchiving" href="#" title="Remove this PV from the cluster">Delete PV</a></li>
-<li><a id="pvDetailsConsolidateData" href="#" title="Consolidate using ETL all the data for this PV into the specified data store">Consolidate data</a></li>
-<li><a id="pvDetailsRenamePV" href="#" title="Change the name of this PV">Rename PV</a></li>
-</ul>
-</div>
-<table id="pvDetailsTable">
-<thead><tr><th>Attribute</th><th>Detail</th></tr></thead>
-<tbody>
-<!--  The table data will go here -->
-<tr><td>1</td><td>2</td></tr>
-<tr><td>1</td><td>2</td></tr>
-</tbody>
-</table>
-<div id="pvDetailsChangeParamDiv"  title="Change the archival parameters for PV">
-<div id="pvDetailsParams">
-<div>Choose the sampling mode for these PVs:</div>
-<div><select id="pvDetailsSamplingMethod">
-  <option value="MONITOR" selected="selected">Monitor</option>
-  <option value="SCAN">Scan</option>
-</select> 
-</div>
-<div>Set the sampling period for the PV to :</div>
-<div><input type="text" id="pvDetailsSamplingPeriod"/>(secs)</div>
-<div id="pvDetailsParamsOkdiv"><input id="pvDetailsParamsOk" type="button" name="Ok" value="Ok"></input></div>
-</div>
-</div>
-<div id="pvConsolidateParamsDiv"  title="Consolidate using ETL all the data for PV into the specified data store">
-<div id="pvConsolidateParams">
-<div>Choose the store to consolidate data into:</div>
-<div><select id="pvConsolidateStore">
-</select> 
-</div>
-<div id="pvConsolidateStorediv"><input id="pvConsolidateStoreOk" type="button" name="Ok" value="Ok"></input></div>
-</div>
-</div>
+      <div
+        id="pvStopArchivingParamsDiv"
+        title="Are you certain you want to stop archiving the PV?"
+      >
+        <div id="pvStopArchivingParams">
+          <div>
+            <input id="pvStopArchivingDeleteData" type="checkbox" />Do you want
+            to delete any data stored for this PV?
+          </div>
+          <div id="pvStopArchivingdiv">
+            <input id="pvStopArchivingOk" type="button" name="Ok" value="Ok" />
+          </div>
+        </div>
+      </div>
 
-<div id="pvStopArchivingParamsDiv"  title="Are you certain you want to stop archiving the PV?">
-<div id="pvStopArchivingParams">
-<div><input id="pvStopArchivingDeleteData" type="checkbox"/>Do you want to delete any data stored for this PV?</div>
-<div id="pvStopArchivingdiv"><input id="pvStopArchivingOk" type="button" name="Ok" value="Ok"></input></div>
-</div>
-</div>
+      <div
+        id="pvRenameParamsDiv"
+        title="Change the name of PV to the specified name"
+      >
+        <div id="pvRenameParams">
+          <div>Enter the new name:</div>
+          <div><input type="text" id="pvRenameParamsNewName" /></div>
+          <div id="pvRenameNewNamediv">
+            <input id="pvRenameNewNameOk" type="button" name="Ok" value="Ok" />
+          </div>
+        </div>
+      </div>
 
-<div id="pvRenameParamsDiv"  title="Change the name of PV to the specified name">
-<div id="pvRenameParams">
-<div>Enter the new name:</div>
-<div><input type="text" id="pvRenameParamsNewName"/></div>
-<div id="pvRenameNewNamediv"><input id="pvRenameNewNameOk" type="button" name="Ok" value="Ok"></input></div>
-</div>
-</div>
+      <div
+        id="pvReshardParamsDiv"
+        title="Change the appliance archiving the PV"
+      >
+        <div id="pvReshardParams">
+          <div>Enter the new appliance:</div>
+          <div><select id="pvReshardNewAppliance"></select></div>
+          <div>Consolidate data into store:</div>
+          <div><select id="pvReshardStore"></select></div>
+          <div id="pvReshardOkDiv">
+            <input id="pvReshardOk" type="button" name="Ok" value="Ok" />
+          </div>
+        </div>
+      </div>
+    </div>
 
-<div id="pvReshardParamsDiv" title="Change the appliance archiving the PV">
-<div id="pvReshardParams">
-<div>Enter the new appliance:</div>
-<div><select id="pvReshardNewAppliance">
-</select> 
-</div>
-<div>Consolidate data into store:</div>
-<div><select id="pvReshardStore">
-</select> 
-</div>
-<div id="pvReshardOkDiv"><input id="pvReshardOk" type="button" name="Ok" value="Ok"></input></div>
-</div>
-</div>
+    <!-- @begin(site_footer) -->
+    <div class="pagefooter"></div>
+    <!-- @end(site_footer) -->
 
+    <script type="text/javascript">
+      $(document).ready(function () {
+        getPVDetails();
+        $("#pvDetailsParams").hide();
+        $("#pvConsolidateParams").hide();
+        $("#pvStopArchivingParams").hide();
+        $("#pvRenameParams").hide();
+        $("#pvReshardParams").hide();
+      });
 
-</div>
+      $("#pvDetailsParamChange").click(function () {
+        var pvName = $("#pvDetailsName").text();
+        $("#pvDetailsChangeParamDiv").attr(
+          "title",
+          "Change the archival parameters for PV " + pvName
+        );
+        var typeInfo = getPVTypeInfo(pvName);
+        $("#pvDetailsSamplingPeriod").val(typeInfo.samplingPeriod);
+        $("#pvDetailsSamplingMethod").val(typeInfo.samplingMethod);
+        $("#pvDetailsParams").show();
+        $("#pvDetailsChangeParamDiv").dialog({
+          height: 250,
+          width: 600,
+          modal: true,
+        });
+      });
 
-<!-- @begin(site_footer) -->
-<div class="pagefooter">
-</div>
-<!-- @end(site_footer) -->
+      $("#pvDetailsParamsOk").click(function () {
+        changeArchivalParams();
+        $("#pvDetailsParams").hide();
+        $("#pvDetailsChangeParamDiv").dialog("close");
+      });
 
-<script type="text/javascript">
-$(document).ready(function() {
-  getPVDetails();
-  $("#pvDetailsParams").hide();
-  $('#pvConsolidateParams').hide();
-  $('#pvStopArchivingParams').hide();
-  $('#pvRenameParams').hide();
-  $('#pvReshardParams').hide();
-});
+      $("#pvDetailsPauseArchiving").click(function () {
+        pauseArchivingPV();
+      });
 
-$("#pvDetailsParamChange").click(function() {
-	var pvName = $("#pvDetailsName").text();
-	$('#pvDetailsChangeParamDiv').attr('title', 'Change the archival parameters for PV ' + pvName);
-	var typeInfo = getPVTypeInfo(pvName);
-	$('#pvDetailsSamplingPeriod').val(typeInfo.samplingPeriod);
-	$('#pvDetailsSamplingMethod').val(typeInfo.samplingMethod);
-	$("#pvDetailsParams").show();
-	$("#pvDetailsChangeParamDiv").dialog({
-		height: 250,
-		width: 600,
-		modal: true
-		});
-});
+      $("#pvDetailsResumeArchiving").click(function () {
+        resumeArchivingPV();
+      });
 
-$("#pvDetailsParamsOk").click(function() {
-	changeArchivalParams();
-	$("#pvDetailsParams").hide();
-	$("#pvDetailsChangeParamDiv").dialog('close');
-});
+      $("#pvDetailsStopArchiving").click(function () {
+        var pvName = $("#pvDetailsName").text();
+        $("#pvStopArchivingParamsDiv").attr(
+          "title",
+          "Are you certain you want to stop archiving PV " + pvName
+        );
+        $("#pvStopArchivingDeleteData").attr("checked", false);
+        $("#pvStopArchivingParams").show();
+        $("#pvStopArchivingParamsDiv").dialog({
+          height: 250,
+          width: 600,
+          modal: true,
+        });
+      });
 
+      $("#pvStopArchivingOk").click(function () {
+        $("#pvStopArchivingParams").hide();
+        $("#pvStopArchivingParamsDiv").dialog("close");
+        deletePV();
+      });
 
-$("#pvDetailsPauseArchiving").click(function() {
-	pauseArchivingPV();
-});
+      $("#pvDetailsConsolidateData").click(function () {
+        var pvName = $("#pvDetailsName").text();
+        $("#pvConsolidateParamsDiv").attr(
+          "title",
+          "Consolidate using ETL all the data for PV " +
+            pvName +
+            " into the specified data store "
+        );
+        var stores = Object.keys(getStoresForPV(pvName));
+        $("#pvConsolidateStore").empty();
+        for (store in stores) {
+          $("#pvConsolidateStore").append(
+            $("<option></option>")
+              .attr("value", stores[store])
+              .text(stores[store])
+          );
+        }
+        $("#pvConsolidateParams").show();
+        $("#pvConsolidateParamsDiv").dialog({
+          height: 250,
+          width: 600,
+          modal: true,
+        });
+      });
 
-$("#pvDetailsResumeArchiving").click(function() {
-	resumeArchivingPV();
-});
+      $("#pvConsolidateStoreOk").click(function () {
+        consolidateDataForPV();
+        $("#pvConsolidateParams").hide();
+        $("#pvConsolidateParamsDiv").dialog("close");
+      });
 
-$("#pvDetailsStopArchiving").click(function() {
-	var pvName = $("#pvDetailsName").text();
-	$('#pvStopArchivingParamsDiv').attr('title', 'Are you certain you want to stop archiving PV ' + pvName);
-	$('#pvStopArchivingDeleteData').attr('checked',false);
-	$("#pvStopArchivingParams").show();
-	$("#pvStopArchivingParamsDiv").dialog({
-		height: 250,
-		width: 600,
-		modal: true
-		});
-});
+      $("#pvDetailsRenamePV").click(function () {
+        var pvName = $("#pvDetailsName").text();
+        $("#pvRenameParamsDiv").attr(
+          "title",
+          "Change the name of PV " + pvName + " to the specified name"
+        );
+        $("#pvRenameParams").show();
+        $("#pvRenameParamsDiv").dialog({
+          height: 250,
+          width: 600,
+          modal: true,
+        });
+      });
 
-$("#pvStopArchivingOk").click(function() {
-	$("#pvStopArchivingParams").hide();
-	$("#pvStopArchivingParamsDiv").dialog('close');
-	deletePV();
-});
+      $("#pvRenameNewNameOk").click(function () {
+        renamePV();
+        $("#pvRenameParams").hide();
+        $("#pvRenameParamsDiv").dialog("close");
+      });
 
+      if (getNumberOfAppliances() > 1) {
+        $("#pvDetailsMenu").append(
+          '<li><a id="pvDetailsReshardPV" href="#" title="Change the appliance archiving this PV">Change appliance</a></li>'
+        );
+        $("#pvDetailsReshardPV").click(function () {
+          var pvName = $("#pvDetailsName").text();
+          $("#pvReshardParamsDiv").attr(
+            "title",
+            "Change the appliance archiving the PV " + pvName
+          );
+          var stores = Object.keys(getStoresForPV(pvName));
+          $("#pvReshardStore").empty();
+          for (store in stores) {
+            $("#pvReshardStore").append(
+              $("<option></option>")
+                .attr("value", stores[store])
+                .text(stores[store])
+            );
+          }
+          $("#pvReshardStore").val($("#pvReshardStore option").last().text());
+          var appliances = getAppliancesAvailableForResharding(pvName);
+          $("#pvReshardNewAppliance").empty();
+          for (appliance in appliances) {
+            $("#pvReshardNewAppliance").append(
+              $("<option></option>")
+                .attr("value", appliances[appliance])
+                .text(appliances[appliance])
+            );
+          }
 
-$("#pvDetailsConsolidateData").click(function() {
-	var pvName = $("#pvDetailsName").text();
-	$('#pvConsolidateParamsDiv').attr('title', 'Consolidate using ETL all the data for PV ' + pvName + ' into the specified data store ');
-	var stores = Object.keys(getStoresForPV(pvName));
-	$('#pvConsolidateStore').empty();
-	for (store in stores) { 
-		$('#pvConsolidateStore').append($("<option></option>").attr("value", stores[store]).text(stores[store]))
-	}
-	$("#pvConsolidateParams").show();
-	$("#pvConsolidateParamsDiv").dialog({
-		height: 250,
-		width: 600,
-		modal: true
-	});
-});
+          $("#pvReshardParams").show();
+          $("#pvReshardParamsDiv").dialog({
+            height: 250,
+            width: 600,
+            modal: true,
+          });
+        });
+      }
 
-$("#pvConsolidateStoreOk").click(function() {
-	consolidateDataForPV();
-	$("#pvConsolidateParams").hide();
-	$("#pvConsolidateParamsDiv").dialog('close');
-});
-
-$("#pvDetailsRenamePV").click(function() {
-	var pvName = $("#pvDetailsName").text();
-	$('#pvRenameParamsDiv').attr('title', 'Change the name of PV ' + pvName + ' to the specified name');
-	$("#pvRenameParams").show();
-	$("#pvRenameParamsDiv").dialog({
-		height: 250,
-		width: 600,
-		modal: true
-	});
-});
-
-$("#pvRenameNewNameOk").click(function() {
-	renamePV();
-	$("#pvRenameParams").hide();
-	$("#pvRenameParamsDiv").dialog('close');
-});
-
-if (getNumberOfAppliances() > 1) { 
-	$("#pvDetailsMenu").append('<li><a id="pvDetailsReshardPV" href="#" title="Change the appliance archiving this PV">Change appliance</a></li>');
-	$("#pvDetailsReshardPV").click(function() {
-		var pvName = $("#pvDetailsName").text();
-		$("#pvReshardParamsDiv").attr('title', 'Change the appliance archiving the PV ' + pvName);
-		var stores = Object.keys(getStoresForPV(pvName));
-		$('#pvReshardStore').empty();
-		for (store in stores) { 
-			$('#pvReshardStore').append($("<option></option>").attr("value", stores[store]).text(stores[store]))
-		}
-		$('#pvReshardStore').val($('#pvReshardStore option').last().text());
-		var appliances = getAppliancesAvailableForResharding(pvName);
-		$('#pvReshardNewAppliance').empty();
-		for (appliance in appliances) { 
-			$('#pvReshardNewAppliance').append($("<option></option>").attr("value", appliances[appliance]).text(appliances[appliance]))
-		}
-		
-		$("#pvReshardParams").show();
-		$("#pvReshardParamsDiv").dialog({
-			height: 250,
-			width: 600,
-			modal: true
-		});
-	});
-}
-
-$("#pvReshardOk").click(function() {
-	reshardPV();
-	$("#pvReshardParams").hide();
-	$("#pvReshardParamsDiv").dialog('close');
-});
-
-
-</script>
-
-
-
-</body>
+      $("#pvReshardOk").click(function () {
+        reshardPV();
+        $("#pvReshardParams").hide();
+        $("#pvReshardParamsDiv").dialog("close");
+      });
+    </script>
+  </body>
 </html>
