@@ -528,12 +528,12 @@ spotless {
 	java {
 		// Exclude the generated java from the protobuf
 		targetExclude(fileTree("$srcDir") { include("**/EPICSEvent.java") })
-		importOrder()
 		// don't need to set target, it is inferred from java
 		removeUnusedImports()
 		cleanthat()
 		// apply a specific flavor of google-java-format
 		palantirJavaFormat()
+		importOrder('', 'java|javax', '\\#')
 		// fix formatting of type annotations
 		formatAnnotations()
 	}
