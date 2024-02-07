@@ -163,29 +163,6 @@ public class PBScalarFloat implements DBRTimeEvent {
     }
 
     @Override
-    public int getSeverity() {
-        unmarshallEventIfNull();
-        return dbevent.getSeverity();
-    }
-
-    @Override
-    public int getRepeatCount() {
-        unmarshallEventIfNull();
-        return dbevent.getRepeatcount();
-    }
-
-    @Override
-    public void setRepeatCount(int repeatCount) {
-        unmarshallEventIfNull();
-        dbevent = EPICSEvent.ScalarFloat.newBuilder()
-                .mergeFrom(dbevent)
-                .setRepeatcount(repeatCount)
-                .build();
-        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
-        return;
-    }
-
-    @Override
     public void setStatus(int status) {
         unmarshallEventIfNull();
         if (status != 0) {
@@ -201,6 +178,12 @@ public class PBScalarFloat implements DBRTimeEvent {
     }
 
     @Override
+    public int getSeverity() {
+        unmarshallEventIfNull();
+        return dbevent.getSeverity();
+    }
+
+    @Override
     public void setSeverity(int severity) {
         unmarshallEventIfNull();
         if (severity != 0) {
@@ -211,6 +194,23 @@ public class PBScalarFloat implements DBRTimeEvent {
         } else {
             dbevent = EPICSEvent.ScalarFloat.newBuilder().mergeFrom(dbevent).build();
         }
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        return;
+    }
+
+    @Override
+    public int getRepeatCount() {
+        unmarshallEventIfNull();
+        return dbevent.getRepeatcount();
+    }
+
+    @Override
+    public void setRepeatCount(int repeatCount) {
+        unmarshallEventIfNull();
+        dbevent = EPICSEvent.ScalarFloat.newBuilder()
+                .mergeFrom(dbevent)
+                .setRepeatcount(repeatCount)
+                .build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         return;
     }

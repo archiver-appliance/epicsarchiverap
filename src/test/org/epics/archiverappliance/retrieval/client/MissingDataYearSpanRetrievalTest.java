@@ -9,6 +9,7 @@ package org.epics.archiverappliance.retrieval.client;
 
 import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,16 +58,22 @@ public class MissingDataYearSpanRetrievalTest {
     private static final Logger logger = LogManager.getLogger(MissingDataYearSpanRetrievalTest.class.getName());
     private static final LinkedList<Instant> generatedTimeStamps = new LinkedList<>();
     static String testSpecificFolder = "MissingDataYearSpanRetrieval";
-    static String pvNamePB = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":" + testSpecificFolder;
+    static String pvNamePB =
+            ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + PlainStorageType.PB + ":" + testSpecificFolder;
+    static String pvNameParquet =
+            ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + PlainStorageType.PARQUET + ":" + testSpecificFolder;
     static File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchUnitTest"
             + File.separator + testSpecificFolder);
     static PlainCommonSetup PBSetup = new PlainCommonSetup();
-    static PlainStoragePlugin pbPlugin = new PlainStoragePlugin();
+    static PlainCommonSetup parquetSetup = new PlainCommonSetup();
+    static PlainStoragePlugin pbPlugin = new PlainStoragePlugin(PlainStorageType.PB);
+    static PlainStoragePlugin parquetPlugin = new PlainStoragePlugin(PlainStorageType.PARQUET);
     static TomcatSetup tomcatSetup = new TomcatSetup();
 
     @BeforeAll
     public static void setUp() throws Exception {
         PBSetup.setUpRootFolder(pbPlugin);
+        parquetSetup.setUpRootFolder(parquetPlugin);
         logger.info("Data folder is " + dataFolder.getAbsolutePath());
         FileUtils.deleteDirectory(dataFolder);
         generateData();
@@ -94,16 +101,22 @@ public class MissingDataYearSpanRetrievalTest {
     private static void generateDate(short year, int jun201201secsIntoYear) throws IOException {
         ArrayListEventStream strmPB = new ArrayListEventStream(
                 0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvNamePB, year));
+        ArrayListEventStream strmParquet = new ArrayListEventStream(
+                0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvNameParquet, year));
         for (int day = 0; day < 30; day++) {
             YearSecondTimestamp yts = new YearSecondTimestamp(
                     year,
                     jun201201secsIntoYear + day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                     111000000);
             strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>(0.0)));
+            strmParquet.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>(0.0)));
             generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
         }
         try (BasicContext context = new BasicContext()) {
             pbPlugin.appendData(context, pvNamePB, strmPB);
+        }
+        try (BasicContext context = new BasicContext()) {
+            parquetPlugin.appendData(context, pvNameParquet, strmParquet);
         }
     }
 
@@ -130,7 +143,7 @@ public class MissingDataYearSpanRetrievalTest {
      * <pre>
      */
     static Stream<Arguments> provideMissingDataYearSpan() {
-        return Stream.of(pvNamePB).flatMap(MissingDataYearSpanRetrievalTest::getArgumentsStream);
+        return Stream.of(pvNamePB, pvNameParquet).flatMap(MissingDataYearSpanRetrievalTest::getArgumentsStream);
     }
 
     static Stream<Arguments> getArgumentsStream(String pvName) {

@@ -164,6 +164,37 @@
       </section>
 
       <section>
+        <h3>The Parquet file storage option</h3>
+        Optionally, a <a href="https://parquet.apache.org/">parquet</a> file
+        backend can be used. A standard file format used as the storage backend
+        to a number of other databases and extensively used in the
+        <a href="https://parquet.apache.org/">Hadoop</a> and
+        <a href="https://spark.apache.org/">Spark</a> ecosystem.
+
+        <h4>Advantages</h4>
+        <ol>
+          <li>
+            Run length encoding, meaning data is stored efficiently even without
+            compression.
+          </li>
+          <li>
+            Support for multiple compression methods. In built support for ZSTD
+            and GZIP, other methods dependent on installed dependencies on
+            operating system.
+          </li>
+        </ol>
+
+        <h4>Disadvantages</h4>
+        <ol>
+          <li>
+            It is not a suitable format for use as the STS, as small writes are
+            badly performant.
+          </li>
+          <li>Can be much slower that the .pb format for ETL processes.</li>
+        </ol>
+      </section>
+
+      <section>
         <h3>The PB/HTTP protocol</h3>
         The <code>PB/HTTP</code> is a binary protocol over HTTP that is an
         extension of the <code>.pb</code> file format. The main difference is

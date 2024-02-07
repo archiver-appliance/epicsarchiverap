@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -27,12 +27,15 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 import javax.servlet.http.HttpServletRequest;
 
 /**
@@ -50,6 +53,10 @@ public class ETLPostProcessorTest {
     String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ETLPostProcessorTest";
     short currentYear = TimeUtils.getCurrentYear();
     ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+
+    private static Stream<Arguments> provideArguments() {
+        return ETLTestPlugins.providePlainStorageTypeArguments();
+    }
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -82,16 +89,19 @@ public class ETLPostProcessorTest {
         return eventCount;
     }
 
-    @Test
-    public void testPostProcessorDuringETL() throws Exception {
+    @ParameterizedTest
+    @MethodSource("provideArguments")
+    public void testPostProcessorDuringETL(PlainStorageType stsPlainStorageType, PlainStorageType mtsPlainStorageType)
+            throws Exception {
 
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETLPostProcessorTest";
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETLPostProcessorTest"
+                + stsPlainStorageType + mtsPlainStorageType;
         PlainStoragePlugin srcPlainPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                stsPlainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "/src&partitionGranularity=PARTITION_HOUR",
                 configService);
         PlainStoragePlugin destPlainPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=MTS&rootFolder="
+                stsPlainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=MTS&rootFolder="
                         + rootFolderName + "/dest&partitionGranularity=PARTITION_DAY&pp="
                         + testPostProcessor.getExtension(),
                 configService);

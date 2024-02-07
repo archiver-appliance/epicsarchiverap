@@ -133,6 +133,12 @@ public class PBScalarDouble implements DBRTimeEvent {
     }
 
     @Override
+    public YearSecondTimestamp getYearSecondTimestamp() {
+        unmarshallEventIfNull();
+        return new YearSecondTimestamp(this.year, dbevent.getSecondsintoyear(), dbevent.getNano());
+    }
+
+    @Override
     public long getEpochSeconds() {
         unmarshallEventIfNull();
         return TimeUtils.getStartOfYearInSeconds(year) + dbevent.getSecondsintoyear();
@@ -156,29 +162,6 @@ public class PBScalarDouble implements DBRTimeEvent {
     }
 
     @Override
-    public int getSeverity() {
-        unmarshallEventIfNull();
-        return dbevent.getSeverity();
-    }
-
-    @Override
-    public int getRepeatCount() {
-        unmarshallEventIfNull();
-        return dbevent.getRepeatcount();
-    }
-
-    @Override
-    public void setRepeatCount(int repeatCount) {
-        unmarshallEventIfNull();
-        dbevent = EPICSEvent.ScalarDouble.newBuilder()
-                .mergeFrom(dbevent)
-                .setRepeatcount(repeatCount)
-                .build();
-        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
-        return;
-    }
-
-    @Override
     public void setStatus(int status) {
         unmarshallEventIfNull();
         if (status != 0) {
@@ -194,6 +177,12 @@ public class PBScalarDouble implements DBRTimeEvent {
     }
 
     @Override
+    public int getSeverity() {
+        unmarshallEventIfNull();
+        return dbevent.getSeverity();
+    }
+
+    @Override
     public void setSeverity(int severity) {
         unmarshallEventIfNull();
         if (severity != 0) {
@@ -204,6 +193,23 @@ public class PBScalarDouble implements DBRTimeEvent {
         } else {
             dbevent = EPICSEvent.ScalarDouble.newBuilder().mergeFrom(dbevent).build();
         }
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        return;
+    }
+
+    @Override
+    public int getRepeatCount() {
+        unmarshallEventIfNull();
+        return dbevent.getRepeatcount();
+    }
+
+    @Override
+    public void setRepeatCount(int repeatCount) {
+        unmarshallEventIfNull();
+        dbevent = EPICSEvent.ScalarDouble.newBuilder()
+                .mergeFrom(dbevent)
+                .setRepeatcount(repeatCount)
+                .build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         return;
     }

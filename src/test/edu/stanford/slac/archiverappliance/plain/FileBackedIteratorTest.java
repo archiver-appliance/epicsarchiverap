@@ -1,7 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import edu.stanford.slac.archiverappliance.plain.parquet.ParquetBackedPBEventIterator;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStreamPositionBasedIterator;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +33,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
@@ -89,7 +90,8 @@ public class FileBackedIteratorTest {
     @BeforeAll
     public static void setUp() throws Exception {
         try {
-            generateData();
+            generateData(PlainStorageType.PB);
+            generateData(PlainStorageType.PARQUET);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -101,76 +103,89 @@ public class FileBackedIteratorTest {
     }
 
     public static Stream<Arguments> provideCorrectIterator() {
-        PlainFileHandler fileHandler = PBPlainFileHandler.DEFAULT_PB_HANDLER;
-        var filePath = filePath(fileHandler.getExtensionString());
-        FileInfo fileInfo;
-        try {
-            fileInfo = fileHandler.fileInfo(filePath);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        Instant FKTS = fileInfo.getFirstEvent().getEventTimeStamp();
-        Instant LKTS = fileInfo.getLastEvent().getEventTimeStamp();
-        logger.info("After generating data," + "FKTS = "
-                + TimeUtils.convertToISO8601String(FKTS) + "LKTS = "
-                + TimeUtils.convertToISO8601String(LKTS));
 
-        var mainIteratorClass = FileBackedPBEventStreamPositionBasedIterator.class;
-        return Stream.of(
-                Arguments.of(
-                        "Case 1",
-                        TimeUtils.minusDays(FKTS, 5),
-                        TimeUtils.minusDays(FKTS, 2),
-                        TimeUtils.minusDays(FKTS, 4),
-                        FKTS,
-                        EmptyEventIterator.class,
-                        filePath),
-                Arguments.of(
-                        "Case 2",
-                        TimeUtils.minusDays(FKTS, 5),
-                        TimeUtils.minusDays(FKTS, 2),
-                        TimeUtils.plusDays(FKTS, 1),
-                        TimeUtils.plusDays(FKTS, 10),
-                        mainIteratorClass,
-                        filePath),
-                Arguments.of(
-                        "Case 3",
-                        TimeUtils.minusDays(FKTS, 5),
-                        TimeUtils.minusDays(FKTS, 1),
-                        TimeUtils.plusDays(LKTS, 1),
-                        TimeUtils.plusDays(LKTS, 10),
-                        mainIteratorClass,
-                        filePath),
-                Arguments.of(
-                        "Case 4",
-                        FKTS,
-                        TimeUtils.plusDays(FKTS, 5),
-                        TimeUtils.minusDays(LKTS, 10),
-                        TimeUtils.minusDays(LKTS, 1),
-                        mainIteratorClass,
-                        filePath),
-                Arguments.of(
-                        "Case 5",
-                        FKTS,
-                        TimeUtils.plusDays(FKTS, 5),
-                        LKTS,
-                        TimeUtils.plusDays(LKTS, 10),
-                        mainIteratorClass,
-                        filePath),
-                Arguments.of(
-                        "Case 6",
-                        TimeUtils.plusDays(LKTS, 1),
-                        TimeUtils.plusDays(LKTS, 10),
-                        TimeUtils.plusDays(LKTS, 1),
-                        TimeUtils.plusDays(LKTS, 10),
-                        EmptyEventIterator.class,
-                        filePath));
+        return Arrays.stream(PlainStorageType.values()).flatMap(fileExtension -> {
+            var filePath = filePath(fileExtension.plainFileHandler().getExtensionString());
+            FileInfo fileInfo;
+            try {
+                fileInfo = fileExtension.plainFileHandler().fileInfo(filePath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Instant FKTS = fileInfo.getFirstEvent().getEventTimeStamp();
+            Instant LKTS = fileInfo.getLastEvent().getEventTimeStamp();
+            logger.info("After generating data," + "FKTS = "
+                    + TimeUtils.convertToISO8601String(FKTS) + "LKTS = "
+                    + TimeUtils.convertToISO8601String(LKTS));
+
+            var mainIteratorClass =
+                    switch (fileExtension) {
+                        case PB -> FileBackedPBEventStreamPositionBasedIterator.class;
+                        case PARQUET -> ParquetBackedPBEventIterator.class;
+                    };
+            return Stream.of(
+                    Arguments.of(
+                            "Case 1",
+                            TimeUtils.minusDays(FKTS, 5),
+                            TimeUtils.minusDays(FKTS, 2),
+                            TimeUtils.minusDays(FKTS, 4),
+                            FKTS,
+                            EmptyEventIterator.class,
+                            filePath,
+                            fileExtension),
+                    Arguments.of(
+                            "Case 2",
+                            TimeUtils.minusDays(FKTS, 5),
+                            TimeUtils.minusDays(FKTS, 2),
+                            TimeUtils.plusDays(FKTS, 1),
+                            TimeUtils.plusDays(FKTS, 10),
+                            mainIteratorClass,
+                            filePath,
+                            fileExtension),
+                    Arguments.of(
+                            "Case 3",
+                            TimeUtils.minusDays(FKTS, 5),
+                            TimeUtils.minusDays(FKTS, 1),
+                            TimeUtils.plusDays(LKTS, 1),
+                            TimeUtils.plusDays(LKTS, 10),
+                            mainIteratorClass,
+                            filePath,
+                            fileExtension),
+                    Arguments.of(
+                            "Case 4",
+                            FKTS,
+                            TimeUtils.plusDays(FKTS, 5),
+                            TimeUtils.minusDays(LKTS, 10),
+                            TimeUtils.minusDays(LKTS, 1),
+                            mainIteratorClass,
+                            filePath,
+                            fileExtension),
+                    Arguments.of(
+                            "Case 5",
+                            FKTS,
+                            TimeUtils.plusDays(FKTS, 5),
+                            LKTS,
+                            TimeUtils.plusDays(LKTS, 10),
+                            mainIteratorClass,
+                            filePath,
+                            fileExtension),
+                    Arguments.of(
+                            "Case 6",
+                            TimeUtils.plusDays(LKTS, 1),
+                            TimeUtils.plusDays(LKTS, 10),
+                            TimeUtils.plusDays(LKTS, 1),
+                            TimeUtils.plusDays(LKTS, 10),
+                            EmptyEventIterator.class,
+                            filePath,
+                            fileExtension));
+        });
     }
 
-    private static void generateData() throws IOException {
-        logger.info("generate Data to " + filePath(PBPlainFileHandler.DEFAULT_PB_HANDLER.getExtensionString()));
+    private static void generateData(PlainStorageType plainStorageType) throws IOException {
+        logger.info("generate Data " + plainStorageType + " to "
+                + filePath(plainStorageType.plainFileHandler().getExtensionString()));
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier()
+                plainStorageType.plainFileHandler().pluginIdentifier()
                         + "://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
                         + "&partitionGranularity=PARTITION_YEAR",
                 FileBackedIteratorTest.configService);
@@ -220,7 +235,8 @@ public class FileBackedIteratorTest {
             Instant minQTE,
             Instant maxQTE,
             Class<? extends Iterator<Event>> expectedIteratorClass,
-            Path pbFilePath)
+            Path pbFilePath,
+            PlainStorageType plainStorageType)
             throws IOException {
         for (Instant QTS = minQTS; QTS.isBefore(maxQTS); QTS = TimeUtils.plusDays(QTS, 1)) {
             for (Instant QTE = minQTE; QTE.isBefore(maxQTE); QTE = TimeUtils.plusDays(QTE, 1)) {
@@ -230,8 +246,9 @@ public class FileBackedIteratorTest {
                 logger.debug("Checking " + testCase + " for QTS " + TimeUtils.convertToISO8601String(QTS) + " and QTE "
                         + TimeUtils.convertToISO8601String(QTE));
 
-                try (EventStream strm = PBPlainFileHandler.DEFAULT_PB_HANDLER.getTimeStream(
-                        pvName, pbFilePath, dbrType, QTS, QTE, false)) {
+                try (EventStream strm = plainStorageType
+                        .plainFileHandler()
+                        .getTimeStream(pvName, pbFilePath, dbrType, QTS, QTE, false)) {
                     Assertions.assertSame(
                             expectedIteratorClass,
                             strm.iterator().getClass(),

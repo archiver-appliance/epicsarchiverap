@@ -10,7 +10,6 @@ package edu.stanford.slac.archiverappliance.plain;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility.StartEndTimeFromName;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -181,8 +180,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         this.appendExtension = plainFileHandler.getExtensionString() + "append";
     }
 
-    public PlainStoragePlugin() {
-        this(new PBPlainFileHandler());
+    public PlainStoragePlugin(PlainStorageType plainStorageType) {
+        this(plainStorageType.plainFileHandler());
     }
 
     private static void addStreamCallable(

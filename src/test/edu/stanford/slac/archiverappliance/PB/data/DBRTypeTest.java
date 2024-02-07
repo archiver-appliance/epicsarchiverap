@@ -9,6 +9,7 @@ package edu.stanford.slac.archiverappliance.PB.data;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import gov.aps.jca.dbr.DBR;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,15 +51,19 @@ import java.util.stream.Stream;
 public class DBRTypeTest {
     private static final Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
     static PlainStoragePlugin pbpluginPB;
+    static PlainStoragePlugin pbpluginParquet;
     static PlainCommonSetup pbSetup = new PlainCommonSetup();
+    static PlainCommonSetup parquetSetup = new PlainCommonSetup();
     static ConfigService configService;
 
     private static final int SECONDS_INTO_YEAR = 100;
 
     @BeforeAll
     public static void setUp() throws Exception {
-        pbpluginPB = new PlainStoragePlugin();
+        pbpluginPB = new PlainStoragePlugin(PlainStorageType.PB);
         pbSetup.setUpRootFolder(pbpluginPB, "DBRTypeTestsPB");
+        pbpluginParquet = new PlainStoragePlugin(PlainStorageType.PARQUET);
+        parquetSetup.setUpRootFolder(pbpluginParquet, "DBRTypeTestsParquet");
         configService = new ConfigServiceForTests(-1);
     }
 
@@ -70,12 +75,13 @@ public class DBRTypeTest {
 
     static Stream<Arguments> provideDBRTypePlainStoragePlugin() {
         return Arrays.stream(ArchDBRTypes.values())
-                .flatMap(d -> Stream.of(pbpluginPB).map(p -> Arguments.of(d, p)));
+                .flatMap(d -> Stream.of(pbpluginParquet, pbpluginPB).map(p -> Arguments.of(d, p)));
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         pbSetup.deleteTestFolder();
+        parquetSetup.deleteTestFolder();
     }
 
     @ParameterizedTest
