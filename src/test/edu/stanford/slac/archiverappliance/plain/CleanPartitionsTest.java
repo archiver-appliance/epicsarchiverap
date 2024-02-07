@@ -14,7 +14,8 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -34,10 +35,11 @@ public class CleanPartitionsTest {
         configService = new ConfigServiceForTests(-1);
     }
 
-    @Test
-    public void testCleanPartitions() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testCleanPartitions(PlainStorageType plainStorageType) throws Exception {
         for (PartitionGranularity granularity : PartitionGranularity.values()) {
-            PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
+            PlainStoragePlugin storagePlugin = new PlainStoragePlugin(plainStorageType);
             PlainCommonSetup srcSetup = new PlainCommonSetup();
 
             srcSetup.setUpRootFolder(storagePlugin, "TestCleanPartitions_" + granularity, granularity);

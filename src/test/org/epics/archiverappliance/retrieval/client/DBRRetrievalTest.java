@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -33,26 +34,33 @@ import java.util.LinkedList;
 @Tag("integration")
 public class DBRRetrievalTest {
     private static final Logger logger = LogManager.getLogger(DBRRetrievalTest.class.getName());
-    private final LinkedList<DataDBR> dataDBRs = new LinkedList<>();
+    private final LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
     private final short currentYear = TimeUtils.getCurrentYear();
     TomcatSetup tomcatSetup = new TomcatSetup();
-
-    Instant start = TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z");
-    Instant end = TimeUtils.convertFromISO8601String(currentYear + "-02-02T08:00:00.000Z");
 
     @BeforeEach
     public void setUp() throws Exception {
 
-        for (ArchDBRTypes type : ArchDBRTypes.values()) {
-            dataDBRs.add(new DataDBR(
-                    ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
-                            + (type.isWaveForm() ? "V_" : "S_")
-                            + type.getPrimitiveName(),
-                    type));
+        for (PlainStorageType plainStorageType : PlainStorageType.values()) {
+            for (ArchDBRTypes type : ArchDBRTypes.values()) {
+                dataDBRs.add(new DataDBR(
+                        ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
+                                + plainStorageType
+                                + (type.isWaveForm() ? "V_" : "S_")
+                                + type.getPrimitiveName(),
+                        type,
+                        plainStorageType));
+            }
         }
 
         for (DataDBR dataDBR : dataDBRs) {
-            GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type, start, end);
+            GenerateData.generateSineForPV(
+                    dataDBR.pvName,
+                    0,
+                    dataDBR.type,
+                    dataDBR.plainStorageType,
+                    TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z"),
+                    TimeUtils.convertFromISO8601String(currentYear + "-02-02T08:00:00.000Z"));
         }
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
@@ -64,8 +72,10 @@ public class DBRRetrievalTest {
 
     @Test
     public void testGetDataForDBRs() {
-        RawDataRetrievalAsEventStream rawDataRetrieval =
-                new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
+        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        Instant start = TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(currentYear + "-02-02T08:00:00.000Z");
 
         for (DataDBR dataDBR : dataDBRs) {
             EventStream stream = null;
@@ -99,5 +109,5 @@ public class DBRRetrievalTest {
         }
     }
 
-    private record DataDBR(String pvName, ArchDBRTypes type) {}
+    private record DataDBR(String pvName, ArchDBRTypes type, PlainStorageType plainStorageType) {}
 }

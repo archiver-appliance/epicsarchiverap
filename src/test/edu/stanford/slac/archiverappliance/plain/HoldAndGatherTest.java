@@ -8,7 +8,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -34,6 +33,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -64,14 +64,15 @@ public class HoldAndGatherTest {
     }
 
     public static Stream<Arguments> provideHoldAndGather() {
-        return Stream.of(
-                Arguments.of(PartitionGranularity.PARTITION_5MIN, 7, 5),
-                Arguments.of(PartitionGranularity.PARTITION_15MIN, 7, 5),
-                Arguments.of(PartitionGranularity.PARTITION_30MIN, 7, 5),
-                Arguments.of(PartitionGranularity.PARTITION_HOUR, 7, 5),
-                Arguments.of(PartitionGranularity.PARTITION_DAY, 7, 5),
-                Arguments.of(PartitionGranularity.PARTITION_DAY, 5, 3),
-                Arguments.of(PartitionGranularity.PARTITION_MONTH, 2, 1));
+        return Arrays.stream(PlainStorageType.values())
+                .flatMap(f -> Stream.of(
+                        Arguments.of(f, PartitionGranularity.PARTITION_5MIN, 7, 5),
+                        Arguments.of(f, PartitionGranularity.PARTITION_15MIN, 7, 5),
+                        Arguments.of(f, PartitionGranularity.PARTITION_30MIN, 7, 5),
+                        Arguments.of(f, PartitionGranularity.PARTITION_HOUR, 7, 5),
+                        Arguments.of(f, PartitionGranularity.PARTITION_DAY, 7, 5),
+                        Arguments.of(f, PartitionGranularity.PARTITION_DAY, 5, 3),
+                        Arguments.of(f, PartitionGranularity.PARTITION_MONTH, 2, 1)));
     }
 
     /**
@@ -80,9 +81,10 @@ public class HoldAndGatherTest {
      */
     @ParameterizedTest
     @MethodSource("provideHoldAndGather")
-    void testHoldAndGather(PartitionGranularity granularity, int hold, int gather) throws Exception {
+    void testHoldAndGather(PlainStorageType plainStorageType, PartitionGranularity granularity, int hold, int gather)
+            throws Exception {
 
-        PlainStoragePlugin etlSrc = new PlainStoragePlugin();
+        PlainStoragePlugin etlSrc = new PlainStoragePlugin(plainStorageType);
         PlainCommonSetup srcSetup = new PlainCommonSetup();
         srcSetup.setUpRootFolder(etlSrc, "ETLHoldGatherTest_" + granularity, granularity);
 
@@ -97,7 +99,7 @@ public class HoldAndGatherTest {
         long incrementSeconds = granularity.getApproxSecondsPerChunk() / ratio;
 
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
-                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + hold + "_" + gather + "_ETL_hold_gather"
+                + plainStorageType.plainFileHandler().pluginIdentifier() + hold + "_" + gather + "_ETL_hold_gather"
                 + etlSrc.getPartitionGranularity();
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores = new String[] {etlSrc.getURLRepresentation(), etlDest.getURLRepresentation()};

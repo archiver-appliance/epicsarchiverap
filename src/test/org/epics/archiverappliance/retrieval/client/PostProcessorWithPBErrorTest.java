@@ -195,7 +195,7 @@ public class PostProcessorWithPBErrorTest {
                     context.getPaths(),
                     ltsFolderName,
                     pvName,
-                    PBPlainFileHandler.pbFileExtension,
+                    PlainStorageType.PB.plainFileHandler().getExtensionString(),
                     CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
             Assertions.assertTrue(true);

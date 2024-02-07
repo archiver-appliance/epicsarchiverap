@@ -12,7 +12,6 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -39,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,36 +120,40 @@ public class PostProcessorWithPBErrorDailyTest {
 		int totalCount = checkRetrieval(pvName, dataGeneratedForYears*365*24*60, true);
 		corruptSomeData();
 
-		// We have now archived this PV, get some data and validate we got the expected number of events
-		// We generated data for dataGeneratedForYears years; one sample every minute
-		// We should get 365*24*60 events if things were ok.
-		// However, we corrupted each file; so we should lose maybe 1000 events per file?
-		checkRetrieval(pvName, totalCount - dataGeneratedForYears*365*1000, false);
-		checkRetrieval("mean_600(" + pvName + ")", totalCount/10 - dataGeneratedForYears*365*100, false);
-		checkRetrieval("firstSample_600(" + pvName + ")", totalCount/10 - dataGeneratedForYears*365*100, false);
-		checkRetrieval("lastSample_600(" + pvName + ")", totalCount/10 - dataGeneratedForYears*365*100, false);
-	}
-	private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch) throws IOException {
-		long startTimeMillis = System.currentTimeMillis();
-		RawDataRetrieval rawDataRetrieval = new RawDataRetrieval("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
-		Instant now = TimeUtils.now();
-		Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
+        // We have now archived this PV, get some data and validate we got the expected number of events
+        // We generated data for dataGeneratedForYears years; one sample every minute
+        // We should get 365*24*60 events if things were ok.
+        // However, we corrupted each file; so we should lose maybe 1000 events per file?
+        checkRetrieval(pvName, totalCount - dataGeneratedForYears * 365 * 1000, false);
+        checkRetrieval("mean_600(" + pvName + ")", totalCount / 10 - dataGeneratedForYears * 365 * 100, false);
+        checkRetrieval("firstSample_600(" + pvName + ")", totalCount / 10 - dataGeneratedForYears * 365 * 100, false);
+        checkRetrieval("lastSample_600(" + pvName + ")", totalCount / 10 - dataGeneratedForYears * 365 * 100, false);
+    }
+
+    private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch)
+            throws IOException {
+        long startTimeMillis = System.currentTimeMillis();
+        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        Instant now = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
 		int eventCount = 0;
 
-		final HashMap<String, String> metaFields = new HashMap<String, String>();
-		// Make sure we get the EGU as part of a regular VAL call.
-		try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
-			PayloadInfo info = null;
-			Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
-			info =  strm.getPayLoadInfo();
-			Assertions.assertNotNull(info, "Stream has no payload info");
-			mergeHeaders(info, metaFields);
-			strm.onInfoChange(new InfoChangeHandler() {
-				@Override
-				public void handleInfoChange(PayloadInfo info) {
-					mergeHeaders(info, metaFields);
-				}
-			});
+        final HashMap<String, String> metaFields = new HashMap<String, String>();
+        // Make sure we get the EGU as part of a regular VAL call.
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(
+                Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
+            PayloadInfo info = null;
+            Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
+            info = strm.getPayLoadInfo();
+            Assertions.assertNotNull(info, "Stream has no payload info");
+            mergeHeaders(info, metaFields);
+            strm.onInfoChange(new InfoChangeHandler() {
+                @Override
+                public void handleInfoChange(PayloadInfo info) {
+                    mergeHeaders(info, metaFields);
+                }
+            });
 
 			long endTimeMillis =  System.currentTimeMillis();
 
@@ -187,7 +191,7 @@ public class PostProcessorWithPBErrorDailyTest {
 				context.getPaths(),
 				mtsFolderName,
 				pvName,
-                PBPlainFileHandler.pbFileExtension,
+                PlainStorageType.PB.plainFileHandler().getExtensionString(),
                 CompressionMode.NONE,
 				configService.getPVNameToKeyConverter());
 			Assertions.assertNotNull(paths);

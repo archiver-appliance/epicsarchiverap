@@ -2,7 +2,7 @@ package org.epics.archiverappliance.config;
 
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -72,7 +72,10 @@ public class SampleRetrievalState extends RetrievalState {
             }
         }
 
-        PlainFileHandler plainFileHandler = new PBPlainFileHandler();
+        PlainFileHandler plainFileHandler = PlainStorageType.PB.plainFileHandler();
+        if (pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PARQUET")) {
+            plainFileHandler = PlainStorageType.PARQUET.plainFileHandler();
+        }
         PlainStoragePlugin mediumTermStore = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 plainFileHandler.pluginIdentifier() + "://localhost?name=MTS&rootFolder=" + configService.rootFolder
                         + "&partitionGranularity=PARTITION_YEAR",

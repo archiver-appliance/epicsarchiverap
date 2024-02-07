@@ -10,13 +10,15 @@ import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
+import org.epics.archiverappliance.etl.ETLDest;
+import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
+import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 
 public class PBPlainFileHandler implements PlainFileHandler {
-    public static final PlainFileHandler DEFAULT_PB_HANDLER = new PBPlainFileHandler();
     public static final String PB_PLUGIN_IDENTIFIER = "pb";
     public static final String pbFileExtension = ".pb";
 
@@ -104,5 +106,10 @@ public class PBPlainFileHandler implements PlainFileHandler {
             PVNameToKeyMapping pv2key)
             throws IOException {
         PlainFileHandler.deleteTempFiles(context, pvName, randSuffix, rootFolder, compressionMode, pv2key);
+    }
+
+    @Override
+    public ETLInfoListProcessor optimisedETLInfoListProcessor(ETLDest etlDest) {
+        return new DefaultETLInfoListProcessor(etlDest);
     }
 }
