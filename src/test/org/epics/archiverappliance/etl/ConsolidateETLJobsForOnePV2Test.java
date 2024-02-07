@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+
 /**
  *  test for consolidate all pb files from short term storage to medium term storage
  * @author Luofeng Li
@@ -45,9 +46,9 @@ public class ConsolidateETLJobsForOnePV2Test {
     String mediumTermFolderName = rootFolderName + "/mediumTerm";
     String longTermFolderName = rootFolderName + "/longTerm";
     String pvName = "ArchUnitTest" + "ConsolidateETLJobsForOnePV2Test";
-    PlainPBStoragePlugin storageplugin1;
-    PlainPBStoragePlugin storageplugin2;
-    PlainPBStoragePlugin storageplugin3;
+    PlainStoragePlugin storageplugin1;
+    PlainStoragePlugin storageplugin2;
+    PlainStoragePlugin storageplugin3;
     short currentYear = TimeUtils.getCurrentYear();
     ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
     private ConfigServiceForTests configService;
@@ -59,14 +60,14 @@ public class ConsolidateETLJobsForOnePV2Test {
             FileUtils.deleteDirectory(new File(rootFolderName));
         }
 
-        storageplugin1 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin1 = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
                 configService);
-        storageplugin2 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin2 = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName
                         + "/&partitionGranularity=PARTITION_HOUR&hold=5&gather=3",
                 configService);
-        storageplugin3 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin3 = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_HOUR&compress=ZIP_PER_PV",
                 configService);
@@ -81,18 +82,18 @@ public class ConsolidateETLJobsForOnePV2Test {
     @Test
     public void testAll() {
         try {
-            Consolidate();
+            consolidate();
         } catch (AlreadyRegisteredException | IOException | InterruptedException e) {
             logger.error(e);
         }
     }
 
-    private void Consolidate() throws AlreadyRegisteredException, IOException, InterruptedException {
+    private void consolidate() throws AlreadyRegisteredException, IOException, InterruptedException {
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-        String[] dataStores = new String[]{
-                storageplugin1.getURLRepresentation(),
-                storageplugin2.getURLRepresentation(),
-                storageplugin3.getURLRepresentation()
+        String[] dataStores = new String[] {
+            storageplugin1.getURLRepresentation(),
+            storageplugin2.getURLRepresentation(),
+            storageplugin3.getURLRepresentation()
         };
         typeInfo.setDataStores(dataStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
@@ -140,11 +141,11 @@ public class ConsolidateETLJobsForOnePV2Test {
                 filesShortTerm.length != 0, "there should be PB files int short term storage but there is no ");
         Assertions.assertTrue(
                 filesMediumTerm.length != 0, "there should be PB files int medium term storage but there is no ");
-        // ArchUnitTestConsolidateETLJobsForOnePVTest:_pb.zip
-        File zipFileOflongTermFile = new File(longTermFolderName + "/" + pvName + ":_pb.zip");
+        // ArchUnitTestConsolidateETLJobsForOnePVTest+_pb.zip
+        File zipFileOflongTermFile = new File(longTermFolderName + "/" + pvName + "+_pb.zip");
         Assertions.assertTrue(
                 zipFileOflongTermFile.exists(),
-                longTermFolderName + "/" + pvName + ":_pb.zip shoule exist but it doesn't");
+                longTermFolderName + "/" + pvName + "+_pb.zip shoule exist but it doesn't");
 
         // consolidate
         // String storageName="LTS";
@@ -152,7 +153,7 @@ public class ConsolidateETLJobsForOnePV2Test {
         String storageName = "MTS";
         Instant oneYearLaterTimeStamp = TimeUtils.convertFromEpochSeconds(
                 TimeUtils.getCurrentEpochSeconds()
-                        + 365 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                        + 365L * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                 0);
         ETLExecutor.runPvETLsBeforeOneStorage(configService, oneYearLaterTimeStamp, pvName, storageName);
         // make sure there are no pb files in short term storage , medium term storage and all files in long term

@@ -1,0 +1,32 @@
+<Configuration>
+    <Properties>
+        <Property name="LOG_DIR">logs</Property>
+    </Properties>
+
+    <Appenders>
+        <RollingFile
+                name="rollingFile"
+                fileName="${LOG_DIR}/arch.log"
+                filePattern="${LOG_DIR}/arch.%d{dd-MMM}.log.gz"
+                ignoreExceptions="false">
+            <PatternLayout>
+                <Pattern>%d %-5p [%t] %C{2} (%F:%L) - %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+        <Syslog name="Syslog" format="RFC5424" host="localhost" port="514"
+                protocol="UDP" appName="ArchiverApplianceLog" facility="LOCAL0"/>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="org.apache.log4j.xml" level="info"/>
+        <Root level="info">
+            <AppenderRef ref="rollingFile" level="info"/>
+            <AppenderRef ref="Syslog" level="info"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

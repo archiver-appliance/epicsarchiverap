@@ -7,9 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import edu.stanford.slac.archiverappliance.PlainPB.FileStreamCreator;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import gov.aps.jca.dbr.DBR;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -49,15 +49,16 @@ import java.util.stream.Stream;
  */
 public class DBRTypeTest {
     private static final Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
-    static PlainPBStoragePlugin pbplugin;
-    static PBCommonSetup pbSetup = new PBCommonSetup();
+    static PlainStoragePlugin pbpluginPB;
+    static PlainCommonSetup pbSetup = new PlainCommonSetup();
     static ConfigService configService;
 
     private static final int SECONDS_INTO_YEAR = 100;
+
     @BeforeAll
     public static void setUp() throws Exception {
-        pbplugin = new PlainPBStoragePlugin();
-        pbSetup.setUpRootFolder(pbplugin, "DBRTypeTestsPB");
+        pbpluginPB = new PlainStoragePlugin();
+        pbSetup.setUpRootFolder(pbpluginPB, "DBRTypeTestsPB");
         configService = new ConfigServiceForTests(-1);
     }
 
@@ -67,14 +68,14 @@ public class DBRTypeTest {
         configService.shutdownNow();
     }
 
+    static Stream<Arguments> provideDBRTypePlainStoragePlugin() {
+        return Arrays.stream(ArchDBRTypes.values())
+                .flatMap(d -> Stream.of(pbpluginPB).map(p -> Arguments.of(d, p)));
+    }
 
     @AfterEach
     public void tearDown() throws Exception {
         pbSetup.deleteTestFolder();
-    }
-
-    static Stream<ArchDBRTypes> provideFileExtensionDBRType() {
-        return Arrays.stream(ArchDBRTypes.values());
     }
 
     @ParameterizedTest
@@ -102,8 +103,8 @@ public class DBRTypeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideFileExtensionDBRType")
-    public void testPopulateAndRead(ArchDBRTypes dbrType) {
+    @MethodSource("provideDBRTypePlainStoragePlugin")
+    public void testPopulateAndRead(ArchDBRTypes dbrType, PlainStoragePlugin pbplugin) {
         EventStream retrievedStrm = null;
         try {
             BoundaryConditionsSimulationValueGenerator valuegenerator =
@@ -114,25 +115,21 @@ public class DBRTypeTest {
             Instant startTime = TimeUtils.getStartOfYear(currentYear);
             Instant endTime = TimeUtils.getEndOfYear(currentYear);
             int periodInSeconds = 10000;
-            SimulationEventStream simstream = new SimulationEventStream(
-                    dbrType,
-                    valuegenerator,
-                    startTime,
-                    endTime,
-                    periodInSeconds);
+            SimulationEventStream simstream =
+                    new SimulationEventStream(dbrType, valuegenerator, startTime, endTime, periodInSeconds);
             String pvName = "testPopulateAndRead" + dbrType.name();
             try (BasicContext context = new BasicContext()) {
                 pbplugin.appendData(context, pvName, simstream);
             }
             logger.info("Done appending data. Now checking the read.");
             // Now test the data.
-            Path path = PlainPBPathNameUtility.getPathNameForTime(
+            Path path = PathNameUtility.getPathNameForTime(
                     pbplugin,
                     pvName,
                     TimeUtils.getStartOfYear(currentYear),
                     new ArchPaths(),
                     configService.getPVNameToKeyConverter());
-            retrievedStrm = FileStreamCreator.getStream(pvName, path, dbrType);
+            retrievedStrm = pbplugin.getPlainFileHandler().getStream(pvName, path, dbrType);
 
             Instant expectedTime = startTime;
             long start = System.currentTimeMillis();
@@ -141,7 +138,8 @@ public class DBRTypeTest {
                 Assertions.assertEquals(evTimestamp, expectedTime);
 
                 SampleValue val = ev.getSampleValue();
-                SampleValue eexpectedval = valuegenerator.getSampleValue(dbrType, TimeUtils.getSecondsIntoYear(expectedTime.getEpochSecond()));
+                SampleValue eexpectedval = valuegenerator.getSampleValue(
+                        dbrType, TimeUtils.getSecondsIntoYear(expectedTime.getEpochSecond()));
                 logger.debug("val is of type " + val.getClass().getName() + " and eexpectedval is of type "
                         + eexpectedval.getClass().getName());
 
@@ -149,8 +147,8 @@ public class DBRTypeTest {
                 expectedTime = expectedTime.plusSeconds(periodInSeconds);
             }
             long end = System.currentTimeMillis();
-            logger.info("Checked " + Duration.between(startTime, expectedTime).getSeconds() / periodInSeconds + " samples of DBR type " + dbrType.name() + " in "
-                    + (end - start) + "(ms)");
+            logger.info("Checked " + Duration.between(startTime, expectedTime).getSeconds() / periodInSeconds
+                    + " samples of DBR type " + dbrType.name() + " in " + (end - start) + "(ms)");
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             Assertions.fail(ex.getMessage());
@@ -203,9 +201,8 @@ public class DBRTypeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideFileExtensionDBRType")
-    public void testMultipleYearDataForDoubles(
-            ArchDBRTypes dbrType) {
+    @MethodSource("provideDBRTypePlainStoragePlugin")
+    public void testMultipleYearDataForDoubles(ArchDBRTypes dbrType, PlainStoragePlugin storagePlugin) {
         for (short year = 1990; year < 3000; year += 10) {
             EventStream retrievedStrm = null;
             try {
@@ -217,23 +214,19 @@ public class DBRTypeTest {
                 Instant endTime = TimeUtils.getEndOfYear(year);
                 int periodInSeconds = PartitionGranularity.PARTITION_MONTH.getApproxSecondsPerChunk();
                 String pvName = "testMultipleYearDataForDoubles" + dbrType.name();
-                SimulationEventStream simstream = new SimulationEventStream(
-                        dbrType, valuegenerator, startTime, endTime, periodInSeconds);
+                SimulationEventStream simstream =
+                        new SimulationEventStream(dbrType, valuegenerator, startTime, endTime, periodInSeconds);
                 try (BasicContext context = new BasicContext()) {
-                    pbplugin.appendData(context, pvName, simstream);
+                    storagePlugin.appendData(context, pvName, simstream);
                 }
                 logger.info("Done appending data. Now checking the read.");
                 // Now test the data.
-                // EventStream retrievedStrm = pbplugin.getDataForPV(dbrType.name(),
+                // EventStream retrievedStrm = storagePlugin.getDataForPV(dbrType.name(),
                 // TimeStamp.time(startOfCurrentYearInSeconds, 0),
                 // TimeStamp.time(startOfCurrentYearInSeconds+SimulationEventStreamIterator.SECONDS_IN_YEAR, 0));
-                Path path = PlainPBPathNameUtility.getPathNameForTime(
-                        pbplugin,
-                        pvName,
-                        startTime,
-                        new ArchPaths(),
-                        configService.getPVNameToKeyConverter());
-                retrievedStrm = FileStreamCreator.getStream(pvName, path, dbrType);
+                Path path = PathNameUtility.getPathNameForTime(
+                        storagePlugin, pvName, startTime, new ArchPaths(), configService.getPVNameToKeyConverter());
+                retrievedStrm = storagePlugin.getPlainFileHandler().getStream(pvName, path, dbrType);
 
                 Instant expectedTime = startTime;
                 long start = System.currentTimeMillis();
@@ -242,13 +235,15 @@ public class DBRTypeTest {
                     Assertions.assertEquals(evTimestamp, expectedTime);
 
                     SampleValue val = ev.getSampleValue();
-                    SampleValue eexpectedval = valuegenerator.getSampleValue(dbrType, TimeUtils.getSecondsIntoYear(expectedTime.getEpochSecond()));
+                    SampleValue eexpectedval = valuegenerator.getSampleValue(
+                            dbrType, TimeUtils.getSecondsIntoYear(expectedTime.getEpochSecond()));
                     Assertions.assertEquals(eexpectedval, val);
                     expectedTime = expectedTime.plusSeconds(periodInSeconds);
                 }
                 long end = System.currentTimeMillis();
-                logger.info("Checked " + Duration.between(startTime, expectedTime).getSeconds() / periodInSeconds + " samples of DBR type " + dbrType.name() + " in "
-                        + (end - start) + "(ms)");
+                logger.info(
+                        "Checked " + Duration.between(startTime, expectedTime).getSeconds() / periodInSeconds
+                                + " samples of DBR type " + dbrType.name() + " in " + (end - start) + "(ms)");
             } catch (Exception ex) {
                 logger.error(ex.getMessage(), ex);
                 Assertions.fail(ex.getMessage());

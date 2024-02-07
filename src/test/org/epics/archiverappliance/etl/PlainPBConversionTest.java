@@ -1,8 +1,8 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 /**
- * Test the conversion implementation in the PlainPBStoragePlugin.
+ * Test the conversion implementation in the PlainStoragePlugin.
  * We generate a standard data set into a PB file, convert and make sure the data is as expected (timestamps remain the same, values are converted appropriately).
  *
  * @author mshankar
@@ -51,8 +51,7 @@ public class PlainPBConversionTest {
     private final int markFieldValuesChanged = 20;
 
     @BeforeAll
-    public static void setup() {
-    }
+    public static void setup() {}
 
     public static Stream<Arguments> providePlainPBConversion() {
         return Stream.of(
@@ -77,19 +76,19 @@ public class PlainPBConversionTest {
                 Arguments.of(granularity, ArchDBRTypes.DBR_SCALAR_SHORT, ArchDBRTypes.DBR_SCALAR_DOUBLE));
     }
 
-    public static Stream<PartitionGranularity> provideFailedConversionForDBRType() {
+    public static Stream<Arguments> provideFailedConversionForDBRType() {
         return Stream.of(
-                PartitionGranularity.PARTITION_HOUR,
-                PartitionGranularity.PARTITION_DAY,
-                PartitionGranularity.PARTITION_MONTH);
+                Arguments.of(PartitionGranularity.PARTITION_HOUR),
+                Arguments.of(PartitionGranularity.PARTITION_DAY),
+                Arguments.of(PartitionGranularity.PARTITION_MONTH));
     }
 
     @ParameterizedTest
     @MethodSource("providePlainPBConversion")
     public void testThruNumberConversionForDBRType(
             PartitionGranularity granularity, ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType) throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
-        PBCommonSetup setup = new PBCommonSetup();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
+        PlainCommonSetup setup = new PlainCommonSetup();
         setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
         logger.info("Testing conversion from " + srcDBRType.toString() + " to " + destDBRType.toString());
         String pvName = "PlainPBConversionTest_" + srcDBRType + "_" + destDBRType;
@@ -110,8 +109,8 @@ public class PlainPBConversionTest {
     @ParameterizedTest
     @MethodSource("provideFailedConversionForDBRType")
     public void testFailedConversionForDBRType(PartitionGranularity granularity) throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
-        PBCommonSetup setup = new PBCommonSetup();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
+        PlainCommonSetup setup = new PlainCommonSetup();
         setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
         logger.info("Testing failed conversion from " + ArchDBRTypes.DBR_SCALAR_DOUBLE + " to "
                 + ArchDBRTypes.DBR_WAVEFORM_STRING + ". You could see an exception here; ignore it. It is expected");
@@ -132,9 +131,8 @@ public class PlainPBConversionTest {
         try {
             convertToType(pvName, ArchDBRTypes.DBR_WAVEFORM_STRING, storagePlugin);
         } catch (Exception ex) {
-            Assertions.assertTrue(
-                    ex.getCause() instanceof ConversionException,
-                    "Expecting a Conversion Exception, instead got a " + ex);
+            Assertions.assertInstanceOf(
+                    ConversionException.class, ex.getCause(), "Expecting a Conversion Exception, instead got a " + ex);
         }
         validateStream(pvName, numEvents, periodInSeconds, startTime, ArchDBRTypes.DBR_SCALAR_DOUBLE, storagePlugin);
     }
@@ -145,7 +143,7 @@ public class PlainPBConversionTest {
             int totalTimePeriodInSeconds,
             int periodInSeconds,
             Instant startTime,
-            PlainPBStoragePlugin storagePlugin)
+            PlainStoragePlugin storagePlugin)
             throws Exception {
         ArrayListEventStream ret = new ArrayListEventStream(
                 100, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
@@ -154,7 +152,7 @@ public class PlainPBConversionTest {
                 DBR2PBTypeMapping.getPBClassFor(dbrType).getSerializingConstructor();
         Instant endTime = startTime.plusSeconds(totalTimePeriodInSeconds);
         try (SimulationEventStream simstream =
-                     new SimulationEventStream(dbrType, new ValueGenerator(dbrType), startTime, endTime, periodInSeconds)) {
+                new SimulationEventStream(dbrType, new ValueGenerator(dbrType), startTime, endTime, periodInSeconds)) {
             for (Event simEvent : simstream) {
                 DBRTimeEvent genEvent = serializingConstructor.newInstance(simEvent);
                 if (eventsAdded % addFieldValues == 0) {
@@ -173,7 +171,7 @@ public class PlainPBConversionTest {
         }
     }
 
-    private void convertToType(String pvName, ArchDBRTypes destDBRType, PlainPBStoragePlugin storagePlugin)
+    private void convertToType(String pvName, ArchDBRTypes destDBRType, PlainStoragePlugin storagePlugin)
             throws IOException {
         try (BasicContext context = new BasicContext()) {
             storagePlugin.convert(context, pvName, new ThruNumberAndStringConversion(destDBRType));
@@ -186,7 +184,7 @@ public class PlainPBConversionTest {
             int periodInSeconds,
             Instant expectedStartTime,
             ArchDBRTypes destDBRType,
-            PlainPBStoragePlugin storagePlugin)
+            PlainStoragePlugin storagePlugin)
             throws Exception {
         Instant expectedTime = expectedStartTime;
         int eventCount = 0;

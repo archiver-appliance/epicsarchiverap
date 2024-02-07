@@ -6,7 +6,9 @@
     </Appenders>
     <Loggers>
         <Logger name="org.apache.log4j.xml" level="info"/>
-        <Root level="info">
+        <Logger name="org.apache.hadoop" level="error"/>
+        <Logger name="org.apache.parquet" level="error"/>
+        <Root level="info" includeLocation="true">
             <AppenderRef ref="STDOUT"/>
         </Root>
     </Loggers>
