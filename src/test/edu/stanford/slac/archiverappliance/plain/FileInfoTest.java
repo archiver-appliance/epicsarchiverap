@@ -15,7 +15,8 @@ import org.epics.archiverappliance.retrieval.GenerateData;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,9 +37,10 @@ class FileInfoTest {
         Files.deleteIfExists(plainFile);
     }
 
-    @Test
-    void testPBInfo() throws Exception {
-        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    void testPBInfo(PlainStorageType plainStorageType) throws Exception {
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin(plainStorageType);
         short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
         plainFile = PathNameUtility.getPathNameForTime(
@@ -49,7 +51,7 @@ class FileInfoTest {
                 (new ConfigServiceForTests(-1).getPVNameToKeyConverter()));
         Instant start = TimeUtils.getStartOfYear(currentYear);
         Instant end = start.plusSeconds(10000);
-        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, end);
+        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, plainStorageType, start, end);
         FileInfo info = storagePlugin.fileInfo(plainFile);
         Assertions.assertEquals(info.getPVName(), pvName, "PVInfo PV name " + info.getPVName());
         Assertions.assertEquals(info.getDataYear(), currentYear, "PVInfo year " + info.getDataYear());

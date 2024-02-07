@@ -1,7 +1,7 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,13 +107,15 @@ public class DataAroundPartitionEndTest {
                 pvName.replace(":", "/").replace("--", "") + ":" + dataYear + "_05_30.pb");
 
         try (BasicContext context = new BasicContext()) {
-            EventStream strm = PBPlainFileHandler.DEFAULT_PB_HANDLER.getTimeStream(
-                    pvName,
-                    pbFilePath,
-                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                    Instant.parse(dataYear + "-05-30T23:59:00.00Z"),
-                    Instant.parse(dataYear + "-06-01T00:00:00.00Z"),
-                    false);
+            EventStream strm = PlainStorageType.PB
+                    .plainFileHandler()
+                    .getTimeStream(
+                            pvName,
+                            pbFilePath,
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            Instant.parse(dataYear + "-05-30T23:59:00.00Z"),
+                            Instant.parse(dataYear + "-06-01T00:00:00.00Z"),
+                            false);
             int totalEvents = 0;
             for (Event ev : strm) {
                 logger.debug(
