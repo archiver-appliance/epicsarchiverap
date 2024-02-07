@@ -26,6 +26,7 @@ public interface Event {
      * Get java epoch seconds of the timestamp of this event.
      * Note that we are skipping nanos.
      * To get to the nanos use the getEventTimeStamp method.
+     *
      * @return The java epoch seconds of this event.
      */
     public long getEpochSeconds();
@@ -42,6 +43,7 @@ public interface Event {
      * Return a serialized form of this event in the internal currency of the archiver appliance. For now, this is Google's Protocol Buffers
      * Note that the raw form is always escaped according to the archiver specification.
      * This is to have a minimum of conversion overhead when streaming data out to servers.
+     *
      * @return A serialization of this event in the internal currency of the archiver appliance.
      */
     public ByteArray getRawForm();
@@ -59,12 +61,14 @@ public interface Event {
     /**
      * Get this event's value. The value for an EPICS sample is a complex thing and can be scalars and vectors of numbers and strings.
      * With EPICS v4, this can get even more complicated.
+     *
      * @return The valus of this event
      */
     public SampleValue getSampleValue();
 
     /**
      * Make a clone of this event free from the confines of its containing stream.
+     *
      * @return A clone of this event
      */
     public Event makeClone();

@@ -10,6 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,7 +56,7 @@ public class SimpleETLTest {
     static long ratio = 5;
     static List<ETLTestPlugins> etlPlugins;
 
-    static Stream<Arguments> provideTestInput() {
+    static Stream<Arguments> providePartitionFileExtension() {
         return Arrays.stream(new PartitionGranularity[] {PartitionGranularity.PARTITION_MONTH})
                 .filter(g -> g.getNextLargerGranularity() != null)
                 .flatMap(g -> etlPlugins.stream().flatMap(plugins -> Stream.of(Arguments.of(g, plugins))));
@@ -85,7 +86,7 @@ public class SimpleETLTest {
      * Generates some data in STS; then calls the ETL to move it to MTS and checks that the total amount of data before and after is the same.
      */
     @ParameterizedTest
-    @MethodSource("provideTestInput")
+    @MethodSource("providePartitionFileExtension")
     public void testMove(PartitionGranularity granularity, ETLTestPlugins testPlugins) throws Exception {
         srcSetup.setUpRootFolder(
                 testPlugins.src(),
@@ -95,7 +96,9 @@ public class SimpleETLTest {
                 testPlugins.dest(),
                 "SimpleETLTestDest" + granularity + testPlugins.dest().getPluginIdentifier(),
                 granularity.getNextLargerGranularity(),
-                CompressionMode.NONE);
+                testPlugins.dest().getPlainFileHandler() == PlainStorageType.PARQUET.plainFileHandler()
+                        ? CompressionMode.valueOf("ZSTD")
+                        : CompressionMode.NONE);
 
         logger.info("Testing simple ETL testMove for " + testPlugins.src().getPartitionGranularity() + " to "
                 + testPlugins.dest().getPartitionGranularity());

@@ -8,7 +8,7 @@
 package org.epics.archiverappliance.utils.imprt;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -49,7 +49,7 @@ public class ImportCSV {
         }
         String rootFolder = args[3];
 
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin(new PBPlainFileHandler());
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
         pbplugin.setRootFolder(rootFolder);
 
         CSVEventStream strm = null;

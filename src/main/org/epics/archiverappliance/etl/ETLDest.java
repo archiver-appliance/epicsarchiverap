@@ -11,6 +11,8 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
+import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
 
 import java.io.IOException;
 
@@ -60,4 +62,8 @@ public interface ETLDest extends Writer {
     public PartitionGranularity getPartitionGranularity();
 
     public String getDescription();
+
+    default ETLInfoListProcessor etlInfoListProcessor(ETLSource curETLSource) {
+        return new DefaultETLInfoListProcessor(this);
+    }
 }

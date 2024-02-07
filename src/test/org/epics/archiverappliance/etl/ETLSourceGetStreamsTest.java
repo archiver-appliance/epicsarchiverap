@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -31,6 +32,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -50,38 +52,47 @@ public class ETLSourceGetStreamsTest {
             .withSecond(0);
 
     static Stream<Arguments> provideTestArguments() {
-        return Stream.of(
-                Arguments.of(
-                        PartitionGranularity.PARTITION_5MIN,
-                        PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
-                        600), // One hour; sample every 10 mins
-                Arguments.of(
-                        PartitionGranularity.PARTITION_15MIN,
-                        PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
-                        600), // One hour; sample every 10 mins
-                Arguments.of(
-                        PartitionGranularity.PARTITION_30MIN,
-                        PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk() * 4,
-                        600), // Four hours day; sample every 10 mins
-                Arguments.of(
-                        PartitionGranularity.PARTITION_HOUR,
-                        PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk() * 5,
-                        600), // 5 hours ; sample every 10 mins
-                Arguments.of(
-                        PartitionGranularity.PARTITION_DAY,
-                        PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7,
-                        PartitionGranularity.PARTITION_30MIN
-                                .getApproxSecondsPerChunk()), // One week; sample every 30 mins
-                Arguments.of(
-                        PartitionGranularity.PARTITION_MONTH,
-                        PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk(),
-                        PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk()
-                                * 15), // One year; sample every 1/2 MONTH
-                Arguments.of(
-                        PartitionGranularity.PARTITION_YEAR,
-                        PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() * 10,
-                        PartitionGranularity.PARTITION_MONTH.getApproxSecondsPerChunk()) // 10 years; sample every MONTH
-                );
+        return Arrays.stream(PlainStorageType.values())
+                .flatMap(f -> Stream.of(
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_5MIN,
+                                PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
+                                600), // One hour; sample every 10 mins
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_15MIN,
+                                PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
+                                600), // One hour; sample every 10 mins
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_30MIN,
+                                PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk() * 4,
+                                600), // Four hours day; sample every 10 mins
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_HOUR,
+                                PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk() * 5,
+                                600), // 5 hours ; sample every 10 mins
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_DAY,
+                                PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7,
+                                PartitionGranularity.PARTITION_30MIN
+                                        .getApproxSecondsPerChunk()), // One week; sample every 30 mins
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_MONTH,
+                                PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk(),
+                                PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk()
+                                        * 15), // One year; sample every 1/2 MONTH
+                        Arguments.of(
+                                f,
+                                PartitionGranularity.PARTITION_YEAR,
+                                PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() * 10,
+                                PartitionGranularity.PARTITION_MONTH
+                                        .getApproxSecondsPerChunk()) // 10 years; sample every MONTH
+                        ));
     }
 
     @BeforeAll
@@ -96,20 +107,28 @@ public class ETLSourceGetStreamsTest {
 
     @ParameterizedTest
     @MethodSource("provideTestArguments")
-    public void getETLStreams(PartitionGranularity partitionGranularity, long sampleRange, long skipSeconds)
+    public void getETLStreams(
+            PlainStorageType plainStorageType,
+            PartitionGranularity partitionGranularity,
+            long sampleRange,
+            long skipSeconds)
             throws Exception {
         PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb" + "://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR",
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + testFolder + "/src&partitionGranularity=PARTITION_HOUR",
                 configService);
         ETLContext etlContext = new ETLContext();
 
-        File rootFolder = new File(
-                testFolder.getAbsolutePath() + File.separator + partitionGranularity.toString() + File.separator);
+        File rootFolder = new File(testFolder.getAbsolutePath()
+                + File.separator
+                + partitionGranularity.toString()
+                + File.separator
+                + plainStorageType);
         rootFolder.mkdirs();
         pbplugin.setRootFolder(rootFolder.getAbsolutePath());
         pbplugin.setPartitionGranularity(partitionGranularity);
-        String pvName =
-                ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLSourceGetStreamsTest:" + partitionGranularity;
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLSourceGetStreamsTest:"
+                + partitionGranularity + plainStorageType;
         ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
         ArrayListEventStream testData =
                 new ArrayListEventStream(1000, new RemotableEventStreamDesc(type, pvName, currentYear));

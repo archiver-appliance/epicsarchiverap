@@ -1,6 +1,5 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +25,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,6 +83,19 @@ public class ZeroedFileEventStreamTest {
         configService = new ConfigServiceForTests(-1);
     }
 
+    private static void deleteChecksumPaths(PlainStorageType plainStorageType, Path path) throws IOException {
+        if (plainStorageType == PlainStorageType.PARQUET) {
+            // delete any checksum files when using hadoop created files.
+            // In best case you would want to replace the file with a back up if checksum failed
+            // but this test checks that you can get some of the data back.
+
+            Path checkSumPath = Path.of(String.valueOf(path.getParent()), "." + path.getFileName() + ".crc");
+            if (Files.exists(checkSumPath)) {
+                Files.delete(checkSumPath);
+            }
+        }
+    }
+
     @AfterEach
     public void tearDown() throws Exception {
         FileUtils.deleteDirectory(new File(rootFolderName));
@@ -92,16 +105,17 @@ public class ZeroedFileEventStreamTest {
     /**
      * Generate PB file with bad footers and then see if we survive PBFileInfo.
      */
-    @Test
-    public void testBadFooters() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testBadFooters(PlainStorageType plainStorageType) throws Exception {
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "&partitionGranularity=PARTITION_YEAR",
                 configService);
 
         logger.info("Testing garbage in the last record");
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
-                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFooters";
+                + plainStorageType.plainFileHandler().pluginIdentifier() + "testBadFooters";
 
         int generatedCount = generateFreshData(storagePlugin, pvName);
         Path[] paths;
@@ -110,7 +124,7 @@ public class ZeroedFileEventStreamTest {
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    PBPlainFileHandler.DEFAULT_PB_HANDLER.getExtensionString(),
+                    plainStorageType.plainFileHandler().getExtensionString(),
                     CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         }
@@ -120,6 +134,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+            deleteChecksumPaths(plainStorageType, path);
 
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
@@ -161,15 +176,16 @@ public class ZeroedFileEventStreamTest {
     /**
      * Generate PB file with bad footers in the ETL source and then see if we survive ETL
      */
-    @Test
-    void testBadFootersInSrcETL() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    void testBadFootersInSrcETL(PlainStorageType plainStorageType) throws Exception {
         PlainStoragePlugin srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         assert srcPlugin != null;
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
-                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFootersInSrcETL";
+                + plainStorageType.plainFileHandler().pluginIdentifier() + "testBadFootersInSrcETL";
 
         int generatedCount = generateFreshData(srcPlugin, pvName);
         Path[] paths = null;
@@ -188,6 +204,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+            deleteChecksumPaths(plainStorageType, path);
 
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
@@ -208,7 +225,7 @@ public class ZeroedFileEventStreamTest {
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores = new String[] {
             srcPlugin.getURLRepresentation(),
-            PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+            plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                     + rootFolderName + "Dest" + "&partitionGranularity=PARTITION_YEAR"
         };
         typeInfo.setDataStores(dataStores);
@@ -280,10 +297,11 @@ public class ZeroedFileEventStreamTest {
     /**
      * Generate PB file with bad footers in the ETL dest and then see if we survive ETL
      */
-    @Test
-    void testBadFootersInDestETL() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    void testBadFootersInDestETL(PlainStorageType plainStorageType) throws Exception {
         PlainStoragePlugin destPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "Dest" + "&partitionGranularity=PARTITION_YEAR",
                 configService);
         assert destPlugin != null;
@@ -293,7 +311,7 @@ public class ZeroedFileEventStreamTest {
         }
 
         PlainStoragePlugin srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         File srcFolder = new File(srcPlugin.getRootFolder());
@@ -301,7 +319,7 @@ public class ZeroedFileEventStreamTest {
             FileUtils.deleteDirectory(srcFolder);
         }
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
-                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFootersInDestETL";
+                + plainStorageType.plainFileHandler().pluginIdentifier() + "testBadFootersInDestETL";
 
         long generatedCount = 0;
         try (BasicContext context = new BasicContext()) {
@@ -338,6 +356,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+            deleteChecksumPaths(plainStorageType, path);
 
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
@@ -446,15 +465,16 @@ public class ZeroedFileEventStreamTest {
      * Generate PB file with bad footers and then see if we survive retrieval
      * @throws Exception
      */
-    @Test
-    public void testBadFootersRetrieval() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testBadFootersRetrieval(PlainStorageType plainStorageType) throws Exception {
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "&partitionGranularity=PARTITION_YEAR",
                 configService);
         assert storagePlugin != null;
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
-                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFootersRetrieval";
+                + plainStorageType.plainFileHandler().pluginIdentifier() + "testBadFootersRetrieval";
 
         int generatedCount = generateFreshData(storagePlugin, pvName);
         Path[] paths = null;
@@ -473,6 +493,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+            deleteChecksumPaths(plainStorageType, path);
 
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
@@ -511,14 +532,15 @@ public class ZeroedFileEventStreamTest {
      * Generate PB file with zeroes at random places and then see if we survive retrieval
      * @throws Exception
      */
-    @Test
-    void testZeroedDataRetrieval() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    void testZeroedDataRetrieval(PlainStorageType plainStorageType) throws Exception {
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
                         + rootFolderName + "&partitionGranularity=PARTITION_YEAR",
                 configService);
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
-                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testZeroedDataRetrieval";
+                + plainStorageType.plainFileHandler().pluginIdentifier() + "testZeroedDataRetrieval";
 
         int generatedCount = generateFreshData(storagePlugin, pvName);
         Path[] paths = null;
@@ -539,6 +561,7 @@ public class ZeroedFileEventStreamTest {
         int zeroedLines = 100;
         Random random = new Random();
         for (Path path : paths) {
+            deleteChecksumPaths(plainStorageType, path);
 
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 for (int i = 0; i < zeroedLines; i++) {
