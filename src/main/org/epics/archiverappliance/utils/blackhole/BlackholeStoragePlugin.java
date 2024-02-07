@@ -40,100 +40,98 @@ import java.util.concurrent.Callable;
  *
  */
 public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
-	private static Logger logger = LogManager.getLogger(BlackholeStoragePlugin.class.getName());
+    private static Logger logger = LogManager.getLogger(BlackholeStoragePlugin.class.getName());
+    private String name = "blackhole";
 
-	@Override
-    public List<Callable<EventStream>> getDataForPV(BasicContext context, String pvName, Instant startTime, Instant endTime, PostProcessor postProcessor) throws IOException {
-		// A blackhole plugin has no data
-		return null;
-	}
+    @Override
+    public List<Callable<EventStream>> getDataForPV(
+            BasicContext context, String pvName, Instant startTime, Instant endTime, PostProcessor postProcessor)
+            throws IOException {
+        // A blackhole plugin has no data
+        return null;
+    }
 
-	@Override
+    @Override
     public int appendData(BasicContext context, String pvName, EventStream stream) {
         return 1;
-	}
+    }
 
-	@Override
-	public Event getLastKnownEvent(BasicContext context, String pvName) throws IOException {
-		// A blackhole plugin has no data
-		return null;
-	}
-	
-	@Override
-	public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
-		return null;
-	}
+    @Override
+    public Event getLastKnownEvent(BasicContext context, String pvName) throws IOException {
+        // A blackhole plugin has no data
+        return null;
+    }
 
-	@Override
-	public boolean prepareForNewPartition(String pvName, Event ev, ArchDBRTypes archDBRType, ETLContext context) throws IOException {
-		return true;
-	}
+    @Override
+    public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
+        return null;
+    }
 
-	@Override
-	public boolean appendToETLAppendData(String pvName, EventStream stream, ETLContext context) {
-		return true;
-	}
+    @Override
+    public boolean appendToETLAppendData(String pvName, EventStream stream, ETLContext context) {
+        return true;
+    }
 
-	@Override
-	public boolean commitETLAppendData(String pvName, ETLContext context) throws IOException {
-		return true;
-	}
-	
-	@Override
-	public boolean runPostProcessors(String pvName, ArchDBRTypes dbrtype, ETLContext context) throws IOException {
-		return true;
-	}
+    @Override
+    public boolean commitETLAppendData(String pvName, ETLContext context) throws IOException {
+        return true;
+    }
 
-	@Override
-	public PartitionGranularity getPartitionGranularity() {
-		return PartitionGranularity.PARTITION_YEAR;
-	}
+    @Override
+    public boolean runPostProcessors(String pvName, ArchDBRTypes dbrtype, ETLContext context) throws IOException {
+        return true;
+    }
 
-	@Override
-	public String getDescription() {
-		return "A black hole plugin";
-	}
-	
-	public String getURLRepresentation() {
-		StringWriter ret = new StringWriter();
-		ret.append("blackhole://localhost");
-		try { 
-			ret.append("?name=");
-			ret.append(URLEncoder.encode(name, "UTF-8"));
-		} catch(UnsupportedEncodingException ex) { }
-		
-		return ret.toString();
-	}
+    @Override
+    public PartitionGranularity getPartitionGranularity() {
+        return PartitionGranularity.PARTITION_YEAR;
+    }
 
-	private String name = "blackhole";
-	@Override
-	public void initialize(String configURL, ConfigService configService) throws IOException {
-		try { 
-			URI srcURI = new URI(configURL);
-			HashMap<String, String> queryNVPairs = URIUtils.parseQueryString(srcURI);
+    @Override
+    public String getDescription() {
+        return "A black hole plugin";
+    }
 
-			if(queryNVPairs.containsKey("name")) {
-				name = queryNVPairs.get("name");
-			} else {
-				logger.debug("Using the default name of " + name + " for this blackhole engine");
-			}
-		} catch(URISyntaxException ex) {
-			throw new IOException(ex);
-		}
-	}
+    public String getURLRepresentation() {
+        StringWriter ret = new StringWriter();
+        ret.append("blackhole://localhost");
+        try {
+            ret.append("?name=");
+            ret.append(URLEncoder.encode(name, "UTF-8"));
+        } catch (UnsupportedEncodingException ex) {
+        }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+        return ret.toString();
+    }
 
-	@Override
-	public void renamePV(BasicContext context, String oldName, String newName) throws IOException {
-		// Nothing to do here.
-	}
+    @Override
+    public void initialize(String configURL, ConfigService configService) throws IOException {
+        try {
+            URI srcURI = new URI(configURL);
+            HashMap<String, String> queryNVPairs = URIUtils.parseQueryString(srcURI);
 
-	@Override
-	public void convert(BasicContext context, String pvName, ConversionFunction conversionFuntion) throws IOException {
-		// Nothing to do here.
-	}
+            if (queryNVPairs.containsKey("name")) {
+                name = queryNVPairs.get("name");
+            } else {
+                logger.debug("Using the default name of " + name + " for this blackhole engine");
+            }
+        } catch (URISyntaxException ex) {
+            throw new IOException(ex);
+        }
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public void renamePV(BasicContext context, String oldName, String newName) throws IOException {
+        // Nothing to do here.
+    }
+
+    @Override
+    public void convert(BasicContext context, String pvName, ConversionFunction conversionFuntion) throws IOException {
+        // Nothing to do here.
+    }
 }

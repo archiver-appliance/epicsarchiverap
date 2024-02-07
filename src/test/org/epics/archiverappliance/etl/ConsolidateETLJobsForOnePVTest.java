@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
@@ -40,6 +40,9 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.zip.ZipEntry;
+
+import static org.junit.jupiter.api.Assertions.fail;
+
 /**
  * test for consolidate all pb files from short term storage and medium term storage to long term storage
  * @author Luofeng Li
@@ -53,9 +56,9 @@ public class ConsolidateETLJobsForOnePVTest {
     String mediumTermFolderName = rootFolderName + "/mediumTerm";
     String longTermFolderName = rootFolderName + "/longTerm";
     String pvName = "ArchUnitTest" + "ConsolidateETLJobsForOnePVTest";
-    PlainPBStoragePlugin storageplugin1;
-    PlainPBStoragePlugin storageplugin2;
-    PlainPBStoragePlugin storageplugin3;
+    PlainStoragePlugin storageplugin1;
+    PlainStoragePlugin storageplugin2;
+    PlainStoragePlugin storageplugin3;
     short currentYear = TimeUtils.getCurrentYear();
     ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
     private ConfigServiceForTests configService;
@@ -67,14 +70,14 @@ public class ConsolidateETLJobsForOnePVTest {
             FileUtils.deleteDirectory(new File(rootFolderName));
         }
 
-        storageplugin1 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin1 = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
                 configService);
-        storageplugin2 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin2 = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName
                         + "/&partitionGranularity=PARTITION_DAY&hold=5&gather=3",
                 configService);
-        storageplugin3 = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin3 = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
                 configService);
@@ -91,6 +94,7 @@ public class ConsolidateETLJobsForOnePVTest {
         try {
             consolidate();
         } catch (AlreadyRegisteredException | IOException | InterruptedException e) {
+            fail();
             logger.error("Exception consolidating storage", e);
         }
     }
@@ -98,10 +102,10 @@ public class ConsolidateETLJobsForOnePVTest {
     @SuppressWarnings("deprecation")
     private void consolidate() throws AlreadyRegisteredException, IOException, InterruptedException {
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-        String[] dataStores = new String[]{
-                storageplugin1.getURLRepresentation(),
-                storageplugin2.getURLRepresentation(),
-                storageplugin3.getURLRepresentation()
+        String[] dataStores = new String[] {
+            storageplugin1.getURLRepresentation(),
+            storageplugin2.getURLRepresentation(),
+            storageplugin3.getURLRepresentation()
         };
         typeInfo.setDataStores(dataStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
@@ -151,12 +155,12 @@ public class ConsolidateETLJobsForOnePVTest {
         assert filesMediumTerm != null;
         Assertions.assertTrue(
                 filesMediumTerm.length != 0, "there should be PB files int medium term storage but there is no ");
-        // ArchUnitTestConsolidateETLJobsForOnePVTest:_pb.zip
-        String zip_suffix = ":_pb.zip";
+        // ArchUnitTestConsolidateETLJobsForOnePVTest+_pb.zip
+        String zip_suffix = "+_pb.zip";
         File zipFileOflongTermFile = new File(longTermFolderName + "/" + pvName + zip_suffix);
         Assertions.assertTrue(
                 zipFileOflongTermFile.exists(),
-                longTermFolderName + "/" + pvName + ":_pb.zip shoule exist but it doesn't");
+                longTermFolderName + "/" + pvName + "+_pb.zip shoule exist but it doesn't");
         ZipFile lastZipFile1 = new ZipFile(zipFileOflongTermFile);
         Enumeration<ZipArchiveEntry> enumeration1 = lastZipFile1.getEntries();
         int ss = 0;
@@ -166,7 +170,7 @@ public class ConsolidateETLJobsForOnePVTest {
         }
         Assertions.assertTrue(
                 ss < dayCount,
-                "the zip file of " + longTermFolderName + "/" + pvName + ":_pb.zip should contain pb files less than "
+                "the zip file of " + longTermFolderName + "/" + pvName + "+_pb.zip should contain pb files less than "
                         + dayCount + ",but the number is " + ss);
         // consolidate
         String storageName = "LTS";
@@ -183,15 +187,21 @@ public class ConsolidateETLJobsForOnePVTest {
         Thread.sleep(4000);
         String[] filesShortTerm2 = shortTermFIle.list();
         String[] filesMediumTerm2 = mediumTermFIle.list();
-        Assertions.assertEquals(0, filesShortTerm2.length, "there should be no files int short term storage but there are still " + filesShortTerm2.length
-                + "PB files");
-        Assertions.assertEquals(0, filesMediumTerm2.length, "there should be no files int medium term storage but there are still " + filesMediumTerm2.length
-                + "PB files");
-        // ArchUnitTestConsolidateETLJobsForOnePVTest:_pb.zip
+        Assertions.assertEquals(
+                0,
+                filesShortTerm2.length,
+                "there should be no files int short term storage but there are still " + filesShortTerm2.length
+                        + "PB files");
+        Assertions.assertEquals(
+                0,
+                filesMediumTerm2.length,
+                "there should be no files int medium term storage but there are still " + filesMediumTerm2.length
+                        + "PB files");
+        // ArchUnitTestConsolidateETLJobsForOnePVTest+_pb.zip
         File zipFileOflongTermFile2 = new File(longTermFolderName + "/" + pvName + zip_suffix);
         Assertions.assertTrue(
                 zipFileOflongTermFile2.exists(),
-                longTermFolderName + "/" + pvName + ":_pb.zip shoule exist but it doesn't");
+                longTermFolderName + "/" + pvName + "+_pb.zip shoule exist but it doesn't");
 
         ZipFile lastZipFile = new ZipFile(zipFileOflongTermFile2);
         Enumeration<ZipArchiveEntry> enumeration = lastZipFile.getEntries();
@@ -210,7 +220,10 @@ public class ConsolidateETLJobsForOnePVTest {
             logger.info("fileName=" + dateFileName);
         }
 
-        Assertions.assertEquals(dayCount, fileNameMap.size(), "The number of files should be " + dayCount + ", actually, it is " + fileNameMap.size());
+        Assertions.assertEquals(
+                dayCount,
+                fileNameMap.size(),
+                "The number of files should be " + dayCount + ", actually, it is " + fileNameMap.size());
         Date beinningDate = new Date();
         beinningDate.setYear(currentYear - 1);
         beinningDate.setMonth(Calendar.DECEMBER);
@@ -224,8 +237,10 @@ public class ConsolidateETLJobsForOnePVTest {
             calendarBeingining.add(Calendar.DAY_OF_MONTH, 1);
             String fileNameTemp1 = df.format(calendarBeingining.getTime());
             logger.info("fileNameTemp1=" + fileNameTemp1);
-            Assertions.assertNotNull(fileNameMap.get(fileNameTemp1), "the file  whose name is like " + pvName + ":" + currentYear + "_" + fileNameTemp1
-                    + ".pb should exist,but it doesn't");
+            Assertions.assertNotNull(
+                    fileNameMap.get(fileNameTemp1),
+                    "the file  whose name is like " + pvName + ":" + currentYear + "_" + fileNameTemp1
+                            + ".pb should exist,but it doesn't");
         }
     }
 }

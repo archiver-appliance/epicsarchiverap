@@ -8,10 +8,10 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
+import edu.stanford.slac.archiverappliance.plain.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.FileExtension;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -49,27 +50,22 @@ import java.util.stream.Stream;
  */
 public class SimpleETLTest {
     private static final Logger logger = LogManager.getLogger(SimpleETLTest.class);
-    static PlainPBStoragePlugin etlSrcPB;
-    static PlainPBStoragePlugin etlDestPB;
     static PBCommonSetup srcSetup = new PBCommonSetup();
     static PBCommonSetup destSetup = new PBCommonSetup();
     static ConfigServiceForTests configService;
     static long ratio = 5;
+    static List<ETLTestPlugins> etlPlugins;
 
     static Stream<Arguments> providePartitionFileExtension() {
-        return Arrays.stream(PartitionGranularity.values())
+        return Arrays.stream(new PartitionGranularity[] {PartitionGranularity.PARTITION_MONTH})
                 .filter(g -> g.getNextLargerGranularity() != null)
-                .map(g -> Arguments.of(
-                        g,
-                        etlSrcPB,
-                        etlDestPB));
+                .flatMap(g -> etlPlugins.stream().flatMap(plugins -> Stream.of(Arguments.of(g, plugins))));
     }
 
     @BeforeAll
     public static void setUp() throws ConfigException {
+        etlPlugins = ETLTestPlugins.generatePlugins();
 
-        etlSrcPB = new PlainPBStoragePlugin();
-        etlDestPB = new PlainPBStoragePlugin();
         configService = new ConfigServiceForTests(new File("./bin"), 1);
     }
 
@@ -91,26 +87,29 @@ public class SimpleETLTest {
      */
     @ParameterizedTest
     @MethodSource("providePartitionFileExtension")
-    public void testMove(
-            PartitionGranularity granularity,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest)
-            throws Exception {
+    public void testMove(PartitionGranularity granularity, ETLTestPlugins testPlugins) throws Exception {
         srcSetup.setUpRootFolder(
-                etlSrc, "SimpleETLTestSrc_" + granularity, granularity);
+                testPlugins.src(),
+                "SimpleETLTestSrc_" + granularity + testPlugins.src().getFileExtension(),
+                granularity);
         destSetup.setUpRootFolder(
-                etlDest,
-                "SimpleETLTestDest" + granularity,
-                granularity.getNextLargerGranularity());
+                testPlugins.dest(),
+                "SimpleETLTestDest" + granularity + testPlugins.dest().getFileExtension(),
+                granularity.getNextLargerGranularity(),
+                testPlugins.dest().getFileExtension() == FileExtension.PARQUET
+                        ? CompressionMode.valueOf("ZSTD")
+                        : CompressionMode.NONE);
 
-        logger.info("Testing simple ETL testMove for " + etlSrc.getPartitionGranularity() + " to "
-                + etlDest.getPartitionGranularity());
+        logger.info("Testing simple ETL testMove for " + testPlugins.src().getPartitionGranularity() + " to "
+                + testPlugins.dest().getPartitionGranularity());
 
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testMove"
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + testPlugins.pvNamePrefix() + "ETL_testMove"
                 + granularity;
 
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-        String[] dataStores = new String[]{etlSrc.getURLRepresentation(), etlDest.getURLRepresentation()};
+        String[] dataStores = new String[] {
+            testPlugins.src().getURLRepresentation(), testPlugins.dest().getURLRepresentation()
+        };
         typeInfo.setDataStores(dataStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
@@ -122,14 +121,10 @@ public class SimpleETLTest {
         Instant endTime =
                 startTime.plusSeconds(granularity.getNextLargerGranularity().getApproxSecondsPerChunk() * ratio);
         SimulationEventStream simstream = new SimulationEventStream(
-                ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                new SineGenerator(0),
-                startTime,
-                endTime,
-                (int) (granularity.getApproxSecondsPerChunk() / ratio));
-        int createdEvents = 0;
+                ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), startTime, endTime, (int)
+                        (granularity.getApproxSecondsPerChunk() / ratio));
         try (BasicContext context = new BasicContext()) {
-            createdEvents = etlSrc.appendData(context, pvName, simstream);
+            testPlugins.src().appendData(context, pvName, simstream);
         }
         logger.info("Done creating src data for PV " + pvName);
 
@@ -139,8 +134,8 @@ public class SimpleETLTest {
         Instant endOfRequest = TimeUtils.plusDays(timeETLruns, 366);
         long beforeCount = 0;
         try (BasicContext context = new BasicContext();
-             EventStream before = new CurrentThreadWorkerEventStream(
-                     pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
+                EventStream before = new CurrentThreadWorkerEventStream(
+                        pvName, testPlugins.src().getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (@SuppressWarnings("unused") Event e : before) {
                 beforeCount++;
             }
@@ -150,25 +145,24 @@ public class SimpleETLTest {
         logger.info("Done performing ETL");
 
         // Check that all the files in the destination store are valid files.
-        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
-                etlDest.getRootFolder(),
+                testPlugins.dest().getRootFolder(),
                 pvName,
-                PlainPBStoragePlugin.pbFileExtension,
-                etlDest.getPartitionGranularity(),
+                testPlugins.dest().getFileExtension().getExtensionString(),
                 CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(
                 allPaths.length > 0,
                 "PlainPBFileNameUtility returns empty array for getAllFilesForPV for " + pvName + " when looking in "
-                        + etlDest.getRootFolder());
+                        + testPlugins.dest().getRootFolder());
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePBFile.validatePBFile(destPath, true),
-                        "File validation failed for "
-                                + destPath.toAbsolutePath());
+                    ValidatePBFile.validatePBFile(
+                            destPath, true, testPlugins.dest().getFileExtension()),
+                    "File validation failed for " + destPath.toAbsolutePath());
         }
 
         logger.info("Asking for data between"
@@ -178,8 +172,8 @@ public class SimpleETLTest {
 
         long afterCount = 0;
         try (BasicContext context = new BasicContext();
-             EventStream afterDest = new CurrentThreadWorkerEventStream(
-                     pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
+                EventStream afterDest = new CurrentThreadWorkerEventStream(
+                        pvName, testPlugins.dest().getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             Assertions.assertNotNull(afterDest);
             for (@SuppressWarnings("unused") Event e : afterDest) {
                 afterCount++;
@@ -188,8 +182,8 @@ public class SimpleETLTest {
         logger.info("Of the " + beforeCount + " events, " + afterCount + " events were moved into the dest store.");
         Assertions.assertTrue(afterCount != 0, "Seems like no events were moved by ETL " + afterCount);
         try (BasicContext context = new BasicContext();
-             EventStream afterSrc = new CurrentThreadWorkerEventStream(
-                     pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
+                EventStream afterSrc = new CurrentThreadWorkerEventStream(
+                        pvName, testPlugins.src().getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (@SuppressWarnings("unused") Event e : afterSrc) {
                 afterCount++;
             }

@@ -188,7 +188,6 @@
         we use 24 core machines with 128GB of memory and 15K SAS drives for
         medium term storage.
       </section>
-
       <section>
         <h3>Storage</h3>
         Out of the box, the following storage technologies/plugins are
@@ -197,8 +196,8 @@
           <li>
             <span class="definitionterm"
               ><a
-                href="api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html"
-                >PlainPBStoragePlugin</a
+                href="api/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html"
+                >PlainStoragePlugin</a
               ></span
             >
             <span class="definition"
@@ -233,7 +232,7 @@
               </li>
             </ol>
             <div class="noteafterlist">
-              By default, the PlainPBStoragePlugin maps PV names to keys using a
+              By default, the PlainStoragePlugin maps PV names to keys using a
               simple algorithm that relies on the presence of a good PV naming
               convention. To use your own mapping scheme, see the
               <a href="customization.html#PVNamesToKeys">Key Mapping</a> section

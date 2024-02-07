@@ -8,18 +8,19 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.FileExtension;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
-import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -42,10 +43,7 @@ import java.util.stream.Stream;
  */
 public class BlackHoleETLTest {
     private static final Logger logger = LogManager.getLogger(BlackHoleETLTest.class.getName());
-    ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-
-    public BlackHoleETLTest() throws ConfigException {
-    }
+    int ratio = 10; // Size of the test
 
     /**
      * Variant of the gradual accumulation test where the destination is a black hole plugin
@@ -53,14 +51,14 @@ public class BlackHoleETLTest {
     public static Stream<Arguments> provideBlackHoleETL() {
         return Arrays.stream(PartitionGranularity.values())
                 .filter(g -> g.getNextLargerGranularity() != null)
-                .flatMap(g -> Stream.of(Arguments.of(g)));
+                .flatMap(g -> Arrays.stream(FileExtension.values()).flatMap(f -> Stream.of(Arguments.of(g, f))));
     }
 
     @ParameterizedTest
     @MethodSource("provideBlackHoleETL")
-    public void testBlackHoleETL(PartitionGranularity granularity)
-            throws Exception {
-        PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
+    void testBlackHoleETL(PartitionGranularity granularity, FileExtension fileExtension) throws Exception {
+
+        PlainStoragePlugin etlSrc = new PlainStoragePlugin(fileExtension);
         PBCommonSetup srcSetup = new PBCommonSetup();
         BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
         ConfigServiceForTests configService = new ConfigServiceForTests(-1);
@@ -72,8 +70,8 @@ public class BlackHoleETLTest {
 
         short year = TimeUtils.getCurrentYear();
         long curEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-        int secondsintoyear = 0;
-        int incrementSeconds = 450;
+        int secondsInTestingPeriod = 0;
+        int incrementSeconds = granularity.getApproxSecondsPerChunk() / ratio;
 
         String pvName =
                 ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_blackhole" + etlSrc.getPartitionGranularity();
@@ -86,40 +84,42 @@ public class BlackHoleETLTest {
         configService.getETLLookup().manualControlForUnitTests();
 
         try (BasicContext context = new BasicContext()) {
-            while (secondsintoyear < 60 * 60 * 24 * 365) {
-                int eventsPerShot = (60 * 60 * 24 * 31) / incrementSeconds;
+            while (secondsInTestingPeriod < granularity.getApproxSecondsPerChunk() * ratio) {
                 ArrayListEventStream instream = new ArrayListEventStream(
-                        eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
-                for (int i = 0; i < eventsPerShot; i++) {
+                        incrementSeconds, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
+                for (int i = 0; i < ratio; i++) {
                     instream.add(new SimulationEvent(
-                            secondsintoyear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>((double)
-                                    secondsintoyear)));
-                    secondsintoyear += incrementSeconds;
+                            secondsInTestingPeriod,
+                            year,
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            new ScalarValue<Double>((double) secondsInTestingPeriod)));
+                    secondsInTestingPeriod += incrementSeconds;
                     curEpochSeconds += incrementSeconds;
                 }
                 etlSrc.appendData(context, pvName, instream);
-                int filesWithDataBefore = getFilesWithData(pvName, etlSrc);
+                int filesWithDataBefore = getFilesWithData(pvName, etlSrc, fileExtension, configService);
                 ETLExecutor.runETLs(configService, TimeUtils.convertFromEpochSeconds(curEpochSeconds, 0));
                 logger.debug("Done performing ETL");
-                int filesWithDataAfter = getFilesWithData(pvName, etlSrc);
+                int filesWithDataAfter = getFilesWithData(pvName, etlSrc, fileExtension, configService);
                 Assertions.assertTrue(
                         filesWithDataAfter < filesWithDataBefore,
                         "Black hole did not remove source files before = " + filesWithDataBefore + " and after = "
-                                + filesWithDataAfter + " for granularity " + granularity.toString());
+                                + filesWithDataAfter + " for granularity " + granularity);
             }
         }
 
         srcSetup.deleteTestFolder();
     }
 
-    private int getFilesWithData(String pvName, PlainPBStoragePlugin etlSrc) throws Exception {
+    private int getFilesWithData(
+            String pvName, PlainStoragePlugin etlSrc, FileExtension fileExtension, ConfigService configService)
+            throws Exception {
         // Check that all the files in the destination store are valid files.
-        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlSrc.getRootFolder(),
                 pvName,
-                PlainPBStoragePlugin.pbFileExtension,
-                etlSrc.getPartitionGranularity(),
+                fileExtension.getExtensionString(),
                 CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         return allPaths.length;

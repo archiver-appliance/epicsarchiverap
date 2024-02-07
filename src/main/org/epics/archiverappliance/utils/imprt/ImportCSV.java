@@ -7,7 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.imprt;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.FileExtension;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -18,50 +19,56 @@ import java.io.IOException;
 /**
  * Simple import of a CSV file into storage plugin.
  * CSV file format is the one used by Bob Hall for export from ChannelArchiver - EPICS epochseconds, nanos, value, status, severity.
- * Example: - 644223600,461147000,5.59054,0,0 
+ * Example: - 644223600,461147000,5.59054,0,0
  * @author mshankar
  *
  */
 public class ImportCSV {
-	private static final Logger logger = LogManager.getLogger(ImportCSV.class);
-	/**
-	 * @param args  &emsp; 
-	 * @throws IOException  &emsp; 
-	 */
-	public static void main(String[] args) throws IOException {
-		if(args.length < 4) {
-			// For now we only support the PB plugin.
-			System.err.println("Usage: java org.epics.archiverappliance.utils.imprt.ImportCSV <CSVFileName> <PVName> <DBRType> <PBRootFolder>");
-			return;
-		}
+    private static final Logger logger = LogManager.getLogger(ImportCSV.class);
 
-		String fileName = args[0];
-		String pvName = args[1];
-		ArchDBRTypes type = ArchDBRTypes.valueOf(args[2]);
-		if(type == null) {
-			System.err.println("Unable to determine the DBR type. Supported types are as follows ");
-			for(ArchDBRTypes supptype : ArchDBRTypes.values()) {
-				System.err.println(supptype.ordinal() + "\t:" + supptype.toString());
-			}
-		}
-		String rootFolder = args[3];
+    /**
+     * @param args &emsp;
+     * @throws IOException &emsp;
+     */
+    public static void main(String[] args) throws IOException {
+        if (args.length < 4) {
+            // For now we only support the PB plugin.
+            System.err.println(
+                    "Usage: java org.epics.archiverappliance.utils.imprt.ImportCSV <CSVFileName> <PVName> <DBRType> <PBRootFolder>");
+            return;
+        }
 
-		PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
-		pbplugin.setRootFolder(rootFolder);
-		                         
-		CSVEventStream strm = null;
-		try(BasicContext context = new BasicContext()) {
-			strm = new CSVEventStream(pvName, fileName, type);
+        String fileName = args[0];
+        String pvName = args[1];
+        ArchDBRTypes type = ArchDBRTypes.valueOf(args[2]);
+        if (type == null) {
+            System.err.println("Unable to determine the DBR type. Supported types are as follows ");
+            for (ArchDBRTypes supptype : ArchDBRTypes.values()) {
+                System.err.println(supptype.ordinal() + "\t:" + supptype.toString());
+            }
+        }
+        String rootFolder = args[3];
+
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(FileExtension.PB);
+        pbplugin.setRootFolder(rootFolder);
+
+        CSVEventStream strm = null;
+        try (BasicContext context = new BasicContext()) {
+            strm = new CSVEventStream(pvName, fileName, type);
             int eventsAppended = pbplugin.appendData(context, pvName, strm);
             if (eventsAppended == 0) {
-				throw new IOException("Please check the logs to make sure the import succeeded.");
-			}
-		} catch (Exception ex) {
-			logger.error(ex.getMessage(), ex);
-		} finally {
-			try { if(strm != null) { strm.close(); strm = null; } } catch(Exception ex) {} 
-		}
-		
-	}
-
+                throw new IOException("Please check the logs to make sure the import succeeded.");
+            }
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+        } finally {
+            try {
+                if (strm != null) {
+                    strm.close();
+                    strm = null;
+                }
+            } catch (Exception ex) {
+            }
+        }
+    }
 }

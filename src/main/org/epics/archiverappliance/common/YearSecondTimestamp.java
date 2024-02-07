@@ -67,20 +67,20 @@ public class YearSecondTimestamp implements Comparable<YearSecondTimestamp> {
         return result;
     }
 
-	public void setNanos(int nanos) {
+    public void setNanos(int nanos) {
         this.nanos = nanos;
     }
 
     @Override
     public String toString() {
-        return "YearSecondTimestamp{" +
-                "year=" + year +
-                ", secondsintoyear=" + secondsintoyear +
-                ", nanos=" + nanos +
-                '}';
+        return "YearSecondTimestamp{" + "datetime="
+                + TimeUtils.convertFromYearSecondTimestamp(this) + ", year="
+                + year + ", secondsintoyear="
+                + secondsintoyear + ", nanos="
+                + nanos + '}';
     }
 
-	@Override
+    @Override
     public int compareTo(YearSecondTimestamp other) {
         if (this.year == other.year) {
             if (this.secondsintoyear == other.secondsintoyear) {
@@ -96,5 +96,4 @@ public class YearSecondTimestamp implements Comparable<YearSecondTimestamp> {
             return this.year - other.year;
         }
     }
-
 }
