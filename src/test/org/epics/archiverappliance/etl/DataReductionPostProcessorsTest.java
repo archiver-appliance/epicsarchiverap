@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,6 +22,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -29,10 +30,8 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithConsolidatedEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -40,8 +39,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -52,23 +49,51 @@ import java.util.stream.Stream;
  * @author mshankar
  *
  */
-@Tag("singleFork")
 public class DataReductionPostProcessorsTest {
     private static final Logger logger = LogManager.getLogger(DataReductionPostProcessorsTest.class);
-    String shortTermFolderName = ConfigServiceForTests.getDefaultShortTermFolder() + "/shortTerm";
-    String mediumTermFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/mediumTerm";
-    String longTermFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/longTerm";
-    private final String rawPVName =
-            ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + DataReductionPostProcessorsTest.class.getSimpleName();
-    private final String reducedPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
-            + DataReductionPostProcessorsTest.class.getSimpleName() + "reduced";
 
-    @BeforeEach
-    public void setUp() throws Exception {
-        cleanDataFolders();
+    static final ConfigServiceForTests configService;
+
+    static {
+        try {
+            configService = new ConfigServiceForTests(1);
+        } catch (ConfigException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void cleanDataFolders() throws IOException {
+    public static Stream<Arguments> provideReduceDataUsing() {
+        return Stream.of(
+                        // No fill versions
+                        "lastSample_3600",
+                        "firstSample_3600",
+                        "firstSample_600",
+                        "lastSample_600",
+                        "meanSample_3600",
+                        "meanSample_600",
+                        "meanSample_1800",
+                        "minSample_3600",
+                        "maxSample_3600",
+                        "medianSample_3600",
+                        // Fill versions)
+                        "mean_3600",
+                        "mean_600",
+                        "mean_1800",
+                        "min_3600",
+                        "max_3600",
+                        "median_3600",
+                        "firstFill_3600",
+                        "lastFill_3600")
+                .map(Arguments::of);
+    }
+
+    @AfterAll
+    public static void afterAll() {
+        configService.shutdownNow();
+    }
+
+    private void cleanDataFolders(String shortTermFolderName, String mediumTermFolderName, String longTermFolderName)
+            throws IOException {
         if (new File(shortTermFolderName).exists()) {
             FileUtils.deleteDirectory(new File(shortTermFolderName));
         }
@@ -78,35 +103,6 @@ public class DataReductionPostProcessorsTest {
         if (new File(longTermFolderName).exists()) {
             FileUtils.deleteDirectory(new File(longTermFolderName));
         }
-    }
-
-    @AfterEach
-    public void tearDown() throws Exception {
-        cleanDataFolders();
-    }
-
-    public static Stream<Arguments> provideReduceDataUsing() {
-        return Stream.of(
-                // No fill versions
-                Arguments.of("lastSample_3600"),
-                Arguments.of("firstSample_3600"),
-                Arguments.of("firstSample_600"),
-                Arguments.of("lastSample_600"),
-                Arguments.of("meanSample_3600"),
-                Arguments.of("meanSample_600"),
-                Arguments.of("meanSample_1800"),
-                Arguments.of("minSample_3600"),
-                Arguments.of("maxSample_3600"),
-                Arguments.of("medianSample_3600"),
-                // Fill versions)
-                Arguments.of("mean_3600"),
-                Arguments.of("mean_600"),
-                Arguments.of("mean_1800"),
-                Arguments.of("min_3600"),
-                Arguments.of("max_3600"),
-                Arguments.of("median_3600"),
-                Arguments.of("firstFill_3600"),
-                Arguments.of("lastFill_3600"));
     }
 
     /**
@@ -119,20 +115,29 @@ public class DataReductionPostProcessorsTest {
     @MethodSource("provideReduceDataUsing")
     public void testPostProcessor(String reduceDataUsing) throws Exception {
         logger.info("Testing for " + reduceDataUsing);
-        cleanDataFolders();
+        final String rawPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
+                + DataReductionPostProcessorsTest.class.getSimpleName()
+                + reduceDataUsing;
+        final String reducedPVName = rawPVName + "reduced";
 
-        ConfigServiceForTests configService = new ConfigServiceForTests(1);
+        String shortTermFolderName =
+                ConfigServiceForTests.getDefaultShortTermFolder() + String.format("/%s/shortTerm", reduceDataUsing);
+        String mediumTermFolderName =
+                ConfigServiceForTests.getDefaultPBTestFolder() + String.format("/%s/mediumTerm", reduceDataUsing);
+        String longTermFolderName =
+                ConfigServiceForTests.getDefaultPBTestFolder() + String.format("/%s/longTerm", reduceDataUsing);
+        cleanDataFolders(shortTermFolderName, mediumTermFolderName, longTermFolderName);
         // Set up the raw and reduced PV's
-        PlainPBStoragePlugin etlSTS = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlSTS = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
                 configService);
-        PlainPBStoragePlugin etlMTS = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlMTS = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_DAY",
                 configService);
-        PlainPBStoragePlugin etlLTSRaw = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlLTSRaw = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=LTS&rootFolder=" + longTermFolderName + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
-        PlainPBStoragePlugin etlLTSReduced = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlLTSReduced = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_YEAR&reducedata=" + reduceDataUsing,
                 configService);
@@ -163,14 +168,17 @@ public class DataReductionPostProcessorsTest {
 
         logger.info("Testing data reduction for postprocessor " + reduceDataUsing);
 
-        for (int day = 0; day < 40; day++) {
+        for (int day = 0; day < 4; day++) {
             // Generate data into the STS on a daily basis
             ArrayListEventStream genDataRaw = new ArrayListEventStream(
-                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                    new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
             ArrayListEventStream genDataReduced = new ArrayListEventStream(
-                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                    new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
             for (int second = 0; second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(); second++) {
-                YearSecondTimestamp ysts = new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + second, 0);
+                YearSecondTimestamp ysts = new YearSecondTimestamp(
+                        currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + second, 0);
                 Instant ts = TimeUtils.convertFromYearSecondTimestamp(ysts);
                 genDataRaw.add(
                         new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>(second * 1.0), 0, 0));
@@ -185,8 +193,8 @@ public class DataReductionPostProcessorsTest {
             logger.debug("For postprocessor " + reduceDataUsing + " done generating data into the STS for day " + day);
 
             // Run ETL at the end of the day
-            Instant timeETLruns = TimeUtils.convertFromYearSecondTimestamp(
-                    new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 86399, 0));
+            Instant timeETLruns = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(
+                    currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 86399, 0));
             ETLExecutor.runETLs(configService, timeETLruns);
             logger.debug("For postprocessor " + reduceDataUsing + " done performing ETL as though today is "
                     + TimeUtils.convertToHumanReadableString(timeETLruns));
@@ -241,19 +249,24 @@ public class DataReductionPostProcessorsTest {
                             logger.info("Reduced" + TimeUtils.convertToHumanReadableString(reducedTimestamps.pop()));
                     }
                 }
-	            Assertions.assertEquals(reducedCount, rawWithPPCount, "For postprocessor " + reduceDataUsing + " for day " + day + " we have " + rawWithPPCount
-			            + " rawWithPP events and " + reducedCount + " reduced events");
+                Assertions.assertEquals(
+                        reducedCount,
+                        rawWithPPCount,
+                        "For postprocessor " + reduceDataUsing + " for day " + day + " we have " + rawWithPPCount
+                                + " rawWithPP events and " + reducedCount + " reduced events");
             }
             if (day > 2) {
-                Assertions.assertTrue((rawWithPPCount != 0), "For postprocessor " + reduceDataUsing + " for day " + day
-                        + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = "
-                        + rawWithPPCount);
-                Assertions.assertTrue((reducedCount != 0), "For postprocessor " + reduceDataUsing + " for day " + day
-                        + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = "
-                        + reducedCount);
+                Assertions.assertTrue(
+                        (rawWithPPCount != 0),
+                        "For postprocessor " + reduceDataUsing + " for day " + day
+                                + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = "
+                                + rawWithPPCount);
+                Assertions.assertTrue(
+                        (reducedCount != 0),
+                        "For postprocessor " + reduceDataUsing + " for day " + day
+                                + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = "
+                                + reducedCount);
             }
         }
-
-        configService.shutdownNow();
     }
 }

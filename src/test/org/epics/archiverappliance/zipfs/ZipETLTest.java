@@ -1,12 +1,13 @@
 package org.epics.archiverappliance.zipfs;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -20,94 +21,106 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.time.Instant;
-import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.util.stream.Stream;
 
-@Tag("slow")
 public class ZipETLTest {
-	private static Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
-	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipETLTest");
-	private ConfigService configService;
+    private static final Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
+    File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipETLTest");
+    private ConfigService configService;
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		configService = new ConfigServiceForTests(-1);
-		if(testFolder.exists()) { 
-			FileUtils.deleteDirectory(testFolder);
-		}
-		testFolder.mkdirs();		
-	}
+    private static Stream<Arguments> provideSource() {
+        return Stream.of(Arguments.of(true), Arguments.of(false));
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		FileUtils.deleteDirectory(testFolder);
-	}
+    @BeforeEach
+    public void setUp() throws Exception {
+        configService = new ConfigServiceForTests(-1);
+        if (testFolder.exists()) {
+            FileUtils.deleteDirectory(testFolder);
+        }
+        assert testFolder.mkdirs();
+    }
 
-	@Test
-	public void testETLIntoZipPerPV() throws Exception {
-		String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLZipTest";
-		String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
-		PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipETL&rootFolder=" + srcRootFolder + "&partitionGranularity=PARTITION_DAY", configService);
-		logger.info(etlSrc.getURLRepresentation());
-		ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-		int phasediffindegrees = 10;
+    @AfterEach
+    public void tearDown() throws Exception {
+        FileUtils.deleteDirectory(testFolder);
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideSource")
+    public void testETLIntoZipPerPV(boolean compressSrc) throws Exception {
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ZipETLTest" + compressSrc;
+        ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+        String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
+        String srcPluginString =
+                "pb://localhost?name=ZipETL&rootFolder=" + srcRootFolder + "&partitionGranularity=PARTITION_DAY";
+        if (compressSrc) {
+            srcPluginString = srcPluginString + "&compress=ZIP_PER_PV";
+        }
+        PlainStoragePlugin etlSrc =
+                (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(srcPluginString, configService);
+        logger.info(etlSrc.getURLRepresentation());
+
+        String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
+        PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                "pb://localhost?name=ZipETL&rootFolder=" + destRootFolder
+                        + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
+                configService);
+        logger.info(etlDest.getURLRepresentation());
+
+        PVTypeInfo typeInfo = new PVTypeInfo(pvName, dbrType, true, 1);
+        String[] dataStores = new String[] {etlSrc.getURLRepresentation(), etlDest.getURLRepresentation()};
+        typeInfo.setDataStores(dataStores);
+        configService.updateTypeInfoForPV(pvName, typeInfo);
+        configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
+        configService.getETLLookup().manualControlForUnitTests();
+
+        int phasediffindegrees = 10;
         short currentYear = TimeUtils.getCurrentYear();
-        SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), TimeUtils.getStartOfYear(currentYear), TimeUtils.getEndOfYear(currentYear), 1);
-		try(BasicContext context = new BasicContext()) {
-			etlSrc.appendData(context, pvName, simstream);
-		}
-		
-		String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
-		PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipETL&rootFolder=" + destRootFolder + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
-		logger.info(etlDest.getURLRepresentation());
-		
-		PVTypeInfo typeInfo = new PVTypeInfo(pvName, dbrType, true, 1);
-		String[] dataStores = new String[] { etlSrc.getURLRepresentation(), etlDest.getURLRepresentation() }; 
-		typeInfo.setDataStores(dataStores);
-		configService.updateTypeInfoForPV(pvName, typeInfo);
-		configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
-		configService.getETLLookup().manualControlForUnitTests();
+        Instant startTime = TimeUtils.getStartOfYear(currentYear);
+        Instant endTime = startTime.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
+        SimulationEventStream simstream =
+                new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), startTime, endTime, 1);
+        try (BasicContext context = new BasicContext()) {
+            etlSrc.appendData(context, pvName, simstream);
+        }
 
-        Instant timeETLruns = TimeUtils.now();
-        ZonedDateTime ts = ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC));
-        if (ts.getMonth() == Month.JANUARY) {
-			// This means that we never test this in Jan but I'd rather have the null check than skip this.
-			timeETLruns = TimeUtils.plusDays(timeETLruns, 35);
-		}
-		ETLExecutor.runETLs(configService, timeETLruns);
-		logger.info("Done performing ETL");
+        Instant timeETLruns = endTime.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 10L);
 
-		
-		
-		File expectedZipFile = new File(destRootFolder + File.separator + configService.getPVNameToKeyConverter().convertPVNameToKey(pvName) + "_pb.zip");
-		Assertions.assertTrue(expectedZipFile.exists(), "Zip file does not seem to exist " + expectedZipFile);
+        ETLExecutor.runETLs(configService, timeETLruns);
+        logger.info("Done performing ETL");
 
-		logger.info("Testing retrieval for zip per pv");
-		int eventCount = 0;
-		try(BasicContext context = new BasicContext();
-				EventStream strm = new CurrentThreadWorkerEventStream(pvName, etlSrc.getDataForPV(context, pvName, TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()), TimeUtils.getEndOfYear(TimeUtils.getCurrentYear())))
-				) {
-			if(strm != null) {
-				for(@SuppressWarnings("unused") Event ev : strm) {
-					eventCount++;
-				}
-			}
-		}
-		try(BasicContext context = new BasicContext();
-				EventStream strm = new CurrentThreadWorkerEventStream(pvName, etlDest.getDataForPV(context, pvName, TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()), TimeUtils.getEndOfYear(TimeUtils.getCurrentYear())))
-				) {
-			for(@SuppressWarnings("unused") Event ev : strm) {
-				eventCount++;
-			}
-		}
-		logger.info("Got " + eventCount + " events");
-        Assertions.assertTrue(eventCount >= (simstream.getNumberOfEvents() - 1), "Retrieval does not seem to return any events " + eventCount);
-	}
+        File expectedZipFile = new File(destRootFolder + File.separator
+                + configService.getPVNameToKeyConverter().convertPVNameToKey(pvName) + "_pb.zip");
+        Assertions.assertTrue(expectedZipFile.exists(), "Zip file does not seem to exist " + expectedZipFile);
+
+        logger.info("Testing retrieval for zip per pv");
+        int srcEventCount = 0;
+        try (BasicContext context = new BasicContext();
+                EventStream strm = new CurrentThreadWorkerEventStream(
+                        pvName, etlSrc.getDataForPV(context, pvName, startTime, endTime))) {
+            for (@SuppressWarnings("unused") Event ev : strm) {
+                srcEventCount++;
+            }
+        }
+        int destEventCount = 0;
+        try (BasicContext context = new BasicContext();
+                EventStream strm = new CurrentThreadWorkerEventStream(
+                        pvName, etlDest.getDataForPV(context, pvName, startTime, endTime))) {
+            for (@SuppressWarnings("unused") Event ev : strm) {
+                destEventCount++;
+            }
+        }
+        logger.info("Got " + srcEventCount + " src events " + destEventCount + " dest events");
+        Assertions.assertEquals(
+                (simstream.getNumberOfEvents() - 1),
+                srcEventCount + destEventCount,
+                "Retrieval does not seem to return correct number of events " + srcEventCount + destEventCount);
+    }
 }
