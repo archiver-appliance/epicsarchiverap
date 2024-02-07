@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -37,7 +38,10 @@ public class SinglePVRetrievalTest {
     @BeforeEach
     public void setUp() throws Exception {
         GenerateData.generateSineForPV(
-                ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1", 0, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+                ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1",
+                0,
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                PlainStorageType.PB);
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 

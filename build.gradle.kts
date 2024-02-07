@@ -125,6 +125,14 @@ dependencies {
 	implementation("com.opencsv:opencsv:5.7.1")
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 
+	// Parquet support
+	implementation("org.apache.parquet:parquet-protobuf:1.15.2")
+	implementation("org.apache.parquet:parquet-column:1.15.2")
+	implementation("org.apache.parquet:parquet-common:1.15.2")
+	implementation("org.apache.parquet:parquet-hadoop:1.15.2")
+	implementation("org.apache.hadoop:hadoop-common:3.3.0")
+	runtimeOnly("org.apache.hadoop:hadoop-client-api:3.3.0")
+
 	// Logging
 	runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies
 	implementation("org.apache.logging.log4j:log4j-api:2.20.0")

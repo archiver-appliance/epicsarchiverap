@@ -1,4 +1,4 @@
-package edu.stanford.slac.archiverappliance.plain.pb;
+package edu.stanford.slac.archiverappliance.plain.parquet;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.CompressionMode;
@@ -11,49 +11,51 @@ import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.etl.ETLDest;
-import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
 import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 
-public class PBPlainFileHandler implements PlainFileHandler {
-    public static final String PB_PLUGIN_IDENTIFIER = "pb";
-    public static final String pbFileExtension = ".pb";
+public class ParquetPlainFileHandler implements PlainFileHandler {
+
+    public static final String PARQUET_PLUGIN_IDENTIFIER = "parquet";
 
     @Override
     public String pluginIdentifier() {
-        return PB_PLUGIN_IDENTIFIER;
-    }
-
-    @Override
-    public FileInfo fileInfo(Path path) throws IOException {
-        return new PBFileInfo(path);
+        return PARQUET_PLUGIN_IDENTIFIER;
     }
 
     @Override
     public String toString() {
-        return "PBPlainFileHandler{}";
+        return "ParquetPlainFileHandler{}";
+    }
+
+    @Override
+    public FileInfo fileInfo(Path path) throws IOException {
+        return new ParquetInfo(path);
     }
 
     @Override
     public EventStream getTimeStream(
             String pvName, Path path, ArchDBRTypes dbrType, Instant start, Instant end, boolean skipSearch)
             throws IOException {
-        return new FileBackedPBEventStream(pvName, path, dbrType, start, end, skipSearch);
+        return new ParquetBackedPBEventFileStream(pvName, List.of(path), dbrType, start, end);
     }
 
     @Override
     public EventStream getTimeStream(
             String pvName, Path path, Instant start, Instant end, boolean skipSearch, FileInfo fileInfo)
             throws IOException {
-        return new FileBackedPBEventStream(pvName, path, fileInfo.getType(), start, end, skipSearch);
+        return new ParquetBackedPBEventFileStream(
+                pvName, List.of(path), fileInfo.getType(), start, end, (ParquetInfo) fileInfo);
     }
 
     @Override
     public EventStream getStream(String pvName, Path path, ArchDBRTypes dbrType) throws IOException {
-        return new FileBackedPBEventStream(pvName, path, dbrType);
+        return new ParquetBackedPBEventFileStream(pvName, path, dbrType);
     }
 
     @Override
@@ -64,7 +66,7 @@ public class PBPlainFileHandler implements PlainFileHandler {
             ArchDBRTypes type,
             BiDirectionalIterable.IterationDirection direction)
             throws IOException {
-        return new FileBackedPBEventStream(pvName, path, type, startAtTime, direction);
+        return null;
     }
 
     @Override
@@ -75,12 +77,16 @@ public class PBPlainFileHandler implements PlainFileHandler {
             String desc,
             PVNameToKeyMapping pv2key,
             CompressionMode compressionMode) {
-        return new PBAppendDataStateData(partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key);
+        return new ParquetAppendDataStateData(
+                partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key);
     }
 
     @Override
-    public void markForDeletion(Path path) {
-        // Nothing for PB files
+    public void markForDeletion(Path path) throws IOException {
+        Path checkSumPath = Path.of(String.valueOf(path.getParent()), "." + path.getFileName() + ".crc");
+        if (Files.exists(checkSumPath)) {
+            Files.delete(checkSumPath);
+        }
     }
 
     @Override
@@ -94,6 +100,14 @@ public class PBPlainFileHandler implements PlainFileHandler {
             PVNameToKeyMapping pv2key)
             throws IOException {
         PlainFileHandler.movePaths(context, pvName, randSuffix, suffix, rootFolder, compressionMode, pv2key);
+        PlainFileHandler.movePaths(
+                context,
+                "." + pvName,
+                randSuffix,
+                getExtensionString() + randSuffix + ".crc",
+                rootFolder,
+                compressionMode,
+                pv2key);
     }
 
     @Override
@@ -106,10 +120,12 @@ public class PBPlainFileHandler implements PlainFileHandler {
             PVNameToKeyMapping pv2key)
             throws IOException {
         PlainFileHandler.deleteTempFiles(context, pvName, randSuffix, rootFolder, compressionMode, pv2key);
+        PlainFileHandler.deleteTempFiles(
+                context, "." + pvName, randSuffix + ".crc", rootFolder, compressionMode, pv2key);
     }
 
     @Override
     public ETLInfoListProcessor optimisedETLInfoListProcessor(ETLDest etlDest) {
-        return new DefaultETLInfoListProcessor(etlDest);
+        return new ParquetETLInfoListProcessor(etlDest);
     }
 }
