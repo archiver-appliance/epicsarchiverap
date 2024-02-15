@@ -32,9 +32,10 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -49,7 +50,6 @@ import static org.epics.archiverappliance.engine.V4.PVAccessUtil.convertBytesToP
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.updateStructure;
-import static org.junit.Assert.assertEquals;
 
 /**
  * Checks the storage of a generic PVAAccess structure format
@@ -62,13 +62,13 @@ public class GenericStructureTest {
     private ConfigService configService;
     private PVAServer pvaServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         configService.shutdownNow();
         pvaServer.close();
@@ -126,7 +126,7 @@ public class GenericStructureTest {
         Map<Instant, SampleValue> actualValues = getReceivedValues(writer, configService);
         Map<Instant, PVAData> convertedActualValues = convertBytesToPVAStructure(actualValues);
 
-        assertEquals(expectedStructure, convertedActualValues);
+        Assertions.assertEquals(expectedStructure, convertedActualValues);
     }
 
     private ByteBuffer encodedStructure(PVAStructure expectedStructure) throws Exception {
@@ -170,7 +170,7 @@ public class GenericStructureTest {
         Map<Instant, String> jsonActualValues = convertToJSON(actualValues);
 
         logger.info("actual " + jsonActualValues);
-        assertEquals(expectedStructure, jsonActualValues);
+        Assertions.assertEquals(expectedStructure, jsonActualValues);
     }
 
     private Map<Instant, String> convertToJSON(Map<Instant, SampleValue> actualValues) {

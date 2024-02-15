@@ -13,7 +13,8 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.python.google.common.collect.Lists;
 
 import java.time.Instant;
@@ -27,8 +28,6 @@ import java.util.stream.IntStream;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class MultiPVTest {
 
@@ -132,14 +131,14 @@ public class MultiPVTest {
                 try {
                     newValue.setValue(input);
                 } catch (Exception e) {
-                    fail(e.getMessage());
+                    Assertions.fail(e.getMessage());
                 }
                 generatedServerPV.expectedData().put(instant, formatInput(newValue));
                 generatedServerPV.timeStamp().set(instant);
                 try {
                     generatedServerPV.serverPV().update(generatedServerPV.data());
                 } catch (Exception e) {
-                    fail(e.getMessage());
+                    Assertions.fail(e.getMessage());
                 }
             });
         }
@@ -154,7 +153,7 @@ public class MultiPVTest {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-            assertEquals(generatedServerPV.expectedData(), actualValues);
+            Assertions.assertEquals(generatedServerPV.expectedData(), actualValues);
         });
         // Teardown
         configService.shutdownNow();

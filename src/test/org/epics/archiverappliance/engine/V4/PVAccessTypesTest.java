@@ -23,7 +23,8 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.python.google.common.collect.Lists;
 
 import java.time.Instant;
@@ -38,8 +39,6 @@ import static java.util.Map.entry;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Test for each pvAccess type that it can be archived successfully.
@@ -233,7 +232,7 @@ public class PVAccessTypesTest {
             try {
                 newValue.setValue(input);
             } catch (Exception e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
             instant = Instant.now();
             expectedData.put(instant, formatInput(newValue));
@@ -241,7 +240,7 @@ public class PVAccessTypesTest {
             try {
                 serverPV.update(data);
             } catch (Exception e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
         }
         Thread.sleep(samplingPeriodMilliSeconds);
@@ -249,7 +248,7 @@ public class PVAccessTypesTest {
         Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
-        assertEquals(expectedData, actualValues);
+        Assertions.assertEquals(expectedData, actualValues);
     }
 
     /**

@@ -32,9 +32,10 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -44,9 +45,6 @@ import java.util.stream.Collectors;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedEvents;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test to check the metadata stored with the pv as it changes
@@ -59,13 +57,13 @@ public class ChangedFieldsTest {
     private ConfigService configService;
     private PVAServer pvaServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         configService.shutdownNow();
         pvaServer.close();
@@ -165,14 +163,14 @@ public class ChangedFieldsTest {
         try {
             value.setValue(new PVAString("value", "2 value string"));
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Instant instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         expectedInstantFieldValues.put(instant, new HashMap<>());
@@ -195,14 +193,14 @@ public class ChangedFieldsTest {
             hysteresis.set(2);
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         HashMap<String, String> allFields = new HashMap<>();
         expectedInstantFieldValues.put(instant, allFields);
@@ -213,14 +211,14 @@ public class ChangedFieldsTest {
             extraString.set("2.0");
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         // Update extraArchived field
@@ -229,14 +227,14 @@ public class ChangedFieldsTest {
             extraArchivedString.set("extraArchived2");
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         HashMap<String, String> extraFields = new HashMap<>();
         extraFields.put("extraArchived", "extraArchived2");
@@ -249,14 +247,14 @@ public class ChangedFieldsTest {
             limitHigh.set(3.0);
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         HashMap<String, String> oneField = new HashMap<>();
         oneField.put("HOPR", "3.0");
@@ -278,10 +276,11 @@ public class ChangedFieldsTest {
             logger.info("For time " + e.getKey() + " expected " + e.getValue() + " actual " + actualMap);
             for (var v : e.getValue().entrySet()) {
                 if (v.getKey().equals("cnxregainedepsecs")) {
-                    assertTrue(Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey())))
-                            < 10);
+                    Assertions.assertTrue(
+                            Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey())))
+                                    < 10);
                 } else {
-                    assertEquals(v.getValue(), actualMap.get(v.getKey()));
+                    Assertions.assertEquals(v.getValue(), actualMap.get(v.getKey()));
                 }
             }
         }

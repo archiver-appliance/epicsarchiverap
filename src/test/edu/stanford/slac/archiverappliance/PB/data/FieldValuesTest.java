@@ -8,18 +8,17 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 
-import static org.junit.Assert.assertTrue;
-
-public class FieldValuesTest {
-    private static Logger logger = LogManager.getLogger(FieldValuesTest.class.getName());
+class FieldValuesTest {
+    private static final Logger logger = LogManager.getLogger(FieldValuesTest.class.getName());
 
     @Test
-    public void testFieldValues() throws Exception {
+    void testFieldValues() throws Exception {
         for (ArchDBRTypes dbrType : ArchDBRTypes.values()) {
             if (!dbrType.isV3Type()) continue;
             logger.info("Testing setting and getting of field values for DBR_type: " + dbrType.name());
@@ -48,37 +47,40 @@ public class FieldValuesTest {
                     pb0.addFieldValue(fieldName, fieldValue);
                     ByteArray raw1 = pb0.getRawForm();
                     DBRTimeEvent pb1DbrTimeEvent = constructorFromBytes.newInstance(year, raw1);
-                    assertTrue(
-                            "Adding 1 field value does not turn hasFieldValues on ", pb1DbrTimeEvent.hasFieldValues());
-                    assertTrue(
-                            "Adding 1 field value yields different results " + pb1DbrTimeEvent.getFieldValue(fieldName),
-                            pb1DbrTimeEvent.getFieldValue(fieldName).equals(fieldValue));
-                    assertTrue(
-                            "Adding 1 field value default of isActualChange is true ",
-                            !pb1DbrTimeEvent.isActualChange());
-                    assertTrue(
-                            "Adding 1 field value getFieldNames does not contain field ",
-                            pb1DbrTimeEvent.getFields().containsKey(fieldName));
+                    Assertions.assertTrue(
+                            pb1DbrTimeEvent.hasFieldValues(), "Adding 1 field value does not turn hasFieldValues on ");
+                    Assertions.assertEquals(
+                            pb1DbrTimeEvent.getFieldValue(fieldName),
+                            fieldValue,
+                            "Adding 1 field value yields different results "
+                                    + pb1DbrTimeEvent.getFieldValue(fieldName));
+                    Assertions.assertFalse(
+                            pb1DbrTimeEvent.isActualChange(),
+                            "Adding 1 field value default of isActualChange is true ");
+                    Assertions.assertTrue(
+                            pb1DbrTimeEvent.getFields().containsKey(fieldName),
+                            "Adding 1 field value getFieldNames does not contain field ");
                     pb1DbrTimeEvent.markAsActualChange();
-                    assertTrue(
-                            "Adding 1 field value after marking as actual change isActualChange is false ",
-                            pb1DbrTimeEvent.isActualChange());
+                    Assertions.assertTrue(
+                            pb1DbrTimeEvent.isActualChange(),
+                            "Adding 1 field value after marking as actual change isActualChange is false ");
 
                     // Test adding multiple fields at the same time.
                     DBRTimeEvent pbm0 = constructorFromDBRTimeEvent.newInstance(ev);
-                    HashMap<String, String> values = new HashMap<String, String>();
+                    HashMap<String, String> values = new HashMap<>();
                     values.put("HIHI", "0.0");
                     values.put("LOLO", "-1.0");
                     values.put("LOPR", "1000.0");
                     values.put("HOPR", "-10000.0");
                     pbm0.setFieldValues(values, false);
-                    assertTrue("Adding multiple field values does not turn hasFieldValues on ", pbm0.hasFieldValues());
-                    assertTrue(
-                            "Adding multiple field values after marking as cached isActualChange is true ",
-                            !pbm0.isActualChange());
-                    assertTrue(
-                            "Adding multiple field values yields different results ",
-                            compareMaps(values, pbm0.getFields()));
+                    Assertions.assertTrue(
+                            pbm0.hasFieldValues(), "Adding multiple field values does not turn hasFieldValues on ");
+                    Assertions.assertFalse(
+                            pbm0.isActualChange(),
+                            "Adding multiple field values after marking as cached isActualChange is true ");
+                    Assertions.assertTrue(
+                            compareMaps(values, pbm0.getFields()),
+                            "Adding multiple field values yields different results ");
 
                     fieldCount++;
                     if (fieldCount > 10) {

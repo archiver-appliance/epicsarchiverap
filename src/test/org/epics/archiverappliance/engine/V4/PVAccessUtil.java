@@ -27,7 +27,7 @@ import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.ServerPV;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -41,9 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class PVAccessUtil {
 
@@ -69,7 +66,7 @@ public class PVAccessUtil {
                 actualValues.put(event.getEventTimeStamp(), event);
             }
         } catch (IOException e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         return actualValues;
     }
@@ -80,14 +77,14 @@ public class PVAccessUtil {
                     .get("level 1")
                     .setValue(new PVAString("level 1", "level 1 0 new"));
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Instant instant = Instant.now();
         ((PVATimeStamp) pvaStructure.get("timeStamp")).set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         return Map.entry(instant, pvaStructure);
@@ -123,7 +120,7 @@ public class PVAccessUtil {
                     true,
                     false);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         ArchiveChannel pvChannel =
@@ -131,7 +128,7 @@ public class PVAccessUtil {
         try {
             pvChannel.startUpMetaChannels();
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         if (wait) {
@@ -148,7 +145,8 @@ public class PVAccessUtil {
     public static void waitForIsConnected(ArchiveChannel pvChannel) {
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertTrue(!pvChannel.metaChannelsNeedStartingUp() && pvChannel.isConnected()));
+                .untilAsserted(() ->
+                        Assertions.assertTrue(!pvChannel.metaChannelsNeedStartingUp() && pvChannel.isConnected()));
     }
 
     /**
@@ -174,7 +172,7 @@ public class PVAccessUtil {
         Awaitility.await()
                 .pollInterval(waitPeriodSeconds, TimeUnit.SECONDS)
                 .atMost(maxTries * waitPeriodSeconds, TimeUnit.SECONDS)
-                .untilAsserted(() -> Assert.assertEquals(expectedStatus, getCurentStatus(pvName, mgmtUrl)));
+                .untilAsserted(() -> Assertions.assertEquals(expectedStatus, getCurentStatus(pvName, mgmtUrl)));
     }
 
     private static String getCurentStatus(String pvName, String mgmtUrl) {

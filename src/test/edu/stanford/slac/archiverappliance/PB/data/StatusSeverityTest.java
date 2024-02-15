@@ -21,12 +21,10 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test storage of status and severity
@@ -48,14 +46,14 @@ public class StatusSeverityTest {
                         DBRTimeEvent e = (DBRTimeEvent) EPICS2PBTypeMapping.getPBClassFor(dbrType)
                                 .getJCADBRConstructor()
                                 .newInstance(dbr);
-                        assertTrue(
-                                "Severities are different " + e.getSeverity() + " and " + severity,
-                                e.getSeverity() == severity);
-                        assertTrue(
-                                "Statuses are different " + e.getStatus() + " and " + status, e.getStatus() == status);
+                        Assertions.assertTrue(
+                                e.getSeverity() == severity,
+                                "Severities are different " + e.getSeverity() + " and " + severity);
+                        Assertions.assertTrue(
+                                e.getStatus() == status, "Statuses are different " + e.getStatus() + " and " + status);
                     } catch (Exception ex) {
                         logger.error("Exception for severity " + severity + " and status " + status, ex);
-                        fail("Exception for severity " + severity + " and status " + status);
+                        Assertions.fail("Exception for severity " + severity + " and status " + status);
                     }
                 }
             }

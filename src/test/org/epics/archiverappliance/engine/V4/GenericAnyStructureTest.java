@@ -37,9 +37,10 @@ import org.epics.pva.data.PVAny;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
@@ -53,8 +54,6 @@ import static org.epics.archiverappliance.engine.V4.PVAccessUtil.bytesToString;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.convertBytesToPVAStructure;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Checks the storage of a generic PVAAccess structure format
@@ -67,13 +66,13 @@ public class GenericAnyStructureTest {
     private ConfigService configService;
     private PVAServer pvaServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         configService.shutdownNow();
         pvaServer.close();
@@ -137,7 +136,7 @@ public class GenericAnyStructureTest {
         logger.info("actualValues" + actualValues);
         logger.info("convertedActualValues" + convertedActualValues);
         logger.info("expected" + expectedStructure);
-        assertEquals(expectedStructure, convertedActualValues);
+        Assertions.assertEquals(expectedStructure, convertedActualValues);
     }
 
     private ByteBuffer encodedStructure(PVAStructure expectedStructure) throws Exception {
@@ -154,14 +153,14 @@ public class GenericAnyStructureTest {
             ((PVAny) ((PVAStructure) pvaStructure.get("structure")).get("any0"))
                     .setValue(new PVAString("any1String", "Any1String"));
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Instant instant = Instant.now();
         ((PVATimeStamp) pvaStructure.get("timeStamp")).set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         return Map.entry(instant, pvaStructure);
@@ -196,7 +195,7 @@ public class GenericAnyStructureTest {
         Map<Instant, String> jsonActualValues = convertToJSON(actualValues);
 
         logger.info("actual " + jsonActualValues);
-        assertEquals(expectedStructure, jsonActualValues);
+        Assertions.assertEquals(expectedStructure, jsonActualValues);
     }
 
     private Map<Instant, String> convertToJSON(Map<Instant, SampleValue> actualValues) {

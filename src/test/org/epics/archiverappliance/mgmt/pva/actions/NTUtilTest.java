@@ -1,12 +1,10 @@
 package org.epics.archiverappliance.mgmt.pva.actions;
 
 import org.epics.pva.data.PVAStringArray;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 
 public class NTUtilTest {
 
@@ -14,17 +12,17 @@ public class NTUtilTest {
     public void testTestExtractStringArray() {
         String[] strings = new String[] {"hello", "there"};
         PVAStringArray stringArray = new PVAStringArray("name", strings);
-        assertEquals(strings, NTUtil.extractStringArray(stringArray));
+        Assertions.assertEquals(strings, NTUtil.extractStringArray(stringArray));
 
-        assertArrayEquals(new String[0], NTUtil.extractStringArray(null));
+        Assertions.assertArrayEquals(new String[0], NTUtil.extractStringArray(null));
     }
 
     @Test
     public void testExtractStringList() {
         String[] strings = new String[] {"hello", "there"};
         PVAStringArray stringArray = new PVAStringArray("name", strings);
-        assertEquals(Arrays.asList(strings), NTUtil.extractStringList(stringArray));
+        Assertions.assertEquals(Arrays.asList(strings), NTUtil.extractStringList(stringArray));
         PVAStringArray emptyArray = new PVAStringArray("name");
-        assertEquals(Arrays.asList(new String[0]), NTUtil.extractStringList(emptyArray));
+        Assertions.assertEquals(Arrays.asList(new String[0]), NTUtil.extractStringList(emptyArray));
     }
 }

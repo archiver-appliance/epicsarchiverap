@@ -7,9 +7,8 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.util;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /** JUnit test of {@link Average}
  *  @author Kay Kasemir
@@ -20,15 +19,15 @@ public class AverageUnitTest {
     @Test
     public void testAverage() {
         Average average = new Average();
-        assertEquals(0.0, average.get(), EPS);
+        Assertions.assertEquals(0.0, average.get(), EPS);
 
         average.update(100.0);
-        assertEquals(100.0, average.get(), EPS);
+        Assertions.assertEquals(100.0, average.get(), EPS);
 
         average.update(50.0);
-        assertEquals(100.0 * 0.9 + 50.0 * 0.1, average.get(), EPS);
+        Assertions.assertEquals(100.0 * 0.9 + 50.0 * 0.1, average.get(), EPS);
 
         average.update(50.0);
-        assertEquals((100.0 * 0.9 + 50.0 * 0.1) * 0.9 + 50.0 * 0.1, average.get(), EPS);
+        Assertions.assertEquals((100.0 * 0.9 + 50.0 * 0.1) * 0.9 + 50.0 * 0.1, average.get(), EPS);
     }
 }

@@ -7,7 +7,7 @@ import gov.aps.jca.configuration.DefaultConfigurationBuilder;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 

@@ -18,7 +18,8 @@ import org.epics.archiverappliance.etl.conversion.ThruNumberAndStringConversion;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -28,8 +29,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import static org.junit.Assert.assertTrue;
 
 /**
  * Test various type conversion functions.
@@ -104,29 +103,30 @@ public class ThruNumberAndStringConversionFunctionTest {
         while (srcIt.hasNext() || destIt.hasNext()) {
             DBRTimeEvent srcEvent = (DBRTimeEvent) srcIt.next();
             DBRTimeEvent destEvent = (DBRTimeEvent) destIt.next();
-            assertTrue(
-                    "Compare timestamps failed at event " + eventCount,
-                    srcEvent.getEventTimeStamp().equals(destEvent.getEventTimeStamp()));
-            assertTrue("Compare status failed at event " + eventCount, srcEvent.getStatus() == destEvent.getStatus());
-            assertTrue(
-                    "Compare severity failed at event " + eventCount,
-                    srcEvent.getSeverity() == destEvent.getSeverity());
-            assertTrue(
+            Assertions.assertTrue(
+                    srcEvent.getEventTimeStamp().equals(destEvent.getEventTimeStamp()),
+                    "Compare timestamps failed at event " + eventCount);
+            Assertions.assertTrue(
+                    srcEvent.getStatus() == destEvent.getStatus(), "Compare status failed at event " + eventCount);
+            Assertions.assertTrue(
+                    srcEvent.getSeverity() == destEvent.getSeverity(),
+                    "Compare severity failed at event " + eventCount);
+            Assertions.assertTrue(
+                    Math.abs(srcEvent.getSampleValue().getValue().doubleValue()
+                                    - destEvent.getSampleValue().getValue().doubleValue())
+                            < 0.0005,
                     "Compare value failed at event " + eventCount
                             + " " + srcEvent.getSampleValue().getValue().doubleValue()
                             + " " + destEvent.getSampleValue().getValue().doubleValue()
                             + " "
                             + Math.abs(srcEvent.getSampleValue().getValue().doubleValue()
-                                    - destEvent.getSampleValue().getValue().doubleValue()),
-                    Math.abs(srcEvent.getSampleValue().getValue().doubleValue()
-                                    - destEvent.getSampleValue().getValue().doubleValue())
-                            < 0.0005);
-            assertTrue(
-                    "Compare fields failed at event " + eventCount,
-                    compareMaps(srcEvent.getFields(), destEvent.getFields()));
-            assertTrue(
-                    "Compare fields changed failed at event " + eventCount,
-                    srcEvent.isActualChange() == destEvent.isActualChange());
+                                    - destEvent.getSampleValue().getValue().doubleValue()));
+            Assertions.assertTrue(
+                    compareMaps(srcEvent.getFields(), destEvent.getFields()),
+                    "Compare fields failed at event " + eventCount);
+            Assertions.assertTrue(
+                    srcEvent.isActualChange() == destEvent.isActualChange(),
+                    "Compare fields changed failed at event " + eventCount);
             eventCount++;
         }
     }

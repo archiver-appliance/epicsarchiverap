@@ -14,9 +14,8 @@ import gov.aps.jca.dbr.DBR_TIME_Float;
 import gov.aps.jca.dbr.DBR_TIME_Int;
 import gov.aps.jca.dbr.DBR_TIME_Short;
 import gov.aps.jca.dbr.DBR_TIME_String;
-import org.junit.Test;
-
-import static org.junit.Assert.assertSame;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the mapping for ArchDBRTypes
@@ -28,63 +27,63 @@ public class ArchDBRTypesTest {
     @Test
     public void testValueOf() {
         JCA2ArchDBRType.values(); // Initialize the enum?
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_STRING.toString(),
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_STRING,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_String()));
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_SHORT.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_String()),
+                ArchDBRTypes.DBR_SCALAR_STRING.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_SHORT,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Short()));
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_FLOAT.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Short()),
+                ArchDBRTypes.DBR_SCALAR_SHORT.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_FLOAT,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Float()));
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_ENUM.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Float()),
+                ArchDBRTypes.DBR_SCALAR_FLOAT.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_ENUM,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Enum()));
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_BYTE.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Enum()),
+                ArchDBRTypes.DBR_SCALAR_ENUM.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_BYTE,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Byte()));
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_INT.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Byte()),
+                ArchDBRTypes.DBR_SCALAR_BYTE.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_INT,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Int()));
-        assertSame(
-                ArchDBRTypes.DBR_SCALAR_DOUBLE.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Int()),
+                ArchDBRTypes.DBR_SCALAR_INT.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Double()));
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Double()),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE.toString());
 
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_STRING.toString(),
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_STRING,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_String(2)));
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_SHORT.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_String(2)),
+                ArchDBRTypes.DBR_WAVEFORM_STRING.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_SHORT,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Short(2)));
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_FLOAT.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Short(2)),
+                ArchDBRTypes.DBR_WAVEFORM_SHORT.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_FLOAT,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Float(2)));
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_ENUM.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Float(2)),
+                ArchDBRTypes.DBR_WAVEFORM_FLOAT.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_ENUM,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Enum(2)));
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_BYTE.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Enum(2)),
+                ArchDBRTypes.DBR_WAVEFORM_ENUM.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_BYTE,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Byte(2)));
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_INT.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Byte(2)),
+                ArchDBRTypes.DBR_WAVEFORM_BYTE.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_INT,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Int(2)));
-        assertSame(
-                ArchDBRTypes.DBR_WAVEFORM_DOUBLE.toString(),
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Int(2)),
+                ArchDBRTypes.DBR_WAVEFORM_INT.toString());
+        Assertions.assertSame(
                 ArchDBRTypes.DBR_WAVEFORM_DOUBLE,
-                JCA2ArchDBRType.valueOf(new DBR_TIME_Double(2)));
+                JCA2ArchDBRType.valueOf(new DBR_TIME_Double(2)),
+                ArchDBRTypes.DBR_WAVEFORM_DOUBLE.toString());
 
         // TODO - Fix once we have upgraded the EPICS V4 jars.
         // assertSame(ArchDBRTypes.DBR_V4_GENERIC_BYTES.toString(), ArchDBRTypes.DBR_V4_GENERIC_BYTES,

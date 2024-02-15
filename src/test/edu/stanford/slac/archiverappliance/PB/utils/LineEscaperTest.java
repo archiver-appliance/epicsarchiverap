@@ -8,12 +8,11 @@
 package edu.stanford.slac.archiverappliance.PB.utils;
 
 import org.epics.archiverappliance.ByteArray;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Random;
-
-import static org.junit.Assert.fail;
 
 /**
  * Test the LineEscaper.
@@ -37,10 +36,10 @@ public class LineEscaperTest {
                 long end = System.currentTimeMillis();
                 exectime += (end - start);
                 if (!Arrays.equals(randombytes, unescapedbytes)) {
-                    fail("Test failed");
+                    Assertions.fail("Test failed");
                 }
             } catch (Exception ex) {
-                fail("Test failed with exception " + ex.getMessage());
+                Assertions.fail("Test failed with exception " + ex.getMessage());
             }
         }
         System.out.println("Time to escape/unescape " + total + " byte sequences is " + (exectime) / 1000
@@ -64,10 +63,10 @@ public class LineEscaperTest {
                 long end = System.currentTimeMillis();
                 exectime += (end - start);
                 if (!Arrays.equals(randombytes, unescapedbytes)) {
-                    fail("Test failed");
+                    Assertions.fail("Test failed");
                 }
             } catch (Exception ex) {
-                fail("Test failed with exception " + ex.getMessage());
+                Assertions.fail("Test failed with exception " + ex.getMessage());
             }
         }
         System.out.println("Time to escape/unescape " + total + " byte sequences is " + (exectime) / 1000
