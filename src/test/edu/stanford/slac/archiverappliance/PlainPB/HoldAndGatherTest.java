@@ -24,13 +24,11 @@ import org.epics.archiverappliance.etl.ETLInfo;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
@@ -40,7 +38,6 @@ import java.util.stream.Stream;
  * @author mshankar
  *
  */
-@Tag("slow")
 public class HoldAndGatherTest {
     private static final Logger logger = LogManager.getLogger(HoldAndGatherTest.class.getName());
 
@@ -63,8 +60,7 @@ public class HoldAndGatherTest {
      */
     @ParameterizedTest
     @MethodSource("provideHoldAndGather")
-    void testHoldAndGather(PartitionGranularity granularity, int hold, int gather)
-            throws Exception {
+    void testHoldAndGather(PartitionGranularity granularity, int hold, int gather) throws Exception {
         PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
         ConfigServiceForTests configService = new ConfigServiceForTests(-1);
