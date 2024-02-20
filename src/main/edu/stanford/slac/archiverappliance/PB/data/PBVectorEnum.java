@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorEnum.Builder;
@@ -44,6 +45,12 @@ public class PBVectorEnum implements DBRTimeEvent {
 
     public PBVectorEnum(short year, ByteArray bar) {
         this.bar = bar;
+        this.year = year;
+    }
+
+    public PBVectorEnum(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.VectorEnum) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         this.year = year;
     }
 
@@ -116,6 +123,18 @@ public class PBVectorEnum implements DBRTimeEvent {
     }
 
     @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.VectorEnum.class;
+    }
+
+    @Override
     public Event makeClone() {
         return new PBVectorEnum(this);
     }
@@ -153,29 +172,6 @@ public class PBVectorEnum implements DBRTimeEvent {
     }
 
     @Override
-    public int getSeverity() {
-        unmarshallEventIfNull();
-        return dbevent.getSeverity();
-    }
-
-    @Override
-    public int getRepeatCount() {
-        unmarshallEventIfNull();
-        return dbevent.getRepeatcount();
-    }
-
-    @Override
-    public void setRepeatCount(int repeatCount) {
-        unmarshallEventIfNull();
-        dbevent = EPICSEvent.VectorEnum.newBuilder()
-                .mergeFrom(dbevent)
-                .setRepeatcount(repeatCount)
-                .build();
-        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
-        return;
-    }
-
-    @Override
     public void setStatus(int status) {
         unmarshallEventIfNull();
         if (status != 0) {
@@ -191,6 +187,12 @@ public class PBVectorEnum implements DBRTimeEvent {
     }
 
     @Override
+    public int getSeverity() {
+        unmarshallEventIfNull();
+        return dbevent.getSeverity();
+    }
+
+    @Override
     public void setSeverity(int severity) {
         unmarshallEventIfNull();
         if (severity != 0) {
@@ -201,6 +203,23 @@ public class PBVectorEnum implements DBRTimeEvent {
         } else {
             dbevent = EPICSEvent.VectorEnum.newBuilder().mergeFrom(dbevent).build();
         }
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        return;
+    }
+
+    @Override
+    public int getRepeatCount() {
+        unmarshallEventIfNull();
+        return dbevent.getRepeatcount();
+    }
+
+    @Override
+    public void setRepeatCount(int repeatCount) {
+        unmarshallEventIfNull();
+        dbevent = EPICSEvent.VectorEnum.newBuilder()
+                .mergeFrom(dbevent)
+                .setRepeatcount(repeatCount)
+                .build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         return;
     }
