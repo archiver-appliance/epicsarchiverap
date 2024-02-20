@@ -7,9 +7,9 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarEnum.Builder;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import gov.aps.jca.dbr.DBR;
 import gov.aps.jca.dbr.DBR_TIME_Enum;
@@ -45,10 +45,16 @@ public class PBScalarEnum implements DBRTimeEvent {
         this.year = year;
     }
 
+    public PBScalarEnum(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.ScalarEnum) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
+    }
+
     public PBScalarEnum(DBRTimeEvent ev) {
         YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
         year = yst.getYear();
-        Builder builder = EPICSEvent.ScalarEnum.newBuilder()
+        EPICSEvent.ScalarEnum.Builder builder = EPICSEvent.ScalarEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
                 .setVal(ev.getSampleValue().getValue().intValue());
@@ -57,7 +63,7 @@ public class PBScalarEnum implements DBRTimeEvent {
         if (ev.hasFieldValues()) {
             HashMap<String, String> fields = ev.getFields();
             for (String fieldName : fields.keySet()) {
-                FieldValue fv = EPICSEvent.FieldValue.newBuilder()
+                EPICSEvent.FieldValue fv = EPICSEvent.FieldValue.newBuilder()
                         .setName(fieldName)
                         .setVal(fields.get(fieldName))
                         .build();
@@ -73,7 +79,7 @@ public class PBScalarEnum implements DBRTimeEvent {
         DBR_TIME_Enum realtype = (DBR_TIME_Enum) dbr;
         YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(realtype.getTimeStamp());
         year = yst.getYear();
-        Builder builder = EPICSEvent.ScalarEnum.newBuilder()
+        EPICSEvent.ScalarEnum.Builder builder = EPICSEvent.ScalarEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
                 .setVal(realtype.getEnumValue()[0]);
@@ -92,7 +98,7 @@ public class PBScalarEnum implements DBRTimeEvent {
         int value = ((PVAInt) ((PVAStructure) v4Data.get("value")).get("index")).get();
 
         year = yst.getYear();
-        Builder builder = EPICSEvent.ScalarEnum.newBuilder()
+        EPICSEvent.ScalarEnum.Builder builder = EPICSEvent.ScalarEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
                 .setVal(value);
@@ -100,6 +106,18 @@ public class PBScalarEnum implements DBRTimeEvent {
         if (alarm.status != 0) builder.setStatus(alarm.status);
         dbevent = builder.build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+    }
+
+    @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.ScalarEnum.class;
     }
 
     @Override

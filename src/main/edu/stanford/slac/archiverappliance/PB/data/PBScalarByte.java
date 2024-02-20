@@ -112,6 +112,17 @@ public class PBScalarByte implements DBRTimeEvent {
     }
 
     @Override
+    public Message getMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.ScalarByte.class;
+    }
+
+    @Override
     public Event makeClone() {
         return new PBScalarByte(this);
     }

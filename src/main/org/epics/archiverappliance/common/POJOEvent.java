@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.common;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -75,8 +76,18 @@ public class POJOEvent implements DBRTimeEvent {
     }
 
     @Override
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    @Override
     public int getSeverity() {
         return severity;
+    }
+
+    @Override
+    public void setSeverity(int severity) {
+        this.severity = severity;
     }
 
     @Override
@@ -86,6 +97,16 @@ public class POJOEvent implements DBRTimeEvent {
 
     @Override
     public void setRepeatCount(int repeatCount) {}
+
+    /**
+     * @return
+     */
+    @Override
+    public Message getMessage() {
+
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getMessage();
+    }
 
     @Override
     public long getEpochSeconds() {
@@ -110,6 +131,17 @@ public class POJOEvent implements DBRTimeEvent {
             throw new RuntimeException("Unable to serialize a simulation event stream");
         }
         return ev;
+    }
+
+    /**
+     *
+     * @return
+     */
+    @Override
+    public Class<? extends Message> getMessageClass() {
+
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getMessageClass();
     }
 
     @Override
@@ -150,15 +182,5 @@ public class POJOEvent implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return this.dbrType;
-    }
-
-    @Override
-    public void setStatus(int status) {
-        this.status = status;
-    }
-
-    @Override
-    public void setSeverity(int severity) {
-        this.severity = severity;
     }
 }

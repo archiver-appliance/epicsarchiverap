@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.simulation;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -122,6 +123,12 @@ public class SimulationEvent implements DBRTimeEvent {
         return ev.getRawForm();
     }
 
+    @Override
+    public Message getMessage() {
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getMessage();
+    }
+
     private DBRTimeEvent getDbrTimeEvent() {
         // We do have a mechanism to avoid inclusion of DBR2PBTypeMapping by going thru the config service.
         // But as the simulation events are mainly for unit tests, we stick to raw PB..
@@ -135,6 +142,15 @@ public class SimulationEvent implements DBRTimeEvent {
             throw new RuntimeException("Unable to serialize a simulation event stream");
         }
         return ev;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getMessageClass();
     }
 
     @Override
