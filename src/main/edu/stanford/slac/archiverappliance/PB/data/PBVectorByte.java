@@ -125,6 +125,18 @@ public class PBVectorByte implements DBRTimeEvent {
     }
 
     @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.VectorChar.class;
+    }
+
+    @Override
     public Event makeClone() {
         return new PBVectorByte(this);
     }

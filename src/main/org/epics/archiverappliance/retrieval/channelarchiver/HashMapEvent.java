@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.channelarchiver;
 
+import com.google.protobuf.Message;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -85,13 +86,39 @@ public class HashMapEvent implements DBRTimeEvent {
     }
 
     @Override
+    public void setStatus(int status) {
+        values.put(STAT_FIELD_NAME, Integer.valueOf(status).toString());
+    }
+
+    @Override
     public int getSeverity() {
         return Integer.parseInt((String) values.get(SEVR_FIELD_NAME));
     }
 
     @Override
+    public void setSeverity(int severity) {
+        values.put(SEVR_FIELD_NAME, Integer.valueOf(severity).toString());
+    }
+
+    @Override
     public long getEpochSeconds() {
         return Long.parseLong((String) values.get(SECS_FIELD_NAME));
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public Message getMessage() {
+        return null;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return null;
     }
 
     @Override
@@ -212,15 +239,5 @@ public class HashMapEvent implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return this.type;
-    }
-
-    @Override
-    public void setStatus(int status) {
-        values.put(STAT_FIELD_NAME, Integer.valueOf(status).toString());
-    }
-
-    @Override
-    public void setSeverity(int severity) {
-        values.put(SEVR_FIELD_NAME, Integer.valueOf(severity).toString());
     }
 }

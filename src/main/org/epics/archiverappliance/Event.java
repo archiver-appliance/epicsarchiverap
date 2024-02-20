@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance;
 
+import com.google.protobuf.Message;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.SampleValue;
 
@@ -44,6 +45,16 @@ public interface Event {
      * @return A serialization of this event in the internal currency of the archiver appliance.
      */
     public ByteArray getRawForm();
+
+    /**
+     * Return the protobuf message.
+     */
+    public Message getMessage();
+
+    /**
+     * Return the protobuf message class.
+     */
+    public Class<? extends Message> getMessageClass();
 
     /**
      * Get this event's value. The value for an EPICS sample is a complex thing and can be scalars and vectors of numbers and strings.

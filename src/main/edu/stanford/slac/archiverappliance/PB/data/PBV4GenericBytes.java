@@ -1,6 +1,7 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +39,12 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
 
     public PBV4GenericBytes(short year, ByteArray bar) {
         this.bar = bar;
+        this.year = year;
+    }
+
+    public PBV4GenericBytes(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.V4GenericBytes) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         this.year = year;
     }
 
@@ -99,6 +106,18 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     }
 
     @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.V4GenericBytes.class;
+    }
+
+    @Override
     public Event makeClone() {
         return new PBV4GenericBytes(this);
     }
@@ -134,29 +153,6 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     }
 
     @Override
-    public int getSeverity() {
-        unmarshallEventIfNull();
-        return dbevent.getSeverity();
-    }
-
-    @Override
-    public int getRepeatCount() {
-        unmarshallEventIfNull();
-        return dbevent.getRepeatcount();
-    }
-
-    @Override
-    public void setRepeatCount(int repeatCount) {
-        unmarshallEventIfNull();
-        dbevent = EPICSEvent.V4GenericBytes.newBuilder()
-                .mergeFrom(dbevent)
-                .setRepeatcount(repeatCount)
-                .build();
-        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
-        return;
-    }
-
-    @Override
     public void setStatus(int status) {
         unmarshallEventIfNull();
         if (status != 0) {
@@ -172,6 +168,12 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     }
 
     @Override
+    public int getSeverity() {
+        unmarshallEventIfNull();
+        return dbevent.getSeverity();
+    }
+
+    @Override
     public void setSeverity(int severity) {
         unmarshallEventIfNull();
         if (severity != 0) {
@@ -182,6 +184,23 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         } else {
             dbevent = EPICSEvent.V4GenericBytes.newBuilder().mergeFrom(dbevent).build();
         }
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        return;
+    }
+
+    @Override
+    public int getRepeatCount() {
+        unmarshallEventIfNull();
+        return dbevent.getRepeatcount();
+    }
+
+    @Override
+    public void setRepeatCount(int repeatCount) {
+        unmarshallEventIfNull();
+        dbevent = EPICSEvent.V4GenericBytes.newBuilder()
+                .mergeFrom(dbevent)
+                .setRepeatcount(repeatCount)
+                .build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         return;
     }
