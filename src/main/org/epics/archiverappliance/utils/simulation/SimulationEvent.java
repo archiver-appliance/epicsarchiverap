@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.simulation;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -107,8 +108,7 @@ public class SimulationEvent implements DBRTimeEvent {
     }
 
     @Override
-    public void setRepeatCount(int repeatCount) {
-    }
+    public void setRepeatCount(int repeatCount) {}
 
     @Override
     public long getEpochSeconds() {
@@ -121,6 +121,12 @@ public class SimulationEvent implements DBRTimeEvent {
 
         DBRTimeEvent ev = getDbrTimeEvent();
         return ev.getRawForm();
+    }
+
+    @Override
+    public Message getMessage() {
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getMessage();
     }
 
     private DBRTimeEvent getDbrTimeEvent() {
@@ -136,6 +142,15 @@ public class SimulationEvent implements DBRTimeEvent {
             throw new RuntimeException("Unable to serialize a simulation event stream");
         }
         return ev;
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getMessageClass();
     }
 
     @Override
