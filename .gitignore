@@ -35,6 +35,9 @@ gradle-app.setting
 # vscode settings
 .vscode
 
+# Intelij files
+/.idea/
+
 # Integration tests folders
 tomcat_*
 
