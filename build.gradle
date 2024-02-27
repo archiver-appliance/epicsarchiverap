@@ -4,7 +4,7 @@ plugins {
 	id "eclipse"
 	id "ca.cutterslade.analyze" version "1.9.1" // Analyzes dependancies for usage
 	id 'com.palantir.git-version' version '0.15.0'
-	id("com.diffplug.spotless") version "6.22.0"
+	id("com.diffplug.spotless") version "6.25.0"
 }
 
 sourceSets {
