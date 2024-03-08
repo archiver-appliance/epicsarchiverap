@@ -29,7 +29,6 @@ public abstract class AppendDataStateData {
     protected final String desc;
     protected final PartitionGranularity partitionGranularity;
     protected final PVNameToKeyMapping pv2key;
-    protected final CompressionMode compressionMode;
     protected Path previousFilePath = null;
     protected short currentEventsYear = -1;
     // These two pieces of information (previousYear and previousEpochSeconds) are from the store using the last known
@@ -38,7 +37,11 @@ public abstract class AppendDataStateData {
     protected short previousYear = -1;
     protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
     private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
+    private final PathResolver pathResolver;
 
+    protected PathResolver getPathResolver() {
+        return this.pathResolver;
+    }
     /**
      * @param partitionGranularity partitionGranularity of the PB plugin.
      * @param rootFolder           RootFolder of the PB plugin
@@ -52,12 +55,12 @@ public abstract class AppendDataStateData {
             String desc,
             Instant lastKnownTimestamp,
             PVNameToKeyMapping pv2key,
-            CompressionMode compressionMode) {
+            PathResolver pathResolver) {
         this.partitionGranularity = partitionGranularity;
         this.rootFolder = rootFolder;
         this.desc = desc;
         this.pv2key = pv2key;
-        this.compressionMode = compressionMode;
+        this.pathResolver = pathResolver;
         if (lastKnownTimestamp != null) {
             this.lastKnownTimeStamp = lastKnownTimestamp;
             this.previousYear = TimeUtils.getYear(lastKnownTimestamp);
@@ -128,8 +131,7 @@ public abstract class AppendDataStateData {
      * @param ts        The epoch seconds
      * @throws IOException &emsp;
      */
-    protected void shouldISwitchPartitions(
-            BasicContext context, String pvName, String extension, Instant ts, CompressionMode compressionMode)
+    protected void shouldISwitchPartitions(BasicContext context, String pvName, String extension, Instant ts)
             throws IOException {
 
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
@@ -141,7 +143,7 @@ public abstract class AppendDataStateData {
                     this.partitionGranularity,
                     true,
                     context.getPaths(),
-                    compressionMode,
+                    pathResolver,
                     this.pv2key);
             this.nextPartitionFirstSecond = TimeUtils.getNextPartitionFirstSecond(ts, this.partitionGranularity);
             if (logger.isDebugEnabled()) {
@@ -225,7 +227,7 @@ public abstract class AppendDataStateData {
             String extensionToCopyFrom,
             Instant ts,
             Path pvPath,
-            CompressionMode compressionMode)
+            PathResolver pathResolver)
             throws IOException {
         Path preparePath;
         if (pvPath == null) {
@@ -237,7 +239,7 @@ public abstract class AppendDataStateData {
                     this.partitionGranularity,
                     true,
                     context.getPaths(),
-                    compressionMode,
+                    pathResolver,
                     this.pv2key);
         } else {
             preparePath = pvPath;

@@ -49,11 +49,10 @@ public class ParquetInfo extends FileInfo {
     boolean fetchedLastEvent = false;
     boolean fetchedFirstEvent = false;
 
-    public ParquetInfo(Path pvPath) throws IOException {
+    public ParquetInfo(Path pvPath, Configuration configuration) throws IOException {
         super();
         var hadoopPath = new org.apache.hadoop.fs.Path(pvPath.toUri());
-        var config = new Configuration();
-        hadoopInputFile = HadoopInputFile.fromPath(hadoopPath, config);
+        hadoopInputFile = HadoopInputFile.fromPath(hadoopPath, configuration);
         fileReader = ParquetFileReader.open(hadoopInputFile);
         footer = fileReader.getFooter();
         var metadata = footer.getFileMetaData();
@@ -69,6 +68,10 @@ public class ParquetInfo extends FileInfo {
                 archDBRTypes,
                 getFirstEvent().getEventTimeStamp().toString(),
                 getLastEvent().getEventTimeStamp()));
+    }
+
+    public ParquetInfo(Path pvPath) throws IOException {
+        this(pvPath, new Configuration());
     }
 
     /**

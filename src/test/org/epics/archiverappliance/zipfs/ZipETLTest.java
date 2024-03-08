@@ -41,6 +41,8 @@ public class ZipETLTest {
     @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
+        configService.getETLLookup().manualControlForUnitTests();
+
         if (testFolder.exists()) {
             FileUtils.deleteDirectory(testFolder);
         }
