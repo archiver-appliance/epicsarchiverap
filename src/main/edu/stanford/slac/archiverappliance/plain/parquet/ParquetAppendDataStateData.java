@@ -2,11 +2,12 @@ package edu.stanford.slac.archiverappliance.plain.parquet;
 
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBMessageTypeMapping;
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.parquet.hadoop.ParquetWriter;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.rewrite.ParquetRewriter;
 import org.apache.parquet.hadoop.rewrite.RewriteOptions;
 import org.epics.archiverappliance.Event;
@@ -31,6 +32,8 @@ import java.util.List;
 public class ParquetAppendDataStateData extends AppendDataStateData {
     private static final Logger logger = LogManager.getLogger(ParquetAppendDataStateData.class.getName());
     private static final String TEMP_FILE_PREFIX = "~";
+    private final Configuration configuration;
+    private final CompressionCodecName compressionCodecName;
     EpicsParquetWriter.Builder<Object> writerBuilder;
     private Path tempFile;
     private ParquetWriter<Object> writer;
@@ -51,9 +54,13 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
             String rootFolder,
             String desc,
             Instant lastKnownTimestamp,
-            CompressionMode compressionMode,
-            PVNameToKeyMapping pv2key) {
-        super(partitionGranularity, rootFolder, desc, lastKnownTimestamp, pv2key, compressionMode);
+            CompressionCodecName compressionCodecName,
+            PVNameToKeyMapping pv2key,
+            Configuration configuration,
+            PathResolver pathResolver) {
+        super(partitionGranularity, rootFolder, desc, lastKnownTimestamp, pv2key, pathResolver);
+        this.compressionCodecName = compressionCodecName;
+        this.configuration = configuration;
     }
 
     /**
@@ -66,15 +73,14 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
         return Path.of(String.valueOf(currentPVPath.getParent()), "." + currentPVPath.getFileName() + ".crc");
     }
 
-    private static void combineFiles(
-            List<Path> inPaths, Path outPath, CompressionMode compressionMode, boolean recompress) throws IOException {
+    private void combineFiles(List<Path> inPaths, Path outPath, boolean recompress) throws IOException {
         Path outTempPath = getOutTempPath(outPath);
         if (inPaths.contains(outTempPath)) {
             outTempPath = getOutTempPath(outTempPath);
         }
         List<org.apache.hadoop.fs.Path> rewriteInPaths = new ArrayList<>();
         if (Files.exists(outPath)) {
-            if (new ParquetInfo(outPath).getFirstEvent() == null) {
+            if (new ParquetInfo(outPath, this.configuration).getFirstEvent() == null) {
                 // if the file is effectively empty, delete it
                 Files.delete(outPath);
                 Path outCheckSumPath = getCheckSumPath(outPath);
@@ -96,7 +102,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
         RewriteOptions.Builder rewriteOptionsBuilder =
                 new RewriteOptions.Builder(conf, rewriteInPaths, new org.apache.hadoop.fs.Path(outTempPath.toUri()));
         if (recompress) {
-            rewriteOptionsBuilder = rewriteOptionsBuilder.transform(compressionMode.getParquetCompressionCodec());
+            rewriteOptionsBuilder = rewriteOptionsBuilder.transform(compressionCodecName);
         }
         RewriteOptions rewriteOptions = rewriteOptionsBuilder.build();
         try {
@@ -128,7 +134,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
     public void updateStateBasedOnExistingFile(String pvName, Path currentPVFilePath) throws IOException {
         logger.debug("parquet updateStateBasedOnExistingFile  pv {} pvPath {} ", pvName, currentPVFilePath);
 
-        ParquetInfo info = new ParquetInfo(currentPVFilePath);
+        ParquetInfo info = new ParquetInfo(currentPVFilePath, configuration);
         if (!info.getPVName().equals(pvName))
             throw new IOException("Trying to append data for " + pvName + " to a file " + currentPVFilePath
                     + " that has data for " + info.getPVName());
@@ -176,7 +182,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
                 .withPVName(pvName)
                 .withYear(this.currentEventsYear)
                 .withType(stream.getDescription().getArchDBRType())
-                .withCompressionCodec(this.compressionMode.getParquetCompressionCodec());
+                .withCompressionCodec(this.compressionCodecName);
         this.previousFilePath = pvPath;
     }
 
@@ -198,11 +204,11 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
                 Instant ts = event.getEventTimeStamp();
                 if (shouldISkipEventBasedOnTimeStamps(event)) continue;
 
-                shouldISwitchPartitions(context, pvName, extension, ts, this.compressionMode);
+                shouldISwitchPartitions(context, pvName, extension, ts);
 
                 if (this.writerBuilder == null) {
                     preparePartition(
-                            pvName, stream, context, extension, extensionToCopyFrom, ts, null, this.compressionMode);
+                            pvName, stream, context, extension, extensionToCopyFrom, ts, null, getPathResolver());
                 }
 
                 // We check for monotonicity in timestamps again as we had some fresh data from an existing file.
@@ -270,7 +276,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
                     extensionToCopyFrom,
                     firstEvent.getEventTimeStamp(),
                     null,
-                    this.compressionMode);
+                    getPathResolver());
         }
 
         // The preparePartition should have created the needed file; so we only append
@@ -280,9 +286,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
         combineFiles(
                 etlParquetFilesStream.getPaths(),
                 pvPath,
-                this.compressionMode,
-                etlParquetFilesStream.getFirstFileInfo().getCompressionCodecName()
-                        != this.compressionMode.getParquetCompressionCodec());
+                etlParquetFilesStream.getFirstFileInfo().getCompressionCodecName() != this.compressionCodecName);
 
         try {
             // Update the last known timestamp and the like...
@@ -320,15 +324,16 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
 
     @Override
     public String toString() {
-        return "ParquetAppendDataStateData{" + "tempFile="
-                + tempFile + ", writerBuilder="
-                + writerBuilder + ", writer="
+        return "ParquetAppendDataStateData{" + "configuration="
+                + configuration + ", writerBuilder="
+                + writerBuilder + ", tempFile="
+                + tempFile + ", writer="
                 + writer + ", rootFolder='"
                 + rootFolder + '\'' + ", desc='"
                 + desc + '\'' + ", partitionGranularity="
                 + partitionGranularity + ", pv2key="
-                + pv2key + ", compressionMode="
-                + compressionMode + ", previousFilePath="
+                + pv2key + ", compressionCodecName="
+                + compressionCodecName + ", previousFilePath="
                 + previousFilePath + ", currentEventsYear="
                 + currentEventsYear + ", previousYear="
                 + previousYear + ", lastKnownTimeStamp="
@@ -339,7 +344,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
         if (tempFile != null) {
             logger.debug("parquet combineWithTempFiles  currentPVPath sizes {} tempFiles {} ", currentPVPath, tempFile);
 
-            combineFiles(List.of(tempFile), currentPVPath, this.compressionMode, false);
+            combineFiles(List.of(tempFile), currentPVPath, false);
             // Delete tempFile
             if (Files.exists(tempFile)) {
                 Files.delete(tempFile);

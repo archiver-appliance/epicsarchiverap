@@ -63,7 +63,7 @@ public class CleanPartitionsTest {
                     storagePlugin.getRootFolder(),
                     pvName,
                     storagePlugin.getExtensionString(),
-                    CompressionMode.NONE,
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter());
             Assertions.assertTrue(allPaths.length > 1);
             for (Path pbFile : allPaths) {

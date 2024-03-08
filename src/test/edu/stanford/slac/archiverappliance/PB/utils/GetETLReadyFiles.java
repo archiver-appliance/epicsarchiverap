@@ -8,7 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.utils;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -51,7 +51,7 @@ public class GetETLReadyFiles {
                 now,
                 ".pb",
                 granularity,
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         if (paths == null || paths.length == 0) {
             System.out.println("No files for pv " + pvName + " before current partition using time "

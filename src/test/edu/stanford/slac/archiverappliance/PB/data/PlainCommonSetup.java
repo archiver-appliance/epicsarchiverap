@@ -7,7 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -70,15 +69,6 @@ public class PlainCommonSetup {
     public void setUpRootFolder(
             PlainStoragePlugin storagePlugin, String testSpecificFolder, PartitionGranularity partitionGranularity)
             throws Exception {
-        setUpRootFolder(storagePlugin, testSpecificFolder, partitionGranularity, CompressionMode.NONE);
-    }
-
-    public void setUpRootFolder(
-            PlainStoragePlugin storagePlugin,
-            String testSpecificFolder,
-            PartitionGranularity partitionGranularity,
-            CompressionMode compressionMode)
-            throws Exception {
         setUpRootFolder();
         this.testSpecificFolder = testSpecificFolder;
 
@@ -96,7 +86,6 @@ public class PlainCommonSetup {
         storagePlugin.setRootFolder(tempFolderForTests.getAbsolutePath());
         storagePlugin.setPartitionGranularity(partitionGranularity);
         storagePlugin.setName(partitionGranularity.toString());
-        storagePlugin.setCompressionMode(compressionMode);
     }
 
     public void deleteTestFolder() throws IOException {

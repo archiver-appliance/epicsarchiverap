@@ -1,8 +1,8 @@
 package org.epics.archiverappliance.retrieval.client;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
@@ -231,7 +231,7 @@ public class PostProcessorWithPBErrorTest {
                     ltsFolderName,
                     pvName,
                     PlainStorageType.PB.plainFileHandler().getExtensionString(),
-                    CompressionMode.NONE,
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter());
             Assertions.assertTrue(true);
             Assertions.assertTrue(paths.length > 0);

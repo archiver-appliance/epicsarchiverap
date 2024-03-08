@@ -1,9 +1,10 @@
 package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.URLKeys;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -18,9 +19,12 @@ import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
 import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
 
 import java.io.IOException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -31,9 +35,37 @@ public class PBPlainFileHandler implements PlainFileHandler {
     public static final String PB_PLUGIN_IDENTIFIER = "pb";
     public static final String pbFileExtension = ".pb";
 
+    private PBCompressionMode compressionMode = PBCompressionMode.NONE;
+
     @Override
     public String pluginIdentifier() {
         return PB_PLUGIN_IDENTIFIER;
+    }
+
+    @Override
+    public PathResolver getPathResolver() {
+        return switch (compressionMode) {
+            case NONE -> PathResolver.BASE_PATH_RESOLVER;
+            case ZIP_PER_PV -> (paths, createParentFolder, rootFolder, pvComponent, pvKey) ->
+                    paths.get(createParentFolder, rootFolder, pvKey + "_pb.zip!", pvComponent);
+        };
+    }
+
+    @Override
+    public boolean useSearchForPositions() {
+        return this.compressionMode.equals(PBCompressionMode.NONE);
+    }
+
+    @Override
+    public String rootFolderPath(String rootFolder) {
+        return this.compressionMode.equals(PBCompressionMode.NONE)
+                ? rootFolder
+                : rootFolder.replace(ArchPaths.ZIP_PREFIX, "/");
+    }
+
+    @Override
+    public void initCompression(Map<String, String> queryStrings) {
+        this.compressionMode = PBCompressionMode.valueOf(queryStrings.get(URLKeys.COMPRESS.key()));
     }
 
     @Override
@@ -43,7 +75,7 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     @Override
     public String toString() {
-        return "PBPlainFileHandler{}";
+        return "PBPlainFileHandler{" + "compressionMode=" + compressionMode + '}';
     }
 
     @Override
@@ -71,9 +103,9 @@ public class PBPlainFileHandler implements PlainFileHandler {
             PartitionGranularity partitionGranularity,
             String rootFolder,
             String desc,
-            PVNameToKeyMapping pv2key,
-            CompressionMode compressionMode) {
-        return new PBAppendDataStateData(partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key);
+            PVNameToKeyMapping pv2key) {
+        return new PBAppendDataStateData(
+                partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key, getPathResolver());
     }
 
     @Override
@@ -88,22 +120,16 @@ public class PBPlainFileHandler implements PlainFileHandler {
             String randSuffix,
             String suffix,
             String rootFolder,
-            CompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
-        PlainFileHandler.movePaths(context, pvName, randSuffix, suffix, rootFolder, compressionMode, pv2key);
+        PlainFileHandler.movePaths(context, pvName, randSuffix, suffix, rootFolder, getPathResolver(), pv2key);
     }
 
     @Override
     public void dataDeleteTempFiles(
-            BasicContext context,
-            String pvName,
-            String randSuffix,
-            String rootFolder,
-            CompressionMode compressionMode,
-            PVNameToKeyMapping pv2key)
+            BasicContext context, String pvName, String randSuffix, String rootFolder, PVNameToKeyMapping pv2key)
             throws IOException {
-        PlainFileHandler.deleteTempFiles(context, pvName, randSuffix, rootFolder, compressionMode, pv2key);
+        PlainFileHandler.deleteTempFiles(context, pvName, randSuffix, rootFolder, getPathResolver(), pv2key);
     }
 
     @Override
@@ -169,5 +195,39 @@ public class PBPlainFileHandler implements PlainFileHandler {
             BiDirectionalIterable.IterationDirection direction)
             throws IOException {
         return findByTime(pathList, pvName, atTime, startAtTime, direction);
+    }
+
+    @Override
+    public String updateRootFolderStr(String rootFolderStr) {
+        if (compressionMode.equals(PBCompressionMode.ZIP_PER_PV)) {
+            if (!rootFolderStr.startsWith(ArchPaths.ZIP_PREFIX)) {
+                String rootFolderWithPath = ArchPaths.ZIP_PREFIX + rootFolderStr;
+                logger.debug("Automatically adding url scheme for compression to rootfolder " + rootFolderWithPath);
+                return rootFolderWithPath;
+            }
+        }
+        return rootFolderStr;
+    }
+
+    @Override
+    public boolean backUpFiles(boolean backupFilesBeforeETL) {
+        return this.compressionMode.equals(PBCompressionMode.NONE) && backupFilesBeforeETL;
+    }
+
+    @Override
+    public Map<URLKeys, String> urlOptions() {
+        if (compressionMode.equals(PBCompressionMode.NONE)) {
+            return Map.of();
+        }
+        return Map.of(URLKeys.COMPRESS, compressionMode.name());
+    }
+
+    @Override
+    public String getPathKey(Path path) {
+        if (this.compressionMode.equals(PBCompressionMode.NONE)) {
+            return path.toAbsolutePath().toString();
+        }
+        return URLDecoder.decode(path.toUri().toString(), StandardCharsets.US_ASCII)
+            .replace(" ", "+");
     }
 }
