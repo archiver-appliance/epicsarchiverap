@@ -4,7 +4,6 @@ import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.plain.pb.MultiFilePBEventStream;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -111,26 +110,6 @@ public class ZipCachedFetchTest {
         }
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        FileUtils.deleteDirectory(new File(rootFolderName));
-    }
-
-    @Test
-    public void test() throws Exception {
-        DecimalFormat format = new DecimalFormat("00");
-        for (int months = 2; months <= 9; months++) {
-            int startMonth = 2;
-            int endMonth = startMonth + months;
-            Instant startTime = TimeUtils.convertFromISO8601String(
-                    currentYear + "-" + format.format(startMonth) + "-01T00:00:00.000Z");
-            Instant endTime = TimeUtils.convertFromISO8601String(
-                    currentYear + "-" + format.format(endMonth) + "-30T00:00:00.000Z");
-            testParallelFetch(startTime, endTime, months);
-            testSerialFetch(startTime, endTime, months);
-        }
-    }
-
     private void testSerialFetch(Instant startTime, Instant endTime, int months) throws Exception {
         try (BasicContext context = new BasicContext()) {
             long st0 = System.currentTimeMillis();
@@ -140,9 +119,9 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PBPlainFileHandler.pbFileExtension,
+                    pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
             long previousEpochSeconds = 0L;
             long eventCount = 0;
@@ -162,6 +141,26 @@ public class ZipCachedFetchTest {
         }
     }
 
+    @AfterEach
+    public void tearDown() throws Exception {
+        FileUtils.deleteDirectory(new File(rootFolderName));
+    }
+
+    @Test
+    public void test() throws Exception {
+        DecimalFormat format = new DecimalFormat("00");
+        for (int months = 2; months <= 9; months++) {
+            int startMonth = 2;
+            int endMonth = startMonth + months;
+            Instant startTime = TimeUtils.convertFromISO8601String(
+                currentYear + "-" + format.format(startMonth) + "-01T00:00:00.000Z");
+            Instant endTime = TimeUtils.convertFromISO8601String(
+                currentYear + "-" + format.format(endMonth) + "-30T00:00:00.000Z");
+            testParallelFetch(startTime, endTime, months);
+            testSerialFetch(startTime, endTime, months);
+        }
+    }
+
     private void testParallelFetch(Instant startTime, Instant endTime, int months) throws Exception {
         ForkJoinPool forkJoinPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() / 2);
         logger.info("The parallelism in the pool is " + forkJoinPool.getParallelism());
@@ -173,9 +172,9 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PBPlainFileHandler.pbFileExtension,
+                    pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
 
             List<Future<EventStream>> futures = new LinkedList<Future<EventStream>>();
