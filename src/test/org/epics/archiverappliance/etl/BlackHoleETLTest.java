@@ -8,8 +8,8 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
@@ -119,7 +119,7 @@ public class BlackHoleETLTest {
                 etlSrc.getRootFolder(),
                 pvName,
                 etlSrc.getExtensionString(),
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         return allPaths.length;
     }

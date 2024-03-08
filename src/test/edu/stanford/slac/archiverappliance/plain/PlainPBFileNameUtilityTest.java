@@ -106,7 +106,7 @@ public class PlainPBFileNameUtilityTest {
                     fileTime,
                     granularity,
                     new ArchPaths(),
-                    CompressionMode.NONE,
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter(),
                     extension));
         }
@@ -119,7 +119,7 @@ public class PlainPBFileNameUtilityTest {
                 startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk() - 1),
                 extension,
                 granularity,
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, matchingPaths.length, "File count " + matchingPaths.length);
 
@@ -130,7 +130,7 @@ public class PlainPBFileNameUtilityTest {
                 startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk()),
                 extension,
                 granularity,
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, etlPaths.length, "File count " + etlPaths.length);
 
@@ -141,7 +141,7 @@ public class PlainPBFileNameUtilityTest {
                         startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk()),
                         extension,
                         granularity,
-                        CompressionMode.NONE,
+                        PathResolver.BASE_PATH_RESOLVER,
                         configService.getPVNameToKeyConverter())
                 .toFile();
         Assertions.assertNotNull(mostRecentFile, "Most recent file is null?");
@@ -175,7 +175,7 @@ public class PlainPBFileNameUtilityTest {
                     curr.toInstant(),
                     partition,
                     new ArchPaths(),
-                    CompressionMode.NONE,
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter(),
                     extension));
             curr = curr.plusYears(1);
@@ -190,7 +190,7 @@ public class PlainPBFileNameUtilityTest {
                 endYear.minusSeconds(1).toInstant(),
                 extension,
                 partition,
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(8, matchingPaths.length, "File count " + matchingPaths.length);
 
@@ -201,7 +201,7 @@ public class PlainPBFileNameUtilityTest {
                 endYear.toInstant(),
                 extension,
                 partition,
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(8, etlPaths.length, "File count " + etlPaths.length);
 
@@ -213,7 +213,7 @@ public class PlainPBFileNameUtilityTest {
                         curr.plusYears(1).toInstant(),
                         extension,
                         partition,
-                        CompressionMode.NONE,
+                        PathResolver.BASE_PATH_RESOLVER,
                         configService.getPVNameToKeyConverter())
                 .toFile();
         Assertions.assertNotNull(mostRecentFile, "Most recent file is null?");
@@ -228,7 +228,7 @@ public class PlainPBFileNameUtilityTest {
                         endYear.toInstant(),
                         extension,
                         partition,
-                        CompressionMode.NONE,
+                        PathResolver.BASE_PATH_RESOLVER,
                         configService.getPVNameToKeyConverter())
                 .toFile();
         Assertions.assertNotNull(mostRecentFile2, "Most recent file is null?");

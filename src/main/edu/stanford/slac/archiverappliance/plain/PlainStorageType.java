@@ -7,16 +7,14 @@ import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
  * Lists possible file extensions for this plugin.
  */
 public enum PlainStorageType {
-    PARQUET(new ParquetPlainFileHandler()),
-    PB(new PBPlainFileHandler()),
+    PARQUET,
+    PB,
     ;
-    private final PlainFileHandler plainFileHandler;
-
-    PlainStorageType(PlainFileHandler plainFileHandler) {
-        this.plainFileHandler = plainFileHandler;
-    }
 
     public PlainFileHandler plainFileHandler() {
-        return this.plainFileHandler;
+        return switch (this) {
+            case PB -> new PBPlainFileHandler();
+            case PARQUET -> new ParquetPlainFileHandler();
+        };
     }
 }

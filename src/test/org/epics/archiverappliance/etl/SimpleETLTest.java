@@ -8,9 +8,8 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -95,10 +94,7 @@ public class SimpleETLTest {
         destSetup.setUpRootFolder(
                 testPlugins.dest(),
                 "SimpleETLTestDest" + granularity + testPlugins.dest().getPluginIdentifier(),
-                granularity.getNextLargerGranularity(),
-                testPlugins.dest().getPlainFileHandler() == PlainStorageType.PARQUET.plainFileHandler()
-                        ? CompressionMode.valueOf("ZSTD")
-                        : CompressionMode.NONE);
+                granularity.getNextLargerGranularity());
 
         logger.info("Testing simple ETL testMove for " + testPlugins.src().getPartitionGranularity() + " to "
                 + testPlugins.dest().getPartitionGranularity());
@@ -150,7 +146,7 @@ public class SimpleETLTest {
                 testPlugins.dest().getRootFolder(),
                 pvName,
                 testPlugins.dest().getExtensionString(),
-                CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(

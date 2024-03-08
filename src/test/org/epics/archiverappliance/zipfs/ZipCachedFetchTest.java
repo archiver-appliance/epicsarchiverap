@@ -4,7 +4,6 @@ import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.plain.pb.MultiFilePBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -111,6 +110,37 @@ public class ZipCachedFetchTest {
         }
     }
 
+    private void testSerialFetch(Instant startTime, Instant endTime, int months) throws Exception {
+        try (BasicContext context = new BasicContext()) {
+            long st0 = System.currentTimeMillis();
+            Path[] paths = PathNameUtility.getPathsWithData(
+                    context.getPaths(),
+                    pbplugin.getRootFolder(),
+                    pvName,
+                    startTime,
+                    endTime,
+                    pbplugin.getExtensionString(),
+                    pbplugin.getPartitionGranularity(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
+                    configService.getPVNameToKeyConverter());
+            long previousEpochSeconds = 0L;
+            long eventCount = 0;
+            try (EventStream st =
+                    new MultiFilePBEventStream(paths, pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, startTime, endTime)) {
+                for (Event e : st) {
+                    long currEpochSeconds = e.getEpochSeconds();
+                    if (currEpochSeconds - previousEpochSeconds > 60 * 60) {
+                        eventCount++;
+                        previousEpochSeconds = currEpochSeconds;
+                    }
+                }
+            }
+            long st1 = System.currentTimeMillis();
+            logger.info("Time takes for serial fetch is " + (st1 - st0) + "(ms) return " + eventCount + " events for "
+                    + (months + 1) + " months");
+        }
+    }
+
     @AfterEach
     public void tearDown() throws Exception {
         FileUtils.deleteDirectory(new File(rootFolderName));
@@ -131,37 +161,6 @@ public class ZipCachedFetchTest {
         }
     }
 
-    private void testSerialFetch(Instant startTime, Instant endTime, int months) throws Exception {
-        try (BasicContext context = new BasicContext()) {
-            long st0 = System.currentTimeMillis();
-            Path[] paths = PathNameUtility.getPathsWithData(
-                    context.getPaths(),
-                    pbplugin.getRootFolder(),
-                    pvName,
-                    startTime,
-                    endTime,
-                    PBPlainFileHandler.pbFileExtension,
-                    pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
-                    configService.getPVNameToKeyConverter());
-            long previousEpochSeconds = 0L;
-            long eventCount = 0;
-            try (EventStream st =
-                    new MultiFilePBEventStream(paths, pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, startTime, endTime)) {
-                for (Event e : st) {
-                    long currEpochSeconds = e.getEpochSeconds();
-                    if (currEpochSeconds - previousEpochSeconds > 60 * 60) {
-                        eventCount++;
-                        previousEpochSeconds = currEpochSeconds;
-                    }
-                }
-            }
-            long st1 = System.currentTimeMillis();
-            logger.info("Time takes for serial fetch is " + (st1 - st0) + "(ms) return " + eventCount + " events for "
-                    + (months + 1) + " months");
-        }
-    }
-
     private void testParallelFetch(Instant startTime, Instant endTime, int months) throws Exception {
         ForkJoinPool forkJoinPool = new ForkJoinPool(Runtime.getRuntime().availableProcessors() / 2);
         logger.info("The parallelism in the pool is " + forkJoinPool.getParallelism());
@@ -173,9 +172,9 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PBPlainFileHandler.pbFileExtension,
+                    pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
 
             List<Future<EventStream>> futures = new LinkedList<Future<EventStream>>();
