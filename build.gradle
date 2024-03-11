@@ -62,6 +62,21 @@ repositories {
 	}
 	mavenCentral()
 	maven { url "https://clojars.org/repo" }
+	ivy {
+		url 'https://github.com/'
+
+		patternLayout {
+			artifact '/[organisation]/[module]/archive/[revision].[ext]'
+		}
+
+		// This is required in Gradle 6.0+ as metadata file (ivy.xml)
+		// is mandatory. Docs linked below this code section
+		metadataSources { artifact() }
+	}
+}
+
+configurations {
+	viewer
 }
 
 dependencies {
@@ -71,6 +86,8 @@ dependencies {
 	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
 	testImplementation files("lib/test/BPLTaglets.jar")
 	testImplementation(":pbrawclient:0.0.9")
+	// github
+	viewer("archiver-appliance:svg_viewer:v1.1.0@zip") // Not compileOnly to avoid check by analyze
 	// Maven dependencies
 	testImplementation("org.seleniumhq.selenium:selenium-api:4.9.0")
 	testImplementation("org.seleniumhq.selenium:selenium-firefox-driver:4.9.0")
@@ -180,19 +197,19 @@ tasks.register("syncStaticContentHeaderFooters", JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath
 }
 
-tasks.register("updateSvgViewer", Exec) {
+tasks.register("stageSvgViewer", Zip) {
 	group = "Staging"
-	description = "Update the svg viewer repository."
-	commandLine "git", "submodule", "update", "--init", "--recursive"
-}
-
-tasks.register("zipSvgViewer", Zip) {
-	group = "Staging"
-	description = "Zip up the svg viewer project for assembling"
-	dependsOn "updateSvgViewer"
+	description = "Copy svg viewer project for assembling"
+	def archPath =  project.configurations.viewer.singleFile
+	from(zipTree(archPath)) {
+		include "svg_viewer-*/**"
+		eachFile { fcd ->
+			fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
+		}
+	}
 	archiveFileName = "viewer.zip"
+	includeEmptyDirs = false
 	destinationDirectory = layout.projectDirectory.dir("${stageDir}/org/epics/archiverappliance/retrieval/staticcontent")
-	from layout.projectDirectory.dir("svg_viewer")
 }
 
 tasks.register("sitespecificantscript") {
@@ -205,7 +222,7 @@ tasks.register("stage") {
 	group = "Staging"
 	description = "Copy static content from each of the projects into the staging directory."
 	dependsOn javadoc
-	finalizedBy "zipSvgViewer"
+	finalizedBy "stageSvgViewer"
 	mkdir stageDir
 
 	copy {
@@ -313,7 +330,7 @@ tasks.register("engineWar", War) {
 
 tasks.register("retreivalWar", War) {
 	group = "Wars"
-	dependsOn "zipSvgViewer"
+	dependsOn "stageSvgViewer"
 	from("${stageDir}/org/epics/archiverappliance/retrieval/staticcontent") {
 		into "ui"
 	}
