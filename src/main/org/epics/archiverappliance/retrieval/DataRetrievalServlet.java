@@ -283,7 +283,7 @@ public class DataRetrievalServlet extends HttpServlet {
     private static boolean useReduced(HttpServletRequest req) {
         boolean useReduced = false;
         String useReducedStr = req.getParameter("usereduced");
-        if (useReducedStr != null && !useReducedStr.isEmpty()) {
+        if (!StringUtils.isEmpty(useReducedStr)) {
             try {
                 useReduced = Boolean.parseBoolean(useReducedStr);
             } catch (Exception ex) {
@@ -443,7 +443,7 @@ public class DataRetrievalServlet extends HttpServlet {
         pmansProfiler.mark("After Appliance Info");
 
         String fieldName = PVNames.getFieldName(pvName);
-        if (fieldName != null && !fieldName.isEmpty() && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
+        if (!StringUtils.isEmpty(fieldName) && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
             logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName()
                     + " as that determines the name of the stream. Also using ExtraFieldsPostProcessor");
             pvName = typeInfo.getPvName();
@@ -764,10 +764,7 @@ public class DataRetrievalServlet extends HttpServlet {
         String extension = req.getPathInfo().split("\\.")[1];
         logger.info("Mime is {}", extension);
 
-        if (!extension.equals("json")
-                && !extension.equals("raw")
-                && !extension.equals("jplot")
-                && !extension.equals("qw")) {
+        if (!StringUtils.equalsAny(extension, "json", "raw", "jplot", "qw")) {
             String msg = "Mime type " + extension + " is not supported. Please use \"json\", \"jplot\" or \"raw\".";
             logAndRespond(msg, null, resp, HttpServletResponse.SC_BAD_REQUEST);
             return;
@@ -931,7 +928,7 @@ public class DataRetrievalServlet extends HttpServlet {
 
             // If a field is specified in a PV name, it will create a post processor for that
             String fieldName = PVNames.getFieldName(pvName);
-            if (fieldName != null && !fieldName.isEmpty() && !pvName.equals(typeInfo.getPvName())) {
+            if (!StringUtils.isEmpty(fieldName) && !pvName.equals(typeInfo.getPvName())) {
                 logger.debug("We reset the pvName " + pvName + " to one from the typeinfo "
                         + typeInfo.getPvName() + " as that determines the name of the stream. "
                         + "Also using ExtraFieldsPostProcessor.");

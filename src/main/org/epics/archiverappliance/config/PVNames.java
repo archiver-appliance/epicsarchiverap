@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.config;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,7 +32,7 @@ public class PVNames {
      * @return String The plain pvName
      */
     public static String stripFieldNameFromPVName(String pvName) {
-        if (pvName == null || pvName.isEmpty()) {
+        if (StringUtils.isEmpty(pvName)) {
             return pvName;
         }
 
@@ -72,7 +73,7 @@ public class PVNames {
      * @return String  normalizePVName
      */
     public static String normalizePVName(String pvName) {
-        if (pvName == null || pvName.isEmpty()) {
+        if (StringUtils.isEmpty(pvName)) {
             return pvName;
         }
 
@@ -81,7 +82,7 @@ public class PVNames {
             return pvName;
         } else if (parts.length == 2) {
             String fieldName = parts[1];
-            if (fieldName != null && fieldName.equals("VAL")) {
+            if (StringUtils.equals(fieldName, "VAL")) {
                 return parts[0];
             } else {
                 return pvName;
@@ -101,7 +102,7 @@ public class PVNames {
      * @return String normalizePVNameWithField
      */
     public static String normalizePVNameWithField(String pvName, String fieldName) {
-        if (pvName == null || pvName.isEmpty()) {
+        if (StringUtils.isEmpty(pvName)) {
             return pvName;
         }
 
@@ -122,7 +123,7 @@ public class PVNames {
      * @return boolean True or False
      */
     public static boolean isField(String pvName) {
-        if (pvName == null || pvName.isEmpty()) {
+        if (StringUtils.isEmpty(pvName)) {
             return false;
         }
 
@@ -131,7 +132,7 @@ public class PVNames {
             return false;
         } else if (parts.length == 2) {
             String fieldName = parts[1];
-            if (fieldName == null || fieldName.isEmpty()) {
+            if (StringUtils.isEmpty(fieldName)) {
                 return false;
             } else {
                 return !fieldName.equals("VAL");
@@ -309,7 +310,7 @@ public class PVNames {
         return false;
     }
 
-    private static Pattern validPVName =
+    private static final Pattern validPVName =
             Pattern.compile("[a-zA-Z0-9\\_\\-\\+\\:\\[\\]\\<\\>\\;\\.\\/\\,\\#\\{\\}\\^]+");
     /**
      * Check to see if the pvName has valid characters.
@@ -326,7 +327,7 @@ public class PVNames {
      * @return boolean True or False
      */
     public static boolean isValidPVName(String pvName) {
-        if (pvName == null || pvName.isEmpty()) return false;
+        if (StringUtils.isEmpty(pvName)) return false;
         return validPVName.matcher(pvName).matches();
     }
 
@@ -346,7 +347,7 @@ public class PVNames {
      * @return EPICSVersion
      */
     public static EPICSVersion pvNameVersion(String pvName) {
-        if (pvName == null || pvName.isEmpty()) return EPICSVersion.DEFAULT;
+        if (StringUtils.isEmpty(pvName)) return EPICSVersion.DEFAULT;
         if (pvName.startsWith(V4_PREFIX)) return EPICSVersion.V4;
         if (pvName.startsWith(V3_PREFIX)) return EPICSVersion.V3;
         return EPICSVersion.DEFAULT;
@@ -358,7 +359,7 @@ public class PVNames {
      * @return String  &emsp;
      */
     public static String stripPrefixFromName(String pvName) {
-        if (pvName == null || pvName.isEmpty()) return pvName;
+        if (StringUtils.isEmpty(pvName)) return pvName;
         if (pvName.startsWith(V4_PREFIX)) {
             return pvName.replace(V4_PREFIX, "");
         }
