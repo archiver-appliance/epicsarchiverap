@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.retrieval.RetrievalMetrics;
 
 import java.text.DecimalFormat;
 import java.time.Instant;
@@ -120,6 +121,8 @@ public class PVMetrics {
      * Feel free to remove if not needed anymore
      */
     private PVConnectionState lastConnectionEventState;
+
+    private RetrievalMetrics retrievalMetrics;
 
     public void setHostName(String hostName) {
         this.hostName = hostName;
@@ -706,5 +709,9 @@ public class PVMetrics {
 
     public long getEventCounts() {
         return eventCounts;
+    }
+
+    public RetrievalMetrics getRetievalMetrics() {
+        return this.retrievalMetrics;
     }
 }

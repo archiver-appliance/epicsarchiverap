@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -70,7 +71,8 @@ public class InstanceReport implements BPLAction {
                 Duration vmInterval = Duration.between(
                         Instant.ofEpochMilli(vmStartTime), Instant.ofEpochMilli(System.currentTimeMillis()));
 
-                applianceInfo.put("MGMT_uptime", vmInterval.toString());
+                applianceInfo.put(
+                        "MGMT_uptime", DurationFormatUtils.formatDurationWords(vmInterval.toMillis(), true, false));
 
                 applianceInfo.put("errors", Integer.toString(0));
                 applianceInfo.put("capacityUtilized", "N/A");

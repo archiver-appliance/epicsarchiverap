@@ -17,13 +17,15 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 import javax.servlet.http.HttpServletRequest;
 
 public class RetrievalState {
-    private static Logger logger = LogManager.getLogger(RetrievalState.class.getName());
-    private ConfigService configService;
+    private static final Logger logger = LogManager.getLogger(RetrievalState.class.getName());
+    private final ConfigService configService;
     private int engineWriteThreadInSeconds = 60;
 
     public RetrievalState(ConfigService configService) {
@@ -31,6 +33,7 @@ public class RetrievalState {
         this.engineWriteThreadInSeconds = Integer.parseInt(configService
                 .getInstallationProperties()
                 .getProperty("org.epics.archiverappliance.config.PVTypeInfo.secondsToBuffer", "60"));
+        this.retrievalMetricsMap = new HashMap<>();
     }
 
     /**
@@ -194,5 +197,22 @@ public class RetrievalState {
             }
         }
         return true;
+    }
+
+    private final Map<String, RetrievalMetrics> retrievalMetricsMap;
+
+    public Map<String, RetrievalMetrics> getRetrievalMetrics() {
+        return retrievalMetricsMap;
+    }
+
+    protected void updateRetrievalMetrics(String pvName, Instant time, String user) {
+        logger.info("Update metrics for " + pvName);
+
+        retrievalMetricsMap.putIfAbsent(pvName, new RetrievalMetrics());
+        retrievalMetricsMap.get(pvName).updateMetrics(time, user);
+    }
+
+    public RetrievalMetrics getPVRetrievalMetrics(String pvName) {
+        return retrievalMetricsMap.get(pvName);
     }
 }

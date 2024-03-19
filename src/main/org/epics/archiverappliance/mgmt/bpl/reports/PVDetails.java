@@ -154,6 +154,14 @@ public class PVDetails implements BPLAction {
                 GetUrlContent.combineJSONArrays(result, engineStatusVars);
             }
 
+            JSONArray retrievalStatusVars =
+                    GetUrlContent.getURLContentAsJSONArray(info.getRetrievalURL() + pvDetailsURLSnippet);
+            if (retrievalStatusVars == null) {
+                logger.warn("No status vars from retrieval using URL " + info.getRetrievalURL() + pvDetailsURLSnippet);
+            } else {
+                GetUrlContent.combineJSONArrays(result, retrievalStatusVars);
+            }
+
             if (typeInfo.isPaused()) {
                 logger.debug("Skipping getting pv details from ETL for paused PV " + pvName);
             } else {

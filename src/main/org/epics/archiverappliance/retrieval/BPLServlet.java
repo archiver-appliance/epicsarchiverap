@@ -22,8 +22,10 @@ import org.epics.archiverappliance.retrieval.bpl.SearchForPVsRegex;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.retrieval.bpl.reports.ApplianceMetricsDetails;
 import org.epics.archiverappliance.retrieval.bpl.reports.InstanceReportDetails;
+import org.epics.archiverappliance.retrieval.bpl.reports.PVDetails;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.HashMap;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -36,15 +38,18 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 public class BPLServlet extends HttpServlet {
+    @Serial
     private static final long serialVersionUID = 7987830282574602915L;
+
     private ConfigService configService = null;
-    private static HashMap<String, Class<? extends BPLAction>> getActions =
+    private static final HashMap<String, Class<? extends BPLAction>> getActions =
             new HashMap<String, Class<? extends BPLAction>>();
 
     static {
         getActions.put("/getApplianceMetrics", ApplianceMetrics.class);
         getActions.put("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
         getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
+        getActions.put("/getPVDetails", PVDetails.class);
         getActions.put("/searchForPVsRegex", SearchForPVsRegex.class);
         getActions.put("/getMatchingPVs", GetMatchingPVs.class);
         getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
