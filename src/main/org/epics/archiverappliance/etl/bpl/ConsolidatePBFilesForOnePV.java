@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.bpl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -38,7 +39,7 @@ public class ConsolidatePBFilesForOnePV implements BPLAction {
         String pvName = req.getParameter("pv");
         String storageName = req.getParameter("storage");
         String optionalDate = req.getParameter("date");
-        if (pvName == null || pvName.isEmpty() || storageName == null || storageName.isEmpty()) {
+        if (StringUtils.isEmpty(pvName) || StringUtils.isEmpty(storageName)) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }

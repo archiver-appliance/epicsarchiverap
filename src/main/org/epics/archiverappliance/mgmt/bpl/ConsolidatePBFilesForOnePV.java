@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -39,13 +40,9 @@ public class ConsolidatePBFilesForOnePV implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         String pvName = req.getParameter("pv");
-        if (pvName == null || pvName.isEmpty()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-
         String storageName = req.getParameter("storage");
-        if (storageName == null || storageName.isEmpty()) {
+
+        if (StringUtils.isEmpty(pvName) || StringUtils.isEmpty(storageName)) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }

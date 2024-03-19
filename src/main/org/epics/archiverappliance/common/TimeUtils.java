@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.pva.data.PVAInt;
@@ -577,7 +578,7 @@ public class TimeUtils {
 
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
         Instant res = defaultTime;
-        if (timestampString != null && !timestampString.isEmpty()) {
+        if (!StringUtils.isEmpty(timestampString)) {
             try {
                 res = convertFromISO8601String(timestampString);
             } catch (IllegalArgumentException ex) {
