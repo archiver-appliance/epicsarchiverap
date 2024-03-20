@@ -24,6 +24,21 @@ public class RetrievalMetrics {
         this.lastRequest = lastRequest;
     }
 
+    public RetrievalMetrics sumMetrics(RetrievalMetrics newMetrics) {
+        this.numberOfRequests += newMetrics.numberOfRequests;
+        this.userIdentifiers.addAll(newMetrics.userIdentifiers);
+        if (newMetrics.lastRequest != null) {
+            if (this.lastRequest == null) {
+                this.lastRequest = newMetrics.lastRequest;
+            } else {
+                long latestEpochMillis =
+                        Long.max(this.lastRequest.toEpochMilli(), newMetrics.lastRequest.toEpochMilli());
+                this.lastRequest = Instant.ofEpochMilli(latestEpochMillis);
+            }
+        }
+        return this;
+    }
+
     public LinkedList<Map<String, String>> getDetails() {
         LinkedList<Map<String, String>> result = new LinkedList<>();
         addDetailedStatus(result, "Number of Retrieval Requests", String.valueOf(this.numberOfRequests));
