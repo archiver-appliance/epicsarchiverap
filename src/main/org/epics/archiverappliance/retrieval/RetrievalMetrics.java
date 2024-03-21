@@ -48,6 +48,16 @@ public class RetrievalMetrics {
         return result;
     }
 
+    public Map<String, String> getMetrics() {
+        return Map.of(
+                "Number of Retrieval Requests",
+                String.valueOf(this.numberOfRequests),
+                "Time of last Retrieval Request",
+                TimeUtils.convertToHumanReadableString(lastRequest),
+                "Number of unique users",
+                String.valueOf(userIdentifiers.size()));
+    }
+
     private static void addDetailedStatus(LinkedList<Map<String, String>> statuses, String name, String value) {
         Map<String, String> obj = new LinkedHashMap<String, String>();
         obj.put("name", name);

@@ -40,6 +40,6 @@ public class ApplianceMetrics implements BPLAction {
     }
 
     public static String summedMetricsJsonString(ConfigService configService) {
-        return JSONValue.toJSONString(calculateSummedMetrics(configService).getDetails());
+        return JSONValue.toJSONString(calculateSummedMetrics(configService).getMetrics());
     }
 }
