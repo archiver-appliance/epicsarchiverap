@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.reports.Details;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -24,7 +25,7 @@ import org.json.simple.JSONValue;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
-import java.util.LinkedHashMap;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -59,13 +60,12 @@ public class PVDetails implements BPLAction {
         if (typeInfoForNameFromRequest != null) {
             logger.debug("Was able to find a PVTypeInfo for the name as specified in the request " + pvNameFromRequest);
             pvName = pvNameFromRequest;
-            info = configService.getApplianceForPV(pvName);
         } else {
             String realName = configService.getRealNameForAlias(pvName);
             if (realName != null) pvName = realName;
             logger.debug("Found an alias; using that instead " + pvName);
-            info = configService.getApplianceForPV(pvName);
         }
+        info = configService.getApplianceForPV(pvName);
 
         logger.info("Getting the detailed status for PV " + pvName);
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
@@ -79,7 +79,7 @@ public class PVDetails implements BPLAction {
             }
         }
 
-        String pvDetailsURLSnippet = "/getPVDetails?pv=" + URLEncoder.encode(pvName, "UTF-8");
+        String pvDetailsURLSnippet = "/getPVDetails?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         try (PrintWriter out = resp.getWriter()) {
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
             addDetailedStatus(result, "PV Name", pvNameFromRequest);
@@ -110,80 +110,81 @@ public class PVDetails implements BPLAction {
                         result, "Sampling method:", typeInfo.getSamplingMethod().toString());
                 addDetailedStatus(result, "Sampling period:", Float.toString(typeInfo.getSamplingPeriod()));
                 addDetailedStatus(result, "Are we using PVAccess?", typeInfo.isUsePVAccess() ? "Yes" : "No");
-                for (String extraFieldName : configService.getExtraFields()) {
-                    String extraValue = typeInfo.getExtraFields().get(extraFieldName);
-                    if (extraValue != null) {
-                        if (extraFieldName.equals("SCAN")) {
-                            try {
-                                addDetailedStatus(
-                                        result,
-                                        "Extra info - " + extraFieldName + ":",
-                                        changeSCANValueFromEnumToString(extraValue));
-                            } catch (Exception ex) {
-                                addDetailedStatus(result, "Extra info - " + extraFieldName + ":", extraValue);
-                            }
-                        } else {
-                            addDetailedStatus(result, "Extra info - " + extraFieldName + ":", extraValue);
-                        }
-                    }
-                }
+                addExtraFields(configService, typeInfo, result);
                 String[] archiveFields = typeInfo.getArchiveFields();
                 if (archiveFields != null && archiveFields.length > 0) {
                     String archiveFieldsStr = typeInfo.obtainArchiveFieldsAsString();
                     addDetailedStatus(result, "Archive Fields", archiveFieldsStr);
                 }
-                List<ChannelArchiverDataServerPVInfo> serverInfos = configService.getChannelArchiverDataServers(pvName);
-                if (serverInfos != null && !serverInfos.isEmpty()) {
-                    for (ChannelArchiverDataServerPVInfo serverInfo : serverInfos) {
-                        addDetailedStatus(
-                                result,
-                                "External server:",
-                                serverInfo.getServerInfo().getServerURL() + "/"
-                                        + serverInfo.getServerInfo().getIndex());
-                    }
-                }
+                addChannelArchiverInfo(configService, pvName, result);
             } else {
                 logger.warn("No PVTypeInfo for pv " + pvName);
             }
 
-            JSONArray engineStatusVars =
-                    GetUrlContent.getURLContentAsJSONArray(info.getEngineURL() + pvDetailsURLSnippet);
-            if (engineStatusVars == null) {
-                logger.warn("No status vars from engine using URL " + info.getEngineURL() + pvDetailsURLSnippet);
-            } else {
-                GetUrlContent.combineJSONArrays(result, engineStatusVars);
-            }
+            getStatusFromOtherWar(
+                    info.getEngineURL(), pvDetailsURLSnippet, "No status vars from engine using URL ", result);
 
-            JSONArray retrievalStatusVars =
-                    GetUrlContent.getURLContentAsJSONArray(info.getRetrievalURL() + pvDetailsURLSnippet);
-            if (retrievalStatusVars == null) {
-                logger.warn("No status vars from retrieval using URL " + info.getRetrievalURL() + pvDetailsURLSnippet);
-            } else {
-                GetUrlContent.combineJSONArrays(result, retrievalStatusVars);
-            }
+            getStatusFromOtherWar(
+                    info.getRetrievalURL(), pvDetailsURLSnippet, "No status vars from retrieval using URL ", result);
 
             if (typeInfo.isPaused()) {
                 logger.debug("Skipping getting pv details from ETL for paused PV " + pvName);
             } else {
-                JSONArray etlStatusVars =
-                        GetUrlContent.getURLContentAsJSONArray(info.getEtlURL() + pvDetailsURLSnippet);
-                if (etlStatusVars == null) {
-                    logger.warn("No status vars from ETL using URL " + info.getEtlURL() + pvDetailsURLSnippet);
-                } else {
-                    GetUrlContent.combineJSONArrays(result, etlStatusVars);
-                }
+                getStatusFromOtherWar(
+                        info.getEtlURL(), pvDetailsURLSnippet, "No status vars from ETL using URL ", result);
             }
 
             out.println(JSONValue.toJSONString(result));
         }
     }
 
+    private static void addChannelArchiverInfo(
+            ConfigService configService, String pvName, LinkedList<Map<String, String>> result) {
+        List<ChannelArchiverDataServerPVInfo> serverInfos = configService.getChannelArchiverDataServers(pvName);
+        if (serverInfos != null && !serverInfos.isEmpty()) {
+            for (ChannelArchiverDataServerPVInfo serverInfo : serverInfos) {
+                addDetailedStatus(
+                        result,
+                        "External server:",
+                        serverInfo.getServerInfo().getServerURL() + "/"
+                                + serverInfo.getServerInfo().getIndex());
+            }
+        }
+    }
+
+    private void addExtraFields(
+            ConfigService configService, PVTypeInfo typeInfo, LinkedList<Map<String, String>> result) {
+        for (String extraFieldName : configService.getExtraFields()) {
+            String extraValue = typeInfo.getExtraFields().get(extraFieldName);
+            if (extraValue != null) {
+                if (extraFieldName.equals("SCAN")) {
+                    try {
+                        addDetailedStatus(
+                                result,
+                                "Extra info - " + extraFieldName + ":",
+                                changeSCANValueFromEnumToString(extraValue));
+                    } catch (Exception ex) {
+                        addDetailedStatus(result, "Extra info - " + extraFieldName + ":", extraValue);
+                    }
+                } else {
+                    addDetailedStatus(result, "Extra info - " + extraFieldName + ":", extraValue);
+                }
+            }
+        }
+    }
+
+    private static void getStatusFromOtherWar(
+            String info, String pvDetailsURLSnippet, String x, LinkedList<Map<String, String>> result) {
+        JSONArray retrievalStatusVars = GetUrlContent.getURLContentAsJSONArray(info + pvDetailsURLSnippet);
+        if (retrievalStatusVars == null) {
+            logger.warn(x + info + pvDetailsURLSnippet);
+        } else {
+            GetUrlContent.combineJSONArrays(result, retrievalStatusVars);
+        }
+    }
+
     private static void addDetailedStatus(LinkedList<Map<String, String>> statuses, String name, String value) {
-        Map<String, String> obj = new LinkedHashMap<String, String>();
-        obj.put("name", name);
-        obj.put("value", value);
-        obj.put("source", "mgmt");
-        statuses.add(obj);
+        statuses.add(Details.metricDetail("mgmt", name, value));
     }
 
     private String changeSCANValueFromEnumToString(String enumValueStr) {

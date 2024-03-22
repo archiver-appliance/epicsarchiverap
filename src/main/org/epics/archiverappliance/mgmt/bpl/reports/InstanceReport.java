@@ -13,11 +13,9 @@ import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.management.ManagementFactory;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -34,38 +32,14 @@ public class InstanceReport implements BPLAction {
         try (PrintWriter out = resp.getWriter()) {
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
             for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-                HashMap<String, String> applianceInfo = new HashMap<String, String>();
-                result.add(applianceInfo);
-                applianceInfo.put("instance", info.getIdentity());
-                int pvCount = 0;
-                for (@SuppressWarnings("unused") String pvName : configService.getPVsForThisAppliance()) {
-                    pvCount++;
-                }
-                applianceInfo.put("pvCount", Integer.toString(pvCount));
+                var applianceInfo = ApplianceMetrics.getBasicMetrics(configService, result, info);
 
                 // The getApplianceMetrics here is not a typo. We redisplay some of the appliance metrics in this page.
                 JSONObject engineMetrics =
                         GetUrlContent.getURLContentAsJSONObject(info.getEngineURL() + "/getApplianceMetrics");
                 JSONObject etlMetrics =
                         GetUrlContent.getURLContentAsJSONObject(info.getEtlURL() + "/getApplianceMetrics");
-                JSONObject retrievalMetrics =
-                        GetUrlContent.getURLContentAsJSONObject(info.getRetrievalURL() + "/getApplianceMetrics");
-                if (engineMetrics != null && etlMetrics != null && retrievalMetrics != null) {
-                    logger.debug("All of the components are working for " + info.getIdentity());
-                    applianceInfo.put("status", "Working");
-                } else {
-                    logger.debug("At least one of the components is not working for " + info.getIdentity());
-                    StringWriter buf = new StringWriter();
-                    buf.append("Stopped - ");
-                    if (engineMetrics == null) buf.append("engine ");
-                    if (etlMetrics == null) buf.append("ETL ");
-                    if (retrievalMetrics == null) buf.append("retrieval ");
-                    applianceInfo.put("status", buf.toString());
-                }
-
-                GetUrlContent.combineJSONObjects(applianceInfo, engineMetrics);
-                GetUrlContent.combineJSONObjects(applianceInfo, etlMetrics);
-                GetUrlContent.combineJSONObjects(applianceInfo, retrievalMetrics);
+                ApplianceMetrics.combineGenericMetrics(info, applianceInfo, engineMetrics, etlMetrics, logger);
 
                 long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
                 Duration vmInterval = Duration.between(

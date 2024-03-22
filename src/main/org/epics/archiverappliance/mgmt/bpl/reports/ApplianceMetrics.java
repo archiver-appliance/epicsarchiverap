@@ -42,15 +42,7 @@ public class ApplianceMetrics implements BPLAction {
         try (PrintWriter out = resp.getWriter()) {
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
             for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-                HashMap<String, String> applianceInfo = new HashMap<String, String>();
-                result.add(applianceInfo);
-                applianceInfo.put("instance", info.getIdentity());
-
-                int pvCount = 0;
-                for (@SuppressWarnings("unused") String pvName : configService.getPVsForThisAppliance()) {
-                    pvCount++;
-                }
-                applianceInfo.put("pvCount", Integer.toString(pvCount));
+                HashMap<String, String> applianceInfo = getBasicMetrics(configService, result, info);
 
                 logger.debug("Asking for appliance metrics from engine using " + info.getEngineURL()
                         + "/getApplianceMetrics");
@@ -62,27 +54,59 @@ public class ApplianceMetrics implements BPLAction {
                         GetUrlContent.getURLContentAsJSONObject(info.getEtlURL() + "/getApplianceMetrics");
                 logger.debug("Asking for appliance metrics from retrieval using " + info.getRetrievalURL()
                         + "/getApplianceMetrics");
-                JSONObject retrievalMetrics =
-                        GetUrlContent.getURLContentAsJSONObject(info.getRetrievalURL() + "/getApplianceMetrics");
-                if (engineMetrics != null && etlMetrics != null && retrievalMetrics != null) {
-                    logger.debug("All of the components are working for " + info.getIdentity());
-                    applianceInfo.put("status", "Working");
-                } else {
-                    logger.debug("At least one of the components is not working for " + info.getIdentity());
-                    StringWriter buf = new StringWriter();
-                    buf.append("Stopped - ");
-                    if (engineMetrics == null) buf.append("engine ");
-                    if (etlMetrics == null) buf.append("ETL ");
-                    if (retrievalMetrics == null) buf.append("retrieval ");
-                    applianceInfo.put("status", buf.toString());
-                }
-                GetUrlContent.combineJSONObjects(applianceInfo, engineMetrics);
-                GetUrlContent.combineJSONObjects(applianceInfo, etlMetrics);
-                GetUrlContent.combineJSONObjects(applianceInfo, retrievalMetrics);
-
-                applianceInfo.put("capacityUtilized", "N/A");
+                combineMetrics(info, applianceInfo, engineMetrics, etlMetrics, logger);
             }
             out.println(JSONValue.toJSONString(result));
         }
+    }
+
+    static HashMap<String, String> getBasicMetrics(
+            ConfigService configService, LinkedList<Map<String, String>> result, ApplianceInfo info) {
+        HashMap<String, String> applianceInfo = new HashMap<String, String>();
+        result.add(applianceInfo);
+        applianceInfo.put("instance", info.getIdentity());
+
+        int pvCount = 0;
+        for (@SuppressWarnings("unused") String pvName : configService.getPVsForThisAppliance()) {
+            pvCount++;
+        }
+        applianceInfo.put("pvCount", Integer.toString(pvCount));
+        return applianceInfo;
+    }
+
+    static void combineMetrics(
+            ApplianceInfo info,
+            HashMap<String, String> applianceInfo,
+            JSONObject engineMetrics,
+            JSONObject etlMetrics,
+            Logger logger) {
+        combineGenericMetrics(info, applianceInfo, engineMetrics, etlMetrics, logger);
+
+        applianceInfo.put("capacityUtilized", "N/A");
+    }
+
+    static void combineGenericMetrics(
+            ApplianceInfo info,
+            HashMap<String, String> applianceInfo,
+            JSONObject engineMetrics,
+            JSONObject etlMetrics,
+            Logger logger) {
+        JSONObject retrievalMetrics =
+                GetUrlContent.getURLContentAsJSONObject(info.getRetrievalURL() + "/getApplianceMetrics");
+        if (engineMetrics != null && etlMetrics != null && retrievalMetrics != null) {
+            logger.debug("All of the components are working for " + info.getIdentity());
+            applianceInfo.put("status", "Working");
+        } else {
+            logger.debug("At least one of the components is not working for " + info.getIdentity());
+            StringWriter buf = new StringWriter();
+            buf.append("Stopped - ");
+            if (engineMetrics == null) buf.append("engine ");
+            if (etlMetrics == null) buf.append("ETL ");
+            if (retrievalMetrics == null) buf.append("retrieval ");
+            applianceInfo.put("status", buf.toString());
+        }
+        GetUrlContent.combineJSONObjects(applianceInfo, engineMetrics);
+        GetUrlContent.combineJSONObjects(applianceInfo, etlMetrics);
+        GetUrlContent.combineJSONObjects(applianceInfo, retrievalMetrics);
     }
 }

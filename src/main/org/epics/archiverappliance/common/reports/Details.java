@@ -8,7 +8,7 @@ import java.util.Map;
 
 public interface Details {
 
-    private static Map<String, String> metricDetail(String source, String name, String value) {
+    static Map<String, String> metricDetail(String source, String name, String value) {
         Map<String, String> obj = new LinkedHashMap<String, String>();
         obj.put("name", name);
         obj.put("value", value);

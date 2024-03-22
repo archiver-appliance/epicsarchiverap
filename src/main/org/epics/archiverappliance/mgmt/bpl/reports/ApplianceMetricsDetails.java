@@ -10,6 +10,7 @@ package org.epics.archiverappliance.mgmt.bpl.reports;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.reports.Details;
 import org.epics.archiverappliance.config.ApplianceAggregateInfo;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
@@ -23,8 +24,8 @@ import org.json.simple.JSONValue;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -36,7 +37,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 public class ApplianceMetricsDetails implements BPLAction {
-    private static Logger logger = LogManager.getLogger(ApplianceMetricsDetails.class.getName());
+    private static final Logger logger = LogManager.getLogger(ApplianceMetricsDetails.class.getName());
 
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
@@ -44,8 +45,8 @@ public class ApplianceMetricsDetails implements BPLAction {
         String applianceIdentity = req.getParameter("appliance");
         logger.info("Getting the detailed metrics for the appliance " + applianceIdentity);
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-        String applianceDetailsURLSnippet =
-                "/getApplianceMetricsForAppliance?appliance=" + URLEncoder.encode(applianceIdentity, "UTF-8");
+        String applianceDetailsURLSnippet = "/getApplianceMetricsForAppliance?appliance="
+                + URLEncoder.encode(applianceIdentity, StandardCharsets.UTF_8);
         ApplianceInfo info = configService.getAppliance(applianceIdentity);
         try (PrintWriter out = resp.getWriter()) {
             DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
@@ -136,10 +137,6 @@ public class ApplianceMetricsDetails implements BPLAction {
     }
 
     private static void addDetailedStatus(LinkedList<Map<String, String>> statuses, String name, String value) {
-        Map<String, String> obj = new LinkedHashMap<String, String>();
-        obj.put("name", name);
-        obj.put("value", value);
-        obj.put("source", "mgmt");
-        statuses.add(obj);
+        statuses.add(Details.metricDetail("mgmt", name, value));
     }
 }
