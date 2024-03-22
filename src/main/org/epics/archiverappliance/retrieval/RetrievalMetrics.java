@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class RetrievalMetrics implements Details {
+    public static final String NUMBER_OF_RETRIEVAL_REQUESTS = "Number of Retrieval Requests";
+    public static final String LAST_RETRIEVAL_REQUEST = "Time of last Retrieval Request";
+    public static final String NUMBER_OF_UNIQUE_USERS = "Number of unique users";
     private long numberOfRequests = 0;
     private Instant lastRequest = null;
     private final Set<String> userIdentifiers = new HashSet<>();
@@ -47,11 +50,11 @@ public class RetrievalMetrics implements Details {
 
     public Map<String, String> getMetrics() {
         return Map.of(
-                "Number of Retrieval Requests",
+                NUMBER_OF_RETRIEVAL_REQUESTS,
                 String.valueOf(this.numberOfRequests),
-                "Time of last Retrieval Request",
+                LAST_RETRIEVAL_REQUEST,
                 TimeUtils.convertToHumanReadableString(lastRequest),
-                "Number of unique users",
+                NUMBER_OF_UNIQUE_USERS,
                 String.valueOf(userIdentifiers.size()));
     }
 
@@ -63,9 +66,9 @@ public class RetrievalMetrics implements Details {
     @Override
     public LinkedList<Map<String, String>> details(ConfigService configService) {
         LinkedList<Map<String, String>> result = new LinkedList<>();
-        result.add(metricDetail("Number of Retrieval Requests", String.valueOf(this.numberOfRequests)));
-        result.add(metricDetail("Time of last Retrieval Request", TimeUtils.convertToHumanReadableString(lastRequest)));
-        result.add(metricDetail("Number of unique users", String.valueOf(userIdentifiers.size())));
+        result.add(metricDetail(NUMBER_OF_RETRIEVAL_REQUESTS, String.valueOf(this.numberOfRequests)));
+        result.add(metricDetail(LAST_RETRIEVAL_REQUEST, TimeUtils.convertToHumanReadableString(lastRequest)));
+        result.add(metricDetail(NUMBER_OF_UNIQUE_USERS, String.valueOf(userIdentifiers.size())));
         return result;
     }
 }

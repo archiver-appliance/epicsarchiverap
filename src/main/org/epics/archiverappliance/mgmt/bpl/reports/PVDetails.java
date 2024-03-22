@@ -121,17 +121,15 @@ public class PVDetails implements BPLAction {
                 logger.warn("No PVTypeInfo for pv " + pvName);
             }
 
-            getStatusFromOtherWar(
-                    info.getEngineURL(), pvDetailsURLSnippet, "No status vars from engine using URL ", result);
+            getStatusFromOtherWar(info.getEngineURL(), pvDetailsURLSnippet, ConfigService.WAR_FILE.ENGINE, result);
 
             getStatusFromOtherWar(
-                    info.getRetrievalURL(), pvDetailsURLSnippet, "No status vars from retrieval using URL ", result);
+                    info.getRetrievalURL(), pvDetailsURLSnippet, ConfigService.WAR_FILE.RETRIEVAL, result);
 
             if (typeInfo.isPaused()) {
                 logger.debug("Skipping getting pv details from ETL for paused PV " + pvName);
             } else {
-                getStatusFromOtherWar(
-                        info.getEtlURL(), pvDetailsURLSnippet, "No status vars from ETL using URL ", result);
+                getStatusFromOtherWar(info.getEtlURL(), pvDetailsURLSnippet, ConfigService.WAR_FILE.ETL, result);
             }
 
             out.println(JSONValue.toJSONString(result));
@@ -174,12 +172,15 @@ public class PVDetails implements BPLAction {
     }
 
     private static void getStatusFromOtherWar(
-            String info, String pvDetailsURLSnippet, String x, LinkedList<Map<String, String>> result) {
-        JSONArray retrievalStatusVars = GetUrlContent.getURLContentAsJSONArray(info + pvDetailsURLSnippet);
-        if (retrievalStatusVars == null) {
-            logger.warn(x + info + pvDetailsURLSnippet);
+            String info,
+            String pvDetailsURLSnippet,
+            ConfigService.WAR_FILE war,
+            LinkedList<Map<String, String>> result) {
+        JSONArray pvDetails = GetUrlContent.getURLContentAsJSONArray(info + pvDetailsURLSnippet);
+        if (pvDetails == null) {
+            logger.warn("No status vars from " + war + " using URL " + info + pvDetailsURLSnippet);
         } else {
-            GetUrlContent.combineJSONArrays(result, retrievalStatusVars);
+            GetUrlContent.combineJSONArrays(result, pvDetails);
         }
     }
 
