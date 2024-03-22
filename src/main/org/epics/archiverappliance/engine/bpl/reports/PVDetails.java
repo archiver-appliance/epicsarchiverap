@@ -9,7 +9,6 @@ package org.epics.archiverappliance.engine.bpl.reports;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -17,42 +16,30 @@ import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext.CommandThreadChannel;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
-import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
-import org.json.simple.JSONValue;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * Details of a PV
  * @author mshankar
  *
  */
-public class PVDetails implements BPLAction {
+public class PVDetails implements org.epics.archiverappliance.common.reports.PVDetails {
     private static final Logger logger = LogManager.getLogger(PVDetails.class);
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
-            throws IOException {
-        String pvName = req.getParameter("pv");
-        if (pvName == null || pvName.isEmpty()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
+    public LinkedList<Map<String, String>> pvDetails(ConfigService configService, String pvName) throws Exception {
 
         try {
             logger.info("Getting the detailed status for PV " + pvName);
             PVTypeInfo typeInfoForPV = configService.getTypeInfoForPV(pvName);
             if (typeInfoForPV == null) {
                 logger.error("Unable to find typeinfo for PV " + pvName);
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
+                throw new IOException("Unable to find typeinfo for PV " + pvName);
             }
 
             if (typeInfoForPV.isPaused()) {
@@ -69,11 +56,7 @@ public class PVDetails implements BPLAction {
                                 immortalChanel.getChannel().getName());
                     }
                 }
-                resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-                try (PrintWriter out = resp.getWriter()) {
-                    out.print(JSONValue.toJSONString(statuses));
-                }
-                return;
+                return statuses;
             }
 
             ArchDBRTypes dbrType = typeInfoForPV.getDBRType();
@@ -101,15 +84,10 @@ public class PVDetails implements BPLAction {
                                 "" + channel.getSecondsElapsedSinceSearchRequest());
                     }
                 }
-
-                resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-                try (PrintWriter out = resp.getWriter()) {
-                    out.print(JSONValue.toJSONString(statuses));
-                }
+                return statuses;
             } else {
                 logger.error("No status for PV " + pvName + " in this engine.");
-                resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-                return;
+                throw new IOException("No status for PV " + pvName + " in this engine.");
             }
         } catch (Exception ex) {
             logger.error("Exception getting details for PV " + pvName, ex);

@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +39,7 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GenericPVMetricsReport<T extends Number> implements BPLAction {
     private static final Logger logger = LogManager.getLogger(GenericPVMetricsReport.class);
-    private Function<PVMetrics, T> getFn;
+    private final Function<PVMetrics, T> getFn;
     private final String metricName;
     private String applianceName;
 
@@ -55,13 +54,13 @@ public class GenericPVMetricsReport<T extends Number> implements BPLAction {
         String limit = req.getParameter("limit");
         logger.info(metricName + " report for " + (limit == null ? "default limit " : ("limit " + limit)));
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-        List<HashMap<String, String>> result = applyMetric(configService, limit);
+        List<Map<String, String>> result = applyMetric(configService, limit);
         try (PrintWriter out = resp.getWriter()) {
             out.println(JSONValue.toJSONString(result));
         }
     }
 
-    private List<HashMap<String, String>> applyMetric(ConfigService configService, String limitStr) {
+    private List<Map<String, String>> applyMetric(ConfigService configService, String limitStr) {
         this.applianceName = configService.getMyApplianceInfo().getIdentity();
         HashMap<String, T> pvs2Rate = new HashMap<String, T>();
         EngineContext engineContext = configService.getEngineContext();
@@ -73,28 +72,19 @@ public class GenericPVMetricsReport<T extends Number> implements BPLAction {
             limitNum = Integer.parseInt(limitStr);
         }
 
-        List<HashMap<String, String>> retVal = pvs2Rate.entrySet().stream()
-                .filter(
-                        new Predicate<Entry<String, T>>() { // Get rid of entries that have 0
-                            @Override
-                            public boolean test(Entry<String, T> t) {
-                                return t.getValue().doubleValue() > 0;
-                            }
-                        })
-                .sorted(Map.Entry.comparingByValue(Collections.reverseOrder()))
-                .limit(limitNum)
-                .map(new Function<Entry<String, T>, HashMap<String, String>>() {
-                    @Override
-                    public HashMap<String, String> apply(Entry<String, T> t) {
-                        HashMap<String, String> ret = new HashMap<String, String>();
-                        ret.put("pvName", t.getKey());
-                        ret.put("instance", GenericPVMetricsReport.this.applianceName);
-                        ret.put(metricName, t.getValue().toString());
-                        return ret;
-                    }
-                })
-                .collect(Collectors.toList());
+        // Get rid of entries that have 0
 
-        return retVal;
+        return pvs2Rate.entrySet().stream()
+                .filter(t -> t.getValue().doubleValue() > 0)
+                .sorted(Entry.comparingByValue(Collections.reverseOrder()))
+                .limit(limitNum)
+                .map(t -> Map.of(
+                        "pvName",
+                        t.getKey(),
+                        "instance",
+                        this.applianceName,
+                        metricName,
+                        t.getValue().toString()))
+                .collect(Collectors.toList());
     }
 }

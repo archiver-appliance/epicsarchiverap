@@ -9,18 +9,16 @@ package org.epics.archiverappliance.engine.epics;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.reports.Details;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PVContext;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
-import org.json.simple.JSONAware;
-import org.json.simple.JSONValue;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -32,7 +30,7 @@ import java.util.Set;
  * @author mshankar
  *
  */
-public class EngineMetrics implements JSONAware {
+public class EngineMetrics implements Details {
     private static final Logger logger = LogManager.getLogger(EngineMetrics.class);
     private int pvCount;
     private int connectedPVCount;
@@ -84,8 +82,7 @@ public class EngineMetrics implements JSONAware {
         this.disconnectedPVCount = disconnectedPVCount;
     }
 
-    @Override
-    public String toJSONString() {
+    public Map<String, String> toJSONString() {
         DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
         HashMap<String, String> engineMetrics = new HashMap<String, String>();
         engineMetrics.put("eventRate", twoSignificantDigits.format(eventRate));
@@ -101,52 +98,49 @@ public class EngineMetrics implements JSONAware {
         engineMetrics.put("formattedWriteThreadSeconds", twoSignificantDigits.format(secondsConsumedByWriter));
         engineMetrics.put("secondsConsumedByWriter", Double.toString(secondsConsumedByWriter));
 
-        return JSONValue.toJSONString(engineMetrics);
+        return engineMetrics;
     }
 
-    public String getDetails(EngineContext context) {
+    @Override
+    public LinkedList<Map<String, String>> details(ConfigService configService) {
+        EngineContext context = configService.getEngineContext();
         DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
         LinkedList<Map<String, String>> details = new LinkedList<Map<String, String>>();
-        addDetailedStatus(details, "Total PV count", Integer.toString(pvCount));
-        addDetailedStatus(details, "Disconnected PV count", Integer.toString(disconnectedPVCount));
-        addDetailedStatus(details, "Connected PV count", Integer.toString(connectedPVCount));
-        addDetailedStatus(details, "Paused PV count", Integer.toString(pausedPVCount));
-        addDetailedStatus(details, "Total channels", Integer.toString(totalEPICSChannels));
-        addDetailedStatus(
-                details,
-                "Approx pending jobs in engine queue",
-                Long.toString((context.getMainSchedulerPendingTasks())));
-        addDetailedStatus(details, "Event Rate (in events/sec)", twoSignificantDigits.format(eventRate));
-        addDetailedStatus(details, "Data Rate (in bytes/sec)", twoSignificantDigits.format(dataRate));
-        addDetailedStatus(
-                details,
+        details.add(this.metricDetail("Total PV count", Integer.toString(pvCount)));
+        details.add(this.metricDetail("Disconnected PV count", Integer.toString(disconnectedPVCount)));
+        details.add(this.metricDetail("Connected PV count", Integer.toString(connectedPVCount)));
+        details.add(this.metricDetail("Paused PV count", Integer.toString(pausedPVCount)));
+        details.add(this.metricDetail("Total channels", Integer.toString(totalEPICSChannels)));
+        details.add(this.metricDetail(
+                "Approx pending jobs in engine queue", Long.toString((context.getMainSchedulerPendingTasks()))));
+        details.add(this.metricDetail("Event Rate (in events/sec)", twoSignificantDigits.format(eventRate)));
+        details.add(this.metricDetail("Data Rate (in bytes/sec)", twoSignificantDigits.format(dataRate)));
+        details.add(this.metricDetail(
                 "Data Rate in (GB/day)",
-                twoSignificantDigits.format((dataRate * 60 * 60 * 24) / (1024 * 1024 * 1024)));
-        addDetailedStatus(
-                details,
+                twoSignificantDigits.format((dataRate * 60 * 60 * 24) / (1024 * 1024 * 1024))));
+        details.add(this.metricDetail(
                 "Data Rate in (GB/year)",
-                twoSignificantDigits.format((dataRate * 60 * 60 * 24 * 365) / (1024 * 1024 * 1024)));
-        addDetailedStatus(
-                details,
+                twoSignificantDigits.format((dataRate * 60 * 60 * 24 * 365) / (1024 * 1024 * 1024))));
+        details.add(this.metricDetail(
                 "Time consumed for writing samplebuffers to STS (in secs)",
-                twoSignificantDigits.format(secondsConsumedByWriter));
+                twoSignificantDigits.format(secondsConsumedByWriter)));
         if (secondsConsumedByWriter != 0) {
             double writesPerSec = eventRate * context.getWritePeriod() / secondsConsumedByWriter;
             double writeBytesPerSec = (dataRate * context.getWritePeriod() / secondsConsumedByWriter) / (1024 * 1024);
-            addDetailedStatus(
-                    details, "Benchmark - writing at (events/sec)", twoSignificantDigits.format(writesPerSec));
-            addDetailedStatus(
-                    details, "Benchmark - writing at (MB/sec)", twoSignificantDigits.format(writeBytesPerSec));
+            details.add(this.metricDetail(
+                    "Benchmark - writing at (events/sec)", twoSignificantDigits.format(writesPerSec)));
+            details.add(this.metricDetail(
+                    "Benchmark - writing at (MB/sec)", twoSignificantDigits.format(writeBytesPerSec)));
         }
-        addDetailedStatus(
-                details, "PVs pending computation of meta info", Integer.toString(MetaGet.getPendingMetaGetsSize()));
-        addDetailedStatus(
-                details, "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount()));
-        addDetailedStatus(details, "Total number of CAJ channels", Integer.toString(context.getCAJChannelCount()));
+        details.add(this.metricDetail(
+                "PVs pending computation of meta info", Integer.toString(MetaGet.getPendingMetaGetsSize())));
+        details.add(this.metricDetail(
+                "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount())));
+        details.add(this.metricDetail("Total number of CAJ channels", Integer.toString(context.getCAJChannelCount())));
 
         details.addAll(context.getCAJContextDetails());
 
-        return JSONValue.toJSONString(details);
+        return details;
     }
 
     private static void addDetailedStatus(LinkedList<Map<String, String>> details, String name, String value) {
@@ -169,10 +163,8 @@ public class EngineMetrics implements JSONAware {
 
         Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
 
-        Iterator<Entry<String, ArchiveChannel>> it =
-                engineContext.getChannelList().entrySet().iterator();
-        while (it.hasNext()) {
-            Entry<String, ArchiveChannel> tempEntry = it.next();
+        for (Entry<String, ArchiveChannel> tempEntry :
+                engineContext.getChannelList().entrySet()) {
             ArchiveChannel channel = tempEntry.getValue();
             String pvName = channel.getName();
             try {
@@ -241,5 +233,10 @@ public class EngineMetrics implements JSONAware {
      */
     public void setPausedPVCount(int pausedPVCount) {
         this.pausedPVCount = pausedPVCount;
+    }
+
+    @Override
+    public ConfigService.WAR_FILE source() {
+        return ConfigService.WAR_FILE.ENGINE;
     }
 }
