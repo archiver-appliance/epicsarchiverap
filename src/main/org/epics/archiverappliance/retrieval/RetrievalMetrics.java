@@ -1,15 +1,16 @@
 package org.epics.archiverappliance.retrieval;
 
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.reports.Details;
+import org.epics.archiverappliance.config.ConfigService;
 
 import java.time.Instant;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
-public class RetrievalMetrics {
+public class RetrievalMetrics implements Details {
     private long numberOfRequests = 0;
     private Instant lastRequest = null;
     private final Set<String> userIdentifiers = new HashSet<>();
@@ -39,13 +40,9 @@ public class RetrievalMetrics {
         return this;
     }
 
-    public LinkedList<Map<String, String>> getDetails() {
-        LinkedList<Map<String, String>> result = new LinkedList<>();
-        addDetailedStatus(result, "Number of Retrieval Requests", String.valueOf(this.numberOfRequests));
-        addDetailedStatus(
-                result, "Time of last Retrieval Request", TimeUtils.convertToHumanReadableString(lastRequest));
-        addDetailedStatus(result, "Number of unique users", String.valueOf(userIdentifiers.size()));
-        return result;
+    public static RetrievalMetrics calculateSummedMetrics(ConfigService configService) {
+        var allMetrics = configService.getRetrievalRuntimeState().getRetrievalMetrics();
+        return allMetrics.values().stream().reduce(new RetrievalMetrics(), RetrievalMetrics::sumMetrics);
     }
 
     public Map<String, String> getMetrics() {
@@ -58,11 +55,17 @@ public class RetrievalMetrics {
                 String.valueOf(userIdentifiers.size()));
     }
 
-    private static void addDetailedStatus(LinkedList<Map<String, String>> statuses, String name, String value) {
-        Map<String, String> obj = new LinkedHashMap<String, String>();
-        obj.put("name", name);
-        obj.put("value", value);
-        obj.put("source", "retrieval");
-        statuses.add(obj);
+    @Override
+    public ConfigService.WAR_FILE source() {
+        return ConfigService.WAR_FILE.RETRIEVAL;
+    }
+
+    @Override
+    public LinkedList<Map<String, String>> details(ConfigService configService) {
+        LinkedList<Map<String, String>> result = new LinkedList<>();
+        result.add(metricDetail("Number of Retrieval Requests", String.valueOf(this.numberOfRequests)));
+        result.add(metricDetail("Time of last Retrieval Request", TimeUtils.convertToHumanReadableString(lastRequest)));
+        result.add(metricDetail("Number of unique users", String.valueOf(userIdentifiers.size())));
+        return result;
     }
 }
