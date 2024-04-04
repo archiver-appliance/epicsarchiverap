@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
@@ -68,10 +67,6 @@ import org.python.core.PyList;
 import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,13 +86,16 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import static org.epics.archiverappliance.retrieval.RetrievalError.check;
 import static org.epics.archiverappliance.retrieval.RetrievalError.logAndRespond;
@@ -141,7 +139,9 @@ public class DataRetrievalServlet extends HttpServlet {
             os.write(LineEscaper.NEWLINE_CHAR);
 
             for (int i = 0; i < 10; i++) {
-                ByteArray val = new SimulationEvent(0, currYear, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.1 * i)).getRawForm();
+                ByteArray val = new SimulationEvent(
+                                0, currYear, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.1 * i))
+                        .getRawForm();
                 os.write(val.data, val.off, val.len);
                 os.write(LineEscaper.NEWLINE_CHAR);
             }
@@ -163,17 +163,31 @@ public class DataRetrievalServlet extends HttpServlet {
      * @param postProcessor post processor
      * @return result
      */
-    private static RetrievalExecutorResult determineExecutorForPostProcessing(String pvName, PVTypeInfo typeInfo, LinkedList<TimeSpan> requestTimes, HttpServletRequest req, PostProcessor postProcessor) {
-        long memoryConsumption = postProcessor.estimateMemoryConsumption(pvName, typeInfo, requestTimes.getFirst().getStartTime(), requestTimes.getLast().getEndTime(), req);
+    private static RetrievalExecutorResult determineExecutorForPostProcessing(
+            String pvName,
+            PVTypeInfo typeInfo,
+            LinkedList<TimeSpan> requestTimes,
+            HttpServletRequest req,
+            PostProcessor postProcessor) {
+        long memoryConsumption = postProcessor.estimateMemoryConsumption(
+                pvName,
+                typeInfo,
+                requestTimes.getFirst().getStartTime(),
+                requestTimes.getLast().getEndTime(),
+                req);
         double memoryConsumptionInMB = (double) memoryConsumption / (1024 * 1024);
         DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
-        logger.debug("Memory consumption estimate from postprocessor for pv " + pvName + " is " + memoryConsumption + "(bytes) ~= " + twoSignificantDigits.format(memoryConsumptionInMB) + "(MB)");
+        logger.debug("Memory consumption estimate from postprocessor for pv " + pvName + " is " + memoryConsumption
+                + "(bytes) ~= " + twoSignificantDigits.format(memoryConsumptionInMB) + "(MB)");
 
         // For now, we only use the current thread to execute in serial.
-        // Once we get the unit tests for the post processors in a more rigorous shape, we can start using the ForkJoinPool.
-        // There are some complexities in using the ForkJoinPool - in this case, we need to convert to using synchronized versions of the SummaryStatistics and DescriptiveStatistics
+        // Once we get the unit tests for the post processors in a more rigorous shape, we can start using the
+        // ForkJoinPool.
+        // There are some complexities in using the ForkJoinPool - in this case, we need to convert to using
+        // synchronized versions of the SummaryStatistics and DescriptiveStatistics
         // We also still have the issue where we can add a sample twice because of the non-transactional nature of ETL.
-        // However, there is a lot of work done by the PostProcessors in estimateMemoryConsumption so leave this call in place.
+        // However, there is a lot of work done by the PostProcessors in estimateMemoryConsumption so leave this call in
+        // place.
         return new RetrievalExecutorResult(new CurrentThreadExecutorService(), requestTimes);
     }
 
@@ -189,15 +203,21 @@ public class DataRetrievalServlet extends HttpServlet {
             }
         }
         return res;
-
     }
 
-    private static void consolidateEventStream(HttpServletResponse resp, String pvName, PostProcessor postProcessor, MergeDedupConsumer mergeDedupCountingConsumer) throws Exception {
+    private static void consolidateEventStream(
+            HttpServletResponse resp,
+            String pvName,
+            PostProcessor postProcessor,
+            MergeDedupConsumer mergeDedupCountingConsumer)
+            throws Exception {
         if (postProcessor instanceof PostProcessorWithConsolidatedEventStream) {
-            try (EventStream eventStream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream()) {
+            try (EventStream eventStream =
+                    ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream()) {
                 EventStreamDesc sourceDesc = eventStream.getDescription();
                 if (sourceDesc == null) {
-                    logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor " + postProcessor.getExtension());
+                    logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor "
+                            + postProcessor.getExtension());
                 } else {
                     mergeDedupCountingConsumer.consumeEventStream(eventStream);
                     resp.flushBuffer();
@@ -206,9 +226,15 @@ public class DataRetrievalServlet extends HttpServlet {
         }
     }
 
-    private static void consolidateEventStream(HttpServletResponse resp, PostProcessor postProcessor, MergeDedupConsumer mergeDedupCountingConsumer, EventStreamDesc sourceDesc, EventStream eventStream) {
+    private static void consolidateEventStream(
+            HttpServletResponse resp,
+            PostProcessor postProcessor,
+            MergeDedupConsumer mergeDedupCountingConsumer,
+            EventStreamDesc sourceDesc,
+            EventStream eventStream) {
         try {
-            // If the postProcessor does not have a consolidated event stream, we send each eventstream across as we encounter it.
+            // If the postProcessor does not have a consolidated event stream, we send each eventstream across as we
+            // encounter it.
             // Else we send the consolidatedEventStream down below.
             if (!(postProcessor instanceof PostProcessorWithConsolidatedEventStream)) {
                 mergeDedupCountingConsumer.consumeEventStream(eventStream);
@@ -219,7 +245,8 @@ public class DataRetrievalServlet extends HttpServlet {
                 // We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
                 logger.debug("Exception when consuming and flushing data from " + sourceDesc.getSource(), ex);
             } else {
-                logger.error("Exception when consuming and flushing data from " + sourceDesc.getSource() + "-->" + ex, ex);
+                logger.error(
+                        "Exception when consuming and flushing data from " + sourceDesc.getSource() + "-->" + ex, ex);
             }
         }
     }
@@ -256,7 +283,7 @@ public class DataRetrievalServlet extends HttpServlet {
     private static boolean useReduced(HttpServletRequest req) {
         boolean useReduced = false;
         String useReducedStr = req.getParameter("usereduced");
-        if (useReducedStr != null && !useReducedStr.equals("")) {
+        if (!StringUtils.isEmpty(useReducedStr)) {
             try {
                 useReduced = Boolean.parseBoolean(useReducedStr);
             } catch (Exception ex) {
@@ -265,7 +292,6 @@ public class DataRetrievalServlet extends HttpServlet {
         }
         return useReduced;
     }
-
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -322,11 +348,12 @@ public class DataRetrievalServlet extends HttpServlet {
         PoorMansProfiler pmansProfiler = new PoorMansProfiler();
         String pvName = req.getParameter("pv");
 
-        if (check(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE,
-                "Cannot process data retrieval requests for PV " + pvName + " until the appliance has completely started up.",
+        if (check(
+                configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE,
+                "Cannot process data retrieval requests for PV " + pvName
+                        + " until the appliance has completely started up.",
                 resp,
-                HttpServletResponse.SC_SERVICE_UNAVAILABLE))
-            return;
+                HttpServletResponse.SC_SERVICE_UNAVAILABLE)) return;
 
         boolean useReduced = useReduced(req);
         String extension = req.getPathInfo().split("\\.")[1];
@@ -336,14 +363,13 @@ public class DataRetrievalServlet extends HttpServlet {
 
         boolean fetchLatestMetadata = isFetchLatestMetadata(req);
 
-        // For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want to have PVTypeInfo's in the system.
+        // For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want
+        // to have PVTypeInfo's in the system.
         // So, we support a template PV that lays out the data sources.
         // During retrieval, you can pass in the PV as a template and we'll clone this and make a temporary copy.
         String retiredPVTemplate = req.getParameter("retiredPVTemplate");
 
-        if (check(pvName == null, "PV name is null.", resp, HttpServletResponse.SC_BAD_REQUEST))
-            return;
-
+        if (check(pvName == null, "PV name is null.", resp, HttpServletResponse.SC_BAD_REQUEST)) return;
 
         logger.debug("pvName is {}", pvName);
         assert pvName != null;
@@ -353,7 +379,7 @@ public class DataRetrievalServlet extends HttpServlet {
             return;
         }
 
-        RequestTimes requestTimesOb = getRequestTimes(req, resp, pvName);
+        RequestTimes requestTimesOb = getRequestTimes(req, resp);
 
         logger.debug("requestTimesOb is {}", requestTimesOb);
         if (requestTimesOb == null) return;
@@ -378,16 +404,17 @@ public class DataRetrievalServlet extends HttpServlet {
                     postProcessorUserArg.append("_").append(components[i]);
                 }
             }
-            logger.debug("After parsing the function call syntax pvName is " + pvName + " and postProcessorUserArg is " + postProcessorUserArg);
+            logger.debug("After parsing the function call syntax pvName is " + pvName + " and postProcessorUserArg is "
+                    + postProcessorUserArg);
         }
-
 
         logger.debug("postProcessorUserArg times is {}", postProcessorUserArg);
         PostProcessor postProcessor = PostProcessors.findPostProcessor(postProcessorUserArg.toString());
 
         String pvNameFromRequest = pvName;
 
-        pvName = removeVal(pvName);
+        pvName = PVNames.stripPrefixFromName(pvName);
+        pvName = PVNames.normalizePVName(pvName);
 
         PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
         pmansProfiler.mark("After PVTypeInfo");
@@ -416,8 +443,9 @@ public class DataRetrievalServlet extends HttpServlet {
         pmansProfiler.mark("After Appliance Info");
 
         String fieldName = PVNames.getFieldName(pvName);
-        if (fieldName != null && !fieldName.equals("") && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
-            logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName() + " as that determines the name of the stream. Also using ExtraFieldsPostProcessor");
+        if (!StringUtils.isEmpty(fieldName) && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
+            logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName()
+                    + " as that determines the name of the stream. Also using ExtraFieldsPostProcessor");
             pvName = typeInfo.getPvName();
             postProcessor = new ExtraFieldsPostProcessor(fieldName);
         }
@@ -433,29 +461,43 @@ public class DataRetrievalServlet extends HttpServlet {
         }
 
         try (BasicContext retrievalContext = new BasicContext(typeInfo.getDBRType(), pvNameFromRequest);
-             MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension);
-             RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(pvName, typeInfo, requestTimesOb.requestTimes(), req, postProcessor)
-        ) {
+                MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension);
+                RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(
+                        pvName, typeInfo, requestTimesOb.requestTimes(), req, postProcessor)) {
             HashMap<String, String> engineMetadata = null;
             if (fetchLatestMetadata && typeInfo.getSamplingMethod() != SamplingMethod.DONT_ARCHIVE) {
-                // Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and the like by checking the sampling method.
+                // Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and the
+                // like by checking the sampling method.
                 engineMetadata = fetchLatestMedataFromEngine(pvName, applianceForPV);
             }
 
-
-            LinkedList<Future<RetrievalResult>> retrievalResultFutures = resolveAllDataSources(pvName, typeInfo, postProcessor, applianceForPV, retrievalContext, executorResult, req);
+            LinkedList<Future<RetrievalResult>> retrievalResultFutures = resolveAllDataSources(
+                    pvName, typeInfo, postProcessor, applianceForPV, retrievalContext, executorResult, req);
             pmansProfiler.mark("After data source resolution");
-
 
             long s1 = System.currentTimeMillis();
             String currentlyProcessingPV = null;
 
-            List<Future<EventStream>> eventStreamFutures = getEventStreamFuturesFromRetrievalResults(executorResult, retrievalResultFutures);
+            List<Future<EventStream>> eventStreamFutures =
+                    getEventStreamFuturesFromRetrievalResults(executorResult, retrievalResultFutures);
 
-            logger.debug("Done with the RetrievalResult's; moving onto the individual event stream from each source for " + pvName);
+            logger.debug(
+                    "Done with the RetrievalResult's; moving onto the individual event stream from each source for "
+                            + pvName);
             pmansProfiler.mark("After retrieval results");
 
-            evaluateEventStreamFutures(resp, pmansProfiler, pvName, requestTimesOb, postProcessor, typeInfo, retrievalContext, mergeDedupCountingConsumer, engineMetadata, currentlyProcessingPV, eventStreamFutures);
+            evaluateEventStreamFutures(
+                    resp,
+                    pmansProfiler,
+                    pvName,
+                    requestTimesOb,
+                    postProcessor,
+                    typeInfo,
+                    retrievalContext,
+                    mergeDedupCountingConsumer,
+                    engineMetadata,
+                    currentlyProcessingPV,
+                    eventStreamFutures);
 
             consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer);
 
@@ -471,7 +513,8 @@ public class DataRetrievalServlet extends HttpServlet {
             pmansProfiler.mark("After writing all eventstreams to response");
 
             long s2 = System.currentTimeMillis();
-            logger.info("For the complete request, found a total of " + mergeDedupCountingConsumer.totalEventsForAllPVs + " in " + (s2 - s1) + "(ms)"
+            logger.info("For the complete request, found a total of " + mergeDedupCountingConsumer.totalEventsForAllPVs
+                    + " in " + (s2 - s1) + "(ms)"
                     + " skipping " + mergeDedupCountingConsumer.skippedEventsForAllPVs + " events"
                     + " deduping involved " + mergeDedupCountingConsumer.comparedEventsForAllPVs + " compares.");
         } catch (Exception ex) {
@@ -481,11 +524,23 @@ public class DataRetrievalServlet extends HttpServlet {
 
         // Till we determine all the if conditions where we log this, we log sparingly..
         if (pmansProfiler.totalTimeMS() > 5000) {
-            logger.error("Retrieval time for " + pvName + " from " + requestTimesOb.start + " to " + requestTimesOb.end + pmansProfiler);
+            logger.error("Retrieval time for " + pvName + " from " + requestTimesOb.start + " to " + requestTimesOb.end
+                    + pmansProfiler);
         }
     }
 
-    private void evaluateEventStreamFutures(HttpServletResponse resp, PoorMansProfiler pmansProfiler, String pvName, RequestTimes requestTimesOb, PostProcessor postProcessor, PVTypeInfo typeInfo, BasicContext retrievalContext, MergeDedupConsumer mergeDedupCountingConsumer, HashMap<String, String> engineMetadata, String currentlyProcessingPV, List<Future<EventStream>> eventStreamFutures) {
+    private void evaluateEventStreamFutures(
+            HttpServletResponse resp,
+            PoorMansProfiler pmansProfiler,
+            String pvName,
+            RequestTimes requestTimesOb,
+            PostProcessor postProcessor,
+            PVTypeInfo typeInfo,
+            BasicContext retrievalContext,
+            MergeDedupConsumer mergeDedupCountingConsumer,
+            HashMap<String, String> engineMetadata,
+            String currentlyProcessingPV,
+            List<Future<EventStream>> eventStreamFutures) {
         for (Future<EventStream> future : eventStreamFutures) {
             EventStreamDesc sourceDesc = null;
             try (EventStream eventStream = future.get()) {
@@ -496,31 +551,49 @@ public class DataRetrievalServlet extends HttpServlet {
                     continue;
                 }
 
-                logger.debug("Processing event stream for pv " + pvName + " from source " + ((eventStream.getDescription() != null) ? eventStream.getDescription().getSource() : " unknown"));
+                logger.debug("Processing event stream for pv " + pvName + " from source "
+                        + ((eventStream.getDescription() != null)
+                                ? eventStream.getDescription().getSource()
+                                : " unknown"));
 
-                if (mergeTypeInfo(typeInfo, engineMetadata, sourceDesc))
-                    continue;
+                if (mergeTypeInfo(typeInfo, engineMetadata, sourceDesc)) continue;
 
                 if (currentlyProcessingPV == null || !currentlyProcessingPV.equals(pvName)) {
-                    logger.debug("Switching to new PV " + pvName + " In some mime responses we insert special headers at the beginning of the response. Calling the hook for that");
+                    logger.debug(
+                            "Switching to new PV " + pvName
+                                    + " In some mime responses we insert special headers at the beginning of the response. Calling the hook for that");
                     currentlyProcessingPV = pvName;
-                    mergeDedupCountingConsumer.processingPV(retrievalContext, currentlyProcessingPV, requestTimesOb.start(), requestTimesOb.end(), (eventStream != null) ? sourceDesc : null);
+                    mergeDedupCountingConsumer.processingPV(
+                            retrievalContext,
+                            currentlyProcessingPV,
+                            requestTimesOb.start(),
+                            requestTimesOb.end(),
+                            (eventStream != null) ? sourceDesc : null);
                 }
 
                 consolidateEventStream(resp, postProcessor, mergeDedupCountingConsumer, sourceDesc, eventStream);
-                pmansProfiler.mark("After event stream " + eventStream.getDescription().getSource());
+                pmansProfiler.mark(
+                        "After event stream " + eventStream.getDescription().getSource());
             } catch (Exception ex) {
                 if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                     // We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
-                    logger.debug("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A"), ex);
+                    logger.debug(
+                            "Exception when consuming and flushing data from "
+                                    + (sourceDesc != null ? sourceDesc.getSource() : "N/A"),
+                            ex);
                 } else {
-                    logger.error("Exception when consuming and flushing data from " + (sourceDesc != null ? sourceDesc.getSource() : "N/A") + "-->" + ex, ex);
+                    logger.error(
+                            "Exception when consuming and flushing data from "
+                                    + (sourceDesc != null ? sourceDesc.getSource() : "N/A") + "-->" + ex,
+                            ex);
                 }
             }
         }
     }
 
-    private boolean mergeTypeInfo(PVTypeInfo typeInfo, HashMap<String, String> engineMetadata, EventStreamDesc sourceDesc) throws IOException {
+    private boolean mergeTypeInfo(
+            PVTypeInfo typeInfo, HashMap<String, String> engineMetadata, EventStreamDesc sourceDesc)
+            throws IOException {
         try {
             mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
         } catch (MismatchedDBRTypeException mex) {
@@ -532,14 +605,18 @@ public class DataRetrievalServlet extends HttpServlet {
 
     private PostProcessor reducePostprocessor(boolean useReduced, PostProcessor postProcessor) {
         if (postProcessor == null && useReduced) {
-            String defaultPPClassName = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.retrieval.DefaultUseReducedPostProcessor", FirstSamplePP.class.getName());
+            String defaultPPClassName = configService
+                    .getInstallationProperties()
+                    .getProperty(
+                            "org.epics.archiverappliance.retrieval.DefaultUseReducedPostProcessor",
+                            FirstSamplePP.class.getName());
             logger.debug("Using the default usereduced preprocessor " + defaultPPClassName);
             try {
-                postProcessor = (PostProcessor) Class.forName(defaultPPClassName).getConstructor().newInstance();
+                postProcessor = (PostProcessor)
+                        Class.forName(defaultPPClassName).getConstructor().newInstance();
             } catch (Exception ex) {
                 logger.error("Exception constructing new instance of post processor " + defaultPPClassName, ex);
             }
-
         }
 
         if (postProcessor == null) {
@@ -549,7 +626,14 @@ public class DataRetrievalServlet extends HttpServlet {
         return postProcessor;
     }
 
-    private PVTypeInfo getPvTypeInfo(HttpServletRequest req, HttpServletResponse resp, String pvName, String retiredPVTemplate, RequestTimes requestTimesOb, PVTypeInfo typeInfo) throws IOException {
+    private PVTypeInfo getPvTypeInfo(
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            String pvName,
+            String retiredPVTemplate,
+            RequestTimes requestTimesOb,
+            PVTypeInfo typeInfo)
+            throws IOException {
         typeInfo = getPvTypeInfo(req, pvName, requestTimesOb, typeInfo);
 
         if (typeInfo == null && (resp.isCommitted())) {
@@ -568,7 +652,8 @@ public class DataRetrievalServlet extends HttpServlet {
                 if (templateTypeInfo != null) {
                     typeInfo = new PVTypeInfo(pvName, templateTypeInfo);
                     typeInfo.setPaused(true);
-                    typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+                    typeInfo.setApplianceIdentity(
+                            configService.getMyApplianceInfo().getIdentity());
                     // Somehow tell the code downstream that this is a fake typeInfo.
                     typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
                     logger.debug("Using a template PV for {}. Need to determine the actual DBR type.", pvName);
@@ -588,7 +673,9 @@ public class DataRetrievalServlet extends HttpServlet {
         return typeInfo;
     }
 
-    private PVTypeInfo getPvTypeInfo(HttpServletRequest req, String pvName, RequestTimes requestTimesOb, PVTypeInfo typeInfo) throws IOException {
+    private PVTypeInfo getPvTypeInfo(
+            HttpServletRequest req, String pvName, RequestTimes requestTimesOb, PVTypeInfo typeInfo)
+            throws IOException {
         if (typeInfo == null && RetrievalState.includeExternalServers(req)) {
             logger.debug("Checking to see if pv {} is served by a external Archiver Server", pvName);
             typeInfo = checkIfPVisServedByExternalServer(pvName, requestTimesOb.start(), requestTimesOb.end());
@@ -596,7 +683,7 @@ public class DataRetrievalServlet extends HttpServlet {
         return typeInfo;
     }
 
-    private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp, String pvName) throws IOException {
+    private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
         Instant end;
         try {
@@ -615,20 +702,25 @@ public class DataRetrievalServlet extends HttpServlet {
         }
 
         if (end.isBefore(start)) {
-            logAndRespond("For request, end " + end + " is before start " + start + " for pv " + pvName, null, resp, HttpServletResponse.SC_BAD_REQUEST);
+            logAndRespond(
+                    "For request, end " + end + " is before start " + start,
+                    null,
+                    resp,
+                    HttpServletResponse.SC_BAD_REQUEST);
             return null;
         }
 
-        return getRequestTimes(req, resp, pvName, end, start);
+        return getRequestTimes(req, resp, end, start);
     }
 
-    private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp, String pvName, Instant end, Instant start) throws IOException {
+    private RequestTimes getRequestTimes(HttpServletRequest req, HttpServletResponse resp, Instant end, Instant start)
+            throws IOException {
         LinkedList<TimeSpan> requestTimes = new LinkedList<>();
 
         // We can specify a list of time stamp pairs using the optional timeranges parameter
         String timeRangesStr = req.getParameter("timeranges");
         if (timeRangesStr != null) {
-            boolean continueWithRequest = parseTimeRanges(resp, pvName, requestTimes, timeRangesStr);
+            boolean continueWithRequest = parseTimeRanges(resp, requestTimes, timeRangesStr);
             if (!continueWithRequest) {
                 // Cannot parse the time ranges properly; we so abort the request.
                 return null;
@@ -644,7 +736,6 @@ public class DataRetrievalServlet extends HttpServlet {
         return new RequestTimes(end, start, requestTimes);
     }
 
-
     private void doGetMultiPV(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 
         PoorMansProfiler pmansProfiler = new PoorMansProfiler();
@@ -659,9 +750,12 @@ public class DataRetrievalServlet extends HttpServlet {
         }
 
         // Ensuring that the AA has finished starting up before requests are accepted.
-        if (check(configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE, "Cannot process data retrieval requests for specified PVs (" + StringUtils.join(pvNames, ", ")
-                + ") until the appliance has completely started up.", resp, HttpServletResponse.SC_SERVICE_UNAVAILABLE))
-            return;
+        if (check(
+                configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE,
+                "Cannot process data retrieval requests for specified PVs (" + StringUtils.join(pvNames, ", ")
+                        + ") until the appliance has completely started up.",
+                resp,
+                HttpServletResponse.SC_SERVICE_UNAVAILABLE)) return;
 
         // Getting various fields from arguments
         boolean useReduced = useReduced(req);
@@ -670,7 +764,7 @@ public class DataRetrievalServlet extends HttpServlet {
         String extension = req.getPathInfo().split("\\.")[1];
         logger.info("Mime is {}", extension);
 
-        if (!extension.equals("json") && !extension.equals("raw") && !extension.equals("jplot") && !extension.equals("qw")) {
+        if (!StringUtils.equalsAny(extension, "json", "raw", "jplot", "qw")) {
             String msg = "Mime type " + extension + " is not supported. Please use \"json\", \"jplot\" or \"raw\".";
             logAndRespond(msg, null, resp, HttpServletResponse.SC_BAD_REQUEST);
             return;
@@ -680,7 +774,8 @@ public class DataRetrievalServlet extends HttpServlet {
 
         boolean fetchLatestMetadata = isFetchLatestMetadata(req);
 
-        // For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want to have PVTypeInfo's in the system.
+        // For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want
+        // to have PVTypeInfo's in the system.
         // So, we support a template PV that lays out the data sources.
         // During retrieval, you can pass in the PV as a template and we'll clone this and make a temporary copy.
         String retiredPVTemplate = req.getParameter("retiredPVTemplate");
@@ -704,7 +799,7 @@ public class DataRetrievalServlet extends HttpServlet {
             return;
         }
 
-        RequestTimes requestTimesOb = getRequestTimes(req, resp, pvNames.toString());
+        RequestTimes requestTimesOb = getRequestTimes(req, resp);
         assert (!Objects.requireNonNull(requestTimesOb).requestTimes.isEmpty());
 
         // Get a post processor for each PV specified in pvNames
@@ -716,8 +811,11 @@ public class DataRetrievalServlet extends HttpServlet {
             postProcessorUserArgs.add(postProcessorUserArg);
 
             if (pvNames.get(i).contains("(")) {
-                if (check(!pvNames.get(i).contains(")"), "Unbalanced paren " + pvNames.get(i), resp, HttpServletResponse.SC_BAD_REQUEST))
-                    return;
+                if (check(
+                        !pvNames.get(i).contains(")"),
+                        "Unbalanced paren " + pvNames.get(i),
+                        resp,
+                        HttpServletResponse.SC_BAD_REQUEST)) return;
                 String[] components = pvNames.get(i).split("[(,)]");
                 postProcessorUserArg = components[0];
                 postProcessorUserArgs.set(i, postProcessorUserArg);
@@ -727,7 +825,8 @@ public class DataRetrievalServlet extends HttpServlet {
                         postProcessorUserArgs.set(i, postProcessorUserArgs.get(i) + "_" + components[j]);
                     }
                 }
-                logger.info("After parsing the function call syntax pvName is " + pvNames.get(i) + " and postProcessorUserArg is " + postProcessorUserArg);
+                logger.info("After parsing the function call syntax pvName is " + pvNames.get(i)
+                        + " and postProcessorUserArg is " + postProcessorUserArg);
             }
             postProcessors.add(PostProcessors.findPostProcessor(postProcessorUserArg));
         }
@@ -752,14 +851,18 @@ public class DataRetrievalServlet extends HttpServlet {
         for (int i = 0; i < pvNames.size(); i++)
             if (typeInfos.get(i) == null && RetrievalState.includeExternalServers(req)) {
                 logger.debug("Checking to see if pv " + pvNames.get(i) + " is served by a external Archiver Server");
-                typeInfos.set(i, checkIfPVisServedByExternalServer(pvNames.get(i), requestTimesOb.start, requestTimesOb.end));
+                typeInfos.set(
+                        i, checkIfPVisServedByExternalServer(pvNames.get(i), requestTimesOb.start, requestTimesOb.end));
             }
 
         for (int i = 0; i < pvNames.size(); i++) {
             typeInfos.set(i, getPvTypeInfo(pvNames.get(i), retiredPVTemplate, typeInfos.get(i)));
 
-            if (check(typeInfos.get(i) == null, "Unable to find typeinfo for pv " + pvNames.get(i), resp, HttpServletResponse.SC_NOT_FOUND))
-                return;
+            if (check(
+                    typeInfos.get(i) == null,
+                    "Unable to find typeinfo for pv " + pvNames.get(i),
+                    resp,
+                    HttpServletResponse.SC_NOT_FOUND)) return;
             postProcessors.set(i, reducePostprocessor(useReduced, postProcessors.get(i)));
         }
 
@@ -770,7 +873,8 @@ public class DataRetrievalServlet extends HttpServlet {
             if (applianceForPVs.get(i) == null) {
                 // TypeInfo cannot be null here...
                 assert (typeInfos.get(i) != null);
-                applianceForPVs.set(i, configService.getAppliance(typeInfos.get(i).getApplianceIdentity()));
+                applianceForPVs.set(
+                        i, configService.getAppliance(typeInfos.get(i).getApplianceIdentity()));
             }
         }
 
@@ -778,15 +882,16 @@ public class DataRetrievalServlet extends HttpServlet {
          * Retrieving the external appliances if the current appliance has not got the PV assigned to it, and
          * storing the associated information of the PVs in that appliance.
          */
-        Map<String, ArrayList<PVInfoForClusterRetrieval>> applianceToPVs = new HashMap<String, ArrayList<PVInfoForClusterRetrieval>>();
+        Map<String, ArrayList<PVInfoForClusterRetrieval>> applianceToPVs =
+                new HashMap<String, ArrayList<PVInfoForClusterRetrieval>>();
         for (int i = 0; i < pvNames.size(); i++) {
             if (!applianceForPVs.get(i).equals(configService.getMyApplianceInfo())) {
 
                 ArrayList<PVInfoForClusterRetrieval> appliancePVs =
                         applianceToPVs.get(applianceForPVs.get(i).getMgmtURL());
                 appliancePVs = (appliancePVs == null) ? new ArrayList<>() : appliancePVs;
-                PVInfoForClusterRetrieval pvInfoForRetrieval = new PVInfoForClusterRetrieval(pvNames.get(i), typeInfos.get(i),
-                        postProcessors.get(i), applianceForPVs.get(i));
+                PVInfoForClusterRetrieval pvInfoForRetrieval = new PVInfoForClusterRetrieval(
+                        pvNames.get(i), typeInfos.get(i), postProcessors.get(i), applianceForPVs.get(i));
                 appliancePVs.add(pvInfoForRetrieval);
                 applianceToPVs.put(applianceForPVs.get(i).getRetrievalURL(), appliancePVs);
             }
@@ -802,12 +907,12 @@ public class DataRetrievalServlet extends HttpServlet {
                 // Get array list of PVs for appliance
                 pvInfos = applianceToPVs.get(retrievalURL);
                 try {
-                    List<List<Future<EventStream>>> resultFromForeignAppliances
-                            = retrieveEventStreamFromForeignAppliance(req, resp, pvInfos, requestTimesOb.requestTimes
-                    );
+                    List<List<Future<EventStream>>> resultFromForeignAppliances =
+                            retrieveEventStreamFromForeignAppliance(req, resp, pvInfos, requestTimesOb.requestTimes);
                     listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
                 } catch (Exception ex) {
-                    logger.error("Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
+                    logger.error(
+                            "Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
                     return;
                 }
             }
@@ -823,7 +928,7 @@ public class DataRetrievalServlet extends HttpServlet {
 
             // If a field is specified in a PV name, it will create a post processor for that
             String fieldName = PVNames.getFieldName(pvName);
-            if (fieldName != null && !fieldName.equals("") && !pvName.equals(typeInfo.getPvName())) {
+            if (!StringUtils.isEmpty(fieldName) && !pvName.equals(typeInfo.getPvName())) {
                 logger.debug("We reset the pvName " + pvName + " to one from the typeinfo "
                         + typeInfo.getPvName() + " as that determines the name of the stream. "
                         + "Also using ExtraFieldsPostProcessor.");
@@ -875,28 +980,37 @@ public class DataRetrievalServlet extends HttpServlet {
             List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvNames.size());
             for (int i = 0; i < pvNames.size(); i++) {
                 if (fetchLatestMetadata && typeInfos.get(i).getSamplingMethod() != SamplingMethod.DONT_ARCHIVE) {
-                    // Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and the like by checking the sampling method.
+                    // Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and
+                    // the like by checking the sampling method.
                     engineMetadatas.add(fetchLatestMedataFromEngine(pvNames.get(i), applianceForPVs.get(i)));
                 }
                 retrievalContexts.add(new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i)));
-                executorResults.add(determineExecutorForPostProcessing(pvNames.get(i), typeInfos.get(i), requestTimesOb.requestTimes, req, postProcessors.get(i)));
+                executorResults.add(determineExecutorForPostProcessing(
+                        pvNames.get(i), typeInfos.get(i), requestTimesOb.requestTimes, req, postProcessors.get(i)));
             }
 
             /*
              * There are as many Future objects in the eventStreamFutures List as there are periods over
              * which to fetch data. Retrieval of data happen here in parallel.
              */
-            List<LinkedList<Future<RetrievalResult>>> listOfRetrievalResultFuturesLists = new ArrayList<LinkedList<Future<RetrievalResult>>>();
+            List<LinkedList<Future<RetrievalResult>>> listOfRetrievalResultFuturesLists =
+                    new ArrayList<LinkedList<Future<RetrievalResult>>>();
             for (int i = 0; i < pvNames.size(); i++) {
-                listOfRetrievalResultFuturesLists.add(resolveAllDataSources(pvNames.get(i), typeInfos.get(i), postProcessors.get(i),
-                        applianceForPVs.get(i), retrievalContexts.get(i), executorResults.get(i), req));
+                listOfRetrievalResultFuturesLists.add(resolveAllDataSources(
+                        pvNames.get(i),
+                        typeInfos.get(i),
+                        postProcessors.get(i),
+                        applianceForPVs.get(i),
+                        retrievalContexts.get(i),
+                        executorResults.get(i),
+                        req));
             }
             pmansProfiler.mark("After data source resolution");
 
             for (int i = 0; i < pvNames.size(); i++) {
                 // Data is retrieved here
-                List<Future<EventStream>> eventStreamFutures = getEventStreamFuturesFromRetrievalResults(executorResults.get(i),
-                        listOfRetrievalResultFuturesLists.get(i));
+                List<Future<EventStream>> eventStreamFutures = getEventStreamFuturesFromRetrievalResults(
+                        executorResults.get(i), listOfRetrievalResultFuturesLists.get(i));
                 listOfEventStreamFuturesLists.add(eventStreamFutures);
             }
 
@@ -914,7 +1028,8 @@ public class DataRetrievalServlet extends HttpServlet {
          */
         try {
             for (int i = 0; i < pvNames.size(); i++) {
-                try (BasicContext retrievalContext = new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i))) {
+                try (BasicContext retrievalContext =
+                        new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i))) {
                     List<Future<EventStream>> eventStreamFutures = listOfEventStreamFuturesLists.get(i);
                     String pvName = pvNames.get(i);
                     PVTypeInfo typeInfo = typeInfos.get(i);
@@ -924,7 +1039,18 @@ public class DataRetrievalServlet extends HttpServlet {
                     logger.debug("Done with the RetrievalResults; moving onto the individual event stream "
                             + "from each source for " + StringUtils.join(pvNames, ", "));
                     pmansProfiler.mark("After retrieval results");
-                    evaluateEventStreamFutures(resp, pmansProfiler, pvName, requestTimesOb, postProcessor, typeInfo, retrievalContext, mergeDedupCountingConsumer, engineMetadata, currentlyProcessingPV, eventStreamFutures);
+                    evaluateEventStreamFutures(
+                            resp,
+                            pmansProfiler,
+                            pvName,
+                            requestTimesOb,
+                            postProcessor,
+                            typeInfo,
+                            retrievalContext,
+                            mergeDedupCountingConsumer,
+                            engineMetadata,
+                            currentlyProcessingPV,
+                            eventStreamFutures);
 
                     consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer);
 
@@ -945,7 +1071,8 @@ public class DataRetrievalServlet extends HttpServlet {
         }
 
         long s2 = System.currentTimeMillis();
-        logger.info("For the complete request, found a total of " + mergeDedupCountingConsumer.totalEventsForAllPVs + " in " + (s2 - s1) + "(ms)"
+        logger.info("For the complete request, found a total of " + mergeDedupCountingConsumer.totalEventsForAllPVs
+                + " in " + (s2 - s1) + "(ms)"
                 + " skipping " + mergeDedupCountingConsumer.skippedEventsForAllPVs + " events"
                 + " deduping involved " + mergeDedupCountingConsumer.comparedEventsForAllPVs + " compares.");
 
@@ -953,7 +1080,8 @@ public class DataRetrievalServlet extends HttpServlet {
 
         // Till we determine all the if conditions where we log this, we log sparingly..
         if (pmansProfiler.totalTimeMS() / pvNames.size() > 5000) {
-            logger.error("Retrieval time for " + StringUtils.join(pvNames, ", ") + " from " + requestTimesOb.start + " to " + requestTimesOb.end + ": " + pmansProfiler);
+            logger.error("Retrieval time for " + StringUtils.join(pvNames, ", ") + " from " + requestTimesOb.start
+                    + " to " + requestTimesOb.end + ": " + pmansProfiler);
         }
 
         mergeDedupCountingConsumer.close();
@@ -969,18 +1097,22 @@ public class DataRetrievalServlet extends HttpServlet {
      * @throws InterruptedException
      * @throws ExecutionException
      */
-    private List<Future<EventStream>> getEventStreamFuturesFromRetrievalResults(RetrievalExecutorResult executorResult, LinkedList<Future<RetrievalResult>> retrievalResultFutures)
+    private List<Future<EventStream>> getEventStreamFuturesFromRetrievalResults(
+            RetrievalExecutorResult executorResult, LinkedList<Future<RetrievalResult>> retrievalResultFutures)
             throws InterruptedException, ExecutionException {
         // List containing the result
         List<Future<EventStream>> eventStreamFutures = new LinkedList<Future<EventStream>>();
 
-        // Loop thru the retrievalResultFutures one by one in sequence; get all the event streams from the plugins and consolidate them into a sequence of eventStream futures.
+        // Loop thru the retrievalResultFutures one by one in sequence; get all the event streams from the plugins and
+        // consolidate them into a sequence of eventStream futures.
         for (Future<RetrievalResult> retrievalResultFuture : retrievalResultFutures) {
             // This call blocks until the future is complete.
             // For now, we use a simple get as opposed to a get with a timeout.
             RetrievalResult retrievalresult = retrievalResultFuture.get();
             if (retrievalresult.hasNoData()) {
-                logger.debug("Skipping as we have not data from " + retrievalresult.getRetrievalRequest().getDescription() + " for pv " + retrievalresult.getRetrievalRequest().getPvName());
+                logger.debug("Skipping as we have not data from "
+                        + retrievalresult.getRetrievalRequest().getDescription() + " for pv "
+                        + retrievalresult.getRetrievalRequest().getPvName());
                 continue;
             }
 
@@ -1007,10 +1139,15 @@ public class DataRetrievalServlet extends HttpServlet {
      * @return
      * @throws IOException
      */
-    private LinkedList<Future<RetrievalResult>> resolveAllDataSources(String pvName, PVTypeInfo typeInfo,
-                                                                      PostProcessor postProcessor, ApplianceInfo applianceForPV,
-                                                                      BasicContext retrievalContext, RetrievalExecutorResult executorResult,
-                                                                      HttpServletRequest req) throws IOException {
+    private LinkedList<Future<RetrievalResult>> resolveAllDataSources(
+            String pvName,
+            PVTypeInfo typeInfo,
+            PostProcessor postProcessor,
+            ApplianceInfo applianceForPV,
+            BasicContext retrievalContext,
+            RetrievalExecutorResult executorResult,
+            HttpServletRequest req)
+            throws IOException {
 
         LinkedList<Future<RetrievalResult>> retrievalResultFutures = new LinkedList<Future<RetrievalResult>>();
 
@@ -1022,7 +1159,15 @@ public class DataRetrievalServlet extends HttpServlet {
 
         for (TimeSpan timespan : executorResult.requestTimespans) {
             // Resolve data sources for the given PV and the given time frames
-            List<UnitOfRetrieval> unitsofretrieval = datasourceresolver.resolveDataSources(pvName, timespan.getStartTime(), timespan.getEndTime(), typeInfo, retrievalContext, postProcessor, req, applianceForPV);
+            List<UnitOfRetrieval> unitsofretrieval = datasourceresolver.resolveDataSources(
+                    pvName,
+                    timespan.getStartTime(),
+                    timespan.getEndTime(),
+                    typeInfo,
+                    retrievalContext,
+                    postProcessor,
+                    req,
+                    applianceForPV);
             // Submit the units of retrieval to the executor service. This will give us a bunch of Futures.
             for (UnitOfRetrieval unitofretrieval : unitsofretrieval) {
                 // unitofretrieval implements a call() method as it extends Callable<?>
@@ -1041,7 +1186,8 @@ public class DataRetrievalServlet extends HttpServlet {
      * @return
      * @throws ServletException
      */
-    private MergeDedupConsumer createMergeDedupConsumer(HttpServletResponse resp, String extension) throws ServletException {
+    private MergeDedupConsumer createMergeDedupConsumer(HttpServletResponse resp, String extension)
+            throws ServletException {
         MergeDedupConsumer mergeDedupCountingConsumer;
         MimeMappingInfo mimemappinginfo = mimeresponses.get(extension);
         if (mimemappinginfo == null) {
@@ -1049,13 +1195,16 @@ public class DataRetrievalServlet extends HttpServlet {
             for (String supportedextension : mimeresponses.keySet()) {
                 supportedextensions.append(supportedextension).append(" ");
             }
-            throw new ServletException("Cannot generate response of mime-type " + extension + ". Supported extensions are " + supportedextensions);
+            throw new ServletException("Cannot generate response of mime-type " + extension
+                    + ". Supported extensions are " + supportedextensions);
         } else {
             try {
                 String ctype = mimeresponses.get(extension).contentType;
                 resp.setContentType(ctype);
-                logger.debug("Using {} as the mime response sending {}", mimemappinginfo.mimeresponseClass.getName(), ctype);
-                MimeResponse mimeresponse = mimemappinginfo.mimeresponseClass.getConstructor().newInstance();
+                logger.debug(
+                        "Using {} as the mime response sending {}", mimemappinginfo.mimeresponseClass.getName(), ctype);
+                MimeResponse mimeresponse =
+                        mimemappinginfo.mimeresponseClass.getConstructor().newInstance();
                 OutputStream os = resp.getOutputStream();
                 mergeDedupCountingConsumer = new MergeDedupConsumer(mimeresponse, os);
             } catch (Exception ex) {
@@ -1087,18 +1236,25 @@ public class DataRetrievalServlet extends HttpServlet {
                 String index = serverEntry.getValue();
                 if (index.equals("pbraw")) {
                     serverUrl = serverUrl.split("\\?")[0];
-                    logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv " + pvName);
-                    JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8), false);
+                    logger.debug("Asking external EPICS Archiver Appliance " + serverUrl + " if it has data for pv "
+                            + pvName);
+                    JSONObject areWeArchivingPVObj = GetUrlContent.getURLContentAsJSONObject(
+                            serverUrl + "/bpl/areWeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8),
+                            false);
                     if (areWeArchivingPVObj != null) {
                         @SuppressWarnings("unchecked")
                         Map<String, String> areWeArchivingPV = areWeArchivingPVObj;
-                        if (areWeArchivingPV.containsKey("status") && Boolean.parseBoolean(areWeArchivingPV.get("status"))) {
+                        if (areWeArchivingPV.containsKey("status")
+                                && Boolean.parseBoolean(areWeArchivingPV.get("status"))) {
                             logger.info("Proxying data retrieval for pv " + pvName + " to " + serverUrl);
                             try (BasicContext context = new BasicContext()) {
-                                StoragePlugin hplg = StoragePluginURLParser.parseStoragePlugin("pbraw://localhost?rawURL=" + serverUrl + "/data/getData.raw&name=ext", configService);
+                                StoragePlugin hplg = StoragePluginURLParser.parseStoragePlugin(
+                                        "pbraw://localhost?rawURL=" + serverUrl + "/data/getData.raw&name=ext",
+                                        configService);
                                 assert hplg != null;
                                 logger.debug(hplg.getDescription());
-                                List<Callable<EventStream>> callables = hplg.getDataForPV(context, pvName, TimeUtils.minusHours(end, 1), end, null);
+                                List<Callable<EventStream>> callables =
+                                        hplg.getDataForPV(context, pvName, TimeUtils.minusHours(end, 1), end, null);
                                 if (callables == null || callables.isEmpty()) {
                                     logger.info("No data from remote server " + serverUrl + " for pv " + pvName);
                                 } else {
@@ -1108,26 +1264,42 @@ public class DataRetrievalServlet extends HttpServlet {
                                                 Iterator<Event> it = strm.iterator();
                                                 if (it.hasNext()) {
                                                     Event e = it.next();
-                                                    ArchDBRTypes dbrType = strm.getDescription().getArchDBRType();
-                                                    typeInfo = new PVTypeInfo(pvName, dbrType, !dbrType.isWaveForm(), e.getSampleValue().getElementCount());
-                                                    typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+                                                    ArchDBRTypes dbrType = strm.getDescription()
+                                                            .getArchDBRType();
+                                                    typeInfo = new PVTypeInfo(
+                                                            pvName,
+                                                            dbrType,
+                                                            !dbrType.isWaveForm(),
+                                                            e.getSampleValue().getElementCount());
+                                                    typeInfo.setApplianceIdentity(configService
+                                                            .getMyApplianceInfo()
+                                                            .getIdentity());
                                                     // Somehow tell the code downstream that this is a fake typeInfo.
                                                     typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
-                                                    typeInfo.setDataStores(new String[]{"pbraw://localhost?rawURL=" + serverUrl + "/data/getData.raw"});
+                                                    typeInfo.setDataStores(new String[] {
+                                                        "pbraw://localhost?rawURL=" + serverUrl + "/data/getData.raw"
+                                                    });
                                                     logger.debug("Done creating a temporary typeinfo for pv " + pvName);
                                                     return typeInfo;
                                                 }
                                             } else {
-                                                logger.info("Empty stream from remote server" + serverUrl + " for pv " + pvName);
+                                                logger.info("Empty stream from remote server" + serverUrl + " for pv "
+                                                        + pvName);
                                             }
                                         } catch (Exception ex) {
-                                            logger.error("Exception trying to determine typeinfo for pv " + pvName + " from external server " + serverUrl, ex);
+                                            logger.error(
+                                                    "Exception trying to determine typeinfo for pv " + pvName
+                                                            + " from external server " + serverUrl,
+                                                    ex);
                                             typeInfo = null;
                                         }
                                     }
                                 }
                             } catch (Exception ex) {
-                                logger.error("Exception trying to determine typeinfo for pv " + pvName + " from external server " + serverUrl, ex);
+                                logger.error(
+                                        "Exception trying to determine typeinfo for pv " + pvName
+                                                + " from external server " + serverUrl,
+                                        ex);
                                 typeInfo = null;
                             }
                         }
@@ -1136,21 +1308,28 @@ public class DataRetrievalServlet extends HttpServlet {
             }
         }
 
-
         List<ChannelArchiverDataServerPVInfo> caServers = configService.getChannelArchiverDataServers(pvName);
         if (caServers != null && !caServers.isEmpty()) {
             try (BasicContext context = new BasicContext()) {
                 for (ChannelArchiverDataServerPVInfo caServer : caServers) {
-                    logger.debug(pvName + " is being server by " + caServer.toString() + " and typeinfo is null. Trying to make a typeinfo up...");
-                    List<Callable<EventStream>> callables = caServer.getServerInfo().getPlugin().getDataForPV(context, pvName, TimeUtils.minusHours(start, 1), start, null);
+                    logger.debug(pvName + " is being server by " + caServer.toString()
+                            + " and typeinfo is null. Trying to make a typeinfo up...");
+                    List<Callable<EventStream>> callables = caServer.getServerInfo()
+                            .getPlugin()
+                            .getDataForPV(context, pvName, TimeUtils.minusHours(start, 1), start, null);
                     if (callables != null && !callables.isEmpty()) {
                         try (EventStream strm = callables.get(0).call()) {
                             if (strm != null) {
                                 Event e = strm.iterator().next();
                                 if (e != null) {
                                     ArchDBRTypes dbrType = strm.getDescription().getArchDBRType();
-                                    typeInfo = new PVTypeInfo(pvName, dbrType, !dbrType.isWaveForm(), e.getSampleValue().getElementCount());
-                                    typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+                                    typeInfo = new PVTypeInfo(
+                                            pvName,
+                                            dbrType,
+                                            !dbrType.isWaveForm(),
+                                            e.getSampleValue().getElementCount());
+                                    typeInfo.setApplianceIdentity(
+                                            configService.getMyApplianceInfo().getIdentity());
                                     // Somehow tell the code downstream that this is a fake typeInfo.
                                     typeInfo.setSamplingMethod(SamplingMethod.DONT_ARCHIVE);
                                     logger.debug("Done creating a temporary typeinfo for pv " + pvName);
@@ -1158,7 +1337,9 @@ public class DataRetrievalServlet extends HttpServlet {
                                 }
                             }
                         } catch (Exception ex) {
-                            logger.error("Exception trying to determine typeinfo for pv " + pvName + " from CA " + caServer, ex);
+                            logger.error(
+                                    "Exception trying to determine typeinfo for pv " + pvName + " from CA " + caServer,
+                                    ex);
                             typeInfo = null;
                         }
                     }
@@ -1181,9 +1362,11 @@ public class DataRetrievalServlet extends HttpServlet {
      * @return
      * @throws IOException
      */
-    private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData) throws IOException {
+    private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData)
+            throws IOException {
         if (typeInfo != null && eventDesc instanceof RemotableEventStreamDesc remoteDesc) {
-            logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source " + eventDesc.getSource());
+            logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source "
+                    + eventDesc.getSource());
             remoteDesc.mergeFrom(typeInfo, engineMetaData);
         }
     }
@@ -1202,7 +1385,8 @@ public class DataRetrievalServlet extends HttpServlet {
     @SuppressWarnings("unchecked")
     private HashMap<String, String> fetchLatestMedataFromEngine(String pvName, ApplianceInfo applianceForPV) {
         try {
-            String metadataURL = applianceForPV.getEngineURL() + "/getMetadata?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
+            String metadataURL = applianceForPV.getEngineURL() + "/getMetadata?pv="
+                    + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
             logger.debug("Getting metadata from the engine using " + metadataURL);
             return GetUrlContent.getURLContentAsJSONObject(metadataURL);
         } catch (Exception ex) {
@@ -1221,12 +1405,16 @@ public class DataRetrievalServlet extends HttpServlet {
      * @param dataRetrievalURLForPV
      * @throws IOException
      */
-    private void proxyRetrievalRequest(HttpServletRequest req, HttpServletResponse resp, String pvName, String dataRetrievalURLForPV) throws IOException {
+    private void proxyRetrievalRequest(
+            HttpServletRequest req, HttpServletResponse resp, String pvName, String dataRetrievalURLForPV)
+            throws IOException {
         try {
-            // It may be beneficial to support both and choose based on where the client in calling from or perhaps from a header?
+            // It may be beneficial to support both and choose based on where the client in calling from or perhaps from
+            // a header?
             boolean redirect = !Objects.equals(req.getHeader("redirect"), "false");
             if (redirect) {
-                logger.info("Data for pv " + pvName + "is elsewhere. Redirecting to appliance " + dataRetrievalURLForPV);
+                logger.info(
+                        "Data for pv " + pvName + "is elsewhere. Redirecting to appliance " + dataRetrievalURLForPV);
                 URI redirectURI = new URI(dataRetrievalURLForPV + "/" + req.getPathInfo());
                 String redirectURIStr = redirectURI.normalize() + "?" + req.getQueryString();
                 logger.debug("URI for redirect is " + redirectURIStr);
@@ -1239,22 +1427,27 @@ public class DataRetrievalServlet extends HttpServlet {
 
                 try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
                     HttpGet getMethod = new HttpGet(redirectURIStr);
-                    getMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
+                    getMethod.addHeader(
+                            "Connection",
+                            "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
                     try (CloseableHttpResponse response = httpclient.execute(getMethod)) {
                         if (response.getStatusLine().getStatusCode() == 200) {
                             HttpEntity entity = response.getEntity();
-                            HashSet<String> proxiedHeaders = new HashSet<String>(Arrays.asList(MimeResponse.PROXIED_HEADERS));
+                            HashSet<String> proxiedHeaders =
+                                    new HashSet<String>(Arrays.asList(MimeResponse.PROXIED_HEADERS));
                             Header[] headers = response.getAllHeaders();
                             for (Header header : headers) {
                                 if (proxiedHeaders.contains(header.getName())) {
-                                    logger.debug("Adding headerName " + header.getName() + " and value " + header.getValue() + " when proxying request");
+                                    logger.debug("Adding headerName " + header.getName() + " and value "
+                                            + header.getValue() + " when proxying request");
                                     resp.addHeader(header.getName(), header.getValue());
                                 }
                             }
 
                             if (entity != null) {
                                 logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-                                try (OutputStream os = resp.getOutputStream(); InputStream is = new BufferedInputStream(entity.getContent())) {
+                                try (OutputStream os = resp.getOutputStream();
+                                        InputStream is = new BufferedInputStream(entity.getContent())) {
                                     byte[] buf = new byte[10 * 1024];
                                     int bytesRead = is.read(buf);
                                     while (bytesRead > 0) {
@@ -1267,9 +1460,12 @@ public class DataRetrievalServlet extends HttpServlet {
                                 throw new IOException("HTTP response did not have an entity associated with it");
                             }
                         } else {
-                            logger.error("Invalid status code " + response.getStatusLine().getStatusCode() + " when connecting to URL " + redirectURIStr + ". Sending the errorstream across");
+                            logger.error("Invalid status code "
+                                    + response.getStatusLine().getStatusCode() + " when connecting to URL "
+                                    + redirectURIStr + ". Sending the errorstream across");
                             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                                try (InputStream is = new BufferedInputStream(response.getEntity().getContent())) {
+                                try (InputStream is = new BufferedInputStream(
+                                        response.getEntity().getContent())) {
                                     byte[] buf = new byte[10 * 1024];
                                     int bytesRead = is.read(buf);
                                     while (bytesRead > 0) {
@@ -1301,29 +1497,40 @@ public class DataRetrievalServlet extends HttpServlet {
      * @throws InterruptedException
      */
     private List<List<Future<EventStream>>> retrieveEventStreamFromForeignAppliance(
-            HttpServletRequest req, HttpServletResponse resp,
-            ArrayList<PVInfoForClusterRetrieval> pvInfos, LinkedList<TimeSpan> requestTimes)
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            ArrayList<PVInfoForClusterRetrieval> pvInfos,
+            LinkedList<TimeSpan> requestTimes)
             throws IOException, InterruptedException, ExecutionException {
 
         // Get the executors for the PVs in other clusters
         List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvInfos.size());
         for (PVInfoForClusterRetrieval pvInfo : pvInfos) {
-            executorResults.add(determineExecutorForPostProcessing(pvInfo.getPVName(),
-                    pvInfo.getTypeInfo(), requestTimes, req, pvInfo.getPostProcessor()));
+            executorResults.add(determineExecutorForPostProcessing(
+                    pvInfo.getPVName(), pvInfo.getTypeInfo(), requestTimes, req, pvInfo.getPostProcessor()));
         }
 
-        // Get list of lists of futures of retrieval results. Basically, this is setting up the data sources for retrieval.
-        List<LinkedList<Future<RetrievalResult>>> listOfRetrievalResultsFutures = new ArrayList<LinkedList<Future<RetrievalResult>>>();
+        // Get list of lists of futures of retrieval results. Basically, this is setting up the data sources for
+        // retrieval.
+        List<LinkedList<Future<RetrievalResult>>> listOfRetrievalResultsFutures =
+                new ArrayList<LinkedList<Future<RetrievalResult>>>();
         for (int i = 0; i < pvInfos.size(); i++) {
             PVInfoForClusterRetrieval pvInfo = pvInfos.get(i);
-            listOfRetrievalResultsFutures.add(resolveAllDataSources(pvInfo.getPVName(), pvInfo.getTypeInfo(), pvInfo.getPostProcessor(),
-                    pvInfo.getApplianceInfo(), new BasicContext(), executorResults.get(i), req));
+            listOfRetrievalResultsFutures.add(resolveAllDataSources(
+                    pvInfo.getPVName(),
+                    pvInfo.getTypeInfo(),
+                    pvInfo.getPostProcessor(),
+                    pvInfo.getApplianceInfo(),
+                    new BasicContext(),
+                    executorResults.get(i),
+                    req));
         }
 
         // Now the data is being retrieved, producing a list of lists of futures of event streams.
         List<List<Future<EventStream>>> listOfEventStreamFutures = new ArrayList<List<Future<EventStream>>>();
         for (int i = 0; i < pvInfos.size(); i++) {
-            listOfEventStreamFutures.add(getEventStreamFuturesFromRetrievalResults(executorResults.get(i), listOfRetrievalResultsFutures.get(i)));
+            listOfEventStreamFutures.add(getEventStreamFuturesFromRetrievalResults(
+                    executorResults.get(i), listOfRetrievalResultsFutures.get(i)));
         }
 
         return listOfEventStreamFutures;
@@ -1333,29 +1540,29 @@ public class DataRetrievalServlet extends HttpServlet {
      * Parse the timeranges parameter and generate a list of TimeSpans.
      *
      * @param resp
-     * @param pvName
      * @param requestTimes  - list of timespans that we add the valid times to.
      * @param timeRangesStr
      * @return
      * @throws IOException
      */
-    private boolean parseTimeRanges(HttpServletResponse resp, String pvName, LinkedList<TimeSpan> requestTimes, String timeRangesStr) throws IOException {
+    private boolean parseTimeRanges(HttpServletResponse resp, LinkedList<TimeSpan> requestTimes, String timeRangesStr)
+            throws IOException {
         String[] timeRangesStrList = timeRangesStr.split(",");
         if (timeRangesStrList.length % 2 != 0) {
-            String msg = "Need to specify an even number of times in timeranges for pv " + pvName + ". We have " + timeRangesStrList.length + " times";
+            String msg = "Need to specify an even number of times in timeranges for pv. We have "
+                    + timeRangesStrList.length + " times";
             logger.error(msg);
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
             return false;
         }
 
-
         LinkedList<Instant> timeRangesList = new LinkedList<Instant>();
-        for(String timeRangesStrItem : timeRangesStrList) { 
-			    try {
+        for (String timeRangesStrItem : timeRangesStrList) {
+            try {
                 Instant ts = TimeUtils.convertFromISO8601String(timeRangesStrItem);
                 timeRangesList.add(ts);
             } catch (IllegalArgumentException ex) {
-				  try {
+                try {
                     Instant ts = TimeUtils.convertFromDateTimeStringWithOffset(timeRangesStrItem);
                     timeRangesList.add(ts);
                 } catch (IllegalArgumentException ex2) {
@@ -1367,22 +1574,23 @@ public class DataRetrievalServlet extends HttpServlet {
             }
         }
 
-		assert(timeRangesList.size()%2 == 0);
+        assert (timeRangesList.size() % 2 == 0);
         Instant prevEnd = null;
-		while(!timeRangesList.isEmpty()) {
+        while (!timeRangesList.isEmpty()) {
             Instant t0 = timeRangesList.pop();
             Instant t1 = timeRangesList.pop();
 
             if (t1.isBefore(t0)) {
-				String msg = "For request, end " + t1.toString() + " is before start " + t0.toString() + " for pv " + pvName;
+                String msg = "For request, end " + t1.toString() + " is before start " + t0.toString();
                 logger.error(msg);
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
                 return false;
             }
 
-			if(prevEnd != null) {
+            if (prevEnd != null) {
                 if (t0.isBefore(prevEnd)) {
-					String msg = "For request, start time " + t0.toString() + " is before previous end time " + prevEnd.toString() + " for pv " + pvName;
+                    String msg = "For request, start time " + t0.toString() + " is before previous end time "
+                            + prevEnd.toString();
                     logger.error(msg);
                     resp.sendError(HttpServletResponse.SC_BAD_REQUEST, msg);
                     return false;
@@ -1402,7 +1610,8 @@ public class DataRetrievalServlet extends HttpServlet {
      * @return
      * @throws IOException
      */
-    private boolean setActualDBRTypeFromData(String pvName, PVTypeInfo typeInfo, ConfigService configService) throws IOException {
+    private boolean setActualDBRTypeFromData(String pvName, PVTypeInfo typeInfo, ConfigService configService)
+            throws IOException {
         String[] dataStores = typeInfo.getDataStores();
         for (String dataStore : dataStores) {
             StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(dataStore, configService);
@@ -1477,14 +1686,12 @@ public class DataRetrievalServlet extends HttpServlet {
      * defined property.
      */
     private Boolean isSearchStoreForRetiredPvs() {
-        String searchStoreForRetiredPvsStr = configService.getInstallationProperties()
-                .getProperty(SEARCH_STORE_FOR_RETIRED_PV_STR, "false");
+        String searchStoreForRetiredPvsStr =
+                configService.getInstallationProperties().getProperty(SEARCH_STORE_FOR_RETIRED_PV_STR, "false");
         return Boolean.parseBoolean(searchStoreForRetiredPvsStr);
     }
 
-    private record RequestTimes(Instant end, Instant start,
-                                LinkedList<TimeSpan> requestTimes) {
-    }
+    private record RequestTimes(Instant end, Instant start, LinkedList<TimeSpan> requestTimes) {}
 
     static class MimeMappingInfo {
         Class<? extends MimeResponse> mimeresponseClass;
@@ -1546,8 +1753,8 @@ public class DataRetrievalServlet extends HttpServlet {
         private final PostProcessor postProcessor;
         private final ApplianceInfo applianceInfo;
 
-        private PVInfoForClusterRetrieval(String pvName, PVTypeInfo typeInfo,
-                                          PostProcessor postProcessor, ApplianceInfo applianceInfo) {
+        private PVInfoForClusterRetrieval(
+                String pvName, PVTypeInfo typeInfo, PostProcessor postProcessor, ApplianceInfo applianceInfo) {
             this.pvName = pvName;
             this.typeInfo = typeInfo;
             this.postProcessor = postProcessor;
@@ -1574,6 +1781,5 @@ public class DataRetrievalServlet extends HttpServlet {
         public ApplianceInfo getApplianceInfo() {
             return applianceInfo;
         }
-
     }
 }
