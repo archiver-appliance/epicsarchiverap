@@ -55,12 +55,11 @@ public class ETLWithRecurringFilesTest {
     public static Stream<Arguments> provideRecurringFiles() {
         return Arrays.stream(PartitionGranularity.values())
                 .flatMap(g -> Stream.of(
-                                Arguments.of(g, true, true),
-                                Arguments.of(g, true, false),
-                                Arguments.of(g, false, true),
-                                Arguments.of(g, false, false)));
+                        Arguments.of(g, true, true),
+                        Arguments.of(g, true, false),
+                        Arguments.of(g, false, true),
+                        Arguments.of(g, false, false)));
     }
-
 
     /**
      * @param granularity
@@ -70,10 +69,7 @@ public class ETLWithRecurringFilesTest {
      */
     @ParameterizedTest
     @MethodSource("provideRecurringFiles")
-    public void testRecurringFiles(
-            PartitionGranularity granularity,
-            boolean backUpFiles,
-            boolean useNewDest)
+    public void testRecurringFiles(PartitionGranularity granularity, boolean backUpFiles, boolean useNewDest)
             throws Exception {
         PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
@@ -117,8 +113,8 @@ public class ETLWithRecurringFilesTest {
                 eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
         for (int i = 0; i < eventsPerShot; i++) {
             int secondsintoyear = TimeUtils.getSecondsIntoYear(curTime.getEpochSecond());
-            instream.add(new SimulationEvent(secondsintoyear
-                    , year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
+            instream.add(new SimulationEvent(
+                    secondsintoyear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
                             secondsintoyear)));
             curTime = curTime.plusSeconds(incrementSeconds);
         }
@@ -138,8 +134,8 @@ public class ETLWithRecurringFilesTest {
                 CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         for (Path srcPath : allSrcPaths) {
-            Path destPath =
-                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
+            Path destPath = srcPath.resolveSibling(
+                    srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
             logger.debug("Path for backup is " + destPath);
             Files.copy(srcPath, destPath, StandardCopyOption.REPLACE_EXISTING);
         }
@@ -154,8 +150,8 @@ public class ETLWithRecurringFilesTest {
         for (Path srcPath : allSrcPaths) {
             Assertions.assertFalse(
                     srcPath.toFile().exists(), srcPath.toAbsolutePath() + " was not deleted in the last run");
-            Path destPath =
-                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
+            Path destPath = srcPath.resolveSibling(
+                    srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
             Files.copy(destPath, srcPath, StandardCopyOption.COPY_ATTRIBUTES);
         }
 
@@ -185,13 +181,7 @@ public class ETLWithRecurringFilesTest {
                     "Running ETL again; the debug logs should see a lot of skipping events messages from here on.");
             ETLExecutor.runETLs(configService, ETLIsRunningAt);
             checkDataValidity(
-                    pvName,
-                    etlSrc,
-                    etlDest,
-                    start,
-                    incrementSeconds,
-                    eventsGenerated,
-                    granularity + "/" + backUpFiles);
+                    pvName, etlSrc, etlDest, start, incrementSeconds, eventsGenerated, granularity + "/" + backUpFiles);
         }
 
         srcSetup.deleteTestFolder();
@@ -225,9 +215,7 @@ public class ETLWithRecurringFilesTest {
                 EventStream afterDest = new CurrentThreadWorkerEventStream(
                         pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterDest) {
-                Assertions.assertEquals(
-                        expectedTime,
-                        e.getEventTimeStamp());
+                Assertions.assertEquals(expectedTime, e.getEventTimeStamp());
                 expectedTime = expectedTime.plusSeconds(incrementSeconds);
                 afterCount++;
             }
@@ -238,9 +226,7 @@ public class ETLWithRecurringFilesTest {
                 EventStream afterSrc = new CurrentThreadWorkerEventStream(
                         pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterSrc) {
-                Assertions.assertEquals(
-                        expectedTime,
-                        e.getEventTimeStamp());
+                Assertions.assertEquals(expectedTime, e.getEventTimeStamp());
                 expectedTime = expectedTime.plusSeconds(incrementSeconds);
                 afterCount++;
             }

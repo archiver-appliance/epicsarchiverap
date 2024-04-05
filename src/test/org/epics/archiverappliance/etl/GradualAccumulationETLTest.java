@@ -63,9 +63,7 @@ public class GradualAccumulationETLTest {
 
     @ParameterizedTest
     @MethodSource("provideGradualAccumulation")
-    public void testGradualAccumulation(
-            PartitionGranularity granularity, boolean backUpfiles)
-            throws Exception {
+    public void testGradualAccumulation(PartitionGranularity granularity, boolean backUpfiles) throws Exception {
         PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
         PlainPBStoragePlugin etlDest = new PlainPBStoragePlugin();
@@ -154,10 +152,13 @@ public class GradualAccumulationETLTest {
                 EventStream afterDest = new CurrentThreadWorkerEventStream(
                         pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterDest) {
-                Assertions.assertEquals(expectedEpochSeconds, e.getEpochSeconds(), testDesc + "Expected seconds "
-                        + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                        + " is not the same as actual seconds "
-                        + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
+                Assertions.assertEquals(
+                        expectedEpochSeconds,
+                        e.getEpochSeconds(),
+                        testDesc + "Expected seconds "
+                                + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
+                                + " is not the same as actual seconds "
+                                + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
                 expectedEpochSeconds += incrementSeconds;
                 afterCount++;
             }
@@ -168,10 +169,13 @@ public class GradualAccumulationETLTest {
                 EventStream afterSrc = new CurrentThreadWorkerEventStream(
                         pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterSrc) {
-                Assertions.assertEquals(expectedEpochSeconds, e.getEpochSeconds(), testDesc + "Expected seconds "
-                        + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                        + " is not the same as actual seconds "
-                        + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
+                Assertions.assertEquals(
+                        expectedEpochSeconds,
+                        e.getEpochSeconds(),
+                        testDesc + "Expected seconds "
+                                + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
+                                + " is not the same as actual seconds "
+                                + TimeUtils.convertToHumanReadableString(e.getEpochSeconds()));
                 expectedEpochSeconds += incrementSeconds;
                 afterCount++;
             }

@@ -92,16 +92,15 @@ public class ZeroByteFilesTest {
     public interface VoidFunction {
         void apply() throws IOException;
     }
+
     @Test
     public void testZeroByteFileInDest() throws Exception {
 
         PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName
-                        + "/&partitionGranularity=PARTITION_DAY",
+                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY",
                 configService);
         PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName
-                        + "/&partitionGranularity=PARTITION_YEAR",
+                "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testZeroDest";
         // Create an zero byte file in the ETL dest
@@ -115,16 +114,15 @@ public class ZeroByteFilesTest {
         };
         runETLAndValidate(pvName, zeroByteGenerator, etlSrc, etlDest);
     }
+
     @Test
     public void testZeroByteFilesInSource() throws Exception {
 
         PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName
-                        + "/&partitionGranularity=PARTITION_DAY",
+                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY",
                 configService);
         PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName
-                        + "/&partitionGranularity=PARTITION_YEAR",
+                "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
         // Create zero byte files in the ETL source; since this is a daily partition, we need something like so
         // sine:2016_03_31.pb
@@ -136,7 +134,10 @@ public class ZeroByteFilesTest {
                         etlSrc.getRootFolder(),
                         pvNameToKeyConverter.convertPVNameToKey(pvName)
                                 + TimeUtils.getPartitionName(
-                                Instant.now().minusSeconds((long) day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk()),
+                                        Instant.now()
+                                                .minusSeconds((long) day
+                                                        * PartitionGranularity.PARTITION_DAY
+                                                                .getApproxSecondsPerChunk()),
                                         PartitionGranularity.PARTITION_DAY)
                                 + pbFileExtension);
                 logger.info("Creating zero byte file " + zeroSrcPath);

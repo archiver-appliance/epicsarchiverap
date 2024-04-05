@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.common.BasicContext;
@@ -40,85 +39,113 @@ import java.util.List;
  *
  */
 public class ETLSourceGetStreamsTest {
-	PlainPBStoragePlugin pbplugin = null;
-	File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ETLSrcStreamsTest");
-	private ConfigService configService;
+    PlainPBStoragePlugin pbplugin = null;
+    File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ETLSrcStreamsTest");
+    private ConfigService configService;
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		testFolder.mkdirs();
-		configService = new ConfigServiceForTests(-1);
-		pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR", configService);
-	}
+    @BeforeEach
+    public void setUp() throws Exception {
+        testFolder.mkdirs();
+        configService = new ConfigServiceForTests(-1);
+        pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                "pb://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR",
+                configService);
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		FileUtils.deleteDirectory(testFolder);
-	}
-	
-	class DataForGetETLStreamsTest {
-		long sampleRange;
-		int skipSeconds;
-		public DataForGetETLStreamsTest(long sampleRange, int skipSeconds) {
-			this.sampleRange = sampleRange;
-			this.skipSeconds = skipSeconds;
-		}
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        FileUtils.deleteDirectory(testFolder);
+    }
 
-	@Test
-	public void getETLStreams() throws Exception {
-		short currentYear = TimeUtils.getCurrentYear();
-		ZonedDateTime startOfToday = ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC))
-				.withHour(0)
-				.withMinute(0)
-				.withSecond(0);
+    class DataForGetETLStreamsTest {
+        long sampleRange;
+        int skipSeconds;
 
-		HashMap<PartitionGranularity, DataForGetETLStreamsTest> testParams = new HashMap<PartitionGranularity, DataForGetETLStreamsTest>();
-		testParams.put(PartitionGranularity.PARTITION_5MIN, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
-		testParams.put(PartitionGranularity.PARTITION_15MIN, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
-		testParams.put(PartitionGranularity.PARTITION_30MIN, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
-		testParams.put(PartitionGranularity.PARTITION_HOUR, new DataForGetETLStreamsTest(3600*24, 600)); // One day; sample every 10 mins
-		testParams.put(PartitionGranularity.PARTITION_DAY, new DataForGetETLStreamsTest(3600*24*7, 1800)); // One week; sample every 30 mins
-		testParams.put(PartitionGranularity.PARTITION_MONTH, new DataForGetETLStreamsTest(3600*24*7*365, 3600*12)); // One year; sample every 1/2 day
-		testParams.put(PartitionGranularity.PARTITION_YEAR, new DataForGetETLStreamsTest(3600L * 24 * 7 * 365 * 10, 3600 * 24 * 7)); // 10 years; sample every week
-		
-		
-		for(PartitionGranularity partitionGranularity : PartitionGranularity.values()) {
-			ETLContext etlContext = new ETLContext();
-			DataForGetETLStreamsTest testParam = testParams.get(partitionGranularity);
-			long sampleRange = testParam.sampleRange;
-			int skipSeconds = testParam.skipSeconds;
+        public DataForGetETLStreamsTest(long sampleRange, int skipSeconds) {
+            this.sampleRange = sampleRange;
+            this.skipSeconds = skipSeconds;
+        }
+    }
 
-			File rootFolder = new File(testFolder.getAbsolutePath() + File.separator + partitionGranularity.toString());
-			rootFolder.mkdirs();
-			pbplugin.setRootFolder(rootFolder.getAbsolutePath());
-			pbplugin.setPartitionGranularity(partitionGranularity);
-			String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLSourceGetStreamsTest:" + partitionGranularity;
-			ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-			ArrayListEventStream testData = new ArrayListEventStream(1000, new RemotableEventStreamDesc(type, pvName, currentYear));
-			for(long i = 0; i < sampleRange; i+=skipSeconds) {
-				testData.add(new SimulationEvent(TimeUtils.getSecondsIntoYear(startOfToday.toEpochSecond() + i), TimeUtils.computeYearForEpochSeconds(startOfToday.toEpochSecond() + i), type, new ScalarValue<Double>((double) i)));
-			}
-			try(BasicContext context = new BasicContext()) {
-				pbplugin.appendData(context, pvName, testData);
-			}
-			// This should have generated many files; one for each partition.
-			// So we now check the number of files we get as we cruise thru the whole day.
-			
-			int expectedFiles = 0;
-			Instant firstSecondOfNextPartition = TimeUtils.getNextPartitionFirstSecond(startOfToday.toInstant(), partitionGranularity);
-			for(long i = 0; i < sampleRange; i+=skipSeconds) {
-				Instant currentTime = startOfToday.toInstant().plusSeconds(i);
-				if (currentTime.isAfter(firstSecondOfNextPartition) || currentTime.equals(firstSecondOfNextPartition)) {
-					firstSecondOfNextPartition = TimeUtils.getNextPartitionFirstSecond(currentTime, partitionGranularity);
-					expectedFiles++;
-				}
-				List<ETLInfo> ETLFiles = pbplugin.getETLStreams(pvName, currentTime, etlContext);
-				Assertions.assertTrue((ETLFiles != null) ? (ETLFiles.size() == expectedFiles) : (expectedFiles == 0), "getETLStream failed for "
-						+ TimeUtils.convertToISO8601String(currentTime)
-						+ " for partition " + partitionGranularity
-						+ " Expected " + expectedFiles + " got " + (ETLFiles != null ? Integer.toString(ETLFiles.size()) : "null"));
-			}
-		}
-	}
+    @Test
+    public void getETLStreams() throws Exception {
+        short currentYear = TimeUtils.getCurrentYear();
+        ZonedDateTime startOfToday = ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC))
+                .withHour(0)
+                .withMinute(0)
+                .withSecond(0);
+
+        HashMap<PartitionGranularity, DataForGetETLStreamsTest> testParams =
+                new HashMap<PartitionGranularity, DataForGetETLStreamsTest>();
+        testParams.put(
+                PartitionGranularity.PARTITION_5MIN,
+                new DataForGetETLStreamsTest(3600 * 24, 600)); // One day; sample every 10 mins
+        testParams.put(
+                PartitionGranularity.PARTITION_15MIN,
+                new DataForGetETLStreamsTest(3600 * 24, 600)); // One day; sample every 10 mins
+        testParams.put(
+                PartitionGranularity.PARTITION_30MIN,
+                new DataForGetETLStreamsTest(3600 * 24, 600)); // One day; sample every 10 mins
+        testParams.put(
+                PartitionGranularity.PARTITION_HOUR,
+                new DataForGetETLStreamsTest(3600 * 24, 600)); // One day; sample every 10 mins
+        testParams.put(
+                PartitionGranularity.PARTITION_DAY,
+                new DataForGetETLStreamsTest(3600 * 24 * 7, 1800)); // One week; sample every 30 mins
+        testParams.put(
+                PartitionGranularity.PARTITION_MONTH,
+                new DataForGetETLStreamsTest(3600 * 24 * 7 * 365, 3600 * 12)); // One year; sample every 1/2 day
+        testParams.put(
+                PartitionGranularity.PARTITION_YEAR,
+                new DataForGetETLStreamsTest(3600L * 24 * 7 * 365 * 10, 3600 * 24 * 7)); // 10 years; sample every week
+
+        for (PartitionGranularity partitionGranularity : PartitionGranularity.values()) {
+            ETLContext etlContext = new ETLContext();
+            DataForGetETLStreamsTest testParam = testParams.get(partitionGranularity);
+            long sampleRange = testParam.sampleRange;
+            int skipSeconds = testParam.skipSeconds;
+
+            File rootFolder = new File(testFolder.getAbsolutePath() + File.separator + partitionGranularity.toString());
+            rootFolder.mkdirs();
+            pbplugin.setRootFolder(rootFolder.getAbsolutePath());
+            pbplugin.setPartitionGranularity(partitionGranularity);
+            String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLSourceGetStreamsTest:"
+                    + partitionGranularity;
+            ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+            ArrayListEventStream testData =
+                    new ArrayListEventStream(1000, new RemotableEventStreamDesc(type, pvName, currentYear));
+            for (long i = 0; i < sampleRange; i += skipSeconds) {
+                testData.add(new SimulationEvent(
+                        TimeUtils.getSecondsIntoYear(startOfToday.toEpochSecond() + i),
+                        TimeUtils.computeYearForEpochSeconds(startOfToday.toEpochSecond() + i),
+                        type,
+                        new ScalarValue<Double>((double) i)));
+            }
+            try (BasicContext context = new BasicContext()) {
+                pbplugin.appendData(context, pvName, testData);
+            }
+            // This should have generated many files; one for each partition.
+            // So we now check the number of files we get as we cruise thru the whole day.
+
+            int expectedFiles = 0;
+            Instant firstSecondOfNextPartition =
+                    TimeUtils.getNextPartitionFirstSecond(startOfToday.toInstant(), partitionGranularity);
+            for (long i = 0; i < sampleRange; i += skipSeconds) {
+                Instant currentTime = startOfToday.toInstant().plusSeconds(i);
+                if (currentTime.isAfter(firstSecondOfNextPartition) || currentTime.equals(firstSecondOfNextPartition)) {
+                    firstSecondOfNextPartition =
+                            TimeUtils.getNextPartitionFirstSecond(currentTime, partitionGranularity);
+                    expectedFiles++;
+                }
+                List<ETLInfo> ETLFiles = pbplugin.getETLStreams(pvName, currentTime, etlContext);
+                Assertions.assertTrue(
+                        (ETLFiles != null) ? (ETLFiles.size() == expectedFiles) : (expectedFiles == 0),
+                        "getETLStream failed for "
+                                + TimeUtils.convertToISO8601String(currentTime)
+                                + " for partition " + partitionGranularity
+                                + " Expected " + expectedFiles + " got "
+                                + (ETLFiles != null ? Integer.toString(ETLFiles.size()) : "null"));
+            }
+        }
+    }
 }

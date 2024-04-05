@@ -44,8 +44,7 @@ public class BlackHoleETLTest {
     private static final Logger logger = LogManager.getLogger(BlackHoleETLTest.class.getName());
     ConfigServiceForTests configService = new ConfigServiceForTests(-1);
 
-    public BlackHoleETLTest() throws ConfigException {
-    }
+    public BlackHoleETLTest() throws ConfigException {}
 
     /**
      * Variant of the gradual accumulation test where the destination is a black hole plugin
@@ -58,8 +57,7 @@ public class BlackHoleETLTest {
 
     @ParameterizedTest
     @MethodSource("provideBlackHoleETL")
-    public void testBlackHoleETL(PartitionGranularity granularity)
-            throws Exception {
+    public void testBlackHoleETL(PartitionGranularity granularity) throws Exception {
         PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
         BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
