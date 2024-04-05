@@ -40,8 +40,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -166,11 +164,14 @@ public class DataReductionPostProcessorsTest {
         for (int day = 0; day < 40; day++) {
             // Generate data into the STS on a daily basis
             ArrayListEventStream genDataRaw = new ArrayListEventStream(
-                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                    new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, rawPVName, currentYear));
             ArrayListEventStream genDataReduced = new ArrayListEventStream(
-                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                    new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, reducedPVName, currentYear));
             for (int second = 0; second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(); second++) {
-                YearSecondTimestamp ysts = new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + second, 0);
+                YearSecondTimestamp ysts = new YearSecondTimestamp(
+                        currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + second, 0);
                 Instant ts = TimeUtils.convertFromYearSecondTimestamp(ysts);
                 genDataRaw.add(
                         new POJOEvent(ArchDBRTypes.DBR_SCALAR_DOUBLE, ts, new ScalarValue<Double>(second * 1.0), 0, 0));
@@ -185,8 +186,8 @@ public class DataReductionPostProcessorsTest {
             logger.debug("For postprocessor " + reduceDataUsing + " done generating data into the STS for day " + day);
 
             // Run ETL at the end of the day
-            Instant timeETLruns = TimeUtils.convertFromYearSecondTimestamp(
-                    new YearSecondTimestamp(currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 86399, 0));
+            Instant timeETLruns = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(
+                    currentYear, day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + 86399, 0));
             ETLExecutor.runETLs(configService, timeETLruns);
             logger.debug("For postprocessor " + reduceDataUsing + " done performing ETL as though today is "
                     + TimeUtils.convertToHumanReadableString(timeETLruns));
@@ -241,16 +242,23 @@ public class DataReductionPostProcessorsTest {
                             logger.info("Reduced" + TimeUtils.convertToHumanReadableString(reducedTimestamps.pop()));
                     }
                 }
-	            Assertions.assertEquals(reducedCount, rawWithPPCount, "For postprocessor " + reduceDataUsing + " for day " + day + " we have " + rawWithPPCount
-			            + " rawWithPP events and " + reducedCount + " reduced events");
+                Assertions.assertEquals(
+                        reducedCount,
+                        rawWithPPCount,
+                        "For postprocessor " + reduceDataUsing + " for day " + day + " we have " + rawWithPPCount
+                                + " rawWithPP events and " + reducedCount + " reduced events");
             }
             if (day > 2) {
-                Assertions.assertTrue((rawWithPPCount != 0), "For postprocessor " + reduceDataUsing + " for day " + day
-                        + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = "
-                        + rawWithPPCount);
-                Assertions.assertTrue((reducedCount != 0), "For postprocessor " + reduceDataUsing + " for day " + day
-                        + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = "
-                        + reducedCount);
+                Assertions.assertTrue(
+                        (rawWithPPCount != 0),
+                        "For postprocessor " + reduceDataUsing + " for day " + day
+                                + ", seems like no events were moved by ETL into LTS for " + rawPVName + " Count = "
+                                + rawWithPPCount);
+                Assertions.assertTrue(
+                        (reducedCount != 0),
+                        "For postprocessor " + reduceDataUsing + " for day " + day
+                                + ", seems like no events were moved by ETL into LTS for " + reducedPVName + " Count = "
+                                + reducedCount);
             }
         }
 
