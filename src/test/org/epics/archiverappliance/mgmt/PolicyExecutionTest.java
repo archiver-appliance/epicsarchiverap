@@ -11,9 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
 public class PolicyExecutionTest {
     Logger logger = LogManager.getLogger(PolicyExecutionTest.class);
 
@@ -27,7 +24,9 @@ public class PolicyExecutionTest {
         try (ExecutePolicy executePolicy = new ExecutePolicy(configService)) {
             PolicyConfig policyConfig = executePolicy.computePolicyForPV("test", pvInfo);
             Assertions.assertNotNull(policyConfig, "policyConfig is null");
-            Assertions.assertTrue(policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1, "dataStores is null");
+            Assertions.assertTrue(
+                    policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1,
+                    "dataStores is null");
         }
     }
 
@@ -42,9 +41,10 @@ public class PolicyExecutionTest {
             try (ExecutePolicy executePolicy = new ExecutePolicy(configService)) {
                 PolicyConfig policyConfig = executePolicy.computePolicyForPV("test" + i, pvInfo);
                 Assertions.assertNotNull(policyConfig, "policyConfig is null");
-                Assertions.assertTrue(policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1, "dataStores is null");
+                Assertions.assertTrue(
+                        policyConfig.getDataStores() != null && policyConfig.getDataStores().length > 1,
+                        "dataStores is null");
             }
         }
     }
-
 }

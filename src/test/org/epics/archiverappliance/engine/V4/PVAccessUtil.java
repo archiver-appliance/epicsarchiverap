@@ -27,7 +27,7 @@ import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.ServerPV;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -42,19 +42,20 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 public class PVAccessUtil {
 
-    private final static Logger logger = LogManager.getLogger(PVAccessUtil.class);
-    public static Map<Instant, SampleValue> getReceivedValues(MemBufWriter writer, ConfigService configService) throws Exception {
+    private static final Logger logger = LogManager.getLogger(PVAccessUtil.class);
+
+    public static Map<Instant, SampleValue> getReceivedValues(MemBufWriter writer, ConfigService configService)
+            throws Exception {
 
         return getReceivedEvents(writer, configService).entrySet().stream()
                 .map((e) -> Map.entry(e.getKey(), e.getValue().getSampleValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-    public static HashMap<Instant, Event> getReceivedEvents(MemBufWriter writer, ConfigService configService) throws Exception {
+
+    public static HashMap<Instant, Event> getReceivedEvents(MemBufWriter writer, ConfigService configService)
+            throws Exception {
         double secondsToBuffer = configService.getEngineContext().getWritePeriod();
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
@@ -65,56 +66,69 @@ public class PVAccessUtil {
                 actualValues.put(event.getEventTimeStamp(), event);
             }
         } catch (IOException e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         return actualValues;
     }
 
-
     public static Map.Entry<Instant, PVAStructure> updateStructure(PVAStructure pvaStructure, ServerPV serverPV) {
         try {
-            ((PVAStructure) pvaStructure.get("structure")).get("level 1").setValue(new PVAString("level 1", "level 1 0 new"));
+            ((PVAStructure) pvaStructure.get("structure"))
+                    .get("level 1")
+                    .setValue(new PVAString("level 1", "level 1 0 new"));
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Instant instant = Instant.now();
         ((PVATimeStamp) pvaStructure.get("timeStamp")).set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         return Map.entry(instant, pvaStructure);
     }
 
-
-
-    public static ArchiveChannel startArchivingPV(String pvName, MemBufWriter writer,
-                                        ConfigService configService, ArchDBRTypes type) throws InterruptedException {
+    public static ArchiveChannel startArchivingPV(
+            String pvName, MemBufWriter writer, ConfigService configService, ArchDBRTypes type)
+            throws InterruptedException {
         return startArchivingPV(pvName, writer, configService, type, true, new String[0]);
     }
 
-    public static ArchiveChannel startArchivingPV(String pvName, MemBufWriter writer,
-                                        ConfigService configService, ArchDBRTypes type, boolean wait,
-                                        String[] metaFields
-                                        ) throws InterruptedException {
+    public static ArchiveChannel startArchivingPV(
+            String pvName,
+            MemBufWriter writer,
+            ConfigService configService,
+            ArchDBRTypes type,
+            boolean wait,
+            String[] metaFields)
+            throws InterruptedException {
 
         long samplingPeriodMilliSeconds = 100;
         float samplingPeriod = (float) samplingPeriodMilliSeconds / (float) 1000.0;
         try {
-            ArchiveEngine.archivePV(pvName, samplingPeriod, PolicyConfig.SamplingMethod.MONITOR, writer,
+            ArchiveEngine.archivePV(
+                    pvName,
+                    samplingPeriod,
+                    PolicyConfig.SamplingMethod.MONITOR,
+                    writer,
                     configService,
-                    type, null, metaFields, true, false);
+                    type,
+                    null,
+                    metaFields,
+                    true,
+                    false);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
-        ArchiveChannel pvChannel = configService.getEngineContext().getChannelList().get(pvName);
+        ArchiveChannel pvChannel =
+                configService.getEngineContext().getChannelList().get(pvName);
         try {
             pvChannel.startUpMetaChannels();
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         if (wait) {
@@ -129,9 +143,10 @@ public class PVAccessUtil {
     }
 
     public static void waitForIsConnected(ArchiveChannel pvChannel) {
-        Awaitility.await().atMost(10, TimeUnit.SECONDS)
-                .untilAsserted(() -> assertTrue(!pvChannel.metaChannelsNeedStartingUp()
-                        && pvChannel.isConnected()));
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .untilAsserted(() ->
+                        Assertions.assertTrue(!pvChannel.metaChannelsNeedStartingUp() && pvChannel.isConnected()));
     }
 
     /**
@@ -152,16 +167,12 @@ public class PVAccessUtil {
         waitForStatusChange(pvName, expectedStatus, maxTries, mgmtUrl, 5);
     }
 
-    public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl, long waitPeriodSeconds) {
+    public static void waitForStatusChange(
+            String pvName, String expectedStatus, int maxTries, String mgmtUrl, long waitPeriodSeconds) {
         Awaitility.await()
                 .pollInterval(waitPeriodSeconds, TimeUnit.SECONDS)
                 .atMost(maxTries * waitPeriodSeconds, TimeUnit.SECONDS)
-                .untilAsserted(() ->
-                        Assert.assertEquals(
-                                expectedStatus,
-                                getCurentStatus(pvName, mgmtUrl)
-                        )
-                );
+                .untilAsserted(() -> Assertions.assertEquals(expectedStatus, getCurentStatus(pvName, mgmtUrl)));
     }
 
     private static String getCurentStatus(String pvName, String mgmtUrl) {
@@ -173,7 +184,6 @@ public class PVAccessUtil {
         logger.debug("status is " + curentStatus);
         return curentStatus;
     }
-
 
     /**
      * Bytes to string method for debugging the byte buffers.
@@ -187,42 +197,46 @@ public class PVAccessUtil {
         return Hexdump.toHexdump(buffer);
     }
 
-    public static PVAData fromGenericSampleValueToPVAData(SampleValue sampleValue, PVATypeRegistry types) throws Exception {
+    public static PVAData fromGenericSampleValueToPVAData(SampleValue sampleValue, PVATypeRegistry types)
+            throws Exception {
         ByteBuffer bytes = sampleValue.getValueAsBytes();
         var val = types.decodeType("struct name", bytes);
         val.decode(types, bytes);
         return val;
     }
+
     public static Map<Instant, PVAData> convertBytesToPVAStructure(Map<Instant, SampleValue> actualValues) {
         PVATypeRegistry types = new PVATypeRegistry();
-        return actualValues.entrySet().stream().map((e) -> {
-            try {
-                return Map.entry(e.getKey(), fromGenericSampleValueToPVAData(e.getValue(), types));
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return actualValues.entrySet().stream()
+                .map((e) -> {
+                    try {
+                        return Map.entry(e.getKey(), fromGenericSampleValueToPVAData(e.getValue(), types));
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private static PVAStructure getCurrentStatus(List<String> pvNames, PVAChannel pvaChannel) throws ExecutionException,
-            InterruptedException, TimeoutException, MustBeArrayException {
+    private static PVAStructure getCurrentStatus(List<String> pvNames, PVAChannel pvaChannel)
+            throws ExecutionException, InterruptedException, TimeoutException, MustBeArrayException {
 
-        PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaGetPVStatus.NAME)
+        PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable()
+                .name(PvaGetPVStatus.NAME)
                 .descriptor(PvaGetPVStatus.NAME)
                 .addColumn(new PVAStringArray("pv", pvNames.toArray(new String[0])))
                 .build();
         return pvaChannel.invoke(archivePvStatusReqTable).get(30, TimeUnit.SECONDS);
     }
 
-    public static HashMap<String, String> getStatuses(List<String> pvNamesAll, PVAChannel pvaChannel) throws ExecutionException, InterruptedException, TimeoutException, MustBeArrayException {
-        var statuses = NTUtil.extractStringArray(PVATable
-                .fromStructure(getCurrentStatus(pvNamesAll, pvaChannel))
-                .getColumn("status"));
-        var pvs = NTUtil.extractStringArray(PVATable
-                .fromStructure(getCurrentStatus(pvNamesAll, pvaChannel))
-                .getColumn("pv"));
+    public static HashMap<String, String> getStatuses(List<String> pvNamesAll, PVAChannel pvaChannel)
+            throws ExecutionException, InterruptedException, TimeoutException, MustBeArrayException {
+        var statuses = NTUtil.extractStringArray(
+                PVATable.fromStructure(getCurrentStatus(pvNamesAll, pvaChannel)).getColumn("status"));
+        var pvs = NTUtil.extractStringArray(
+                PVATable.fromStructure(getCurrentStatus(pvNamesAll, pvaChannel)).getColumn("pv"));
         var result = new HashMap<String, String>();
-        for (int i = 0; i<pvs.length; i++) {
+        for (int i = 0; i < pvs.length; i++) {
             result.put(pvs[i], statuses[i]);
         }
         return result;

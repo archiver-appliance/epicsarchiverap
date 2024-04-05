@@ -23,7 +23,8 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.python.google.common.collect.Lists;
 
 import java.time.Instant;
@@ -38,8 +39,6 @@ import static java.util.Map.entry;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 /**
  * Test for each pvAccess type that it can be archived successfully.
@@ -54,7 +53,7 @@ public class PVAccessTypesTest {
      * <p>
      * For example with maxInputNumber: 10, multiplier: 2, nOfArrayGroups: 2
      * returns {{2, 4, 6, 8, 10}, {12, 14, 16, 18, 20}}
-     * 
+     *
      * @param numberOfPartitions Amount of partitions
      * @param multiplier float multiplier to make values floats
      * @param partitionSize Size of each partition
@@ -68,7 +67,8 @@ public class PVAccessTypesTest {
         // with the previous value.
         // So the size of each array must be the same.
         return Lists.partition(
-                IntStream.range(0, numberOfPartitions * partitionSize).mapToDouble(i -> multiplier * i)
+                IntStream.range(0, numberOfPartitions * partitionSize)
+                        .mapToDouble(i -> multiplier * i)
                         .boxed()
                         .collect(Collectors.toList()),
                 partitionSize);
@@ -81,48 +81,55 @@ public class PVAccessTypesTest {
      * generated fake data to the PVAccess type.
      * Seconds goes over every waveform type, converting each array of the
      * generated fake data to the PVAccess type.
-     * 
+     *
      * @return input data
      */
     public static Map<ArchDBRTypes, List<PVAData>> data() {
         List<List<Double>> fakeData = fakeData(100, 1.1, 10);
         return Map.ofEntries(
-                entry(ArchDBRTypes.DBR_SCALAR_STRING,
+                entry(
+                        ArchDBRTypes.DBR_SCALAR_STRING,
                         fakeData.get(0).stream()
-                                .map((d) -> (PVAData) new PVAString(VALUE_STRING,
-                                        d.toString()))
+                                .map((d) -> (PVAData) new PVAString(VALUE_STRING, d.toString()))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_SCALAR_SHORT,
-                        fakeData.get(0).stream().map(Double::shortValue)
-                                .map((s) -> (PVAData) new PVAShort(VALUE_STRING, false,
-                                        s))
+                entry(
+                        ArchDBRTypes.DBR_SCALAR_SHORT,
+                        fakeData.get(0).stream()
+                                .map(Double::shortValue)
+                                .map((s) -> (PVAData) new PVAShort(VALUE_STRING, false, s))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_SCALAR_FLOAT,
-                        fakeData.get(0).stream().map(Double::floatValue)
+                entry(
+                        ArchDBRTypes.DBR_SCALAR_FLOAT,
+                        fakeData.get(0).stream()
+                                .map(Double::floatValue)
                                 .map((f) -> (PVAData) new PVAFloat(VALUE_STRING, f))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_SCALAR_BYTE,
-                        fakeData.get(0).stream().map(Double::byteValue)
-                                .map((b) -> (PVAData) new PVAByte(VALUE_STRING, false,
-                                        b))
+                entry(
+                        ArchDBRTypes.DBR_SCALAR_BYTE,
+                        fakeData.get(0).stream()
+                                .map(Double::byteValue)
+                                .map((b) -> (PVAData) new PVAByte(VALUE_STRING, false, b))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_SCALAR_INT,
-                        fakeData.get(0).stream().map(Double::intValue)
-                                .map((i) -> (PVAData) new PVAInt(VALUE_STRING, false,
-                                        i))
+                entry(
+                        ArchDBRTypes.DBR_SCALAR_INT,
+                        fakeData.get(0).stream()
+                                .map(Double::intValue)
+                                .map((i) -> (PVAData) new PVAInt(VALUE_STRING, false, i))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                entry(
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE,
                         fakeData.get(0).stream()
                                 .map((d) -> (PVAData) new PVADouble(VALUE_STRING, d))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_WAVEFORM_STRING,
-                     fakeData.stream()
-                             .map((dArray) -> (PVAData) new PVAStringArray(
-                                     VALUE_STRING,
-                                     dArray.stream().map(Object::toString)
-                                             .toArray(String[]::new)))
-                             .toList()),
-                entry(ArchDBRTypes.DBR_WAVEFORM_SHORT,
+                entry(
+                        ArchDBRTypes.DBR_WAVEFORM_STRING,
+                        fakeData.stream()
+                                .map((dArray) -> (PVAData) new PVAStringArray(
+                                        VALUE_STRING,
+                                        dArray.stream().map(Object::toString).toArray(String[]::new)))
+                                .toList()),
+                entry(
+                        ArchDBRTypes.DBR_WAVEFORM_SHORT,
                         fakeData.stream()
                                 .map((dArray) -> {
                                     short[] array = new short[dArray.size()];
@@ -131,10 +138,11 @@ public class PVAccessTypesTest {
                                         array[count] = d.shortValue();
                                         count++;
                                     }
-                                    return (PVAData) new PVAShortArray(VALUE_STRING,
-                                            false, array);
-                                }).toList()),
-                entry(ArchDBRTypes.DBR_WAVEFORM_FLOAT,
+                                    return (PVAData) new PVAShortArray(VALUE_STRING, false, array);
+                                })
+                                .toList()),
+                entry(
+                        ArchDBRTypes.DBR_WAVEFORM_FLOAT,
                         fakeData.stream()
                                 .map((dArray) -> {
                                     float[] array = new float[dArray.size()];
@@ -143,10 +151,11 @@ public class PVAccessTypesTest {
                                         array[count] = d.floatValue();
                                         count++;
                                     }
-                                    return (PVAData) new PVAFloatArray(VALUE_STRING,
-                                            array);
-                                }).toList()),
-                entry(ArchDBRTypes.DBR_WAVEFORM_BYTE,
+                                    return (PVAData) new PVAFloatArray(VALUE_STRING, array);
+                                })
+                                .toList()),
+                entry(
+                        ArchDBRTypes.DBR_WAVEFORM_BYTE,
                         fakeData.stream()
                                 .map((dArray) -> {
                                     byte[] array = new byte[dArray.size()];
@@ -155,22 +164,27 @@ public class PVAccessTypesTest {
                                         array[count] = d.byteValue();
                                         count++;
                                     }
-                                    return (PVAData) new PVAByteArray(VALUE_STRING,
-                                            false, array);
-                                }).toList()),
-                entry(ArchDBRTypes.DBR_WAVEFORM_INT,
+                                    return (PVAData) new PVAByteArray(VALUE_STRING, false, array);
+                                })
+                                .toList()),
+                entry(
+                        ArchDBRTypes.DBR_WAVEFORM_INT,
                         fakeData.stream()
-                                .map((dArray) -> (PVAData) new PVAIntArray(VALUE_STRING,
+                                .map((dArray) -> (PVAData) new PVAIntArray(
+                                        VALUE_STRING,
                                         false,
-                                        dArray.stream().mapToInt(
-                                                        Double::intValue)
+                                        dArray.stream()
+                                                .mapToInt(Double::intValue)
                                                 .toArray()))
                                 .toList()),
-                entry(ArchDBRTypes.DBR_WAVEFORM_DOUBLE,
-                        fakeData.stream().map((dArray) -> (PVAData) new PVADoubleArray(
-                                VALUE_STRING,
-                                dArray.stream().mapToDouble(Double::doubleValue)
-                                        .toArray()))
+                entry(
+                        ArchDBRTypes.DBR_WAVEFORM_DOUBLE,
+                        fakeData.stream()
+                                .map((dArray) -> (PVAData) new PVADoubleArray(
+                                        VALUE_STRING,
+                                        dArray.stream()
+                                                .mapToDouble(Double::doubleValue)
+                                                .toArray()))
                                 .toList()));
     }
 
@@ -185,17 +199,16 @@ public class PVAccessTypesTest {
      *  5. Send data from inputData
      *  6. Convert Received Data into a hashmap
      *  7. Test received and sent data are the same
-     * 
-     * @param configService Archiver to send pv to 
+     *
+     * @param configService Archiver to send pv to
      * @param server a pvAccess server
      * @param type Type of pv
      * @param inputData Input data to archive
      * @throws InterruptedException throw if interrupted
      */
-    public void singlePVTest(ConfigService configService, PVAServer server, ArchDBRTypes type,
-            List<PVAData> inputData) throws Exception {
-        String pvName = "PV:" + inputData.get(0).getClass().getSimpleName() + ":"
-                + UUID.randomUUID();
+    public void singlePVTest(ConfigService configService, PVAServer server, ArchDBRTypes type, List<PVAData> inputData)
+            throws Exception {
+        String pvName = "PV:" + inputData.get(0).getClass().getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for type " + type + " with pv " + pvName);
         PVAData value = inputData.get(0).cloneData();
@@ -205,8 +218,7 @@ public class PVAccessTypesTest {
         PVATimeStamp timeStamp = new PVATimeStamp(instant);
         String struct_name = type.isWaveForm() ? "epics:nt/NTScalarArray:1.0" : "epics:nt/NTScalar:1.0";
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-        PVAStructure data = new PVAStructure("demo", struct_name, value,
-                timeStamp, alarm);
+        PVAStructure data = new PVAStructure("demo", struct_name, value, timeStamp, alarm);
 
         ServerPV serverPV = server.createPV(pvName, data);
 
@@ -220,7 +232,7 @@ public class PVAccessTypesTest {
             try {
                 newValue.setValue(input);
             } catch (Exception e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
             instant = Instant.now();
             expectedData.put(instant, formatInput(newValue));
@@ -228,15 +240,15 @@ public class PVAccessTypesTest {
             try {
                 serverPV.update(data);
             } catch (Exception e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
         }
         Thread.sleep(samplingPeriodMilliSeconds);
 
-        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
-        assertEquals(expectedData, actualValues);
+        Assertions.assertEquals(expectedData, actualValues);
     }
 
     /**
@@ -248,7 +260,7 @@ public class PVAccessTypesTest {
      * Run tests
      * <p>
      * Shuts down server and archiver
-     * 
+     *
      * @throws Exception Generic exception
      */
     @Test
@@ -265,5 +277,4 @@ public class PVAccessTypesTest {
         configService.shutdownNow();
         server.close();
     }
-
 }

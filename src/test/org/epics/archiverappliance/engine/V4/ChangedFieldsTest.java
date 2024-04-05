@@ -32,9 +32,10 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -44,9 +45,6 @@ import java.util.stream.Collectors;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedEvents;
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test to check the metadata stored with the pv as it changes
@@ -59,13 +57,13 @@ public class ChangedFieldsTest {
     private ConfigService configService;
     private PVAServer pvaServer;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
         pvaServer = new PVAServer();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         configService.shutdownNow();
         pvaServer.close();
@@ -80,41 +78,34 @@ public class ChangedFieldsTest {
     @Test
     public void testSetFieldValues() throws Exception {
 
-        String pvName = "PV:" + ChangedFieldsTest.class.getName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + ChangedFieldsTest.class.getName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
         Instant firstInstant = Instant.now();
         PVATimeStamp timeStamp = new PVATimeStamp(firstInstant);
         String struct_name = "epics:nt/NTScalar:1.0";
         var value = new PVAString("value", "value string");
-        var alarm = new PVAStructure("alarm", "alarm_t",
-                new PVAInt("status", 0), new PVAInt("severity", 0));
+        var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
 
         var limitLow = new PVADouble("limitLow", 1.0);
         var limitHigh = new PVADouble("limitHigh", 1.0);
         var description = new PVAString("description", "DESC");
         var units = new PVAString("units", "kHz");
-        var display = new PVAStructure("display", "display_t",
-                limitLow,
-                limitHigh,
-                description,
-                units);
+        var display = new PVAStructure("display", "display_t", limitLow, limitHigh, description, units);
 
         var c_limitLow = new PVADouble("limitLow", 1.0);
         var c_limitHigh = new PVADouble("limitHigh", 1.0);
         var minStep = new PVADouble("minStep", 1.0);
-        var control = new PVAStructure("control", "control_t",
-                c_limitLow,
-                c_limitHigh,
-                minStep);
+        var control = new PVAStructure("control", "control_t", c_limitLow, c_limitHigh, minStep);
 
         var lowAlarmLimit = new PVAInt("lowAlarmLimit", 1);
         var lowWarningLimit = new PVAInt("lowWarningLimit", 1);
         var highWarningLimit = new PVAInt("highWarningLimit", 1);
         var highAlarmLimit = new PVAInt("highAlarmLimit", 1);
         var hysteresis = new PVAInt("hysteresis", 1);
-        var valueAlarm = new PVAStructure("valueAlarm", "valueAlarm_t",
+        var valueAlarm = new PVAStructure(
+                "valueAlarm",
+                "valueAlarm_t",
                 lowAlarmLimit,
                 lowWarningLimit,
                 highWarningLimit,
@@ -124,8 +115,17 @@ public class ChangedFieldsTest {
         var extraString = new PVAString("extra", "extra value");
         var extraArchivedString = new PVAString("extraArchived", "extra archived value");
 
-        PVAStructure pvaStructure = new PVAStructure("struct name", struct_name, value,
-                timeStamp, alarm, display, control, valueAlarm, extraString, extraArchivedString);
+        PVAStructure pvaStructure = new PVAStructure(
+                "struct name",
+                struct_name,
+                value,
+                timeStamp,
+                alarm,
+                display,
+                control,
+                valueAlarm,
+                extraString,
+                extraArchivedString);
 
         HashMap<Instant, HashMap<String, String>> expectedInstantFieldValues = new HashMap<>();
         HashMap<String, String> initFieldValues = new HashMap<>();
@@ -158,19 +158,19 @@ public class ChangedFieldsTest {
 
         var type = ArchDBRTypes.DBR_SCALAR_STRING;
         MemBufWriter writer = new MemBufWriter(pvName, type);
-        startArchivingPV(pvName, writer, configService, type, true, new String[]{"extraArchived", "noMetaField"});
+        startArchivingPV(pvName, writer, configService, type, true, new String[] {"extraArchived", "noMetaField"});
         long samplingPeriodMilliSeconds = 100;
         try {
             value.setValue(new PVAString("value", "2 value string"));
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         Instant instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         expectedInstantFieldValues.put(instant, new HashMap<>());
@@ -193,14 +193,14 @@ public class ChangedFieldsTest {
             hysteresis.set(2);
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         HashMap<String, String> allFields = new HashMap<>();
         expectedInstantFieldValues.put(instant, allFields);
@@ -211,14 +211,14 @@ public class ChangedFieldsTest {
             extraString.set("2.0");
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
 
         // Update extraArchived field
@@ -227,14 +227,14 @@ public class ChangedFieldsTest {
             extraArchivedString.set("extraArchived2");
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         HashMap<String, String> extraFields = new HashMap<>();
         extraFields.put("extraArchived", "extraArchived2");
@@ -247,14 +247,14 @@ public class ChangedFieldsTest {
             limitHigh.set(3.0);
 
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         instant = Instant.now();
         timeStamp.set(instant);
         try {
             serverPV.update(pvaStructure);
         } catch (Exception e) {
-            fail(e.getMessage());
+            Assertions.fail(e.getMessage());
         }
         HashMap<String, String> oneField = new HashMap<>();
         oneField.put("HOPR", "3.0");
@@ -265,9 +265,9 @@ public class ChangedFieldsTest {
         double secondsToBuffer = configService.getEngineContext().getWritePeriod();
         // Need to wait for the writer to write all the received data.
         Thread.sleep((long) secondsToBuffer * 1000);
-        Map<Instant, HashMap<String, String>> actualValues = getReceivedEvents(writer, configService).entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, (e) -> ((DBRTimeEvent) e.getValue()).getFields()));
+        Map<Instant, HashMap<String, String>> actualValues =
+                getReceivedEvents(writer, configService).entrySet().stream()
+                        .collect(Collectors.toMap(Map.Entry::getKey, (e) -> ((DBRTimeEvent) e.getValue()).getFields()));
 
         logger.info("expectedValues: " + expectedInstantFieldValues);
         logger.info("actualValues: " + actualValues);
@@ -276,13 +276,13 @@ public class ChangedFieldsTest {
             logger.info("For time " + e.getKey() + " expected " + e.getValue() + " actual " + actualMap);
             for (var v : e.getValue().entrySet()) {
                 if (v.getKey().equals("cnxregainedepsecs")) {
-                    assertTrue(Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey()))) < 10);
+                    Assertions.assertTrue(
+                            Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey())))
+                                    < 10);
                 } else {
-                    assertEquals(v.getValue(), actualMap.get(v.getKey()));
+                    Assertions.assertEquals(v.getValue(), actualMap.get(v.getKey()));
                 }
             }
-
         }
     }
-
 }
