@@ -25,101 +25,96 @@ import java.util.concurrent.TimeUnit;
 
 import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.fail;
-
 /**
  * {@link PvaGetArchivedPVs}
- * 
+ *
  * @author Kunal Shroff
  *
  */
-@Tag("integration")@Tag("localEpics")
+@Tag("integration")
+@Tag("localEpics")
 public class PvaGetArchivedPVsTest {
 
-	private static final Logger logger = LogManager.getLogger(PvaGetArchivedPVsTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(PvaGetArchivedPVsTest.class.getName());
 
-	static TomcatSetup tomcatSetup = new TomcatSetup();
-	static SIOCSetup siocSetup = new SIOCSetup();
+    static TomcatSetup tomcatSetup = new TomcatSetup();
+    static SIOCSetup siocSetup = new SIOCSetup();
 
-	private static PVAClient pvaClient;
-	private static PVAChannel pvaChannel;
+    private static PVAClient pvaClient;
+    private static PVAChannel pvaChannel;
 
-	@BeforeAll
-	public static void setup() {
-		logger.info("Set up for the PvaGetArchivedPVsTest");
-		try {
-			siocSetup.startSIOCWithDefaultDB();
-			tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
+    @BeforeAll
+    public static void setup() {
+        logger.info("Set up for the PvaGetArchivedPVsTest");
+        try {
+            siocSetup.startSIOCWithDefaultDB();
+            tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
 
-			pvaClient = new PVAClient();
-			pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
-			pvaChannel.connect().get(5, TimeUnit.SECONDS);
-		} catch (Exception e) {
-			logger.log(Level.FATAL, e.getMessage(), e);
-		}
-	}
+            pvaClient = new PVAClient();
+            pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
+            pvaChannel.connect().get(5, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            logger.log(Level.FATAL, e.getMessage(), e);
+        }
+    }
 
-	@AfterAll
-	public static void tearDown() {
-		logger.info("Tear Down for the PvaGetArchivedPVsTest");
-		try {
-			pvaChannel.close();
-			pvaClient.close();
-			tomcatSetup.tearDown();
-			siocSetup.stopSIOC();
-		} catch (Exception e) {
-			logger.log(Level.FATAL, e.getMessage(), e);
-		}
-	}
+    @AfterAll
+    public static void tearDown() {
+        logger.info("Tear Down for the PvaGetArchivedPVsTest");
+        try {
+            pvaChannel.close();
+            pvaClient.close();
+            tomcatSetup.tearDown();
+            siocSetup.stopSIOC();
+        } catch (Exception e) {
+            logger.log(Level.FATAL, e.getMessage(), e);
+        }
+    }
 
-	@Test
-	public void archivedPVTest() {
-		List<String> pvNamesAll = new ArrayList<String>(1000);
-		List<String> pvNamesEven = new ArrayList<String>(500);
-		List<String> pvNamesOdd = new ArrayList<String>(500);
-		List<String> expectedStatus = new ArrayList<String>(1000);
-		for (int i = 0; i < 1000; i++) {
-			pvNamesAll.add("test_" + i);
-			if (i % 2 == 0) {
-				pvNamesEven.add("test_" + i);
-				expectedStatus.add("Archived");
-			} else {
-				pvNamesOdd.add("test_" + i);
-				expectedStatus.add("Not Archived");
-			}
-		}
+    @Test
+    public void archivedPVTest() {
+        List<String> pvNamesAll = new ArrayList<String>(1000);
+        List<String> pvNamesEven = new ArrayList<String>(500);
+        List<String> pvNamesOdd = new ArrayList<String>(500);
+        List<String> expectedStatus = new ArrayList<String>(1000);
+        for (int i = 0; i < 1000; i++) {
+            pvNamesAll.add("test_" + i);
+            if (i % 2 == 0) {
+                pvNamesEven.add("test_" + i);
+                expectedStatus.add("Archived");
+            } else {
+                pvNamesOdd.add("test_" + i);
+                expectedStatus.add("Not Archived");
+            }
+        }
 
-		try {
-			// Submit all the even named pv's to be archived
-			PVATable archivePvReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
-					.descriptor(PvaArchivePVAction.NAME)
-					.addColumn(new PVAStringArray("pv", pvNamesEven.toArray(new String[pvNamesEven.size()])))
-					.build();
-			pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
+        try {
+            // Submit all the even named pv's to be archived
+            PVATable archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
+                    .name(PvaArchivePVAction.NAME)
+                    .descriptor(PvaArchivePVAction.NAME)
+                    .addColumn(new PVAStringArray("pv", pvNamesEven.toArray(new String[pvNamesEven.size()])))
+                    .build();
+            pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
 
-			// Wait 2 mins for the pv's to start archiving
-			Thread.sleep(2*60*1000);
+            // Wait 2 mins for the pv's to start archiving
+            Thread.sleep(2 * 60 * 1000);
 
-			archivePvReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
-					.descriptor(PvaGetArchivedPVs.NAME)
-					.addColumn(new PVAStringArray("pv", pvNamesAll.toArray(new String[pvNamesAll.size()])))
-					.build();
-			PVAStructure result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
-            Assertions.assertArrayEquals(pvNamesAll.toArray(new String[1000]),
-					NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("pv")));
-            Assertions.assertArrayEquals(expectedStatus.toArray(new String[1000]),
-					NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("status")));
-		} catch (Exception e) {
-			e.printStackTrace();
-			Assertions.fail(e.getMessage());
-		}
-
-	}
-
+            archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
+                    .name(PvaArchivePVAction.NAME)
+                    .descriptor(PvaGetArchivedPVs.NAME)
+                    .addColumn(new PVAStringArray("pv", pvNamesAll.toArray(new String[pvNamesAll.size()])))
+                    .build();
+            PVAStructure result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
+            Assertions.assertArrayEquals(
+                    pvNamesAll.toArray(new String[1000]),
+                    NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("pv")));
+            Assertions.assertArrayEquals(
+                    expectedStatus.toArray(new String[1000]),
+                    NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("status")));
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assertions.fail(e.getMessage());
+        }
+    }
 }

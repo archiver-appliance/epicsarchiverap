@@ -26,6 +26,5 @@ public class NTUtilTest {
         assertEquals(Arrays.asList(strings), NTUtil.extractStringList(stringArray));
         PVAStringArray emptyArray = new PVAStringArray("name");
         assertEquals(Arrays.asList(new String[0]), NTUtil.extractStringList(emptyArray));
-
     }
 }
