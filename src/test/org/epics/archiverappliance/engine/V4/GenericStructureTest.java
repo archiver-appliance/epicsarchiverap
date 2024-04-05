@@ -75,13 +75,12 @@ public class GenericStructureTest {
     }
 
     private String structureJson(Instant instant, String value) {
-        String json = "{\"alarm\"" +
-                ":{\"severity\":0,\"status\":0}," +
-                "\"structure\":{\"level 1\":\"%s\"," +
-                "\"level 2\":{\"level 2.1\":\"level 2.1 0\"," +
-                "\"level 2.2\":\"level 2.2 0\"}}," +
-                "\"timeStamp\":{\"nanoseconds\":%d,\"secondsPastEpoch\":%d,\"userTag\":0}}";
-        return String.format(json,value, instant.getNano()  ,instant.getEpochSecond());
+        String json = "{\"alarm\"" + ":{\"severity\":0,\"status\":0},"
+                + "\"structure\":{\"level 1\":\"%s\","
+                + "\"level 2\":{\"level 2.1\":\"level 2.1 0\","
+                + "\"level 2.2\":\"level 2.2 0\"}},"
+                + "\"timeStamp\":{\"nanoseconds\":%d,\"secondsPastEpoch\":%d,\"userTag\":0}}";
+        return String.format(json, value, instant.getNano(), instant.getEpochSecond());
     }
 
     private PVAStructure testStructure(Instant instant) {
@@ -92,14 +91,10 @@ public class GenericStructureTest {
         var level22 = new PVAString("level 2.2", "level 2.2 0");
         var level2 = new PVAStructure("level 2", "struct_level_2", level21, level22);
         var value = new PVAStructure("structure", "structure_name", level1, level2);
-        var alarm = new PVAStructure("alarm", "alarm_t",
-                new PVAInt("status", 0), new PVAInt("severity", 0));
+        var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
 
-        return new PVAStructure("struct name", struct_name, value,
-                timeStamp, alarm);
-
+        return new PVAStructure("struct name", struct_name, value, timeStamp, alarm);
     }
-
 
     /**
      * Test that output of a generic structure stays consistent.
@@ -109,8 +104,7 @@ public class GenericStructureTest {
     @Test
     public void testGenericStructureDecoding() throws Exception {
 
-        String pvName = "PV:" + GenericStructureTest.class.getSimpleName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + GenericStructureTest.class.getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
 
@@ -124,7 +118,7 @@ public class GenericStructureTest {
 
         var type = ArchDBRTypes.DBR_V4_GENERIC_BYTES;
         MemBufWriter writer = new MemBufWriter(pvName, type);
-        startArchivingPV(pvName, writer,configService, type);
+        startArchivingPV(pvName, writer, configService, type);
 
         var entry = updateStructure(pvaStructure, serverPV);
         expectedStructure.put(entry.getKey(), entry.getValue());
@@ -135,7 +129,6 @@ public class GenericStructureTest {
         assertEquals(expectedStructure, convertedActualValues);
     }
 
-
     private ByteBuffer encodedStructure(PVAStructure expectedStructure) throws Exception {
         ByteBuffer buffer = ByteBuffer.allocate(512);
         expectedStructure.encodeType(buffer, new BitSet());
@@ -143,9 +136,6 @@ public class GenericStructureTest {
         buffer.flip();
         return buffer;
     }
-
-
-
 
     /**
      * Test for a pv changing other values than 'value'
@@ -155,8 +145,7 @@ public class GenericStructureTest {
     @Test
     public void testJSONOutput() throws Exception {
 
-        String pvName = "PV:" + ChangedFieldsTest.class.getName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + ChangedFieldsTest.class.getName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
 
@@ -168,10 +157,14 @@ public class GenericStructureTest {
 
         var type = ArchDBRTypes.DBR_V4_GENERIC_BYTES;
         MemBufWriter writer = new MemBufWriter(pvName, type);
-        startArchivingPV(pvName, writer,configService,  type);
+        startArchivingPV(pvName, writer, configService, type);
 
         var entry = updateStructure(pvaStructure, serverPV);
-        expectedStructure.put(entry.getKey(), structureJson(entry.getKey(), ((PVAString) ((PVAStructure) entry.getValue().get("structure")).get("level 1")).get()));
+        expectedStructure.put(
+                entry.getKey(),
+                structureJson(
+                        entry.getKey(),
+                        ((PVAString) ((PVAStructure) entry.getValue().get("structure")).get("level 1")).get()));
 
         Map<Instant, SampleValue> actualValues = getReceivedValues(writer, configService);
         Map<Instant, String> jsonActualValues = convertToJSON(actualValues);
@@ -181,9 +174,8 @@ public class GenericStructureTest {
     }
 
     private Map<Instant, String> convertToJSON(Map<Instant, SampleValue> actualValues) {
-        return actualValues.entrySet().stream().map((e) ->
-                Map.entry(e.getKey(), e.getValue().toJSONString())
-        ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return actualValues.entrySet().stream()
+                .map((e) -> Map.entry(e.getKey(), e.getValue().toJSONString()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-
 }
