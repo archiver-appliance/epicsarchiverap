@@ -191,20 +191,6 @@ public class DataRetrievalServlet extends HttpServlet {
         return new RetrievalExecutorResult(new CurrentThreadExecutorService(), requestTimes);
     }
 
-    static Instant fromString(String timestampString, Instant defaultTime) throws IllegalArgumentException {
-
-        // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
-        Instant res = defaultTime;
-        if (timestampString != null) {
-            try {
-                res = TimeUtils.convertFromISO8601String(timestampString);
-            } catch (IllegalArgumentException ex) {
-                res = TimeUtils.convertFromDateTimeStringWithOffset(timestampString);
-            }
-        }
-        return res;
-    }
-
     private static void consolidateEventStream(
             HttpServletResponse resp,
             String pvName,
@@ -687,7 +673,7 @@ public class DataRetrievalServlet extends HttpServlet {
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
         Instant end;
         try {
-            end = fromString(req.getParameter("to"), TimeUtils.plusHours(TimeUtils.now(), 1));
+            end = TimeUtils.fromString(req.getParameter("to"), TimeUtils.plusHours(TimeUtils.now(), 1));
         } catch (IllegalArgumentException ex) {
             logAndRespond("Cannot parse time" + req.getParameter("to"), ex, resp, HttpServletResponse.SC_BAD_REQUEST);
             return null;
@@ -695,7 +681,7 @@ public class DataRetrievalServlet extends HttpServlet {
         // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
         Instant start;
         try {
-            start = fromString(req.getParameter("from"), TimeUtils.minusDays(end, 1));
+            start = TimeUtils.fromString(req.getParameter("from"), TimeUtils.minusDays(end, 1));
         } catch (IllegalArgumentException ex) {
             logAndRespond("Cannot parse time" + req.getParameter("from"), ex, resp, HttpServletResponse.SC_BAD_REQUEST);
             return null;
