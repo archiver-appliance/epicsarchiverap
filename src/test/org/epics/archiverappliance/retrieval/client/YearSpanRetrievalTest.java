@@ -31,7 +31,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Instant;
@@ -88,7 +87,11 @@ public class YearSpanRetrievalTest {
             }
 
             SimulationEventStream simstream = new SimulationEventStream(
-                    ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), TimeUtils.getStartOfYear(2010), TimeUtils.getEndOfYear(2013), 1);
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    new SineGenerator(0),
+                    TimeUtils.getStartOfYear(2010),
+                    TimeUtils.getEndOfYear(2013),
+                    1);
             // The pbplugin should handle all the rotation etc.
             try (BasicContext context = new BasicContext()) {
                 pbplugin.appendData(context, "--ArchUnitTestyspan", simstream);
@@ -110,7 +113,7 @@ public class YearSpanRetrievalTest {
         EventStream stream = null;
         try {
             stream = rawDataRetrieval.getDataForPVS(
-                    new String[]{ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan"},
+                    new String[] {ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan"},
                     start,
                     end,
                     new RetrievalEventProcessor() {

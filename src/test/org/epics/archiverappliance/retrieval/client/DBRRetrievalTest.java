@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -34,17 +33,20 @@ import java.util.LinkedList;
  */
 @Tag("integration")
 public class DBRRetrievalTest {
-	private static final Logger logger = LogManager.getLogger(DBRRetrievalTest.class.getName());
-	TomcatSetup tomcatSetup = new TomcatSetup();
-	private final LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
+    private static final Logger logger = LogManager.getLogger(DBRRetrievalTest.class.getName());
+    TomcatSetup tomcatSetup = new TomcatSetup();
+    private final LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
 
+    @BeforeEach
+    public void setUp() throws Exception {
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		
-		for (ArchDBRTypes type : ArchDBRTypes.values()) {
-			dataDBRs.add(new DataDBR(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + (type.isWaveForm() ? "V_" : "S_") + type.getPrimitiveName(), type));
-		}
+        for (ArchDBRTypes type : ArchDBRTypes.values()) {
+            dataDBRs.add(new DataDBR(
+                    ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
+                            + (type.isWaveForm() ? "V_" : "S_")
+                            + type.getPrimitiveName(),
+                    type));
+        }
 
         for (DataDBR dataDBR : dataDBRs) {
             GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type);
@@ -52,48 +54,51 @@ public class DBRRetrievalTest {
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		tomcatSetup.tearDown();
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        tomcatSetup.tearDown();
+    }
 
-	@Test
-	public void testGetDataForDBRs() {
-		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
+    @Test
+    public void testGetDataForDBRs() {
+        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
         Instant start = TimeUtils.convertFromISO8601String(TimeUtils.getCurrentYear() + "-02-01T08:00:00.000Z");
         Instant end = TimeUtils.convertFromISO8601String(TimeUtils.getCurrentYear() + "-02-02T08:00:00.000Z");
-		
-		for(DataDBR dataDBR : dataDBRs) {
-			EventStream stream = null;
-			try {
-				logger.info("Testing retrieval for DBR " + dataDBR.type.toString());
-				stream = rawDataRetrieval.getDataForPVS(new String[] { dataDBR.pvName }, start, end, new RetrievalEventProcessor() {
-					@Override
-					public void newPVOnStream(EventStreamDesc desc) {
-						logger.info("Getting data for PV " + desc.getPvName());
-					}
-				});
 
-				long previousEpochSeconds = 0; 
-				
-				// Make sure we get the DBR type we expect
-				Assertions.assertEquals(stream.getDescription().getArchDBRType(), dataDBR.type);
+        for (DataDBR dataDBR : dataDBRs) {
+            EventStream stream = null;
+            try {
+                logger.info("Testing retrieval for DBR " + dataDBR.type.toString());
+                stream = rawDataRetrieval.getDataForPVS(
+                        new String[] {dataDBR.pvName}, start, end, new RetrievalEventProcessor() {
+                            @Override
+                            public void newPVOnStream(EventStreamDesc desc) {
+                                logger.info("Getting data for PV " + desc.getPvName());
+                            }
+                        });
 
-				// We are making sure that the stream we get back has times in sequential order...
-				for(Event e : stream) {
-					long actualSeconds = e.getEpochSeconds();
-					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
-					previousEpochSeconds = actualSeconds;
-				}
-            } finally {
-                if (stream != null) try {
-                    stream.close();
-                    stream = null;
-                } catch (Throwable t) {
+                long previousEpochSeconds = 0;
+
+                // Make sure we get the DBR type we expect
+                Assertions.assertEquals(stream.getDescription().getArchDBRType(), dataDBR.type);
+
+                // We are making sure that the stream we get back has times in sequential order...
+                for (Event e : stream) {
+                    long actualSeconds = e.getEpochSeconds();
+                    Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
+                    previousEpochSeconds = actualSeconds;
                 }
+            } finally {
+                if (stream != null)
+                    try {
+                        stream.close();
+                        stream = null;
+                    } catch (Throwable t) {
+                    }
             }
-		}
-	}
+        }
+    }
 
     private static final class DataDBR {
         String pvName;
@@ -104,5 +109,4 @@ public class DBRRetrievalTest {
             this.type = type;
         }
     }
-
 }
