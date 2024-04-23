@@ -342,27 +342,6 @@ public class DefaultConfigService implements ConfigService {
             configlogger.fatal("Exception loading the appliance properties file", ex);
         }
 
-        switch (contextPath) {
-            case "/mgmt":
-                warFile = WAR_FILE.MGMT;
-                this.mgmtRuntime = new MgmtRuntimeState(this);
-                break;
-            case "/engine":
-                warFile = WAR_FILE.ENGINE;
-                this.engineContext = new EngineContext(this);
-                break;
-            case "/retrieval":
-                warFile = WAR_FILE.RETRIEVAL;
-                this.retrievalState = new RetrievalState(this);
-                break;
-            case "/etl":
-                this.etlPVLookup = new PBThreeTierETLPVLookup(this);
-                warFile = WAR_FILE.ETL;
-                break;
-            default:
-                logger.error("We seem to have introduced a new component into the system " + contextPath);
-        }
-
         String pvName2KeyMappingClass =
                 this.getInstallationProperties().getProperty(ARCHAPPL_PVNAME_TO_KEY_MAPPING_CLASSNAME);
         if (pvName2KeyMappingClass == null || pvName2KeyMappingClass.isEmpty()) {
