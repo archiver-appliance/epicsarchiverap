@@ -24,7 +24,10 @@ To build simply run:
 gradle
 ```
 
-The resulting distribution can then be found in the `build/distributions` folder.
+The resulting distribution can then be found in the `build/distributions` folder. To build for a sitespecific customised
+version, set the environment variable ARCHAPPL_SITEID to a folder name in `src/sitespecific`. There is an example
+custom build in `src/sitespecific/slacdev`.
+
 ### Formatting
 
 This project uses [spotless](https://github.com/diffplug/spotless) to aim towards a standardised formatting.
