@@ -107,8 +107,7 @@ public class SimulationEvent implements DBRTimeEvent {
     }
 
     @Override
-    public void setRepeatCount(int repeatCount) {
-    }
+    public void setRepeatCount(int repeatCount) {}
 
     @Override
     public long getEpochSeconds() {
