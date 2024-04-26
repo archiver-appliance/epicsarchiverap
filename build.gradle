@@ -45,8 +45,10 @@ def stageDir = layout.projectDirectory.file("build/stage")
 def srcDir = layout.projectDirectory.file("src/main")
 def libDir = layout.projectDirectory.file("lib")
 def apiDocsDir = layout.projectDirectory.file("docs/api")
-def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
+def archapplsite = System.getenv("ARCHAPPL_SITEID") ? System.getenv("ARCHAPPL_SITEID") : "tests"
 
+ant.stage = stageDir
+ant.archapplsite = archapplsite
 ant.importBuild("build.xml")
 
 repositories {
@@ -100,6 +102,7 @@ dependencies {
 	permitUnusedDeclared("org.apache.logging.log4j:log4j-jul:2.20.0")
 	runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
 	runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 	implementation("com.opencsv:opencsv:5.7.1")
 	implementation("com.google.protobuf:protobuf-java:3.23.0")
 	testImplementation("commons-cli:commons-cli:1.5.0")
@@ -192,6 +195,12 @@ tasks.register("zipSvgViewer", Zip) {
 	from layout.projectDirectory.dir("svg_viewer")
 }
 
+tasks.register("sitespecificantscript") {
+	dependsOn("stage")
+	ant.classes = sourceSets.main.runtimeClasspath.asPath
+	finalizedBy "sitespecificbuild"
+}
+
 tasks.register("stage") {
 	group = "Staging"
 	description = "Copy static content from each of the projects into the staging directory."
@@ -232,7 +241,7 @@ tasks.register("generateReleaseNotes", Exec) {
  * Common parts to all the war building.
  */
 tasks.withType(War).configureEach {
-	dependsOn "stage"
+	dependsOn "stage", "sitespecificantscript"
 	from("${stageDir}/org/epics/archiverappliance/staticcontent") {
 		into "ui/comm"
 	}
@@ -526,7 +535,7 @@ spotless {
 		endWithNewline()
 	}
 	format 'styling', {
-		target 'docs/*.html', 'docs/*.css', 'docs/arch/docs.js', 'src/**/*.html', 'src/**/*.js', 'src/**/*.css'
+		target 'docs/*.html', 'docs/*.css', 'docs/arch/docs.js', 'src/main/**/*.html', 'src/main/**/*.js', 'src/main/**/*.css'
 		prettier()
 	}
 	java {

@@ -1,0 +1,72 @@
+html {
+  background: #b2b2b2;
+}
+
+body {
+  background: white;
+  color: black;
+  width: 1024px;
+  margin: 0 auto;
+  padding-bottom: 50px;
+  font-family: Helvetica, Arial, "Liberation Sans", FreeSans, sans-serif;
+  font-size: 13px;
+}
+
+.page {
+  min-height: 600px;
+}
+
+.pageheader {
+  height: 80px;
+}
+
+.apptitle {
+  padding-left: 0.5em;
+  padding-top: 0.75em;
+  font-family: Garamond, serif;
+  color: #0f687e;
+  font-size: 30px;
+  display: inline-block;
+}
+
+#siteimages {
+  float: right;
+  padding-top: 0.75em;
+}
+
+div.nav {
+  overflow: hidden;
+  display: block;
+  height: 30px;
+  background: transparent url(../img/nav-bar-bg.gif) repeat-x top left;
+  margin-bottom: 20px;
+}
+
+ul.mainmenu {
+  list-style-position: inside;
+  margin: 0;
+  padding: 0;
+  padding-left: 5px;
+  font-weight: bold;
+  color: white;
+}
+
+ul.mainmenu li,
+ul.mainmenu li a,
+ul.mainmenu li a:visited {
+  display: inline;
+  line-height: 29px;
+  padding: 0 0 0 0;
+  padding-left: 0.5em;
+  list-style-type: none;
+  text-decoration: none;
+  color: white;
+}
+
+#navigation li {
+  display: inline;
+}
+
+.dialogheader {
+  font-size: medium;
+}

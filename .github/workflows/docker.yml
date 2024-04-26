@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   epicstests:
+    name: Run all unit tests reliant on EPICS install
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
