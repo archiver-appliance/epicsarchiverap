@@ -1,15 +1,15 @@
 /*******************************************************************************
-
+ *
  * Copyright (c) 2010 Oak Ridge National Laboratory.
-
+ *
  * All rights reserved. This program and the accompanying materials
-
+ *
  * are made available under the terms of the Eclipse Public License v1.0
-
+ *
  * which accompanies this distribution, and is available at
-
+ *
  * http://www.eclipse.org/legal/epl-v10.html
-
+ *
  ******************************************************************************/
 package org.epics.archiverappliance.engine.model;
 
@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Base for archived channels. An ArchiveChannel has
  * <ol>
@@ -53,7 +54,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @version Initial version:CSS
  * @version 4-Jun-2012, Luofeng Li:added codes to support for the new archiver
  */
-
 @SuppressWarnings("nls")
 public abstract class ArchiveChannel {
     private static final Logger logger = LogManager.getLogger(ArchiveChannel.class);
@@ -62,8 +62,8 @@ public abstract class ArchiveChannel {
      * Throttled log for NaN samples
      */
     private static final ThrottledLogger trouble_sample_log = new ThrottledLogger(LogLevel.info, 60);
-    private static final Instant PAST_CUTOFF_TIMESTAMP =
-            TimeUtils.convertFromISO8601String("1991-01-01T00:00:00.000Z");
+
+    private static final Instant PAST_CUTOFF_TIMESTAMP = TimeUtils.convertFromISO8601String("1991-01-01T00:00:00.000Z");
     private static final int FUTURE_CUTOFF_SECONDS = 30 * 60;
     /**
      * Initialize the metafields for this channel. In addition to the metafields specified  here, we also generate PV's
@@ -81,8 +81,8 @@ public abstract class ArchiveChannel {
     static HashMap<String, ArchDBRTypes> metaFieldOverrideTypes = new HashMap<String, ArchDBRTypes>();
 
     static {
-        fieldsAvailableFromDBRControl.addAll(Arrays.asList(
-                "PREC", "EGU", "HOPR", "LOPR", "HIHI", "HIGH", "LOW", "LOLO", "DRVH", "DRVL"));
+        fieldsAvailableFromDBRControl.addAll(
+                Arrays.asList("PREC", "EGU", "HOPR", "LOPR", "HIHI", "HIGH", "LOW", "LOLO", "DRVH", "DRVL"));
     }
 
     static {
@@ -337,34 +337,48 @@ public abstract class ArchiveChannel {
     /**
      * Add a pv for this PV for the given metafield.
      */
-	private void addMetaField(String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean usePVAccess, boolean useDBEProperties) throws IOException {
-		if(this.pv == null) throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
+    private void addMetaField(
+            String fieldName,
+            ConfigService configservice,
+            boolean isRuntimeOnly,
+            boolean usePVAccess,
+            boolean useDBEProperties)
+            throws IOException {
+        if (this.pv == null)
+            throw new IOException("Cannot add metadata fields for channel that does not have its PV initialized.");
 
-		if (!usePVAccess) {
-			EPICS_V3_PV v3Pv = (EPICS_V3_PV) this.pv;
-			v3AddMetaField(v3Pv, fieldName, configservice, isRuntimeOnly, useDBEProperties);
-		} else {
-			EPICS_V4_PV v4Pv = (EPICS_V4_PV) this.pv;
-			v4Pv.addMetaField(fieldName);
-		}
-	}
+        if (!usePVAccess) {
+            EPICS_V3_PV v3Pv = (EPICS_V3_PV) this.pv;
+            v3AddMetaField(v3Pv, fieldName, configservice, isRuntimeOnly, useDBEProperties);
+        } else {
+            EPICS_V4_PV v4Pv = (EPICS_V4_PV) this.pv;
+            v4Pv.addMetaField(fieldName);
+        }
+    }
 
-	private void v3AddMetaField(EPICS_V3_PV v3Pv,  String fieldName, ConfigService configservice, boolean isRuntimeOnly, boolean useDBEProperties) {
-		if(useDBEProperties) {
-			// For a DBE_PROPERTIES, we use the name of the PV as the name of the channel
-			v3Pv.setDBEroperties();
-			return;
-		}
+    private void v3AddMetaField(
+            EPICS_V3_PV v3Pv,
+            String fieldName,
+            ConfigService configservice,
+            boolean isRuntimeOnly,
+            boolean useDBEProperties) {
+        if (useDBEProperties) {
+            // For a DBE_PROPERTIES, we use the name of the PV as the name of the channel
+            v3Pv.setDBEroperties();
+            return;
+        }
         // This tells the main PV to create the hashmaps for the metafield storage
-		v3Pv.markPVHasMetafields(true);
-		String pvNameForField = PVNames.stripFieldNameFromPVName(this.name) + "." + fieldName;
-		ArchDBRTypes metaFieldDBRType = v3Pv.getArchDBRTypes();
-		if(metaFieldOverrideTypes.containsKey(fieldName)) {
+        v3Pv.markPVHasMetafields(true);
+        String pvNameForField = PVNames.stripFieldNameFromPVName(this.name) + "." + fieldName;
+        ArchDBRTypes metaFieldDBRType = v3Pv.getArchDBRTypes();
+        if (metaFieldOverrideTypes.containsKey(fieldName)) {
             metaFieldDBRType = metaFieldOverrideTypes.get(fieldName);
         }
-		logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType " + metaFieldDBRType.toString() + " DBE_PROPERTIES is " + false);
-		EPICS_V3_PV metaPV = (EPICS_V3_PV) PVFactory.createPV(pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, false, false);
-		metaPV.setMetaFieldParentPV(v3Pv, isRuntimeOnly);
+        logger.debug("Initializing the metafield for field " + pvNameForField + " as ArchDBRType "
+                + metaFieldDBRType.toString() + " DBE_PROPERTIES is " + false);
+        EPICS_V3_PV metaPV = (EPICS_V3_PV) PVFactory.createPV(
+                pvNameForField, configservice, false, metaFieldDBRType, this.JCACommandThreadID, false, false);
+        metaPV.setMetaFieldParentPV(v3Pv, isRuntimeOnly);
         this.metaPVs.put(fieldName, metaPV);
     }
 
@@ -600,7 +614,6 @@ public abstract class ArchiveChannel {
         }
 
         if (SampleBuffer.isInErrorState()) need_write_error_sample = true;
-
     }
 
     /**
@@ -685,8 +698,7 @@ public abstract class ArchiveChannel {
      * @return - Can return null if this PV has no meta fields.
      */
     public HashMap<String, String> getCurrentCopyOfMetaFields() {
-        if (this.pv != null)
-            return pv.getLatestMetadata();
+        if (this.pv != null) return pv.getLatestMetadata();
         return null;
     }
 
@@ -791,8 +803,7 @@ public abstract class ArchiveChannel {
                     ArchiveChannel.this.pv.updateTotalMetaInfo();
                 } catch (Throwable t) {
                     logger.error(
-                            "Exception issuing request to update total meta Info for pv "
-                                    + ArchiveChannel.this.name,
+                            "Exception issuing request to update total meta Info for pv " + ArchiveChannel.this.name,
                             t);
                 }
             });

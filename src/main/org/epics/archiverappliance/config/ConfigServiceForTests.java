@@ -9,7 +9,6 @@ import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
 
-import javax.servlet.ServletContext;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -21,6 +20,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executors;
+import javax.servlet.ServletContext;
 
 public class ConfigServiceForTests extends DefaultConfigService {
     public static final String TESTAPPLIANCE0 = "appliance0";
@@ -33,11 +33,13 @@ public class ConfigServiceForTests extends DefaultConfigService {
      * This name is supposed to be something that we will not encounter in the field.
      */
     public static final String ARCH_UNIT_TEST_PVNAME_PREFIX = "--ArchUnitTest";
+
     protected static final String DEFAULT_PB_SHORT_TERM_TEST_DATA_FOLDER = getDefaultShortTermFolder();
     /**
      * A folder which is used to store the data for the unit tests...
      */
     protected static final String DEFAULT_PB_TEST_DATA_FOLDER = getDefaultPBTestFolder();
+
     static HashMap<String, ArchDBRTypes> samplePV2DBRtypemap = new HashMap<String, ArchDBRTypes>();
     private static final Logger logger = LogManager.getLogger(ConfigServiceForTests.class.getName());
     private static final Logger configlogger = LogManager.getLogger("config." + ConfigServiceForTests.class.getName());
@@ -62,28 +64,30 @@ public class ConfigServiceForTests extends DefaultConfigService {
      *
      * @throws ConfigException
      */
-	public ConfigServiceForTests() throws ConfigException {
-		super();
-	}
+    public ConfigServiceForTests() throws ConfigException {
+        super();
+    }
+
     public ConfigServiceForTests(int jcaCommandThreadCount) throws ConfigException {
         this(new File("./build/classes"), jcaCommandThreadCount);
     }
 
-	public static final int defaultMinutesDisconnect = 1;
-	public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
-		this.webInfClassesFolder = WebInfClassesFolder;
-		configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
-		appliances = new HashMap<String, ApplianceInfo>();
-		pv2appliancemapping = new ConcurrentHashMap<String, ApplianceInfo>();
-		namedFlags = new ConcurrentHashMap<String, Boolean>();
-		typeInfos = new ConcurrentHashMap<String, PVTypeInfo>();
-		archivePVRequests = new ConcurrentHashMap<String, UserSpecifiedSamplingParams>();
-		aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
-		channelArchiverDataServers = new ConcurrentHashMap<String, String>();
-		pvsForThisAppliance = new ConcurrentSkipListSet<String>();
-		pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
-		pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
-		appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
+    public static final int defaultMinutesDisconnect = 1;
+
+    public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
+        this.webInfClassesFolder = WebInfClassesFolder;
+        configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
+        appliances = new HashMap<String, ApplianceInfo>();
+        pv2appliancemapping = new ConcurrentHashMap<String, ApplianceInfo>();
+        namedFlags = new ConcurrentHashMap<String, Boolean>();
+        typeInfos = new ConcurrentHashMap<String, PVTypeInfo>();
+        archivePVRequests = new ConcurrentHashMap<String, UserSpecifiedSamplingParams>();
+        aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
+        channelArchiverDataServers = new ConcurrentHashMap<String, String>();
+        pvsForThisAppliance = new ConcurrentSkipListSet<String>();
+        pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
+        pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
+        appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
 
         myApplianceInfo = new ApplianceInfo(
                 TESTAPPLIANCE0,
@@ -179,16 +183,16 @@ public class ConfigServiceForTests extends DefaultConfigService {
         }
     }
 
-	@Override
-	public ApplianceInfo getApplianceForPV(String pvName) {
-		ApplianceInfo applianceInfo = super.getApplianceForPV(pvName);
-		// We should do the following code only for unit tests (and not for the real config service).
+    @Override
+    public ApplianceInfo getApplianceForPV(String pvName) {
+        ApplianceInfo applianceInfo = super.getApplianceForPV(pvName);
+        // We should do the following code only for unit tests (and not for the real config service).
         if (applianceInfo == null && pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX)) {
-			logger.debug("Setting appliance for unit test pv " + pvName + " to self in unit tests mode.");
-			applianceInfo = myApplianceInfo;
-		}
-		return applianceInfo;
-	}
+            logger.debug("Setting appliance for unit test pv " + pvName + " to self in unit tests mode.");
+            applianceInfo = myApplianceInfo;
+        }
+        return applianceInfo;
+    }
 
     /**
      * Register the pv to the appliance
@@ -199,23 +203,25 @@ public class ConfigServiceForTests extends DefaultConfigService {
      * @param applianceInfo ApplianceInfo
      * @throws AlreadyRegisteredException pv already registered.
      */
-	@Override
-	public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
-		super.registerPVToAppliance(pvName, applianceInfo);
-		if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
-			logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");
-			this.pvsForThisAppliance.add(pvName);
+    @Override
+    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
+        super.registerPVToAppliance(pvName, applianceInfo);
+        if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
+            logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");
+            this.pvsForThisAppliance.add(pvName);
             if (this.getETLLookup() != null) {
-            	this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));
+                this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));
             }
         }
     }
 
-
     @Override
     public InputStream getPolicyText() throws IOException {
         if (webInfClassesFolder != null) {
-            String policyURL = ConfigServiceForTests.class.getClassLoader().getResource("policies.py").getPath().toString();
+            String policyURL = ConfigServiceForTests.class
+                    .getClassLoader()
+                    .getResource("policies.py")
+                    .getPath();
             return new FileInputStream(policyURL);
         }
         return super.getPolicyText();
@@ -273,12 +279,11 @@ public class ConfigServiceForTests extends DefaultConfigService {
         this.rootFolder = rootFolder;
     }
 
-
-	@Override
-	public String getWebInfFolder() {
-		if (this.webInfClassesFolder != null) {
-			return this.webInfClassesFolder.getAbsolutePath();
-		}
+    @Override
+    public String getWebInfFolder() {
+        if (this.webInfClassesFolder != null) {
+            return this.webInfClassesFolder.getAbsolutePath();
+        }
 
         return super.getWebInfFolder();
     }

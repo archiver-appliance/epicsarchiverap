@@ -7,10 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt.pva.actions;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map.Entry;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
@@ -21,6 +17,10 @@ import org.epics.pva.data.PVAStringArray;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.MustBeArrayException;
 import org.epics.pva.data.nt.PVATable;
+
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 /**
  * Given a list of PVs, determine those that are being archived. Of course, you
@@ -59,71 +59,72 @@ import org.epics.pva.data.nt.PVATable;
  *
  */
 public class PvaGetArchivedPVs implements PvaAction {
-	private static final Logger logger = LogManager.getLogger(PvaGetArchivedPVs.class);
-	
-	public static final String NAME = "archivedPVStatus";
+    private static final Logger logger = LogManager.getLogger(PvaGetArchivedPVs.class);
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+    public static final String NAME = "archivedPVStatus";
 
-	@Override
-	public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
-		logger.info("Determining PVs that are archived ");
-		LinkedHashMap<String, String> map = new LinkedHashMap<>();
-		for(String pvName : NTUtil.extractStringArray(PVATable.fromStructure(args).getColumn("pv"))) {
-			PVTypeInfo typeInfo = null;
-			logger.debug("Check for the name as it came in from the user " + pvName);
-			typeInfo = configService.getTypeInfoForPV(pvName);
-			if(typeInfo != null)  {
-				map.put(pvName, "Archived");
-				continue;
-			}
-			logger.debug("Check for the normalized name");
-			typeInfo = configService.getTypeInfoForPV(PVNames.normalizePVName(pvName));
-			if(typeInfo != null) {
-				map.put(pvName, "Archived");
-				continue;
-			}
-			logger.debug("Check for aliases");
-			String aliasRealName = configService.getRealNameForAlias(PVNames.normalizePVName(pvName));
-			if(aliasRealName != null) { 
-				typeInfo = configService.getTypeInfoForPV(aliasRealName);
-				if(typeInfo != null) {
-					map.put(pvName, "Archived");
-					continue;
-				}
-			}
-			logger.debug("Check for fields");
-			String fieldName = PVNames.getFieldName(pvName);
-			if(fieldName != null) { 
-				typeInfo = configService.getTypeInfoForPV(PVNames.stripFieldNameFromPVName(pvName));
-				if(typeInfo != null) { 
-					if(Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
-						map.put(pvName, "Archived");
-						continue;
-					}
-				}
-			}
-			map.put(pvName, "Not Archived");
-		}
-		String[] pvs = new String[map.size()];
-		String[] statuses = new String[map.size()];
-		int counter = 0;
-		for (Entry<String, String> entry : map.entrySet()) {
-			pvs[counter]= entry.getKey();
-			statuses[counter] = entry.getValue();
-			counter++;
-		}
-		try {
-			return PVATable.PVATableBuilder.aPVATable()
-					.name(NAME)
-					.addColumn(new PVAStringArray("pv", pvs))
-					.addColumn(new PVAStringArray("status", statuses))
-					.build();
-		} catch (MustBeArrayException e) {
-			throw new RuntimeException(e);
-		}
-	}
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    @Override
+    public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
+        logger.info("Determining PVs that are archived ");
+        LinkedHashMap<String, String> map = new LinkedHashMap<>();
+        for (String pvName :
+                NTUtil.extractStringArray(PVATable.fromStructure(args).getColumn("pv"))) {
+            PVTypeInfo typeInfo = null;
+            logger.debug("Check for the name as it came in from the user " + pvName);
+            typeInfo = configService.getTypeInfoForPV(pvName);
+            if (typeInfo != null) {
+                map.put(pvName, "Archived");
+                continue;
+            }
+            logger.debug("Check for the normalized name");
+            typeInfo = configService.getTypeInfoForPV(PVNames.normalizePVName(pvName));
+            if (typeInfo != null) {
+                map.put(pvName, "Archived");
+                continue;
+            }
+            logger.debug("Check for aliases");
+            String aliasRealName = configService.getRealNameForAlias(PVNames.normalizePVName(pvName));
+            if (aliasRealName != null) {
+                typeInfo = configService.getTypeInfoForPV(aliasRealName);
+                if (typeInfo != null) {
+                    map.put(pvName, "Archived");
+                    continue;
+                }
+            }
+            logger.debug("Check for fields");
+            String fieldName = PVNames.getFieldName(pvName);
+            if (fieldName != null) {
+                typeInfo = configService.getTypeInfoForPV(PVNames.stripFieldNameFromPVName(pvName));
+                if (typeInfo != null) {
+                    if (Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
+                        map.put(pvName, "Archived");
+                        continue;
+                    }
+                }
+            }
+            map.put(pvName, "Not Archived");
+        }
+        String[] pvs = new String[map.size()];
+        String[] statuses = new String[map.size()];
+        int counter = 0;
+        for (Entry<String, String> entry : map.entrySet()) {
+            pvs[counter] = entry.getKey();
+            statuses[counter] = entry.getValue();
+            counter++;
+        }
+        try {
+            return PVATable.PVATableBuilder.aPVATable()
+                    .name(NAME)
+                    .addColumn(new PVAStringArray("pv", pvs))
+                    .addColumn(new PVAStringArray("status", statuses))
+                    .build();
+        } catch (MustBeArrayException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
