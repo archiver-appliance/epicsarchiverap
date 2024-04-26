@@ -3,7 +3,6 @@ package org.epics.archiverappliance.mgmt.bpl;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,26 +35,7 @@ public class SyncStaticContentHeadersFooters {
         }
         String srcFileName = args[0];
         final File srcFile = new File(srcFileName);
-        String[] fileLocations = Arrays.copyOfRange(args, 1, args.length);
-        LinkedList<File> filesToModify = new LinkedList<File>();
-
-        for (String fileLocation : fileLocations) {
-            File fileLocationFile = new File(fileLocation);
-            if (fileLocationFile.isDirectory()) {
-                File[] htmlFiles = fileLocationFile.listFiles(new FileFilter() {
-                    @Override
-                    public boolean accept(File pathname) {
-                        if (pathname.getName().endsWith(".html") && !pathname.equals(srcFile)) {
-                            return true;
-                        }
-                        return false;
-                    }
-                });
-                for (File htmlFile : htmlFiles) filesToModify.add(htmlFile);
-            } else {
-                filesToModify.add(fileLocationFile);
-            }
-        }
+        LinkedList<File> filesToModify = getFilesToModify(args, srcFile);
 
         LinkedList<TextChunk> srcTextChunks = breakFileIntoChunks(srcFile);
         HashMap<String, String> mainSrcFileTextChunks = new HashMap<String, String>();
@@ -89,15 +69,24 @@ public class SyncStaticContentHeadersFooters {
         }
     }
 
-    public static class TextChunk {
-        String typeOfChunk;
-        String textChunk;
+    private static LinkedList<File> getFilesToModify(String[] args, File srcFile) {
+        String[] fileLocations = Arrays.copyOfRange(args, 1, args.length);
+        LinkedList<File> filesToModify = new LinkedList<File>();
 
-        public TextChunk(String typeOfChunk, String textChunk) {
-            this.typeOfChunk = typeOfChunk;
-            this.textChunk = textChunk;
+        for (String fileLocation : fileLocations) {
+            File fileLocationFile = new File(fileLocation);
+            if (fileLocationFile.isDirectory()) {
+                File[] htmlFiles = fileLocationFile.listFiles(
+                        pathname -> pathname.getName().endsWith(".html") && !pathname.equals(srcFile));
+                filesToModify.addAll(Arrays.asList(htmlFiles));
+            } else {
+                filesToModify.add(fileLocationFile);
+            }
         }
+        return filesToModify;
     }
+
+    public record TextChunk(String typeOfChunk, String textChunk) {}
 
     private static final String REGULAR_TEXT = "RegularText";
     /**
@@ -128,15 +117,14 @@ public class SyncStaticContentHeadersFooters {
             InputStream is, String startOfChunkIndicator, String endOfChunkIndicator) throws IOException {
         LinkedList<TextChunk> textChunks = new LinkedList<TextChunk>();
         String currentChunkType = REGULAR_TEXT;
-        StringBuffer currentTextChunk = new StringBuffer();
+        StringBuilder currentTextChunk = new StringBuilder();
         try (LineNumberReader lineReader = new LineNumberReader(new InputStreamReader(is))) {
             String line = lineReader.readLine();
             while (line != null) {
                 if (line.contains(startOfChunkIndicator)) {
-                    if (currentTextChunk.length() > 0) {
+                    if (!currentTextChunk.isEmpty()) {
                         textChunks.add(new TextChunk(currentChunkType, currentTextChunk.toString()));
-                        currentTextChunk = new StringBuffer();
-                        currentChunkType = REGULAR_TEXT;
+                        currentTextChunk = new StringBuilder();
                     }
 
                     currentTextChunk.append(line);
@@ -149,7 +137,7 @@ public class SyncStaticContentHeadersFooters {
                         currentTextChunk.append(line);
                         currentTextChunk.append("\n");
                         textChunks.add(new TextChunk(currentChunkType, currentTextChunk.toString()));
-                        currentTextChunk = new StringBuffer();
+                        currentTextChunk = new StringBuilder();
                         currentChunkType = REGULAR_TEXT;
                     } else {
                         currentTextChunk.append(line);
