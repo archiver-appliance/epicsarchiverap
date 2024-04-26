@@ -24,16 +24,31 @@ import javax.servlet.ServletContext;
 
 public class ConfigServiceForTests extends DefaultConfigService {
     public static final String TESTAPPLIANCE0 = "appliance0";
+    public static final int DEFAULT_MGMT_PORT = 17665;
     /**
      * Tomcat is launched listening to this port when running the unit tests
      */
-    public static final int RETRIEVAL_TEST_PORT = 17665;
+    public static final int RETRIEVAL_TEST_PORT = DEFAULT_MGMT_PORT;
     /**
      * All unit test PV names are expected to begin with this.
      * This name is supposed to be something that we will not encounter in the field.
      */
     public static final String ARCH_UNIT_TEST_PVNAME_PREFIX = "--ArchUnitTest";
 
+    public static final String HTTP_LOCALHOST = "http://localhost:";
+    public static final String DATA_RETRIEVAL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + "/retrieval";
+    public static final String MGMT_BPL = "/mgmt/bpl";
+    public static final String MGMT_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + MGMT_BPL;
+    public static final String MGMT_UI_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + "/mgmt/ui";
+    public static final String MGMT_INDEX_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + "/mgmt/ui/index.html";
+    public static final String ENGINE_BPL = "/engine/bpl";
+    public static final String ENGINE_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + ENGINE_BPL;
+    public static final String RETRIEVAL_BPL = "/retrieval/bpl";
+    public static final String RETRIEVAL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + RETRIEVAL_BPL;
+    public static final String RETRIEVAL_DATA = "/retrieval/data/getData.raw";
+    public static final String RAW_RETRIEVAL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + RETRIEVAL_DATA;
+    public static final String ETL_BPL = "/etl/bpl";
+    public static final String ETL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + ETL_BPL;
     protected static final String DEFAULT_PB_SHORT_TERM_TEST_DATA_FOLDER = getDefaultShortTermFolder();
     /**
      * A folder which is used to store the data for the unit tests...
@@ -90,13 +105,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
         appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
 
         myApplianceInfo = new ApplianceInfo(
-                TESTAPPLIANCE0,
-                "http://localhost:17665/mgmt/bpl",
-                "http://localhost:17665/engine/bpl",
-                "http://localhost:17665/retrieval/bpl",
-                "http://localhost:17665/etl/bpl",
-                "localhost:16670",
-                "http://localhost:17665/retrieval");
+                TESTAPPLIANCE0, MGMT_URL, ENGINE_URL, RETRIEVAL_URL, ETL_URL, "localhost:16670", DATA_RETRIEVAL_URL);
         appliances.put(TESTAPPLIANCE0, myApplianceInfo);
         appliancesInCluster.add(TESTAPPLIANCE0);
 
