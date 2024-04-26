@@ -11,7 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -34,8 +33,12 @@ import java.util.LinkedList;
 @Tag("integration")
 public class DBRRetrievalTest {
     private static final Logger logger = LogManager.getLogger(DBRRetrievalTest.class.getName());
+    private final LinkedList<DataDBR> dataDBRs = new LinkedList<>();
+    private final short currentYear = TimeUtils.getCurrentYear();
     TomcatSetup tomcatSetup = new TomcatSetup();
-    private final LinkedList<DataDBR> dataDBRs = new LinkedList<DataDBR>();
+
+    Instant start = TimeUtils.convertFromISO8601String(currentYear + "-02-01T08:00:00.000Z");
+    Instant end = TimeUtils.convertFromISO8601String(currentYear + "-02-02T08:00:00.000Z");
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -49,7 +52,7 @@ public class DBRRetrievalTest {
         }
 
         for (DataDBR dataDBR : dataDBRs) {
-            GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type);
+            GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type, start, end);
         }
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
@@ -61,22 +64,18 @@ public class DBRRetrievalTest {
 
     @Test
     public void testGetDataForDBRs() {
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
-        Instant start = TimeUtils.convertFromISO8601String(TimeUtils.getCurrentYear() + "-02-01T08:00:00.000Z");
-        Instant end = TimeUtils.convertFromISO8601String(TimeUtils.getCurrentYear() + "-02-02T08:00:00.000Z");
+        RawDataRetrievalAsEventStream rawDataRetrieval =
+                new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
 
         for (DataDBR dataDBR : dataDBRs) {
             EventStream stream = null;
             try {
                 logger.info("Testing retrieval for DBR " + dataDBR.type.toString());
                 stream = rawDataRetrieval.getDataForPVS(
-                        new String[] {dataDBR.pvName}, start, end, new RetrievalEventProcessor() {
-                            @Override
-                            public void newPVOnStream(EventStreamDesc desc) {
-                                logger.info("Getting data for PV " + desc.getPvName());
-                            }
-                        });
+                        new String[] {dataDBR.pvName},
+                        start,
+                        end,
+                        desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
                 long previousEpochSeconds = 0;
 
@@ -100,13 +99,5 @@ public class DBRRetrievalTest {
         }
     }
 
-    private static final class DataDBR {
-        String pvName;
-        ArchDBRTypes type;
-
-        public DataDBR(String pvName, ArchDBRTypes type) {
-            this.pvName = pvName;
-            this.type = type;
-        }
-    }
+    private record DataDBR(String pvName, ArchDBRTypes type) {}
 }
