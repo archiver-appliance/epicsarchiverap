@@ -9,14 +9,13 @@ package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -26,17 +25,13 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStr
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
-
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Test if the named flags control of ETL works if the flag is set and unset
@@ -45,30 +40,20 @@ import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.p
  * @author mshankar
  *
  */
-@Tag("singleFork")
 public class NamedFlagETLTest {
     private static final Logger logger = LogManager.getLogger(NamedFlagETLTest.class);
-    String shortTermFolderName = ConfigServiceForTests.getDefaultShortTermFolder() + "/shortTerm";
-    String mediumTermFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/mediumTerm";
 
-    @BeforeEach
-    public void setUp() throws Exception {
-        if (new File(shortTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-        }
-        if (new File(mediumTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
+    static ConfigServiceForTests configService;
+
+    @BeforeAll
+    public static void setUp() throws Exception {
+        configService = new ConfigServiceForTests(-1);
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
-        if (new File(shortTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-        }
-        if (new File(mediumTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
+    @AfterAll
+    public static void tearDown() throws Exception {
+        logger.info("Config service flags at end were " + configService.getNamedFlagNames());
+        configService.shutdownNow();
     }
 
     /**
@@ -76,117 +61,129 @@ public class NamedFlagETLTest {
      * Check that we only move reduced data into the MTS.
      */
     @Test
-    public void testMove() throws Exception {
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            logger.info("Testing Plain ETL");
-            BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "");
-            Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
-            Assertions.assertEquals(
-                    0,
-                    etlCounts.afterCountSTS,
-                    "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-            Assertions.assertEquals(
-                    etlCounts.afterCountMTS,
-                    (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS),
-                    "Did we miss some events when moving data? ");
-        }
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            logger.info("Testing with flag but value of flag is false");
-            BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "&etlIntoStoreIf=testFlag");
-            // By default testFlag is false, so we should lose data in the move.
-            Assertions.assertEquals(
-                    0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
-            Assertions.assertEquals(
-                    0,
-                    etlCounts.afterCountSTS,
-                    "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-            Assertions.assertEquals(0, etlCounts.afterCountMTS, "We should have lost all the data in this case");
-        }
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            configService.setNamedFlag("testFlag", true);
-            logger.info("Testing with flag but value of flag is true");
-            BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "&etlIntoStoreIf=testFlag");
-            Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
-            Assertions.assertEquals(
-                    0,
-                    etlCounts.afterCountSTS,
-                    "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-            Assertions.assertEquals(
-                    etlCounts.afterCountMTS,
-                    (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS),
-                    "Did we miss some events when moving data? ");
-        }
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            configService.setNamedFlag("testFlag", true);
-            logger.info("Testing with some other flag but value of flag is true");
-            BeforeAndAfterETLCounts etlCounts =
-                    generateAndMoveData(configService, "", "&etlIntoStoreIf=testSomeOtherFlag");
-            // This is some other flag; so it should be false and we should behave like a black hole again
-            Assertions.assertEquals(
-                    0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
-            Assertions.assertEquals(
-                    0,
-                    etlCounts.afterCountSTS,
-                    "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-            Assertions.assertEquals(0, etlCounts.afterCountMTS, "We should have lost all the data in this case");
-        }
+    void testMoveNoFlags() throws Exception {
+        logger.info("Testing Plain ETL");
+        BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "", "", "testMoveNoFlags");
+        Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
+        Assertions.assertEquals(
+                0,
+                etlCounts.afterCountSTS,
+                "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+        Assertions.assertEquals(
+                etlCounts.afterCountMTS,
+                (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS),
+                "Did we miss some events when moving data? ");
+    }
 
-        // Testing etlOutofStoreIf from here
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            logger.info("Testing with flag but value of flag is false");
-            BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "&etlOutofStoreIf=testFlag", "");
-            // By default testFlag is false, so no data should move.
-            Assertions.assertTrue((etlCounts.beforeCountSTS > 0), "Did we generate any data?");
-            Assertions.assertTrue(
-                    (etlCounts.afterCountMTS == 0), "Seems like some events were moved into the MTS by ETL ");
-            Assertions.assertTrue(
-                    (etlCounts.beforeCountSTS == etlCounts.afterCountSTS),
-                    "We should not have moved any data in this case");
-        }
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            configService.setNamedFlag("testFlag", true);
-            logger.info("Testing with flag but value of flag is true");
-            BeforeAndAfterETLCounts etlCounts = generateAndMoveData(configService, "&etlOutofStoreIf=testFlag", "");
-            Assertions.assertTrue((etlCounts.afterCountMTS > 0), "Seems like no events were moved by ETL ");
-            Assertions.assertTrue(
-                    (etlCounts.afterCountSTS == 0),
-                    "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
-            Assertions.assertTrue(
-                    (etlCounts.afterCountMTS == (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS)),
-                    "Did we miss some events when moving data? ");
-        }
-        {
-            ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-            configService.setNamedFlag("testFlag", true);
-            logger.info("Testing with some other flag but value of flag is true");
-            BeforeAndAfterETLCounts etlCounts =
-                    generateAndMoveData(configService, "&etlOutofStoreIf=testSomeOtherFlag", "");
-            // This is some other flag; so it should be false and we should behave like a black hole again
-            Assertions.assertTrue((etlCounts.beforeCountSTS > 0), "Did we generate any data?");
-            Assertions.assertTrue(
-                    (etlCounts.afterCountMTS == 0), "Seems like some events were moved into the MTS by ETL ");
-            Assertions.assertTrue(
-                    (etlCounts.beforeCountSTS == etlCounts.afterCountSTS),
-                    "We should not have moved any data in this case");
-        }
+    @Test
+    void testMoveDestFlagged() throws Exception {
+
+        logger.info("Testing with flag but value of flag is false");
+
+        BeforeAndAfterETLCounts etlCounts =
+                generateAndMoveData(configService, "", "&etlIntoStoreIf=testFlagFalse", "testMoveDestFlagged");
+        // By default testFlag is false, so we should lose data in the move.
+        Assertions.assertEquals(0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
+        Assertions.assertEquals(
+                0,
+                etlCounts.afterCountSTS,
+                "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+        Assertions.assertEquals(0, etlCounts.afterCountMTS, "We should have lost all the data in this case");
+    }
+
+    @Test
+    void testMoveWithFlagTrue() throws Exception {
+
+        configService.setNamedFlag("testFlagTrue", true);
+        logger.info("Testing with flag but value of flag is true");
+        BeforeAndAfterETLCounts etlCounts =
+                generateAndMoveData(configService, "", "&etlIntoStoreIf=testFlagTrue", "testMoveWithFlagTrue");
+        Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
+        Assertions.assertEquals(
+                0,
+                etlCounts.afterCountSTS,
+                "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+        Assertions.assertEquals(
+                etlCounts.afterCountMTS,
+                (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS),
+                "Did we miss some events when moving data? ");
+    }
+
+    @Test
+    void testMoveWithFlagTrueDestSomeOtherFlag() throws Exception {
+
+        configService.setNamedFlag("testFlagTrue", true);
+
+        logger.info("Testing with some other flag but value of flag is true");
+        BeforeAndAfterETLCounts etlCounts = generateAndMoveData(
+                configService, "", "&etlIntoStoreIf=testSomeOtherFlagNotSet", "testMoveWithFlagTrueDestSomeOtherFlag");
+        // This is some other flag; so it should be false and we should behave like a black hole again
+        Assertions.assertEquals(0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
+
+        Assertions.assertEquals(
+                0,
+                etlCounts.afterCountSTS,
+                "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+        Assertions.assertEquals(0, etlCounts.afterCountMTS, "We should have lost all the data in this case");
+    }
+
+    @Test
+    void testNoFlagSrcWithFlag() throws Exception {
+
+        logger.info("Testing with flag but value of flag is false");
+
+        BeforeAndAfterETLCounts etlCounts =
+                generateAndMoveData(configService, "&etlOutofStoreIf=testFlagSrcFalse", "", "testNoFlagSrcWithFlag");
+        // By default testFlag is false, so no data should move.
+        Assertions.assertTrue(etlCounts.beforeCountSTS > 0, "Did we generate any data?");
+        Assertions.assertEquals(0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
+        Assertions.assertEquals(
+                etlCounts.beforeCountSTS, etlCounts.afterCountSTS, "We should not have moved any data in this case");
+    }
+
+    @Test
+    void testSrcWithFlagTrue() throws Exception {
+
+        configService.setNamedFlag("testFlagSrcTrue", true);
+
+        logger.info("Testing with flag but value of flag is true");
+        BeforeAndAfterETLCounts etlCounts =
+                generateAndMoveData(configService, "&etlOutofStoreIf=testFlagSrcTrue", "", "testSrcWithFlagTrue");
+        Assertions.assertTrue(etlCounts.afterCountMTS > 0, "Seems like no events were moved by ETL ");
+        Assertions.assertEquals(
+                0,
+                etlCounts.afterCountSTS,
+                "Seems like we still have " + etlCounts.afterCountSTS + " events in the source ");
+        Assertions.assertEquals(
+                etlCounts.afterCountMTS,
+                (etlCounts.beforeCountSTS + etlCounts.beforeCountMTS),
+                "Did we miss some events when moving data? ");
+    }
+
+    @Test
+    void testEtlOutofStoreIfFromHereSomeOtherFlag() throws Exception {
+
+        configService.setNamedFlag("testFlagSrcTrue", true);
+
+        logger.info("Testing with some other flag but value of flag is true");
+        BeforeAndAfterETLCounts etlCounts = generateAndMoveData(
+                configService,
+                "&etlOutofStoreIf=testSomeOtherFlagSrcFalse",
+                "",
+                "testEtlOutofStoreIfFromHereSomeOtherFlag");
+        // This is some other flag; so it should be false and we should behave like a black hole again
+        Assertions.assertTrue(etlCounts.beforeCountSTS > 0, "Did we generate any data?");
+        Assertions.assertEquals(0, etlCounts.afterCountMTS, "Seems like some events were moved into the MTS by ETL ");
+        Assertions.assertEquals(
+                etlCounts.beforeCountSTS, etlCounts.afterCountSTS, "We should not have moved any data in this case");
     }
 
     BeforeAndAfterETLCounts generateAndMoveData(
-            ConfigServiceForTests configService, String appendToSourceURL, String appendToDestURL) throws Exception {
+            ConfigServiceForTests configService, String appendToSourceURL, String appendToDestURL, String testName)
+            throws Exception {
         BeforeAndAfterETLCounts etlCounts = new BeforeAndAfterETLCounts();
-
-        if (new File(shortTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-        }
-        if (new File(mediumTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
+        String shortTermFolderName = configService.getPBRootFolder() + "/shortTerm";
+        String mediumTermFolderName = configService.getPBRootFolder() + "/mediumTerm";
 
         PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY"
@@ -197,18 +194,17 @@ public class NamedFlagETLTest {
                         + appendToDestURL,
                 configService);
 
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_NamedFlagTest"
-                + etlSrc.getPartitionGranularity();
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_NamedFlagTest" + testName;
         short currentYear = TimeUtils.getCurrentYear();
 
-        SimulationEventStream simstream = new SimulationEventStream(
+        SimulationEventStream simulationStream = new SimulationEventStream(
                 ArchDBRTypes.DBR_SCALAR_DOUBLE,
                 new SineGenerator(0),
                 TimeUtils.getStartOfYear(currentYear),
                 TimeUtils.getEndOfYear(currentYear),
-                1);
+                PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk());
         try (BasicContext context = new BasicContext()) {
-            etlSrc.appendData(context, pvName, simstream);
+            etlSrc.appendData(context, pvName, simulationStream);
         }
         logger.info("Done creating src data for PV " + pvName);
 
@@ -258,16 +254,16 @@ public class NamedFlagETLTest {
                 new ArchPaths(),
                 etlDest.getRootFolder(),
                 pvName,
-                pbFileExtension,
+                etlDest.getExtensionString(),
                 etlDest.getPartitionGranularity(),
-                CompressionMode.NONE,
+                PlainPBStoragePlugin.CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
-        Assertions.assertTrue(true, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
+        Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePBFile.validatePBFile(destPath, false),
-                    "File validation failed for " + destPath.toAbsolutePath().toString());
+                    ValidatePBFile.validatePBFile(destPath, true),
+                    "File validation failed for " + destPath.toAbsolutePath());
         }
 
         logger.info("Asking for data between"
@@ -291,7 +287,6 @@ public class NamedFlagETLTest {
         }
         logger.info(
                 "After ETL, the counts are STS = " + etlCounts.afterCountSTS + " and MTS = " + etlCounts.afterCountMTS);
-
         return etlCounts;
     }
 
