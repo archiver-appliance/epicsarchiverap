@@ -11,8 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.TomcatSetup;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -49,14 +49,15 @@ public class SinglePVRetrievalTest {
 
     @Test
     public void testGetDataForSinglePV() throws Exception {
-        testGetOneDaysDataForYear(TimeUtils.getCurrentYear(), 86400);
+        testGetOneDaysDataForYear(
+                TimeUtils.getCurrentYear(), PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk());
         testGetOneDaysDataForYear(TimeUtils.getCurrentYear() - 1, 0);
         testGetOneDaysDataForYear(TimeUtils.getCurrentYear() + 1, 1);
     }
 
     private void testGetOneDaysDataForYear(int year, int expectedCount) throws Exception {
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrievalAsEventStream rawDataRetrieval =
+                new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         Instant start = TimeUtils.convertFromISO8601String(year + "-02-01T08:00:00.000Z");
         Instant end = TimeUtils.convertFromISO8601String(year + "-02-02T08:00:00.000Z");
 
@@ -66,12 +67,7 @@ public class SinglePVRetrievalTest {
                     new String[] {ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1"},
                     start,
                     end,
-                    new RetrievalEventProcessor() {
-                        @Override
-                        public void newPVOnStream(EventStreamDesc desc) {
-                            logger.info("Getting data for PV " + desc.getPvName());
-                        }
-                    });
+                    desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
             long previousEpochSeconds = 0;
             int eventCount = 0;
@@ -86,8 +82,9 @@ public class SinglePVRetrievalTest {
                 }
             }
 
-            Assertions.assertTrue(
-                    eventCount == expectedCount,
+            Assertions.assertEquals(
+                    eventCount,
+                    expectedCount,
                     "Event count is not what we expect. We got " + eventCount + " and we expected " + expectedCount
                             + " for year " + year);
         } finally {
