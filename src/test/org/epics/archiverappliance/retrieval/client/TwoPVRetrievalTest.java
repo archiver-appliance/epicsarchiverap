@@ -33,6 +33,7 @@ import java.time.Instant;
 @Tag("integration")
 public class TwoPVRetrievalTest {
     private static final Logger logger = LogManager.getLogger(TwoPVRetrievalTest.class.getName());
+    static long previousEpochSeconds = 0;
     TomcatSetup tomcatSetup = new TomcatSetup();
 
     @BeforeEach
@@ -49,12 +50,10 @@ public class TwoPVRetrievalTest {
         tomcatSetup.tearDown();
     }
 
-    static long previousEpochSeconds = 0;
-
     @Test
     public void testGetDataForTwoPVs() {
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrievalAsEventStream rawDataRetrieval =
+                new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
         Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
         EventStream stream = null;

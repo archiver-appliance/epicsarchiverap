@@ -36,6 +36,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+
 /**
  * Michael DavidSaver supplied the data for this test.
  * We have raw data and data from another PV that applies the ADEL.
@@ -54,6 +56,16 @@ public class DeadBandTest {
     private String pvName = "UnitTestNoNamingConvention:inactive1";
     private String ltsFolderName = System.getenv("ARCHAPPL_LONG_TERM_FOLDER");
     private File ltsFolder = new File(ltsFolderName);
+
+    private static void mergeHeaders(PayloadInfo info, HashMap<String, String> headers) {
+        int headerCount = info.getHeadersCount();
+        for (int i = 0; i < headerCount; i++) {
+            String headerName = info.getHeaders(i).getName();
+            String headerValue = info.getHeaders(i).getVal();
+            logger.debug("Adding header " + headerName + " = " + headerValue);
+            headers.put(headerName, headerValue);
+        }
+    }
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -96,8 +108,7 @@ public class DeadBandTest {
         newPVTypeInfo.setChunkKey("TST-CT{}Sig/1-I:");
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
         GetUrlContent.postObjectAndGetContentAsJSONObject(
-                "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(newPVName, "UTF-8")
-                        + "&createnew=true",
+                MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(newPVName, "UTF-8") + "&createnew=true",
                 encoder.encode(newPVTypeInfo));
 
         logger.info("Sample file copied to " + destFile.getAbsolutePath());
@@ -118,8 +129,7 @@ public class DeadBandTest {
             String retrievalPVName, Instant start, Instant end, int expectedAtLeastEvents, boolean exactMatch)
             throws IOException {
         long startTimeMillis = System.currentTimeMillis();
-        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         int eventCount = 0;
 
         final HashMap<String, String> metaFields = new HashMap<String, String>();
@@ -162,22 +172,11 @@ public class DeadBandTest {
         return eventCount;
     }
 
-    private static void mergeHeaders(PayloadInfo info, HashMap<String, String> headers) {
-        int headerCount = info.getHeadersCount();
-        for (int i = 0; i < headerCount; i++) {
-            String headerName = info.getHeaders(i).getName();
-            String headerValue = info.getHeaders(i).getVal();
-            logger.debug("Adding header " + headerName + " = " + headerValue);
-            headers.put(headerName, headerValue);
-        }
-    }
-
     private void compareStreams(
             String retrievalPVName, Instant start, Instant end, FileBackedPBEventStream compareStream)
             throws IOException {
         long startTimeMillis = System.currentTimeMillis();
-        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         int eventCount = 0;
 
         final HashMap<String, String> metaFields = new HashMap<String, String>();

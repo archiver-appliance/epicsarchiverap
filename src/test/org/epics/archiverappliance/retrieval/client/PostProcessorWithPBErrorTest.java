@@ -3,7 +3,6 @@ package org.epics.archiverappliance.retrieval.client;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -43,6 +42,8 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Random;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_INDEX_URL;
+
 /**
  * Generate known amount of data for a PV; corrupt known number of the values.
  * Retrieve data using mean_600 and raw and make sure we do not drop the stream entirely.
@@ -53,20 +54,30 @@ import java.util.Random;
 @Tag("localEpics")
 public class PostProcessorWithPBErrorTest {
     private static final Logger logger = LogManager.getLogger(PostProcessorWithPBErrorTest.class.getName());
-    TomcatSetup tomcatSetup = new TomcatSetup();
-    SIOCSetup siocSetup = new SIOCSetup();
-    WebDriver driver;
     private final String pvName = "UnitTestNoNamingConvention:inactive1";
     private final short currentYear = TimeUtils.getCurrentYear();
     private final String ltsFolderName = System.getenv("ARCHAPPL_LONG_TERM_FOLDER");
     private final File ltsFolder = new File(ltsFolderName + "/UnitTestNoNamingConvention");
+    private final short dataGeneratedForYears = 5;
+    TomcatSetup tomcatSetup = new TomcatSetup();
+    SIOCSetup siocSetup = new SIOCSetup();
+    WebDriver driver;
     StoragePlugin storageplugin;
     private ConfigServiceForTests configService;
-    private final short dataGeneratedForYears = 5;
 
     @BeforeAll
     public static void setupClass() {
         WebDriverManager.firefoxdriver().setup();
+    }
+
+    private static void mergeHeaders(PayloadInfo info, HashMap<String, String> headers) {
+        int headerCount = info.getHeadersCount();
+        for (int i = 0; i < headerCount; i++) {
+            String headerName = info.getHeaders(i).getName();
+            String headerValue = info.getHeaders(i).getVal();
+            logger.debug("Adding header " + headerName + " = " + headerValue);
+            headers.put(headerName, headerValue);
+        }
     }
 
     @BeforeEach
@@ -87,9 +98,12 @@ public class PostProcessorWithPBErrorTest {
                 short year = (short) (currentYear - y);
                 for (int day = 0; day < 365; day++) {
                     ArrayListEventStream testData = new ArrayListEventStream(
-                            24 * 60 * 60, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
-                    int startofdayinseconds = day * 24 * 60 * 60;
-                    for (int secondintoday = 0; secondintoday < 24 * 60 * 60; secondintoday += 60) {
+                            PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                            new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
+                    int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                    for (int secondintoday = 0;
+                            secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                            secondintoday += 60) {
                         // The value should be the secondsIntoYear integer divided by 600.
                         testData.add(new SimulationEvent(
                                 startofdayinseconds + secondintoday,
@@ -117,7 +131,7 @@ public class PostProcessorWithPBErrorTest {
 
     @Test
     public void testRetrievalWithPostprocessingAndCorruption() throws Exception {
-        driver.get("http://localhost:17665/mgmt/ui/index.html");
+        driver.get(MGMT_INDEX_URL);
         WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
         pvstextarea.sendKeys(pvName);
         WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
@@ -163,8 +177,7 @@ public class PostProcessorWithPBErrorTest {
     private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch)
             throws IOException {
         long startTimeMillis = System.currentTimeMillis();
-        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         Instant now = TimeUtils.now();
         Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
         int eventCount = 0;
@@ -208,16 +221,6 @@ public class PostProcessorWithPBErrorTest {
         return eventCount;
     }
 
-    private static void mergeHeaders(PayloadInfo info, HashMap<String, String> headers) {
-        int headerCount = info.getHeadersCount();
-        for (int i = 0; i < headerCount; i++) {
-            String headerName = info.getHeaders(i).getName();
-            String headerValue = info.getHeaders(i).getVal();
-            logger.debug("Adding header " + headerName + " = " + headerValue);
-            headers.put(headerName, headerValue);
-        }
-    }
-
     private void corruptSomeData() throws Exception {
         try (BasicContext context = new BasicContext()) {
             Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(
@@ -225,8 +228,8 @@ public class PostProcessorWithPBErrorTest {
                     ltsFolderName,
                     pvName,
                     PlainPBStoragePlugin.pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PartitionGranularity.PARTITION_DAY,
+                    PlainPBStoragePlugin.CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
             Assertions.assertTrue(true);
             Assertions.assertTrue(paths.length > 0);
