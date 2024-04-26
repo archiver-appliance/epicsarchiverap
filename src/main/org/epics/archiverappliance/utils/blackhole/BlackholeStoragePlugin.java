@@ -41,6 +41,9 @@ import java.util.concurrent.Callable;
  */
 public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
     private static Logger logger = LogManager.getLogger(BlackholeStoragePlugin.class.getName());
+    public static final String BLACKHOLE_PLUGIN_IDENTIFIER = "blackhole";
+
+    private String name = BLACKHOLE_PLUGIN_IDENTIFIER;
 
     @Override
     public List<Callable<EventStream>> getDataForPV(
@@ -99,7 +102,7 @@ public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
 
     public String getURLRepresentation() {
         StringWriter ret = new StringWriter();
-        ret.append("blackhole://localhost");
+        ret.append(BLACKHOLE_PLUGIN_IDENTIFIER + "://localhost");
         try {
             ret.append("?name=");
             ret.append(URLEncoder.encode(name, "UTF-8"));
@@ -108,8 +111,6 @@ public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
 
         return ret.toString();
     }
-
-    private String name = "blackhole";
 
     @Override
     public void initialize(String configURL, ConfigService configService) throws IOException {
@@ -125,6 +126,11 @@ public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
         } catch (URISyntaxException ex) {
             throw new IOException(ex);
         }
+    }
+
+    @Override
+    public String pluginIdentifier() {
+        return BLACKHOLE_PLUGIN_IDENTIFIER;
     }
 
     @Override

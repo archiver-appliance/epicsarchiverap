@@ -81,4 +81,10 @@ public interface StoragePlugin extends Reader, Writer {
      * @throws IOException &emsp;
      */
     public void convert(BasicContext context, String pvName, ConversionFunction conversionFuntion) throws IOException;
+
+    /**
+     * Provide the prefix for storage plugin urls.
+     * @return String of the Storage Plugin Identifier
+     */
+    String pluginIdentifier();
 }

@@ -518,7 +518,7 @@ public class PlainPBPathNameUtility {
      * The PlainPBStorage plugin has a naming scheme that provides much information. This class encapsulates the
      * potential start and end times of a particular chunk.
      */
-    static class StartEndTimeFromName {
+    public static class StartEndTimeFromName {
         ZonedDateTime pathDataStartTime;
         ZonedDateTime pathDataEndTime;
 

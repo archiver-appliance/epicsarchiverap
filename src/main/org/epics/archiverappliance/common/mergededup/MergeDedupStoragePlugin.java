@@ -78,7 +78,7 @@ import java.util.concurrent.Callable;
  *
  */
 public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics {
-    private static Logger logger = LogManager.getLogger(MergeDedupStoragePlugin.class.getName());
+    private static final Logger logger = LogManager.getLogger(MergeDedupStoragePlugin.class.getName());
     private String name;
     private StoragePlugin dest;
     private StoragePlugin other;
@@ -155,35 +155,6 @@ public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDes
         return dest.appendData(context, pvName, stream);
     }
 
-    class MergeStreamCreator implements ETLStreamCreator {
-        ETLStreamCreator strmCreator;
-        Instant startTime, endTime;
-        String pvName;
-
-        MergeStreamCreator(ETLStreamCreator strc, String pvName, Instant sTime, Instant eTime) {
-            this.strmCreator = strc;
-            this.startTime = sTime;
-            this.endTime = eTime;
-            this.pvName = pvName;
-        }
-
-        @Override
-        public EventStream getStream() throws IOException {
-            try (BasicContext context = new BasicContext()) {
-                List<Callable<EventStream>> othrStrms =
-                        other.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
-                if (othrStrms == null || othrStrms.size() == 0) {
-                    throw new IOException("No data from other plugin; skipping ETL for now");
-                }
-                EventStream srcStream = strmCreator.getStream();
-                logger.info("Merging " + srcStream.getDescription().getSource() + " with streams from "
-                        + other.getDescription());
-                return new MergeDedupWithCallablesEventStream(
-                        CallableEventStream.makeOneStreamCallableList(srcStream), othrStrms);
-            }
-        }
-    }
-
     @Override
     public long getTotalSpace(StorageMetricsContext storageMetricsContext) throws IOException {
         return ((StorageMetrics) dest).getTotalSpace(storageMetricsContext);
@@ -233,6 +204,13 @@ public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDes
     @Override
     public boolean consolidateOnShutdown() {
         return ((ETLSource) dest).consolidateOnShutdown();
+    }
+
+    public static final String MERGE_PLUGIN_IDENTIFIER = "merge";
+
+    @Override
+    public String pluginIdentifier() {
+        return MERGE_PLUGIN_IDENTIFIER;
     }
 
     @Override
@@ -296,5 +274,34 @@ public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDes
     @Override
     public void convert(BasicContext context, String pvName, ConversionFunction conversionFuntion) throws IOException {
         dest.convert(context, pvName, conversionFuntion);
+    }
+
+    class MergeStreamCreator implements ETLStreamCreator {
+        ETLStreamCreator strmCreator;
+        Instant startTime, endTime;
+        String pvName;
+
+        MergeStreamCreator(ETLStreamCreator strc, String pvName, Instant sTime, Instant eTime) {
+            this.strmCreator = strc;
+            this.startTime = sTime;
+            this.endTime = eTime;
+            this.pvName = pvName;
+        }
+
+        @Override
+        public EventStream getStream() throws IOException {
+            try (BasicContext context = new BasicContext()) {
+                List<Callable<EventStream>> othrStrms =
+                        other.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
+                if (othrStrms == null || othrStrms.size() == 0) {
+                    throw new IOException("No data from other plugin; skipping ETL for now");
+                }
+                EventStream srcStream = strmCreator.getStream();
+                logger.info("Merging " + srcStream.getDescription().getSource() + " with streams from "
+                        + other.getDescription());
+                return new MergeDedupWithCallablesEventStream(
+                        CallableEventStream.makeOneStreamCallableList(srcStream), othrStrms);
+            }
+        }
     }
 }

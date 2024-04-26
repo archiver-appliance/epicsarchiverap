@@ -215,6 +215,13 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
         this.append_extension = pbFileExtension + "append";
     }
 
+    public static final String PB_PLUGIN_IDENTIFIER = "pb";
+
+    @Override
+    public String pluginIdentifier() {
+        return PB_PLUGIN_IDENTIFIER;
+    }
+
     @Override
     public String toString() {
         return "PlainPBStoragePlugin{" + "append_extension='"
@@ -1334,6 +1341,10 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
                 }
             }
         }
+    }
+
+    public String getExtensionString() {
+        return ".pb";
     }
 
     /**

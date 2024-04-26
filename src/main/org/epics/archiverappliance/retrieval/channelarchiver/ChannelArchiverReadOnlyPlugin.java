@@ -275,6 +275,13 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
         throw new UnsupportedOperationException();
     }
 
+    public static final String RTREE_PLUGIN_IDENTIFIER = "rtree";
+
+    @Override
+    public String pluginIdentifier() {
+        return RTREE_PLUGIN_IDENTIFIER;
+    }
+
     @Override
     public String getName() {
         return name;
