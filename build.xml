@@ -10,21 +10,14 @@
 <project name="epicsarchiverap">
     <description>The build file for the EPICS archiver appliance.</description>
 
-	<property name="classes" location="bin/"/>
-	<property name="stage" location="stage/"/>
 	<property environment="env"/>
-
-	<!-- Determine the site from the environment variable ARCHAPPL_SITEID. If this is not set, we assume the unit tests environment -->
-	<condition property="archapplsite" value="${env.ARCHAPPL_SITEID}" else="tests">
-		<isset property="env.ARCHAPPL_SITEID"/>
-	</condition>
 
 	<available file="src/sitespecific/${archapplsite}/build.xml" property="site_has_site_specific_build_xml">
 	</available>
 
 	<echo>Building the archiver appliance for the site ${archapplsite}</echo>
 
-	<target name="sitespecificbuild" if="site_has_site_specific_build_xml">
+	<target name="sitespecificbuild" if="site_has_site_specific_build_xml" depends="stage">
 		<echo message="Calling site specific build for site ${archapplsite}"></echo>
 		<ant dir="src/sitespecific/${archapplsite}" inheritall="true"></ant>
 	</target>

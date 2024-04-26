@@ -1,24 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- ====================================================================== 
-Site specific builds for slacdev
-Proof of concept
-====================================================================== -->
-<project name="slacedv" default="slac">
-	<property name="site" value="SLAC"/>
+<project name="test" default="updateui">
+	<property name="site" value="Testing"/>
 	<target name="echo">
 		<echo message="From within the site specific build for ${archapplsite}."/>
 		<echo message="${site} SITE ID : ${archapplsite}" />
 		<echo message="${site} : STAGE_FOLDER - ${stage}" />
+		<echo message="${site} : Classes folder - ${classes}" />
 	</target>
-	<target name="slac" depends="updateTemplate">
+	<target name="updateui" depends="updateTemplate">
 		<echo message="${site} : ${site} image files to STAGE_FOLDER/org/epics/archiverappliance/staticcontent/img" />
 		<copy todir="${stage}/org/epics/archiverappliance/staticcontent/img" overwrite="true">
 			<fileset dir="img" />
 		</copy>
-		<echo message="${site} : css/main.css to STAGE_FOLDER/org/epics/archiverappliance/staticcontent/css" />
-		<copy file="css/main.css" todir="${stage}/org/epics/archiverappliance/staticcontent/css" overwrite="true" />
-		<echo message="${site} : css/mgmt.css to STAGE_FOLDER/org/epics/archiverappliance/mgmt/staticcontent/css" />
-		<copy file="css/mgmt.css" todir="${stage}/org/epics/archiverappliance/mgmt/staticcontent/css" overwrite="true" />
 	</target>
 	<target name="updateTemplate" depends="echo">
 		<echo message="${site} : Apply template_changes.html to mgmt to STAGE_FOLDER/org/epics/archiverappliance/staticcontent" />
