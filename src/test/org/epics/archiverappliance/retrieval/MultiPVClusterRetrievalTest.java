@@ -33,7 +33,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -45,17 +44,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+
 @Tag("integration")
 public class MultiPVClusterRetrievalTest {
     private static final Logger logger = LogManager.getLogger(MultiPVClusterRetrievalTest.class.getName());
     private final TomcatSetup tomcatSetup = new TomcatSetup();
-    private final PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
-    short year = TimeUtils.getCurrentYear();
-
     private final String pvName = "MultiPVClusterRetrievalTest:dataretrieval";
     private final String pvName2 = "MultiPVClusterRetrievalTest:dataretrieval2";
     private final String ltsFolder = System.getenv("ARCHAPPL_LONG_TERM_FOLDER");
     private final File ltsPVFolder = new File(ltsFolder + File.separator + "MultiPVClusterRetrievalTest");
+    short year = TimeUtils.getCurrentYear();
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -76,16 +76,16 @@ public class MultiPVClusterRetrievalTest {
 
     /**
      * Test to make sure that data is retrieved from across clusters.
-     * @throws Exception
-     * @throws UnsupportedEncodingException
      */
     @Test
     public void multiplePvsAcrossCluster() throws Exception {
+        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+
         ConfigService configService = new ConfigServiceForTests(-1);
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize(
-                "pb://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR",
+                "pb" + "://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR",
                 configService);
 
         // Generate an event stream to populate the PB files
@@ -102,8 +102,8 @@ public class MultiPVClusterRetrievalTest {
         logger.info("Done generating data for PV in " + ltsPVFolder.getAbsolutePath());
 
         // Load a sample PVTypeInfo from a prototype file.
-        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File(
-                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
+        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(
+                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
 
         // Create target for decoded type info from JSON
         PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
@@ -133,7 +133,7 @@ public class MultiPVClusterRetrievalTest {
         pvTypeInfo1.setModificationTime(TimeUtils.now());
         pvTypeInfo1.setApplianceIdentity("appliance0");
         GetUrlContent.postObjectAndGetContentAsJSONObject(
-                "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
+                MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                         + "&override=false&createnew=true",
                 encoder.encode(pvTypeInfo1));
 
@@ -145,7 +145,7 @@ public class MultiPVClusterRetrievalTest {
         pvTypeInfo2.setModificationTime(TimeUtils.now());
         pvTypeInfo2.setApplianceIdentity("appliance1");
         GetUrlContent.postObjectAndGetContentAsJSONObject(
-                "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName2, StandardCharsets.UTF_8)
+                MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName2, StandardCharsets.UTF_8)
                         + "&override=false&createnew=true",
                 encoder.encode(pvTypeInfo2));
         logger.info("Added " + pvName + " to appliance1");
@@ -183,12 +183,12 @@ public class MultiPVClusterRetrievalTest {
 
         // Establish a connection with appliance0 -- borrowed from
         // http://www.mkyong.com/java/how-to-send-http-request-getpost-in-java/
-        URL obj = new URL("http://localhost:17665/retrieval/data/getDataForPVs.json?pv="
+        URL obj = new URL(DATA_RETRIEVAL_URL + "/data/getDataForPVs.json?pv="
                 + URLEncoder.encode(pvName, StandardCharsets.UTF_8) + "&pv="
                 + URLEncoder.encode(pvName2, StandardCharsets.UTF_8) + "&from="
                 + URLEncoder.encode(startString, StandardCharsets.UTF_8)
                 + "&to=" + URLEncoder.encode(endString, StandardCharsets.UTF_8) + "&pp=pb");
-        logger.info("Opening this URL: " + obj.toString());
+        logger.info("Opening this URL: " + obj);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
         con.setRequestMethod("GET");
 
@@ -215,6 +215,7 @@ public class MultiPVClusterRetrievalTest {
 
         Map<String, List<JSONObject>> pvToData = new HashMap<>();
         int sizeOfResponse = finalResult.size();
+        Assertions.assertEquals(2, sizeOfResponse);
 
         logger.info("Size of response: " + sizeOfResponse);
 
@@ -225,7 +226,7 @@ public class MultiPVClusterRetrievalTest {
             logger.debug("Count on the for-loop: " + i);
 
             // Three explicit castings because Java
-            String pvName = ((JSONObject) ((JSONObject) ((JSONObject) finalResult.get(i))).get("meta"))
+            String pvName = ((JSONObject) ((JSONObject) finalResult.get(i)).get("meta"))
                     .get("name")
                     .toString();
 
