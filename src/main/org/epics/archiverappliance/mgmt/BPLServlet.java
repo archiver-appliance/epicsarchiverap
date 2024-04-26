@@ -7,15 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.ProcessMetricsChartData;
@@ -107,6 +98,14 @@ import org.epics.archiverappliance.mgmt.policy.GetApplianceProps;
 import org.epics.archiverappliance.mgmt.policy.GetPolicyList;
 import org.epics.archiverappliance.mgmt.policy.GetPolicyText;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * The main business logic servlet for mgmt. All BPLActions are registered here.
  * @author mshankar
@@ -114,170 +113,169 @@ import org.epics.archiverappliance.mgmt.policy.GetPolicyText;
  */
 @SuppressWarnings("serial")
 public class BPLServlet extends HttpServlet {
-	private static HashMap<String, Class<? extends BPLAction>> getActions = new HashMap<String, Class<? extends BPLAction>>();
-	private static LinkedList<String> actionsSequenceForDocs = new LinkedList<String>();
-	
-	static {
-		// BPL related to PVs/appliances etc
-		addAction("/getAllPVs", GetAllPVs.class);
-		addAction("/getAllExpandedPVNames", GetAllExpandedPVNames.class);
-		addAction("/getPVStatus", GetPVStatusAction.class);
-		addAction("/getPVTypeInfo", GetPVTypeInfo.class);
-		addAction("/archivePV", ArchivePVAction.class);
-		addAction("/pauseArchivingPV", PauseArchivingPV.class);
-		addAction("/resumeArchivingPV", ResumeArchivingPV.class);
-		addAction("/getStoresForPV", GetStoresForPV.class);
-		addAction("/modifyStoreURLForPV", ModifyStoreURLForPV.class);
-		addAction("/consolidateDataForPV", ConsolidatePBFilesForOnePV.class);
-		addAction("/deletePV", DeletePV.class);
-		addAction("/abortArchivingPV", AbortArchiveRequest.class);
-		addAction("/abortArchivingPVForThisAppliance", AbortArchiveRequestForAppliance.class);
-		addAction("/changeArchivalParameters", ChangeArchivalParamsAction.class);
-		addAction("/getPVDetails", PVDetails.class);
-		addAction("/getApplianceInfo", GetApplianceInfo.class);
-		addAction("/getAppliancesInCluster", GetAppliancesInCluster.class);
-		addAction("/renamePV", RenamePVAction.class);
-		addAction("/reshardPV", ReshardPV.class);
-		addAction("/appendAndAliasPV", AppendAndAliasPV.class);
-		addAction("/addAlias", AddAliasAction.class);
-		addAction("/removeAlias", RemoveAliasAction.class);
-		addAction("/getAllAliases", GetAllAliasesAction.class);
-		addAction("/skipAliasCheck", SkipAliasCheckAction.class);
-		addAction("/changeTypeForPV", ChangeTypeForPV.class);
-		addAction("/mergeInData", MergeInDataFromExternalStore.class);
-		addAction("/resetFailoverCaches", ResetFailoverCaches.class);
-		addAction("/getVersions", GetVersions.class);
-		addAction("/modifyMetaFields", ModifyMetaFieldsAction.class);
-		addAction("/getNamedFlag", NamedFlagsGet.class);
-		addAction("/setNamedFlag", NamedFlagsSet.class);
-		addAction("/getTypeInfoKeys", GetPVTypeInfoKeys.class);
+    private static HashMap<String, Class<? extends BPLAction>> getActions =
+            new HashMap<String, Class<? extends BPLAction>>();
+    private static LinkedList<String> actionsSequenceForDocs = new LinkedList<String>();
 
-		// BPL related to reports
-		addAction("/getNeverConnectedPVs", NeverConnectedPVsAction.class);
-		addAction("/getNeverConnectedPVsForThisAppliance", NeverConnectedPVsForThisAppliance.class);
-		addAction("/getMetaGets", MetaGetsAction.class);
-		addAction("/getCurrentlyDisconnectedPVs", CurrentlyDisconnectedPVs.class);
-		addAction("/getEventRateReport", EventRateReport.class);
-		addAction("/getStorageRateReport", StorageRateReport.class);
-		addAction("/getRecentlyAddedPVs", RecentlyAddedPVs.class);
-		addAction("/getRecentlyAddedPVsForThisInstance", RecentlyAddedPVsforThisInstance.class);
-		addAction("/getRecentlyModifiedPVs", RecentlyChangedPVs.class);
-		addAction("/getRecentlyModifiedPVsForThisInstance", RecentlyChangedPVsforThisInstance.class);
-		addAction("/getStorageMetrics", StorageReport.class);
-		addAction("/getStorageMetricsForAppliance", StorageReportDetails.class);
-		addAction("/getPVsByStorageConsumed", PVsByStorageConsumed.class);
-		addAction("/getLostConnectionsReport", LostConnectionsReport.class);
-		addAction("/getSilentPVsReport", SilentPVReport.class);
-		addAction("/getPVsForThisAppliance", GetPVsForThisAppliance.class);
-		addAction("/getPVsByDroppedEventsTimestamp",DroppedEventsTimestampReport.class);
-		addAction("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
-		addAction("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
-		addAction("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
-		addAction("/getPausedPVsReport", PausedPVsReport.class);
-		addAction("/getPausedPVsForThisAppliance", GetPausedPVsForThisAppliance.class);
-		addAction("/getArchivedWaveforms", WaveformPVsAction.class);	
-		addAction("/getTimeSpanReport", TimeSpanReport.class);
-		
-		
-		// Others.
-		addAction("/getPolicyText", GetPolicyText.class);
-		addAction("/exportConfig", ExportConfig.class);
-		addAction("/exportConfigForAppliance", ExportConfigForThisInstance.class);
-		addAction("/getInstanceMetrics", InstanceReport.class);
-		addAction("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
-		addAction("/getApplianceMetrics", ApplianceMetrics.class);
-		addAction("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
-		addAction("/getExternalArchiverServers", ChannelArchiverListView.class);
-		addAction("/addExternalArchiverServer", AddExternalArchiverServer.class);
-		addAction("/addExternalArchiverServerArchives", AddExternalArchiverServerArchives.class);
-		addAction("/removeExternalArchiverServer", RemoveExternalArchiverServer.class);
-		addAction("/test/compareWithChannelArchiver", CompareWithChannelArchiver.class);
-		addAction("/getAggregatedApplianceInfo", AggregatedApplianceInfo.class);
-		addAction("/importDataFromPlugin", ImportDataFromPlugin.class);
-		addAction("/getPolicyList", GetPolicyList.class);		
-		addAction("/getApplianceProperties", GetApplianceProps.class);		
-		addAction("/webAppReady", WebappReady.class);
-		addAction("/getProcessMetrics", ProcessMetricsReport.class);
-		addAction("/getProcessMetricsDataForAppliance", ProcessMetricsChartData.class);
-		addAction("/refreshPVDataFromChannelArchivers", RefreshPVDataFromChannelArchivers.class);
-		addAction("/getMatchingPVsForThisAppliance", GetMatchingPVsForAppliance.class);
-		addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);	
-		addAction("/restartArchivePVWorkflowThreadForThisAppliance", RestartArchiveWorkflowThreadForAppliance.class);
-	}
-	
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		BasicDispatcher.dispatch(req, resp, configService, getActions);
-	}
+    static {
+        // BPL related to PVs/appliances etc
+        addAction("/getAllPVs", GetAllPVs.class);
+        addAction("/getAllExpandedPVNames", GetAllExpandedPVNames.class);
+        addAction("/getPVStatus", GetPVStatusAction.class);
+        addAction("/getPVTypeInfo", GetPVTypeInfo.class);
+        addAction("/archivePV", ArchivePVAction.class);
+        addAction("/pauseArchivingPV", PauseArchivingPV.class);
+        addAction("/resumeArchivingPV", ResumeArchivingPV.class);
+        addAction("/getStoresForPV", GetStoresForPV.class);
+        addAction("/modifyStoreURLForPV", ModifyStoreURLForPV.class);
+        addAction("/consolidateDataForPV", ConsolidatePBFilesForOnePV.class);
+        addAction("/deletePV", DeletePV.class);
+        addAction("/abortArchivingPV", AbortArchiveRequest.class);
+        addAction("/abortArchivingPVForThisAppliance", AbortArchiveRequestForAppliance.class);
+        addAction("/changeArchivalParameters", ChangeArchivalParamsAction.class);
+        addAction("/getPVDetails", PVDetails.class);
+        addAction("/getApplianceInfo", GetApplianceInfo.class);
+        addAction("/getAppliancesInCluster", GetAppliancesInCluster.class);
+        addAction("/renamePV", RenamePVAction.class);
+        addAction("/reshardPV", ReshardPV.class);
+        addAction("/appendAndAliasPV", AppendAndAliasPV.class);
+        addAction("/addAlias", AddAliasAction.class);
+        addAction("/removeAlias", RemoveAliasAction.class);
+        addAction("/getAllAliases", GetAllAliasesAction.class);
+        addAction("/skipAliasCheck", SkipAliasCheckAction.class);
+        addAction("/changeTypeForPV", ChangeTypeForPV.class);
+        addAction("/mergeInData", MergeInDataFromExternalStore.class);
+        addAction("/resetFailoverCaches", ResetFailoverCaches.class);
+        addAction("/getVersions", GetVersions.class);
+        addAction("/modifyMetaFields", ModifyMetaFieldsAction.class);
+        addAction("/getNamedFlag", NamedFlagsGet.class);
+        addAction("/setNamedFlag", NamedFlagsSet.class);
+        addAction("/getTypeInfoKeys", GetPVTypeInfoKeys.class);
 
-	
+        // BPL related to reports
+        addAction("/getNeverConnectedPVs", NeverConnectedPVsAction.class);
+        addAction("/getNeverConnectedPVsForThisAppliance", NeverConnectedPVsForThisAppliance.class);
+        addAction("/getMetaGets", MetaGetsAction.class);
+        addAction("/getCurrentlyDisconnectedPVs", CurrentlyDisconnectedPVs.class);
+        addAction("/getEventRateReport", EventRateReport.class);
+        addAction("/getStorageRateReport", StorageRateReport.class);
+        addAction("/getRecentlyAddedPVs", RecentlyAddedPVs.class);
+        addAction("/getRecentlyAddedPVsForThisInstance", RecentlyAddedPVsforThisInstance.class);
+        addAction("/getRecentlyModifiedPVs", RecentlyChangedPVs.class);
+        addAction("/getRecentlyModifiedPVsForThisInstance", RecentlyChangedPVsforThisInstance.class);
+        addAction("/getStorageMetrics", StorageReport.class);
+        addAction("/getStorageMetricsForAppliance", StorageReportDetails.class);
+        addAction("/getPVsByStorageConsumed", PVsByStorageConsumed.class);
+        addAction("/getLostConnectionsReport", LostConnectionsReport.class);
+        addAction("/getSilentPVsReport", SilentPVReport.class);
+        addAction("/getPVsForThisAppliance", GetPVsForThisAppliance.class);
+        addAction("/getPVsByDroppedEventsTimestamp", DroppedEventsTimestampReport.class);
+        addAction("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
+        addAction("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
+        addAction("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
+        addAction("/getPausedPVsReport", PausedPVsReport.class);
+        addAction("/getPausedPVsForThisAppliance", GetPausedPVsForThisAppliance.class);
+        addAction("/getArchivedWaveforms", WaveformPVsAction.class);
+        addAction("/getTimeSpanReport", TimeSpanReport.class);
 
-	private ConfigService configService;
-	@Override
-	public void init() throws ServletException {
-		super.init();
-		configService = (ConfigService) getServletConfig().getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
-	}
-	
+        // Others.
+        addAction("/getPolicyText", GetPolicyText.class);
+        addAction("/exportConfig", ExportConfig.class);
+        addAction("/exportConfigForAppliance", ExportConfigForThisInstance.class);
+        addAction("/getInstanceMetrics", InstanceReport.class);
+        addAction("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
+        addAction("/getApplianceMetrics", ApplianceMetrics.class);
+        addAction("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
+        addAction("/getExternalArchiverServers", ChannelArchiverListView.class);
+        addAction("/addExternalArchiverServer", AddExternalArchiverServer.class);
+        addAction("/addExternalArchiverServerArchives", AddExternalArchiverServerArchives.class);
+        addAction("/removeExternalArchiverServer", RemoveExternalArchiverServer.class);
+        addAction("/test/compareWithChannelArchiver", CompareWithChannelArchiver.class);
+        addAction("/getAggregatedApplianceInfo", AggregatedApplianceInfo.class);
+        addAction("/importDataFromPlugin", ImportDataFromPlugin.class);
+        addAction("/getPolicyList", GetPolicyList.class);
+        addAction("/getApplianceProperties", GetApplianceProps.class);
+        addAction("/webAppReady", WebappReady.class);
+        addAction("/getProcessMetrics", ProcessMetricsReport.class);
+        addAction("/getProcessMetricsDataForAppliance", ProcessMetricsChartData.class);
+        addAction("/refreshPVDataFromChannelArchivers", RefreshPVDataFromChannelArchivers.class);
+        addAction("/getMatchingPVsForThisAppliance", GetMatchingPVsForAppliance.class);
+        addAction("/getCreationReportForAppliance", CreationTimeReportForAppliance.class);
+        addAction("/restartArchivePVWorkflowThreadForThisAppliance", RestartArchiveWorkflowThreadForAppliance.class);
+    }
 
-	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
-	static {
-		addPostAction("/importChannelArchiverConfiguration", ImportChannelArchiverConfigAction.class);
-		addPostAction("/uploadChannelArchiverConfiguration", UploadChannelArchiverConfigAction.class);
-		addPostAction("/importConfig", ImportConfig.class);
-		addPostAction("/importConfigForAppliance", ImportConfigForAppliance.class);
-		addPostAction("/archivePV", ArchivePVAction.class);
-		addPostAction("/getPVStatus", GetPVStatusAction.class);
-		addPostAction("/pauseArchivingPV", PauseArchivingPV.class);
-		addPostAction("/resumeArchivingPV", ResumeArchivingPV.class);
-		addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
-		addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
-		addPostAction("/archivedPVs", ArchivedPVsAction.class);
-		addPostAction("/archivedPVsForThisAppliance", ArchivedPVsForThisApplianceAction.class);
-		addPostAction("/archivedPVsNotInList", ArchivedPVsNotInListAction.class);
-	}
-	
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		BasicDispatcher.dispatch(req, resp, configService, postActions);
-	}
-	
-	/**
-	 * Add so that we can maintain the sequence of addition as well. 
-	 * @param path
-	 * @param bplClassName
-	 */
-	private static void addAction(String path, Class<? extends BPLAction> bplClassName) { 
-		getActions.put(path, bplClassName);
-		actionsSequenceForDocs.add(path);
-	}
-	
-	private static void addPostAction(String path, Class<? extends BPLAction> bplClassName) { 
-		postActions.put(path, bplClassName);
-		if(!actionsSequenceForDocs.contains(path)) { 
-			actionsSequenceForDocs.add(path);
-		}
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        BasicDispatcher.dispatch(req, resp, configService, getActions);
+    }
 
-	
-	/**
-	 * The main method here is used only to generate documentation for the scripting guide. 
-	 * No other functionality is provided
-	 * @param args  &emsp;
-	 * @throws IOException  &emsp;
-	 */
-	public static void main(String[] args) throws IOException {
-		System.out.println("#Path mappings for mgmt BPLs");
-		for(String path : actionsSequenceForDocs) { 
-			Class<? extends BPLAction> classObj = getActions.get(path);
-			if(classObj == null) { 
-				classObj = postActions.get(path);
-			}
-			if(classObj == null) { 
-				System.err.println("Invalid registration for " + path);
-			}
-			System.out.println(path + "=" + classObj.getName());
-		}
-	}
+    private ConfigService configService;
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        configService =
+                (ConfigService) getServletConfig().getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
+    }
+
+    private static HashMap<String, Class<? extends BPLAction>> postActions =
+            new HashMap<String, Class<? extends BPLAction>>();
+
+    static {
+        addPostAction("/importChannelArchiverConfiguration", ImportChannelArchiverConfigAction.class);
+        addPostAction("/uploadChannelArchiverConfiguration", UploadChannelArchiverConfigAction.class);
+        addPostAction("/importConfig", ImportConfig.class);
+        addPostAction("/importConfigForAppliance", ImportConfigForAppliance.class);
+        addPostAction("/archivePV", ArchivePVAction.class);
+        addPostAction("/getPVStatus", GetPVStatusAction.class);
+        addPostAction("/pauseArchivingPV", PauseArchivingPV.class);
+        addPostAction("/resumeArchivingPV", ResumeArchivingPV.class);
+        addPostAction("/putPVTypeInfo", PutPVTypeInfo.class);
+        addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
+        addPostAction("/archivedPVs", ArchivedPVsAction.class);
+        addPostAction("/archivedPVsForThisAppliance", ArchivedPVsForThisApplianceAction.class);
+        addPostAction("/archivedPVsNotInList", ArchivedPVsNotInListAction.class);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        BasicDispatcher.dispatch(req, resp, configService, postActions);
+    }
+
+    /**
+     * Add so that we can maintain the sequence of addition as well.
+     * @param path
+     * @param bplClassName
+     */
+    private static void addAction(String path, Class<? extends BPLAction> bplClassName) {
+        getActions.put(path, bplClassName);
+        actionsSequenceForDocs.add(path);
+    }
+
+    private static void addPostAction(String path, Class<? extends BPLAction> bplClassName) {
+        postActions.put(path, bplClassName);
+        if (!actionsSequenceForDocs.contains(path)) {
+            actionsSequenceForDocs.add(path);
+        }
+    }
+
+    /**
+     * The main method here is used only to generate documentation for the scripting guide.
+     * No other functionality is provided
+     * @param args  &emsp;
+     * @throws IOException  &emsp;
+     */
+    public static void main(String[] args) throws IOException {
+        System.out.println("#Path mappings for mgmt BPLs");
+        for (String path : actionsSequenceForDocs) {
+            Class<? extends BPLAction> classObj = getActions.get(path);
+            if (classObj == null) {
+                classObj = postActions.get(path);
+            }
+            if (classObj == null) {
+                System.err.println("Invalid registration for " + path);
+            }
+            System.out.println(path + "=" + classObj.getName());
+        }
+    }
 }
