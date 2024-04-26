@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -44,27 +43,22 @@ import java.util.HashMap;
 @Tag("integration")
 public class YearSpanRetrievalTest {
     private static final Logger logger = LogManager.getLogger(YearSpanRetrievalTest.class.getName());
-    static long previousEpochSeconds = 0;
-    PBCommonSetup pbSetup = new PBCommonSetup();
-    PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
     TomcatSetup tomcatSetup = new TomcatSetup();
     private ConfigService configService;
 
     @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
-        pbSetup.setUpRootFolder(pbplugin);
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-        generateDataForYears();
     }
 
-    private void generateDataForYears() throws IOException {
+    private void generateDataForYears(PlainPBStoragePlugin pbplugin, String pvName) throws IOException {
         // We skip generation of the file only if all the files exist.
         boolean deletefilesandgeneratedata = false;
         for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
             if (!PlainPBPathNameUtility.getPathNameForTime(
                             pbplugin,
-                            "--ArchUnitTestyspan",
+                            pvName,
                             TimeUtils.getStartOfYear(currentyear),
                             new ArchPaths(),
                             configService.getPVNameToKeyConverter())
@@ -80,7 +74,7 @@ public class YearSpanRetrievalTest {
             for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
                 Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
                         pbplugin,
-                        "--ArchUnitTestyspan",
+                        pvName,
                         TimeUtils.getStartOfYear(currentyear),
                         new ArchPaths(),
                         configService.getPVNameToKeyConverter()));
@@ -94,7 +88,7 @@ public class YearSpanRetrievalTest {
                     1);
             // The pbplugin should handle all the rotation etc.
             try (BasicContext context = new BasicContext()) {
-                pbplugin.appendData(context, "--ArchUnitTestyspan", simstream);
+                pbplugin.appendData(context, pvName, simstream);
             }
         }
     }
@@ -105,28 +99,28 @@ public class YearSpanRetrievalTest {
     }
 
     @Test
-    public void testYearSpan() {
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+    public void testYearSpan() throws Exception {
+        PBCommonSetup pbSetup = new PBCommonSetup();
+        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        pbSetup.setUpRootFolder(pbplugin);
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan";
+        generateDataForYears(pbplugin, pvName);
+        RawDataRetrievalAsEventStream rawDataRetrieval =
+                new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         Instant start = TimeUtils.convertFromISO8601String("2011-12-31T08:00:00.000Z");
         Instant end = TimeUtils.convertFromISO8601String("2012-01-01T08:00:00.000Z");
         EventStream stream = null;
         try {
             stream = rawDataRetrieval.getDataForPVS(
-                    new String[] {ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan"},
+                    new String[] {pvName},
                     start,
                     end,
-                    new RetrievalEventProcessor() {
-                        @Override
-                        public void newPVOnStream(EventStreamDesc desc) {
-                            logger.info("On the client side, switching to processing PV " + desc.getPvName());
-                            previousEpochSeconds = 0;
-                        }
-                    });
+                    desc -> logger.info("On the client side, switching to processing PV " + desc.getPvName()));
 
             // We are making sure that the stream we get back has times in sequential order...
 
             HashMap<Short, YearCount> counts = new HashMap<Short, YearCount>();
+            long previousEpochSeconds = 0;
 
             for (Event e : stream) {
                 long actualSeconds = e.getEpochSeconds();
@@ -152,6 +146,7 @@ public class YearSpanRetrievalTest {
                 } catch (Throwable ignored) {
                 }
         }
+        pbSetup.deleteTestFolder();
     }
 
     static class YearCount {
