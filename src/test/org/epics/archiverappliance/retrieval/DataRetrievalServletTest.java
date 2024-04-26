@@ -45,32 +45,19 @@ import java.time.Instant;
 @Tag("integration")
 public class DataRetrievalServletTest {
 
-    private static Logger logger = LogManager.getLogger(DataRetrievalServletTest.class.getName());
-    private ConfigService configService;
-    PBCommonSetup pbSetup = new PBCommonSetup();
-    PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+    private static final Logger logger = LogManager.getLogger(DataRetrievalServletTest.class.getName());
     TomcatSetup tomcatSetup = new TomcatSetup();
 
-    String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
     short year = (short) 2011;
 
     @BeforeEach
     public void setUp() throws Exception {
-        configService = new ConfigServiceForTests(-1);
-        pbSetup.setUpRootFolder(pbplugin);
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 
     @AfterEach
     public void tearDown() throws Exception {
         tomcatSetup.tearDown();
-
-        Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
-                pbplugin,
-                pvName,
-                TimeUtils.getStartOfYear(year),
-                new ArchPaths(),
-                configService.getPVNameToKeyConverter()));
     }
 
     /**
@@ -78,6 +65,13 @@ public class DataRetrievalServletTest {
      */
     @Test
     public void testTimesAreSequential() throws Exception {
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
+
+        PBCommonSetup pbSetup = new PBCommonSetup();
+
+        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        pbSetup.setUpRootFolder(pbplugin);
+
         PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
         ConfigService configService = new ConfigServiceForTests(-1);
         storagePlugin.initialize(
@@ -100,6 +94,7 @@ public class DataRetrievalServletTest {
                 TimeUtils.getStartOfYear(year),
                 TimeUtils.getEndOfYear(year),
                 1);
+
         try (BasicContext context = new BasicContext()) {
             pbplugin.appendData(context, pvName, simstream);
         }
@@ -119,7 +114,6 @@ public class DataRetrievalServletTest {
             int totalEvents = 0;
             // Goes through the stream
             for (Event e : stream) {
-                System.out.println(e.getRawForm());
                 long actualSeconds = e.getEpochSeconds();
                 long desired = starttimeinseconds + next++;
                 Assertions.assertTrue(
@@ -133,6 +127,15 @@ public class DataRetrievalServletTest {
             }
             long e = System.currentTimeMillis();
             logger.info("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
+            Assertions.assertEquals(end.getEpochSecond() - start.getEpochSecond() + 1, totalEvents);
         }
+        Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+                pbplugin,
+                pvName,
+                TimeUtils.getStartOfYear(year),
+                new ArchPaths(),
+                configService.getPVNameToKeyConverter()));
+
+        pbSetup.deleteTestFolder();
     }
 }
