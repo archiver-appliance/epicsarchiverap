@@ -1,72 +1,104 @@
 html {
-  background: #b2b2b2;
+  background: white;
 }
 
 body {
-  background: white;
   color: black;
   width: 1024px;
   margin: 0 auto;
   padding-bottom: 50px;
   font-family: Helvetica, Arial, "Liberation Sans", FreeSans, sans-serif;
-  font-size: 13px;
 }
 
 .page {
   min-height: 600px;
 }
 
-.pageheader {
-  height: 80px;
-}
-
 .apptitle {
-  padding-left: 0.5em;
-  padding-top: 0.75em;
-  font-family: Garamond, serif;
-  color: #0f687e;
-  font-size: 30px;
+  padding-left: 1em;
+  padding-top: 1em;
+  font-family: Helvetica, sans-serif;
+  color: white;
+  font-size: 2em;
   display: inline-block;
+  font-weight: bold;
+  float: left;
 }
 
 #siteimages {
   float: right;
-  padding-top: 0.75em;
+  padding-top: 0.5em;
 }
 
-div.nav {
-  overflow: hidden;
-  display: block;
-  height: 30px;
-  background: transparent url(../img/nav-bar-bg.gif) repeat-x top left;
-  margin-bottom: 20px;
+.navbar {
+  background-color: #0f687e;
+}
+
+.nav {
+  border-top-style: solid;
+  border-top-color: white;
+  border-top-width: 0.0625em;
+  border-bottom-style: solid;
+  border-bottom-color: white;
+  border-bottom-width: 0.5em;
 }
 
 ul.mainmenu {
-  list-style-position: inside;
+  list-style-type: none;
   margin: 0;
   padding: 0;
-  padding-left: 5px;
-  font-weight: bold;
-  color: white;
+  overflow: hidden;
 }
 
-ul.mainmenu li,
-ul.mainmenu li a,
-ul.mainmenu li a:visited {
-  display: inline;
-  line-height: 29px;
-  padding: 0 0 0 0;
-  padding-left: 0.5em;
-  list-style-type: none;
+/* Float the list items side by side */
+ul.mainmenu li {
+  float: left;
+}
+
+/* Style the links inside the list items */
+ul.mainmenu li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 0.875em 1em;
   text-decoration: none;
-  color: white;
+  transition: 0.5s;
 }
 
-#navigation li {
-  display: inline;
+/* Change background color of links on hover */
+ul.mainmenu li a:hover {
+  background-color: #1272a9;
 }
 
-.dialogheader {
-  font-size: medium;
+ul.mainmenu li a.active {
+  border-style: solid;
+  border-color: white;
+  border-width: 0.0625em;
+}
+
+/* Hide the list item that contains the link that should open and close the topnav on small screens */
+ul.mainmenu li.icon {
+  display: none;
+}
+
+.page p {
+  font-size: 1em;
+  line-height: 1.25em;
+  margin: 1.25em 1.25em 1em 0em;
+  text-align: justify;
+}
+
+input[type="button"] {
+  background-color: white;
+  color: black;
+  padding: 2px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  transition-duration: 0.4s;
+  border: 2px solid #e7e7e7;
+}
+
+input[type="button"]:hover {
+  background-color: #e7e7e7;
 }
