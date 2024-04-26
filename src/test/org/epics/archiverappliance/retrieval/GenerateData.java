@@ -70,13 +70,10 @@ public class GenerateData {
                 storagePlugin.appendData(context, pvName, simstream);
             }
         }
-        configService.shutdownNow();
         return numberOfEvents;
     }
-
     /**
      * We generate a sine wave for the data if it does not already exist.
-     *
      * @throws IOException
      */
     public static long generateSineForPV(String pvName, int phasediffindegrees, ArchDBRTypes type) throws Exception {
