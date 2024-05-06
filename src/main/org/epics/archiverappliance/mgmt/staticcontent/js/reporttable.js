@@ -27,7 +27,7 @@
 // 1) initialSort (optional) - This is the column index of the column to sort the data by after fetching the data from the server.
 // 2) initialSortDirection (optional) - This is the direction of the sort. By default, we do a descending sort. If this attribute has the value 'asc', then we do an ascending sort.
 
-function createReportTable(jsonurl, tabledivname, coldefs, rowdefs) {
+function createReportTable(json, url, tabledivname, coldefs, rowdefs) {
   var reporttablediv = $("#" + tabledivname);
   reporttablediv.empty();
   var reportTable = $(
@@ -59,9 +59,9 @@ function createReportTable(jsonurl, tabledivname, coldefs, rowdefs) {
     )
     .append("<tbody>");
   reportTable.data("coldefs", coldefs);
-  if (rowdefs != null && rowdefs != undefined)
-    reportTable.data("rowdefs", rowdefs);
-  reportTable.data("jsonurl", jsonurl);
+  if (rowdefs != null) reportTable.data("rowdefs", rowdefs);
+  reportTable.data("json", json);
+  reportTable.data("url", url);
   reporttablediv.append(reportTable);
 
   getJSONDataAndRefreshTable(reportTable);
@@ -235,23 +235,17 @@ function addSorterToTableTh(reportTable, indexofthelement) {
 }
 
 function getJSONDataAndRefreshTable(reportTable) {
-  var jsonurl = reportTable.data("jsonurl");
-  var components = jsonurl.split("?");
-  var urlalone = components[0];
-  var querystring = "";
-  if (components.length > 1) {
-    querystring = components[1];
-  }
-  var HTTPMethod = "GET";
-  if (jsonurl.length > 2048) {
-    HTTPMethod = "POST";
-  }
+  const json = reportTable.data("json");
+  const url = reportTable.data("url");
+  const HTTPMethod = "POST";
 
   $.ajax({
-    url: urlalone,
-    data: querystring,
+    url: url,
+    data: json,
     type: HTTPMethod,
     dataType: "json",
+    processData: false,
+    contentType: "application/json",
     success: function (data, textStatus, jqXHR) {
       var coldefs = reportTable.data("coldefs");
       if (coldefs == null) return;
