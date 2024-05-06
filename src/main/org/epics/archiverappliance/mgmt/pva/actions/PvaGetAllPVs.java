@@ -11,6 +11,7 @@ import org.epics.pva.data.nt.*;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,12 +75,13 @@ public class PvaGetAllPVs implements PvaAction {
         PVAScalar<PVAStringArray> ntScalarArray = null;
         try {
             Map<String, String> queryName = uri.getQuery();
+
             if (queryName.containsKey("limit")) {
-                searchParameters.put("limit", queryName.get("limit"));
+                defaultLimit = Integer.parseInt(queryName.get("limit"));
             }
             LinkedList<String> pvNames =
-                    PVsMatchingParameter.getMatchingPVs(searchParameters, configService, false, defaultLimit);
-            ntScalarArray = PVAScalar.stringArrayScalarBuilder(pvNames.toArray(new String[pvNames.size()]))
+                    PVsMatchingParameter.getMatchingPVs(List.of(), null, defaultLimit, configService, false);
+            ntScalarArray = PVAScalar.stringArrayScalarBuilder(pvNames.toArray(new String[0]))
                     .name("result")
                     .build();
         } catch (PVAScalarDescriptionNameException | NotValueException | PVAScalarValueNameException e) {

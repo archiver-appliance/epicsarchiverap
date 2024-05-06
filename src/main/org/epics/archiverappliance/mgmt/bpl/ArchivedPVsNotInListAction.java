@@ -38,7 +38,7 @@ public class ArchivedPVsNotInListAction implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         logger.info("Determining PVs that are archived but are not in list.");
-        LinkedList<String> incomingPVNamesList = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+        LinkedList<String> incomingPVNamesList = PVsMatchingParameter.getPVNamesFromPostBody(req);
         logger.debug("Incoming list has " + incomingPVNamesList.size() + "PV names");
         if (incomingPVNamesList.size() <= 0) {
             logger.error("Incoming list cannnot be empty for the action "

@@ -33,7 +33,7 @@ public class BulkPauseResumeUtils {
             throws IOException {
         LinkedList<String> pvNames = null;
         if (req.getMethod().equals("POST")) {
-            pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+            pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
         } else {
             pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, false, -1);
         }

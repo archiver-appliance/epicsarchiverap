@@ -42,7 +42,7 @@ public class ArchivedPVsAction implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         logger.info("Determining PVs that are archived ");
-        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
         LinkedList<String> archivedPVs = new LinkedList<String>();
         for (String pvName : pvNames) {
             PVTypeInfo typeInfo = null;

@@ -20,6 +20,7 @@ import org.epics.pva.data.nt.PVATable;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -93,12 +94,13 @@ public class PvaGetPVStatus implements PvaAction {
     public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
         Map<String, String> requestParameters = new HashMap<>();
         PVATable table = PVATable.fromStructure(args);
+        List<String> pvs = List.of();
         if (table != null) {
-            requestParameters.put("pv", String.join(",", NTUtil.extractStringList(table.getColumn("pv"))));
+            pvs = NTUtil.extractStringList(table.getColumn("pv"));
         } else {
             throw new IllegalArgumentException("Only supports request args of type NTURI or NTTable ");
         }
-        LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(requestParameters, configService, true, -1);
+        LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(pvs, null, -1, configService, true);
 
         HashMap<String, Map<String, String>> pvStatuses = new HashMap<String, Map<String, String>>();
         HashMap<String, LinkedList<String>> pvNamesToAskEngineForStatus = new HashMap<String, LinkedList<String>>();

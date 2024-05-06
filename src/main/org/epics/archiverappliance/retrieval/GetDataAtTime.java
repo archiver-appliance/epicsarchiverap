@@ -157,7 +157,7 @@ public class GetDataAtTime {
             throws ServletException, IOException, InterruptedException, ExecutionException {
         PoorMansProfiler pmansProfiler = new PoorMansProfiler();
 
-        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
         String timeStr = req.getParameter("at");
         if (timeStr == null) {
             timeStr = TimeUtils.convertToISO8601String(TimeUtils.getCurrentEpochSeconds());
@@ -377,7 +377,7 @@ public class GetDataAtTime {
     public static void getDataAtTimeForAppliance(
             HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws ServletException, IOException, InterruptedException, ExecutionException {
-        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
         String timeStr = req.getParameter("at");
         if (timeStr == null) {
             timeStr = TimeUtils.convertToISO8601String(TimeUtils.getCurrentEpochSeconds());

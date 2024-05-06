@@ -45,8 +45,22 @@ public class GetPVStatusAction implements BPLAction {
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
+        LinkedList<String> pvNames;
+        if (req.getMethod().equals("POST")) {
+
+            LinkedList<String> postPVNames = BulkPauseResumeUtils.getPVNames(req, configService);
+
+            pvNames = PVsMatchingParameter.getMatchingPVs(
+                    postPVNames,
+                    null,
+                    PVsMatchingParameter.getLimit(-1, PVsMatchingParameter.getRequestParameters(req)),
+                    configService,
+                    true);
+
+        } else {
+            pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, true, -1);
+        }
         logger.info("Getting the status of pv(s) " + req.getParameter("pv"));
-        LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(req, configService, true, -1);
 
         HashMap<String, Map<String, String>> pvStatuses = new LinkedHashMap<>();
         HashMap<String, LinkedList<String>> pvNamesToAskEngineForStatus =

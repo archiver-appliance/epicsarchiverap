@@ -88,7 +88,7 @@ public class GetDataAtTimeEngine implements BPLAction {
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
-        List<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+        List<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
         logger.debug("Getting data at time for PVs " + pvNames.size());
 
         String timeStr = req.getParameter("at");

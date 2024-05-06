@@ -42,8 +42,7 @@ public class UnarchivedPVsAction implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         logger.info("Determining PVs that are unarchived ");
-        Set<String> pvNamesFromUser =
-                new HashSet<String>(PVsMatchingParameter.getPVNamesFromPostBody(req, configService));
+        Set<String> pvNamesFromUser = new HashSet<String>(PVsMatchingParameter.getPVNamesFromPostBody(req));
 
         Set<String> expandedNames = new HashSet<String>();
         configService.getAllExpandedNames(new Consumer<String>() {
