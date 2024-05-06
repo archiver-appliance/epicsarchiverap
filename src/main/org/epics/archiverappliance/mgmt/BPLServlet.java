@@ -218,7 +218,7 @@ public class BPLServlet extends HttpServlet {
                 (ConfigService) getServletConfig().getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
     }
 
-    private static HashMap<String, Class<? extends BPLAction>> postActions =
+    private static final HashMap<String, Class<? extends BPLAction>> postActions =
             new HashMap<String, Class<? extends BPLAction>>();
 
     static {
@@ -227,6 +227,7 @@ public class BPLServlet extends HttpServlet {
         addPostAction("/importConfig", ImportConfig.class);
         addPostAction("/importConfigForAppliance", ImportConfigForAppliance.class);
         addPostAction("/archivePV", ArchivePVAction.class);
+        addPostAction("/deletePV", DeletePV.class);
         addPostAction("/getPVStatus", GetPVStatusAction.class);
         addPostAction("/pauseArchivingPV", PauseArchivingPV.class);
         addPostAction("/resumeArchivingPV", ResumeArchivingPV.class);
