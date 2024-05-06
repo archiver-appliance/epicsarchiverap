@@ -515,10 +515,15 @@ tasks.register("testRun", JavaExec) {
 	description = "Runs the application same as for integration tests."
 	dependsOn "integrationTestSetup"
 
+	environment "ARCHAPPL_SHORT_TERM_FOLDER", "${buildDir}/storage/sts"
+	environment "ARCHAPPL_MEDIUM_TERM_FOLDER", "${buildDir}/storage/mts"
+	environment "ARCHAPPL_LONG_TERM_FOLDER", "${buildDir}/storage/lts"
+
 	mainClass = "org.epics.archiverappliance.TestRun"
 
 	classpath = sourceSets.test.runtimeClasspath
 	args "-c2"
+
 }
 
 spotless {
