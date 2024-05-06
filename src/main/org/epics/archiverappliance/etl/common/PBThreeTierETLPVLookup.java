@@ -72,7 +72,7 @@ public final class PBThreeTierETLPVLookup {
     private final List<ScheduledThreadPoolExecutor> etlLifeTimeThreadPoolExecutors =
             new LinkedList<ScheduledThreadPoolExecutor>();
 
-    private final List<ETLMetricsForLifetime> applianceMetrics = new LinkedList<ETLMetricsForLifetime>();
+    private final ETLMetrics applianceMetrics = new ETLMetrics();
 
     public PBThreeTierETLPVLookup(ConfigService configService) {
         this.configService = configService;
@@ -144,7 +144,7 @@ public final class PBThreeTierETLPVLookup {
                                 new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(etllifetimeid)));
                         lifetimeId2PVName2LookupItem.put(
                                 etllifetimeid, new ConcurrentHashMap<String, ETLPVLookupItems>());
-                        applianceMetrics.add(new ETLMetricsForLifetime(etllifetimeid));
+                        applianceMetrics.add(etllifetimeid);
                     }
 
                     String sourceStr = dataSources[etllifetimeid];
@@ -349,7 +349,7 @@ public final class PBThreeTierETLPVLookup {
         }
     }
 
-    public List<ETLMetricsForLifetime> getApplianceMetrics() {
+    public ETLMetrics getApplianceMetrics() {
         return applianceMetrics;
     }
 

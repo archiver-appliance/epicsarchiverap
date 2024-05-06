@@ -1,20 +1,17 @@
 package org.epics.archiverappliance.etl.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.reports.MetricsDetails;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.etl.common.ETLMetrics;
 
-public class InstanceReportDetails implements BPLAction {
+import java.util.LinkedList;
+import java.util.Map;
 
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		try (PrintWriter out = resp.getWriter()) {
-			out.println(ApplianceMetricsDetails.getETLMetricsDetails(configService));
-		}
-	}
+public class InstanceReportDetails implements MetricsDetails {
+
+    @Override
+    public LinkedList<Map<String, String>> metricsDetails(ConfigService configService) {
+        ETLMetrics etlMetrics = configService.getETLLookup().getApplianceMetrics();
+        return etlMetrics.details(configService);
+    }
 }

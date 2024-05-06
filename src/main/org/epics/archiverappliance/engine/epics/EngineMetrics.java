@@ -7,132 +7,151 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.epics;
 
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.reports.Details;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.engine.pv.PVContext;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
-import org.json.simple.JSONAware;
-import org.json.simple.JSONValue;
+
+import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * POJO with some basic metrics.
  * @author mshankar
  *
  */
-public class EngineMetrics implements JSONAware {
-	private static final Logger logger = LogManager.getLogger(EngineMetrics.class);
-	private int pvCount;
-	private int connectedPVCount;
-	private int disconnectedPVCount;
-	private int pausedPVCount;
-	private int totalEPICSChannels;
-	private double eventRate;
-	private double dataRate;
-	private double secondsConsumedByWriter=0.00;
-	//private static Logger logger=Logger.getLogger(EngineMetrics.class.getName());
-	
+public class EngineMetrics implements Details {
+    private static final Logger logger = LogManager.getLogger(EngineMetrics.class);
+    private int pvCount;
+    private int connectedPVCount;
+    private int disconnectedPVCount;
+    private int pausedPVCount;
+    private int totalEPICSChannels;
+    private double eventRate;
+    private double dataRate;
+    private double secondsConsumedByWriter = 0.00;
+    // private static Logger logger=Logger.getLogger(EngineMetrics.class.getName());
 
-	public double getSecondsConsumedByWriter() {
-		return secondsConsumedByWriter;
-	}
-	public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
-		this.secondsConsumedByWriter = secondsConsumedByWriter;
-	}
-	public double getEventRate() {
-		return eventRate;
-	}
-	public void setEventRate(double eventRate) {
-		this.eventRate = eventRate;
-	}
-	public double getDataRate() {
-		return dataRate;
-	}
-	public void setDataRate(double dataRate) {
-		this.dataRate = dataRate;
-	}
+    public double getSecondsConsumedByWriter() {
+        return secondsConsumedByWriter;
+    }
 
-	public int getPvCount() {
-		return pvCount;
-	}
-	public void setPvCount(int pvCount) {
-		this.pvCount = pvCount;
-	}
-	public int getDisconnectedPVCount() {
-		return disconnectedPVCount;
-	}
-	public void setDisconnectedPVCount(int disconnectedPVCount) {
-		this.disconnectedPVCount = disconnectedPVCount;
-	}
+    public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
+        this.secondsConsumedByWriter = secondsConsumedByWriter;
+    }
 
-	@Override
-	public String toJSONString() {
-		DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
-		HashMap<String, String> engineMetrics = new HashMap<String, String>();
-		engineMetrics.put("eventRate", twoSignificantDigits.format(eventRate));
-		engineMetrics.put("dataRate", twoSignificantDigits.format(dataRate));
-		engineMetrics.put("dataRateGBPerDay", twoSignificantDigits.format((dataRate*60*60*24)/(1024*1024*1024)));
-		engineMetrics.put("dataRateGBPerYear", twoSignificantDigits.format((dataRate*60*60*24*365)/(1024*1024*1024)));
-		engineMetrics.put("pvCount", Integer.toString(pvCount));
-		engineMetrics.put("connectedPVCount", Integer.toString(connectedPVCount));
-		engineMetrics.put("disconnectedPVCount", Integer.toString(disconnectedPVCount));
-		engineMetrics.put("formattedWriteThreadSeconds", twoSignificantDigits.format(secondsConsumedByWriter));
-		engineMetrics.put("secondsConsumedByWriter", Double.toString(secondsConsumedByWriter));
+    public double getEventRate() {
+        return eventRate;
+    }
 
-		return JSONValue.toJSONString(engineMetrics);
-	}
-	
-	public String getDetails(EngineContext context) {
-		DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
-		LinkedList<Map<String, String>> details = new LinkedList<Map<String, String>>();
-		addDetailedStatus(details, "Total PV count", Integer.toString(pvCount));
-		addDetailedStatus(details, "Disconnected PV count", Integer.toString(disconnectedPVCount));
-		addDetailedStatus(details, "Connected PV count", Integer.toString(connectedPVCount));
-		addDetailedStatus(details, "Paused PV count", Integer.toString(pausedPVCount));
-		addDetailedStatus(details, "Total channels", Integer.toString(totalEPICSChannels));
-		addDetailedStatus(details, "Approx pending jobs in engine queue", Long.toString((context.getMainSchedulerPendingTasks())));
-		addDetailedStatus(details, "Event Rate (in events/sec)", twoSignificantDigits.format(eventRate));
-		addDetailedStatus(details, "Data Rate (in bytes/sec)", twoSignificantDigits.format(dataRate));
-		addDetailedStatus(details, "Data Rate in (GB/day)", twoSignificantDigits.format((dataRate*60*60*24)/(1024*1024*1024)));
-		addDetailedStatus(details, "Data Rate in (GB/year)", twoSignificantDigits.format((dataRate*60*60*24*365)/(1024*1024*1024)));
-		addDetailedStatus(details, "Time consumed for writing samplebuffers to STS (in secs)", twoSignificantDigits.format(secondsConsumedByWriter));
-		if(secondsConsumedByWriter != 0) { 
-			double writesPerSec = eventRate * context.getWritePeriod() / secondsConsumedByWriter;
-			double writeBytesPerSec = (dataRate * context.getWritePeriod() / secondsConsumedByWriter)/(1024*1024);
-			addDetailedStatus(details, "Benchmark - writing at (events/sec)", twoSignificantDigits.format(writesPerSec));
-			addDetailedStatus(details, "Benchmark - writing at (MB/sec)", twoSignificantDigits.format(writeBytesPerSec));
-		}
-		addDetailedStatus(details, "PVs pending computation of meta info", Integer.toString(MetaGet.getPendingMetaGetsSize()));
-		addDetailedStatus(details, "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount()));
-		addDetailedStatus(details, "Total number of CAJ channels", Integer.toString(context.getCAJChannelCount()));
-		
-		details.addAll(context.getCAJContextDetails());
-		
-		return JSONValue.toJSONString(details);
-	}
-	
-	private static void addDetailedStatus(LinkedList<Map<String, String>> details, String name, String value) {
-		Map<String, String> obj = new LinkedHashMap<String, String>();
-		obj.put("name", name);
-		obj.put("value", value);
-		obj.put("source", "engine");
-		details.add(obj);
-	}
-	
-	
-	public static EngineMetrics computeEngineMetrics(EngineContext engineContext, ConfigService configService) {
+    public void setEventRate(double eventRate) {
+        this.eventRate = eventRate;
+    }
+
+    public double getDataRate() {
+        return dataRate;
+    }
+
+    public void setDataRate(double dataRate) {
+        this.dataRate = dataRate;
+    }
+
+    public int getPvCount() {
+        return pvCount;
+    }
+
+    public void setPvCount(int pvCount) {
+        this.pvCount = pvCount;
+    }
+
+    public int getDisconnectedPVCount() {
+        return disconnectedPVCount;
+    }
+
+    public void setDisconnectedPVCount(int disconnectedPVCount) {
+        this.disconnectedPVCount = disconnectedPVCount;
+    }
+
+    public Map<String, String> toJSONString() {
+        DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
+        HashMap<String, String> engineMetrics = new HashMap<String, String>();
+        engineMetrics.put("eventRate", twoSignificantDigits.format(eventRate));
+        engineMetrics.put("dataRate", twoSignificantDigits.format(dataRate));
+        engineMetrics.put(
+                "dataRateGBPerDay", twoSignificantDigits.format((dataRate * 60 * 60 * 24) / (1024 * 1024 * 1024)));
+        engineMetrics.put(
+                "dataRateGBPerYear",
+                twoSignificantDigits.format((dataRate * 60 * 60 * 24 * 365) / (1024 * 1024 * 1024)));
+        engineMetrics.put("pvCount", Integer.toString(pvCount));
+        engineMetrics.put("connectedPVCount", Integer.toString(connectedPVCount));
+        engineMetrics.put("disconnectedPVCount", Integer.toString(disconnectedPVCount));
+        engineMetrics.put("formattedWriteThreadSeconds", twoSignificantDigits.format(secondsConsumedByWriter));
+        engineMetrics.put("secondsConsumedByWriter", Double.toString(secondsConsumedByWriter));
+
+        return engineMetrics;
+    }
+
+    @Override
+    public LinkedList<Map<String, String>> details(ConfigService configService) {
+        EngineContext context = configService.getEngineContext();
+        DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
+        LinkedList<Map<String, String>> details = new LinkedList<Map<String, String>>();
+        details.add(this.metricDetail("Total PV count", Integer.toString(pvCount)));
+        details.add(this.metricDetail("Disconnected PV count", Integer.toString(disconnectedPVCount)));
+        details.add(this.metricDetail("Connected PV count", Integer.toString(connectedPVCount)));
+        details.add(this.metricDetail("Paused PV count", Integer.toString(pausedPVCount)));
+        details.add(this.metricDetail("Total channels", Integer.toString(totalEPICSChannels)));
+        details.add(this.metricDetail(
+                "Approx pending jobs in engine queue", Long.toString((context.getMainSchedulerPendingTasks()))));
+        details.add(this.metricDetail("Event Rate (in events/sec)", twoSignificantDigits.format(eventRate)));
+        details.add(this.metricDetail("Data Rate (in bytes/sec)", twoSignificantDigits.format(dataRate)));
+        details.add(this.metricDetail(
+                "Data Rate in (GB/day)",
+                twoSignificantDigits.format((dataRate * 60 * 60 * 24) / (1024 * 1024 * 1024))));
+        details.add(this.metricDetail(
+                "Data Rate in (GB/year)",
+                twoSignificantDigits.format((dataRate * 60 * 60 * 24 * 365) / (1024 * 1024 * 1024))));
+        details.add(this.metricDetail(
+                "Time consumed for writing samplebuffers to STS (in secs)",
+                twoSignificantDigits.format(secondsConsumedByWriter)));
+        if (secondsConsumedByWriter != 0) {
+            double writesPerSec = eventRate * context.getWritePeriod() / secondsConsumedByWriter;
+            double writeBytesPerSec = (dataRate * context.getWritePeriod() / secondsConsumedByWriter) / (1024 * 1024);
+            details.add(this.metricDetail(
+                    "Benchmark - writing at (events/sec)", twoSignificantDigits.format(writesPerSec)));
+            details.add(this.metricDetail(
+                    "Benchmark - writing at (MB/sec)", twoSignificantDigits.format(writeBytesPerSec)));
+        }
+        details.add(this.metricDetail(
+                "PVs pending computation of meta info", Integer.toString(MetaGet.getPendingMetaGetsSize())));
+        details.add(this.metricDetail(
+                "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount())));
+        details.add(this.metricDetail("Total number of CAJ channels", Integer.toString(context.getCAJChannelCount())));
+
+        details.addAll(context.getCAJContextDetails());
+
+        return details;
+    }
+
+    private static void addDetailedStatus(LinkedList<Map<String, String>> details, String name, String value) {
+        Map<String, String> obj = new LinkedHashMap<String, String>();
+        obj.put("name", name);
+        obj.put("value", value);
+        obj.put("source", "engine");
+        details.add(obj);
+    }
+
+    public static EngineMetrics computeEngineMetrics(EngineContext engineContext, ConfigService configService) {
         EngineMetrics engineMetrics = new EngineMetrics();
         // Event rate is in events/sec
         double eventRate = 0.0;
@@ -141,76 +160,83 @@ public class EngineMetrics implements JSONAware {
         int connectedChannels = 0;
         int disconnectedChannels = 0;
         int totalChannels = 0;
-        
-		Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
-        
-        Iterator<Entry<String, ArchiveChannel>> it=engineContext.getChannelList().entrySet().iterator();
-        while(it.hasNext()){
-        	Entry<String, ArchiveChannel> tempEntry=it.next();
-        	ArchiveChannel channel=tempEntry.getValue();
-        	String pvName = channel.getName();
-        	try { 
-	        	if(pausedPVs.contains(pvName)) {
-	        		// Skipping paused PV.
-	        		continue;
-	        	}
 
-	        	PVMetrics pvMetrics = channel.getPVMetrics();
-	        	totalChannels++;
-	        	if(pvMetrics==null) {
-					disconnectedChannels++;
-					continue;
-				}
-				if(!pvMetrics.isConnected()) { 
-					disconnectedChannels++;
-				} else { 
-					connectedChannels++;
-				}
-				eventRate += pvMetrics.getEventRate();
-				dataRate += pvMetrics.getStorageRate();
-        	} catch(Exception ex) { 
-        		logger.error("Exception computing engine metrics for PV " + channel.getName(), ex);
-        	}
+        Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
+
+        for (Entry<String, ArchiveChannel> tempEntry :
+                engineContext.getChannelList().entrySet()) {
+            ArchiveChannel channel = tempEntry.getValue();
+            String pvName = channel.getName();
+            try {
+                if (pausedPVs.contains(pvName)) {
+                    // Skipping paused PV.
+                    continue;
+                }
+
+                PVMetrics pvMetrics = channel.getPVMetrics();
+                totalChannels++;
+                if (pvMetrics == null) {
+                    disconnectedChannels++;
+                    continue;
+                }
+                if (!pvMetrics.isConnected()) {
+                    disconnectedChannels++;
+                } else {
+                    connectedChannels++;
+                }
+                eventRate += pvMetrics.getEventRate();
+                dataRate += pvMetrics.getStorageRate();
+            } catch (Exception ex) {
+                logger.error("Exception computing engine metrics for PV " + channel.getName(), ex);
+            }
         }
-		engineMetrics.setEventRate(eventRate);
-		engineMetrics.setDataRate(dataRate);
+        engineMetrics.setEventRate(eventRate);
+        engineMetrics.setDataRate(dataRate);
 
-		engineMetrics.setPvCount(totalChannels);
-		engineMetrics.setConnectedPVCount(connectedChannels);
-		engineMetrics.setDisconnectedPVCount(disconnectedChannels);
-		engineMetrics.setPausedPVCount(pausedPVs.size());
-		int totalchannelCount = engineContext.getChannelList().size();
-		for(ArchiveChannel archiveChannel : engineContext.getChannelList().values()) { 
-			totalchannelCount += archiveChannel.getMetaChannelCount();
-		}
-		engineMetrics.setTotalEPICSChannels(totalchannelCount);
-		engineMetrics.setSecondsConsumedByWriter(engineContext.getAverageSecondsConsumedByWriter());
+        engineMetrics.setPvCount(totalChannels);
+        engineMetrics.setConnectedPVCount(connectedChannels);
+        engineMetrics.setDisconnectedPVCount(disconnectedChannels);
+        engineMetrics.setPausedPVCount(pausedPVs.size());
+        int totalchannelCount = engineContext.getChannelList().size();
+        for (ArchiveChannel archiveChannel : engineContext.getChannelList().values()) {
+            totalchannelCount += archiveChannel.getMetaChannelCount();
+        }
+        engineMetrics.setTotalEPICSChannels(totalchannelCount);
+        engineMetrics.setSecondsConsumedByWriter(engineContext.getAverageSecondsConsumedByWriter());
 
-		return engineMetrics;
-	}
-	public int getConnectedPVCount() {
-		return connectedPVCount;
-	}
-	public void setConnectedPVCount(int connectedPVCount) {
-		this.connectedPVCount = connectedPVCount;
-	}
-	public int getTotalEPICSChannels() {
-		return totalEPICSChannels;
-	}
-	public void setTotalEPICSChannels(int totalEPICSChannels) {
-		this.totalEPICSChannels = totalEPICSChannels;
-	}
-	/**
-	 * @return the pausedPVCount
-	 */
-	public int getPausedPVCount() {
-		return pausedPVCount;
-	}
-	/**
-	 * @param pausedPVCount the pausedPVCount to set
-	 */
-	public void setPausedPVCount(int pausedPVCount) {
-		this.pausedPVCount = pausedPVCount;
-	}
+        return engineMetrics;
+    }
+
+    public int getConnectedPVCount() {
+        return connectedPVCount;
+    }
+
+    public void setConnectedPVCount(int connectedPVCount) {
+        this.connectedPVCount = connectedPVCount;
+    }
+
+    public int getTotalEPICSChannels() {
+        return totalEPICSChannels;
+    }
+
+    public void setTotalEPICSChannels(int totalEPICSChannels) {
+        this.totalEPICSChannels = totalEPICSChannels;
+    }
+    /**
+     * @return the pausedPVCount
+     */
+    public int getPausedPVCount() {
+        return pausedPVCount;
+    }
+    /**
+     * @param pausedPVCount the pausedPVCount to set
+     */
+    public void setPausedPVCount(int pausedPVCount) {
+        this.pausedPVCount = pausedPVCount;
+    }
+
+    @Override
+    public ConfigService.WAR_FILE source() {
+        return ConfigService.WAR_FILE.ENGINE;
+    }
 }
-

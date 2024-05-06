@@ -7,55 +7,30 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.epics.archiverappliance.common.BPLAction;
-import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.reports.Metrics;
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.etl.common.ETLMetricsForLifetime;
-import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
-import org.json.simple.JSONValue;
+import org.epics.archiverappliance.etl.common.ETLMetrics;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Gets the ETL appliance metrics
  * @author mshankar
  *
  */
-public class ApplianceMetrics implements BPLAction {
+public class ApplianceMetrics implements Metrics {
 
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		try (PrintWriter out = resp.getWriter()) {
-			out.println(getETLMetrics(configService));
-		}
-	}
-	
-	private String getETLMetrics(ConfigService configService) {
-		HashMap<String, String> metrics = new HashMap<String, String>();
-		List<ETLMetricsForLifetime> metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
-		if(metricsForLifetime == null || metricsForLifetime.size() < 1) {
-			metrics.put("Startup", "In Progress");
-		} else { 
-			double maxETLPercentage = 0.0; 
-			long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
-			for(ETLMetricsForLifetime metricForLifetime : metricsForLifetime) {
-				double etlPercentage = (metricForLifetime.getTimeForOverallETLInMilliSeconds()/1000)*100/(currentEpochSeconds - metricForLifetime.getStartOfMetricsMeasurementInEpochSeconds());
-				maxETLPercentage = Math.max(etlPercentage, maxETLPercentage);
-				metrics.put("totalETLRuns("+metricForLifetime.getLifeTimeId()+")", Long.toString(metricForLifetime.getTotalETLRuns()));
-				metrics.put("timeForOverallETLInSeconds("+metricForLifetime.getLifeTimeId()+")", Long.toString(metricForLifetime.getTimeForOverallETLInMilliSeconds()/1000));
-			}
-			DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
-			metrics.put("maxETLPercentage", twoSignificantDigits.format(maxETLPercentage));
-		}
+    @Override
+    public Map<String, String> metrics(ConfigService configService) {
+        HashMap<String, String> metrics = new HashMap<String, String>();
+        ETLMetrics metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
+        if (metricsForLifetime == null) {
+            metrics.put("Startup", "In Progress");
+        } else {
+            return metricsForLifetime.metrics();
+        }
 
-		return JSONValue.toJSONString(metrics);
-	}
+        return metrics;
+    }
 }

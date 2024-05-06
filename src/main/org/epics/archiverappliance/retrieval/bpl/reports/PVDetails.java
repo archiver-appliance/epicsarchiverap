@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.bpl.reports;
 
-import org.epics.archiverappliance.common.reports.MetricsDetails;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.retrieval.RetrievalMetrics;
 
@@ -15,14 +14,16 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Detail metrics for retrieval for an alliance.
- * @author mshankar
+ * Gets the Retrieval details of a PV.
  *
  */
-public class ApplianceMetricsDetails implements MetricsDetails {
+public class PVDetails implements org.epics.archiverappliance.common.reports.PVDetails {
 
     @Override
-    public LinkedList<Map<String, String>> metricsDetails(ConfigService configService) {
-        return RetrievalMetrics.calculateSummedMetrics(configService).details(configService);
+    public LinkedList<Map<String, String>> pvDetails(ConfigService configService, String pvName) throws Exception {
+        RetrievalMetrics retrievalMetrics =
+                configService.getRetrievalRuntimeState().getPVRetrievalMetrics(pvName);
+        if (retrievalMetrics == null) retrievalMetrics = RetrievalMetrics.EMPTY_METRICS;
+        return new LinkedList<>(retrievalMetrics.details(configService));
     }
 }
