@@ -30,7 +30,7 @@ function getPVQueryParam() {
   return pvQuery;
 }
 
-var patternForPVNames = /^[a-zA-Z0-9:_\-\+\[\]<>;.\/\,\#\{\}\^]+$/;
+const patternForPVNames = /^[a-zA-Z0-9:_\-+\[\];\/,#{}^<>]+$/;
 // Validates pvNames to make sure they are valid - pattern from CA developers guide.
 function validatePVNames() {
   var pvText = $("#archstatpVNames").val();
