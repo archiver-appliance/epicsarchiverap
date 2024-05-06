@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -54,7 +56,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
     public List<Callable<EventStream>> getDataForPV(
             BasicContext context, String pvName, Instant startTime, Instant endTime, PostProcessor postProcessor)
             throws IOException {
-        String getURL = accessURL + "?pv=" + pvName
+        String getURL = accessURL + "?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                 + "&from=" + TimeUtils.convertToISO8601String(startTime)
                 + "&to=" + TimeUtils.convertToISO8601String(endTime)
                 + (postProcessor != null ? "&pp=" + postProcessor.getExtension() : "")
