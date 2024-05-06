@@ -400,7 +400,7 @@ public class DataRetrievalServlet extends HttpServlet {
         String pvNameFromRequest = pvName;
 
         pvName = PVNames.stripPrefixFromName(pvName);
-        pvName = PVNames.normalizePVName(pvName);
+        pvName = PVNames.normalizeChannelName(pvName);
         configService.getRetrievalRuntimeState().updateRetrievalMetrics(pvName, Instant.now(), req.getRemoteAddr());
 
         PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
@@ -731,7 +731,7 @@ public class DataRetrievalServlet extends HttpServlet {
         // String arrays might be inefficient for retrieval. In any case, they are sorted, which is essential later on.
         List<String> pvNames = null;
         if (req.getMethod().equals("POST")) {
-            pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req, configService);
+            pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
         } else {
             pvNames = Arrays.asList(req.getParameterValues("pv"));
         }

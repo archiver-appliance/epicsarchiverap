@@ -61,7 +61,7 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
     }
 
     public void mergeFrom(PVTypeInfo info, HashMap<String, String> engineMetadata) throws IOException {
-        if (!PVNames.stripFieldNameFromPVName(this.pvName).equals(PVNames.stripFieldNameFromPVName(info.getPvName())))
+        if (!PVNames.channelNamePVName(this.pvName).equals(PVNames.channelNamePVName(info.getPvName())))
             throw new IOException("Mismatch in pv info's. Src is for " + this.pvName + ". Info from config db is for "
                     + info.getPvName());
         this.elementCount = info.getElementCount();

@@ -235,7 +235,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
         // For the unit tests, we have a naming convention that identifies the DBR type etc based on the name of the
         // PV...
         if (pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX)) {
-            pvName = PVNames.stripFieldNameFromPVName(pvName);
+            pvName = PVNames.channelNamePVName(pvName);
             logger.info("Unit test typeinfo for pv " + pvName);
             ArchDBRTypes namingConventionType = samplePV2DBRtypemap.get(pvName);
             if (namingConventionType == null) {

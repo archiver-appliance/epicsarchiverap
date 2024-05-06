@@ -252,15 +252,15 @@ public class ArchivePVAction implements BPLAction {
             if (fieldName.equals("VAL")) {
                 logger.debug("Treating .VAL as pv Name alone for " + pvName);
                 fieldName = null;
-                pvName = PVNames.stripFieldNameFromPVName(pvName);
+                pvName = PVNames.channelNamePVName(pvName);
             } else if (fieldsArchivedAsPartOfStream.contains(fieldName)) {
                 logger.debug("Field " + fieldName + " is one of the standard fields for pv " + pvName);
-                pvName = PVNames.stripFieldNameFromPVName(pvName);
+                pvName = PVNames.channelNamePVName(pvName);
                 isStandardFieldName = true;
             }
         }
 
-        if (!PVNames.isValidPVName(pvName)) {
+        if (!PVNames.isValidChannelName(pvName)) {
             String msg = "PV name fails syntax check " + pvName;
             logger.error(msg);
             throw new IOException(msg);

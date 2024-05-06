@@ -82,13 +82,13 @@ public class PvaGetArchivedPVs implements PvaAction {
                 continue;
             }
             logger.debug("Check for the normalized name");
-            typeInfo = configService.getTypeInfoForPV(PVNames.normalizePVName(pvName));
+            typeInfo = configService.getTypeInfoForPV(PVNames.normalizeChannelName(pvName));
             if (typeInfo != null) {
                 map.put(pvName, "Archived");
                 continue;
             }
             logger.debug("Check for aliases");
-            String aliasRealName = configService.getRealNameForAlias(PVNames.normalizePVName(pvName));
+            String aliasRealName = configService.getRealNameForAlias(PVNames.normalizeChannelName(pvName));
             if (aliasRealName != null) {
                 typeInfo = configService.getTypeInfoForPV(aliasRealName);
                 if (typeInfo != null) {
@@ -99,7 +99,7 @@ public class PvaGetArchivedPVs implements PvaAction {
             logger.debug("Check for fields");
             String fieldName = PVNames.getFieldName(pvName);
             if (fieldName != null) {
-                typeInfo = configService.getTypeInfoForPV(PVNames.stripFieldNameFromPVName(pvName));
+                typeInfo = configService.getTypeInfoForPV(PVNames.channelNamePVName(pvName));
                 if (typeInfo != null) {
                     if (Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
                         map.put(pvName, "Archived");

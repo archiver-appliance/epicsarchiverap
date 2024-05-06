@@ -1115,8 +1115,8 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public boolean isBeingArchivedOnThisAppliance(String pvName) {
-        boolean isField = PVNames.isField(pvName);
-        String plainPVName = PVNames.stripFieldNameFromPVName(pvName);
+        boolean isField = PVNames.isFieldOrFieldModifier(pvName);
+        String plainPVName = PVNames.channelNamePVName(pvName);
         String fieldName = PVNames.getFieldName(pvName);
         if (isField) {
             // If this is a field, we have two possibilities.
@@ -1536,7 +1536,7 @@ public class DefaultConfigService implements ConfigService {
                 new HashMap<String, List<ChannelArchiverDataServerPVInfo>>();
         long totalPVsProxied = 0;
         for (NamesHandler.ChannelDescription pvChannelDesc : handler.getChannels()) {
-            String pvName = PVNames.normalizePVName(pvChannelDesc.getName());
+            String pvName = PVNames.normalizeChannelName(pvChannelDesc.getName());
             if (this.pv2ChannelArchiverDataServer.containsKey(pvName)) {
                 List<ChannelArchiverDataServerPVInfo> alreadyExistingServers =
                         this.pv2ChannelArchiverDataServer.get(pvName);
@@ -1645,7 +1645,7 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public List<ChannelArchiverDataServerPVInfo> getChannelArchiverDataServers(String pvName) {
-        String normalizedPVName = PVNames.normalizePVName(pvName);
+        String normalizedPVName = PVNames.normalizeChannelName(pvName);
         logger.debug(() -> "Looking for CA sever for pv " + normalizedPVName);
         return pv2ChannelArchiverDataServer.get(normalizedPVName);
     }
@@ -2158,7 +2158,7 @@ public class DefaultConfigService implements ConfigService {
         // Add fields and the VAL field
         for (String pvName : allPVs) {
             func.accept(pvName);
-            if (!PVNames.isField(pvName)) {
+            if (!PVNames.isFieldOrFieldModifier(pvName)) {
                 func.accept(pvName + ".VAL");
                 PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
                 if (typeInfo != null) {
@@ -2171,7 +2171,7 @@ public class DefaultConfigService implements ConfigService {
         List<String> allAliases = this.getAllAliases();
         for (String pvName : allAliases) {
             func.accept(pvName);
-            if (!PVNames.isField(pvName)) {
+            if (!PVNames.isFieldOrFieldModifier(pvName)) {
                 func.accept(pvName + ".VAL");
                 PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
                 if (typeInfo != null) {
@@ -2183,7 +2183,7 @@ public class DefaultConfigService implements ConfigService {
         }
         for (String pvName : this.getArchiveRequestsCurrentlyInWorkflow()) {
             func.accept(pvName);
-            if (!PVNames.isField(pvName)) {
+            if (!PVNames.isFieldOrFieldModifier(pvName)) {
                 func.accept(pvName + ".VAL");
             }
         }

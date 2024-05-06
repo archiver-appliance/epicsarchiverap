@@ -369,7 +369,7 @@ public abstract class ArchiveChannel {
         }
         // This tells the main PV to create the hashmaps for the metafield storage
         v3Pv.markPVHasMetafields(true);
-        String pvNameForField = PVNames.stripFieldNameFromPVName(this.name) + "." + fieldName;
+        String pvNameForField = PVNames.channelNamePVName(this.name) + "." + fieldName;
         ArchDBRTypes metaFieldDBRType = v3Pv.getArchDBRTypes();
         if (metaFieldOverrideTypes.containsKey(fieldName)) {
             metaFieldDBRType = metaFieldOverrideTypes.get(fieldName);

@@ -145,7 +145,7 @@ public class ArchivePVState {
                         }
                     }
 
-                    boolean isField = PVNames.isField(pvName);
+                    boolean isField = PVNames.isFieldOrFieldModifier(pvName);
 
                     PVTypeInfo typeInfo = new PVTypeInfo(
                             pvName, metaInfo.getArchDBRTypes(), !metaInfo.isVector(), metaInfo.getCount());
@@ -227,7 +227,7 @@ public class ArchivePVState {
                                 + " based on policy " + thePolicy.getPolicyName());
                     } else {
                         if (isField) {
-                            String pvNameAlone = PVNames.stripFieldNameFromPVName(pvName);
+                            String pvNameAlone = PVNames.channelNamePVName(pvName);
                             ApplianceInfo pvNameAloneAssignedToAppliance = configService.getApplianceForPV(pvNameAlone);
                             if (pvNameAloneAssignedToAppliance != null) {
                                 logger.info("Assinging field " + pvName + " to the same appliance as the pv itself "

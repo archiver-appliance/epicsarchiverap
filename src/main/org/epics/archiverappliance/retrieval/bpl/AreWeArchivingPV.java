@@ -47,7 +47,7 @@ public class AreWeArchivingPV implements BPLAction {
 
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
         if (typeInfo == null) {
-            typeInfo = configService.getTypeInfoForPV(PVNames.stripFieldNameFromPVName(pvName));
+            typeInfo = configService.getTypeInfoForPV(PVNames.channelNamePVName(pvName));
             if (typeInfo == null) {
                 retVal.put("status", Boolean.FALSE.toString());
             } else {
