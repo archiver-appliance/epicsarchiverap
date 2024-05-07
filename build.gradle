@@ -40,7 +40,9 @@ java {
 	}
 }
 
-version gitVersion()
+// Allows: gradle -PprojVersion=X build
+version project.findProperty('projVersion') ?: gitVersion() ?: "UnknownVersion"
+
 def stageDir = layout.projectDirectory.file("build/stage")
 def srcDir = layout.projectDirectory.file("src/main")
 def libDir = layout.projectDirectory.file("lib")
