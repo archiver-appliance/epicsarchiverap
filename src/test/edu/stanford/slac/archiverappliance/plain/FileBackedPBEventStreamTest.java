@@ -1,9 +1,6 @@
-package edu.stanford.slac.archiverappliance.PlainPB;
+package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
-import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
