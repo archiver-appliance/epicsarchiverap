@@ -35,6 +35,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -171,7 +172,7 @@ public class ETLTimeTest {
         logger.info("File size left in dest folder " + getDataSizeInGBPerHour(postETLDestVisitor));
 
         Assertions.assertEquals(
-                srcCompression != PBCompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
+                !Objects.equals(srcCompression, PBCompressionMode.ZIP_PER_PV) ? 0 : pvs.size(),
                 postETLSrcVisitor.filesPresent,
                 "We have some files that have not moved " + postETLSrcVisitor.filesPresent);
         int expectedFiles = pvs.size();

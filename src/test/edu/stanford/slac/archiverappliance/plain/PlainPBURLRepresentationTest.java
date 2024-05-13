@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class PlainPBURLRepresentationTest {
+
     @Test
     public void testToAndFromURL() throws Exception {
         PlainStoragePlugin etlSrc = new PlainStoragePlugin();
