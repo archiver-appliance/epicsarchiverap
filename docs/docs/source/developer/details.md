@@ -73,7 +73,7 @@ medium term storage.
 Out of the box, the following storage technologies/plugins are
 supported.
 
-[PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
 : This plugin serializes samples using Google\'s
 [ProtocolBuffers](https://developers.google.com/protocol-buffers)
 and stores data in chunks. Each chunk has a well defined key and
@@ -88,7 +88,7 @@ database BLOB per chunk or a key/value pair per chunk in any
 key/value store).
 
     :::{note}
-    By default, the PlainPBStoragePlugin maps PV names to keys using a
+    By default, the PlainStoragePlugin maps PV names to keys using a
     simple algorithm that relies on the presence of a good PV naming
     convention. To use your own mapping scheme, see the [Key Mapping](../sysadmin/customization#key_mapping) section in the
     customization guide.
