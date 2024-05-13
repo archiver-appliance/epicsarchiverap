@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.zipfs;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,7 +54,7 @@ public class ZipETLTest {
     public void testETLIntoZipPerPV() throws Exception {
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLZipTest";
         String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
-        PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=ZipETL&rootFolder=" + srcRootFolder + "&partitionGranularity=PARTITION_DAY",
                 configService);
         logger.info(etlSrc.getURLRepresentation());
@@ -72,7 +72,7 @@ public class ZipETLTest {
         }
 
         String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
-        PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=ZipETL&rootFolder=" + destRootFolder
                         + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
                 configService);

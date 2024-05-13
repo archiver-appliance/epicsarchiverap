@@ -8,7 +8,7 @@ import com.jmatio.types.MLDouble;
 import com.jmatio.types.MLStructure;
 import com.jmatio.types.MLUInt64;
 import com.jmatio.types.MLUInt8;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,14 +42,14 @@ import java.util.Map;
 public class MatlabFileTest {
     private static Logger logger = LogManager.getLogger(MatlabFileTest.class.getName());
     ConfigService configService;
-    PlainPBStoragePlugin storageplugin;
+    PlainStoragePlugin storageplugin;
     String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MatlabFileTest";
     String pvName = "Test_MatlabPV";
 
     @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
-        storageplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storageplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + rootFolderName + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
         if (new File(rootFolderName).exists()) {

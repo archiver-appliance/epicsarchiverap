@@ -1,5 +1,7 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,8 +33,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileSuffix;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
 
 /**
  * Test data retrieval around the partition boundaries.
@@ -69,7 +71,7 @@ public class DataAroundPartitionEndTest {
     private static void generateData() throws Exception {
         logger.info("Generating data info to " + pbFilePath);
 
-        PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
                         + "&partitionGranularity=PARTITION_DAY",
                 DataAroundPartitionEndTest.configService);
@@ -125,7 +127,7 @@ public class DataAroundPartitionEndTest {
 
     @Test
     public void checkRetrieval() throws Exception {
-        PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
                         + "&partitionGranularity=PARTITION_DAY",
                 DataAroundPartitionEndTest.configService);

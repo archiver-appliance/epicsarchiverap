@@ -8,6 +8,9 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -38,10 +41,10 @@ public class PBFileInfoTest {
 
     @Test
     public void testPBInfo() throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
-        pBfile = PlainPBPathNameUtility.getPathNameForTime(
+        pBfile = PlainPathNameUtility.getPathNameForTime(
                 storagePlugin,
                 pvName,
                 TimeUtils.getStartOfYear(currentYear),

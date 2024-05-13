@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -50,7 +51,7 @@ public class PlainPBETLDestTest {
 
     @Test
     public void testGetLastKnownEvent() throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         setup.setUpRootFolder(storagePlugin, "PVETLDestTests");
 
         long epochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();

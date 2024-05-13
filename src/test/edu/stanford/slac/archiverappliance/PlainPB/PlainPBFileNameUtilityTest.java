@@ -7,6 +7,9 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -89,14 +92,14 @@ public class PlainPBFileNameUtilityTest {
         // Lets create some files that cater to this partition.
         Instant startOfYear = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
         String pvName = granularity.name() + "Part_1";
-        String extension = PlainPBStoragePlugin.pbFileExtension;
+        String extension = PlainStoragePlugin.pbFileExtension;
         long nIntervals = 1
                 + granularity.getNextLargerGranularity().getApproxSecondsPerChunk()
                         / granularity.getApproxSecondsPerChunk();
         Instant fileTime = null;
         for (long nGranularity = 0; nGranularity < nIntervals; nGranularity++) {
             fileTime = startOfYear.plusSeconds(nGranularity * granularity.getApproxSecondsPerChunk());
-            mkPath(PlainPBPathNameUtility.getPathNameForTime(
+            mkPath(PlainPathNameUtility.getPathNameForTime(
                     rootFolderStr,
                     pvName,
                     fileTime,
@@ -106,7 +109,7 @@ public class PlainPBFileNameUtilityTest {
                     configService.getPVNameToKeyConverter()));
         }
 
-        Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(
+        Path[] matchingPaths = PlainPathNameUtility.getPathsWithData(
                 new ArchPaths(),
                 rootFolderStr,
                 pvName,
@@ -118,7 +121,7 @@ public class PlainPBFileNameUtilityTest {
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, matchingPaths.length, "File count " + matchingPaths.length);
 
-        Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(
+        Path[] etlPaths = PlainPathNameUtility.getPathsBeforeCurrentPartition(
                 new ArchPaths(),
                 rootFolderStr,
                 pvName,
@@ -129,7 +132,7 @@ public class PlainPBFileNameUtilityTest {
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, etlPaths.length, "File count " + etlPaths.length);
 
-        File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(
+        File mostRecentFile = PlainPathNameUtility.getMostRecentPathBeforeTime(
                         new ArchPaths(),
                         rootFolderStr,
                         pvName,
@@ -157,10 +160,10 @@ public class PlainPBFileNameUtilityTest {
         ZonedDateTime curr = startOfYear;
         String pvName = "First:Second:Third:YearPart_1";
         PartitionGranularity partition = PartitionGranularity.PARTITION_YEAR;
-        String extension = PlainPBStoragePlugin.pbFileExtension;
+        String extension = PlainStoragePlugin.pbFileExtension;
         ZonedDateTime endYear = null;
         for (int years = 0; years < 20; years++) {
-            mkPath(PlainPBPathNameUtility.getPathNameForTime(
+            mkPath(PlainPathNameUtility.getPathNameForTime(
                     rootFolderStr,
                     pvName,
                     curr.toInstant(),
@@ -172,7 +175,7 @@ public class PlainPBFileNameUtilityTest {
             if (years == 7) endYear = curr;
         }
 
-        Path[] matchingPaths = PlainPBPathNameUtility.getPathsWithData(
+        Path[] matchingPaths = PlainPathNameUtility.getPathsWithData(
                 new ArchPaths(),
                 rootFolderStr,
                 pvName,
@@ -184,7 +187,7 @@ public class PlainPBFileNameUtilityTest {
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(8, matchingPaths.length, "File count " + matchingPaths.length);
 
-        Path[] etlPaths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(
+        Path[] etlPaths = PlainPathNameUtility.getPathsBeforeCurrentPartition(
                 new ArchPaths(),
                 rootFolderStr,
                 pvName,
@@ -196,7 +199,7 @@ public class PlainPBFileNameUtilityTest {
         Assertions.assertEquals(8, etlPaths.length, "File count " + etlPaths.length);
 
         // Ask for the next year here; the last file written out is for current year plus (20 - 1)
-        File mostRecentFile = PlainPBPathNameUtility.getMostRecentPathBeforeTime(
+        File mostRecentFile = PlainPathNameUtility.getMostRecentPathBeforeTime(
                         new ArchPaths(),
                         rootFolderStr,
                         pvName,
@@ -211,7 +214,7 @@ public class PlainPBFileNameUtilityTest {
                 mostRecentFile.getName().endsWith(curr.minusYears(1).getYear() + extension),
                 "Unxpected most recent file " + mostRecentFile.getAbsolutePath());
 
-        File mostRecentFile2 = PlainPBPathNameUtility.getMostRecentPathBeforeTime(
+        File mostRecentFile2 = PlainPathNameUtility.getMostRecentPathBeforeTime(
                         new ArchPaths(),
                         rootFolderStr,
                         pvName,
