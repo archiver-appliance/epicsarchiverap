@@ -1,8 +1,8 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.pbFileExtension;
 
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,8 +70,8 @@ public class DataAroundPartitionEndTest {
         logger.info("Generating data info to " + pbFilePath);
 
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
-                        + "&partitionGranularity=PARTITION_DAY",
+                pbFileExtension + "://localhost?name=DataAroundPartitionEndTest&rootFolder="
+                        + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_DAY",
                 DataAroundPartitionEndTest.configService);
         ArrayListEventStream strm = new ArrayListEventStream(
                 PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 3,
@@ -106,7 +106,7 @@ public class DataAroundPartitionEndTest {
                 pvName.replace(":", "/").replace("--", "") + ":" + dataYear + "_05_30.pb");
 
         try (BasicContext context = new BasicContext()) {
-            EventStream strm = FileStreamCreator.getTimeStream(
+            EventStream strm = PBPlainFileHandler.DEFAULT_PB_HANDLER.getTimeStream(
                     pvName,
                     pbFilePath,
                     ArchDBRTypes.DBR_SCALAR_DOUBLE,
@@ -126,8 +126,8 @@ public class DataAroundPartitionEndTest {
     @Test
     public void checkRetrieval() throws Exception {
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
-                        + "&partitionGranularity=PARTITION_DAY",
+                pbFileExtension + "://localhost?name=DataAroundPartitionEndTest&rootFolder="
+                        + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_DAY",
                 DataAroundPartitionEndTest.configService);
         try (BasicContext context = new BasicContext()) {
             Instant rstart = generatedStartDate;

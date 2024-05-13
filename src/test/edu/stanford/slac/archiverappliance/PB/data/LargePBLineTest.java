@@ -7,11 +7,12 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;
@@ -84,9 +85,8 @@ public class LargePBLineTest {
                 new ArchPaths(),
                 storagePlugin.getRootFolder(),
                 pvName,
-                PlainStoragePlugin.pbFileExtension,
-                storagePlugin.getPartitionGranularity(),
-                PBCompressionMode.NONE,
+                PBPlainFileHandler.pbFileExtension,
+                CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "testLargeLines returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(
@@ -96,7 +96,7 @@ public class LargePBLineTest {
             try {
                 new PBFileInfo(destPath);
                 Assertions.assertTrue(
-                        ValidatePlainFile.validatePlainFile(destPath, false),
+                        ValidatePlainFile.validatePlainFile(destPath, false, PBPlainFileHandler.DEFAULT_PB_HANDLER),
                         "File validation failed for " + destPath.toAbsolutePath());
             } catch (Exception ex) {
                 logger.error("Exception parsing file" + destPath.toAbsolutePath(), ex);

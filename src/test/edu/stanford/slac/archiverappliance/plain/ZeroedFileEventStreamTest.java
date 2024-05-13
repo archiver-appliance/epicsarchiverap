@@ -1,10 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
-
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,8 +57,7 @@ public class ZeroedFileEventStreamTest {
     static Instant endTime = TimeUtils.getStartOfYear(currentYear + 1);
     static int defaultPeriodInSeconds = PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() / 10;
     private static ConfigService configService;
-    String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZeroedFileEventStreamTest/";
-    String pvNamePrefix = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTest";
+    String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZeroedFileEventStreamTestTest/";
 
     private static int generateFreshData(PlainStoragePlugin pbplugin4data, String pvName) throws Exception {
         File rootFolder = new File(pbplugin4data.getRootFolder());
@@ -104,29 +99,25 @@ public class ZeroedFileEventStreamTest {
      */
     @Test
     public void testBadFooters() throws Exception {
-        logger.info("Testing garbage in the last record");
-        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_YEAR",
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_YEAR",
                 configService);
 
         logger.info("Testing garbage in the last record");
-        String pvName = pvNamePrefix + "testBadFooters";
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
+                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFooters";
 
-        generateFreshData(pbplugin, pvName);
-        Path[] paths = null;
+        int generatedCount = generateFreshData(storagePlugin, pvName);
+        Path[] paths;
         try (BasicContext context = new BasicContext()) {
             paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    PBPlainFileHandler.DEFAULT_PB_HANDLER.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
         Assertions.assertTrue(
@@ -134,6 +125,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
                 int bytesToOverwrite = 100;
@@ -149,7 +141,7 @@ public class ZeroedFileEventStreamTest {
                 Assertions.fail();
             }
 
-            PBFileInfo info = new PBFileInfo(path);
+            FileInfo info = storagePlugin.fileInfo(path);
             Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
             Assertions.assertEquals(
                     info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
@@ -161,7 +153,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = storagePlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 long eventCount = 0;
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
@@ -175,19 +167,15 @@ public class ZeroedFileEventStreamTest {
      * Generate PB file with bad footers in the ETL source and then see if we survive ETL
      */
     @Test
-    public void testBadFootersInSrcETL() throws Exception {
-        PlainStoragePlugin srcPlugin = null;
-        try {
-            srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                    pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
-                            + "&partitionGranularity=PARTITION_MONTH",
-                    configService);
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
-        }
-        String pvName = pvNamePrefix + "testBadFootersInSrcETL";
+    void testBadFootersInSrcETL() throws Exception {
+        PlainStoragePlugin srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_MONTH",
+                configService);
         assert srcPlugin != null;
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
+                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFootersInSrcETL";
+
         int generatedCount = generateFreshData(srcPlugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
@@ -195,13 +183,9 @@ public class ZeroedFileEventStreamTest {
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    srcPlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
         Assertions.assertTrue(
@@ -209,6 +193,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
                 int bytesToOverwrite = 100;
@@ -228,8 +213,8 @@ public class ZeroedFileEventStreamTest {
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores = new String[] {
             srcPlugin.getURLRepresentation(),
-            pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName + "Dest"
-                    + "&partitionGranularity=PARTITION_YEAR"
+            PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                    + rootFolderName + "Dest" + "&partitionGranularity=PARTITION_YEAR"
         };
         typeInfo.setDataStores(dataStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
@@ -261,20 +246,16 @@ public class ZeroedFileEventStreamTest {
                     context.getPaths(),
                     rootFolderName + "Dest",
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    srcPlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
-        Assertions.assertTrue(paths != null && paths.length > 0, "ETL did not seem to move any data?");
+        Assertions.assertTrue(paths.length > 0, "ETL did not seem to move any data?");
 
         long eventCount = 0;
         for (Path path : paths) {
-            PBFileInfo info = new PBFileInfo(path);
+            FileInfo info = srcPlugin.fileInfo(path);
             Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
             Assertions.assertEquals(
                     info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
@@ -286,7 +267,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = srcPlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
                 }
@@ -305,33 +286,20 @@ public class ZeroedFileEventStreamTest {
      * Generate PB file with bad footers in the ETL dest and then see if we survive ETL
      */
     @Test
-    public void testBadFootersInDestETL() throws Exception {
-        String pvName = pvNamePrefix + "testBadFootersInDestETL";
-
-        PlainStoragePlugin destPlugin = null;
-        try {
-            destPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                    pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName + "Dest"
-                            + "&partitionGranularity=PARTITION_YEAR",
-                    configService);
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
-        }
+    void testBadFootersInDestETL() throws Exception {
+        PlainStoragePlugin destPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "Dest" + "&partitionGranularity=PARTITION_YEAR",
+                configService);
         assert destPlugin != null;
         File destFolder = new File(destPlugin.getRootFolder());
         if (destFolder.exists()) {
-            try {
-                FileUtils.deleteDirectory(destFolder);
-            } catch (IOException e) {
-                logger.error(e);
-                Assertions.fail();
-            }
+            FileUtils.deleteDirectory(destFolder);
         }
 
         PlainStoragePlugin srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_MONTH",
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         File srcFolder = new File(srcPlugin.getRootFolder());
         if (srcFolder.exists()) {
@@ -342,6 +310,8 @@ public class ZeroedFileEventStreamTest {
                 Assertions.fail();
             }
         }
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
+                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFootersInDestETL";
 
         long generatedCount = 0;
         try (BasicContext context = new BasicContext()) {
@@ -359,24 +329,17 @@ public class ZeroedFileEventStreamTest {
                 }
                 generatedCount = generatedCount + destPlugin.appendData(context, pvName, testData);
             }
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
-        Path[] paths = null;
+        Path[] paths;
         try (BasicContext context = new BasicContext()) {
             paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     destPlugin.getRootFolder(),
                     pvName,
-                    pbFileExtension,
-                    destPlugin.getPartitionGranularity(),
-                    PBCompressionMode.NONE,
+                    destPlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
         Assertions.assertTrue(
@@ -385,6 +348,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
                 int bytesToOverwrite = 100;
@@ -447,32 +411,21 @@ public class ZeroedFileEventStreamTest {
         }
         logger.info("Done performing ETL");
 
-        paths = null;
         try (BasicContext context = new BasicContext()) {
             paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     destPlugin.getRootFolder(),
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    destPlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
         Assertions.assertTrue(paths.length > 0, "ETL did not seem to move any data?");
 
         long eventCount = 0;
         for (Path path : paths) {
-            PBFileInfo info = null;
-            try {
-                info = new PBFileInfo(path);
-            } catch (IOException e) {
-                logger.error(e);
-                Assertions.fail();
-            }
+            FileInfo info = destPlugin.fileInfo(path);
             Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
             Assertions.assertEquals(
                     info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
@@ -484,7 +437,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = destPlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
                 }
@@ -505,27 +458,24 @@ public class ZeroedFileEventStreamTest {
      */
     @Test
     public void testBadFootersRetrieval() throws Exception {
-        String pvName = pvNamePrefix + "testBadFootersRetrieval";
-        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_YEAR",
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_YEAR",
                 configService);
-        assert pbplugin != null;
+        assert storagePlugin != null;
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
+                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testBadFootersRetrieval";
 
-        int generatedCount = generateFreshData(pbplugin, pvName);
+        int generatedCount = generateFreshData(storagePlugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
             paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    storagePlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
 
         Assertions.assertTrue(
@@ -533,6 +483,7 @@ public class ZeroedFileEventStreamTest {
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
+
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 // Seek to somewhere at the end
                 int bytesToOverwrite = 100;
@@ -554,7 +505,7 @@ public class ZeroedFileEventStreamTest {
         long exepectedEventCount = (Duration.between(start, end).toSeconds() / defaultPeriodInSeconds) - 1;
         try (BasicContext context = new BasicContext();
                 EventStream result = new CurrentThreadWorkerEventStream(
-                        pvName, pbplugin.getDataForPV(context, pvName, start, end))) {
+                        pvName, storagePlugin.getDataForPV(context, pvName, start, end))) {
             long eventCount = 0;
             for (@SuppressWarnings("unused") Event e : result) {
                 eventCount++;
@@ -563,9 +514,6 @@ public class ZeroedFileEventStreamTest {
                     eventCount >= exepectedEventCount,
                     "Event count is too low " + eventCount + " expecting " + exepectedEventCount
                             + " from total generated " + generatedCount);
-        } catch (IOException e) {
-            logger.error(e);
-            Assertions.fail();
         }
     }
 
@@ -574,23 +522,23 @@ public class ZeroedFileEventStreamTest {
      * @throws Exception
      */
     @Test
-    public void testZeroedDataRetrieval() throws Exception {
-        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_YEAR",
+    void testZeroedDataRetrieval() throws Exception {
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_YEAR",
                 configService);
-        String pvName = pvNamePrefix + "testZeroedDataRetrieval";
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTestTest"
+                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "testZeroedDataRetrieval";
 
-        int generatedCount = generateFreshData(pbplugin, pvName);
+        int generatedCount = generateFreshData(storagePlugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
             paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    storagePlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.warn(e);
@@ -604,6 +552,7 @@ public class ZeroedFileEventStreamTest {
         int zeroedLines = 100;
         Random random = new Random();
         for (Path path : paths) {
+
             try (SeekableByteChannel channel = Files.newByteChannel(path, StandardOpenOption.WRITE)) {
                 for (int i = 0; i < zeroedLines; i++) {
                     int bytesToOverwrite = 10;
@@ -629,7 +578,7 @@ public class ZeroedFileEventStreamTest {
 
         try (BasicContext context = new BasicContext();
                 EventStream result = new CurrentThreadWorkerEventStream(
-                        pvName, pbplugin.getDataForPV(context, pvName, start, end))) {
+                        pvName, storagePlugin.getDataForPV(context, pvName, start, end))) {
             long eventCount = 0;
             for (@SuppressWarnings("unused") Event e : result) {
                 eventCount++;
@@ -638,9 +587,6 @@ public class ZeroedFileEventStreamTest {
             Assertions.assertTrue(
                     Math.abs(eventCount - exepectedEventCount) < zeroedLines * 3,
                     "Event count is too low " + eventCount + " expecting approximately " + exepectedEventCount);
-        } catch (IOException e) {
-            logger.warn(e);
-            Assertions.fail();
         }
     }
 }

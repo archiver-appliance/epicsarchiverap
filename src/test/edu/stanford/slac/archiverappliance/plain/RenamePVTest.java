@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,16 +37,14 @@ import java.util.concurrent.Callable;
 
 /**
  * Test rename PV for the PlainStoragePlugin...
- * @author mshankar
  *
+ * @author mshankar
  */
 public class RenamePVTest {
     private static final Logger logger = LogManager.getLogger(RenamePVTest.class);
+    private final File rootFolder =
+            new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "RenamePV");
     private ConfigService configService;
-    private File rootFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "RenamePV");
-
-    private String oldPVName = "Test:rename:oldPVName";
-    private String newPVName = "Test:rename:newPVName";
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -54,7 +52,7 @@ public class RenamePVTest {
         if (rootFolder.exists()) {
             FileUtils.deleteDirectory(rootFolder);
         }
-        rootFolder.mkdirs();
+        assert rootFolder.mkdirs();
     }
 
     @AfterEach
@@ -72,12 +70,15 @@ public class RenamePVTest {
     @Test
     public void testRenamePV() throws Exception {
         PlainStoragePlugin plugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=RenameTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY",
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=RenameTest&rootFolder="
+                        + rootFolder + "&partitionGranularity=PARTITION_DAY",
                 configService);
         short currentYear = TimeUtils.getCurrentYear();
+        String oldPVName = "Test:rename:oldPVName";
         ArrayListEventStream strm = new ArrayListEventStream(
-                86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, oldPVName, currentYear));
-        for (int i = 0; i < 365 * 86400; i += 1500) {
+                PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, oldPVName, currentYear));
+        for (int i = 0; i < 365 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(); i += 1500) {
             strm.add(new POJOEvent(
                     ArchDBRTypes.DBR_SCALAR_DOUBLE,
                     TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(currentYear, i, 0)),
@@ -86,6 +87,7 @@ public class RenamePVTest {
                     0));
         }
         try (BasicContext context = new BasicContext()) {
+            assert plugin != null;
             plugin.appendData(context, oldPVName, strm);
         }
 
@@ -106,14 +108,14 @@ public class RenamePVTest {
                             context.getPaths(),
                             plugin.getRootFolder(),
                             oldPVName,
-                            PlainStoragePlugin.pbFileExtension,
-                            PartitionGranularity.PARTITION_DAY,
-                            PBCompressionMode.NONE,
+                            plugin.getExtensionString(),
+                            CompressionMode.NONE,
                             configService.getPVNameToKeyConverter())
                     .length;
         }
         logger.info("Done generating data with " + oldPVEventCount + " points   About to rename PV");
 
+        String newPVName = "Test:rename:newPVName";
         try (BasicContext context = new BasicContext()) {
             plugin.renamePV(context, oldPVName, newPVName);
         }
@@ -137,34 +139,35 @@ public class RenamePVTest {
                             context.getPaths(),
                             plugin.getRootFolder(),
                             newPVName,
-                            PlainStoragePlugin.pbFileExtension,
-                            PartitionGranularity.PARTITION_DAY,
-                            PBCompressionMode.NONE,
+                            plugin.getExtensionString(),
+                            CompressionMode.NONE,
                             configService.getPVNameToKeyConverter())
                     .length;
             newPathForOldPVNameCount = PathNameUtility.getAllPathsForPV(
                             context.getPaths(),
                             plugin.getRootFolder(),
                             oldPVName,
-                            PlainStoragePlugin.pbFileExtension,
-                            PartitionGranularity.PARTITION_DAY,
-                            PBCompressionMode.NONE,
+                            plugin.getExtensionString(),
+                            CompressionMode.NONE,
                             configService.getPVNameToKeyConverter())
                     .length;
         }
 
         logger.info("Old count " + oldPVEventCount + " and new count " + newPVEventCount);
         logger.info("Old path count " + oldPathCount + " and new path count " + newPathCount);
-        Assertions.assertTrue(
-                newPVEventCount == oldPVEventCount,
+        Assertions.assertEquals(
+                newPVEventCount,
+                oldPVEventCount,
                 "Event counts before and after the move are not the same. Old count " + oldPVEventCount
                         + " and new count " + newPVEventCount);
-        Assertions.assertTrue(
-                oldPathCount == newPathCount,
+        Assertions.assertEquals(
+                oldPathCount,
+                newPathCount,
                 "Path counts before and after the move are not the same. Old count " + oldPathCount + " and new count "
                         + newPathCount);
-        Assertions.assertTrue(
-                newPathForOldPVNameCount == oldPathCount,
+        Assertions.assertEquals(
+                newPathForOldPVNameCount,
+                oldPathCount,
                 "Path counts for the old PV name after the rename " + newPathForOldPVNameCount
                         + " is not the same as before the rename " + oldPathCount);
     }

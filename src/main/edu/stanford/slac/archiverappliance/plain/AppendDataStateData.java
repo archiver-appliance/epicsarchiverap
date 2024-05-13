@@ -1,6 +1,5 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -30,7 +29,7 @@ public abstract class AppendDataStateData {
     protected final String desc;
     protected final PartitionGranularity partitionGranularity;
     protected final PVNameToKeyMapping pv2key;
-    protected final PBCompressionMode compressionMode;
+    protected final CompressionMode compressionMode;
     protected Path previousFilePath = null;
     protected short currentEventsYear = -1;
     // These two pieces of information (previousYear and previousEpochSeconds) are from the store using the last known
@@ -53,7 +52,7 @@ public abstract class AppendDataStateData {
             String desc,
             Instant lastKnownTimestamp,
             PVNameToKeyMapping pv2key,
-            PBCompressionMode compressionMode) {
+            CompressionMode compressionMode) {
         this.partitionGranularity = partitionGranularity;
         this.rootFolder = rootFolder;
         this.desc = desc;
@@ -130,7 +129,7 @@ public abstract class AppendDataStateData {
      * @throws IOException &emsp;
      */
     protected void shouldISwitchPartitions(
-            BasicContext context, String pvName, String extension, Instant ts, PBCompressionMode compressionMode)
+            BasicContext context, String pvName, String extension, Instant ts, CompressionMode compressionMode)
             throws IOException {
 
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
@@ -226,7 +225,7 @@ public abstract class AppendDataStateData {
             String extensionToCopyFrom,
             Instant ts,
             Path pvPath,
-            PBCompressionMode compressionMode)
+            CompressionMode compressionMode)
             throws IOException {
         Path preparePath;
         if (pvPath == null) {

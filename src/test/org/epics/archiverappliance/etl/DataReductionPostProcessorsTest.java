@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -117,7 +118,7 @@ public class DataReductionPostProcessorsTest {
         final String rawPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
                 + DataReductionPostProcessorsTest.class.getSimpleName()
                 + reduceDataUsing
-                + PlainStoragePlugin.pbFileSuffix;
+                + PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
         final String reducedPVName = rawPVName + "reduced";
 
         String shortTermFolderName =
@@ -135,11 +136,11 @@ public class DataReductionPostProcessorsTest {
                 "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_DAY",
                 configService);
         PlainStoragePlugin etlLTSRaw = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PlainStoragePlugin.pbFileSuffix + "://localhost?name=LTS&rootFolder=" + longTermFolderName
+                PBPlainFileHandler.PB_PLUGIN_IDENTIFIER + "://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
         PlainStoragePlugin etlLTSReduced = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PlainStoragePlugin.pbFileSuffix + "://localhost?name=LTS&rootFolder=" + longTermFolderName
+                PBPlainFileHandler.PB_PLUGIN_IDENTIFIER + "://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_YEAR&reducedata=" + reduceDataUsing,
                 configService);
         {
