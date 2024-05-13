@@ -1,4 +1,4 @@
-package edu.stanford.slac.archiverappliance.PlainPB;
+package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
