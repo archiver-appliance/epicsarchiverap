@@ -9,6 +9,7 @@ package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import edu.stanford.slac.archiverappliance.plain.EventStreamIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -25,15 +26,15 @@ import java.nio.file.Path;
  * @author mshankar
  *
  */
-public class FileBackedPBEventStreamPositionBasedIterator implements FileBackedPBEventStreamIterator {
+public class FileBackedPBEventStreamPositionBasedIterator implements EventStreamIterator {
     private static final Logger logger =
             LogManager.getLogger(FileBackedPBEventStreamPositionBasedIterator.class.getName());
+    private final ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
+    private final Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
     private short year = 0;
     private LineByteStream lbs = null;
-    private final ByteArray nextLine = new ByteArray(LineByteStream.MAX_LINE_SIZE);
     // Whether the line already in nextLine has been used by the iterator
     private boolean lineUsed = false;
-    private final Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
 
     public FileBackedPBEventStreamPositionBasedIterator(
             Path path, long startFilePos, long endFilePos, short year, ArchDBRTypes type) throws IOException {

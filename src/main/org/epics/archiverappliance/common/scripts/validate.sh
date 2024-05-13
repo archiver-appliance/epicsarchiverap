@@ -20,5 +20,5 @@ do
 done
 popd
 
-java -Xmx2G -cp "${CLASSPATH}" edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile $@
+java -Xmx2G -cp "${CLASSPATH}" edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePlainFile $@
 

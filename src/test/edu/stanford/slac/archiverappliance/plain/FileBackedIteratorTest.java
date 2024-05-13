@@ -1,7 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStreamPositionBasedIterator;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +36,6 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
-
 /**
  * The FileBackedPBEventStream supports two iterators - one is a file-position based one and the other is a time based one.
  * For performance reasons, we should use the file-position based iterator in cases where the query start time is after the timestamp of the first sample; defaulting to the time based one in case of unexpected circumstances.
@@ -70,9 +67,13 @@ public class FileBackedIteratorTest {
             new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "FileBackedIteratorTest");
     private static final String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":FileBackedIteratorTest";
     private static final short currentYear = TimeUtils.getCurrentYear();
-    private static final Path pbFilePath = Paths.get(
-            testFolder.getAbsolutePath(),
-            pvName.replace(":", "/").replace("--", "") + ":" + currentYear + pbFileExtension);
+
+    static Path filePath(String extensionString) {
+        return Paths.get(
+                testFolder.getAbsolutePath(),
+                pvName.replace(":", "/").replace("--", "") + ":" + currentYear + extensionString);
+    }
+
     private static final ConfigService configService;
 
     static {
@@ -100,10 +101,11 @@ public class FileBackedIteratorTest {
     }
 
     public static Stream<Arguments> provideCorrectIterator() {
-
-        PBFileInfo fileInfo;
+        PlainFileHandler fileHandler = PBPlainFileHandler.DEFAULT_PB_HANDLER;
+        var filePath = filePath(fileHandler.getExtensionString());
+        FileInfo fileInfo;
         try {
-            fileInfo = new PBFileInfo(pbFilePath);
+            fileInfo = fileHandler.fileInfo(filePath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -121,35 +123,40 @@ public class FileBackedIteratorTest {
                         TimeUtils.minusDays(FKTS, 2),
                         TimeUtils.minusDays(FKTS, 4),
                         FKTS,
-                        EmptyEventIterator.class),
+                        EmptyEventIterator.class,
+                        filePath),
                 Arguments.of(
                         "Case 2",
                         TimeUtils.minusDays(FKTS, 5),
                         TimeUtils.minusDays(FKTS, 2),
                         TimeUtils.plusDays(FKTS, 1),
                         TimeUtils.plusDays(FKTS, 10),
-                        mainIteratorClass),
+                        mainIteratorClass,
+                        filePath),
                 Arguments.of(
                         "Case 3",
                         TimeUtils.minusDays(FKTS, 5),
                         TimeUtils.minusDays(FKTS, 1),
                         TimeUtils.plusDays(LKTS, 1),
                         TimeUtils.plusDays(LKTS, 10),
-                        mainIteratorClass),
+                        mainIteratorClass,
+                        filePath),
                 Arguments.of(
                         "Case 4",
                         FKTS,
                         TimeUtils.plusDays(FKTS, 5),
                         TimeUtils.minusDays(LKTS, 10),
                         TimeUtils.minusDays(LKTS, 1),
-                        mainIteratorClass),
+                        mainIteratorClass,
+                        filePath),
                 Arguments.of(
                         "Case 5",
                         FKTS,
                         TimeUtils.plusDays(FKTS, 5),
                         LKTS,
                         TimeUtils.plusDays(LKTS, 10),
-                        mainIteratorClass),
+                        mainIteratorClass,
+                        filePath),
                 Arguments.of(
                         "Case 6",
                         TimeUtils.plusDays(LKTS, 1),
@@ -157,13 +164,14 @@ public class FileBackedIteratorTest {
                         TimeUtils.plusDays(LKTS, 1),
                         TimeUtils.plusDays(LKTS, 10),
                         EmptyEventIterator.class,
-                        mainIteratorClass));
+                        filePath));
     }
 
     private static void generateData() throws IOException {
-        logger.info("generate Data " + pbFileExtension + " to " + pbFilePath);
+        logger.info("generate Data to " + filePath(PBPlainFileHandler.DEFAULT_PB_HANDLER.getExtensionString()));
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier()
+                        + "://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
                         + "&partitionGranularity=PARTITION_YEAR",
                 FileBackedIteratorTest.configService);
 
@@ -179,8 +187,8 @@ public class FileBackedIteratorTest {
             // Generate data for  10 days
             for (int day = 0; day < 10; day++) {
                 for (int second = 0;
-                     second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
-                     second += 15) {
+                        second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                        second += 15) {
                     strm.add(new POJOEvent(
                             ArchDBRTypes.DBR_SCALAR_DOUBLE,
                             TimeUtils.convertFromEpochSeconds(
@@ -211,7 +219,8 @@ public class FileBackedIteratorTest {
             Instant maxQTS,
             Instant minQTE,
             Instant maxQTE,
-            Class<? extends Iterator<Event>> expectedIteratorClass)
+            Class<? extends Iterator<Event>> expectedIteratorClass,
+            Path pbFilePath)
             throws IOException {
         for (Instant QTS = minQTS; QTS.isBefore(maxQTS); QTS = TimeUtils.plusDays(QTS, 1)) {
             for (Instant QTE = minQTE; QTE.isBefore(maxQTE); QTE = TimeUtils.plusDays(QTE, 1)) {
@@ -221,8 +230,8 @@ public class FileBackedIteratorTest {
                 logger.debug("Checking " + testCase + " for QTS " + TimeUtils.convertToISO8601String(QTS) + " and QTE "
                         + TimeUtils.convertToISO8601String(QTE));
 
-                try (EventStream strm =
-                             FileStreamCreator.getTimeStream(pvName, pbFilePath, dbrType, QTS, QTE, false)) {
+                try (EventStream strm = PBPlainFileHandler.DEFAULT_PB_HANDLER.getTimeStream(
+                        pvName, pbFilePath, dbrType, QTS, QTE, false)) {
                     Assertions.assertSame(
                             expectedIteratorClass,
                             strm.iterator().getClass(),

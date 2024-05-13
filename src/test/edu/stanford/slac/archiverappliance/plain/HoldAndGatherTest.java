@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -16,6 +17,7 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.etl.ETLContext;
@@ -24,12 +26,14 @@ import org.epics.archiverappliance.etl.ETLInfo;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -40,6 +44,24 @@ import java.util.stream.Stream;
  */
 public class HoldAndGatherTest {
     private static final Logger logger = LogManager.getLogger(HoldAndGatherTest.class.getName());
+
+    static ConfigServiceForTests configService;
+
+    static BlackholeStoragePlugin etlDest;
+    long ratio = 10; // Must be larger than the biggest hold + 1
+
+    @BeforeAll
+    static void setUp() throws ConfigException {
+        configService = new ConfigServiceForTests(-1);
+        configService.getETLLookup().manualControlForUnitTests();
+
+        etlDest = new BlackholeStoragePlugin();
+    }
+
+    @AfterAll
+    static void tearDown() {
+        configService.shutdownNow();
+    }
 
     public static Stream<Arguments> provideHoldAndGather() {
         return Stream.of(
@@ -55,30 +77,27 @@ public class HoldAndGatherTest {
     /**
      * We generate data in chunks for a year.
      * At each chunk we predict how many ETL streams we should get.
-     * @param granularity
-     * @throws IOException
      */
     @ParameterizedTest
     @MethodSource("provideHoldAndGather")
     void testHoldAndGather(PartitionGranularity granularity, int hold, int gather) throws Exception {
+
         PlainStoragePlugin etlSrc = new PlainStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
-        ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         srcSetup.setUpRootFolder(etlSrc, "ETLHoldGatherTest_" + granularity, granularity);
 
-        etlSrc.setHoldETLForPartions(hold);
+        etlSrc.setHoldETLForPartitions(hold);
         etlSrc.setGatherETLinPartitions(gather);
-
-        BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
 
         logger.info("Testing ETL hold gather for " + etlSrc.getPartitionGranularity());
 
-        short year = TimeUtils.getCurrentYear();
-        long curEpochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
-        int secondsintoyear = 0;
-        int incrementSeconds = 10;
+        Instant currTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
+        Instant endTime = currTime.plusSeconds(ratio * granularity.getApproxSecondsPerChunk());
 
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_hold_gather"
+        long incrementSeconds = granularity.getApproxSecondsPerChunk() / ratio;
+
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
+                + PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + hold + "_" + gather + "_ETL_hold_gather"
                 + etlSrc.getPartitionGranularity();
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores = new String[] {etlSrc.getURLRepresentation(), etlDest.getURLRepresentation()};
@@ -86,31 +105,29 @@ public class HoldAndGatherTest {
         configService.updateTypeInfoForPV(pvName, typeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
 
-        configService.getETLLookup().manualControlForUnitTests();
-
-        while (secondsintoyear < 60 * 60 * 24 * 366) {
-            int eventsPerShot = (granularity.getApproxSecondsPerChunk()) / incrementSeconds;
+        while (currTime.isBefore(endTime)) {
+            long eventsPerShot = granularity.getApproxSecondsPerChunk() / incrementSeconds;
+            short year = TimeUtils.getYear(currTime);
             ArrayListEventStream instream = new ArrayListEventStream(
-                    eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
+                    (int) eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
             for (int i = 0; i < eventsPerShot; i++) {
+                int secondsIntoYear = TimeUtils.getSecondsIntoYear(currTime.getEpochSecond());
                 instream.add(new SimulationEvent(
-                        secondsintoyear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>((double)
-                                secondsintoyear)));
-                secondsintoyear += incrementSeconds;
-                curEpochSeconds += incrementSeconds;
+                        secondsIntoYear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
+                                secondsIntoYear)));
+                currTime = currTime.plusSeconds(incrementSeconds);
             }
             try (BasicContext context = new BasicContext()) {
                 etlSrc.appendData(context, pvName, instream);
             }
 
-            List<ETLInfo> etlStreams = etlSrc.getETLStreams(
-                    pvName, TimeUtils.convertFromEpochSeconds(curEpochSeconds, 0), new ETLContext());
+            List<ETLInfo> etlStreams = etlSrc.getETLStreams(pvName, currTime, new ETLContext());
             Assertions.assertTrue(
-                    (etlStreams == null) || (etlStreams.size() == 0) || (etlStreams.size() == (gather)),
-                    "At " + TimeUtils.convertToISO8601String(curEpochSeconds) + " we have "
+                    (etlStreams == null) || (etlStreams.isEmpty()) || (etlStreams.size() == (gather)),
+                    "At " + currTime + " we have "
                             + ((etlStreams == null) ? "null" : Integer.toString(etlStreams.size())) + " for "
                             + granularity + " hold = " + hold + " gather = " + gather);
-            ETLExecutor.runETLs(configService, TimeUtils.convertFromEpochSeconds(curEpochSeconds, 0));
+            ETLExecutor.runETLs(configService, currTime);
         }
 
         srcSetup.deleteTestFolder();

@@ -171,12 +171,6 @@ public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDes
     }
 
     @Override
-    public boolean prepareForNewPartition(String pvName, Event ev, ArchDBRTypes archDBRType, ETLContext context)
-            throws IOException {
-        return ((ETLDest) dest).prepareForNewPartition(pvName, ev, archDBRType, context);
-    }
-
-    @Override
     public boolean appendToETLAppendData(String pvName, EventStream stream, ETLContext context) throws IOException {
         return ((ETLDest) dest).appendToETLAppendData(pvName, stream, context);
     }

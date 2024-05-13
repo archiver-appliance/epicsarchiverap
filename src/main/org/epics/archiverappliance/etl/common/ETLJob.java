@@ -3,6 +3,7 @@ package org.epics.archiverappliance.etl.common;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.etl.ETLContext;
 import org.epics.archiverappliance.etl.ETLDest;
@@ -25,7 +26,7 @@ public class ETLJob implements Runnable {
     private final ETLPVLookupItems lookupItem;
     private boolean currentlyRunning = false;
     private long ETLRunStartEpochSeconds = 0;
-    private Instant runAsIfAtTime = null;
+    private final Instant runAsIfAtTime;
     private Exception exceptionFromLastRun = null;
 
     public ETLJob(ETLPVLookupItems lookupItem) {
@@ -42,6 +43,43 @@ public class ETLJob implements Runnable {
     public ETLJob(ETLPVLookupItems lookupItem, Instant runAsIfAtTime) {
         this.lookupItem = lookupItem;
         this.runAsIfAtTime = runAsIfAtTime;
+    }
+
+    private static boolean notEnoughFreeSpace(
+            long sizeOfSrcStream, StorageMetrics destMetrics, ETLPVLookupItems lookupItem, String key, String pvName)
+            throws IOException {
+
+        if (sizeOfSrcStream > 0 && destMetrics != null) {
+            long freeSpace = destMetrics.getUsableSpace(lookupItem.getMetricsForLifetime());
+            long freeSpaceBuffer = 1024 * 1024;
+            // We leave space for at lease freeSpaceBuffer in the dest so that you can login and have some
+            // room to repair damage coming in from an out of space condition.
+            long estimatedSpaceNeeded = sizeOfSrcStream + freeSpaceBuffer;
+            if (freeSpace < estimatedSpaceNeeded) {
+
+                logger.error("No space on dest when moving ETLInfo with key = " + key
+                        + " for PV " + pvName + " as we estimate we need "
+                        + estimatedSpaceNeeded + " bytes but we only have " + freeSpace);
+                return true;
+            } else {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static void checkAppendStatus(String pvName, boolean status, String key, PartitionGranularity granularity) {
+        if (status) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Successfully appended ETLInfo with key = " + key
+                        + " for PV " + pvName + "itemInfo partitionGranularity = "
+                        + granularity);
+            }
+        } else {
+            logger.warn("Invalid status when processing ETLInfo with key = " + key
+                    + " for PV " + pvName + "itemInfo partitionGranularity = "
+                    + granularity);
+        }
     }
 
     @Override
@@ -70,16 +108,15 @@ public class ETLJob implements Runnable {
      *
      * @param processingTime Typically we'd use TimeUtils.now() for this. However, we can also run as if it's a certain
      *                       time by using this parameter.
-     * @throws IOException &emsp;
      */
-    public void processETL(Instant processingTime) throws IOException {
+    public void processETL(Instant processingTime) {
         String pvName = lookupItem.getPvName();
         String jobDesc = lookupItem.toString();
         if (currentlyRunning) {
             logger.error("The previous ETL job (" + jobDesc + ") that began at "
                     + ((ETLRunStartEpochSeconds != 0)
-                            ? TimeUtils.convertToHumanReadableString(ETLRunStartEpochSeconds)
-                            : "Unknown")
+                    ? TimeUtils.convertToHumanReadableString(ETLRunStartEpochSeconds)
+                    : "Unknown")
                     + " is still running");
             return;
         }
@@ -123,88 +160,22 @@ public class ETLJob implements Runnable {
             // PV name being processed.
             long time1 = System.currentTimeMillis();
             long totalSrcBytes = 0;
-            List<ETLInfo> ETLInfoList = curETLSource.getETLStreams(pvName, processingTime, etlContext);
+            List<ETLInfo> etlInfoList = curETLSource.getETLStreams(pvName, processingTime, etlContext);
             time4getETLStreams = time4getETLStreams + System.currentTimeMillis() - time1;
-            if (ETLInfoList != null) {
-                List<ETLInfo> movedList = new LinkedList<ETLInfo>();
-                for (ETLInfo infoItem : ETLInfoList) {
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName
-                                + "itemInfo partitionGranularity = "
-                                + infoItem.getGranularity().toString() + " and size " + infoItem.getSize());
-                    }
+            if (etlInfoList != null && !etlInfoList.isEmpty()) {
+                List<ETLInfo> movedList = new LinkedList<>();
 
-                    long checkSzStart = System.currentTimeMillis();
-                    long sizeOfSrcStream = infoItem.getSize();
-                    totalSrcBytes += sizeOfSrcStream;
-                    if (sizeOfSrcStream > 0 && destMetrics != null) {
-                        long freeSpace = destMetrics.getUsableSpace(lookupItem.getMetricsForLifetime());
-                        long freeSpaceBuffer = 1024 * 1024;
-                        // We leave space for at lease freeSpaceBuffer in the dest so that you can login and have some
-                        // room to repair damage coming in from an out of space condition.
-                        long estimatedSpaceNeeded = sizeOfSrcStream + freeSpaceBuffer;
-                        if (freeSpace < estimatedSpaceNeeded) {
-                            logger.error("No space on dest when moving ETLInfo with key = " + infoItem.getKey()
-                                    + " for PV " + pvName + "itemInfo partitionGranularity = "
-                                    + infoItem.getGranularity().toString() + " as we estimate we need "
-                                    + estimatedSpaceNeeded + " bytes but we only have " + freeSpace);
-                            OutOfSpaceHandling outOfSpaceHandling = this.lookupItem.getOutOfSpaceHandling();
-                            if (outOfSpaceHandling == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
-                                logger.error("Not enough space on dest. Deleting src stream " + infoItem.getKey());
-                                movedList.add(infoItem);
-                                lookupItem.outOfSpaceChunkDeleted();
-                                continue;
-                            } else if (outOfSpaceHandling == OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE) {
-                                logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
-                                break;
-                            } else {
-                                // By default, we use the DELETE_SRC_STREAMS_IF_FIRST_DEST_WHEN_OUT_OF_SPACE...
-                                if (lookupItem.getLifetimeorder() == 0) {
-                                    logger.error("Not enough space on dest. Deleting src stream " + infoItem.getKey());
-                                    movedList.add(infoItem);
-                                    lookupItem.outOfSpaceChunkDeleted();
-                                    continue;
-                                } else {
-                                    logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    long checkSzEnd = System.currentTimeMillis();
-                    time4checkSizes = time4checkSizes + (checkSzEnd - checkSzStart);
-
-                    try (EventStream stream = infoItem.getEv()) {
-                        long time2 = System.currentTimeMillis();
-                        boolean partitionPrepareResult = curETLDest.prepareForNewPartition(
-                                pvName, infoItem.getFirstEvent(), infoItem.getType(), etlContext);
-                        time4prepareForNewPartition = time4prepareForNewPartition + System.currentTimeMillis() - time2;
-                        if (logger.isDebugEnabled()) {
-                            if (!partitionPrepareResult)
-                                logger.debug("Destination partition already prepared for PV " + pvName + " with key = "
-                                        + infoItem.getKey());
-                        }
-                        long time3 = System.currentTimeMillis();
-                        boolean status = curETLDest.appendToETLAppendData(pvName, stream, etlContext);
-                        movedList.add(infoItem);
-                        time4appendToETLAppendData = time4appendToETLAppendData + System.currentTimeMillis() - time3;
-                        if (status) {
-                            if (logger.isDebugEnabled()) {
-                                logger.debug("Successfully appended ETLInfo with key = " + infoItem.getKey()
-                                        + " for PV " + pvName + "itemInfo partitionGranularity = "
-                                        + infoItem.getGranularity().toString());
-                            }
-                        } else {
-                            logger.warn("Invalid status when processing ETLInfo with key = " + infoItem.getKey()
-                                    + " for PV " + pvName + "itemInfo partitionGranularity = "
-                                    + infoItem.getGranularity().toString());
-                        }
-                    } catch (IOException ex) {
-                        // TODO What do we do in the case of exceptions? Do we remove the source still? Do we stop the
-                        // engine from recording this PV?
-                        logger.error("Exception processing " + infoItem.getKey(), ex);
-                    }
-                }
+                ProcessInfoListResult processInfoListResult = processETLInfoList(
+                        etlInfoList,
+                        pvName,
+                        totalSrcBytes,
+                        destMetrics,
+                        movedList,
+                        time4checkSizes,
+                        curETLDest,
+                        etlContext,
+                        time4prepareForNewPartition,
+                        time4appendToETLAppendData);
 
                 // Concatenate any append data for the current ETLDest
                 // destination to this destination.
@@ -249,14 +220,14 @@ public class ETLJob implements Runnable {
                 lookupItem.addETLDurationInMillis(pvETLStartEpochMilliSeconds, pvETLEndEpochMilliSeconds);
                 lookupItem.addInfoAboutDetailedTime(
                         time4getETLStreams,
-                        time4checkSizes,
-                        time4prepareForNewPartition,
-                        time4appendToETLAppendData,
+                        processInfoListResult.time4checkSizes(),
+                        processInfoListResult.time4prepareForNewPartition(),
+                        processInfoListResult.time4appendToETLAppendData(),
                         time4commitETLAppendData,
                         time4markForDeletion,
                         time4runPostProcessors,
                         time4executePostETLTasks,
-                        totalSrcBytes);
+                        processInfoListResult.totalSrcBytes());
             } else {
                 logger.debug("There were no ETL streams when running ETL for " + jobDesc);
             }
@@ -264,6 +235,88 @@ public class ETLJob implements Runnable {
             logger.error("IOException processing ETL for pv " + lookupItem.getPvName(), ex);
         } finally {
             currentlyRunning = false;
+        }
+    }
+
+    private ProcessInfoListResult processETLInfoList(
+            List<ETLInfo> etlInfoList,
+            String pvName,
+            long totalSrcBytes,
+            StorageMetrics destMetrics,
+            List<ETLInfo> movedList,
+            long time4checkSizes,
+            ETLDest curETLDest,
+            ETLContext etlContext,
+            long time4prepareForNewPartition,
+            long time4appendToETLAppendData)
+            throws IOException {
+        for (ETLInfo infoItem : etlInfoList) {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Processing ETLInfo with key = " + infoItem.getKey() + " for PV " + pvName
+                        + "itemInfo partitionGranularity = "
+                        + infoItem.getGranularity().toString() + " and size " + infoItem.getSize());
+            }
+
+            long checkSzStart = System.currentTimeMillis();
+            long sizeOfSrcStream = infoItem.getSize();
+            totalSrcBytes += sizeOfSrcStream;
+            if (notEnoughFreeSpace(sizeOfSrcStream, destMetrics, this.lookupItem, infoItem.getKey(), pvName)) {
+                if (deleteSrcStreamWhenOutOfSpace(
+                        List.of(infoItem), this.lookupItem.getOutOfSpaceHandling(), movedList, lookupItem, pvName)) {
+                    continue;
+                } else {
+                    break;
+                }
+            }
+            long checkSzEnd = System.currentTimeMillis();
+            time4checkSizes = time4checkSizes + (checkSzEnd - checkSzStart);
+
+            try (EventStream stream = infoItem.getEv()) {
+                long time2 = System.currentTimeMillis();
+                time4prepareForNewPartition = time4prepareForNewPartition + System.currentTimeMillis() - time2;
+                long time3 = System.currentTimeMillis();
+                boolean status = curETLDest.appendToETLAppendData(pvName, stream, etlContext);
+                movedList.add(infoItem);
+                time4appendToETLAppendData = time4appendToETLAppendData + System.currentTimeMillis() - time3;
+                checkAppendStatus(pvName, status, infoItem.getKey(), infoItem.getGranularity());
+            } catch (IOException ex) {
+                // TODO What do we do in the case of exceptions? Do we remove the source still? Do we stop the
+                // engine from recording this PV?
+                logger.error("Exception processing " + infoItem.getKey(), ex);
+            }
+        }
+        return new ProcessInfoListResult(
+                time4checkSizes, time4prepareForNewPartition, time4appendToETLAppendData, totalSrcBytes);
+    }
+
+    private boolean deleteSrcStreamWhenOutOfSpace(
+            List<ETLInfo> infoItems,
+            OutOfSpaceHandling outOfSpaceHandling,
+            List<ETLInfo> movedList,
+            ETLPVLookupItems lookupItem,
+            String pvName) {
+
+        if (outOfSpaceHandling == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
+            logger.error("Not enough space on dest. Deleting src streams "
+                    + infoItems.stream().map(ETLInfo::getKey).toList());
+            movedList.addAll(infoItems);
+            lookupItem.outOfSpaceChunkDeleted();
+            return true;
+        } else if (outOfSpaceHandling == OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE) {
+            logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
+            return false;
+        } else {
+            // By default, we use the DELETE_SRC_STREAMS_IF_FIRST_DEST_WHEN_OUT_OF_SPACE...
+            if (lookupItem.getLifetimeorder() == 0) {
+                logger.error("Not enough space on dest. Deleting src stream "
+                        + infoItems.stream().map(ETLInfo::getKey).toList());
+                movedList.addAll(infoItems);
+                lookupItem.outOfSpaceChunkDeleted();
+                return true;
+            } else {
+                logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
+                return false;
+            }
         }
     }
 
@@ -275,4 +328,10 @@ public class ETLJob implements Runnable {
     public Exception getExceptionFromLastRun() {
         return exceptionFromLastRun;
     }
+
+    private record ProcessInfoListResult(
+            long time4checkSizes,
+            long time4prepareForNewPartition,
+            long time4appendToETLAppendData,
+            long totalSrcBytes) {}
 }

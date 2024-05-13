@@ -12,6 +12,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import edu.stanford.slac.archiverappliance.PB.utils.ReverseLineByteStream;
 
+import edu.stanford.slac.archiverappliance.plain.EventStreamIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -28,7 +29,7 @@ import java.nio.file.Path;
  * @author mshankar
  *
  */
-public class PBEventStreamPositionBasedReverseIterator implements FileBackedPBEventStreamIterator {
+public class PBEventStreamPositionBasedReverseIterator implements EventStreamIterator {
 	private static final Logger logger = LogManager.getLogger(PBEventStreamPositionBasedReverseIterator.class.getName());
 	private short year = 0;
 	private ReverseLineByteStream lbs = null;

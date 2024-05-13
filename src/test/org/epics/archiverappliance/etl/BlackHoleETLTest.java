@@ -10,7 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -118,8 +118,7 @@ public class BlackHoleETLTest {
                 etlSrc.getRootFolder(),
                 pvName,
                 etlSrc.getExtensionString(),
-                etlSrc.getPartitionGranularity(),
-                PBCompressionMode.NONE,
+                CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         return allPaths.length;
     }

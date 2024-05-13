@@ -36,11 +36,11 @@ import java.util.Arrays;
  *
  */
 public class ChangePVName {
-    private static Logger logger = LogManager.getLogger(ChangePVName.class.getName());
+    private static final Logger logger = LogManager.getLogger(ChangePVName.class.getName());
 
     /**
-     * @param args  &emsp;
-     * @throws Exception  &emsp;
+     * @param args &emsp;
+     * @throws Exception &emsp;
      */
     public static void main(String[] args) throws Exception {
         if (args == null || args.length <= 2) {

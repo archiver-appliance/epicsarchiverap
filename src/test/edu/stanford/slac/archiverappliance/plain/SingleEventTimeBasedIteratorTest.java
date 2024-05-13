@@ -1,7 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -24,8 +23,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Path;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.
  * This had one event in the STS/MTS which was between the starttime and the end time.
@@ -47,24 +44,25 @@ public class SingleEventTimeBasedIteratorTest {
 
     @Test
     public void testSingleEvent() throws Exception {
-        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_HOUR",
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_HOUR",
                 configService);
 
-        File rootFolder = new File(pbplugin.getRootFolder());
+        File rootFolder = new File(storagePlugin.getRootFolder());
         if (rootFolder.exists()) {
             FileUtils.deleteDirectory(rootFolder);
         }
 
         // Generate one event on Feb 21 in the current year.
         try (BasicContext context = new BasicContext()) {
-            ArrayListEventStream testData =
-                    new ArrayListEventStream(24 * 60 * 60, new RemotableEventStreamDesc(type, pvName, (short) 2013));
+            ArrayListEventStream testData = new ArrayListEventStream(
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                    new RemotableEventStreamDesc(type, pvName, (short) 2013));
             YearSecondTimestamp eventTs = TimeUtils.convertToYearSecondTimestamp(
                     TimeUtils.convertFromISO8601String("2013-02-21T18:45:08.570Z"));
             testData.add(new SimulationEvent(eventTs, type, new ScalarValue<Double>(6.855870246887207)));
-            pbplugin.appendData(context, pvName, testData);
+            storagePlugin.appendData(context, pvName, testData);
         }
 
         try (BasicContext context = new BasicContext()) {
@@ -72,19 +70,20 @@ public class SingleEventTimeBasedIteratorTest {
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_HOUR,
-                    PBCompressionMode.NONE,
+                    storagePlugin.getExtensionString(),
+                    CompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
             Assertions.assertEquals(1, paths.length, "We should get only one file, instead we got " + paths.length);
             long eventCount = 0;
-            try (EventStream strm = new FileBackedPBEventStream(
-                    pvName,
-                    paths[0],
-                    type,
-                    TimeUtils.convertFromISO8601String("2013-02-19T10:45:08.570Z"),
-                    TimeUtils.convertFromISO8601String("2013-02-22T10:45:08.570Z"),
-                    false)) {
+            try (EventStream strm = storagePlugin
+                    .getPlainFileHandler()
+                    .getTimeStream(
+                            pvName,
+                            paths[0],
+                            type,
+                            TimeUtils.convertFromISO8601String("2013-02-19T10:45:08.570Z"),
+                            TimeUtils.convertFromISO8601String("2013-02-22T10:45:08.570Z"),
+                            false)) {
                 for (@SuppressWarnings("unused") Event event : strm) {
                     eventCount++;
                 }
