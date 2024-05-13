@@ -38,12 +38,13 @@ public class AppendDataStateData {
     private final PartitionGranularity partitionGranularity;
     private final String rootFolder;
 
-	private OutputStream os = null;
+    private OutputStream os = null;
     private final PlainPBStoragePlugin.CompressionMode compressionMode;
     protected short previousYear = -1;
     protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
     private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
-	// These two pieces of information (previousYear and previousEpochSeconds) are from the store using the last known sample when we appending to an existing stream.
+    // These two pieces of information (previousYear and previousEpochSeconds) are from the store using the last known
+    // sample when we appending to an existing stream.
     // See the creation and use of the PBFileInfo object below.
     private short currentEventsYear = -1;
 
@@ -89,7 +90,9 @@ public class AppendDataStateData {
      * @param extensionToCopyFrom &emsp;
      * @return eventsAppended  &emsp;
      */
-    public int partitionBoundaryAwareAppendData(BasicContext context, String pvName, EventStream stream, String extension, String extensionToCopyFrom) throws IOException {
+    public int partitionBoundaryAwareAppendData(
+            BasicContext context, String pvName, EventStream stream, String extension, String extensionToCopyFrom)
+            throws IOException {
         try (stream) {
             int eventsAppended = 0;
             for (Event event : stream) {
@@ -100,7 +103,8 @@ public class AppendDataStateData {
                 shouldISwitchPartitions(context, pvName, extension, ts, this.compressionMode);
 
                 if (this.os == null) {
-                    pvPath = preparePartition(pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, this.compressionMode);
+                    pvPath = preparePartition(
+                            pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, this.compressionMode);
                 }
 
                 // We check for monotonicity in timestamps again as we had some fresh data from an existing file.
@@ -115,7 +119,8 @@ public class AppendDataStateData {
                 this.previousYear = this.currentEventsYear;
                 this.lastKnownTimeStamp = event.getEventTimeStamp();
                 eventsAppended++;
-                // logger.debug("Done appending event " + TimeUtils.convertToISO8601String(event.getEventTimeStamp()) + " into " + previousFileName + " of len " + val.len);
+                // logger.debug("Done appending event " + TimeUtils.convertToISO8601String(event.getEventTimeStamp()) +
+                // " into " + previousFileName + " of len " + val.len);
             }
             return eventsAppended;
         } catch (Throwable t) {
@@ -154,8 +159,7 @@ public class AppendDataStateData {
                     context.getPaths(),
                     compressionMode,
                     this.pv2key);
-            this.nextPartitionFirstSecond =
-                    TimeUtils.getNextPartitionFirstSecond(ts, this.partitionGranularity);
+            this.nextPartitionFirstSecond = TimeUtils.getNextPartitionFirstSecond(ts, this.partitionGranularity);
             if (logger.isDebugEnabled()) {
                 if (this.previousFileName != null) {
                     logger.debug(desc + ": Encountering a change in partitions in the event stream. "
@@ -319,14 +323,17 @@ public class AppendDataStateData {
     private void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException {
         PBFileInfo info = new PBFileInfo(pvPath);
         if (!info.getPVName().equals(pvName))
-            throw new IOException("Trying to append data for " + pvName + " to a file " + pvPath + " that has data for " + info.getPVName());
+            throw new IOException("Trying to append data for " + pvName + " to a file " + pvPath + " that has data for "
+                    + info.getPVName());
         this.previousYear = info.getDataYear();
         if (info.getLastEvent() != null) {
             this.lastKnownTimeStamp = info.getLastEvent().getEventTimeStamp();
         } else {
-            logger.error("Cannot determine last known timestamp when updating state for PV " + pvName + " and path " + pvPath.toString());
+            logger.error("Cannot determine last known timestamp when updating state for PV " + pvName + " and path "
+                    + pvPath.toString());
         }
-        this.os = new BufferedOutputStream(Files.newOutputStream(pvPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
+        this.os = new BufferedOutputStream(
+                Files.newOutputStream(pvPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
         this.previousFileName = pvPath.getFileName().toString();
     }
 
@@ -340,24 +347,29 @@ public class AppendDataStateData {
      */
     private void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream) throws IOException {
         if (Files.exists(pvPath) && Files.size(pvPath) > 0) {
-            throw new IOException("Trying to write a header into a file that exists " + pvPath.toAbsolutePath().toString());
+            throw new IOException("Trying to write a header into a file that exists "
+                    + pvPath.toAbsolutePath().toString());
         }
-        if (logger.isDebugEnabled()) logger.debug(desc + ": Writing new PB file" + pvPath.toAbsolutePath().toString()
-                + " for PV " + pvName
-                + " for year " + this.currentEventsYear
-                + " of type " + stream.getDescription().getArchDBRType()
-                + " of PBPayload " + stream.getDescription().getArchDBRType().getPBPayloadType());
-        this.os = new BufferedOutputStream(Files.newOutputStream(pvPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
+        if (logger.isDebugEnabled())
+            logger.debug(
+                    desc + ": Writing new PB file" + pvPath.toAbsolutePath().toString()
+                            + " for PV " + pvName
+                            + " for year " + this.currentEventsYear
+                            + " of type " + stream.getDescription().getArchDBRType()
+                            + " of PBPayload "
+                            + stream.getDescription().getArchDBRType().getPBPayloadType());
+        this.os = new BufferedOutputStream(
+                Files.newOutputStream(pvPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
         byte[] headerBytes = LineEscaper.escapeNewLines(EPICSEvent.PayloadInfo.newBuilder()
                 .setPvname(pvName)
                 .setType(stream.getDescription().getArchDBRType().getPBPayloadType())
                 .setYear(this.currentEventsYear)
-                .build().toByteArray());
+                .build()
+                .toByteArray());
         this.os.write(headerBytes);
         this.os.write(LineEscaper.NEWLINE_CHAR);
         this.previousFileName = pvPath.getFileName().toString();
     }
-
 
     /**
      * Append data in bulk skipping some of the per event checks.
@@ -370,21 +382,35 @@ public class AppendDataStateData {
      * @return boolean &emsp;
      * @throws IOException &emsp;
      */
-    public boolean bulkAppend(String pvName, ETLContext context, ETLBulkStream bulkStream, String extension, String extensionToCopyFrom) throws IOException {
+    public boolean bulkAppend(
+            String pvName, ETLContext context, ETLBulkStream bulkStream, String extension, String extensionToCopyFrom)
+            throws IOException {
         Event firstEvent = bulkStream.getFirstEvent(context);
         if (this.shouldISkipEventBasedOnTimeStamps(firstEvent)) {
-            logger.error("The bulk append functionality works only if we the first event fits cleanly in the current stream for pv " + pvName + " for stream " + bulkStream.getDescription().getSource());
+            logger.error(
+                    "The bulk append functionality works only if we the first event fits cleanly in the current stream for pv "
+                            + pvName + " for stream "
+                            + bulkStream.getDescription().getSource());
             return false;
         }
 
         Path pvPath = null;
         if (this.os == null) {
-            pvPath = preparePartition(pvName, bulkStream, context, extension, extensionToCopyFrom, firstEvent.getEventTimeStamp(), pvPath, this.compressionMode);
+            pvPath = preparePartition(
+                    pvName,
+                    bulkStream,
+                    context,
+                    extension,
+                    extensionToCopyFrom,
+                    firstEvent.getEventTimeStamp(),
+                    pvPath,
+                    this.compressionMode);
         }
         this.closeStreams();
 
         // The preparePartition should have created the needed file; so we only append
-        try (ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND); ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
+        try (ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND);
+                ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
             logger.debug("ETL bulk appends for pv " + pvName);
             ByteBuffer buf = ByteBuffer.allocate(1024 * 1024);
             int bytesRead = srcChannel.read(buf);

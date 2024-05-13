@@ -246,8 +246,8 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
             desc = new RemotableEventStreamDesc(pvName, fileInfo.getInfo());
             desc.setSource(path.toString());
             if (!this.pvName.equals(fileInfo.getPVName())) {
-                logger.error("File " + path.toAbsolutePath() + " is being used to read data for pv "
-                        + this.pvName + " but it actually contains data for pv " + fileInfo.getPVName());
+                logger.error("File " + path.toAbsolutePath() + " is being used to read data for pv " + this.pvName
+                        + " but it actually contains data for pv " + fileInfo.getPVName());
             }
             if (!this.type.equals(fileInfo.getType())) {
                 throw new Exception("File " + path.toAbsolutePath() + " contains "
@@ -259,10 +259,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 logger.debug("Setting start position after header " + startFilePos);
             }
         } catch (Throwable t) {
-            logger.error(
-                    "Exception determing header information from file "
-                            + path.toAbsolutePath(),
-                    t);
+            logger.error("Exception determing header information from file " + path.toAbsolutePath(), t);
             throw new IOException(t);
         }
     }
@@ -287,8 +284,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
         YearSecondTimestamp queryEndEpoch = TimeUtils.convertToYearSecondTimestamp(queryEndTime);
 
         if (fileInfo.getLastEvent() == null) {
-            logger.warn("Cannot determine last event; defaulting to a time based iterator "
-                    + path.toAbsolutePath());
+            logger.warn("Cannot determine last event; defaulting to a time based iterator " + path.toAbsolutePath());
             this.positionBoundaries = false;
             this.startTime = queryStartTime;
             this.endTime = queryEndTime;
@@ -311,8 +307,8 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 this.startFilePos = fileInfo.getPositionOfFirstSample() - 1;
                 this.endFilePos = endPosition;
             } else {
-                logger.warn("Case 2 - did not find the end  for pv " + pvName + " in file "
-                        + path.toAbsolutePath() + ". Switching to using a time based iterator");
+                logger.warn("Case 2 - did not find the end  for pv " + pvName + " in file " + path.toAbsolutePath()
+                        + ". Switching to using a time based iterator");
                 this.positionBoundaries = false;
                 this.startTime = queryStartTime;
                 this.endTime = queryEndTime;
@@ -346,8 +342,8 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 this.startFilePos = startPosition;
                 this.endFilePos = Files.size(path);
             } else {
-                logger.warn("Case 5 - did not find the start for pv " + pvName + " in file "
-                        + path.toAbsolutePath() + ". Switching to using a time based iterator");
+                logger.warn("Case 5 - did not find the start for pv " + pvName + " in file " + path.toAbsolutePath()
+                        + ". Switching to using a time based iterator");
                 this.positionBoundaries = false;
                 this.startTime = queryStartTime;
                 this.endTime = queryEndTime;
@@ -379,8 +375,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                     lis.seekToFirstNewLine();
                     lis.readLine(nextLine);
                     while (!nextLine.isEmpty()) {
-                        DBRTimeEvent event =
-		                        unmarshallingConstructor.newInstance(this.desc.getYear(), nextLine);
+                        DBRTimeEvent event = unmarshallingConstructor.newInstance(this.desc.getYear(), nextLine);
                         if (event.getEventTimeStamp().isAfter(queryEndTime)) {
                             break;
                         } else {
@@ -403,8 +398,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
         return endPosition;
     }
 
-    private long seekToStartTime(Path path, ArchDBRTypes dbrtype, Instant queryStartTime)
-            throws IOException {
+    private long seekToStartTime(Path path, ArchDBRTypes dbrtype, Instant queryStartTime) throws IOException {
         YearSecondTimestamp queryStartYTS = TimeUtils.convertToYearSecondTimestamp(queryStartTime);
         long startPosition = -1;
 
