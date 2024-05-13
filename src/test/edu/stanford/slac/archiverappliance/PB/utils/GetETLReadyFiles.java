@@ -7,8 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -19,7 +19,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Utility to check what files are ready for ETL for a given PV, folder and partition granularity.
@@ -45,7 +45,7 @@ public class GetETLReadyFiles {
 		}
 
         Instant now = TimeUtils.now();
-		Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), folder.getAbsolutePath(), pvName, now, pbFileExtension, granularity, CompressionMode.NONE, configService.getPVNameToKeyConverter());
+		Path[] paths = PlainPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), folder.getAbsolutePath(), pvName, now, pbFileExtension, granularity, CompressionMode.NONE, configService.getPVNameToKeyConverter());
 		if(paths == null || paths.length == 0) {
 			System.out.println("No files for pv " + pvName + " before current partition using time " + TimeUtils.convertToHumanReadableString(now));
 		}

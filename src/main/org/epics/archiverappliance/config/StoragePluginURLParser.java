@@ -8,7 +8,7 @@
 package org.epics.archiverappliance.config;
 
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
@@ -25,7 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import static edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin.PBHTTP_PLUGIN_IDENTIFIER;
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.common.mergededup.MergeDedupStoragePlugin.MERGE_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin.RTREE_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin.BLACKHOLE_PLUGIN_IDENTIFIER;
@@ -34,9 +34,9 @@ import static org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin
  * Parses a URL representation of a storage plugin.
  * Storage plugins can optionally implement ETLSource, ETLDest and perhaps other interfaces.
  * This is one stop shopping for initializing all of these from a URL representation.
- * For example, <code>pb://localhost?name=LTS&amp;rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&amp;partitionGranularity=PARTITION_YEAR</code> will initialize a PlainPBStoragePlugin.
+ * For example, <code>pb://localhost?name=LTS&amp;rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&amp;partitionGranularity=PARTITION_YEAR</code> will initialize a PlainStoragePlugin.
  * <ol>
- * <li>The <code>pb</code> prefix initializes {@link edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin PlainPBStoragePlugin}.</li>
+ * <li>The <code>pb</code> prefix initializes {@link PlainStoragePlugin PlainStoragePlugin}.</li>
  * <li>The <code>pbraw</code> prefix initializes {@link PBOverHTTPStoragePlugin PBOverHTTPStoragePlugin}.</li>
  * <li>The <code>blackhole</code> prefix initializes {@link BlackholeStoragePlugin BlackholeStoragePlugin}.</li>
  * <li>The <code>rtree</code> prefix initializes {@link ChannelArchiverReadOnlyPlugin ChannelArchiverReadOnlyPlugin}.</li>
@@ -129,15 +129,16 @@ public class StoragePluginURLParser {
             throw new IOException(ex);
         }
 
-        return null;
-    }
+		return null;
+	}
+	
 
-    private static PlainPBStoragePlugin parsePlainPBStoragePlugin(String srcURIStr, ConfigService configService)
-            throws IOException {
-        PlainPBStoragePlugin ret = new PlainPBStoragePlugin();
-        ret.initialize(expandMacros(srcURIStr), configService);
-        return ret;
-    }
+
+	private static PlainStoragePlugin parsePlainPBStoragePlugin(String srcURIStr, ConfigService configService) throws IOException {
+		PlainStoragePlugin ret = new PlainStoragePlugin();
+		ret.initialize(expandMacros(srcURIStr), configService);
+		return ret;
+	}
 
     private static PBOverHTTPStoragePlugin parseHTTPStoragePlugin(String srcURIStr, ConfigService configService)
             throws IOException {

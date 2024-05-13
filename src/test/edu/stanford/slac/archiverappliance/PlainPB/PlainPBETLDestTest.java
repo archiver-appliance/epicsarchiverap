@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -24,8 +25,6 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 /**
  * Tests the various methods needed for ETLDest as implemented by the PlainPBStorage plugin
@@ -52,7 +51,7 @@ public class PlainPBETLDestTest {
 
     @Test
     public void testGetLastKnownEvent() throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         setup.setUpRootFolder(storagePlugin, "PVETLDestTests");
 
         long epochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();
