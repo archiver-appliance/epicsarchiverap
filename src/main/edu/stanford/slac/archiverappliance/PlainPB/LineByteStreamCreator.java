@@ -7,64 +7,61 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import org.epics.archiverappliance.config.ArchDBRTypes;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
-import org.epics.archiverappliance.config.ArchDBRTypes;
-
-import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-
 /**
- * When using a MultiFileEventStream on a HOUR granularity, we could potentially run into "too many open files" issues. 
+ * When using a MultiFileEventStream on a HOUR granularity, we could potentially run into "too many open files" issues.
  * So we add a level of indirection for this case.
  * @author mshankar
  *
  */
 public class LineByteStreamCreator {
-	LineByteStream lis;
-	Path path;
-	String pvName;
-	ArchDBRTypes type;
-	
-	/**
-	 * In this case we get a correctly positioned LIS
-	 * @param lis The line bytes stream
-	 * @param pvName the PV name
-	 * @param type  Enum ArchDBRTypes
-	 */
-	public LineByteStreamCreator(LineByteStream lis, String pvName, ArchDBRTypes type) {
-		this.lis = lis;
-		this.pvName = pvName;
-		this.type = type;
-	}
-	
-	/**
-	 * In this case, we get a whole file 
-	 * We need to position the lis past the header before returning.
-	 * @param path Path
-	 * @param pvName The PV name
-	 * @param type  Enum ArchDBRTypes
-	 */
-	public LineByteStreamCreator(Path path, String pvName, ArchDBRTypes type) {
-		this.path = path;
-		this.pvName = pvName;
-		this.type = type;
-	}
-	
+    LineByteStream lis;
+    Path path;
+    String pvName;
+    ArchDBRTypes type;
 
-	public LineByteStream getLineByteStream() throws IOException {
-		if(lis != null) return lis;
-		
-		lis = new LineByteStream(path);
-		// Position the lis after the header.
-		PBFileInfo.checkPayloadInfo(lis, pvName, type);
-		return lis;
-	}
-	
-	public void safeClose() {
-		if(lis != null) {
-			lis.safeClose();
-		}
-	}
-	
+    /**
+     * In this case we get a correctly positioned LIS
+     * @param lis The line bytes stream
+     * @param pvName the PV name
+     * @param type  Enum ArchDBRTypes
+     */
+    public LineByteStreamCreator(LineByteStream lis, String pvName, ArchDBRTypes type) {
+        this.lis = lis;
+        this.pvName = pvName;
+        this.type = type;
+    }
+
+    /**
+     * In this case, we get a whole file
+     * We need to position the lis past the header before returning.
+     * @param path Path
+     * @param pvName The PV name
+     * @param type  Enum ArchDBRTypes
+     */
+    public LineByteStreamCreator(Path path, String pvName, ArchDBRTypes type) {
+        this.path = path;
+        this.pvName = pvName;
+        this.type = type;
+    }
+
+    public LineByteStream getLineByteStream() throws IOException {
+        if (lis != null) return lis;
+
+        lis = new LineByteStream(path);
+        // Position the lis after the header.
+        PBFileInfo.checkPayloadInfo(lis, pvName, type);
+        return lis;
+    }
+
+    public void safeClose() {
+        if (lis != null) {
+            lis.safeClose();
+        }
+    }
 }

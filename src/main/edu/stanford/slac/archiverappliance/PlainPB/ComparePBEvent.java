@@ -25,56 +25,56 @@ import java.lang.reflect.Constructor;
  *
  */
 public class ComparePBEvent implements CompareEventLine {
-	private final YearSecondTimestamp yearSecondTimestamp;
-	private final ArchDBRTypes type;
+    private final YearSecondTimestamp yearSecondTimestamp;
+    private final ArchDBRTypes type;
 
-	public ComparePBEvent(ArchDBRTypes type, YearSecondTimestamp yearSecondTimestamp) {
-		this.type = type;
-		this.yearSecondTimestamp = yearSecondTimestamp;
-	}
-	
+    public ComparePBEvent(ArchDBRTypes type, YearSecondTimestamp yearSecondTimestamp) {
+        this.type = type;
+        this.yearSecondTimestamp = yearSecondTimestamp;
+    }
 
-	@Override
-	public NextStep compare(byte[] line1, byte[] line2) throws IOException  {
-		// The year does not matter here as we are driving solely off secondsintoyear. So we set it to 0.
-		Constructor<? extends DBRTimeEvent> constructor = DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
-		YearSecondTimestamp line1Timestamp = new YearSecondTimestamp(this.yearSecondTimestamp.getYear(), 0, 0);
-		YearSecondTimestamp line2Timestamp = new YearSecondTimestamp(
-				this.yearSecondTimestamp.getYear(),
-				PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() + 1,
-				0);
-		try {
-			// The raw forms for all the DBR types implement the PartionedTime interface
-			PartionedTime e =
-					(PartionedTime) constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
-			line1Timestamp = e.getYearSecondTimestamp();
-			if(line2 != null) {
-				PartionedTime e2 = (PartionedTime)
-						constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line2));
-				line2Timestamp = e2.getYearSecondTimestamp();
-			}
-		} catch(Exception ex) {
-			throw new IOException(ex);
-		}
-		if (line1Timestamp.getSecondsintoyear() < 0) {
-			throw new IOException("We cannot have a negative seconds into year " + line1Timestamp);
-		}
-		if (line1Timestamp.compareTo(this.yearSecondTimestamp) > 0) {
-			return NextStep.GO_LEFT;
-		} else if (line2Timestamp.compareTo(this.yearSecondTimestamp) <= 0) {
-			return NextStep.GO_RIGHT;
-		} else {
-			// If we are here, line1 < SS <= line2
-			if(line2 != null) {
-				if (line1Timestamp.compareTo(this.yearSecondTimestamp) <= 0
-						&& line2Timestamp.compareTo(this.yearSecondTimestamp) > 0) {
-					return NextStep.STAY_WHERE_YOU_ARE;
-				} else {
-					return NextStep.GO_LEFT;
-				}
-			} else {
-				return NextStep.STAY_WHERE_YOU_ARE;
-			}
-		}
-	}
+    @Override
+    public NextStep compare(byte[] line1, byte[] line2) throws IOException {
+        // The year does not matter here as we are driving solely off secondsintoyear. So we set it to 0.
+        Constructor<? extends DBRTimeEvent> constructor =
+                DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
+        YearSecondTimestamp line1Timestamp = new YearSecondTimestamp(this.yearSecondTimestamp.getYear(), 0, 0);
+        YearSecondTimestamp line2Timestamp = new YearSecondTimestamp(
+                this.yearSecondTimestamp.getYear(),
+                PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() + 1,
+                0);
+        try {
+            // The raw forms for all the DBR types implement the PartionedTime interface
+            PartionedTime e =
+                    (PartionedTime) constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
+            line1Timestamp = e.getYearSecondTimestamp();
+            if (line2 != null) {
+                PartionedTime e2 = (PartionedTime)
+                        constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line2));
+                line2Timestamp = e2.getYearSecondTimestamp();
+            }
+        } catch (Exception ex) {
+            throw new IOException(ex);
+        }
+        if (line1Timestamp.getSecondsintoyear() < 0) {
+            throw new IOException("We cannot have a negative seconds into year " + line1Timestamp);
+        }
+        if (line1Timestamp.compareTo(this.yearSecondTimestamp) > 0) {
+            return NextStep.GO_LEFT;
+        } else if (line2Timestamp.compareTo(this.yearSecondTimestamp) <= 0) {
+            return NextStep.GO_RIGHT;
+        } else {
+            // If we are here, line1 < SS <= line2
+            if (line2 != null) {
+                if (line1Timestamp.compareTo(this.yearSecondTimestamp) <= 0
+                        && line2Timestamp.compareTo(this.yearSecondTimestamp) > 0) {
+                    return NextStep.STAY_WHERE_YOU_ARE;
+                } else {
+                    return NextStep.GO_LEFT;
+                }
+            } else {
+                return NextStep.STAY_WHERE_YOU_ARE;
+            }
+        }
+    }
 }

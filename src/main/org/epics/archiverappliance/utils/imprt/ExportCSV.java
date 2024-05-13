@@ -22,49 +22,53 @@ import java.time.Instant;
 /**
  * This is the reverse of ImportCSV. This generates a CSV file to stdout
  * CSV file format is the one used by Bob Hall for export from ChannelArchiver - EPICS epochseconds, nanos, value, status, severity.
- * Example: - 644223600,461147000,5.59054,0,0 
+ * Example: - 644223600,461147000,5.59054,0,0
  * @author mshankar
  *
  */
 public class ExportCSV {
-	
-	private static final Logger logger = LogManager.getLogger(ExportCSV.class);
 
-	/**
-	 * Pass in a PB file.
-	 * @param args  &emsp; 
-	 */
-	public static void main(String[] args) {
-		if(args.length < 1) {
-			System.out.println("Usage: java org.epics.archiverappliance.utils.imprt.ExportCSV <PBFileName>");
-			return;
-		}
+    private static final Logger logger = LogManager.getLogger(ExportCSV.class);
 
-		String fileName = args[0];
-		FileBackedPBEventStream strm = null;
-		long lineNumber = 0;
-		try {
-			Path path = Paths.get(fileName);
-			PBFileInfo info = new PBFileInfo(path);
-			strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType());
-			for(Event e : strm) {
-				DBRTimeEvent evnt = (DBRTimeEvent) e;
+    /**
+     * Pass in a PB file.
+     *
+     * @param args &emsp;
+     */
+    public static void main(String[] args) {
+        if (args.length < 1) {
+            System.out.println("Usage: java org.epics.archiverappliance.utils.imprt.ExportCSV <PBFileName>");
+            return;
+        }
+
+        String fileName = args[0];
+        FileBackedPBEventStream strm = null;
+        long lineNumber = 0;
+        try {
+            Path path = Paths.get(fileName);
+            PBFileInfo info = new PBFileInfo(path);
+            strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType());
+            for (Event e : strm) {
+                DBRTimeEvent evnt = (DBRTimeEvent) e;
                 Instant ts = evnt.getEventTimeStamp();
-				long epicsEpochSeconds = e.getEpochSeconds() - TimeUtils.EPICS_EPOCH_2_JAVA_EPOCH_OFFSET;
+                long epicsEpochSeconds = e.getEpochSeconds() - TimeUtils.EPICS_EPOCH_2_JAVA_EPOCH_OFFSET;
 
-				System.out.println(epicsEpochSeconds + "," +
-                                ts.getNano() + "," +
-						evnt.getSampleValue().toString() + "," +
-						evnt.getStatus() + "," +
-						evnt.getSeverity()
-						);
-				lineNumber++;
-			}
-		} catch (Exception ex) {
-			logger.error("Exception near line " + lineNumber, ex);
-		} finally {
-			try { if(strm != null) { strm.close(); strm = null; } } catch(Exception ex) {} 
-		}
-		
-	}
+                System.out.println(epicsEpochSeconds + "," + ts.getNano()
+                        + "," + evnt.getSampleValue().toString()
+                        + "," + evnt.getStatus()
+                        + "," + evnt.getSeverity());
+                lineNumber++;
+            }
+        } catch (Exception ex) {
+            logger.error("Exception near line " + lineNumber, ex);
+        } finally {
+            try {
+                if (strm != null) {
+                    strm.close();
+                    strm = null;
+                }
+            } catch (Exception ex) {
+            }
+        }
+    }
 }
