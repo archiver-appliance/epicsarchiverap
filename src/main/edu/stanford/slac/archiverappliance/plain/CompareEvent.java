@@ -38,15 +38,14 @@ public class CompareEvent implements CompareEventLine {
         // The year does not matter here as we are driving solely off secondsintoyear. So we set it to 0.
         Constructor<? extends DBRTimeEvent> constructor =
                 DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
-        YearSecondTimestamp line1Timestamp = new YearSecondTimestamp(this.yearSecondTimestamp.getYear(), 0, 0);
+        YearSecondTimestamp line1Timestamp;
         YearSecondTimestamp line2Timestamp = new YearSecondTimestamp(
                 this.yearSecondTimestamp.getYear(),
                 PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() + 1,
                 0);
         try {
             // The raw forms for all the DBR types implement the PartionedTime interface
-            PartionedTime e =
-                    constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
+            PartionedTime e = constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
             line1Timestamp = e.getYearSecondTimestamp();
             if (line2 != null) {
                 PartionedTime e2 = constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line2));

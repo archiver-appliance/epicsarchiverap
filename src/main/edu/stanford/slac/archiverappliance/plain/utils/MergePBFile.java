@@ -37,7 +37,7 @@ public class MergePBFile {
 
     /**
      * @param args &emsp;
-     * @throws  Exception  &emsp;
+     * @throws Exception &emsp;
      */
     public static void main(String[] args) throws Exception {
         if (args == null || args.length < 3) {

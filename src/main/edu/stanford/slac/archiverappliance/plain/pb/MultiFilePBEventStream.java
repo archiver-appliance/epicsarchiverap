@@ -9,7 +9,7 @@ package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.PB.search.FileEventStreamSearch;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.plain.LineByteStreamCreator;
+import edu.stanford.slac.archiverappliance.plain.pb.LineByteStreamCreator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -35,10 +35,10 @@ import java.util.Iterator;
  */
 public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
     private static final Logger logger = LogManager.getLogger(MultiFilePBEventStream.class);
-    private LineByteStreamCreator istreams[] = null;
-    private String pvName;
-    private ArchDBRTypes type;
-    private RemotableEventStreamDesc desc;
+    private final String pvName;
+    private final ArchDBRTypes type;
+    private final RemotableEventStreamDesc desc;
+    private LineByteStreamCreator[] istreams = null;
     private MultiFilePBEventStreamIterator theIterator = null;
 
     public MultiFilePBEventStream(Path[] paths, String pvName, ArchDBRTypes dbrtype, Instant startTime, Instant endTime)
@@ -112,8 +112,7 @@ public class MultiFilePBEventStream implements EventStream, RemotableOverRaw {
                     }
                 } else {
                     // Use whole file for chunks in the middle.
-                    logger.debug("Using all the data from file "
-                            + path.toAbsolutePath().toString());
+                    logger.debug("Using all the data from file " + path.toAbsolutePath());
                     istreams[i] = new LineByteStreamCreator(path, pvName, type);
                 }
             } catch (IOException ex) {

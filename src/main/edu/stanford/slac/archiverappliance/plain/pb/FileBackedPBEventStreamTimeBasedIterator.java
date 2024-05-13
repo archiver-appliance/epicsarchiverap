@@ -11,6 +11,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import edu.stanford.slac.archiverappliance.plain.EventStreamIterator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -30,7 +31,7 @@ import java.util.NoSuchElementException;
  * @author mshankar
  *
  */
-public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEventStreamIterator {
+public class FileBackedPBEventStreamTimeBasedIterator implements EventStreamIterator {
     private static final Logger logger = LogManager.getLogger(FileBackedPBEventStreamTimeBasedIterator.class.getName());
     private final long startTimeEpochSeconds;
     private final long endTimeEpochSeconds;

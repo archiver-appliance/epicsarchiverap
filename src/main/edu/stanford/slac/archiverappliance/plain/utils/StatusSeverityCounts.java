@@ -54,20 +54,20 @@ import java.util.List;
 public class StatusSeverityCounts {
 
     /**
-     * @param args  &emsp;
-     * @throws IOException  &emsp;
+     * @param args &emsp;
+     * @throws IOException &emsp;
      */
     public static void main(String[] args) throws IOException {
         String dirName = args[0];
         File dir = new File(dirName);
         Path dirPath = dir.toPath();
         class Count {
+            int val;
+            long count = 0;
+
             Count(int val) {
                 this.val = val;
             }
-
-            int val;
-            long count = 0;
         }
         final HashMap<Integer, Count> statuses = new HashMap<Integer, Count>();
         final HashMap<Integer, Count> severities = new HashMap<Integer, Count>();

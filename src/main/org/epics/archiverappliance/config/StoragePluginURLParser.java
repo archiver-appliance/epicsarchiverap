@@ -25,7 +25,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import static edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin.PBHTTP_PLUGIN_IDENTIFIER;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.common.mergededup.MergeDedupStoragePlugin.MERGE_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin.RTREE_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin.BLACKHOLE_PLUGIN_IDENTIFIER;
