@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,7 +59,7 @@ public class MultiFilePBEventStreamTest {
 
 	@Test
 	public void testMultiFileEventStream() throws Exception {
-		// We generate a years worth of data into a PlainPBStoragePlugin with different granularity. 
+		// We generate a years worth of data into a PlainStoragePlugin with different granularity.
 		// We then retrieve data and make sure that we get what we expect
 		ConfigService configService = new ConfigServiceForTests(-1);
 		
@@ -67,7 +68,7 @@ public class MultiFilePBEventStreamTest {
 
 			String pvName = "MultiYear" + granularity.toString();
 			String configURL = "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=" + granularity.toString();
-			PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+			PlainStoragePlugin pbplugin = new PlainStoragePlugin();
 			pbplugin.initialize(configURL, configService);
 			short currentYear = TimeUtils.getCurrentYear();
 			ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;

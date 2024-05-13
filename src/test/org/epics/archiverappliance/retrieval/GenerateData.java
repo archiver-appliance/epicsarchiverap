@@ -8,8 +8,8 @@
 package org.epics.archiverappliance.retrieval;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -57,12 +57,12 @@ public class GenerateData {
      */
     public static long generateSineForPV(
             String pvName, int phasediffindegrees, ArchDBRTypes type, Instant start, Instant end) throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         PBCommonSetup setup = new PBCommonSetup();
         setup.setUpRootFolder(storagePlugin);
         long numberOfEvents = 0;
         try (BasicContext context = new BasicContext()) {
-            if (!Files.exists(PlainPBPathNameUtility.getPathNameForTime(
+            if (!Files.exists(PlainPathNameUtility.getPathNameForTime(
                     storagePlugin, pvName, start, context.getPaths(), configService.getPVNameToKeyConverter()))) {
                 SimulationEventStream simstream =
                         new SimulationEventStream(type, new SineGenerator(phasediffindegrees), start, end, 1);

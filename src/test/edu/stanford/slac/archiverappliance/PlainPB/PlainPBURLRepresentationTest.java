@@ -1,6 +1,7 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -8,20 +9,18 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-
 public class PlainPBURLRepresentationTest {
     @Test
     public void testToAndFromURL() throws Exception {
-        PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
+        PlainStoragePlugin etlSrc = new PlainStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
 
         srcSetup.setUpRootFolder(
                 etlSrc, "SimpleETLTestSrc_" + PartitionGranularity.PARTITION_HOUR, PartitionGranularity.PARTITION_HOUR);
         String urlRep = etlSrc.getURLRepresentation();
         ConfigService configService = new ConfigServiceForTests(-1);
-        PlainPBStoragePlugin after =
-                (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(urlRep, configService);
+        PlainStoragePlugin after =
+                (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(urlRep, configService);
         assert after != null;
         Assertions.assertEquals(
                 after.getRootFolder(),

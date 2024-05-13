@@ -8,8 +8,8 @@
 package org.epics.archiverappliance.retrieval.client;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -56,7 +56,7 @@ public class YearSpanRetrievalTest {
         // We skip generation of the file only if all the files exist.
         boolean deletefilesandgeneratedata = false;
         for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
-            if (!PlainPBPathNameUtility.getPathNameForTime(
+            if (!PlainPathNameUtility.getPathNameForTime(
                             pbplugin,
                             pvName,
                             TimeUtils.getStartOfYear(currentyear),
@@ -72,7 +72,7 @@ public class YearSpanRetrievalTest {
         // Delete all the files for the specified span
         if (deletefilesandgeneratedata) {
             for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
-                Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+                Files.deleteIfExists(PlainPathNameUtility.getPathNameForTime(
                         pbplugin,
                         pvName,
                         TimeUtils.getStartOfYear(currentyear),

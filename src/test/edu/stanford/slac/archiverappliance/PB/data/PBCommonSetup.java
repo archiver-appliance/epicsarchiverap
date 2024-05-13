@@ -8,7 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +43,7 @@ public class PBCommonSetup {
 
     public void setUpRootFolder() throws Exception {
 
-		String rootFolder = System.getProperty("edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.rootFolder");
+		String rootFolder = System.getProperty("edu.stanford.slac.archiverappliance.PlainPB.PlainStoragePlugin.rootFolder");
 
 		if(rootFolder != null)  {
 			logger.info("Setting PB root folder to " + rootFolder);
@@ -52,7 +52,7 @@ public class PBCommonSetup {
 
 	}
 
-	public void setUpRootFolder(PlainPBStoragePlugin pbplugin) throws Exception {
+	public void setUpRootFolder(PlainStoragePlugin pbplugin) throws Exception {
 		setUpRootFolder();
 		tempFolderForTests = new File(configService.getPBRootFolder());
 		pbplugin.initialize("pb://localhost?name=UnitTest&rootFolder="+tempFolderForTests+"&partitionGranularity=PARTITION_YEAR", configService);
@@ -60,7 +60,7 @@ public class PBCommonSetup {
 		pbplugin.setName(tempFolderForTests.getAbsolutePath());
 	}
 	
-	public void setUpRootFolder(PlainPBStoragePlugin pbplugin, String testSpecificFolder) throws Exception {
+	public void setUpRootFolder(PlainStoragePlugin pbplugin, String testSpecificFolder) throws Exception {
 		setUpRootFolder();
 		this.testSpecificFolder = testSpecificFolder;
 		
@@ -77,7 +77,7 @@ public class PBCommonSetup {
 		pbplugin.setName(tempFolderForTests.getAbsolutePath());
 	}
 	
-	public void setUpRootFolder(PlainPBStoragePlugin pbplugin, String testSpecificFolder, PartitionGranularity partitionGranularity) throws Exception {
+	public void setUpRootFolder(PlainStoragePlugin pbplugin, String testSpecificFolder, PartitionGranularity partitionGranularity) throws Exception {
 		setUpRootFolder();
 		this.testSpecificFolder = testSpecificFolder;
 		

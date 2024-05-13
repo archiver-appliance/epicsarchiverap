@@ -7,7 +7,9 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,7 +38,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
- * Test rename PV for the PlainPBStoragePlugin...
+ * Test rename PV for the PlainStoragePlugin...
  * @author mshankar
  *
  */
@@ -71,7 +73,7 @@ public class RenamePVTest {
 	 */
 	@Test
 	public void testRenamePV() throws Exception {
-		PlainPBStoragePlugin plugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=RenameTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
+		PlainStoragePlugin plugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=RenameTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
 		short currentYear = TimeUtils.getCurrentYear();
 		ArrayListEventStream strm = new ArrayListEventStream(86400, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, oldPVName, currentYear));
 		for(int i = 0; i < 365*86400; i+=1500) { 
@@ -90,7 +92,7 @@ public class RenamePVTest {
 					oldPVEventCount++;
 				}
 			}
-			oldPathCount = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainPBStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
+			oldPathCount = PlainPathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
 		}
 		logger.info("Done generating data with " +  oldPVEventCount + " points   About to rename PV");
 		
@@ -109,8 +111,8 @@ public class RenamePVTest {
 					newPVEventCount++;
 				}
 			}
-			newPathCount = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), newPVName, PlainPBStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
-			newPathForOldPVNameCount = PlainPBPathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainPBStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
+			newPathCount = PlainPathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), newPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
+			newPathForOldPVNameCount = PlainPathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
 		}
 
 		logger.info("Old count " + oldPVEventCount + " and new count " + newPVEventCount);

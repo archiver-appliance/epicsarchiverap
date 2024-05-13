@@ -9,8 +9,8 @@ package org.epics.archiverappliance.retrieval;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -82,7 +82,7 @@ public class DataRetrievalServletTest {
                                 StandardCharsets.UTF_8),
                 configService);
 
-        Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+        Files.deleteIfExists(PlainPathNameUtility.getPathNameForTime(
                 pbplugin,
                 pvName,
                 TimeUtils.getStartOfYear(year),
@@ -129,7 +129,7 @@ public class DataRetrievalServletTest {
             logger.info("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
             Assertions.assertEquals(end.getEpochSecond() - start.getEpochSecond() + 1, totalEvents);
         }
-        Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+        Files.deleteIfExists(PlainPathNameUtility.getPathNameForTime(
                 pbplugin,
                 pvName,
                 TimeUtils.getStartOfYear(year),

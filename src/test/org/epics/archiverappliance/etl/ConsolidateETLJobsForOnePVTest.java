@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -54,9 +54,9 @@ class ConsolidateETLJobsForOnePVTest {
     static String mediumTermFolderName = rootFolderName + "/mediumTerm";
     static String longTermFolderName = rootFolderName + "/longTerm";
     String pvNamePrefix = "ArchUnitTest" + "ConsolidateETLJobsForOnePVTest";
-    static PlainPBStoragePlugin stsStoragePlugin;
-    static PlainPBStoragePlugin mtsStoragePlugin;
-    static PlainPBStoragePlugin ltsStoragePlugin;
+    static PlainStoragePlugin stsStoragePlugin;
+    static PlainStoragePlugin mtsStoragePlugin;
+    static PlainStoragePlugin ltsStoragePlugin;
     static short currentYear = TimeUtils.getCurrentYear();
 
     static Instant startOfYear = TimeUtils.getStartOfYear(currentYear);
@@ -71,14 +71,14 @@ class ConsolidateETLJobsForOnePVTest {
             FileUtils.deleteDirectory(new File(rootFolderName));
         }
 
-        stsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
                 configService);
-        mtsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName
                         + "/&partitionGranularity=PARTITION_DAY&hold=" + mtsHold + "&gather=" + mtsGather,
                 configService);
-        ltsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        ltsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=LTS&rootFolder=" + longTermFolderName
                         + "/&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
                 configService);
@@ -141,7 +141,7 @@ class ConsolidateETLJobsForOnePVTest {
         }
     }
 
-    private void checkStorageEventCount(String pvName, int eventsGenerated, PlainPBStoragePlugin storagePlugin)
+    private void checkStorageEventCount(String pvName, int eventsGenerated, PlainStoragePlugin storagePlugin)
             throws IOException {
 
         long afterSourceCount = 0;

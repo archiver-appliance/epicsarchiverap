@@ -1,6 +1,9 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -23,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Path;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.
@@ -46,7 +49,7 @@ public class SingleEventTimeBasedIteratorTest {
 
     @Test
     public void testSingleEvent() throws Exception {
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_HOUR",
                 configService);
@@ -67,7 +70,7 @@ public class SingleEventTimeBasedIteratorTest {
         }
 
         try (BasicContext context = new BasicContext()) {
-            Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(
+            Path[] paths = PlainPathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,

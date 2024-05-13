@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 public class GetFileTime {
 	private static Logger logger = LogManager.getLogger(GetFileTime.class.getName());

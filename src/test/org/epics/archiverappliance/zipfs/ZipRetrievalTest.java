@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.zipfs;
 
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,7 +99,7 @@ public class ZipRetrievalTest {
 	@Test
 	public void testSimpleArchivePVZipPerPV() throws Exception {
 		String rootFolder = testFolder.getAbsolutePath();
-		PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_HOUR&compress=ZIP_PER_PV", configService);
+		PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_HOUR&compress=ZIP_PER_PV", configService);
 		logger.info(storagePlugin.getURLRepresentation());
 		String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":SimpleZipTest";
 		ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
@@ -131,7 +131,7 @@ public class ZipRetrievalTest {
 		ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 		{
 			String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstUncompressed";
-			PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
+			PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
 			logger.info(storagePlugin.getURLRepresentation());
 			int phasediffindegrees = 10;
             short currentYear = TimeUtils.getCurrentYear();
@@ -142,7 +142,7 @@ public class ZipRetrievalTest {
 		}
 		{
 			String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstCompressed";
-			PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
+			PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
 			logger.info(storagePlugin.getURLRepresentation());
 			int phasediffindegrees = 10;
             short currentYear = TimeUtils.getCurrentYear();
@@ -156,7 +156,7 @@ public class ZipRetrievalTest {
 		short currentYear = TimeUtils.getCurrentYear();
 		{
 			String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstUncompressed";
-			PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
+			PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY", configService);
 			DecimalFormat format = new DecimalFormat("00");
 			long totalTimeConsumed = 0;
 			int numdays = 27;
@@ -182,7 +182,7 @@ public class ZipRetrievalTest {
 			
 		{
 			String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstCompressed";
-			PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
+			PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV", configService);
 			DecimalFormat format = new DecimalFormat("00");
 			long totalTimeConsumed = 0;
 			int numdays = 27;

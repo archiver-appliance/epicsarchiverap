@@ -7,9 +7,9 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import edu.stanford.slac.archiverappliance.PlainPB.FileStreamCreator;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
+import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import gov.aps.jca.dbr.DBR;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,14 +49,14 @@ import java.util.stream.Stream;
  */
 public class DBRTypeTest {
     private static final Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
-    static PlainPBStoragePlugin pbplugin;
+    static PlainStoragePlugin pbplugin;
     static PBCommonSetup pbSetup = new PBCommonSetup();
     static ConfigService configService;
 
     private static final int SECONDS_INTO_YEAR = 100;
     @BeforeAll
     public static void setUp() throws Exception {
-        pbplugin = new PlainPBStoragePlugin();
+        pbplugin = new PlainStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin, "DBRTypeTestsPB");
         configService = new ConfigServiceForTests(-1);
     }
@@ -126,7 +126,7 @@ public class DBRTypeTest {
             }
             logger.info("Done appending data. Now checking the read.");
             // Now test the data.
-            Path path = PlainPBPathNameUtility.getPathNameForTime(
+            Path path = PlainPathNameUtility.getPathNameForTime(
                     pbplugin,
                     pvName,
                     TimeUtils.getStartOfYear(currentYear),
@@ -227,7 +227,7 @@ public class DBRTypeTest {
                 // EventStream retrievedStrm = pbplugin.getDataForPV(dbrType.name(),
                 // TimeStamp.time(startOfCurrentYearInSeconds, 0),
                 // TimeStamp.time(startOfCurrentYearInSeconds+SimulationEventStreamIterator.SECONDS_IN_YEAR, 0));
-                Path path = PlainPBPathNameUtility.getPathNameForTime(
+                Path path = PlainPathNameUtility.getPathNameForTime(
                         pbplugin,
                         pvName,
                         startTime,
