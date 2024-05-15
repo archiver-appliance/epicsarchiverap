@@ -16,11 +16,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-
-
-
-
 /** A control system PV.
  *  <p>
  *  When 'start'ed, the PV will attempt to connect or
@@ -38,11 +33,9 @@ import java.util.Map;
  * @version Initial version:CSS
  * @version 4-Jun-2012, Luofeng Li:added codes to support for the new archiver
  */
-public interface PV
-{
+public interface PV {
     /** @return Returns the name. */
     public String getName();
-
 
     /** Add a new listener.
      * @param listener PVListener
@@ -50,7 +43,7 @@ public interface PV
      */
     public void addListener(PVListener listener);
 
-    /** Remove a listener. 
+    /** Remove a listener.
      * @param listener PVListener
      */
     public void removeListener(PVListener listener);
@@ -72,59 +65,59 @@ public interface PV
     /** @return Returns <code>true</code> between <code>start()</code> and <code>stop()</code>. */
     public boolean isRunning();
 
-	/**
-	 * @return Returns <code>true</code> when connected. While <code>isRunning</code>, we are subscribed for value
-	 * updates, but we might still be disconnected, at least temporarily.
-	 */
-	public boolean isConnected();
+    /**
+     * @return Returns <code>true</code> when connected. While <code>isRunning</code>, we are subscribed for value
+     * updates, but we might still be disconnected, at least temporarily.
+     */
+    public boolean isConnected();
 
-	/**
-	 * @return Returns <code>true</code> when connected. While <code>isRunning</code>, we are subscribed for value
-	 * updates, but we might still be disconnected, at least temporarily.
-	 */
-	public PVConnectionState connectionState();
-    
-   /***
-    * get the archive DBR types for this pv
-    * @return ArchDBRTypes  &emsp;
-    */
-	ArchDBRTypes getArchDBRTypes();
+    /**
+     * @return Returns <code>true</code> when connected. While <code>isRunning</code>, we are subscribed for value
+     * updates, but we might still be disconnected, at least temporarily.
+     */
+    public PVConnectionState connectionState();
 
-	/**
-	 * Combine the metadata from various sources and return the latest copy.
-	 * @return HashMap   &emsp;
-	 */
-	public HashMap<String, String> getLatestMetadata();
+    /***
+     * get the archive DBR types for this pv
+     * @return ArchDBRTypes  &emsp;
+     */
+    ArchDBRTypes getArchDBRTypes();
 
-	/**
-	 * Do a caget and update the metadata that is cached in the PV.
-	 * @throws IllegalStateException  &emsp;
-	 * @throws CAException  &emsp;
-	 */
-	public void updateTotalMetaInfo() throws IllegalStateException, CAException;
+    /**
+     * Combine the metadata from various sources and return the latest copy.
+     * @return HashMap   &emsp;
+     */
+    public HashMap<String, String> getLatestMetadata();
 
-	/**
-	 * Get the MetaInfo for this PV; used during initial MetaGet phase
-	 * @return MetaInfo  &emsp; 
-	 */
-	public MetaInfo getTotalMetaInfo();
-	
-	public  String getHostName();
+    /**
+     * Do a caget and update the metadata that is cached in the PV.
+     * @throws IllegalStateException  &emsp;
+     * @throws CAException  &emsp;
+     */
+    public void updateTotalMetaInfo() throws IllegalStateException, CAException;
 
-	/**
-	 * Get any low level info as a displayable list; this is typically meant for debugging purposes..
-	 * Add these to as key value pairs to the statuses
-	 */
-	public void getLowLevelChannelInfo(List<Map<String, String>> statuses);
-	
-	/**
-	 * This method is called each time the ArchiveChannel has written changed a DBRTimeEvent into the buffers.
-	 */
-	public void sampleWrittenIntoStores();
-    
-	/**
-	 * This method is called each time the Write thread is about to write a batch of samples. 
-	 * The writer thread passes in the last sample of the previous batch of samples after buffer rotation.
-	 */
-	public void aboutToWriteBuffer(DBRTimeEvent lastEvent);
+    /**
+     * Get the MetaInfo for this PV; used during initial MetaGet phase
+     * @return MetaInfo  &emsp;
+     */
+    public MetaInfo getTotalMetaInfo();
+
+    public String getHostName();
+
+    /**
+     * Get any low level info as a displayable list; this is typically meant for debugging purposes..
+     * Add these to as key value pairs to the statuses
+     */
+    public void getLowLevelChannelInfo(List<Map<String, String>> statuses);
+
+    /**
+     * This method is called each time the ArchiveChannel has written changed a DBRTimeEvent into the buffers.
+     */
+    public void sampleWrittenIntoStores();
+
+    /**
+     * This method is called each time the Write thread is about to write a batch of samples.
+     * The writer thread passes in the last sample of the previous batch of samples after buffer rotation.
+     */
+    public void aboutToWriteBuffer(DBRTimeEvent lastEvent);
 }

@@ -1,3 +1,5 @@
+const archstatpVNames = "#archstatpVNames";
+
 /*******************************************************************************
  * Copyright (c) 2011 The Board of Trustees of the Leland Stanford Junior University
  * as Operator of the SLAC National Accelerator Laboratory.
@@ -9,43 +11,40 @@
 // Convert a list of PVs as typed in the #archstatpVNames textarea into a "pv=CSV" type HTTP argument.
 
 function getPVQueryParam() {
-  var pvText = $("#archstatpVNames").val();
+  const pvText = $(archstatpVNames).val();
   // Check for value, non-zero length and non-blanks
   if (!pvText || 0 === pvText.length || /^\s*$/.test(pvText)) {
     alert("No PVs have been specified.");
     return;
   }
-  var pvS = pvText.split("\n");
-  var pvQuery = new String("pv=");
-  var firstLine = true;
-  for (var i = 0; i < pvS.length; i++) {
+  const pvS = pvText.split("\n");
+  const jsonArray = [];
+
+  for (let i = 0; i < pvS.length; i++) {
     if (!pvS[i] || 0 === pvS[i] || /^\s*$/.test(pvS[i])) continue;
-    if (firstLine) {
-      firstLine = false;
-    } else {
-      pvQuery = pvQuery.concat(",");
-    }
-    pvQuery = pvQuery.concat(encodeURIComponent(pvS[i].trim()));
+    jsonArray.push({ pv: pvS[i].trim() });
   }
-  return pvQuery;
+  return JSON.stringify(jsonArray);
 }
 
-var patternForPVNames = /^[a-zA-Z0-9:_\-\+\[\]<>;.\/\,\#\{\}\^]+$/;
+const patternForPVNames = /^[a-zA-Z0-9:_\-+\[\];\/,#{}^<>]+$/;
 // Validates pvNames to make sure they are valid - pattern from CA developers guide.
+// Should match pattern in PVNames.isValidPVName
 function validatePVNames() {
-  var pvText = $("#archstatpVNames").val();
+  const pvText = $(archstatpVNames).val();
   // Check for value, non-zero length and non-blanks
   if (!pvText || 0 === pvText.length || /^\s*$/.test(pvText)) {
     alert("No PVs have been specified for archiving.");
     return false;
   }
 
-  var pvS = pvText.split("\n");
-  var message = new String("The following PV names do not match the CA spec");
-  var errors = false;
-  for (var i = 0; i < pvS.length; i++) {
+  const pvS = pvText.split("\n");
+  let message = String("The following PV names do not match the CA spec");
+  let errors = false;
+  for (let i = 0; i < pvS.length; i++) {
     if (!pvS[i] || 0 === pvS[i] || /^\s*$/.test(pvS[i])) continue;
-    if (!patternForPVNames.test(pvS[i].trim())) {
+    let baseName = pvS[i].split(".", 2)[0];
+    if (!patternForPVNames.test(baseName.trim())) {
       message = message.concat("\n" + pvS[i]);
       errors = true;
     }
@@ -65,16 +64,13 @@ function archivePVs() {
   }
   var pvQuery = getPVQueryParam();
   if (!pvQuery) return;
-  var HTTPMethod = "GET";
-  if (pvQuery.length > 2048) {
-    HTTPMethod = "POST";
-  }
 
   $.ajax({
     url: "../bpl/archivePV",
     dataType: "json",
     data: pvQuery,
-    type: HTTPMethod,
+    type: "POST",
+    contentType: "application/json",
     success: function () {
       checkPVStatus();
     },
@@ -209,10 +205,7 @@ function archivePVsWithDetails() {
 
     var pvQuery = getPVQueryParam();
     if (!pvQuery) return;
-    var HTTPMethod = "GET";
-    if (pvQuery.length > 2048) {
-      HTTPMethod = "POST";
-    }
+    HTTPMethod = "POST";
 
     $.ajax({
       url: "../bpl/archivePV",
@@ -315,17 +308,18 @@ var skipAutoRefresh = false;
 
 // Displays the status of the PVs as typed in the #archstatpVNames textarea in the archstats table.
 function checkPVStatus() {
-  var pvNames = $("#archstatpVNames").val();
+  var pvNames = $(archstatpVNames).val();
   if (sessionStorage && pvNames != null) {
-    sessionStorage["archstatpVNames"] = $("#archstatpVNames").val();
+    sessionStorage["archstatpVNames"] = $(archstatpVNames).val();
   }
 
-  var pvQuery = getPVQueryParam();
+  const pvQuery = getPVQueryParam();
   if (!pvQuery) return;
 
-  var jsonurl = "../bpl/getPVStatus?" + pvQuery + "&reporttype=short";
-  var tabledivname = "archstatsdiv";
-  createReportTable(jsonurl, tabledivname, [
+  const json = pvQuery;
+  let url = "../bpl/getPVStatus?reporttype=short";
+  const tabledivname = "archstatsdiv";
+  createReportTable(json, url, tabledivname, [
     { srcAttr: "pvName", label: "PV Name" },
     {
       srcAttr: "status",
@@ -336,7 +330,7 @@ function checkPVStatus() {
         }
         if (
           curdata.status !== undefined &&
-          curdata.status != "Being archived"
+          curdata.status !== "Being archived"
         ) {
           if (!inRefreshPVStatus) {
             inRefreshPVStatus = true;
@@ -398,18 +392,23 @@ function checkPVStatus() {
 function getPVNames() {
   //http://172.21.225.187:17665/mgmt/bpl/getMatchingPVsForThisAppliance?regex=.*&limit=1000
 
-  var pvNames = $("#archstatpVNames").val();
+  var pvNames = $(archstatpVNames).val();
   if (sessionStorage && pvNames != null) {
-    sessionStorage["archstatpVNames"] = $("#archstatpVNames").val();
+    sessionStorage["archstatpVNames"] = $(archstatpVNames).val();
   }
 
-  var pvQuery = getPVQueryParam();
+  const pvQuery = getPVQueryParam();
   if (!pvQuery) return;
 
-  var jsonurl =
-    "../bpl/getMatchingPVsForThisAppliance?" + pvQuery + "&limit=-1";
-  var tabledivname = "archstatsdiv";
-  createReportTable(jsonurl, tabledivname, [
+  let pvName;
+  if (pvQuery.length > 0) {
+    pvName = pvQuery[0].get("pv");
+  } else {
+    return;
+  }
+  const url = "../bpl/getMatchingPVsForThisAppliance?" + pvName + "&limit=-1";
+  const tabledivname = "archstatsdiv";
+  createReportTable([], url, tabledivname, [
     {
       srcAttr: "pvName",
       label: "PV Name",
@@ -1935,35 +1934,26 @@ function reshardPV() {
 
 // Looks up the PVs in #archstatpVNames text area and then replace the text area with the PV names.
 function lookupPVs() {
-  var pvQuery = getPVQueryParam();
+  const pvQuery = getPVQueryParam();
   if (!pvQuery) return;
 
-  var jsonurl = "../bpl/getPVStatus?" + pvQuery + "&reporttype=short";
-  var components = jsonurl.split("?");
-  var urlalone = components[0];
-  var querystring = "";
-  if (components.length > 1) {
-    querystring = components[1];
-  }
-  var HTTPMethod = "GET";
-  if (jsonurl.length > 2048) {
-    HTTPMethod = "POST";
-  }
+  const url = "../bpl/getPVStatus?reporttype=short";
+  let HTTPMethod = "POST";
 
   $.ajax({
-    url: urlalone,
-    data: querystring,
+    url: url,
+    data: pvQuery,
     type: HTTPMethod,
     dataType: "json",
+    contentType: "application/json",
     success: function (data, textStatus, jqXHR) {
-      $("#archstatpVNames").val("");
-      for (var pvInfo in data) {
-        var newval =
-          $("#archstatpVNames").val() + data[pvInfo]["pvName"] + "\n";
-        $("#archstatpVNames").val(newval);
-        var pvNames = $("#archstatpVNames").val();
+      $(archstatpVNames).val("");
+      for (const pvInfo in data) {
+        var newval = $(archstatpVNames).val() + data[pvInfo]["pvName"] + "\n";
+        $(archstatpVNames).val(newval);
+        var pvNames = $(archstatpVNames).val();
         if (sessionStorage && pvNames != null) {
-          sessionStorage["archstatpVNames"] = $("#archstatpVNames").val();
+          sessionStorage["archstatpVNames"] = $(archstatpVNames).val();
         }
       }
     },
@@ -1979,26 +1969,17 @@ function lookupPVs() {
 }
 
 function pauseMultiplePVs() {
-  var pvQuery = getPVQueryParam();
+  const pvQuery = getPVQueryParam();
   if (!pvQuery) return;
 
-  var jsonurl = "../bpl/pauseArchivingPV?" + pvQuery;
-  var components = jsonurl.split("?");
-  var urlalone = components[0];
-  var querystring = "";
-  if (components.length > 1) {
-    querystring = components[1];
-  }
-  var HTTPMethod = "GET";
-  if (jsonurl.length > 2048) {
-    HTTPMethod = "POST";
-  }
+  const url = "../bpl/pauseArchivingPV";
 
   $.ajax({
-    url: urlalone,
-    data: querystring,
-    type: HTTPMethod,
+    url: url,
+    data: pvQuery,
+    type: "POST",
     dataType: "json",
+    contentType: "application/json",
     success: function (data, textStatus, jqXHR) {
       checkPVStatus();
     },
@@ -2017,23 +1998,15 @@ function deleteMultiplePVs() {
   var pvQuery = getPVQueryParam();
   if (!pvQuery) return;
 
-  var jsonurl = "../bpl/deletePV?" + pvQuery;
-  var components = jsonurl.split("?");
-  var urlalone = components[0];
-  var querystring = "";
-  if (components.length > 1) {
-    querystring = components[1];
-  }
-  var HTTPMethod = "GET";
-  if (jsonurl.length > 2048) {
-    HTTPMethod = "POST";
-  }
+  var url = "../bpl/deletePV";
+  var HTTPMethod = "POST";
 
   $.ajax({
-    url: urlalone,
-    data: querystring,
+    url: url,
+    data: pvQuery,
     type: HTTPMethod,
     dataType: "json",
+    contentType: "application/json",
     success: function (data, textStatus, jqXHR) {
       if (
         data.status != null &&
@@ -2061,26 +2034,18 @@ function deleteMultiplePVs() {
 }
 
 function resumeMultiplePVs() {
-  var pvQuery = getPVQueryParam();
+  const pvQuery = getPVQueryParam();
   if (!pvQuery) return;
 
-  var jsonurl = "../bpl/resumeArchivingPV?" + pvQuery;
-  var components = jsonurl.split("?");
-  var urlalone = components[0];
-  var querystring = "";
-  if (components.length > 1) {
-    querystring = components[1];
-  }
-  var HTTPMethod = "GET";
-  if (jsonurl.length > 2048) {
-    HTTPMethod = "POST";
-  }
+  const url = "../bpl/resumeArchivingPV";
+  const HTTPMethod = "POST";
 
   $.ajax({
-    url: urlalone,
-    data: querystring,
+    url: url,
+    data: pvQuery,
     type: HTTPMethod,
     dataType: "json",
+    contentType: "application/json",
     success: function (data, textStatus, jqXHR) {
       checkPVStatus();
     },

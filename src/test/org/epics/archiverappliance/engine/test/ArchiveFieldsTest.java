@@ -26,182 +26,290 @@ import org.junit.jupiter.api.Test;
 
 /**
  * test for meta data archiving
- * 
+ *
  * @author Luofeng Li
- * 
+ *
  */
 @Tag("localEpics")
-public class ArchiveFieldsTest  {
-	private static final Logger logger = LogManager.getLogger(ArchiveFieldsTest.class.getName());
-	private SIOCSetup ioc = null;
-	private ConfigServiceForTests testConfigService;
+public class ArchiveFieldsTest {
+    private static final Logger logger = LogManager.getLogger(ArchiveFieldsTest.class.getName());
+    private SIOCSetup ioc = null;
+    private ConfigServiceForTests testConfigService;
     private final String pvPrefix = ArchiveFieldsTest.class.getSimpleName();
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		ioc = new SIOCSetup(pvPrefix);
-		ioc.startSIOCWithDefaultDB();
+    @BeforeEach
+    public void setUp() throws Exception {
+        ioc = new SIOCSetup(pvPrefix);
+        ioc.startSIOCWithDefaultDB();
         testConfigService = new ConfigServiceForTests(-1);
         Thread.sleep(3000);
-	}
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
+    @AfterEach
+    public void tearDown() throws Exception {
 
-		testConfigService.shutdownNow();
-		ioc.stopSIOC();
+        testConfigService.shutdownNow();
+        ioc.stopSIOC();
+    }
 
-	}
+    /**
+     * test one pv with meta field. We must make sure the meta fields should be
+     * archived too
+     */
+    @Test
+    public void oneChannelWithMetaField() {
 
+        try {
+            String pvName = pvPrefix + "test_NOADEL";
+            MemBufWriter myWriter = new MemBufWriter(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+            PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+            typeInfo.addArchiveField("HIHI");
+            typeInfo.addArchiveField("LOLO");
+            testConfigService.updateTypeInfoForPV(pvName, typeInfo);
+            testConfigService.registerPVToAppliance(pvName, testConfigService.getMyApplianceInfo());
 
-	/**
-	 * test one pv with meta field. We must make sure the meta fields should be
-	 * archived too
-	 */
-	@Test
-	public void oneChannelWithMetaField() {
+            ArchiveEngine.archivePV(
+                    pvName,
+                    1,
+                    SamplingMethod.MONITOR,
+                    myWriter,
+                    testConfigService,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    null,
+                    typeInfo.getArchiveFields(),
+                    false,
+                    false);
+            Thread.sleep(15 * 1000);
+            testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
+            Thread.sleep(15 * 1000);
+            Assertions.assertFalse(
+                    testConfigService
+                            .getEngineContext()
+                            .getChannelList()
+                            .get(pvName)
+                            .metaChannelsNeedStartingUp(),
+                    "Not enough delay - metafields still need starting up");
+            logger.info("Changing fields");
+            SIOCSetup.caput(pvName + ".HIHI", 80);
+            SIOCSetup.caput(pvName + ".LOLO", 5);
+            Thread.sleep(1000);
+            SIOCSetup.caput(pvName + ".HIHI", 85);
+            SIOCSetup.caput(pvName + ".LOLO", 6);
+            logger.info("Done changing fields");
+            Thread.sleep(3000);
 
-		try {
-			String pvName = pvPrefix + "test_NOADEL";
-			MemBufWriter myWriter = new MemBufWriter(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-			PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-			typeInfo.addArchiveField("HIHI");
-			typeInfo.addArchiveField("LOLO");
-			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
-			testConfigService.registerPVToAppliance(pvName, testConfigService.getMyApplianceInfo());
+            int hihiNum = 0;
+            int loloNUm = 0;
+            int totalEvents = 0;
+            for (Event e : myWriter.getCollectedSamples()) {
+                DBRTimeEvent tempDBRTimeEvent = (DBRTimeEvent) e;
+                String hihiVluue = tempDBRTimeEvent.getFieldValue("HIHI");
+                if (hihiVluue != null) {
+                    hihiNum++;
+                }
 
-			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.MONITOR, myWriter, testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null, typeInfo.getArchiveFields(), false, false);
-			Thread.sleep(15*1000);
-			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
-			Thread.sleep(15 * 1000);
-			Assertions.assertFalse(testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp(), "Not emough delay - metafields still need starting up");
-			logger.info("Changing fields");
-			SIOCSetup.caput(pvName + ".HIHI", 80);
-			SIOCSetup.caput(pvName + ".LOLO", 5);
-			Thread.sleep(1000);
-			SIOCSetup.caput(pvName + ".HIHI", 85);
-			SIOCSetup.caput(pvName + ".LOLO", 6);
-			logger.info("Done changing fields");
-			Thread.sleep(30000);
+                String loloVluue = tempDBRTimeEvent.getFieldValue("LOLO");
+                if (loloVluue != null) {
+                    loloNUm++;
+                }
+                totalEvents++;
+            }
+            Assertions.assertTrue(totalEvents >= 2, "We should have some events in the current samples " + totalEvents);
+            Assertions.assertTrue(
+                    hihiNum >= 2,
+                    "the number of values for " + pvName + ".HIHI num is " + hihiNum + " it should be >=2");
+            Assertions.assertTrue(
+                    loloNUm >= 2,
+                    "the number of values for " + pvName + ".LOLO num is " + loloNUm + " it should be >=2");
+            Thread.sleep(3000);
 
-			int hihiNum = 0;
-			int loloNUm = 0;
-			int totalEvents = 0;
-			for (Event e : myWriter.getCollectedSamples()) {
-				DBRTimeEvent tempDBRTimeEvent = (DBRTimeEvent) e;
-				String hihiVluue = tempDBRTimeEvent.getFieldValue("HIHI");
-				if (hihiVluue != null) {
-					hihiNum++;
-				}
+        } catch (Exception e) {
+            //
+            Assertions.fail(e.getMessage());
+            logger.error("Exception", e);
+        }
+    }
 
-				String loloVluue = tempDBRTimeEvent.getFieldValue("LOLO");
-				if (loloVluue != null) {
-					loloNUm++;
-				}
-				totalEvents++;
-			}
-			Assertions.assertTrue(totalEvents >= 2, "We should have some events in the current samples " + totalEvents);
-			Assertions.assertTrue(hihiNum >= 2, "the number of value for test_0.HIHI num is " + hihiNum
-					+ " and <3 and" + "it should be >=3");
-			Assertions.assertTrue(loloNUm >= 2, "the number of value for test_0.LOLO num is " + loloNUm
-					+ " and <3 and" + "it should be >=3");
-			Thread.sleep(3000);
+    /**
+     * test one pv with meta field. We must make sure the meta fields should be
+     * archived too
+     */
+    @Test
+    public void testArchiveFilterPV() {
 
-		} catch (Exception e) {
-			//
-			Assertions.fail(e.getMessage());
-			logger.error("Exception", e);
-		}
-	}
+        try {
+            String pvName = "ArchUnitTest:manual.{'dbnd':{'abs':0.1}}";
+            MemBufWriter myWriter = new MemBufWriter(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+            PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+            testConfigService.updateTypeInfoForPV(pvName, typeInfo);
+            testConfigService.registerPVToAppliance(pvName, testConfigService.getMyApplianceInfo());
 
-	/**
-	 * test one pv with meta field.this pv and the meta fields are controlled by
-	 * another pv to start or stop archiving. We must make sure when the pv is
-	 * stopped or started archiving ,all the meta field should be stopped or
-	 * stated at the same time
-	 */
-	@Test
-	public void oneChannelWithMetaFieldWithControlPv() {
+            ArchiveEngine.archivePV(
+                    pvName,
+                    1,
+                    SamplingMethod.MONITOR,
+                    myWriter,
+                    testConfigService,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    null,
+                    typeInfo.getArchiveFields(),
+                    false,
+                    false);
+            Thread.sleep(15 * 1000);
+            testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
+            Thread.sleep(15 * 1000);
+            Assertions.assertFalse(
+                    testConfigService
+                            .getEngineContext()
+                            .getChannelList()
+                            .get(pvName)
+                            .metaChannelsNeedStartingUp(),
+                    "Not enough delay - metafields still need starting up");
+            logger.info("Changing fields");
+            SIOCSetup.caput(pvName, 0);
+            SIOCSetup.caput(pvName, 0.1);
+            SIOCSetup.caput(pvName, 0.15);
+            SIOCSetup.caput(pvName, 1.0);
+            SIOCSetup.caput(pvName, 1.05);
+            SIOCSetup.caput(pvName, 1.06);
+            Thread.sleep(1000);
+            logger.info("Done changing fields");
+            Thread.sleep(10000);
 
-		try {
-			String pvName = pvPrefix + "test_1";
+            int totalEvents = 0;
+            for (Event e : myWriter.getCollectedSamples()) {
+                logger.info("event " + e.getSampleValue().toString());
+                totalEvents++;
+            }
+            Assertions.assertEquals(3, totalEvents, "We should have some events in the current samples " + totalEvents);
 
-			MemBufWriter myWriter = new MemBufWriter(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+        } catch (Exception e) {
+            //
+            logger.error("Exception", e);
+        }
+    }
 
-			String controlPVName = pvPrefix + "test:enable0";
-			SIOCSetup.caput(controlPVName, 1);
-			Thread.sleep(3000);
-			String[] metaFields = { "HIHI", "LOLO" };
-			PVTypeInfo typeInfo = new PVTypeInfo(pvName,ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-			typeInfo.setSamplingMethod(SamplingMethod.SCAN);
-			typeInfo.setSamplingPeriod(20);
-			typeInfo.setDataStores(new String[] {"blackhole://localhost"});
-			typeInfo.setArchiveFields(metaFields);
-			typeInfo.setControllingPV(controlPVName);
-			testConfigService.updateTypeInfoForPV(pvName, typeInfo);
-			ArchiveEngine.archivePV(pvName, 1, SamplingMethod.SCAN, myWriter,
-					testConfigService, ArchDBRTypes.DBR_SCALAR_DOUBLE, null,
-					controlPVName, metaFields, null, false, false);
-			Thread.sleep(10 * 1000);
-			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
-			Thread.sleep(10 * 1000);
-			Assertions.assertFalse(testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp(), "Not emough delay - metafields still need starting up");
-			ArchiveChannel archiveChannel = testConfigService
-					.getEngineContext().getChannelList().get(pvName);
+    /**
+     * test one pv with meta field.this pv and the meta fields are controlled by
+     * another pv to start or stop archiving. We must make sure when the pv is
+     * stopped or started archiving ,all the meta field should be stopped or
+     * stated at the same time
+     */
+    @Test
+    public void oneChannelWithMetaFieldWithControlPv() {
 
-			boolean samplesExist = !myWriter.getCollectedSamples().isEmpty();
-			boolean result = archiveChannel.isConnected()
-					&& samplesExist;
+        try {
+            String pvName = pvPrefix + "test_1";
+
+            MemBufWriter myWriter = new MemBufWriter(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+
+            String controlPVName = pvPrefix + "test:enable0";
+            SIOCSetup.caput(controlPVName, 1);
+            Thread.sleep(3000);
+            String[] metaFields = {"HIHI", "LOLO"};
+            PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+            typeInfo.setSamplingMethod(SamplingMethod.SCAN);
+            typeInfo.setSamplingPeriod(20);
+            typeInfo.setDataStores(new String[] {"blackhole://localhost"});
+            typeInfo.setArchiveFields(metaFields);
+            typeInfo.setControllingPV(controlPVName);
+            testConfigService.updateTypeInfoForPV(pvName, typeInfo);
+            ArchiveEngine.archivePV(
+                    pvName,
+                    1,
+                    SamplingMethod.SCAN,
+                    myWriter,
+                    testConfigService,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    null,
+                    controlPVName,
+                    metaFields,
+                    null,
+                    false,
+                    false);
+            Thread.sleep(10 * 1000);
+            testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
+            Thread.sleep(10 * 1000);
+            Assertions.assertFalse(
+                    testConfigService
+                            .getEngineContext()
+                            .getChannelList()
+                            .get(pvName)
+                            .metaChannelsNeedStartingUp(),
+                    "Not enough delay - metafields still need starting up");
+            ArchiveChannel archiveChannel =
+                    testConfigService.getEngineContext().getChannelList().get(pvName);
+
+            boolean samplesExist = !myWriter.getCollectedSamples().isEmpty();
+            boolean result = archiveChannel.isConnected() && samplesExist;
             Assertions.assertTrue(result, pvName + "is not started successfully and it shoule be started successfully");
 
-			for (String metaFieldTemp : metaFields) {
-				String pvNameTemp = pvName + "." + metaFieldTemp;
-				Assertions.assertTrue(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp + " should be created and connected but it is not");
+            for (String metaFieldTemp : metaFields) {
+                String pvNameTemp = pvName + "." + metaFieldTemp;
+                Assertions.assertTrue(
+                        archiveChannel.isMetaPVConnected(metaFieldTemp),
+                        "the channel for " + pvNameTemp + " should be created and connected but it is not");
+            }
+            Thread.sleep(10 * 1000);
+            SIOCSetup.caput(controlPVName, 0);
+            testConfigService.getEngineContext().getWriteThead().flushBuffer();
+            Thread.sleep(10 * 1000);
+            archiveChannel =
+                    testConfigService.getEngineContext().getChannelList().get(pvName);
+            Assertions.assertTrue(
+                    archiveChannel == null || !archiveChannel.isConnected(),
+                    pvName + "is not stopped successfully and it should be stopped successfully");
+            Assertions.assertTrue(
+                    archiveChannel == null
+                            || archiveChannel
+                                    .getSampleBuffer()
+                                    .getCurrentSamples()
+                                    .isEmpty(),
+                    pvName + "should not have any data");
 
-			}
-			Thread.sleep(10 * 1000);
-			SIOCSetup.caput(controlPVName, 0);
-			testConfigService.getEngineContext().getWriteThead().flushBuffer();
-			Thread.sleep(10 * 1000);
-			archiveChannel = testConfigService.getEngineContext().getChannelList().get(pvName);
-			Assertions.assertTrue(archiveChannel == null || !archiveChannel.isConnected(), pvName + "is not stopped successfully and it should be stopped successfully");
-			Assertions.assertTrue(archiveChannel == null || archiveChannel.getSampleBuffer().getCurrentSamples().isEmpty(), pvName + "should not have any data");
+            if (archiveChannel != null) {
+                for (String metaFieldTemp : metaFields) {
+                    String pvNameTemp = pvName + "." + metaFieldTemp;
+                    Assertions.assertFalse(
+                            archiveChannel.isMetaPVConnected(metaFieldTemp),
+                            "the channel for " + pvNameTemp + " should be not connected but it is ");
+                }
+            }
 
-			if(archiveChannel != null) { 
-				for (String metaFieldTemp : metaFields) {
-					String pvNameTemp = pvName + "." + metaFieldTemp;
-					Assertions.assertFalse(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
-							+ " should be not connected but it is ");
-				}
-			}
+            Thread.sleep(10 * 1000);
+            SIOCSetup.caput(controlPVName, 1);
+            Thread.sleep(10 * 1000);
+            archiveChannel =
+                    testConfigService.getEngineContext().getChannelList().get(pvName);
+            Assertions.assertNotNull(
+                    archiveChannel,
+                    "After resuming the control channel, the archive channel for pv " + pvName + " is still null");
+            boolean result3 = archiveChannel.isConnected();
+            Assertions.assertTrue(
+                    result3, pvName + "is not started successfully and it should be started successfully");
 
-			Thread.sleep(10 * 1000);
-			SIOCSetup.caput(controlPVName, 1);
-			Thread.sleep(10 * 1000);
-			archiveChannel = testConfigService.getEngineContext().getChannelList().get(pvName);
-			Assertions.assertNotNull(archiveChannel, "After resuming the control channel, the archive channel for pv " + pvName + " is still null");
-			boolean result3 = archiveChannel.isConnected();
-			Assertions.assertTrue(result3, pvName
-					+ "is not started successfully and it should be started successfully");
-			
-			Thread.sleep(15*1000);
-			testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
-			Thread.sleep(15 * 1000);
-			Assertions.assertFalse(testConfigService.getEngineContext().getChannelList().get(pvName).metaChannelsNeedStartingUp(), "Not emough delay - metafields still need starting up");
+            Thread.sleep(15 * 1000);
+            testConfigService.getEngineContext().getChannelList().get(pvName).startUpMetaChannels();
+            Thread.sleep(15 * 1000);
+            Assertions.assertFalse(
+                    testConfigService
+                            .getEngineContext()
+                            .getChannelList()
+                            .get(pvName)
+                            .metaChannelsNeedStartingUp(),
+                    "Not enough delay - metafields still need starting up");
 
-			// check meta field is not connected
-			for (String metaFieldTemp : metaFields) {
-				String pvNameTemp = pvName + "." + metaFieldTemp;
-				Assertions.assertTrue(archiveChannel.isMetaPVConnected(metaFieldTemp), "the channel for " + pvNameTemp
-						+ " should be reconnected but it is  not");
+            // check meta field is not connected
+            for (String metaFieldTemp : metaFields) {
+                String pvNameTemp = pvName + "." + metaFieldTemp;
+                Assertions.assertTrue(
+                        archiveChannel.isMetaPVConnected(metaFieldTemp),
+                        "the channel for " + pvNameTemp + " should be reconnected but it is  not");
+            }
 
-			}
-
-		} catch (Exception e) {
-			//
-			Assertions.fail(e.getMessage());
-			logger.error("Exception", e);
-		}
-	}
-
+        } catch (Exception e) {
+            Assertions.fail(e.getMessage());
+            logger.error("Exception", e);
+        }
+    }
 }

@@ -1,9 +1,5 @@
 package org.epics.archiverappliance.mgmt.pva.actions;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
@@ -12,6 +8,11 @@ import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.pva.data.PVAStringArray;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.*;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Get all the PVs in the cluster. Note this call can return millions of PVs
@@ -51,38 +52,41 @@ import org.epics.pva.data.nt.*;
  * </ul>
  *
  * Based on {@link GetAllPVs}
- * 
+ *
  * @author Kunal Shroff, mshankar
  *
  */
 public class PvaGetAllPVs implements PvaAction {
-	private static final Logger logger = LogManager.getLogger(PvaGetAllPVs.class.getName());
+    private static final Logger logger = LogManager.getLogger(PvaGetAllPVs.class.getName());
 
-	public static final String NAME = "getAllPVs";
+    public static final String NAME = "getAllPVs";
 
-	@Override
-	public String getName() {
-		return NAME;
-	}
+    @Override
+    public String getName() {
+        return NAME;
+    }
 
-	@Override
-	public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
-		logger.debug("Getting all pvs for cluster");
-		Map<String, String> searchParameters = new HashMap<String, String>();
-		int defaultLimit = 500;
-		PVAURI uri = PVAURI.fromStructure(args);
-		PVAScalar<PVAStringArray> ntScalarArray = null;
-		try {
-			Map<String, String> queryName = uri.getQuery();
-			if (queryName.containsKey("limit")) {
-				searchParameters.put("limit", queryName.get("limit"));
-			}
-			LinkedList<String> pvNames = PVsMatchingParameter.getMatchingPVs(searchParameters, configService, false, defaultLimit);
-			ntScalarArray = PVAScalar.stringArrayScalarBuilder(pvNames.toArray(new String[pvNames.size()])).name("result").build();
-		} catch (PVAScalarDescriptionNameException | NotValueException | PVAScalarValueNameException e) {
-			throw new ResponseConstructionException(e);
-		}
-		return ntScalarArray;
-	}
+    @Override
+    public PVAStructure request(PVAStructure args, ConfigService configService) throws PvaActionException {
+        logger.debug("Getting all pvs for cluster");
+        Map<String, String> searchParameters = new HashMap<String, String>();
+        int defaultLimit = 500;
+        PVAURI uri = PVAURI.fromStructure(args);
+        PVAScalar<PVAStringArray> ntScalarArray = null;
+        try {
+            Map<String, String> queryName = uri.getQuery();
 
+            if (queryName.containsKey("limit")) {
+                defaultLimit = Integer.parseInt(queryName.get("limit"));
+            }
+            LinkedList<String> pvNames =
+                    PVsMatchingParameter.getMatchingPVs(List.of(), null, defaultLimit, configService, false);
+            ntScalarArray = PVAScalar.stringArrayScalarBuilder(pvNames.toArray(new String[0]))
+                    .name("result")
+                    .build();
+        } catch (PVAScalarDescriptionNameException | NotValueException | PVAScalarValueNameException e) {
+            throw new ResponseConstructionException(e);
+        }
+        return ntScalarArray;
+    }
 }

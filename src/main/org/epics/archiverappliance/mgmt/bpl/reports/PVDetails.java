@@ -51,7 +51,7 @@ public class PVDetails implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         String pvNameFromRequest = req.getParameter("pv");
-        String pvName = PVNames.stripFieldNameFromPVName(pvNameFromRequest);
+        String pvName = PVNames.channelNamePVName(pvNameFromRequest);
         // Get rid of the V4 prefix
         pvName = PVNames.stripPrefixFromName(pvName);
 
