@@ -1,6 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -13,7 +13,7 @@ public class PlainPBURLRepresentationTest {
     @Test
     public void testToAndFromURL() throws Exception {
         PlainStoragePlugin etlSrc = new PlainStoragePlugin();
-        PBCommonSetup srcSetup = new PBCommonSetup();
+        PlainCommonSetup srcSetup = new PlainCommonSetup();
 
         srcSetup.setUpRootFolder(
                 etlSrc, "SimpleETLTestSrc_" + PartitionGranularity.PARTITION_HOUR, PartitionGranularity.PARTITION_HOUR);

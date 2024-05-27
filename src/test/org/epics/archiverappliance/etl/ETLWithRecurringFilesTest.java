@@ -7,10 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.CompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -89,16 +89,17 @@ public class ETLWithRecurringFilesTest {
     public void testRecurringFiles(
             PartitionGranularity granularity, boolean backUpFiles, boolean useNewDest, ETLTestPlugins etlTestPlugins)
             throws Exception {
-        PBCommonSetup srcSetup = new PBCommonSetup();
-        PBCommonSetup destSetup = new PBCommonSetup();
+        PlainCommonSetup srcSetup = new PlainCommonSetup();
+        PlainCommonSetup destSetup = new PlainCommonSetup();
         etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
-        PlainStoragePlugin etlNewDest = new PlainStoragePlugin();
+        PlainStoragePlugin etlNewDest =
+                new PlainStoragePlugin(etlTestPlugins.dest().getPlainFileHandler());
 
         srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
                 etlTestPlugins.dest(), "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
 
-        PBCommonSetup newDestSetup = new PBCommonSetup();
+        PlainCommonSetup newDestSetup = new PlainCommonSetup();
         newDestSetup.setUpRootFolder(
                 etlNewDest, "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
 
