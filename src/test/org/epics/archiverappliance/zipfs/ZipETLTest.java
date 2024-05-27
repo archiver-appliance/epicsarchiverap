@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -20,21 +21,22 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.time.Instant;
-import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
+import java.util.stream.Stream;
 
-@Tag("slow")
 public class ZipETLTest {
-    private static Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
     File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipETLTest");
     private ConfigService configService;
+
+    private static Stream<Arguments> provideSource() {
+        return Stream.of(Arguments.of(true), Arguments.of(false));
+    }
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -42,7 +44,7 @@ public class ZipETLTest {
         if (testFolder.exists()) {
             FileUtils.deleteDirectory(testFolder);
         }
-        testFolder.mkdirs();
+        assert testFolder.mkdirs();
     }
 
     @AfterEach
@@ -50,26 +52,20 @@ public class ZipETLTest {
         FileUtils.deleteDirectory(testFolder);
     }
 
-    @Test
-    public void testETLIntoZipPerPV() throws Exception {
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLZipTest";
-        String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
-        PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=ZipETL&rootFolder=" + srcRootFolder + "&partitionGranularity=PARTITION_DAY",
-                configService);
-        logger.info(etlSrc.getURLRepresentation());
+    @ParameterizedTest
+    @MethodSource("provideSource")
+    public void testETLIntoZipPerPV(boolean compressSrc) throws Exception {
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ZipETLTest" + compressSrc;
         ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-        int phasediffindegrees = 10;
-        short currentYear = TimeUtils.getCurrentYear();
-        SimulationEventStream simstream = new SimulationEventStream(
-                dbrType,
-                new SineGenerator(phasediffindegrees),
-                TimeUtils.getStartOfYear(currentYear),
-                TimeUtils.getEndOfYear(currentYear),
-                1);
-        try (BasicContext context = new BasicContext()) {
-            etlSrc.appendData(context, pvName, simstream);
+        String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
+        String srcPluginString =
+                "pb://localhost?name=ZipETL&rootFolder=" + srcRootFolder + "&partitionGranularity=PARTITION_DAY";
+        if (compressSrc) {
+            srcPluginString = srcPluginString + "&compress=ZIP_PER_PV";
         }
+        PlainStoragePlugin etlSrc =
+                (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(srcPluginString, configService);
+        logger.info(etlSrc.getURLRepresentation());
 
         String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
         PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
@@ -85,12 +81,18 @@ public class ZipETLTest {
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
         configService.getETLLookup().manualControlForUnitTests();
 
-        Instant timeETLruns = TimeUtils.now();
-        ZonedDateTime ts = ZonedDateTime.now(ZoneId.from(ZoneOffset.UTC));
-        if (ts.getMonth() == Month.JANUARY) {
-            // This means that we never test this in Jan but I'd rather have the null check than skip this.
-            timeETLruns = TimeUtils.plusDays(timeETLruns, 35);
+        int phasediffindegrees = 10;
+        short currentYear = TimeUtils.getCurrentYear();
+        Instant startTime = TimeUtils.getStartOfYear(currentYear);
+        Instant endTime = startTime.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
+        SimulationEventStream simstream =
+                new SimulationEventStream(dbrType, new SineGenerator(phasediffindegrees), startTime, endTime, 1);
+        try (BasicContext context = new BasicContext()) {
+            etlSrc.appendData(context, pvName, simstream);
         }
+
+        Instant timeETLruns = endTime.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 10L);
+
         ETLExecutor.runETLs(configService, timeETLruns);
         logger.info("Done performing ETL");
 
@@ -99,36 +101,26 @@ public class ZipETLTest {
         Assertions.assertTrue(expectedZipFile.exists(), "Zip file does not seem to exist " + expectedZipFile);
 
         logger.info("Testing retrieval for zip per pv");
-        int eventCount = 0;
+        int srcEventCount = 0;
         try (BasicContext context = new BasicContext();
                 EventStream strm = new CurrentThreadWorkerEventStream(
-                        pvName,
-                        etlSrc.getDataForPV(
-                                context,
-                                pvName,
-                                TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()),
-                                TimeUtils.getEndOfYear(TimeUtils.getCurrentYear())))) {
-            if (strm != null) {
-                for (@SuppressWarnings("unused") Event ev : strm) {
-                    eventCount++;
-                }
-            }
-        }
-        try (BasicContext context = new BasicContext();
-                EventStream strm = new CurrentThreadWorkerEventStream(
-                        pvName,
-                        etlDest.getDataForPV(
-                                context,
-                                pvName,
-                                TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()),
-                                TimeUtils.getEndOfYear(TimeUtils.getCurrentYear())))) {
+                        pvName, etlSrc.getDataForPV(context, pvName, startTime, endTime))) {
             for (@SuppressWarnings("unused") Event ev : strm) {
-                eventCount++;
+                srcEventCount++;
             }
         }
-        logger.info("Got " + eventCount + " events");
-        Assertions.assertTrue(
-                eventCount >= (simstream.getNumberOfEvents() - 1),
-                "Retrieval does not seem to return any events " + eventCount);
+        int destEventCount = 0;
+        try (BasicContext context = new BasicContext();
+                EventStream strm = new CurrentThreadWorkerEventStream(
+                        pvName, etlDest.getDataForPV(context, pvName, startTime, endTime))) {
+            for (@SuppressWarnings("unused") Event ev : strm) {
+                destEventCount++;
+            }
+        }
+        logger.info("Got " + srcEventCount + " src events " + destEventCount + " dest events");
+        Assertions.assertEquals(
+                (simstream.getNumberOfEvents() - 1),
+                srcEventCount + destEventCount,
+                "Retrieval does not seem to return correct number of events " + srcEventCount + destEventCount);
     }
 }
