@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -24,9 +26,9 @@ import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProces
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -34,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -43,42 +46,53 @@ import java.util.concurrent.Callable;
  * @author mshankar
  *
  */
-public class FailoverETLServerDownTest {
-    private static Logger logger = LogManager.getLogger(FailoverETLServerDownTest.class.getName());
-    private ConfigServiceForTests configService;
-    String pvName = "FailoverETLServerDownTest";
-    ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+class FailoverETLServerDownTest {
+    private static final Logger logger = LogManager.getLogger(FailoverETLServerDownTest.class.getName());
+    String pvName = FailoverETLServerDownTest.class.getSimpleName();
     long tCount = 0;
     long stepSeconds = 2;
+    File testLTSFolder = new File(System.getenv("ARCHAPPL_LONG_TERM_FOLDER")
+            + File.separator
+            + FailoverETLServerDownTest.class.getSimpleName());
+    File testMTSFolder = new File(System.getenv("ARCHAPPL_MEDIUM_TERM_FOLDER")
+            + File.separator
+            + FailoverETLServerDownTest.class.getSimpleName());
+    private ConfigServiceForTests configService;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
     }
 
-    private int generateData(String applianceName, Instant lastMonth, int startingOffset) throws IOException {
+    @AfterEach
+    void tearDown() {
+        configService.shutdownNow();
+    }
+
+    private int generateData(Instant lastMonth) throws IOException {
         int genEventCount = 0;
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + "tomcat_"
-                        + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
-                        + "&partitionGranularity=PARTITION_DAY",
+                "pb://localhost?name=MTS&rootFolder=" + testMTSFolder + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
+            Instant start = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
+                    .plusSeconds(1 + 1);
             ArrayListEventStream strm = new ArrayListEventStream(
                     0,
                     new RemotableEventStreamDesc(
                             ArchDBRTypes.DBR_SCALAR_DOUBLE,
                             pvName,
-                            TimeUtils.convertToYearSecondTimestamp(lastMonth).getYear()));
-
-            for (Instant s = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
-                            .plusSeconds(1 + startingOffset); // We generate a months worth of data.
+                            TimeUtils.convertToYearSecondTimestamp(start).getYear()));
+            for (Instant s = start; // We generate a months worth of data.
                     s.isBefore(TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH));
                     s = s.plusSeconds(stepSeconds)) {
+
                 strm.add(new POJOEvent(
-                        ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0));
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<>((double) s.getEpochSecond()), 0, 0));
                 genEventCount++;
+                assert plugin != null;
             }
+            assert plugin != null;
             plugin.appendData(context, pvName, strm);
         }
         logger.info("Done generating dest data");
@@ -86,8 +100,8 @@ public class FailoverETLServerDownTest {
     }
 
     private void changeMTSForDest() throws Exception {
-        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File(
-                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
+        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(
+                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
         PVTypeInfo destPVTypeInfo = new PVTypeInfo();
         JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
         decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
@@ -99,10 +113,10 @@ public class FailoverETLServerDownTest {
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());
         String otherURL = "pbraw://localhost?name=MTS&rawURL="
-                + URLEncoder.encode("http://localhost:17665/retrieval/data/getData.raw", "UTF-8");
+                + URLEncoder.encode(DATA_RETRIEVAL_URL + "/data/getData.raw", StandardCharsets.UTF_8);
         destPVTypeInfo.getDataStores()[1] = "merge://localhost?name=MTS&dest="
-                + URLEncoder.encode(destPVTypeInfo.getDataStores()[1], "UTF-8")
-                + "&other=" + URLEncoder.encode(otherURL, "UTF-8");
+                + URLEncoder.encode(destPVTypeInfo.getDataStores()[1], StandardCharsets.UTF_8)
+                + "&other=" + URLEncoder.encode(otherURL, StandardCharsets.UTF_8);
         configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
         configService.getETLLookup().manualControlForUnitTests();
@@ -113,11 +127,12 @@ public class FailoverETLServerDownTest {
         long lastEvEpoch = 0;
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(pluginURL, configService);
         try (BasicContext context = new BasicContext()) {
+            assert plugin != null;
             List<Callable<EventStream>> callables =
                     plugin.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
             for (Callable<EventStream> callable : callables) {
                 EventStream ev = callable.call();
-                logger.error("Event Stream " + ev.getDescription());
+                logger.debug("Event Stream " + ev.getDescription());
                 for (Event e : ev) {
                     long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
                     logger.debug("Current event " + TimeUtils.convertToHumanReadableString(evEpoch) + " Previous: "
@@ -138,27 +153,12 @@ public class FailoverETLServerDownTest {
     }
 
     @Test
-    @Tag("slow")
     public void testETL() throws Exception {
         configService.getETLLookup().manualControlForUnitTests();
         // Register the PV with both appliances and generate data.
         Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2 * 31);
 
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_SHORT_TERM_FOLDER",
-                        "libs/" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts");
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_MEDIUM_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts");
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_LONG_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts");
-        long dCount = generateData("dest_appliance", lastMonth, 1);
-
-        tCount = dCount;
+        tCount = generateData(lastMonth);
 
         changeMTSForDest();
         Instant timeETLruns = TimeUtils.plusDays(TimeUtils.now(), 365 * 10);
@@ -167,20 +167,17 @@ public class FailoverETLServerDownTest {
 
         logger.info("Checking merged data after running ETL");
         long lCount = testMergedRetrieval(
-                "pb://localhost?name=LTS&rootFolder=" + "tomcat_"
-                        + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts"
-                        + "&partitionGranularity=PARTITION_YEAR",
+                "pb://localhost?name=LTS&rootFolder=" + testLTSFolder + "&partitionGranularity=PARTITION_YEAR",
                 TimeUtils.minusDays(TimeUtils.now(), 365 * 2),
                 TimeUtils.plusDays(TimeUtils.now(), 365 * 2));
-        Assertions.assertTrue(lCount == 0, "We expected LTS to have failed " + lCount);
+        Assertions.assertEquals(0, lCount, "We expected LTS to have failed " + lCount);
         long mCount = testMergedRetrieval(
-                "pb://localhost?name=MTS&rootFolder=" + "tomcat_"
-                        + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts"
-                        + "&partitionGranularity=PARTITION_DAY",
+                "pb://localhost?name=MTS&rootFolder=" + testMTSFolder + "&partitionGranularity=PARTITION_DAY",
                 TimeUtils.minusDays(TimeUtils.now(), 365 * 2),
                 TimeUtils.plusDays(TimeUtils.now(), 365 * 2));
-        Assertions.assertTrue(
-                mCount == tCount,
+        Assertions.assertEquals(
+                mCount,
+                tCount,
                 "We expected MTS to have the same amount of data " + tCount + " instead we got " + mCount);
     }
 }
