@@ -50,7 +50,7 @@ import java.util.stream.Stream;
 public class DBRTypeTest {
     private static final Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
     static PlainStoragePlugin pbplugin;
-    static PBCommonSetup pbSetup = new PBCommonSetup();
+    static PlainCommonSetup pbSetup = new PlainCommonSetup();
     static ConfigService configService;
 
     private static final int SECONDS_INTO_YEAR = 100;

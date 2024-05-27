@@ -7,11 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.CompressionMode;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,8 +49,8 @@ import java.util.stream.Stream;
  */
 public class SimpleETLTest {
     private static final Logger logger = LogManager.getLogger(SimpleETLTest.class);
-    static PBCommonSetup srcSetup = new PBCommonSetup();
-    static PBCommonSetup destSetup = new PBCommonSetup();
+    static PlainCommonSetup srcSetup = new PlainCommonSetup();
+    static PlainCommonSetup destSetup = new PlainCommonSetup();
     static ConfigServiceForTests configService;
     static long ratio = 5;
     static List<ETLTestPlugins> etlPlugins;
@@ -91,12 +89,13 @@ public class SimpleETLTest {
     public void testMove(PartitionGranularity granularity, ETLTestPlugins testPlugins) throws Exception {
         srcSetup.setUpRootFolder(
                 testPlugins.src(),
-                "SimpleETLTestSrc_" + granularity + testPlugins.src().pluginIdentifier(),
+                "SimpleETLTestSrc_" + granularity + testPlugins.src().getPluginIdentifier(),
                 granularity);
         destSetup.setUpRootFolder(
                 testPlugins.dest(),
-                "SimpleETLTestDest" + granularity + testPlugins.dest().pluginIdentifier(),
-                granularity.getNextLargerGranularity());
+                "SimpleETLTestDest" + granularity + testPlugins.dest().getPluginIdentifier(),
+                granularity.getNextLargerGranularity(),
+                CompressionMode.NONE);
 
         logger.info("Testing simple ETL testMove for " + testPlugins.src().getPartitionGranularity() + " to "
                 + testPlugins.dest().getPartitionGranularity());
@@ -158,7 +157,8 @@ public class SimpleETLTest {
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePlainFile.validatePlainFile(destPath, true, testPlugins.dest().getPlainFileHandler()),
+                    ValidatePlainFile.validatePlainFile(
+                            destPath, true, testPlugins.dest().getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
