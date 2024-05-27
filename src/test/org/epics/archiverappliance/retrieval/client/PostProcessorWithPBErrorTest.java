@@ -145,7 +145,8 @@ public class PostProcessorWithPBErrorTest {
     private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch)
             throws IOException {
         long startTimeMillis = System.currentTimeMillis();
-        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(ConfigServiceForTests.RAW_RETRIEVAL_URL);
+        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
         Instant now = TimeUtils.now();
         Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
         int eventCount = 0;

@@ -8,6 +8,7 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -79,10 +80,12 @@ public class RenamePVBPLTest {
                 short year = (short) (currentYear - y);
                 for (int day = 0; day < 366; day++) {
                     ArrayListEventStream testData = new ArrayListEventStream(
-                            24 * 60 * 60,
+                            PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                             new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
-                    int startofdayinseconds = day * 24 * 60 * 60;
-                    for (int secondintoday = 0; secondintoday < 24 * 60 * 60; secondintoday++) {
+                    int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                    for (int secondintoday = 0;
+                            secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                            secondintoday++) {
                         // The value should be the secondsIntoYear integer divided by 600.
                         testData.add(new SimulationEvent(
                                 startofdayinseconds + secondintoday,
