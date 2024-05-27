@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.ui;
 
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,13 +17,13 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.time.Instant;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.time.Instant;
 
 /**
  * This is currently the code that remotes an event stream, for example from the engine etc.
@@ -31,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  *
  */
 @SuppressWarnings("serial")
-public class RetrievalServlet extends HttpServlet {
+public class RetrievalServlet  extends HttpServlet {
     private static Logger logger = LogManager.getLogger(RetrievalServlet.class.getName());
     String pbRootFolder = null;
 
@@ -45,7 +46,7 @@ public class RetrievalServlet extends HttpServlet {
         String startTimeStr = req.getParameter("from");
         String endTimeStr = req.getParameter("to");
 
-        if (PV == null || startTimeStr == null || endTimeStr == null) {
+        if(PV == null || startTimeStr == null || endTimeStr == null) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
@@ -54,19 +55,19 @@ public class RetrievalServlet extends HttpServlet {
         Instant end = TimeUtils.convertFromISO8601String(endTimeStr);
         // resp.addHeader("Transfer-Encoding", "chunked");
 
-        try (OutputStream os = resp.getOutputStream();
-                BasicContext context = new BasicContext();
-                EventStream st = new CurrentThreadWorkerEventStream(
-                        PV, storagePlugin.getDataForPV(context, PV, start, end, new DefaultRawPostProcessor()))) {
+        try(OutputStream os = resp.getOutputStream();
+            BasicContext context = new BasicContext();
+            EventStream st = new CurrentThreadWorkerEventStream(PV, storagePlugin.getDataForPV(context, PV, start, end, new DefaultRawPostProcessor()))) {
             long s = System.currentTimeMillis();
             int totalEvents = StreamPBIntoOutput.streamPBIntoOutputStream(st, os, start, end);
             long e = System.currentTimeMillis();
-            logger.info("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
+            logger.info("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
         }
     }
 
     @Override
-    public void init() throws ServletException {}
+    public void init() throws ServletException {
+    }
 
     /**
      * Should only be used by the unit tests for setup...

@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,7 +89,8 @@ public class ClusterSinglePVTest {
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize(
-                "pb" + "://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR",
+                PBPlainFileHandler.DEFAULT_PB_HANDLER.pluginIdentifier() + "://localhost?name=LTS&rootFolder="
+                        + ltsFolder + "&partitionGranularity=PARTITION_YEAR",
                 configService);
 
         short currentYear = TimeUtils.getCurrentYear();
