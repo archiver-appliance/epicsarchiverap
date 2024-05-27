@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,7 +83,7 @@ public class HoldAndGatherTest {
     void testHoldAndGather(PartitionGranularity granularity, int hold, int gather) throws Exception {
 
         PlainStoragePlugin etlSrc = new PlainStoragePlugin();
-        PBCommonSetup srcSetup = new PBCommonSetup();
+        PlainCommonSetup srcSetup = new PlainCommonSetup();
         srcSetup.setUpRootFolder(etlSrc, "ETLHoldGatherTest_" + granularity, granularity);
 
         etlSrc.setHoldETLForPartitions(hold);

@@ -1,6 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility.StartEndTimeFromName;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,7 +38,7 @@ public class CleanPartitionsTest {
     public void testCleanPartitions() throws Exception {
         for (PartitionGranularity granularity : PartitionGranularity.values()) {
             PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
-            PBCommonSetup srcSetup = new PBCommonSetup();
+            PlainCommonSetup srcSetup = new PlainCommonSetup();
 
             srcSetup.setUpRootFolder(storagePlugin, "TestCleanPartitions_" + granularity, granularity);
 
