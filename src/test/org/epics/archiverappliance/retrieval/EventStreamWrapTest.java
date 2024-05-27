@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.retrieval;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,7 +58,8 @@ public class EventStreamWrapTest {
         }
         assert new File(shortTermFolderName).mkdirs();
         storagePluginPB = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_MONTH",
+                PBPlainFileHandler.PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + shortTermFolderName
+                        + "/&partitionGranularity=PARTITION_MONTH",
                 configService);
 
         logger.info("Start insert data");
