@@ -28,7 +28,7 @@ import java.util.Map;
  *
  */
 public class RemotableEventStreamDesc extends EventStreamDesc {
-    private static Logger logger = LogManager.getLogger(RemotableEventStreamDesc.class.getName());
+    private static final Logger logger = LogManager.getLogger(RemotableEventStreamDesc.class.getName());
     private short year;
     private int elementCount = 1;
     private HashMap<String, String> headers = new HashMap<String, String>();
