@@ -28,7 +28,7 @@ import java.util.Map;
  *
  */
 public class RemotableEventStreamDesc extends EventStreamDesc {
-    private static Logger logger = LogManager.getLogger(RemotableEventStreamDesc.class.getName());
+    private static final Logger logger = LogManager.getLogger(RemotableEventStreamDesc.class.getName());
     private short year;
     private int elementCount = 1;
     private HashMap<String, String> headers = new HashMap<String, String>();
@@ -106,37 +106,31 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
         }
     }
 
-    public ArchDBRTypes getArchDBRType() {
-        return archDBRType;
-    }
+	public ArchDBRTypes getArchDBRType() {
+		return archDBRType;
+	}
 
-    public void setArchDBRType(ArchDBRTypes archDBRType) {
-        this.archDBRType = archDBRType;
-    }
-
-    public String getPvName() {
-        return pvName;
-    }
-
-    public void setPvName(String pvName) {
-        this.pvName = pvName;
-    }
-
-    public short getYear() {
-        return year;
-    }
-
-    public void setYear(short year) {
-        this.year = year;
-    }
-
-    public int getElementCount() {
-        return elementCount;
-    }
-
-    public void setElementCount(int elementCount) {
-        this.elementCount = elementCount;
-    }
+	public void setArchDBRType(ArchDBRTypes archDBRType) {
+		this.archDBRType = archDBRType;
+	}
+	public String getPvName() {
+		return pvName;
+	}
+	public void setPvName(String pvName) {
+		this.pvName = pvName;
+	}
+	public short getYear() {
+		return year;
+	}
+	public void setYear(short year) {
+		this.year = year;
+	}
+	public int getElementCount() {
+		return elementCount;
+	}
+	public void setElementCount(int elementCount) {
+		this.elementCount = elementCount;
+	}
 
     public HashMap<String, String> getHeaders() {
         return headers;
