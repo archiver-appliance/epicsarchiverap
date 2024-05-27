@@ -89,12 +89,13 @@ public class SimpleETLTest {
     public void testMove(PartitionGranularity granularity, ETLTestPlugins testPlugins) throws Exception {
         srcSetup.setUpRootFolder(
                 testPlugins.src(),
-                "SimpleETLTestSrc_" + granularity + testPlugins.src().pluginIdentifier(),
+                "SimpleETLTestSrc_" + granularity + testPlugins.src().getPluginIdentifier(),
                 granularity);
         destSetup.setUpRootFolder(
                 testPlugins.dest(),
-                "SimpleETLTestDest" + granularity + testPlugins.dest().pluginIdentifier(),
-                granularity.getNextLargerGranularity());
+                "SimpleETLTestDest" + granularity + testPlugins.dest().getPluginIdentifier(),
+                granularity.getNextLargerGranularity(),
+                CompressionMode.NONE);
 
         logger.info("Testing simple ETL testMove for " + testPlugins.src().getPartitionGranularity() + " to "
                 + testPlugins.dest().getPartitionGranularity());
