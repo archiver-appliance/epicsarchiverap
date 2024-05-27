@@ -114,7 +114,8 @@ public class ETLTimeTest {
         ArrayList<String> pvs = new ArrayList<String>();
         for (int i = 0; i < testSize; i++) {
             int tableName = 0;
-            String pvName = "ArchUnitTest" + tableName + srcCompression + destCompression + ":ETLTimeTest" + i;
+            String pvName = "ArchUnitTest" + tableName + srcCompression.toURLString() + destCompression.toURLString()
+                    + ":ETLTimeTest" + i;
             PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
             String[] dataStores =
                     new String[] {stsStoragePlugin.getURLRepresentation(), mtsStoragePlugin.getURLRepresentation()};
@@ -179,7 +180,7 @@ public class ETLTimeTest {
         logger.info("File size left in dest folder " + getDataSizeInGBPerHour(postETLDestVisitor));
 
         Assertions.assertEquals(
-                !Objects.equals(srcCompression, new CompressionMode(PBCompressionMode.ZIP_PER_PV)) ? 0 : pvs.size(),
+                srcCompression.getPbCompression() != PBCompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
                 postETLSrcVisitor.filesPresent,
                 "We have some files that have not moved " + postETLSrcVisitor.filesPresent);
         int expectedFiles = pvs.size();
