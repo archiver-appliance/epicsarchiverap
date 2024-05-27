@@ -106,31 +106,37 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
         }
     }
 
-	public ArchDBRTypes getArchDBRType() {
-		return archDBRType;
-	}
+    public ArchDBRTypes getArchDBRType() {
+        return archDBRType;
+    }
 
-	public void setArchDBRType(ArchDBRTypes archDBRType) {
-		this.archDBRType = archDBRType;
-	}
-	public String getPvName() {
-		return pvName;
-	}
-	public void setPvName(String pvName) {
-		this.pvName = pvName;
-	}
-	public short getYear() {
-		return year;
-	}
-	public void setYear(short year) {
-		this.year = year;
-	}
-	public int getElementCount() {
-		return elementCount;
-	}
-	public void setElementCount(int elementCount) {
-		this.elementCount = elementCount;
-	}
+    public void setArchDBRType(ArchDBRTypes archDBRType) {
+        this.archDBRType = archDBRType;
+    }
+
+    public String getPvName() {
+        return pvName;
+    }
+
+    public void setPvName(String pvName) {
+        this.pvName = pvName;
+    }
+
+    public short getYear() {
+        return year;
+    }
+
+    public void setYear(short year) {
+        this.year = year;
+    }
+
+    public int getElementCount() {
+        return elementCount;
+    }
+
+    public void setElementCount(int elementCount) {
+        this.elementCount = elementCount;
+    }
 
     public HashMap<String, String> getHeaders() {
         return headers;
