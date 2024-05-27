@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
@@ -66,7 +67,8 @@ public class ZipCachedFetchTest {
             long previousEpochSeconds = 0L;
             for (Event e : srcStream) {
                 long currEpochSeconds = e.getEpochSeconds();
-                if (currEpochSeconds - previousEpochSeconds > 60 * 60) {
+                if (currEpochSeconds - previousEpochSeconds
+                        > PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk()) {
                     this.add(e);
                     previousEpochSeconds = currEpochSeconds;
                 }
@@ -92,10 +94,13 @@ public class ZipCachedFetchTest {
         ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
         try (BasicContext context = new BasicContext()) {
             for (int day = 0; day < 365; day++) {
-                ArrayListEventStream testData =
-                        new ArrayListEventStream(24 * 60 * 60, new RemotableEventStreamDesc(type, pvName, currentYear));
-                int startofdayinseconds = day * 24 * 60 * 60;
-                for (int secondintoday = 0; secondintoday < 24 * 60 * 60; secondintoday++) {
+                ArrayListEventStream testData = new ArrayListEventStream(
+                        PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                        new RemotableEventStreamDesc(type, pvName, currentYear));
+                int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                for (int secondintoday = 0;
+                        secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                        secondintoday++) {
                     testData.add(new SimulationEvent(
                             startofdayinseconds + secondintoday, currentYear, type, new ScalarValue<Double>((double)
                                     secondintoday)));
