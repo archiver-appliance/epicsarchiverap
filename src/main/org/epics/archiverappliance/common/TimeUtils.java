@@ -217,6 +217,17 @@ public class TimeUtils {
     }
 
     /**
+     * Convert Java EPOCH seconds to a seconds into year
+     *
+     * @param instant &emsp;
+     * @return SecondsIntoYear The difference in Seconds
+     */
+    public static int getSecondsIntoYear(Instant instant) {
+        long epochseconds = instant.getEpochSecond();
+        return getSecondsIntoYear(epochseconds);
+    }
+
+    /**
      * Determine year from java epoch seconds.
      *
      * @param epochseconds &emsp;
@@ -526,6 +537,7 @@ public class TimeUtils {
 
     /**
      * Convert the timeStamp from a pvAccess normative type to YearSecondTimestamp
+     *
      * @param timeStampPVStructure
      * @return Timestamp
      */
