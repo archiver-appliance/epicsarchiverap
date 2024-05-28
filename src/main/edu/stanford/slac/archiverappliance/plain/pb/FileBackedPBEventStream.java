@@ -419,7 +419,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
     @Override
     public Event getFirstEvent(BasicContext context) throws IOException {
         PBFileInfo fileInfo = new PBFileInfo(path, false);
-        return fileInfo.firstEvent;
+        return fileInfo.getFirstEvent();
     }
 
     @Override
