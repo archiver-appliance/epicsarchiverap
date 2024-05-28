@@ -1,8 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
@@ -70,7 +68,7 @@ public class SingleEventTimeBasedIteratorTest {
         }
 
         try (BasicContext context = new BasicContext()) {
-            Path[] paths = PlainPathNameUtility.getAllPathsForPV(
+            Path[] paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,

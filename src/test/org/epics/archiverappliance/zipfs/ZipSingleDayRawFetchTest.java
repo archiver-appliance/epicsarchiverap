@@ -2,7 +2,7 @@ package org.epics.archiverappliance.zipfs;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -131,7 +131,7 @@ public class ZipSingleDayRawFetchTest {
         Instant expectedTime = startTime;
         long start = System.currentTimeMillis();
         try (BasicContext context = new BasicContext()) {
-            Path path = PlainPathNameUtility.getPathNameForTime(
+            Path path = PathNameUtility.getPathNameForTime(
                     pbplugin,
                     pvName,
                     startTime,
