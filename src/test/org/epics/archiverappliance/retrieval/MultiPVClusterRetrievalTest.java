@@ -79,7 +79,7 @@ public class MultiPVClusterRetrievalTest {
      */
     @Test
     public void multiplePvsAcrossCluster() throws Exception {
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
 
         ConfigService configService = new ConfigServiceForTests(-1);
 

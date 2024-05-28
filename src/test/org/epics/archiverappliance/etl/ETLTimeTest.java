@@ -59,13 +59,13 @@ public class ETLTimeTest {
 
     private static Stream<Arguments> provideTestTime() {
         return Stream.of(
-                Arguments.of(PlainPBStoragePlugin.CompressionMode.NONE, PlainPBStoragePlugin.CompressionMode.NONE),
+                Arguments.of(PlainStoragePlugin.CompressionMode.NONE, PlainStoragePlugin.CompressionMode.NONE),
                 Arguments.of(
-                        PlainPBStoragePlugin.CompressionMode.NONE,
-                        PlainPBStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV")),
+                        PlainStoragePlugin.CompressionMode.NONE,
+                        PlainStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV")),
                 Arguments.of(
-                        PlainPBStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV"),
-                        PlainPBStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV")));
+                        PlainStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV"),
+                        PlainStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV")));
     }
 
     private static double getDataSizeInGBPerHour(CountFiles stsSizeVisitor) {
@@ -94,14 +94,14 @@ public class ETLTimeTest {
     @ParameterizedTest
     @MethodSource("provideTestTime")
     public void testTime(
-            PlainPBStoragePlugin.CompressionMode srcCompression, PlainPBStoragePlugin.CompressionMode destCompression)
+            PlainStoragePlugin.CompressionMode srcCompression, PlainStoragePlugin.CompressionMode destCompression)
             throws Exception {
-        PlainPBStoragePlugin stsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder="
                         + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR&compress="
                         + srcCompression,
                 configService);
-        PlainPBStoragePlugin mtsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder="
                         + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR&compress="
                         + destCompression,
@@ -176,7 +176,7 @@ public class ETLTimeTest {
         logger.info("File size left in dest folder " + getDataSizeInGBPerHour(postETLDestVisitor));
 
         Assertions.assertEquals(
-                srcCompression != PlainPBStoragePlugin.CompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
+                srcCompression != PlainStoragePlugin.CompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
                 postETLSrcVisitor.filesPresent,
                 "We have some files that have not moved " + postETLSrcVisitor.filesPresent);
         int expectedFiles = pvs.size();

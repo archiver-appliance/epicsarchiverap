@@ -42,7 +42,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 
 
 /**
@@ -81,8 +81,8 @@ public class GetDataAtTimeForPVFromStoresTest {
             throw new RuntimeException(e);
         }
     }
-    private static PlainPBStoragePlugin getStoragePlugin() throws IOException {
-        return (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+    private static PlainStoragePlugin getStoragePlugin() throws IOException {
+        return (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 storagePBPluginString,
                 configService);
     }
@@ -103,7 +103,7 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     private static void createTestData() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream events = new ArrayListEventStream(currentYear, 

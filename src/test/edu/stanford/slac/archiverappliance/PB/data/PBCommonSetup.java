@@ -43,7 +43,7 @@ public class PBCommonSetup {
 
     public void setUpRootFolder() throws Exception {
 
-		String rootFolder = System.getProperty("edu.stanford.slac.archiverappliance.PlainPB.PlainStoragePlugin.rootFolder");
+		String rootFolder = System.getProperty("edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.rootFolder");
 
 		if(rootFolder != null)  {
 			logger.info("Setting PB root folder to " + rootFolder);

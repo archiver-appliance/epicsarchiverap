@@ -153,7 +153,7 @@ public class ETLWithRecurringFilesTest {
                 pvName,
                 etlTestPlugins.src().getExtensionString(),
                 etlTestPlugins.src().getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PlainStoragePlugin.CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         for (Path srcPath : allSrcPaths) {
             Path destPath = srcPath.resolveSibling(srcPath.getFileName()
