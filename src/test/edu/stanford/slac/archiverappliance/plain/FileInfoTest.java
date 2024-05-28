@@ -22,26 +22,26 @@ import java.nio.file.Path;
 import java.time.Instant;
 
 /**
- * Test the PBFileInfo.
+ * Test the FileInfo.
  * @author mshankar
  *
  */
-public class PBFileInfoTest {
+class FileInfoTest {
     PlainCommonSetup setup = new PlainCommonSetup();
-    Path pBfile;
+    Path plainFile;
     String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PVInfo";
 
     @AfterEach
     public void tearDown() throws Exception {
-        Files.deleteIfExists(pBfile);
+        Files.deleteIfExists(plainFile);
     }
 
     @Test
-    public void testPBInfo() throws Exception {
+    void testPBInfo() throws Exception {
         PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
-        pBfile = PathNameUtility.getPathNameForTime(
+        plainFile = PathNameUtility.getPathNameForTime(
                 storagePlugin,
                 pvName,
                 TimeUtils.getStartOfYear(currentYear),
@@ -50,10 +50,10 @@ public class PBFileInfoTest {
         Instant start = TimeUtils.getStartOfYear(currentYear);
         Instant end = start.plusSeconds(10000);
         GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, end);
-        PBFileInfo info = new PBFileInfo(pBfile);
+        FileInfo info = new PBFileInfo(plainFile);
         Assertions.assertEquals(info.getPVName(), pvName, "PVInfo PV name " + info.getPVName());
         Assertions.assertEquals(info.getDataYear(), currentYear, "PVInfo year " + info.getDataYear());
-        Assertions.assertEquals(info.getType(), ArchDBRTypes.DBR_SCALAR_DOUBLE, "PVInfo type " + info.getType());
+        Assertions.assertEquals(ArchDBRTypes.DBR_SCALAR_DOUBLE, info.getType(), "PVInfo type " + info.getType());
         Assertions.assertEquals(start, info.getFirstEvent().getEventTimeStamp());
         Assertions.assertEquals(end.minusSeconds(1), info.getLastEvent().getEventTimeStamp());
     }

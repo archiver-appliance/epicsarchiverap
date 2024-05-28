@@ -12,6 +12,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -30,11 +31,9 @@ import java.nio.file.Path;
  * @author mshankar
  *
  */
-public class PBFileInfo {
+public class PBFileInfo extends FileInfo {
     private static final Logger logger = LogManager.getLogger(PBFileInfo.class);
     PayloadInfo info;
-    DBRTimeEvent firstEvent = null;
-    DBRTimeEvent lastEvent = null;
     long positionOfFirstSample = 0L;
     long positionOfLastSample = 0;
 
@@ -53,6 +52,8 @@ public class PBFileInfo {
     }
 
     public PBFileInfo(Path path, boolean lookupLastEvent) throws IOException {
+        super();
+
         try (LineByteStream lis = new LineByteStream(path)) {
             byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
             info = PayloadInfo.parseFrom(payloadLine);
