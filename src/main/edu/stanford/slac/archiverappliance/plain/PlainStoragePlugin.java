@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -199,7 +200,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
      */
     private boolean backupFilesBeforeETL = false;
 
-    private CompressionMode compressionMode = CompressionMode.NONE;
+    private PBCompressionMode compressionMode = PBCompressionMode.NONE;
     private List<String> postProcessorUserArgs = null;
     private String reducedataPostProcessor = null;
     private int holdETLForPartions = 0;
@@ -330,7 +331,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
             logger.info(desc + " Found " + paths.length + " matching files for pv " + pvName + " in store "
                     + this.getName());
-            boolean useSearchForPositions = (this.compressionMode == CompressionMode.NONE);
+            boolean useSearchForPositions = (this.compressionMode == PBCompressionMode.NONE);
             boolean doNotuseSearchForPositions = !useSearchForPositions;
 
             ArrayList<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
@@ -597,8 +598,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
 
             if (queryNVPairs.containsKey("compress")) {
-                compressionMode = CompressionMode.valueOf(queryNVPairs.get("compress"));
-                if (compressionMode != CompressionMode.NONE) {
+                compressionMode = PBCompressionMode.valueOf(queryNVPairs.get("compress"));
+                if (compressionMode != PBCompressionMode.NONE) {
                     if (!rootFolderStr.startsWith(ArchPaths.ZIP_PREFIX)) {
                         String rootFolderWithPath = ArchPaths.ZIP_PREFIX + rootFolderStr;
                         logger.debug(
@@ -663,7 +664,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 buf.append(true);
             }
 
-            if (this.compressionMode != CompressionMode.NONE) {
+            if (this.compressionMode != PBCompressionMode.NONE) {
                 buf.append("&compress=");
                 buf.append(compressionMode.toString());
             }
@@ -708,7 +709,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         logger.debug("Setting root folder to " + rootFolder);
         try (ArchPaths paths = new ArchPaths()) {
             Path path;
-            if (this.compressionMode == CompressionMode.NONE) {
+            if (this.compressionMode == PBCompressionMode.NONE) {
                 path = paths.get(this.rootFolder);
                 if (!Files.exists(path)) {
                     logger.warn(desc + ": The root folder specified does not exist - " + rootFolder + ". Creating it");
@@ -1009,7 +1010,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     @Override
     public boolean commitETLAppendData(String pvName, ETLContext context) throws IOException {
-        if (compressionMode == CompressionMode.NONE && backupFilesBeforeETL) {
+        if (compressionMode == PBCompressionMode.NONE && backupFilesBeforeETL) {
             // Get all append data files for the specified PV name and partition granularity.
             Path[] appendDataPaths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
@@ -1153,7 +1154,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         return spaceConsumed;
     }
 
-    public CompressionMode getCompressionMode() {
+    public PBCompressionMode getCompressionMode() {
         return compressionMode;
     }
 
@@ -1385,16 +1386,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     public String getExtensionString() {
         return ".pb";
-    }
-
-    /**
-     * Support for ZIP_PER_PV is still experimental.
-     *
-     * @author mshankar
-     */
-    public enum CompressionMode {
-        NONE,
-        ZIP_PER_PV,
     }
 
     private static class PPMissingPaths {

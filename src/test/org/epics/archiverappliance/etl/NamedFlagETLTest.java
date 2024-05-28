@@ -9,6 +9,7 @@ package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -256,7 +257,7 @@ public class NamedFlagETLTest {
                 pvName,
                 etlDest.getExtensionString(),
                 etlDest.getPartitionGranularity(),
-                PlainStoragePlugin.CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
 

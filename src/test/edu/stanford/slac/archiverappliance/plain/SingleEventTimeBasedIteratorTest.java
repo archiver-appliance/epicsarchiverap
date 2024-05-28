@@ -1,7 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -74,7 +74,7 @@ public class SingleEventTimeBasedIteratorTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_HOUR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
             Assertions.assertEquals(1, paths.length, "We should get only one file, instead we got " + paths.length);
             long eventCount = 0;
