@@ -11,7 +11,7 @@ import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
+import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
@@ -94,7 +94,7 @@ public class LargePBLineTest {
             try {
                 new PBFileInfo(destPath);
                 Assertions.assertTrue(
-                        ValidatePBFile.validatePBFile(destPath, false),
+                        ValidatePlainFile.validatePBFile(destPath, false),
                         "File validation failed for " + destPath.toAbsolutePath());
             } catch (Exception ex) {
                 logger.error("Exception parsing file" + destPath.toAbsolutePath(), ex);

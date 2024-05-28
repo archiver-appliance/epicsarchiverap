@@ -10,7 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
+import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -231,7 +231,7 @@ public class ZeroByteFilesTest {
         logger.info("allPaths {}", (Object) allPaths);
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePBFile.validatePBFile(destPath, false),
+                    ValidatePlainFile.validatePBFile(destPath, false),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
