@@ -37,8 +37,8 @@ import java.util.Iterator;
  * @author mshankar
  *
  */
-public class PlainPathNameUtility {
-    private static final Logger logger = LogManager.getLogger(PlainPathNameUtility.class);
+public class PathNameUtility {
+    private static final Logger logger = LogManager.getLogger(PathNameUtility.class);
 
     public static Path getPathNameForTime(
             PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)

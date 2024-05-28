@@ -147,7 +147,7 @@ public class AppendDataStateData {
             throws IOException {
 
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
-            Path nextPath = PlainPathNameUtility.getFileName(
+            Path nextPath = PathNameUtility.getFileName(
                     this.rootFolder,
                     pvName,
                     ts,
@@ -252,7 +252,7 @@ public class AppendDataStateData {
             PBCompressionMode compressionMode)
             throws IOException {
         if (pvPath == null) {
-            pvPath = PlainPathNameUtility.getFileName(
+            pvPath = PathNameUtility.getFileName(
                     this.rootFolder,
                     pvName,
                     ts,
