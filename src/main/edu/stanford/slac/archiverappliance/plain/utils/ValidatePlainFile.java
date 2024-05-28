@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.common.TimeUtils;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -22,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,30 +32,29 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author mshankar
  *
  */
-public class ValidatePBFile {
-    private static final Logger logger = LogManager.getLogger(ValidatePBFile.class.getName());
+public class ValidatePlainFile {
+    private static final Logger logger = LogManager.getLogger(ValidatePlainFile.class.getName());
 
-    public static boolean validatePBFile(Path path, boolean verboseMode) throws IOException {
+    public static boolean validatePlainFile(Path path, boolean verboseMode) throws IOException {
         PBFileInfo info = new PBFileInfo(path);
         logger.info("File " + path.getFileName().toString() + " is for PV " + info.getPVName() + " of type "
                 + info.getType() + " for year " + info.getDataYear());
-        long previousEpochSeconds = Long.MIN_VALUE;
+        Instant previousTimestamp = Instant.EPOCH;
         long eventnum = 0;
         try (EventStream strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType())) {
             Event firstEvent = null;
             Event lastEvent = null;
             for (Event ev : strm) {
-                long epochSeconds = ev.getEpochSeconds();
-                if (epochSeconds >= previousEpochSeconds) {
-                    previousEpochSeconds = epochSeconds;
+                Instant eventTimeStamp = ev.getEventTimeStamp();
+                if (eventTimeStamp.isAfter(previousTimestamp) || eventTimeStamp.equals(previousTimestamp)) {
+                    previousTimestamp = eventTimeStamp;
                 } else {
                     throw new IOException("We expect to see monotonically increasing timestamps in a PB file"
                             + ". This is not true at " + eventnum
                             + ". The previous time stamp is "
-                            + TimeUtils.convertToISO8601String(
-                                    TimeUtils.convertFromEpochSeconds(previousEpochSeconds, 0))
+                            + previousTimestamp
                             + ". The current time stamp is "
-                            + TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(epochSeconds, 0)));
+                            + eventTimeStamp);
                 }
                 if (firstEvent == null) firstEvent = ev;
                 lastEvent = ev;
@@ -63,12 +62,12 @@ public class ValidatePBFile {
             }
 
             if (verboseMode) {
-                logger.info("File " + path.getFileName().toString() + " appears to be valid. It has data ranging from "
-                        + TimeUtils.convertToISO8601String(
-                                TimeUtils.convertFromEpochSeconds(firstEvent.getEpochSeconds(), 0))
+                assert firstEvent != null;
+                logger.info("File " + path.getFileName().toString() + " appears to be valid. It has " + eventnum
+                        + " events ranging from "
+                        + firstEvent.getEventTimeStamp()
                         + " to "
-                        + TimeUtils.convertToISO8601String(
-                                TimeUtils.convertFromEpochSeconds(lastEvent.getEpochSeconds(), 0)));
+                        + lastEvent.getEventTimeStamp());
             }
             if (verboseMode) {
                 System.out.println(path + " seems to be a valid PB file.");
@@ -124,14 +123,13 @@ public class ValidatePBFile {
                             }
 
                             @Override
-                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
-                                    throws IOException {
+                            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                                 return FileVisitResult.CONTINUE;
                             }
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                if (!validatePBFile(file, verboseMode)) {
+                                if (!validatePlainFile(file, verboseMode)) {
                                     failures.incrementAndGet();
                                 }
                                 return FileVisitResult.CONTINUE;
@@ -148,7 +146,7 @@ public class ValidatePBFile {
                             }
                         }.init(verboseMode));
             } else {
-                if (!validatePBFile(path, verboseMode)) {
+                if (!validatePlainFile(path, verboseMode)) {
                     failures.incrementAndGet();
                 }
             }
