@@ -8,7 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
-import edu.stanford.slac.archiverappliance.plain.PlainPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import gov.aps.jca.dbr.DBR;
 import org.apache.logging.log4j.LogManager;
@@ -126,7 +126,7 @@ public class DBRTypeTest {
             }
             logger.info("Done appending data. Now checking the read.");
             // Now test the data.
-            Path path = PlainPathNameUtility.getPathNameForTime(
+            Path path = PathNameUtility.getPathNameForTime(
                     pbplugin,
                     pvName,
                     TimeUtils.getStartOfYear(currentYear),
@@ -227,7 +227,7 @@ public class DBRTypeTest {
                 // EventStream retrievedStrm = pbplugin.getDataForPV(dbrType.name(),
                 // TimeStamp.time(startOfCurrentYearInSeconds, 0),
                 // TimeStamp.time(startOfCurrentYearInSeconds+SimulationEventStreamIterator.SECONDS_IN_YEAR, 0));
-                Path path = PlainPathNameUtility.getPathNameForTime(
+                Path path = PathNameUtility.getPathNameForTime(
                         pbplugin,
                         pvName,
                         startTime,
