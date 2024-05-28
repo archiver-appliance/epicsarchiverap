@@ -11,6 +11,7 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.plain.pb.PBAppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
@@ -475,13 +476,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             return appendDataStates.get(pvName);
         } else {
             logger.debug("Creating new append data state for pv " + pvName);
-            AppendDataStateData state = new AppendDataStateData(
+            AppendDataStateData state = new PBAppendDataStateData(
                     this.partitionGranularity,
                     this.rootFolder,
                     this.desc,
                     getLastKnownTimestampForAppend(context, pvName),
-                    this.pv2key,
-                    this.compressionMode);
+                    this.compressionMode,
+                    this.pv2key);
 
             appendDataStates.put(pvName, state);
             return state;
@@ -1066,13 +1067,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             // event.
                             // Ideally this should be the first event of the source stream minus some buffer.
                             Instant timezero = TimeUtils.convertFromEpochSeconds(0, 0);
-                            AppendDataStateData state = new AppendDataStateData(
+                            AppendDataStateData state = new PBAppendDataStateData(
                                     this.partitionGranularity,
                                     this.rootFolder,
                                     this.desc,
                                     timezero,
-                                    this.pv2key,
-                                    this.compressionMode);
+                                    this.compressionMode,
+                                    this.pv2key);
                             int eventsAppended =
                                     state.partitionBoundaryAwareAppendData(context, pvName, stream, ppExt, null);
                             if (logger.isDebugEnabled())
@@ -1372,13 +1373,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                     setimes.pathDataEndTime.toInstant()),
                             setimes.pathDataStartTime.toInstant(),
                             setimes.pathDataEndTime.toInstant())) {
-                        AppendDataStateData state = new AppendDataStateData(
+                        AppendDataStateData state = new PBAppendDataStateData(
                                 this.partitionGranularity,
                                 this.rootFolder,
                                 this.desc,
                                 Instant.ofEpochMilli(0),
-                                this.pv2key,
-                                this.compressionMode);
+                                this.compressionMode,
+                                this.pv2key);
                         state.partitionBoundaryAwareAppendData(
                                 context, pvName, convertedStream, ppExt + randSuffix, null);
                     }
