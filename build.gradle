@@ -47,10 +47,14 @@ def stageDir = layout.projectDirectory.file("build/stage")
 def srcDir = layout.projectDirectory.file("src/main")
 def libDir = layout.projectDirectory.file("lib")
 def apiDocsDir = layout.projectDirectory.file("docs/api")
-def archapplsite = System.getenv("ARCHAPPL_SITEID") ? System.getenv("ARCHAPPL_SITEID") : "tests"
+def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
+def defaultsitespecificpath = "src/sitespecific/${archapplsite}"
+// Allow the site to be outside of the repository
+def sitespecificpath = (new File("${defaultsitespecificpath}").exists()) ? defaultsitespecificpath : archapplsite
 
 ant.stage = stageDir
 ant.archapplsite = archapplsite
+ant.sitespecificpath = sitespecificpath
 ant.importBuild("build.xml")
 
 repositories {
@@ -252,7 +256,7 @@ tasks.withType(War).configureEach {
 			into "WEB-INF/classes"
 		}
 	}
-	from("src/sitespecific/${archapplsite}/classpathfiles") {
+	from("${sitespecificpath}/classpathfiles") {
 		into "WEB-INF/classes"
 	}
 	rootSpec.exclude("**/tomcat-servlet-api*.jar")
