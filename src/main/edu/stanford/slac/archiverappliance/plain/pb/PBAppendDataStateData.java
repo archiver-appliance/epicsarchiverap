@@ -229,7 +229,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
         // The preparePartition should have created the needed file; so we only append
         assert pvPath != null;
         try (ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND);
-             ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
+                ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
             logger.debug("ETL bulk appends for pv " + pvName);
             ByteBuffer buf = ByteBuffer.allocate(1024 * 1024);
             int bytesRead = srcChannel.read(buf);

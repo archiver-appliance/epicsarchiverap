@@ -45,8 +45,7 @@ public class CompareEvent implements CompareEventLine {
                 0);
         try {
             // The raw forms for all the DBR types implement the PartionedTime interface
-            PartionedTime e =
-                    constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
+            PartionedTime e = constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line1));
             line1Timestamp = e.getYearSecondTimestamp();
             if (line2 != null) {
                 PartionedTime e2 = constructor.newInstance(this.yearSecondTimestamp.getYear(), new ByteArray(line2));
