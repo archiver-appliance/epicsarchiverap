@@ -297,7 +297,7 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void testDirectionalIteration() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         for(BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
             logger.info("Testing directional iteration {}", direction);
@@ -334,7 +334,7 @@ public class FileBackedPBEventStreamTest {
     }
 
     private Instant getFirstSampleTSUsingIteration(Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
         Instant theInstant = null;
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(

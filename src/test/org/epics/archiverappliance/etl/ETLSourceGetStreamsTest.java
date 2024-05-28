@@ -98,7 +98,7 @@ public class ETLSourceGetStreamsTest {
     @MethodSource("provideTestArguments")
     public void getETLStreams(PartitionGranularity partitionGranularity, long sampleRange, long skipSeconds)
             throws Exception {
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb" + "://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR",
                 configService);
         ETLContext etlContext = new ETLContext();

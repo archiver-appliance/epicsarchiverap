@@ -185,7 +185,7 @@ public class NamedFlagETLTest {
         String shortTermFolderName = configService.getPBRootFolder() + "/shortTerm";
         String mediumTermFolderName = configService.getPBRootFolder() + "/mediumTerm";
 
-        PlainPtoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY"
                         + appendToSourceURL,
                 configService);
@@ -256,7 +256,7 @@ public class NamedFlagETLTest {
                 pvName,
                 etlDest.getExtensionString(),
                 etlDest.getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PlainStoragePlugin.CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
 

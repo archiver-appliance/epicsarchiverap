@@ -69,7 +69,7 @@ public class DataRetrievalServletTest {
 
         PBCommonSetup pbSetup = new PBCommonSetup();
 
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin);
 
         PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();

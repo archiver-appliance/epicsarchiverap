@@ -82,7 +82,7 @@ public class ClusterSinglePVTest {
      */
     @Test
     public void singlePvsAcrossCluster() throws Exception {
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
 
         ConfigService configService = new ConfigServiceForTests(-1);
 

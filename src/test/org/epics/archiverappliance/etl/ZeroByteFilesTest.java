@@ -220,7 +220,7 @@ public class ZeroByteFilesTest {
                 pvName,
                 etlDest.getExtensionString(),
                 etlDest.getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PlainStoragePlugin.CompressionMode.NONE,
                 pvNameToKeyConverter);
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(

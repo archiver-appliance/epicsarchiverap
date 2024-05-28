@@ -54,7 +54,7 @@ public class StoragePluginURLParser {
             String pluginIdentifier = srcURI.getScheme();
             switch (pluginIdentifier) {
                 case PB_PLUGIN_IDENTIFIER -> {
-                    return parsePlainPBStoragePlugin(srcURIStr, configService);
+                    return parsePlainStoragePlugin(srcURIStr, configService);
                 }
                 case PBHTTP_PLUGIN_IDENTIFIER -> {
                     return parseHTTPStoragePlugin(srcURIStr, configService);
@@ -86,7 +86,7 @@ public class StoragePluginURLParser {
             String pluginIdentifier = srcURI.getScheme();
             switch (pluginIdentifier) {
                 case PB_PLUGIN_IDENTIFIER -> {
-                    return parsePlainPBStoragePlugin(srcURIStr, configService);
+                    return parsePlainStoragePlugin(srcURIStr, configService);
                 }
                 case MERGE_PLUGIN_IDENTIFIER -> {
                     return parseMergeDedupPlugin(srcURIStr, configService);
@@ -113,7 +113,7 @@ public class StoragePluginURLParser {
             String pluginIdentifier = srcURI.getScheme();
             switch (pluginIdentifier) {
                 case PB_PLUGIN_IDENTIFIER -> {
-                    return parsePlainPBStoragePlugin(srcURIStr, configService);
+                    return parsePlainStoragePlugin(srcURIStr, configService);
                 }
                 case MERGE_PLUGIN_IDENTIFIER -> {
                     return parseMergeDedupPlugin(srcURIStr, configService);
@@ -134,7 +134,7 @@ public class StoragePluginURLParser {
 	
 
 
-	private static PlainStoragePlugin parsePlainPBStoragePlugin(String srcURIStr, ConfigService configService) throws IOException {
+	private static PlainStoragePlugin parsePlainStoragePlugin(String srcURIStr, ConfigService configService) throws IOException {
 		PlainStoragePlugin ret = new PlainStoragePlugin();
 		ret.initialize(expandMacros(srcURIStr), configService);
 		return ret;

@@ -148,7 +148,7 @@ public class SimpleETLTest {
                 pvName,
                 testPlugins.dest().getExtensionString(),
                 testPlugins.dest().getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PlainStoragePlugin.CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(
