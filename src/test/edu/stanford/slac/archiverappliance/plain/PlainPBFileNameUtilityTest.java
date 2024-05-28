@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -105,7 +105,7 @@ public class PlainPBFileNameUtilityTest {
                     fileTime,
                     granularity,
                     new ArchPaths(),
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter()));
         }
 
@@ -117,7 +117,7 @@ public class PlainPBFileNameUtilityTest {
                 startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk() - 1),
                 extension,
                 granularity,
-                CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, matchingPaths.length, "File count " + matchingPaths.length);
 
@@ -128,7 +128,7 @@ public class PlainPBFileNameUtilityTest {
                 startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk()),
                 extension,
                 granularity,
-                CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, etlPaths.length, "File count " + etlPaths.length);
 
@@ -139,7 +139,7 @@ public class PlainPBFileNameUtilityTest {
                         startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk()),
                         extension,
                         granularity,
-                        CompressionMode.NONE,
+                        PBCompressionMode.NONE,
                         configService.getPVNameToKeyConverter())
                 .toFile();
         Assertions.assertNotNull(mostRecentFile, "Most recent file is null?");
@@ -169,7 +169,7 @@ public class PlainPBFileNameUtilityTest {
                     curr.toInstant(),
                     partition,
                     new ArchPaths(),
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter()));
             curr = curr.plusYears(1);
             if (years == 7) endYear = curr;
@@ -183,7 +183,7 @@ public class PlainPBFileNameUtilityTest {
                 endYear.minusSeconds(1).toInstant(),
                 extension,
                 partition,
-                CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(8, matchingPaths.length, "File count " + matchingPaths.length);
 
@@ -194,7 +194,7 @@ public class PlainPBFileNameUtilityTest {
                 endYear.toInstant(),
                 extension,
                 partition,
-                CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(8, etlPaths.length, "File count " + etlPaths.length);
 
@@ -206,7 +206,7 @@ public class PlainPBFileNameUtilityTest {
                         curr.plusYears(1).toInstant(),
                         extension,
                         partition,
-                        CompressionMode.NONE,
+                        PBCompressionMode.NONE,
                         configService.getPVNameToKeyConverter())
                 .toFile();
         Assertions.assertNotNull(mostRecentFile, "Most recent file is null?");
@@ -221,7 +221,7 @@ public class PlainPBFileNameUtilityTest {
                         endYear.toInstant(),
                         extension,
                         partition,
-                        CompressionMode.NONE,
+                        PBCompressionMode.NONE,
                         configService.getPVNameToKeyConverter())
                 .toFile();
         Assertions.assertNotNull(mostRecentFile2, "Most recent file is null?");

@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -90,7 +90,7 @@ public class RenamePVTest {
 					oldPVEventCount++;
 				}
 			}
-			oldPathCount = PathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
+			oldPathCount = PathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, PBCompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
 		}
 		logger.info("Done generating data with " +  oldPVEventCount + " points   About to rename PV");
 		
@@ -109,8 +109,8 @@ public class RenamePVTest {
 					newPVEventCount++;
 				}
 			}
-			newPathCount = PathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), newPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
-			newPathForOldPVNameCount = PathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, CompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
+			newPathCount = PathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), newPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, PBCompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
+			newPathForOldPVNameCount = PathNameUtility.getAllPathsForPV(context.getPaths(), plugin.getRootFolder(), oldPVName, PlainStoragePlugin.pbFileExtension, PartitionGranularity.PARTITION_DAY, PBCompressionMode.NONE, configService.getPVNameToKeyConverter()).length;
 		}
 
 		logger.info("Old count " + oldPVEventCount + " and new count " + newPVEventCount);

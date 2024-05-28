@@ -3,7 +3,7 @@ package edu.stanford.slac.archiverappliance.plain;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility.StartEndTimeFromName;
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -66,7 +66,7 @@ public class CleanPartitionsTest {
                     pvName,
                     pbFileExtension,
                     pbPlugin.getPartitionGranularity(),
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
             for (Path pbFile : allPaths) {
                 PBFileInfo fileInfo = new PBFileInfo(pbFile);

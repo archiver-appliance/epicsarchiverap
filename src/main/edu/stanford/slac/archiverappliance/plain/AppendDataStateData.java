@@ -2,6 +2,7 @@ package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +41,7 @@ public class AppendDataStateData {
     private final String rootFolder;
 
     private OutputStream os = null;
-    private final PlainStoragePlugin.CompressionMode compressionMode;
+    private final PBCompressionMode compressionMode;
     protected short previousYear = -1;
     protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
     private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
@@ -66,7 +67,7 @@ public class AppendDataStateData {
             String desc,
             Instant lastKnownTimestamp,
             PVNameToKeyMapping pv2key,
-            PlainStoragePlugin.CompressionMode compressionMode) {
+            PBCompressionMode compressionMode) {
         this.partitionGranularity = partitionGranularity;
         this.rootFolder = rootFolder;
         this.desc = desc;
@@ -146,7 +147,7 @@ public class AppendDataStateData {
             String pvName,
             String extension,
             Instant ts,
-            PlainStoragePlugin.CompressionMode compressionMode)
+            PBCompressionMode compressionMode)
             throws IOException {
 
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
@@ -252,7 +253,7 @@ public class AppendDataStateData {
             String extensionToCopyFrom,
             Instant ts,
             Path pvPath,
-            PlainStoragePlugin.CompressionMode compressionMode)
+            PBCompressionMode compressionMode)
             throws IOException {
         if (pvPath == null) {
             pvPath = PathNameUtility.getFileName(
