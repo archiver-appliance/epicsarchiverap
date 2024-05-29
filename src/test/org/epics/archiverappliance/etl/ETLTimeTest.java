@@ -201,11 +201,6 @@ public class ETLTimeTest {
                 expectedFiles,
                 "Dest file count " + postETLDestVisitor.filesPresent + " is not the same as PV count " + pvs.size());
 
-        if (postETLSrcVisitor.filesPresent == 0) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
-
         logger.info(configService.getETLLookup().getApplianceMetrics().details(configService));
     }
 

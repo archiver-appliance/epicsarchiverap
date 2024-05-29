@@ -37,6 +37,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
+import static org.epics.archiverappliance.config.ConvertPVNameToKey.SITE_NAME_SPACE_TERMINATOR;
+
 /**
  * The FileBackedPBEventStream supports two iterators - one is a file-position based one and the other is a time based one.
  * For performance reasons, we should use the file-position based iterator in cases where the query start time is after the timestamp of the first sample; defaulting to the time based one in case of unexpected circumstances.
@@ -72,7 +74,7 @@ public class FileBackedIteratorTest {
     static Path filePath(String extensionString) {
         return Paths.get(
                 testFolder.getAbsolutePath(),
-                pvName.replace(":", "/").replace("--", "") + ":" + currentYear + extensionString);
+                pvName.replace(":", "/").replace("--", "") + configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_TERMINATOR) + currentYear + extensionString);
     }
 
     private static final ConfigService configService;
