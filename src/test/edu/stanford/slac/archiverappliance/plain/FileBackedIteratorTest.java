@@ -1,5 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import static org.epics.archiverappliance.config.ConvertPVNameToKey.SITE_NAME_SPACE_TERMINATOR;
+
 import edu.stanford.slac.archiverappliance.plain.parquet.ParquetBackedPBEventIterator;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStreamPositionBasedIterator;
 import org.apache.commons.io.FileUtils;
@@ -72,7 +74,10 @@ public class FileBackedIteratorTest {
     static Path filePath(String extensionString) {
         return Paths.get(
                 testFolder.getAbsolutePath(),
-                pvName.replace(":", "/").replace("--", "") + ":" + currentYear + extensionString);
+                pvName.replace(":", "/").replace("--", "")
+                        + configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_TERMINATOR)
+                        + currentYear
+                        + extensionString);
     }
 
     private static final ConfigService configService;

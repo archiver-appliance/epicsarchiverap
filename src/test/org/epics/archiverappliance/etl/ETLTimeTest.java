@@ -4,7 +4,6 @@ import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import edu.stanford.slac.archiverappliance.plain.URLKeys;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -27,7 +26,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -202,11 +200,6 @@ public class ETLTimeTest {
                 postETLDestVisitor.filesPresent,
                 expectedFiles,
                 "Dest file count " + postETLDestVisitor.filesPresent + " is not the same as PV count " + pvs.size());
-
-        if (postETLSrcVisitor.filesPresent == 0) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
 
         logger.info(configService.getETLLookup().getApplianceMetrics().details(configService));
     }
