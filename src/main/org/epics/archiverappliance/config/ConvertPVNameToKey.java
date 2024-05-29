@@ -37,7 +37,7 @@ import org.epics.archiverappliance.config.exception.ConfigException;
 public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	private static Logger configlogger = LogManager.getLogger("config." + ConvertPVNameToKey.class.getName());
 	private static final String SITE_NAME_SPACE_SEPARATORS = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceSeparators";
-	private static final String SITE_NAME_SPACE_TERMINATOR = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator";
+	public static final String SITE_NAME_SPACE_TERMINATOR = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator";
 	private String siteNameSpaceSeparators;
 	private char terminatorChar = ':';
 	
