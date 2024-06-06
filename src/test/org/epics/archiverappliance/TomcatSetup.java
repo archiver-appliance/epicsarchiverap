@@ -231,6 +231,7 @@ public class TomcatSetup {
 		File workFolder = new File("build/tomcats/tomcat_" + testName + File.separator + applianceName);
 		assert (workFolder.exists());
 		environment.put("CATALINA_BASE", workFolder.getAbsolutePath());
+        environment.put("CATALINA_OPTS", "-Deaatag=eaatesttm"); // The tag is for pkill during testing
 
 		environment.put("LOG4J_CONFIGURATION_FILE", (new File("src/resources/test/log4j2.xml")).getAbsolutePath());
 		environment.put(ConfigService.ARCHAPPL_CONFIGSERVICE_IMPL, ConfigServiceForTests.class.getName());
