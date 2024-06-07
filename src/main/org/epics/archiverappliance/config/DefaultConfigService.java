@@ -1362,14 +1362,7 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
-        int appliancesInCluster = this.appliances.size();
-        int initialDelayInSeconds = 10;
-        if (appliancesInCluster > 1) {
-            // We use a longer initial delay here to get all the appliances in the cluster a chance to restart
-            // We also need some time to build up the capacity planning metrics.
-            initialDelayInSeconds = 30 * 60;
-        }
-
+        int initialDelayInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.mgmt.MgmtRuntimeState.initialDelayBeforeStartingArchiveRequests", "10"));
         return initialDelayInSeconds;
     }
 
