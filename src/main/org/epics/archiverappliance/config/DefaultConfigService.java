@@ -260,57 +260,6 @@ public class DefaultConfigService implements ConfigService {
         configlogger.info("My identity is " + myApplianceInfo.getIdentity() + " and my mgmt URL is "
                 + myApplianceInfo.getMgmtURL());
 
-        switch (contextPath) {
-            case "/mgmt":
-                warFile = WAR_FILE.MGMT;
-                this.mgmtRuntime = new MgmtRuntimeState(this);
-                break;
-            case "/engine":
-                warFile = WAR_FILE.ENGINE;
-                this.engineContext = new EngineContext(this);
-                break;
-            case "/retrieval":
-                warFile = WAR_FILE.RETRIEVAL;
-                this.retrievalState = new RetrievalState(this);
-                break;
-            case "/etl":
-                this.etlPVLookup = new PBThreeTierETLPVLookup(this);
-                warFile = WAR_FILE.ETL;
-                break;
-            default:
-                logger.error("We seem to have introduced a new component into the system " + contextPath);
-        }
-
-        // To make sure we are not starting multiple appliance with the same identity, we make sure that the hostnames
-        // match
-        if (this.warFile == WAR_FILE.MGMT) {
-            try {
-                String machineHostName = InetAddress.getLocalHost().getCanonicalHostName();
-                String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
-                String myHostNameFromInfo = myAddrParts[0];
-                if (myHostNameFromInfo.equals("localhost")) {
-                    logger.debug(
-                            "Using localhost for the cluster inet port. If you are indeed running a cluster, the cluster members will not join the cluster.");
-                } else if (myHostNameFromInfo.equals(machineHostName)) {
-                    logger.debug(
-                            "Hostname from config and hostname from InetAddress match exactly; we are correctly configured "
-                                    + machineHostName);
-                } else if (InetAddressValidator.getInstance().isValid(myHostNameFromInfo)) {
-                    logger.debug(() -> "Using ipAddress for cluster config " + myHostNameFromInfo);
-                } else {
-                    String msg = "The hostname from appliances.xml is " + myHostNameFromInfo
-                            + " and from a call to InetAddress.getLocalHost().getCanonicalHostName() (typially FQDN) is "
-                            + machineHostName
-                            + ". These are not identical. They are probably equivalent but to prevent multiple appliances binding to the same identity we enforce this equality.";
-                    configlogger.fatal(msg);
-                    throw new ConfigException(msg);
-                }
-            } catch (UnknownHostException ex) {
-                configlogger.error(
-                        "Got an UnknownHostException when trying to determine the hostname. This happens when DNS is not set correctly on this machine (for example, when using VM's. See the documentation for InetAddress.getLocalHost().getCanonicalHostName()");
-            }
-        }
-
         try {
             String archApplPropertiesFileName = System.getProperty(ARCHAPPL_PROPERTIES_FILENAME);
             if (archApplPropertiesFileName == null) {
@@ -368,6 +317,59 @@ public class DefaultConfigService implements ConfigService {
             String[] runTimeFieldsArr = runtimeFieldsListStr.split(",");
             for (String rf : runTimeFieldsArr) {
                 this.runTimeFields.add(rf.trim());
+            }
+        }
+
+
+
+        switch (contextPath) {
+            case "/mgmt":
+                warFile = WAR_FILE.MGMT;
+                this.mgmtRuntime = new MgmtRuntimeState(this);
+                break;
+            case "/engine":
+                warFile = WAR_FILE.ENGINE;
+                this.engineContext = new EngineContext(this);
+                break;
+            case "/retrieval":
+                warFile = WAR_FILE.RETRIEVAL;
+                this.retrievalState = new RetrievalState(this);
+                break;
+            case "/etl":
+                this.etlPVLookup = new PBThreeTierETLPVLookup(this);
+                warFile = WAR_FILE.ETL;
+                break;
+            default:
+                logger.error("We seem to have introduced a new component into the system " + contextPath);
+        }
+
+        // To make sure we are not starting multiple appliance with the same identity, we make sure that the hostnames
+        // match
+        if (this.warFile == WAR_FILE.MGMT) {
+            try {
+                String machineHostName = InetAddress.getLocalHost().getCanonicalHostName();
+                String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
+                String myHostNameFromInfo = myAddrParts[0];
+                if (myHostNameFromInfo.equals("localhost")) {
+                    logger.debug(
+                            "Using localhost for the cluster inet port. If you are indeed running a cluster, the cluster members will not join the cluster.");
+                } else if (myHostNameFromInfo.equals(machineHostName)) {
+                    logger.debug(
+                            "Hostname from config and hostname from InetAddress match exactly; we are correctly configured "
+                                    + machineHostName);
+                } else if (InetAddressValidator.getInstance().isValid(myHostNameFromInfo)) {
+                    logger.debug(() -> "Using ipAddress for cluster config " + myHostNameFromInfo);
+                } else {
+                    String msg = "The hostname from appliances.xml is " + myHostNameFromInfo
+                            + " and from a call to InetAddress.getLocalHost().getCanonicalHostName() (typially FQDN) is "
+                            + machineHostName
+                            + ". These are not identical. They are probably equivalent but to prevent multiple appliances binding to the same identity we enforce this equality.";
+                    configlogger.fatal(msg);
+                    throw new ConfigException(msg);
+                }
+            } catch (UnknownHostException ex) {
+                configlogger.error(
+                        "Got an UnknownHostException when trying to determine the hostname. This happens when DNS is not set correctly on this machine (for example, when using VM's. See the documentation for InetAddress.getLocalHost().getCanonicalHostName()");
             }
         }
 
@@ -1360,14 +1362,7 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
-        int appliancesInCluster = this.appliances.size();
-        int initialDelayInSeconds = 10;
-        if (appliancesInCluster > 1) {
-            // We use a longer initial delay here to get all the appliances in the cluster a chance to restart
-            // We also need some time to build up the capacity planning metrics.
-            initialDelayInSeconds = 30 * 60;
-        }
-
+        int initialDelayInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.mgmt.MgmtRuntimeState.initialDelayBeforeStartingArchiveRequests", "10"));
         return initialDelayInSeconds;
     }
 
