@@ -319,7 +319,7 @@ function checkPVStatus() {
   const json = pvQuery;
   let url = "../bpl/getPVStatus?reporttype=short";
   const tabledivname = "archstatsdiv";
-  createReportTable(json, url, tabledivname, [
+  createReportTableDATA(json, url, tabledivname, [
     { srcAttr: "pvName", label: "PV Name" },
     {
       srcAttr: "status",
