@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.config;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -45,6 +46,15 @@ public interface ConfigPersistence {
 
 	public List<String> getAliasNamesToRealNamesKeys() throws IOException;
 	public String getAliasNamesToRealName(String pvName) throws IOException;
+	default public List<String> getAliasNamesForRealName(String realName) throws IOException {
+		LinkedList<String> ret = new LinkedList<String>();
+		for(String aliasName : getAliasNamesToRealNamesKeys()) {
+			if(getAliasNamesToRealName(aliasName).equals(realName)) {
+				ret.add(aliasName);
+			}
+		}
+		return ret;
+	}
 	public void putAliasNamesToRealName(String pvName, String realName) throws IOException;	
 	public void removeAliasName(String pvName, String realName) throws IOException;	
 }

@@ -1379,6 +1379,16 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
+    public List<String> getAliasesForRealName(String realName) { 
+        try {
+            return persistanceLayer.getAliasNamesForRealName(realName);
+        } catch (IOException ex) {
+            logger.error("Exception retrieving aliasnames for real name " + realName, ex);
+            return new LinkedList<String>();
+        }
+    }
+
+    @Override
     public List<String> getAllAliases() {
         return new ArrayList<String>(aliasNamesToRealNames.keySet());
     }

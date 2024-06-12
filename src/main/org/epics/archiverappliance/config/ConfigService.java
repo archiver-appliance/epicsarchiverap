@@ -412,7 +412,14 @@ public interface ConfigService {
 	 * @return String RealNameForAlias
 	 */
 	public String getRealNameForAlias(String aliasName);
-	
+
+	/**
+	 * Gets all the aliases in the system that map to this real PV name
+	 * @param realName &emsp;
+	 * @return List<String> A list of aliases for this real name
+	 */
+	public List<String> getAliasesForRealName(String realName);
+
 	/**
 	 * Return the text of the policy for this installation.
 	 * Gets you an InputStream; remember to close it.
