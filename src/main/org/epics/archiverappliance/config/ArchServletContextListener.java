@@ -27,6 +27,8 @@ public class ArchServletContextListener implements ServletContextListener {
 	private static final Logger configlogger = LogManager.getLogger("config." + ArchServletContextListener.class);
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
+		// This should hopefully trigger the log4j2 initialization
+		configlogger.info("Initializing the ArchServletContextListener");
 		try {
 			String configServiceImplClassName = System.getProperty(ConfigService.ARCHAPPL_CONFIGSERVICE_IMPL);
 			if(configServiceImplClassName == null) {
