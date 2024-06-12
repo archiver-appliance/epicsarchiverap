@@ -41,11 +41,7 @@ public class PlainPBPathNameUtility {
     private static final Logger logger = LogManager.getLogger(PlainPBPathNameUtility.class);
 
     public static Path getPathNameForTime(
-            PlainPBStoragePlugin plugin,
-            String pvName,
-            Instant ts,
-            ArchPaths paths,
-            PVNameToKeyMapping pv2key)
+            PlainPBStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
             throws IOException {
         return getPathNameForTime(
                 plugin.getRootFolder(),
@@ -79,8 +75,7 @@ public class PlainPBPathNameUtility {
     }
 
     public static Path getSparsifiedPathNameForTime(
-            PlainPBStoragePlugin plugin, String pvName, Instant ts,
-            ArchPaths paths, PVNameToKeyMapping pv2key)
+            PlainPBStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
             throws IOException {
         return getSparsifiedPathNameForTime(
                 plugin.getRootFolder(),
@@ -101,8 +96,7 @@ public class PlainPBPathNameUtility {
             CompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
-        return getFileName(
-                rootFolder, pvName, ts, ".pbs", partitionGranularity, false, paths, compressionMode, pv2key);
+        return getFileName(rootFolder, pvName, ts, ".pbs", partitionGranularity, false, paths, compressionMode, pv2key);
     }
 
     /**
@@ -200,8 +194,8 @@ public class PlainPBPathNameUtility {
             throws IOException {
         final long reqStartEpochSeconds = 1;
         final Instant reqEndTime = TimeUtils.getPreviousPartitionLastSecond(currentTime, granularity);
-        logger.debug(pvName + ": Looking for files in " + rootFolder + " with data before "
-                + reqEndTime + " from currentTime " + currentTime);
+        logger.debug(pvName + ": Looking for files in " + rootFolder + " with data before " + reqEndTime
+                + " from currentTime " + currentTime);
 
         return getPathsWithData(
                 archPaths,
@@ -510,8 +504,7 @@ public class PlainPBPathNameUtility {
             // Return an empty directory stream in this case.
             return new DirectoryStream<>() {
                 @Override
-                public void close() {
-                }
+                public void close() {}
 
                 @Override
                 public Iterator<Path> iterator() {
@@ -525,7 +518,7 @@ public class PlainPBPathNameUtility {
      * The PlainPBStorage plugin has a naming scheme that provides much information. This class encapsulates the
      * potential start and end times of a particular chunk.
      */
-    static class StartEndTimeFromName {
+    public static class StartEndTimeFromName {
         ZonedDateTime pathDataStartTime;
         ZonedDateTime pathDataEndTime;
 
@@ -605,7 +598,8 @@ public class PlainPBPathNameUtility {
                     int hour = Integer.parseInt(timecomponents[3]);
                     int min = Integer.parseInt(timecomponents[4]);
 
-                    pathDataStartTime = ZonedDateTime.of(year, month, day, hour, min, 0, 0, ZoneId.from(ZoneOffset.UTC));
+                    pathDataStartTime =
+                            ZonedDateTime.of(year, month, day, hour, min, 0, 0, ZoneId.from(ZoneOffset.UTC));
                     pathDataEndTime = pathDataStartTime
                             .withMinute(min + granularity.getApproxMinutesPerChunk() - 1)
                             .withSecond(59);

@@ -10,7 +10,6 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -21,14 +20,16 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -40,6 +41,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -47,51 +49,60 @@ import java.util.stream.Stream;
  * @author mshankar
  *
  */
-@Tag("slow")
 public class ETLWithRecurringFilesTest {
     private static final Logger logger = LogManager.getLogger(ETLWithRecurringFilesTest.class.getName());
+    static ConfigServiceForTests configService;
+    static ConfigServiceForTests newConfigService;
+    static List<ETLTestPlugins> etlTestPlugins;
     int ratio = 5; // size of test
 
     public static Stream<Arguments> provideRecurringFiles() {
         return Arrays.stream(PartitionGranularity.values())
-                .flatMap(g -> Stream.of(
-                                Arguments.of(g, true, true),
-                                Arguments.of(g, true, false),
-                                Arguments.of(g, false, true),
-                                Arguments.of(g, false, false)));
+                .filter(g -> g.getNextLargerGranularity() != null)
+                .flatMap(g -> etlTestPlugins.stream()
+                        .flatMap(plugins -> Stream.of(
+                                Arguments.of(g, true, true, plugins),
+                                Arguments.of(g, true, false, plugins),
+                                Arguments.of(g, false, true, plugins),
+                                Arguments.of(g, false, false, plugins))));
     }
 
+    @BeforeAll
+    static void setup() throws ConfigException {
+        configService = new ConfigServiceForTests(new File("./bin"), 1);
+        newConfigService = new ConfigServiceForTests(new File("./bin"), 1);
+        etlTestPlugins = ETLTestPlugins.generatePlugins();
+    }
+
+    @AfterAll
+    static void tearDownAll() {
+
+        configService.shutdownNow();
+    }
 
     /**
-     * @param granularity
-     * @param backUpFiles
      * @param useNewDest - This creates a new ETLDest for the rerun. New dest should hopefully not have any state and should still work.
-     * @throws Exception
      */
     @ParameterizedTest
     @MethodSource("provideRecurringFiles")
     public void testRecurringFiles(
-            PartitionGranularity granularity,
-            boolean backUpFiles,
-            boolean useNewDest)
+            PartitionGranularity granularity, boolean backUpFiles, boolean useNewDest, ETLTestPlugins etlTestPlugins)
             throws Exception {
-        PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
-        PlainPBStoragePlugin etlDest = new PlainPBStoragePlugin();
         PBCommonSetup destSetup = new PBCommonSetup();
+        etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
         PlainPBStoragePlugin etlNewDest = new PlainPBStoragePlugin();
-        PBCommonSetup newDestSetup = new PBCommonSetup();
-        ConfigServiceForTests configService = new ConfigServiceForTests(1);
-        etlDest.setBackupFilesBeforeETL(backUpFiles);
 
-        srcSetup.setUpRootFolder(etlSrc, "RecurringFilesTestSrc" + granularity, granularity);
+        srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
-                etlDest, "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
+                etlTestPlugins.dest(), "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
+
+        PBCommonSetup newDestSetup = new PBCommonSetup();
         newDestSetup.setUpRootFolder(
                 etlNewDest, "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
 
-        logger.info("Testing recurring files for " + etlSrc.getPartitionGranularity() + " to "
-                + etlDest.getPartitionGranularity() + " with backup = " + backUpFiles
+        logger.info("Testing recurring files for " + etlTestPlugins.src().getPartitionGranularity() + " to "
+                + etlTestPlugins.dest().getPartitionGranularity() + " with backup = " + backUpFiles
                 + " and newDest = " + useNewDest);
 
         short year = TimeUtils.getCurrentYear();
@@ -100,69 +111,78 @@ public class ETLWithRecurringFilesTest {
         int incrementSeconds = granularity.getApproxSecondsPerChunk() / ratio; // ratio events per granularity
         int eventsGenerated;
 
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testRecurringFiles"
-                + etlSrc.getPartitionGranularity();
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testRecurringFiles" + granularity
+                + backUpFiles + useNewDest + etlTestPlugins.pvNamePrefix();
         {
             PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-            String[] dataStores = new String[] {etlSrc.getURLRepresentation(), etlDest.getURLRepresentation()};
+            String[] dataStores = new String[] {
+                etlTestPlugins.src().getURLRepresentation(),
+                etlTestPlugins.dest().getURLRepresentation()
+            };
             typeInfo.setDataStores(dataStores);
             configService.updateTypeInfoForPV(pvName, typeInfo);
             configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
             configService.getETLLookup().manualControlForUnitTests();
         }
 
-        // Generate 3 times the granularity
-        int eventsPerShot = granularity.getApproxSecondsPerChunk() * 3 / incrementSeconds;
+        // Generate ratio times the granularity
+        int eventsPerShot = (granularity.getNextLargerGranularity().getApproxSecondsPerChunk()
+                        / granularity.getApproxSecondsPerChunk())
+                * ratio;
         ArrayListEventStream instream = new ArrayListEventStream(
                 eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
         for (int i = 0; i < eventsPerShot; i++) {
             int secondsintoyear = TimeUtils.getSecondsIntoYear(curTime.getEpochSecond());
-            instream.add(new SimulationEvent(secondsintoyear
-                    , year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
+            instream.add(new SimulationEvent(
+                    secondsintoyear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
                             secondsintoyear)));
             curTime = curTime.plusSeconds(incrementSeconds);
         }
 
         try (BasicContext context = new BasicContext()) {
-            eventsGenerated = etlSrc.appendData(context, pvName, instream);
+            eventsGenerated = etlTestPlugins.src().appendData(context, pvName, instream);
         }
 
+        String tempFileExtension = ".etltest" + etlTestPlugins.src().pluginIdentifier();
         // We should now have some data in the src root folder...
         // Make a copy of these files so that we can restore them back later after ETL.
         Path[] allSrcPaths = PlainPBPathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
-                etlSrc.getRootFolder(),
+                etlTestPlugins.src().getRootFolder(),
                 pvName,
-                PlainPBStoragePlugin.pbFileExtension,
-                etlSrc.getPartitionGranularity(),
-                CompressionMode.NONE,
+                etlTestPlugins.src().getExtensionString(),
+                etlTestPlugins.src().getPartitionGranularity(),
+                PlainPBStoragePlugin.CompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         for (Path srcPath : allSrcPaths) {
-            Path destPath =
-                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
+            Path destPath = srcPath.resolveSibling(srcPath.getFileName()
+                    .toString()
+                    .replace(etlTestPlugins.src().getExtensionString(), tempFileExtension));
             logger.debug("Path for backup is " + destPath);
             Files.copy(srcPath, destPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
-        // Run ETL as if it was a week later.
+        // Run ETL as if it was february after end of this year
         Instant ETLIsRunningAt =
-                curTime.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
+                curTime.plusSeconds(PartitionGranularity.PARTITION_MONTH.getApproxSecondsPerChunk() + 1);
         // Now do ETL and the srcFiles should have disappeared.
         ETLExecutor.runETLs(configService, ETLIsRunningAt);
 
         // Restore the files from the backup and run ETL again.
         for (Path srcPath : allSrcPaths) {
+
             Assertions.assertFalse(
                     srcPath.toFile().exists(), srcPath.toAbsolutePath() + " was not deleted in the last run");
-            Path destPath =
-                    srcPath.resolveSibling(srcPath.getFileName().toString().replace(PlainPBStoragePlugin.pbFileExtension, ".etltest"));
+            Path destPath = srcPath.resolveSibling(srcPath.getFileName()
+                    .toString()
+                    .replace(etlTestPlugins.src().getExtensionString(), tempFileExtension));
             Files.copy(destPath, srcPath, StandardCopyOption.COPY_ATTRIBUTES);
         }
 
         if (useNewDest) {
-            ConfigServiceForTests newConfigService = new ConfigServiceForTests(new File("./bin"), 1);
             PVTypeInfo typeInfo2 = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-            String[] dataStores2 = new String[] {etlSrc.getURLRepresentation(), etlNewDest.getURLRepresentation()};
+            String[] dataStores2 =
+                    new String[] {etlTestPlugins.src().getURLRepresentation(), etlNewDest.getURLRepresentation()};
             typeInfo2.setDataStores(dataStores2);
             newConfigService.registerPVToAppliance(pvName, newConfigService.getMyApplianceInfo());
             newConfigService.updateTypeInfoForPV(pvName, typeInfo2);
@@ -173,7 +193,7 @@ public class ETLWithRecurringFilesTest {
             ETLExecutor.runETLs(configService, ETLIsRunningAt);
             checkDataValidity(
                     pvName,
-                    etlSrc,
+                    etlTestPlugins.src(),
                     etlNewDest,
                     start,
                     incrementSeconds,
@@ -186,8 +206,8 @@ public class ETLWithRecurringFilesTest {
             ETLExecutor.runETLs(configService, ETLIsRunningAt);
             checkDataValidity(
                     pvName,
-                    etlSrc,
-                    etlDest,
+                    etlTestPlugins.src(),
+                    etlTestPlugins.dest(),
                     start,
                     incrementSeconds,
                     eventsGenerated,
@@ -197,8 +217,6 @@ public class ETLWithRecurringFilesTest {
         srcSetup.deleteTestFolder();
         destSetup.deleteTestFolder();
         newDestSetup.deleteTestFolder();
-
-        configService.shutdownNow();
     }
 
     private void checkDataValidity(
@@ -225,9 +243,7 @@ public class ETLWithRecurringFilesTest {
                 EventStream afterDest = new CurrentThreadWorkerEventStream(
                         pvName, etlDest.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterDest) {
-                Assertions.assertEquals(
-                        expectedTime,
-                        e.getEventTimeStamp());
+                Assertions.assertEquals(expectedTime, e.getEventTimeStamp());
                 expectedTime = expectedTime.plusSeconds(incrementSeconds);
                 afterCount++;
             }
@@ -238,9 +254,7 @@ public class ETLWithRecurringFilesTest {
                 EventStream afterSrc = new CurrentThreadWorkerEventStream(
                         pvName, etlSrc.getDataForPV(context, pvName, startOfRequest, endOfRequest))) {
             for (Event e : afterSrc) {
-                Assertions.assertEquals(
-                        expectedTime,
-                        e.getEventTimeStamp());
+                Assertions.assertEquals(expectedTime, e.getEventTimeStamp());
                 expectedTime = expectedTime.plusSeconds(incrementSeconds);
                 afterCount++;
             }

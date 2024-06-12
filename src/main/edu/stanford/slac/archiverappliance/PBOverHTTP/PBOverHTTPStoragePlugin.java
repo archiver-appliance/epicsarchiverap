@@ -51,6 +51,12 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
     private String desc = "A event stream backed by a .raw response from a remote server.";
     private String name;
     private boolean skipExternalServers = false;
+    public static final String PBHTTP_PLUGIN_IDENTIFIER = "pbraw";
+
+    @Override
+    public String pluginIdentifier() {
+        return PBHTTP_PLUGIN_IDENTIFIER;
+    }
 
     @Override
     public List<Callable<EventStream>> getDataForPV(
