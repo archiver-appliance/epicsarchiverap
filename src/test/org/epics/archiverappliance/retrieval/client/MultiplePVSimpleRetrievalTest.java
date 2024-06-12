@@ -7,7 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -33,58 +32,58 @@ import java.time.Instant;
  */
 @Tag("integration")
 public class MultiplePVSimpleRetrievalTest {
-	private static final Logger logger = LogManager.getLogger(MultiplePVSimpleRetrievalTest.class.getName());
-	TomcatSetup tomcatSetup = new TomcatSetup();
+    private static final Logger logger = LogManager.getLogger(MultiplePVSimpleRetrievalTest.class.getName());
+    TomcatSetup tomcatSetup = new TomcatSetup();
     private static long previousEpochSeconds = 0;
     private static final int TOTAL_NUMBER_OF_PVS = 10;
-	private static final String[] pvs = new String[TOTAL_NUMBER_OF_PVS];
+    private static final String[] pvs = new String[TOTAL_NUMBER_OF_PVS];
 
+    @BeforeEach
+    public void setUp() throws Exception {
+        int phasediff = 360 / TOTAL_NUMBER_OF_PVS;
+        for (int i = 0; i < TOTAL_NUMBER_OF_PVS; i++) {
+            pvs[i] = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine" + i;
+            GenerateData.generateSineForPV(pvs[i], i * phasediff, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+        }
+        tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
+    }
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		int phasediff = 360/TOTAL_NUMBER_OF_PVS;
-		for(int i = 0; i < TOTAL_NUMBER_OF_PVS; i++) {
-			pvs[i] = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine" + i;
-			GenerateData.generateSineForPV(pvs[i], i*phasediff, ArchDBRTypes.DBR_SCALAR_DOUBLE);
-		}
-		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        tomcatSetup.tearDown();
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		tomcatSetup.tearDown();
-	}
-
-	@Test
-	public void testGetDataForMultiplePVs() {
-		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
+    @Test
+    public void testGetDataForMultiplePVs() {
+        RawDataRetrievalAsEventStream rawDataRetrieval =
+                new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
         Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
-		EventStream stream = null;
-		try {
-			stream = rawDataRetrieval.getDataForPVS(pvs, start, end, new RetrievalEventProcessor() {
-				@Override
-				public void newPVOnStream(EventStreamDesc desc) {
-					logger.info("On the client side, switching to processing PV " + desc.getPvName());
-					previousEpochSeconds = 0;
-				}
-			});
+        EventStream stream = null;
+        try {
+            stream = rawDataRetrieval.getDataForPVS(pvs, start, end, new RetrievalEventProcessor() {
+                @Override
+                public void newPVOnStream(EventStreamDesc desc) {
+                    logger.info("On the client side, switching to processing PV " + desc.getPvName());
+                    previousEpochSeconds = 0;
+                }
+            });
 
-
-			// We are making sure that the stream we get back has times in sequential order...
-			if(stream != null) {
-				for(Event e : stream) {
-					long actualSeconds = e.getEpochSeconds();
-					Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
-					previousEpochSeconds = actualSeconds;
-				}
-			}
-		} finally {
-			if (stream != null) try {
-				stream.close();
-				stream = null;
-			} catch (Throwable ignored) {
-			}
-		}
-	}
+            // We are making sure that the stream we get back has times in sequential order...
+            if (stream != null) {
+                for (Event e : stream) {
+                    long actualSeconds = e.getEpochSeconds();
+                    Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
+                    previousEpochSeconds = actualSeconds;
+                }
+            }
+        } finally {
+            if (stream != null)
+                try {
+                    stream.close();
+                    stream = null;
+                } catch (Throwable ignored) {
+                }
+        }
+    }
 }

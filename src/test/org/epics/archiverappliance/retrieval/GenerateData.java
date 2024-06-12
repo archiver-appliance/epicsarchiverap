@@ -51,45 +51,32 @@ public class GenerateData {
         }
     }
 
-	/**
+    /**
      * We generate a sine wave for the data if it does not already exist.
      * @throws IOException
      */
     public static long generateSineForPV(
-            String pvName,
-            int phasediffindegrees,
-            ArchDBRTypes type,
-            Instant start,
-            Instant end)
-            throws Exception {
+            String pvName, int phasediffindegrees, ArchDBRTypes type, Instant start, Instant end) throws Exception {
         PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
         PBCommonSetup setup = new PBCommonSetup();
         setup.setUpRootFolder(storagePlugin);
         long numberOfEvents = 0;
         try (BasicContext context = new BasicContext()) {
             if (!Files.exists(PlainPBPathNameUtility.getPathNameForTime(
-                    storagePlugin,
-                    pvName,
-                    start,
-                    context.getPaths(),
-                    configService.getPVNameToKeyConverter()))) {
+                    storagePlugin, pvName, start, context.getPaths(), configService.getPVNameToKeyConverter()))) {
                 SimulationEventStream simstream =
                         new SimulationEventStream(type, new SineGenerator(phasediffindegrees), start, end, 1);
                 numberOfEvents = simstream.getNumberOfEvents();
                 storagePlugin.appendData(context, pvName, simstream);
             }
         }
-        configService.shutdownNow();
         return numberOfEvents;
     }
-
     /**
      * We generate a sine wave for the data if it does not already exist.
-     *
      * @throws IOException
      */
-    public static long generateSineForPV(
-            String pvName, int phasediffindegrees, ArchDBRTypes type) throws Exception {
+    public static long generateSineForPV(String pvName, int phasediffindegrees, ArchDBRTypes type) throws Exception {
 
         return generateSineForPV(
                 pvName,
