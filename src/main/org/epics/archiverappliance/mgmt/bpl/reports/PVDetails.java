@@ -86,6 +86,11 @@ public class PVDetails implements BPLAction {
             if (!pvName.equals(pvNameFromRequest)) {
                 addDetailedStatus(result, "Alias for ", pvName);
             }
+            List<String> myaliases = configService.getAliasesForRealName(pvName);
+            if(myaliases != null && !myaliases.isEmpty()) {
+                addDetailedStatus(result, "Aliases mapped to this PV ", String.join(",", myaliases));
+            }
+
             addDetailedStatus(result, "Instance archiving PV", info.getIdentity());
             PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
             if (typeInfo != null) {

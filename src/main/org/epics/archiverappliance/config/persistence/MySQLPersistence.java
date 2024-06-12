@@ -223,8 +223,6 @@ public class MySQLPersistence implements ConfigPersistence {
 		removeKey("DELETE FROM ExternalDataServers WHERE serverid = ?;", serverId, "removeExternalDataServer");
 	}
 
-
-
 	@Override
 	public List<String> getAliasNamesToRealNamesKeys() throws IOException {
 		return getKeys("SELECT pvName AS pvName FROM PVAliases ORDER BY pvName;", "getAliasNamesToRealNamesKeys");
@@ -234,6 +232,13 @@ public class MySQLPersistence implements ConfigPersistence {
 	public String getAliasNamesToRealName(String pvName) throws IOException {
 		return getStringValueForKey("SELECT realName AS realName FROM PVAliases WHERE pvName = ?;", pvName, "getAliasNamesToRealName");
 	}
+
+	@Override
+	public List<String> getAliasNamesForRealName(String realName) throws IOException {
+		logger.debug("Getting all the aliases for real name {}", realName);
+		return getStringListValueForKey("SELECT pvName FROM PVAliases WHERE realName=?;", realName, "getAliasNamesForRealName");
+	}
+
 
 	@Override
 	public void putAliasNamesToRealName(String pvName, String realName) throws IOException {
@@ -274,8 +279,6 @@ public class MySQLPersistence implements ConfigPersistence {
 		logger.debug(msg + " returns " + ret.size() + " keys");
 		return ret;
 	}
-
-
 
 	private <T> T getValueForKey(String sql, String key, T obj, Class<T> clazz, String msg) throws IOException {
 		if(key == null || key.equals("")) return null;
@@ -319,7 +322,25 @@ public class MySQLPersistence implements ConfigPersistence {
 		return null;
 	}
 
+	private List<String> getStringListValueForKey(String sql, String key, String msg) throws IOException {
+		LinkedList<String> ret = new LinkedList<String>();
+		if(key == null || key.equals("")) return ret;
 
+		try(Connection conn = theDataSource.getConnection()) {
+			try(PreparedStatement stmt = conn.prepareStatement(sql)) {
+				stmt.setString(1, key);
+				try(ResultSet rs = stmt.executeQuery()) {
+					while(rs.next()) {
+						ret.add(rs.getString(1));
+					}
+				}
+			}
+		} catch(Exception ex) {
+			throw new IOException(ex);
+		}
+
+		return ret;
+	}
 
 	private <T> void putValueForKey(String sql, String key, T obj, Class<T> clazz, String msg) throws IOException {
 		if(key == null || key.equals("")) throw new IOException("key cannot be null when persisting " + msg);
