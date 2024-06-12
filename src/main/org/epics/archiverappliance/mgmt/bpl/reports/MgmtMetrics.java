@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.reports.Metrics;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
@@ -29,22 +30,16 @@ import org.json.simple.JSONValue;
  * @author mshankar
  *
  */
-public class MgmtMetrics implements BPLAction {
+public class MgmtMetrics implements Metrics {
     private static final Logger logger = LogManager.getLogger(MgmtMetrics.class);
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
-            throws IOException {
-        logger.info("Generating mgmt metrics report");
-        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-        try (PrintWriter out = resp.getWriter()) {
-            Map<String, String> result = new HashMap<String, String>();
-            long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
-            Duration vmInterval = Duration.between(
-                    Instant.ofEpochMilli(vmStartTime), Instant.ofEpochMilli(System.currentTimeMillis()));            
-            result.put("uptime", vmInterval.toString());
-
-            out.println(JSONValue.toJSONString(result));
-        }
+    public Map<String, String> metrics(ConfigService configService) { 
+        Map<String, String> result = new HashMap<String, String>();
+        long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
+        Duration vmInterval = Duration.between(
+                Instant.ofEpochMilli(vmStartTime), Instant.ofEpochMilli(System.currentTimeMillis()));            
+        result.put("uptime", vmInterval.toString());
+        return result;
     }
 }
