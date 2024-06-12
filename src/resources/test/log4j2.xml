@@ -21,7 +21,7 @@
  <Loggers>
   <Logger name="config" level="debug"/>
   <Root level="debug">
-   <AppenderRef ref="RollingFile" level="info"/>
+   <AppenderRef ref="RollingFile" level="$${env:LOG_LEVEL:-info}"/>
    <AppenderRef ref="STDOUT" level="info"/>
   </Root>
  </Loggers>
