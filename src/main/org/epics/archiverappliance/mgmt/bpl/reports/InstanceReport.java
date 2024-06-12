@@ -33,6 +33,12 @@ public class InstanceReport implements BPLAction {
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
             for (ApplianceInfo info : configService.getAppliancesInCluster()) {
                 var applianceInfo = ApplianceMetrics.getBasicMetrics(configService, result, info);
+                JSONObject mgmtMetrics =
+                        GetUrlContent.getURLContentAsJSONObject(info.getMgmtURL() + "/getMgmtMetricsForAppliance");
+                applianceInfo.put(
+                        "MGMT_uptime",((String) mgmtMetrics.get("uptime")).substring(2)
+                        .replaceAll("(\\d[HMS])(?!$)", "$1 ")
+                        .toLowerCase());
 
                 // The getApplianceMetrics here is not a typo. We redisplay some of the appliance metrics in this page.
                 JSONObject engineMetrics =
@@ -40,16 +46,6 @@ public class InstanceReport implements BPLAction {
                 JSONObject etlMetrics =
                         GetUrlContent.getURLContentAsJSONObject(info.getEtlURL() + "/getApplianceMetrics");
                 ApplianceMetrics.combineGenericMetrics(info, applianceInfo, engineMetrics, etlMetrics, logger);
-
-                long vmStartTime = ManagementFactory.getRuntimeMXBean().getStartTime();
-                Duration vmInterval = Duration.between(
-                        Instant.ofEpochMilli(vmStartTime), Instant.ofEpochMilli(System.currentTimeMillis()));
-
-                applianceInfo.put(
-                        "MGMT_uptime", DurationFormatUtils.formatDurationWords(vmInterval.toMillis(), true, false));
-
-                applianceInfo.put("errors", Integer.toString(0));
-                applianceInfo.put("capacityUtilized", "N/A");
             }
             out.println(JSONValue.toJSONString(result));
         }

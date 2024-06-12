@@ -78,6 +78,7 @@ import org.epics.archiverappliance.mgmt.bpl.reports.InstanceReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.InstanceReportDetails;
 import org.epics.archiverappliance.mgmt.bpl.reports.LostConnectionsReport;
 import org.epics.archiverappliance.mgmt.bpl.reports.MetaGetsAction;
+import org.epics.archiverappliance.mgmt.bpl.reports.MgmtMetrics;
 import org.epics.archiverappliance.mgmt.bpl.reports.NeverConnectedPVsAction;
 import org.epics.archiverappliance.mgmt.bpl.reports.NeverConnectedPVsForThisAppliance;
 import org.epics.archiverappliance.mgmt.bpl.reports.PVDetails;
@@ -186,6 +187,7 @@ public class BPLServlet extends HttpServlet {
         addAction("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
         addAction("/getApplianceMetrics", ApplianceMetrics.class);
         addAction("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
+        addAction("/getMgmtMetricsForAppliance", MgmtMetrics.class);
         addAction("/getExternalArchiverServers", ChannelArchiverListView.class);
         addAction("/addExternalArchiverServer", AddExternalArchiverServer.class);
         addAction("/addExternalArchiverServerArchives", AddExternalArchiverServerArchives.class);
