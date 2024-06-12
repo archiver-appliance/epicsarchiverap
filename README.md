@@ -144,5 +144,5 @@ python -m pip install --upgrade --no-cache-dir pip setuptools
 python -m pip install --upgrade --no-cache-dir sphinx readthedocs-sphinx-ext 
 python -m pip install --exists-action=w --no-cache-dir -r docs/requirements.txt 
 cd docs
-sphinx-autobuild source build
+sphinx-autobuild source build 
 ```
