@@ -144,7 +144,7 @@ public class PVsMatchingParameter {
             boolean includePVSThatDontExist,
             LinkedList<String> pvNames) {
         for (String pv : pvs) {
-            if (StringUtils.containsAny("*", "?")) {
+            if (StringUtils.containsAny(pv, "*?")) {
                 WildcardFileFilter matcher = new WildcardFileFilter(pv);
                 for (String pvName : configService.getAllPVs()) {
                     if (matcher.accept((new File(pvName)))) {
