@@ -16,9 +16,11 @@ import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.EmptyEventIterator;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
+import org.epics.archiverappliance.common.BiDirectionalIterable.IterationDirection;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.etl.ETLBulkStream;
@@ -56,6 +58,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
     private FileBackedPBEventStreamIterator theIterator = null;
     private RemotableEventStreamDesc desc;
     private PBFileInfo fileInfo = null;
+    private BiDirectionalIterable.IterationDirection direction = null;
 
     /**
      * Used when we want to include data from the entire file.
@@ -122,6 +125,39 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
         }
     }
 
+
+    /**
+     * Used for unlimited iteration.
+     * We specify a time to start the iteration at and a direction.
+     * @param pvname  The PV name
+     * @param path Path
+     * @param dbrtype Enum ArchDBRTypes
+     * @param startAtTime Start iteration at time
+     * @throws IOException  &emsp;
+     */
+    public FileBackedPBEventStream(
+            String pvname, Path path, ArchDBRTypes dbrtype, Instant startAtTime, BiDirectionalIterable.IterationDirection direction)
+            throws IOException {
+        this.pvName = pvname;
+        this.path = path;
+        this.type = dbrtype;
+        this.direction = direction;
+        this.startTime = startAtTime;
+        this.endTime = startAtTime;
+        this.readPayLoadInfo();
+        if(direction == IterationDirection.FORWARDS) {
+            this.startFilePos = this.seekToStartTime(path, dbrtype, startAtTime);
+            this.endFilePos = Files.size(path);
+        } else {
+            this.startFilePos = this.fileInfo.positionOfFirstSample;
+            this.endFilePos = this.seekToEndTime(path, dbrtype, startAtTime);
+            if(this.endFilePos <=0) {
+                this.endFilePos = Files.size(path);
+            }
+        }
+    }
+
+
     @Override
     public Iterator<Event> iterator() {
         try {
@@ -136,6 +172,25 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
             }
             if (fileInfo == null) {
                 readPayLoadInfo();
+            }
+
+            if(this.direction != null) {
+                if(this.direction == BiDirectionalIterable.IterationDirection.BACKWARDS) {
+                    // If I am going backwards and the first event in this file is after the startAtTime, we don't have any data in this file for the iteration
+                    if(fileInfo.firstEvent.getEventTimeStamp().isAfter(this.endTime)) {
+                        logger.info("Returning an empty iterator as the time in file is after endtime");
+                        return new EmptyEventIterator();
+                    }
+                    theIterator = new PBEventStreamPositionBasedReverseIterator(path, startFilePos, endFilePos, desc.getYear(), type);
+                } else {
+                    // If I am going forwards and the last event in the file is before the startAtTime, we don't have any data in this file for the iteration
+                    if(fileInfo.lastEvent.getEventTimeStamp().isBefore(this.startTime)) {
+                        logger.info("Returning an empty iterator as the time in file is before starttime");
+                        return new EmptyEventIterator();
+                    }
+                    theIterator = new FileBackedPBEventStreamPositionBasedIterator(path, startFilePos, endFilePos, desc.getYear(), type);
+                }
+                return theIterator;
             }
 
             if (this.positionBoundaries) {

@@ -19,18 +19,22 @@ import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.XmlClientConfigBuilder;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.XmlConfigBuilder;
-import com.hazelcast.core.Cluster;
+import com.hazelcast.cluster.Cluster;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
-import com.hazelcast.core.ITopic;
-import com.hazelcast.core.Member;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import com.hazelcast.map.IMap;
+import com.hazelcast.topic.ITopic;
+import com.hazelcast.cluster.Member;
+import com.hazelcast.cluster.MembershipEvent;
+import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
+import com.hazelcast.projection.Projection;
+import com.hazelcast.query.Predicate;
+import com.hazelcast.query.PredicateBuilder.EntryObject;
+import com.hazelcast.query.Predicates;
+
 import edu.stanford.slac.archiverappliance.PB.data.PBTypeSystem;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.logging.log4j.LogManager;
@@ -66,8 +70,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.PlatformLoggingMXBean;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -193,6 +195,8 @@ public class DefaultConfigService implements ConfigService {
     private ServletContext servletContext;
 
     private final long appserverStartEpochSeconds = TimeUtils.getCurrentEpochSeconds();
+
+    private HazelcastInstance hzinstance;
 
     protected DefaultConfigService() {
         // Only the unit tests config service uses this constructor.
@@ -415,8 +419,6 @@ public class DefaultConfigService implements ConfigService {
         this.startupState = STARTUP_SEQUENCE.POST_STARTUP_RUNNING;
         configlogger.info("Post startup for " + this.getWarFile().toString());
 
-        HazelcastInstance hzinstance;
-
         // Set the thread count to control how may threads this library spawns.
         Properties hzThreadCounts = new Properties();
         if (System.getenv().containsKey("ARCHAPPL_ALL_APPS_ON_ONE_JVM")) {
@@ -453,8 +455,7 @@ public class DefaultConfigService implements ConfigService {
                     config.getNetworkConfig().getInterfaces().clear();
 
                     // We don't really use the authentication provided by the tool; however, we set it to some default
-                    config.getGroupConfig().setName(ARCHAPPL_NAME);
-                    config.getGroupConfig().setPassword(ARCHAPPL_NAME);
+                    config.setClusterName(ARCHAPPL_NAME);
 
                     // Backup count is 1 by default; we set it explicitly however...
                     config.getMapConfig("default").setBackupCount(1);
@@ -472,6 +473,8 @@ public class DefaultConfigService implements ConfigService {
                 logger.info("Reducing the generic clustering thread counts.");
                 config.getProperties().putAll(hzThreadCounts);
             }
+
+            config.setProperty( "hazelcast.logging.type", "log4j2" );
 
             try {
                 String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
@@ -535,9 +538,10 @@ public class DefaultConfigService implements ConfigService {
                  *   4. it loads the hazelcast-client-default.xml
                  */
                 ClientConfig clientConfig = new XmlClientConfigBuilder().build();
-                clientConfig.getGroupConfig().setName(ARCHAPPL_NAME);
-                clientConfig.getGroupConfig().setPassword(ARCHAPPL_NAME);
-                clientConfig.setExecutorPoolSize(4);
+                clientConfig.setClusterName(ARCHAPPL_NAME);
+                clientConfig.setInstanceName(myIdentity+"_"+this.warFile);
+                clientConfig.setProperty( "hazelcast.logging.type", "log4j2" );
+
                 // Non mgmt client can only connect to their MGMT webapp.
                 String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
                 String myHostName = myAddrParts[0];
@@ -557,11 +561,6 @@ public class DefaultConfigService implements ConfigService {
                     logger.info("Reducing the generic clustering thread counts.");
                     clientConfig.getProperties().putAll(hzThreadCounts);
                 }
-
-                configlogger.info("client network config conn attempt limit: "
-                        + clientConfig.getNetworkConfig().getConnectionAttemptLimit());
-                configlogger.info("client network config conn attempt period: "
-                        + clientConfig.getNetworkConfig().getConnectionAttemptPeriod());
                 configlogger.info("client network config conn timeout: "
                         + clientConfig.getNetworkConfig().getConnectionTimeout());
                 configlogger.info("client network config addresses: "
@@ -650,13 +649,6 @@ public class DefaultConfigService implements ConfigService {
                     } else {
                         configlogger.debug(() -> "Received member removed event for " + inetPort);
                     }
-                }
-
-                @Override
-                public void memberAttributeChanged(MemberAttributeEvent membersipEvent) {
-                    Member member = membersipEvent.getMember();
-                    String inetPort = getMemberKey(member);
-                    configlogger.debug(() -> "Received membership attribute changed event for " + inetPort);
                 }
             });
 
@@ -1071,20 +1063,29 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
-    public Iterable<String> getPVsForThisAppliance() {
+    public Set<String> getPVsForThisAppliance() {
         if (pvsForThisAppliance != null) {
             logger.debug(() -> "Returning the locally cached copy of the pvs for this appliance");
-            return pvsForThisAppliance;
+            return Collections.unmodifiableSet(pvsForThisAppliance);
         } else {
-            logger.debug(() -> "Fetching the list of PVs for this appliance from the mgmt app");
-            JSONArray pvs =
-                    GetUrlContent.getURLContentAsJSONArray(myApplianceInfo.getMgmtURL() + "/getPVsForThisAppliance");
-            LinkedList<String> retval = new LinkedList<String>();
-            for (Object pv : pvs) {
-                retval.add((String) pv);
+            logger.debug(() -> "Generating the list of PVs for this appliance from pv2appliancemapping");
+            ConcurrentSkipListSet<String> retval = new ConcurrentSkipListSet<String>();
+            for (Map.Entry<String, ApplianceInfo> entry : pv2appliancemapping.entrySet()) {
+                if(entry.getValue().getIdentity().equals(this.myIdentity)) {
+                    retval.add(entry.getKey());
+                }
             }
-            return retval;
+            return Collections.unmodifiableSet(retval);
         }
+    }
+
+    @Override
+	public <T> Collection<T> projectPVTypeInfos(Set<String> pvNames, Projection<Map.Entry<String, PVTypeInfo>, T> projection) {
+        IMap<String, PVTypeInfo> hztypeinfos = hzinstance.getMap(TYPEINFO);
+        EntryObject e = Predicates.newPredicateBuilder().getEntryObject();
+        Predicate<String, PVTypeInfo> predicate = e.key().in(pvNames.toArray(new String[0]));
+        Collection<T> projectedTypeInfos = hztypeinfos.project(projection, predicate);
+        return projectedTypeInfos;
     }
 
     @Override

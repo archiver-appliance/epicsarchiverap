@@ -6,8 +6,10 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.BiDirectionalIterable.IterationDirection;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
@@ -292,6 +294,44 @@ public class FileBackedPBEventStreamTest {
             }
         }
     }
+
+    @Test
+    public void testDirectionalIteration() throws IOException {
+        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+
+        for(BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
+            logger.info("Testing directional iteration {}", direction);
+            Instant startAtTime = (direction == BiDirectionalIterable.IterationDirection.BACKWARDS) 
+                ? TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()+1) 
+                : TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
+
+            try (BasicContext context = new BasicContext()) {
+                long startMs = System.currentTimeMillis();
+                Path path = PlainPBPathNameUtility.getPathNameForTime(
+                        storagePlugin,
+                        pvName,
+                        oneWeekIntoYear,
+                        context.getPaths(),
+                        configService.getPVNameToKeyConverter());
+                Assertions.assertNotNull(path, "Did we not write any data?");
+                long eventCount = 0;
+                try (FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType, startAtTime, direction)) {
+                    for (Event e : stream) {
+                        try {
+                            logger.debug("Timestamp of sample {}", TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+                        } catch(Exception ex) {
+                            logger.error("Exception at event " + eventCount, ex);
+                            throw ex;
+                        }
+                        eventCount++;
+                    }
+                }
+                Assertions.assertEquals(events, eventCount, "Expected " + events + " got " + eventCount);
+                long endMs = System.currentTimeMillis();
+                logger.info("Time for " + eventCount + " samples = " + (endMs - startMs) + "(ms)");
+            }    
+        }
+    }    
 
     @Test
     public void makeSureWeGetTheLastEventInTheFile() throws IOException {
