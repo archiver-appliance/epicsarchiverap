@@ -108,8 +108,6 @@ import javax.servlet.ServletContext;
  *
  */
 public class DefaultConfigService implements ConfigService {
-    public static final String COM_HAZELCAST = "com.hazelcast";
-    public static final String HAZELCAST_LOGGING_TYPE = "hazelcast.logging.type";
     public static final String LOGGING_TYPE = "log4j2";
     public static final String ARCHAPPL_NAME = "archappl";
     public static final String LOCAL_HOST_ADDRESS = "127.0.0.1";
@@ -417,29 +415,6 @@ public class DefaultConfigService implements ConfigService {
         this.startupState = STARTUP_SEQUENCE.POST_STARTUP_RUNNING;
         configlogger.info("Post startup for " + this.getWarFile().toString());
 
-        // Inherit logging from log4j configuration.
-        try {
-            PlatformLoggingMXBean logging = ManagementFactory.getPlatformMXBean(PlatformLoggingMXBean.class);
-            if (logging != null) {
-                java.util.logging.Logger.getLogger(COM_HAZELCAST);
-                if (clusterLogger.isDebugEnabled()) {
-                    logging.setLoggerLevel(COM_HAZELCAST, java.util.logging.Level.FINE.toString());
-                } else if (clusterLogger.isInfoEnabled()) {
-                    logging.setLoggerLevel(COM_HAZELCAST, java.util.logging.Level.INFO.toString());
-                } else {
-                    logger.info("Setting clustering logging based on log levels for cluster."
-                            + getClass().getName());
-                    logging.setLoggerLevel(COM_HAZELCAST, java.util.logging.Level.SEVERE.toString());
-                }
-            }
-
-        } catch (Exception ex) {
-            logger.error("Exception setting logging JVM levels ", ex);
-        }
-
-        // Add this to the system props before doing anything with Hz
-        System.getProperties().put(HAZELCAST_LOGGING_TYPE, LOGGING_TYPE);
-
         HazelcastInstance hzinstance;
 
         // Set the thread count to control how may threads this library spawns.
@@ -483,8 +458,6 @@ public class DefaultConfigService implements ConfigService {
 
                     // Backup count is 1 by default; we set it explicitly however...
                     config.getMapConfig("default").setBackupCount(1);
-
-                    config.setProperty(HAZELCAST_LOGGING_TYPE, LOGGING_TYPE);
                 } else {
                     logger.debug(
                             "There is a hazelcast.xml in the classpath; skipping default configuration in the code.");
@@ -579,7 +552,6 @@ public class DefaultConfigService implements ConfigService {
                 configlogger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress()
                         + ":" + myClusterPort);
                 clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
-                clientConfig.setProperty(HAZELCAST_LOGGING_TYPE, LOGGING_TYPE);
 
                 if (!hzThreadCounts.isEmpty()) {
                     logger.info("Reducing the generic clustering thread counts.");
