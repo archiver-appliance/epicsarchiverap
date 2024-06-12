@@ -1,6 +1,0 @@
-[submodule "epicsarchiverap_viewer"]
-	path = epicsarchiverap_viewer
-	url = https://github.com/slacmshankar/epicsarchiverap_viewer.git
-[submodule "svg_viewer"]
-	path = svg_viewer
-	url = https://github.com/slacmshankar/svg_viewer.git
