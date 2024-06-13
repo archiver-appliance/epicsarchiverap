@@ -58,7 +58,7 @@ RUN cp -Rv /tomcat-download/apache-tomcat-$TOMCAT_VERSION/* /tomcat/
 
 FROM base-$TARGETARCH AS gradle-base
 
-RUN apt-get update && apt-get install -yq git default-jdk libreadline-dev
+RUN apt-get update && apt-get install -yq git openjdk-17-jdk libreadline-dev
 COPY --from=tomcat-download-extract /tomcat /tomcat
 ENV TOMCAT_HOME=/tomcat
 

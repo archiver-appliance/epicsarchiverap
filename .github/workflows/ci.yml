@@ -72,6 +72,11 @@ jobs:
           file: docker/Dockerfile
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
       - name: Run tests with docker compose
         run: docker compose -f docker/docker-compose.epicsTests.yml run epicsarchiver-test
         env:
