@@ -2,8 +2,13 @@ version: "2"
 
 build:
   os: "ubuntu-22.04"
+  apt_packages:
+    - openjdk-17-jdk
   tools:
     python: "3.10"
+  jobs:
+    pre_build:
+      - ./gradlew javadoc
 
 python:
   install:
