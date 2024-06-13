@@ -60,4 +60,5 @@ sysadmin/sqlite.md
 developer/details.md
 developer/developersguide.md
 developer/pb_pbraw.md
+Management Scriptables <developer/mgmt_scriptables.md>
 ```
