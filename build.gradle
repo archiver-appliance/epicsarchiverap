@@ -548,7 +548,7 @@ spotless {
 		endWithNewline()
 	}
 	format 'styling', {
-		target 'docs/*.html', 'docs/*.css', 'docs/arch/docs.js', 'src/main/**/*.html', 'src/main/**/*.js', 'src/main/**/*.css'
+		target 'docs/docs/source/**/*.html', 'docs/docs/source/**/*.css', 'docs/docs/source/**/*.md', 'docs/**/docs.js', 'src/main/**/*.html', 'src/main/**/*.js', 'src/main/**/*.css'
 		prettier()
 	}
 	java {

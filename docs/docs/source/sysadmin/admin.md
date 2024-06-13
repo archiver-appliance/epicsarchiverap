@@ -5,10 +5,10 @@
 For bulk operations, most administrators will almost find the scripting
 interface useful as well. All actions in the UI (in addition to a few
 that are not exposed in the UI) are accessible from within scripts -
-please see the [details](details.html#scripting) page for more info.
-Click [here](api/mgmt_scriptables.html) for a list of
+please see the [details](../developer/details.md#scripting) page for more info.
+Click [here](../developer/mgmt_scriptables) for a list of
 business logic accessible thru scripting. There are also many scripting
-samples in the *`tomcat_mgmt`*`/webapps/mgmt/ui/help/samples/` folder.
+samples in the _`tomcat_mgmt`_`/webapps/mgmt/ui/help/samples/` folder.
 
 ## Monitoring
 
@@ -17,8 +17,8 @@ monitored
 
 Logs
 : Monitor the logs periodically for Exceptions,
-    OutOfMemory and FATAL error messages. You can use a variation of
-    these commands
+OutOfMemory and FATAL error messages. You can use a variation of
+these commands
 
     ```bash
     find /arch/tomcats -wholename '*/logs/*' -exec grep -l xception {} \;
@@ -32,59 +32,64 @@ Logs
 
 Disk free space
 : Monitor the disk free space in each of
-    your stores (raising alarms if disk usage increases about a certain
-    limit).
+your stores (raising alarms if disk usage increases about a certain
+limit).
 
 Connected PVs
 : You can use the `getApplianceMetrics` BPL
-    (see `samples/checkConnectedPVs.py`) to monitor the number of
-    currently disconnected PVs. You can then send an email notification
-    to the system administrators if this is greater than a certain
-    percentage or absolute number.
+(see `samples/checkConnectedPVs.py`) to monitor the number of
+currently disconnected PVs. You can then send an email notification
+to the system administrators if this is greater than a certain
+percentage or absolute number.
 
 Type changes
 : You can use the
-    `/getPVsByDroppedEventsTypeChange` BPL (see
-    `samples/checkTypeChangedPVs.py`) to watch for any PV\'s that have
-    changed type. If a PV changes type, the EPICS archiver appliance
-    will suspend archiving this PV until the situation is manually
-    resolved.
-    1. You can rename the PV to a new name.
-        1. Pause the PV under the current name.
-        2. Rename the PV to a new name using the `/renamePV` BPL or the
-            UI
-        3. Delete the PV under the current name.
-        4. Re-archive under the current name.
+`/getPVsByDroppedEventsTypeChange` BPL (see
+`samples/checkTypeChangedPVs.py`) to watch for any PV\'s that have
+changed type. If a PV changes type, the EPICS archiver appliance
+will suspend archiving this PV until the situation is manually
+resolved.
 
-        This should now archive the PV using the new type; however,
-        requests for the older data (which is of the older type) will
-        have to made using the older name.
-    2. The EPICS archiver appliance has some support for converting
-        data from one type to the other. This is not available in all
-        cases but you should be able to convert most scalars.
-        1. Pause the PV
-        2. If needed, consolidate and make a backup of the data for
-            this PV.
-        3. Convert to the new type using the `/changeTypeForPV` BPL
-        4. Resume the PV (if the conversion process succeeds)
+1.  You can rename the PV to a new name.
 
-        The `/changeTypeForPV` alters the data that has already been
-        archived; so you may want to make a backup first.
+    1.  Pause the PV under the current name.
+    2.  Rename the PV to a new name using the `/renamePV` BPL or the
+        UI
+    3.  Delete the PV under the current name.
+    4.  Re-archive under the current name.
+
+            This should now archive the PV using the new type; however,
+            requests for the older data (which is of the older type) will
+            have to made using the older name.
+
+2.  The EPICS archiver appliance has some support for converting
+    data from one type to the other. This is not available in all
+    cases but you should be able to convert most scalars.
+
+    1. Pause the PV
+    2. If needed, consolidate and make a backup of the data for
+       this PV.
+    3. Convert to the new type using the `/changeTypeForPV` BPL
+    4. Resume the PV (if the conversion process succeeds)
+
+    The `/changeTypeForPV` alters the data that has already been
+    archived; so you may want to make a backup first.
 
 Maintaining a clean system
 : Monitoring connected PVs (see
-    above) is made significantly easier if you maintain a clean system.
-    One strategy that can be used is to pause PV\'s that have been
-    disconnected for more than a certain time. The
-    `/getCurrentlyDisconnectedPVs` returns a list of currently
-    disconnected PVs and some notion of when the connection to this PV
-    was lost.
-    - You can (perhaps automatically) pause PVs that have been
-        disconnected for more than a certain period of time.
-    - You can (perhaps automatically) resume PVs that have been paused
-        (obtained using the `/getPausedPVsReport`) but are now alive.
-    - Optionally, you can potentially delete PVs that have been paused
-        for some time and are still not alive.
+above) is made significantly easier if you maintain a clean system.
+One strategy that can be used is to pause PV\'s that have been
+disconnected for more than a certain time. The
+`/getCurrentlyDisconnectedPVs` returns a list of currently
+disconnected PVs and some notion of when the connection to this PV
+was lost.
+
+- You can (perhaps automatically) pause PVs that have been
+  disconnected for more than a certain period of time.
+- You can (perhaps automatically) resume PVs that have been paused
+  (obtained using the `/getPausedPVsReport`) but are now alive.
+- Optionally, you can potentially delete PVs that have been paused
+  for some time and are still not alive.
 
 ## Backing up your config databases
 
@@ -95,7 +100,7 @@ to back this database up periodically. For example, one can do a daily
 backup using `mysqldump`; this should be more than adequate.
 
 ```bash
-mysqldump -u userid -p password  archappl > /path/to/backupfile 
+mysqldump -u userid -p password  archappl > /path/to/backupfile
 ```
 
 It is also good practice to validate the backups every so often. Most
@@ -121,7 +126,7 @@ appliance with an empty config database; you can import the
 configuration into this empty database using
 
 ```bash
-mysql -u userid -p password  archappl < /path/to/backupfile 
+mysql -u userid -p password  archappl < /path/to/backupfile
 ```
 
 Restarting the appliance after this should pick up the imported
@@ -139,28 +144,27 @@ inspect the same elsewhere. Michael Davidsaver maintains a [Wireshark LUA plugin
 Channel Access ( and PVAccess ). Here\'s an example of this process
 
 - First, take a packet capture using Wireshark or tcpdump. For
-    example, you can constrain tcpdump to capture packets on the network
-    interface `em1` between the archiver appliance and the IOC using
-    something like so
+  example, you can constrain tcpdump to capture packets on the network
+  interface `em1` between the archiver appliance and the IOC using
+  something like so
 
-    ```bash
-    /usr/sbin/tcpdump -i em1 'host ioc_or_gateway_hostname and appliance_hostname' -w /localdisk/captured_packets
-    ```
+  ```bash
+  /usr/sbin/tcpdump -i em1 'host ioc_or_gateway_hostname and appliance_hostname' -w /localdisk/captured_packets
+  ```
 
 - The file `/localdisk/captured_packets` contains the packet capture
-    and can be copied over to a dev box and inspected at leisure.
+  and can be copied over to a dev box and inspected at leisure.
 - Wireshark has a very comprehensive GUI and can be used to load the
-    packet capture. Alternatively, one can also use the command line
-    variant of Wireshark called `tshark` like so
+  packet capture. Alternatively, one can also use the command line
+  variant of Wireshark called `tshark` like so
 
-    ```bash
-    tshark -X lua_script:ca.lua -r captured_packets 2>&1 | less
-    ```
+  ```bash
+  tshark -X lua_script:ca.lua -r captured_packets 2>&1 | less
+  ```
 
 - Recent version of the EPICS archiver appliance display the Channel
-    Access `CID - Client ID`, `SID - Server ID` and `Subscription ID` in
-    the PV details page.
+  Access `CID - Client ID`, `SID - Server ID` and `Subscription ID` in
+  the PV details page.
 - Pausing and resuming the PV during packet capture will also enable
-    the `cashark` plugin to track the life cycle of the Channel Access
-    channel.
-
+  the `cashark` plugin to track the life cycle of the Channel Access
+  channel.

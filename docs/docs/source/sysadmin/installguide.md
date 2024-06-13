@@ -33,36 +33,36 @@ accommodates installations with a \"standard\" set of parameters and
 installs the EPICS archiver appliance on one machine. In addition to the
 [System requirements](../developer/details.md#system-requirements), the
 `install_scripts/single_machine_install.sh` will ask for
- 
+
 1. Location of the Tomcat distribution.
 
 2. Location of the MySQL client jar - usually a file with a name like
-    `mysql-connector-java-5.1.21-bin.jar`
+   `mysql-connector-java-5.1.21-bin.jar`
 
 3. A MySQL connection string that looks like so
-    `--user=archappl --password=archappl --database=archappl` that can
-    be used with the MySQL client like so
-    `mysql ${MYSQL_CONNECTION_STRING} -e "SHOW DATABASES"`. This implies
-    that the MySQL schema has already been created using something like
+   `--user=archappl --password=archappl --database=archappl` that can
+   be used with the MySQL client like so
+   `mysql ${MYSQL_CONNECTION_STRING} -e "SHOW DATABASES"`. This implies
+   that the MySQL schema has already been created using something like
 
-    ```bash
-    mysql --user=root --password=*****
-    CREATE DATABASE archappl;
-    GRANT ALL ON archappl.* TO 'archappl' identified by 'archappl';
-    ```
+   ```bash
+   mysql --user=root --password=*****
+   CREATE DATABASE archappl;
+   GRANT ALL ON archappl.* TO 'archappl' identified by 'archappl';
+   ```
 
 The `install_scripts/single_machine_install.sh` install script creates a
 couple of scripts in the deployment folder that can be customized for
 your site.
 
 1. **`sampleStartup.sh`** - This is a script in the fashion of scripts
-    in `/etc/init.d` that can be used to start and stop the four Tomcat
-    processes of your archiver appliance.
+   in `/etc/init.d` that can be used to start and stop the four Tomcat
+   processes of your archiver appliance.
 2. **`deployRelease.sh`** - This can be used to upgrade your
-    installation to a new release of the EPICS archiver appliance. The
-    `deployRelease.sh` also includes some post install hooks to deploy
-    your site specific content as outlined
-    [here](site_specific).
+   installation to a new release of the EPICS archiver appliance. The
+   `deployRelease.sh` also includes some post install hooks to deploy
+   your site specific content as outlined
+   [here](site_specific).
 
 ## Details
 
@@ -73,18 +73,18 @@ configuration consists of these steps. For the cluster
 2. Optionally, create your policies.py file
 
 In addition to installing the JDK, EPICS (see [System requirements](../developer/details.md#system-requirements)), for each appliance
- 
+
 1. Install and configure Tomcat
-    1. Compile the Apache Commons Daemon that is supplied with Tomcat.
+   1. Compile the Apache Commons Daemon that is supplied with Tomcat.
 2. Install MySQL (or other persistence provider)
-    1. Create the tables
-    2. Create a connection pool in Tomcat
+   1. Create the tables
+   2. Create a connection pool in Tomcat
 3. Set up storage
 4. Create individual Tomcats for each of the WAR files using the
-    provided python script that copies a single Tomcat installation into
-    four individual Tomcats - one for each WAR.
+   provided python script that copies a single Tomcat installation into
+   four individual Tomcats - one for each WAR.
 5. Deploy the WAR files into their respective containers - This is the
-    deployment step that will be run when you upgrade to a new release.
+   deployment step that will be run when you upgrade to a new release.
 6. Stop/Start each of the Tomcats
 
 ## Appliances XML
@@ -95,7 +95,7 @@ same physical file, the contents are expected to be identical across all
 appliances in the cluster. The details of the file are outlined in the
 [ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES){.external}
 javadoc. A sample `appliances.xml` with two appliances looks like
- 
+
 ```xml
 <appliances>
    <appliance>
@@ -120,107 +120,111 @@ javadoc. A sample `appliances.xml` with two appliances looks like
 ```
 
 - The archiver appliance looks at the environment variable
-    `ARCHAPPL_APPLIANCES` for the location of the `appliances.xml` file.
-    Use an export statement like so
+  `ARCHAPPL_APPLIANCES` for the location of the `appliances.xml` file.
+  Use an export statement like so
 
-    ```bash
-        export ARCHAPPL_APPLIANCES=/nfs/epics/archiver/production_appliances.xml
-    ```
-    to set the location of the `appliances.xml` file.
+  ```bash
+      export ARCHAPPL_APPLIANCES=/nfs/epics/archiver/production_appliances.xml
+  ```
+
+  to set the location of the `appliances.xml` file.
 
 - The `appliances.xml` has one `<appliance>` section per appliance.
-    Please only define those appliances that are currently in
-    production. Certain BPL, most importantly, the `/archivePV` BPL,
-    are suspended until all the appliances defined in the
-    `appliances.xml` have started up and registered their PVs in the
-    cluster. Previously, we would allow any number of appliances to be
-    defined in the `appliances.xml` regardless of whether they are in
-    production or not. However, it\'s becoming more and more untenable
-    to support this feature. So, from Mar 2023 onwards, please only
-    define live appliances in `appliances.xml`. ~~You can have more
-    entries than you have appliances; that is, if you plan to eventually
-    deploy a cluster of 10 machines but only have a budget for 2, you
-    can go ahead and add entries for the other machines. The cluster
-    should start up even if one or more appliances are missing.~~
+  Please only define those appliances that are currently in
+  production. Certain BPL, most importantly, the `/archivePV` BPL,
+  are suspended until all the appliances defined in the
+  `appliances.xml` have started up and registered their PVs in the
+  cluster. Previously, we would allow any number of appliances to be
+  defined in the `appliances.xml` regardless of whether they are in
+  production or not. However, it\'s becoming more and more untenable
+  to support this feature. So, from Mar 2023 onwards, please only
+  define live appliances in `appliances.xml`. ~~You can have more
+  entries than you have appliances; that is, if you plan to eventually
+  deploy a cluster of 10 machines but only have a budget for 2, you
+  can go ahead and add entries for the other machines. The cluster
+  should start up even if one or more appliances are missing.~~
 
 - The `identity` for each appliance is unique to each appliance. For
-    example, the string `appliance0` serves to uniquely identify the
-    archiver appliance on the machine `archappl0.slac.stanford.edu`.
+  example, the string `appliance0` serves to uniquely identify the
+  archiver appliance on the machine `archappl0.slac.stanford.edu`.
 
 - The `cluster_inetport` is the `TCPIP address:port` combination that
-    is used for inter-appliance communication. There is a check made to
-    ensure that the hostname portion of the `cluster_inetport` is either
-    `localhost` or the same as that obtained from a call to
-    `InetAddress.getLocalHost().getCanonicalHostName()` which typically
-    returns the fully qualified domain name (FQDN). The intent here is
-    to prevent multiple appliances starting up with the same appliance
-    identity (a situation that could potentially lead to data loss).
-    1. For a cluster to function correctly, any member `A` of a cluster
-        should be able to communicate with any member `B` of a cluster
-        using `B`\'s `cluster_inetport` as defined in the
-        `appliances.xml`.
-    2. Obviously, `localhost` should be used for the `cluster_inetport`
-        only if you have a cluster with only one appliance. Even in this
-        case, it\'s probably more future-proof to use the FQDN.
+  is used for inter-appliance communication. There is a check made to
+  ensure that the hostname portion of the `cluster_inetport` is either
+  `localhost` or the same as that obtained from a call to
+  `InetAddress.getLocalHost().getCanonicalHostName()` which typically
+  returns the fully qualified domain name (FQDN). The intent here is
+  to prevent multiple appliances starting up with the same appliance
+  identity (a situation that could potentially lead to data loss).
+
+  1. For a cluster to function correctly, any member `A` of a cluster
+     should be able to communicate with any member `B` of a cluster
+     using `B`\'s `cluster_inetport` as defined in the
+     `appliances.xml`.
+  2. Obviously, `localhost` should be used for the `cluster_inetport`
+     only if you have a cluster with only one appliance. Even in this
+     case, it\'s probably more future-proof to use the FQDN.
 
 - For the ports, it is convenient if
+
   - The port specified in the `cluster_inetport` is the same on all
-        machines. This is the port on which the appliances talk to each
-        other.
+    machines. This is the port on which the appliances talk to each
+    other.
   - The `mgmt_url` has the smallest port number amongst all the web
-        apps.
+    apps.
   - The port numbers for the other three web apps increment in the
-        order show above.
+    order show above.
 
     Again, there is no requirement that this be the case. If you follow
     this convention, you can use the standard deployment scripts with
     minimal modification.
 
 - There are two URL\'s for the `retrieval` webapp.
-    1. The `retrieval_url` is the URL used by the `mgmt` webapp to talk
-        to the `retrieval` webapp.
-    2. The `data_retrieval_url` is used by archive data retrieval
-        clients to talk to the cluster. In this case, we are pointing
-        all clients to a single load-balancer on
-        `archproxy.slac.stanford.edu` on port 80. One can use the
-        [mod_proxy_balancer](http://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html)
-        of Apache to load-balance among any of the appliances in the
-        cluster.
 
-        ![Using Apache HTTP on `archiver` to load balance data retrieval between `appliance0` and`appliance1`.](../images/ApacheasLB.png)
+  1. The `retrieval_url` is the URL used by the `mgmt` webapp to talk
+     to the `retrieval` webapp.
+  2. The `data_retrieval_url` is used by archive data retrieval
+     clients to talk to the cluster. In this case, we are pointing
+     all clients to a single load-balancer on
+     `archproxy.slac.stanford.edu` on port 80. One can use the
+     [mod_proxy_balancer](http://httpd.apache.org/docs/2.4/mod/mod_proxy_balancer.html)
+     of Apache to load-balance among any of the appliances in the
+     cluster.
 
-        - Note there are also other load-balancing solutions available
-            that load-balance the HTTP protocol that may be more
-            appropriate for your installation.
-        - Also, note that Apache+Tomcat can also use a binary protocol
-            called `AJP` for load-balancing between Apache and Tomcat.
-            For this software, we should use simple HTTP; this workflow
-            does not entail the additional complexity of the `AJP`
-            protocol.
+     ![Using Apache HTTP on `archiver` to load balance data retrieval between `appliance0` and`appliance1`.](../images/ApacheasLB.png)
+
+     - Note there are also other load-balancing solutions available
+       that load-balance the HTTP protocol that may be more
+       appropriate for your installation.
+     - Also, note that Apache+Tomcat can also use a binary protocol
+       called `AJP` for load-balancing between Apache and Tomcat.
+       For this software, we should use simple HTTP; this workflow
+       does not entail the additional complexity of the `AJP`
+       protocol.
 
 ## Create your policies file
 
 The EPICS archiver appliance ships with a sample
 [`policies.py`](customization.md#policies) (from the `tests` site)
 that creates a three stage storage environment. These are
- 
+
 1. **STS** - A datastore that uses the
-    [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
-    to store data in a folder specified by the environment variable
-    `ARCHAPPL_SHORT_TERM_FOLDER` at the granularity of an hour.
+   [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+   to store data in a folder specified by the environment variable
+   `ARCHAPPL_SHORT_TERM_FOLDER` at the granularity of an hour.
 2. **MTS** - A datastore that uses the
-    [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
-    to store data in a folder specified by the environment variable
-    `ARCHAPPL_MEDIUM_TERM_FOLDER` at the granularity of a day.
+   [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+   to store data in a folder specified by the environment variable
+   `ARCHAPPL_MEDIUM_TERM_FOLDER` at the granularity of a day.
 3. **LTS** - A datastore that uses the
-    [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
-    to store data in a folder specified by the environment variable
-    `ARCHAPPL_LONG_TERM_FOLDER` at the granularity of an year.
+   [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+   to store data in a folder specified by the environment variable
+   `ARCHAPPL_LONG_TERM_FOLDER` at the granularity of an year.
 
 If you are using the generic build and would like to point to a
 different `policies.py` file, you can use the `ARCHAPPL_POLICIES`
 environment variable, like so.
- 
+
 ```bash
     export ARCHAPPL_POLICIES=/nfs/epics/archiver/production_policies.py
 ```
@@ -238,69 +242,70 @@ not need to specify the `ARCHAPPL_POLICIES` environment variable.
 Installing Tomcat consists of
 
 1. Untar\'ing the Tomcat distribution. It is best to set the
-    environment variable `TOMCAT_HOME` to the location where the Tomcat
-    distribution is expanded. Many of the following steps require a
-    `TOMCAT_HOME` to be set.
+   environment variable `TOMCAT_HOME` to the location where the Tomcat
+   distribution is expanded. Many of the following steps require a
+   `TOMCAT_HOME` to be set.
 
 2. Editing the `conf/server.xml` file to change the ports to better
-    suit your installation.
-    1. By default, the connector port for the HTTP connector is set
-        to 8080. Change this to the port used by the `mgmt` webapp for
-        this appliance, in this example, 17665.
+   suit your installation.
 
-        ``` xml
-        <Connector connectionTimeout="20000" port="808017665" protocol="HTTP/1.1" redirectPort="8443"/>
-        ```
+   1. By default, the connector port for the HTTP connector is set
+      to 8080. Change this to the port used by the `mgmt` webapp for
+      this appliance, in this example, 17665.
 
-    2. Remove/comment out the sections for the AJP connector.
+      ```xml
+      <Connector connectionTimeout="20000" port="808017665" protocol="HTTP/1.1" redirectPort="8443"/>
+      ```
 
-    3. At the end, there should be two ports active in the
-        `conf/server.xml` file, one for the HTTP connector and the other
-        for the `SHUTDOWN` command.
+   2. Remove/comment out the sections for the AJP connector.
+
+   3. At the end, there should be two ports active in the
+      `conf/server.xml` file, one for the HTTP connector and the other
+      for the `SHUTDOWN` command.
 
 3. Setting the appropriate log4j configuration level by
-    creating/editing the `lib/log4j2.xml`. Here\'s a sample that logs
-    exceptions and errors with one exception - log messages logged to
-    the `config` namespace are logged at INFO level.
+   creating/editing the `lib/log4j2.xml`. Here\'s a sample that logs
+   exceptions and errors with one exception - log messages logged to
+   the `config` namespace are logged at INFO level.
 
-    ``` xml
-    <Configuration>
-       <Appenders>
-            <Console name="STDOUT" target="SYSTEM_OUT">
-                <PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/>
-            </Console>
-        </Appenders>
-        <Loggers>
-            <Logger name="org.apache.log4j.xml" level="info"/>
-            <Root level="info">
-                <AppenderRef ref="STDOUT"/>
-            </Root>
-        </Loggers>
-    </Configuration>
-    ```
+   ```xml
+   <Configuration>
+      <Appenders>
+           <Console name="STDOUT" target="SYSTEM_OUT">
+               <PatternLayout pattern="%d %-5p [%t] %C{2} (%F:%L) - %m%n"/>
+           </Console>
+       </Appenders>
+       <Loggers>
+           <Logger name="org.apache.log4j.xml" level="info"/>
+           <Root level="info">
+               <AppenderRef ref="STDOUT"/>
+           </Root>
+       </Loggers>
+   </Configuration>
+   ```
 
 4. To use [Apache Commons Daemon](http://commons.apache.org/daemon/),
-    unzip the `${TOMCAT_HOME}/bin/commons-daemon-native.tar.gz` and
-    follow the instructions. Once you have built this, copy the `jsvc`
-    binary to the Tomcat `bin` folder for convenience. Note, it\'s not
-    required that you use `Apache Commons Daemon` especially, if you are
-    already using system monitoring and management tools like
-    [Nagios](http://www.nagios.org/) or
-    [Hyperic](http://www.hyperic.com/).
+   unzip the `${TOMCAT_HOME}/bin/commons-daemon-native.tar.gz` and
+   follow the instructions. Once you have built this, copy the `jsvc`
+   binary to the Tomcat `bin` folder for convenience. Note, it\'s not
+   required that you use `Apache Commons Daemon` especially, if you are
+   already using system monitoring and management tools like
+   [Nagios](http://www.nagios.org/) or
+   [Hyperic](http://www.hyperic.com/).
 
-    ``` bash
-    $ tar zxf commons-daemon-native.tar.gz
-    $ cd commons-daemon-1.1.0-native-src
-    $ cd unix/
-    $ ./configure
-    *** Current host ***
-    checking build system type... x86_64-pc-linux-gnu
-    ...
-    $ make
-    (cd native; make  all)
-    ...
-    $ cp jsvc ../../../bin/
-    ```
+   ```bash
+   $ tar zxf commons-daemon-native.tar.gz
+   $ cd commons-daemon-1.1.0-native-src
+   $ cd unix/
+   $ ./configure
+   *** Current host ***
+   checking build system type... x86_64-pc-linux-gnu
+   ...
+   $ make
+   (cd native; make  all)
+   ...
+   $ cp jsvc ../../../bin/
+   ```
 
 ## Installing MySQL
 
@@ -317,79 +322,80 @@ appliance,
 - Make sure MySQL is set to start on powerup (using `chkconfig`)
 
 - Create a schema for the archiver appliance called `archappl` and
-    grant a user (in this example, also called `archappl`) permissions
-    for this schema.
+  grant a user (in this example, also called `archappl`) permissions
+  for this schema.
 
-    ```sql
-        CREATE DATABASE archappl;
-        GRANT ALL ON archappl.* TO 'archappl'@localhost IDENTIFIED BY '<password>';
-    ```
+  ```sql
+      CREATE DATABASE archappl;
+      GRANT ALL ON archappl.* TO 'archappl'@localhost IDENTIFIED BY '<password>';
+  ```
 
 - The archiver appliance ships with DDL, for MySQL, this is a file
-    called `archappl_mysql.sql` that is included as part of the `mgmt`
-    WAR file. Execute this script in you newly created schema. Confirm
-    that the tables have been created using a `SHOW TABLES` command.
-    There should be at least these tables
-    1. `PVTypeInfo` - This table stores the archiving parameters for
-        the PVs
-    2. `PVAliases` - This table stores EPICS alias mappings
-    3. `ExternalDataServers` - This table stores information about
-        external data servers.
-    4. `ArchivePVRequests` - This table stores archive requests that
-        are still pending.
+  called `archappl_mysql.sql` that is included as part of the `mgmt`
+  WAR file. Execute this script in you newly created schema. Confirm
+  that the tables have been created using a `SHOW TABLES` command.
+  There should be at least these tables
+
+  1. `PVTypeInfo` - This table stores the archiving parameters for
+     the PVs
+  2. `PVAliases` - This table stores EPICS alias mappings
+  3. `ExternalDataServers` - This table stores information about
+     external data servers.
+  4. `ArchivePVRequests` - This table stores archive requests that
+     are still pending.
 
 - Download and install the [MySQL
-    Connector/J](http://dev.mysql.com/downloads/connector/j/) jar file
-    into your Tomcat\'s `lib` folder. In addition to the log4j2.xml
-    file, you should have a `mysql-connector-java-XXX.jar` as show here.
+  Connector/J](http://dev.mysql.com/downloads/connector/j/) jar file
+  into your Tomcat\'s `lib` folder. In addition to the log4j2.xml
+  file, you should have a `mysql-connector-java-XXX.jar` as show here.
 
-    ``` bash
-    $ ls -ltra
-    ...
-    -rw-r--r-- 1 mshankar cd     505 Nov 13 10:29 log4j2.xml
-    -rw-r--r-- 1 mshankar cd 1007505 Nov 13 10:29 mysql-connector-java-5.1.47-bin.jar
-    ```
+  ```bash
+  $ ls -ltra
+  ...
+  -rw-r--r-- 1 mshankar cd     505 Nov 13 10:29 log4j2.xml
+  -rw-r--r-- 1 mshankar cd 1007505 Nov 13 10:29 mysql-connector-java-5.1.47-bin.jar
+  ```
 
 - Add a connection pool in Tomcat named `jdbc/archappl`. You can use
-    the Tomcat management UI or directly add an entry in
-    `conf/context.xml` like so
+  the Tomcat management UI or directly add an entry in
+  `conf/context.xml` like so
 
-    ``` xml
-    <Resource   name="jdbc/archappl"
-          auth="Container"
-          type="javax.sql.DataSource"
-          factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
-          username="archappl"
-          password="XXXXXXX"
-          testWhileIdle="true"
-          testOnBorrow="true"
-          testOnReturn="false"
-          validationQuery="SELECT 1"
-          validationInterval="30000"
-          timeBetweenEvictionRunsMillis="30000"
-          maxActive="10"
-          minIdle="2"
-          maxWait="10000"
-          initialSize="2"
-          removeAbandonedTimeout="60"
-          removeAbandoned="true"
-          logAbandoned="true"
-          minEvictableIdleTimeMillis="30000"
-          jmxEnabled="true"
-          driverClassName="com.mysql.jdbc.Driver"
-          url="jdbc:mysql://localhost:3306/archappl"
-     />
-    ```
+  ```xml
+  <Resource   name="jdbc/archappl"
+        auth="Container"
+        type="javax.sql.DataSource"
+        factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+        username="archappl"
+        password="XXXXXXX"
+        testWhileIdle="true"
+        testOnBorrow="true"
+        testOnReturn="false"
+        validationQuery="SELECT 1"
+        validationInterval="30000"
+        timeBetweenEvictionRunsMillis="30000"
+        maxActive="10"
+        minIdle="2"
+        maxWait="10000"
+        initialSize="2"
+        removeAbandonedTimeout="60"
+        removeAbandoned="true"
+        logAbandoned="true"
+        minEvictableIdleTimeMillis="30000"
+        jmxEnabled="true"
+        driverClassName="com.mysql.jdbc.Driver"
+        url="jdbc:mysql://localhost:3306/archappl"
+   />
+  ```
 
-    Of course, please do make changes appropriate to your installation.
-    The only parameter that is fixed is the name of the pool and this
-    needs to be `jdbc/archappl`. All other parameters are left to your
-    discretion.
+  Of course, please do make changes appropriate to your installation.
+  The only parameter that is fixed is the name of the pool and this
+  needs to be `jdbc/archappl`. All other parameters are left to your
+  discretion.
 
   - Note for Debian/Ubuntu users: The Tomcat packages shipped with
-        Debian/Ubuntu do not include the Tomcat JDBC Connection Pool.
-        Download it from the web and drop the `tomcat-jdbc.jar` file
-        into `/usr/share/tomcat7/lib`.
+    Debian/Ubuntu do not include the Tomcat JDBC Connection Pool.
+    Download it from the web and drop the `tomcat-jdbc.jar` file
+    into `/usr/share/tomcat7/lib`.
 
 ## Setting up storage
 
@@ -399,7 +405,7 @@ thereof, you\'ll need to set up three stages of storage. A useful way to
 do this is to create a folder called `/arch` and then create soft links
 in this folder to the actual physical location. For example,
 
-``` bash
+```bash
 $ ls -ltra
 total 32
 lrwxrwxrwx    1 archappl archappl      8 Jun 21  2013 sts -> /dev/shm
@@ -427,24 +433,24 @@ variable `TOMCAT_HOME`). To run this script, set the following
 environment variables
 
 1. `TOMCAT_HOME` - This is the Tomcat installation that you prepared in
-    the previous steps.
+   the previous steps.
 2. `ARCHAPPL_APPLIANCES` - This points to the `appliances.xml` that you
-    created in the previous steps.
+   created in the previous steps.
 3. `ARCHAPPL_MYIDENTITY` - This is the identity of the current
-    appliance, for example `appliance0`. If this is not set, the system
-    will default to using the machine\'s hostname as determined by
-    making a call to
-    `InetAddress.getLocalHost().getCanonicalHostName()`. However, this
-    makes `ARCHAPPL_MYIDENTITY` a physical entity and not a logical
-    entity; so, if you can, use a logical name for this entry. Note,
-    this must match the `identity` element of this appliance as it is
-    defined in the `appliances.xml`.
+   appliance, for example `appliance0`. If this is not set, the system
+   will default to using the machine\'s hostname as determined by
+   making a call to
+   `InetAddress.getLocalHost().getCanonicalHostName()`. However, this
+   makes `ARCHAPPL_MYIDENTITY` a physical entity and not a logical
+   entity; so, if you can, use a logical name for this entry. Note,
+   this must match the `identity` element of this appliance as it is
+   defined in the `appliances.xml`.
 
 and then run the `deployMultipleTomcats.py` script passing in one
 argument that identifies the parent folder of the individual Tomcat
 containers.
 
-``` bash
+```bash
 $ export TOMCAT_HOME=/arch/single_machine_install/tomcats/apache-tomcat-9.0.20
 $ export ARCHAPPL_APPLIANCES=/arch/single_machine_install/sample_appliances.xml
 $ export ARCHAPPL_MYIDENTITY=appliance0
@@ -464,7 +470,7 @@ Generating tomcat folder for  etl  in location /arch/single_machine_install/tomc
 Commenting connector with protocol  AJP/1.3 . If you do need this connector, you should un-comment this.
 Generating tomcat folder for  retrieval  in location /arch/single_machine_install/tomcats/retrieval
 Commenting connector with protocol  AJP/1.3 . If you do need this connector, you should un-comment this.
-$ 
+$
 ```
 
 This is the last of the steps that are install specific; that is,
@@ -482,13 +488,13 @@ are
 
 1. Stop all four Tomcat containers.
 2. Remove the older WAR file and expanded WAR file from the `webapps`
-    folder (if present).
+   folder (if present).
 3. Copy the newer WAR file into the `webapps` folder.
 4. Optionally expand the WAR file after copying it over to the
-    `webapps` folder
-    - This lets you replace individual files in the expanded WAR file
-        (for example, images, policies etc) giving you one more way to
-        do site specific deployments.
+   `webapps` folder
+   - This lets you replace individual files in the expanded WAR file
+     (for example, images, policies etc) giving you one more way to
+     do site specific deployments.
 5. Start all four Tomcat containers.
 
 If `DEPLOY_DIR` is the parent folder of the individual Tomcat containers
@@ -508,13 +514,13 @@ Running multiple Tomcats on a single machine using the same install
 requires two enviromnent variables
 
 1. `CATALINA_HOME` - This is the install folder for Tomcat that is
-    common to all Tomcat instances; in our case this is `$TOMCAT_HOME`
+   common to all Tomcat instances; in our case this is `$TOMCAT_HOME`
 2. `CATALINA_BASE` - This is the deploy folder for Tomcat that is
-    specific to each Tomcat instance; in our case this is
-    - `${DEPLOY_DIR}/mgmt`
-    - `${DEPLOY_DIR}/etl`
-    - `${DEPLOY_DIR}/engine`
-    - `${DEPLOY_DIR}/retrieval`
+   specific to each Tomcat instance; in our case this is
+   - `${DEPLOY_DIR}/mgmt`
+   - `${DEPLOY_DIR}/etl`
+   - `${DEPLOY_DIR}/engine`
+   - `${DEPLOY_DIR}/retrieval`
 
 If you are using Apache Commons Daemon, then two bash functions for
 stopping and starting Tomcat instance look something like
@@ -598,16 +604,16 @@ previous steps
 7. `ARCHAPPL_LONG_TERM_FOLDER` or equivalent
 
 8. `JAVA_OPTS` - This is the environment variable typically used by
-    Tomcat to pass arguments to the VM. You can pass in appropriate
-    arguments like so
+   Tomcat to pass arguments to the VM. You can pass in appropriate
+   arguments like so
 
-    ```bash
-        export JAVA_OPTS="-XX:+UseG1GC -Xmx4G -Xms4G -ea"
-    ```
+   ```bash
+       export JAVA_OPTS="-XX:+UseG1GC -Xmx4G -Xms4G -ea"
+   ```
 
 9. `LD_LIBRARY_PATH` - If you are using JCA, please make sure your
-    LD_LIBRARY_PATH includes the paths to the JCA and EPICS base
-    `.so`\'s.
+   LD_LIBRARY_PATH includes the paths to the JCA and EPICS base
+   `.so`\'s.
 
 A sample startup script using these elements is available
 [here](../samples/sampleStartup.sh). Please modify to suit your

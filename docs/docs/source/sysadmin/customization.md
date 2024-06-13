@@ -22,60 +22,60 @@ extensible for other distributions.
 :::
 
 1. The `src/sitespecific` folder contains materials specific to your
-    site. You can use the environment variable `ARCHAPPL_SITEID` to
-    control which set of sitespecific files are included in the
-    generated WARS.
+   site. You can use the environment variable `ARCHAPPL_SITEID` to
+   control which set of sitespecific files are included in the
+   generated WARS.
 
-    1. When you set this environment variable, you should see a message
-        `Building the archiver appliance for the site`{.sample}`YourSite`{.variable}
-    2. If this variable is not set, by default, we use the material in
-        the `tests` site.
-    3. The quickstart package `archappl_vx.x.x.tar.gz` available in the
-        Downloads is also built to the `tests` site.
-    4. The files in the
-        `src/sitespecific/`*`YourSite`*`/classpathfiles` are added to
-        the `WEB-INF/classes` of the generated WAR files and should be
-        accessible in the code using
-        `servletContext.getResourceAsStream("/WEB-INF/classes/<<fileName>>")`
-    5. If you do not set the `ARCHAPPL_POLICIES` environment variable,
-        the `policies.py` for your site is discovered this way
-        1. You can generate WAR with `policies.py` specific to your
-            site by setting the `ARCHAPPL_SITEID`.
-        2. Or you can unpack the WAR files within the container and
-            override the default `policies.py` with your own during
-            deployment.
-    6. If you do not set the `ARCHAPPL_APPLIANCES` environment
-        variable, the `appliances.xml` is discovered in a similar
-        fashion.
-    7. There is also a site specific properties file called
-        `archappl.properties` that is discovered in a similar fashion.
-        The properties in this file are used to control some of the
-        other customizations of the archiver appliance.
+   1. When you set this environment variable, you should see a message
+      `Building the archiver appliance for the site`{.sample}`YourSite`{.variable}
+   2. If this variable is not set, by default, we use the material in
+      the `tests` site.
+   3. The quickstart package `archappl_vx.x.x.tar.gz` available in the
+      Downloads is also built to the `tests` site.
+   4. The files in the
+      `src/sitespecific/`_`YourSite`_`/classpathfiles` are added to
+      the `WEB-INF/classes` of the generated WAR files and should be
+      accessible in the code using
+      `servletContext.getResourceAsStream("/WEB-INF/classes/<<fileName>>")`
+   5. If you do not set the `ARCHAPPL_POLICIES` environment variable,
+      the `policies.py` for your site is discovered this way
+      1. You can generate WAR with `policies.py` specific to your
+         site by setting the `ARCHAPPL_SITEID`.
+      2. Or you can unpack the WAR files within the container and
+         override the default `policies.py` with your own during
+         deployment.
+   6. If you do not set the `ARCHAPPL_APPLIANCES` environment
+      variable, the `appliances.xml` is discovered in a similar
+      fashion.
+   7. There is also a site specific properties file called
+      `archappl.properties` that is discovered in a similar fashion.
+      The properties in this file are used to control some of the
+      other customizations of the archiver appliance.
 
-    ``` bash
-    $ ls -ltr src/sitespecific/
-    total 0
-    drwxr-xr-x 3 mshankar cd 28 Jun 21 10:40 tests
-    drwxr-xr-x 3 mshankar cd 45 Sep  9 16:03 slacdev
-    $ export ARCHAPPL_SITEID=slacdev
-    $ gradle
+   ```bash
+   $ ls -ltr src/sitespecific/
+   total 0
+   drwxr-xr-x 3 mshankar cd 28 Jun 21 10:40 tests
+   drwxr-xr-x 3 mshankar cd 45 Sep  9 16:03 slacdev
+   $ export ARCHAPPL_SITEID=slacdev
+   $ gradle
 
-    > Configure project :
-    [ant:echo] Building the archiver appliance for the site slacdev
-    ```
+   > Configure project :
+   [ant:echo] Building the archiver appliance for the site slacdev
+   ```
 
 2. The archiver appliance uses [gradle](http://gradle.org) for its
-    builds, and [Apache Ant](http://ant.apache.org/) for site specific
-    build steps. As part of the gradle build process, you have the
-    opportunity to call an ant script that is as part of the
-    `src/sitespecific` folder. The `build.xml` in the `src/sitespecific`
-    is called (if it exists) after the compile and staging tasks and
-    before the WAR is packed. This lets you replace default collateral
-    (like images, phone numbers in messages etc) with your own
-    collateral in the generated WAR file(s).
+   builds, and [Apache Ant](http://ant.apache.org/) for site specific
+   build steps. As part of the gradle build process, you have the
+   opportunity to call an ant script that is as part of the
+   `src/sitespecific` folder. The `build.xml` in the `src/sitespecific`
+   is called (if it exists) after the compile and staging tasks and
+   before the WAR is packed. This lets you replace default collateral
+   (like images, phone numbers in messages etc) with your own
+   collateral in the generated WAR file(s).
 
 3. For simple site specific content changes like replacing the images
-    or the contact text in the home page, please see [this document](site_specific).
+   or the contact text in the home page, please see [this document](site_specific).
 
 ## Policies
 
@@ -107,18 +107,18 @@ This is converted into a sequence of StoragePlugin\'s that is used like
 so
 
 1. The engine webapp writes data into the first StoragePlugin in the
-    sequence, i.e. `dataStores[0]`
+   sequence, i.e. `dataStores[0]`
 2. The ETL webapp schedules data transfers from one StoragePlugin to
-    the next in the sequence according to their
-    [PartitionGranularity](../_static/javadoc/org/epics/archiverappliance/common/PartitionGranularity.html)\'s
+   the next in the sequence according to their
+   [PartitionGranularity](../_static/javadoc/org/epics/archiverappliance/common/PartitionGranularity.html)\'s
 3. When servicing a data retrieval request, the retrieval webapp
-    retrieves data from all of the datastores and then combines them
-    using a merge/dedup operator.
+   retrieves data from all of the datastores and then combines them
+   using a merge/dedup operator.
 
 Optionally, as part of a policy, we can also archive fields in addition
 to the VAL field. That is, one can establish a blanket policy that says
-something like *For all `ai's`, in addition to the `.VAL` field, also
-archive the `.HIHI, .LOLO` etc* These fields are stored as part of the
+something like _For all `ai's`, in addition to the `.VAL` field, also
+archive the `.HIHI, .LOLO` etc_ These fields are stored as part of the
 data for .VAL field.
 
 For more details and an example of a policy file, please look at the
@@ -128,7 +128,7 @@ few more methods that need to be defined. These include
 
 1. `getPolicyList` \-- This returns a list of available policy names.
 2. `getFieldsArchivedAsPartOfStream` \-- This returns a list of fields
-    that are to be archived as part of the stream.
+   that are to be archived as part of the stream.
 
 ## Site specific properties
 
@@ -169,8 +169,8 @@ key mapping strategy, it is important (for performance reasons) that the
 PV names follow a good naming convention that distributes the chunks
 into many folders - see the
 [Javadoc](../_static/javadoc/org/epics/archiverappliance/config/ConvertPVNameToKey.html)
-for more details. If the *key/file structure reflecting the PV naming
-convention* feature is not important to you, you can choose to use an
+for more details. If the _key/file structure reflecting the PV naming
+convention_ feature is not important to you, you can choose to use an
 alternate key mapping strategy by implementing the
 [PVNameToKeyMapping](../_static/javadoc/org/epics/archiverappliance/config/PVNameToKeyMapping.html)
 interface and setting this
@@ -204,13 +204,13 @@ In addition to the StoragePlugin interface, additional optional
 interfaces facilitate additional functionality
 
 1. [ETLSource](../_static/javadoc/org/epics/archiverappliance/etl/ETLSource.html) \--
-    The lets a StoragePlugin act as a source of data in the ETL process.
+   The lets a StoragePlugin act as a source of data in the ETL process.
 2. [ETLDest](../_static/javadoc/org/epics/archiverappliance/etl/ETLDest.html) \-- The
-    lets a StoragePlugin act as a destination of data in the ETL
-    process.
+   lets a StoragePlugin act as a destination of data in the ETL
+   process.
 3. [StorageMetrics](../_static/javadoc/org/epics/archiverappliance/etl/StorageMetrics.html)
-    \-- The lets a StoragePlugin provide metrics that are displayed in
-    the UI and participate in capacity planning.
+   \-- The lets a StoragePlugin provide metrics that are displayed in
+   the UI and participate in capacity planning.
 
 Writing a new StoragePlugin does take some effort but with this
 separation, you should be able to support a wide variety of storage
@@ -219,7 +219,7 @@ technologies. For more details, please see the Javadoc.
 ## NIO2
 
 The
-[PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external} 
+[PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
 can be viewed as a chunking
 [StoragePlugin](../_static/javadoc/org/epics/archiverappliance/StoragePlugin.html){.external}. It
 chunks data into `Time instant t ↔ Chunk key`,

@@ -9,12 +9,12 @@ unpacking the WAR file during deployment. The `quickstart.sh` and
 that can be used as a starting point.
 
 - These rely on the presence of a folder `site_specific_content` in
-    the deployment folder.
+  the deployment folder.
 - All images in the folder `site_specific_content/img` is copied into
-    the mgmt webapp\'s `ui/comm/img` folder and can be used for site
-    logos and so on.
+  the mgmt webapp\'s `ui/comm/img` folder and can be used for site
+  logos and so on.
 - The [SyncStaticContentHeadersFooters](../_static/javadoc/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html)
-    is run on a file called `template_changes.html`
+  is run on a file called `template_changes.html`
 
 At a high level, after unzipping the `mgmt.war` into the Tomcat
 `webapps` folder, one can replace/modify the files to implement some
@@ -23,7 +23,7 @@ sections delimited by special tags. For example, the home page has
 
 ```html
 <!-- @begin(site_contact_text) -->
-This is the archiver appliance management console for the ... 
+This is the archiver appliance management console for the ...
 <!-- @end(site_contact_text) -->
 ```
 
@@ -34,15 +34,22 @@ template. For example, create a master temple in
 `/tmp/master_template.html` that looks like so
 
 ```html
-    <!-- @begin(site_header) -->
-    <div class="pageheader" style="background-image:url('comm/img/mylab.png'); background-size:1024px 400px;">
-    <span class="apptitle" id="archiveInstallationTitle">My Site Archiver Appliance</span>
-    </div>
-    <!-- @end(site_header) -->
+<!-- @begin(site_header) -->
+<div
+  class="pageheader"
+  style="background-image:url('comm/img/mylab.png'); background-size:1024px 400px;"
+>
+  <span class="apptitle" id="archiveInstallationTitle"
+    >My Site Archiver Appliance</span
+  >
+</div>
+<!-- @end(site_header) -->
 
-    <!-- @begin(site_contact_text) -->
-    This is the EPICS archiver appliance management console for my site/beamline/program. Please contact me at 555 - 555 - 5555 if you have any issues. 
-    <!-- @end(site_contact_text) -->
+<!-- @begin(site_contact_text) -->
+This is the EPICS archiver appliance management console for my
+site/beamline/program. Please contact me at 555 - 555 - 5555 if you have any
+issues.
+<!-- @end(site_contact_text) -->
 ```
 
 Then run `SyncStaticContentHeadersFooters` using

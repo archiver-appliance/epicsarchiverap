@@ -19,11 +19,11 @@ As serialized PB messages are binary data; after serialization, newline
 characters are escaped to maintain a \"sample per line\" constraint.
 
 1. The ASCII escape character `0x1B` is escaped to the following two
-    characters `0x1B 0x01`
+   characters `0x1B 0x01`
 2. The ASCII newline character `\n` or `0x0A` is escaped to the
-    following two characters `0x1B 0x02`
+   following two characters `0x1B 0x02`
 3. The ASCII carriage return character `0x0D` is escaped to the
-    following two characters `0x1B 0x03`
+   following two characters `0x1B 0x03`
 
 Because of the sample per line constraint, one can use `wc -l` to
 determine the number of events in a PB file. The \"sample per line\"
@@ -53,18 +53,18 @@ files. These can be found in the `install/pbutils` folder of the `mgmt`
 webapp. These include
 
 1. **printTimes.sh** - This utility prints the record processing
-    timestamps of all the samples in the set of specified PB files.
+   timestamps of all the samples in the set of specified PB files.
 2. **pb2json.sh** - This utility prints all the data in all the samples
-    in the set of specified PB files as JSON that can potentially be
-    loaded into Python or other languages.
+   in the set of specified PB files as JSON that can potentially be
+   loaded into Python or other languages.
 3. **validate.sh** - This utility performs some simple validation of
-    the set of specified PB files or PB files in the specified folders.
+   the set of specified PB files or PB files in the specified folders.
 4. **repair.sh** - This utility performs some simple validation of the
-    set of specified PB files or PB files in the specified folders. If
-    errors are found in a PB file, the PB file is repaired by copying
-    the valid samples into a new file and then renaming it to the old
-    file name. It also support an option to make a backup of the
-    original file before attempting to fix it.
+   set of specified PB files or PB files in the specified folders. If
+   errors are found in a PB file, the PB file is repaired by copying
+   the valid samples into a new file and then renaming it to the old
+   file name. It also support an option to make a backup of the
+   original file before attempting to fix it.
 
 ## The PB/HTTP protocol
 

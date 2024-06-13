@@ -7,18 +7,18 @@ archiving a small set of critical PVs. At a high level
 
 - Archive the same PV in two independent clusters.
   - The two clusters need not have the same policy. For example, you
-        can designate one cluster the **primary** cluster and the other
-        one the **secondary** cluster
+    can designate one cluster the **primary** cluster and the other
+    one the **secondary** cluster
   - The primary cluster can archive the PV using your usual policies
-        while the secondary can store data for a much smaller timeframe.
+    while the secondary can store data for a much smaller timeframe.
 - Configure one of the clusters ( for performance reasons, the smaller
-    of the two, most likely the secondary ) to proxy the other one.
+  of the two, most likely the secondary ) to proxy the other one.
   - When creating the proxy, add a param `mergeDuringRetrieval`. For
-        example, add a *External EPICS Archiver Appliance* proxy with a
-        URL that looks like so
-        `http://archapp.slac.stanford.edu/retrieval?mergeDuringRetrieval=true`
+    example, add a _External EPICS Archiver Appliance_ proxy with a
+    URL that looks like so
+    `http://archapp.slac.stanford.edu/retrieval?mergeDuringRetrieval=true`
 - Periodically, if needed, merge in the data manually from the
-    secondary cluster to the primary using the `mergeInData` BPL.
+  secondary cluster to the primary using the `mergeInData` BPL.
 
 ## Case study
 
