@@ -31,9 +31,9 @@ using the `install_scripts/single_machine_install.sh` install script
 that comes with the installation bundle. This install script
 accommodates installations with a \"standard\" set of parameters and
 installs the EPICS archiver appliance on one machine. In addition to the
-[System requirements](../developer/details#system-requirements), the
+[System requirements](../developer/details.md#system-requirements), the
 `install_scripts/single_machine_install.sh` will ask for
-
+ 
 1. Location of the Tomcat distribution.
 
 2. Location of the MySQL client jar - usually a file with a name like
@@ -72,9 +72,8 @@ configuration consists of these steps. For the cluster
 1. Create an appliances.xml
 2. Optionally, create your policies.py file
 
-In addition to installing the JDK, EPICS (see [System
-requirements](details.html#SystemRequirements)), for each appliance
-
+In addition to installing the JDK, EPICS (see [System requirements](../developer/details.md#system-requirements)), for each appliance
+ 
 1. Install and configure Tomcat
     1. Compile the Apache Commons Daemon that is supplied with Tomcat.
 2. Install MySQL (or other persistence provider)
@@ -94,9 +93,9 @@ The `appliances.xml` is a file that lists all the appliances in a
 cluster of archiver appliance. While it is not necessary to point to the
 same physical file, the contents are expected to be identical across all
 appliances in the cluster. The details of the file are outlined in the
-[ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES)
+[ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES){.external}
 javadoc. A sample `appliances.xml` with two appliances looks like
-
+ 
 ```xml
 <appliances>
    <appliance>
@@ -202,9 +201,9 @@ javadoc. A sample `appliances.xml` with two appliances looks like
 ## Create your policies file
 
 The EPICS archiver appliance ships with a sample
-[`policies.py`](customization#policies) (from the `tests` site)
+[`policies.py`](customization.md#policies) (from the `tests` site)
 that creates a three stage storage environment. These are
-
+ 
 1. **STS** - A datastore that uses the
     [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
     to store data in a folder specified by the environment variable
@@ -611,7 +610,7 @@ previous steps
     `.so`\'s.
 
 A sample startup script using these elements is available
-[here](samples/sampleStartup.sh). Please modify to suit your
+[here](../samples/sampleStartup.sh). Please modify to suit your
 installation.
 
 ## Other containers
