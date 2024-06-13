@@ -7,7 +7,7 @@ At a high level, some features are
 - Focus on data retrieval performance.
 - Focus on zero oversight.
 
-For more details, please see the [documentation](http://slacmshankar.github.io/epicsarchiver_docs/index.html), or the [current branch documentation](docs).
+For more details, please see the [documentation](http://epicsarchiver.readthedocs.io/), or the [current branch documentation](docs).
 
 ## Development
 
