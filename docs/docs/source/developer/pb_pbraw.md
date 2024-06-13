@@ -7,7 +7,7 @@ The
 in the EPICS archiver appliance uses Google\'s
 [ProtocolBuffers](https://developers.google.com/protocol-buffers) as the
 serialization mechanism. The PB definitions mapping EPICS DBR types to
-PB messages can be found in [EPICSEvent.proto](EPICSEvent.proto). PB
+PB messages can be found in [EPICSEvent.proto](../../../EPICSEvent.proto). PB
 files contain serialized PB messages; one per sample; a sample per line.
 The first line in a PB file is a header (`PayloadInfo` PB message) that
 contains some basic information like the PV name, its DBR type and so
