@@ -88,13 +88,13 @@ requirements](details.html#SystemRequirements)), for each appliance
     deployment step that will be run when you upgrade to a new release.
 6. Stop/Start each of the Tomcats
 
-## Create an `appliances.xml`
+## Appliances XML
 
 The `appliances.xml` is a file that lists all the appliances in a
 cluster of archiver appliance. While it is not necessary to point to the
 same physical file, the contents are expected to be identical across all
 appliances in the cluster. The details of the file are outlined in the
-[ConfigService](api/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES)
+[ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES)
 javadoc. A sample `appliances.xml` with two appliances looks like
 
 ```xml
@@ -206,22 +206,22 @@ The EPICS archiver appliance ships with a sample
 that creates a three stage storage environment. These are
 
 1. **STS** - A datastore that uses the
-    [PlainPBStoragePlugin](api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html)
+    [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
     to store data in a folder specified by the environment variable
     `ARCHAPPL_SHORT_TERM_FOLDER` at the granularity of an hour.
 2. **MTS** - A datastore that uses the
-    [PlainPBStoragePlugin](api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html)
+    [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
     to store data in a folder specified by the environment variable
     `ARCHAPPL_MEDIUM_TERM_FOLDER` at the granularity of a day.
 3. **LTS** - A datastore that uses the
-    [PlainPBStoragePlugin](api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html)
+    [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
     to store data in a folder specified by the environment variable
     `ARCHAPPL_LONG_TERM_FOLDER` at the granularity of an year.
 
 If you are using the generic build and would like to point to a
 different `policies.py` file, you can use the `ARCHAPPL_POLICIES`
 environment variable, like so.
-
+ 
 ```bash
     export ARCHAPPL_POLICIES=/nfs/epics/archiver/production_policies.py
 ```

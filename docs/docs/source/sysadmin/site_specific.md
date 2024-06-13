@@ -13,7 +13,7 @@ that can be used as a starting point.
 - All images in the folder `site_specific_content/img` is copied into
     the mgmt webapp\'s `ui/comm/img` folder and can be used for site
     logos and so on.
-- The [SyncStaticContentHeadersFooters](api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html)
+- The [SyncStaticContentHeadersFooters](../_static/javadoc/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html)
     is run on a file called `template_changes.html`
 
 At a high level, after unzipping the `mgmt.war` into the Tomcat
@@ -28,7 +28,7 @@ This is the archiver appliance management console for the ...
 ```
 
 The simple java utility
-[SyncStaticContentHeadersFooters](api/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html)
+[SyncStaticContentHeadersFooters](../_static/javadoc/org/epics/archiverappliance/mgmt/bpl/SyncStaticContentHeadersFooters.html)
 can be used to replace content between these tags based on a master
 template. For example, create a master temple in
 `/tmp/master_template.html` that looks like so

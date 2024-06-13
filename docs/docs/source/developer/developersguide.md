@@ -219,10 +219,10 @@ separate projects in the same repository.
         `PVTypeInfo`; you can see what one looks like by looking at
         <http://machine:17665/mgmt/bpl/getPVTypeInfo?pv=MYPV:111:BDES>
     - The main interfaces are the ones in the
-        [`org.epics.archiverappliance`](api/org/epics/archiverappliance/package-summary.html)
+        [`org.epics.archiverappliance`](../_static/javadoc/org/epics/archiverappliance/package-summary.html)
         package.
     - The
-        [ConfigService](api/org/epics/archiverappliance/config/ConfigService.html)
+        [ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html)
         class does all configuration management.
     - The [customization guide](../sysadmin/customization) is also a good
         guide to way in which this product can be customized.

@@ -8,7 +8,7 @@ Here are the main features.
 
 - Ability to cluster appliances and to scale by adding appliances to
     the cluster.
-  - Limited support for [redundancy](sysadmin/redundancy).
+  - Limited support for [redundancy](../sysadmin/redundancy).
 - Multiple stages and an inbuilt process to move data between the
     stages.
   - This supports the ability to use faster storage (which is
@@ -37,7 +37,7 @@ Here are the main features.
         responses.
 - Support for EPICS aliases.
 - Support for EPICS 7/PVAccess/Structured data.
-- Support for retrieval of data using [CS-Studio](../user/csstudio), the
+- Support for retrieval of data using [CS-Studio](../user/cstudio), the
     [ArchiveViewer](../user/archiveviewer) and Matlab.
 - Limited integration with existing Channel Archiver data sources.
 
@@ -72,7 +72,7 @@ medium term storage.
 Out of the box, the following storage technologies/plugins are
 supported.
 
-[PlainPBStoragePlugin](api/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html)
+[PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
 :   This plugin serializes samples using Google\'s
     [ProtocolBuffers](https://developers.google.com/protocol-buffers)
     and stores data in chunks. Each chunk has a well defined key and
@@ -92,7 +92,7 @@ supported.
     :::{note}
     By default, the PlainPBStoragePlugin maps PV names to keys using a
     simple algorithm that relies on the presence of a good PV naming
-    convention. To use your own mapping scheme, see the [Key Mapping](customization#key_mapping) section in the
+    convention. To use your own mapping scheme, see the [Key Mapping](../sysadmin/customization#key_mapping) section in the
     customization guide.
     :::
 
@@ -144,7 +144,7 @@ stores
 All of the various configurations can get quite tricky for end users to
 navigate. Rather than expose all of this variation to the end users and
 to provide a simple interface to end users, the archiver appliance uses
-[policies](api/org/epics/archiverappliance/mgmt/policy/package-summary.html).
+[policies](../_static/javadoc/org/epics/archiverappliance/mgmt/policy/package-summary.html){.external}.
 Policies are Python scripts that make these decisions on behalf of the
 users. Policies are site-specific and identical across all appliances in
 the cluster. When a user requests a new PV to be archived, the archiver
@@ -190,7 +190,7 @@ functionality to route/proxy the request accordingly.
 In addition, users do not need to allocate PVs to appliances when
 requesting for new PVs be archived. The appliances maintain a small set
 of metrics during their operation and use this in addition to the
-measured event and storage rates to do an automated [Capacity Planning](api/org/epics/archiverappliance/mgmt/archivepv/CapacityPlanningBPL.html)/load
+measured event and storage rates to do an automated [Capacity Planning](../_static/javadoc/org/epics/archiverappliance/mgmt/archivepv/CapacityPlanningBPL.html)/load
 balancing.
 
 ## Scripting
