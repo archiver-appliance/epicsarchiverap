@@ -275,7 +275,7 @@ tasks.register("mgmtWar", War) {
 	from("docs") {
 		into "ui/help"
 	}
-	from("docs/samples") {
+	from("docs/docs/source/samples") {
 		include "deployMultipleTomcats.py"
 		into "install"
 	}
@@ -349,22 +349,23 @@ tasks.register("buildRelease", Tar) {
 		include "*License.txt"
 		include "RELEASE_NOTES"
 	}
-	from("docs/samples") {
+	def samplesFolder = "docs/docs/source/samples"
+	from("${samplesFolder}") {
 		fileMode 755
 		include "quickstart.sh"
 	}
-	from("docs/samples") {
+	from("${samplesFolder}") {
 		include "sampleStartup.sh"
 		include "deployMultipleTomcats.py"
 		include "addMysqlConnPool.py"
 		include "single_machine_install.sh"
 		into "install_scripts"
 	}
-	from("docs/samples/site_specific_content") {
+	from("${samplesFolder}/site_specific_content") {
 		into "sample_site_specific_content"
 		include "template_changes.html"
 	}
-	from("docs/samples/site_specific_content") {
+	from("${samplesFolder}/site_specific_content") {
 		into "sample_site_specific_content/img"
 		include "*.png"
 	}
@@ -436,8 +437,8 @@ tasks.register("shutdownAllTomcats", Exec) {
 	description "task to shut down all tomcats after running integration tests," +
 			" if they didn't shut down correctly."
 	ignoreExitValue true
-    commandLine "echo", "This is where we kill any lingering tomcats using a special tag"
-    commandLine "pkill", "-9", "-f", "Deaatag=eaatesttm"
+	commandLine "echo", "This is where we kill any lingering tomcats using a special tag"
+	commandLine "pkill", "-9", "-f", "Deaatag=eaatesttm"
 }
 
 tasks.register("integrationTestSetup", Copy) {
