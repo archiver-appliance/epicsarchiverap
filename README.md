@@ -7,7 +7,7 @@ At a high level, some features are
 - Focus on data retrieval performance.
 - Focus on zero oversight.
 
-For more details, please see the [documentation](http://slacmshankar.github.io/epicsarchiver_docs/index.html), or the [current branch documentation](docs).
+For more details, please see the [documentation](http://epicsarchiver.readthedocs.io/), or the [current branch documentation](docs).
 
 ## Development
 
@@ -130,3 +130,19 @@ For a quick deploy of a single appliance:
 
 For more information see the [quickstart documentation](docs/quickstart.html). For more complicated
 deployments see the [samples folder](docs/samples).
+
+## Build Documentation
+
+Documentation for the website is built using [Read the Docs](http://readthedocs.org).
+To build it and run it locally:
+
+```bash
+cd docs
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade --no-cache-dir pip setuptools
+python -m pip install --upgrade --no-cache-dir sphinx readthedocs-sphinx-ext
+python -m pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
+cd docs
+sphinx-autobuild source build
+```
