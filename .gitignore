@@ -43,3 +43,6 @@ tomcat_*
 
 # War files
 wars
+
+# Test logs
+logs
