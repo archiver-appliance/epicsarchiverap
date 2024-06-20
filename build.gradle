@@ -40,6 +40,10 @@ java {
 	}
 }
 
+ext {
+    runTestsSequentially = findProperty('ARCHAPPL_SEQUENTIAL_TESTS') ?: false
+}
+
 // Allows: gradle -PprojVersion=X build
 version project.findProperty('projVersion') ?: gitVersion() ?: "UnknownVersion"
 
@@ -401,12 +405,15 @@ assemble {
 }
 
 tasks.withType(Test).configureEach {
+	maxParallelForks = runTestsSequentially.toBoolean() ? 1 : ( Runtime.runtime.availableProcessors().intdiv(2) ?: 1 )
+
 	doFirst {
 		mkdir file("${temporaryDir}/sts")
 		mkdir file("${temporaryDir}/mts")
 		mkdir file("${temporaryDir}/lts")
+		logger.info("Running the tests using {} maxParallelForks", maxParallelForks)
 	}
-	maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+	
 	filter {
 		//include specific method in any of the tests
 		includeTestsMatching "*Test"
