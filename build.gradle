@@ -264,6 +264,11 @@ tasks.register("generateReleaseNotes", Exec) {
 	commandLine "git", "log", "--oneline", "remotes/origin/master"
 }
 
+tasks.register("sphinx", Exec) {
+	dependsOn "javadoc"
+	commandLine "cd", "docs", "&&", "./build_docs.sh"
+}
+
 /**
  * Common parts to all the war building.
  */
@@ -285,7 +290,7 @@ tasks.withType(War).configureEach {
 
 tasks.register("mgmtWar", War) {
 	group = "Wars"
-	dependsOn "generateJavaDocTagletScriptables"
+	dependsOn "sphinx"
 	from("${stageDir}/org/epics/archiverappliance/mgmt/staticcontent") {
 		into "ui"
 	}
@@ -293,7 +298,7 @@ tasks.register("mgmtWar", War) {
 		include "*.sql"
 		into "install"
 	}
-	from("docs") {
+	from("docs/docs/build") {
 		into "ui/help"
 	}
 	from("docs/docs/source/samples") {
