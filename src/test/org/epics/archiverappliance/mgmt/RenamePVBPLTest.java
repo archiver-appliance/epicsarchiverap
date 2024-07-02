@@ -136,6 +136,7 @@ public class RenamePVBPLTest {
 		 // We have now archived this PV, get some data and validate we got the expected number of events
 		 long beforeRenameCount = checkRetrieval(pvName, 3*365*86400);
 		 logger.info("Before renaming, we had this many events from retrieval" +  beforeRenameCount);
+		 Assertions.assertTrue(beforeRenameCount > 0, "We should see at least a few event before renaming the PV");
 		 
 		 // Let's pause the PV.
 		 String pausePVURL = "http://localhost:17665/mgmt/bpl/pauseArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");

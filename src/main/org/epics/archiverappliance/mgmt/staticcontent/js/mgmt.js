@@ -203,19 +203,21 @@ function archivePVsWithDetails() {
     $("#pvDetailsParams").hide();
     $("#pvDetailsChangeParamDiv").dialog("close");
 
-    var pvQuery = getPVQueryParam();
+    let pvQuery = getPVQueryParam();
     if (!pvQuery) return;
     HTTPMethod = "POST";
-
+    pvQuery = JSON.parse(pvQuery);
+    pvQuery.forEach(function(pv){
+      if(samplingPeriodParam != "") { pv["samplingperiod"] = samplingPeriod };
+      if(samplingMethodParam != "") { pv["samplingmethod"] = samplingMethod };
+      if(controllingPVParam != "") { pv["controllingPV"] = controllingPV };
+      if(policyParam != "") { pv["policy"] = policySelected.trim() };
+    });
     $.ajax({
       url: "../bpl/archivePV",
       dataType: "json",
-      data:
-        pvQuery +
-        samplingPeriodParam +
-        samplingMethodParam +
-        controllingPVParam +
-        policyParam,
+      data: JSON.stringify(pvQuery),
+      contentType: "application/json",
       type: HTTPMethod,
       success: function () {
         checkPVStatus();

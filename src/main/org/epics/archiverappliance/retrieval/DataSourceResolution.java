@@ -161,13 +161,17 @@ public class DataSourceResolution {
 								logger.error("Exception during failover retrieval " + pvName, ex);
 							}
 						}
-						logger.debug("Merging " + sampleCount + " samples from the failover server ");
-						for(UnitOfRetrieval unitofretrieval : unitsofretrieval) {
-							logger.debug("Wrapping UnitOfRetrieval with failover stream for PV " + pvName);
-							unitofretrieval.wrapWithFailoverStreams(CallableEventStream.makeOneStreamCallableList(cacheStream));
-						}				
+						if(sampleCount > 0) {
+							logger.debug("Merging " + sampleCount + " samples from the failover server ");
+							for(UnitOfRetrieval unitofretrieval : unitsofretrieval) {
+								logger.debug("Wrapping UnitOfRetrieval with failover stream for PV " + pvName);
+								unitofretrieval.wrapWithFailoverStreams(CallableEventStream.makeOneStreamCallableList(cacheStream));
+							}
+						} else {
+							logger.warn("0 samples from failover stream for PV " + pvName);
+						}
 					} else {
-						logger.debug("No streams from the failover server for PV " + pvName);				
+						logger.warn("No streams from the failover server for PV " + pvName);				
 					}
 				}
 			}

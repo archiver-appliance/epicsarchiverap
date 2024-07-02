@@ -38,6 +38,7 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Map;
 
@@ -79,9 +80,10 @@ public class FailoverScoreAPITest {
     private void generateMTSData(String applURL, String applianceName, Instant theMonth, boolean morningp)
             throws Exception {
         int genEventCount = 0;
+        String folderName = "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + applianceName + "/mts";
+        logger.info("Generating data into folder " + Paths.get(folderName).toAbsolutePath().toString());
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + "tomcat_"
-                        + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
+                "pb://localhost?name=LTS&rootFolder=" + folderName
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {

@@ -177,7 +177,6 @@ public class MetricsTest {
                 entry(mgmtSource + "Sampling method:", "MONITOR"),
                 entry(mgmtSource + "Sampling period:", "1.0"),
                 entry(mgmtSource + "Are we using PVAccess?", "No"),
-                entry(pvSource + "Host name", "localhost"),
                 entry(pvSource + "Controlling PV", ""),
                 entry(pvSource + "Is engine currently archiving this?", "yes"),
                 entry(pvSource + "Sample buffer capacity", "3"),

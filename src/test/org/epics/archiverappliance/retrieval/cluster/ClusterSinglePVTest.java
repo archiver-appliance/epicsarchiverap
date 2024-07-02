@@ -141,9 +141,9 @@ public class ClusterSinglePVTest {
         } catch (Exception ignored) {
         }
 
-        Instant pluginstart = start.plusMillis(1000);
+        Instant pluginstart = start;
 
-        Map<String, List<JSONObject>> pvToData = retrieveJsonResults(startString, endString, true);
+        Map<String, List<JSONObject>> pvToData = retrieveJsonResults(startString, endString);
 
         logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + start
                 + " End: " + end);
@@ -153,7 +153,7 @@ public class ClusterSinglePVTest {
                         pvName, pbplugin.getDataForPV(context, pvName, pluginstart, end))) {
             compareDataAndInstants(pvName, pvToData.get(pvName), pv1ResultsStream);
         }
-        Map<String, List<JSONObject>> pvToDataNoRedirect = retrieveJsonResults(startString, endString, false);
+        Map<String, List<JSONObject>> pvToDataNoRedirect = retrieveJsonResults(startString, endString);
 
         logger.info("Received response from server; now retrieving data using PBStoragePlugin Start: " + start
                 + " End: " + end);
@@ -165,11 +165,10 @@ public class ClusterSinglePVTest {
         }
     }
 
-    private Map<String, List<JSONObject>> retrieveJsonResults(String startString, String endString, boolean redirect)
+    private Map<String, List<JSONObject>> retrieveJsonResults(String startString, String endString)
             throws IOException {
         logger.info(
-                "Retrieving data using JSON/HTTP and comparing it to retrieval over PBStoragePlugin with redirect:{}",
-                redirect);
+                "Retrieving data using JSON/HTTP and comparing it to retrieval over PBStoragePlugin");
 
         // Establish a connection with appliance0
         URL obj = new URL(DATA_RETRIEVAL_URL + "/data/getData.json?pv="
@@ -177,7 +176,7 @@ public class ClusterSinglePVTest {
                 + URLEncoder.encode(startString, StandardCharsets.UTF_8)
                 + "&to=" + URLEncoder.encode(endString, StandardCharsets.UTF_8));
         logger.info("Opening this URL: " + obj);
-        JSONArray finalResult = getURLContentAsJSONArray(obj.toString(), true, redirect);
+        JSONArray finalResult = getURLContentAsJSONArray(obj.toString(), true);
 
         Map<String, List<JSONObject>> pvToData = new HashMap<>();
         assert finalResult != null;

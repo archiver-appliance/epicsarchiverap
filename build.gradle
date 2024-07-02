@@ -99,10 +99,10 @@ dependencies {
 	// github
 	viewer("archiver-appliance:svg_viewer:v1.1.0@zip") // Not compileOnly to avoid check by analyze
 	// Maven dependencies
-	testImplementation("org.seleniumhq.selenium:selenium-api:4.9.0")
-	testImplementation("org.seleniumhq.selenium:selenium-firefox-driver:4.9.0")
-	testImplementation("org.seleniumhq.selenium:selenium-support:4.9.0")
-	testImplementation("io.github.bonigarcia:webdrivermanager:5.3.2")
+	testImplementation("org.seleniumhq.selenium:selenium-java:4.22.0")
+	testImplementation("org.seleniumhq.selenium:selenium-firefox-driver:4.22.0")
+	testImplementation("org.seleniumhq.selenium:selenium-support:4.22.0")
+	testImplementation("io.github.bonigarcia:webdrivermanager:5.9.1")
 	testImplementation("org.apache.commons:commons-compress:1.23.0")
 	testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
 	implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")// Only needed for tests, but inbuilt to main)

@@ -23,7 +23,7 @@ import java.util.HashMap;
  * @see DataRetrieval
  * @see Reader
  */
-public interface DataRetrieval {
+public interface DataRetrievalForPVs {
 	/**
 	 * Get data for multiple PVs from starttime to endtime.
 	 * Pass out-of-band events into the supplied retrievalEventProcessor
