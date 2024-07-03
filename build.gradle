@@ -264,6 +264,15 @@ tasks.register("generateReleaseNotes", Exec) {
 	commandLine "git", "log", "--oneline", "remotes/origin/master"
 }
 
+tasks.register("sphinx", Exec) {
+	group = "Staging"
+	description = "Generate the documentation site."
+	dependsOn "javadoc"
+	workingDir "docs"
+	it.outputs.dir("docs/docs/build")
+	commandLine "./build_docs.sh"
+}
+
 /**
  * Common parts to all the war building.
  */
@@ -285,7 +294,7 @@ tasks.withType(War).configureEach {
 
 tasks.register("mgmtWar", War) {
 	group = "Wars"
-	dependsOn "generateJavaDocTagletScriptables"
+	dependsOn "sphinx"
 	from("${stageDir}/org/epics/archiverappliance/mgmt/staticcontent") {
 		into "ui"
 	}
@@ -293,7 +302,7 @@ tasks.register("mgmtWar", War) {
 		include "*.sql"
 		into "install"
 	}
-	from("docs") {
+	from("docs/docs/build") {
 		into "ui/help"
 	}
 	from("docs/docs/source/samples") {
@@ -499,14 +508,12 @@ tasks.register("integrationTests", Test) {
 tasks.register("epicsTests", Test) {
 	group = "Test"
 	description = "Run the epics integration tests with parallel iocs."
-	dependsOn "integrationTestSetup"
 	useJUnitPlatform {
 		includeTags "localEpics"
 		excludeTags "slow",
 				"flaky",
 				"integration"
 	}
-	finalizedBy "shutdownAllTomcats"
 }
 
 tasks.register("singleForkTests", Test) {
