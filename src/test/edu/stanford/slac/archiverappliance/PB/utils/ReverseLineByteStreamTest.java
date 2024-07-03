@@ -89,7 +89,8 @@ public class ReverseLineByteStreamTest {
                     linesRead++;
                     bRead = lis.testFillLineBuffer();
                 }
-                Assertions.assertEquals(expectedLines, linesRead, "Mismatch in lines read");
+                // The -1 is because the ReverseLineByteStream constructors do a fillLineBuffer
+                Assertions.assertEquals(expectedLines-1, linesRead, "Mismatch in lines read");
     
                 f.delete();
             }
@@ -132,7 +133,9 @@ public class ReverseLineByteStreamTest {
                     linesRead++;
                     expectedInt--;
                     bRead = lis.readLine(bar);
-                    theline = new String(bar.toBytes());
+                    if(bRead) {
+                        theline = new String(bar.toBytes());
+                    }
                 }
                 Assertions.assertEquals("This is a line " + 0, theline, "Mismatch at line 0");
                 Assertions.assertEquals(expectedLines, linesRead, "Mismatch in lines read");
