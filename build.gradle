@@ -95,7 +95,7 @@ dependencies {
 			"lib/redisnio_0.0.1.jar")
 	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
 	testImplementation files("lib/test/BPLTaglets.jar")
-	testImplementation(":pbrawclient:0.0.9")
+	testImplementation(":pbrawclient:0.2.0")
 	// github
 	viewer("archiver-appliance:svg_viewer:v1.1.0@zip") // Not compileOnly to avoid check by analyze
 	// Maven dependencies
