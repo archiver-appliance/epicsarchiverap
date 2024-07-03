@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -184,8 +185,8 @@ public class PostProcessorWithPBErrorTest {
 
         final HashMap<String, String> metaFields = new HashMap<String, String>();
         // Make sure we get the EGU as part of a regular VAL call.
-        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(
-                retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(
+                Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
             PayloadInfo info = null;
             Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
             info = strm.getPayLoadInfo();
