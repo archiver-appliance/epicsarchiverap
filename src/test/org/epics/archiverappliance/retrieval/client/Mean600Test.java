@@ -31,6 +31,7 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -132,7 +133,7 @@ public class Mean600Test {
 
 		 final HashMap<String, String> metaFields = new HashMap<String, String>(); 
 		 // Make sure we get the EGU as part of a regular VAL call.
-        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			 PayloadInfo info = null;
 			 Assertions.assertTrue(strm != null, "We should get some data, we are getting a null stream back");
 			 info =  strm.getPayLoadInfo();

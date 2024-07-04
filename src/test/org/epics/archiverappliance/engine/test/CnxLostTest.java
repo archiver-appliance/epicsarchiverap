@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -209,7 +210,7 @@ public class CnxLostTest {
         Instant end = now;
 
 		LinkedList<EpicsMessage> retrievedData = new LinkedList<EpicsMessage>();
-        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
 			int eventCount = 0;
 			Assertions.assertTrue(strm != null, "We should get some data, we are getting a null stream back");
 				for(EpicsMessage dbrevent : strm) {
