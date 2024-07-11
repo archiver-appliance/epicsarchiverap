@@ -15,6 +15,7 @@ import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -37,7 +38,9 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 
@@ -147,42 +150,52 @@ public class GetDataAtTimeForPVFromStoresTest {
             throw new IOException(ex);
         }
     }
+
+    public static Stream<Arguments> provideTimesAndFields() {
+        return Stream.of(
+            Arguments.of(now,
+                Map.of(
+                    "HIHI", "HIHI_@_3",
+                    "LOLO", "LOLO_@_6",
+                    "HIGH", "HIGH_@_12",
+                    "LOW", "LOW_@_12"
+                    )
+                ),
+                Arguments.of(now.minus(4, ChronoUnit.HOURS),
+                Map.of(
+                    "HIHI", "HIHI_@_6",
+                    "LOLO", "LOLO_@_6",
+                    "HIGH", "HIGH_@_12",
+                    "LOW", "LOW_@_12"
+                    )
+                ),
+                Arguments.of(now.minus(7, ChronoUnit.HOURS),
+                Map.of(
+                    "HIHI", "HIHI_@_9",
+                    "LOLO", "LOLO_@_12",
+                    "HIGH", "HIGH_@_12",
+                    "LOW", "LOW_@_12"
+                    )
+                ),
+                Arguments.of(now.minus(10, ChronoUnit.HOURS), 
+                Map.of(
+                    "HIHI", "HIHI_@_12",
+                    "LOLO", "LOLO_@_12",
+                    "HIGH", "HIGH_@_12",
+                    "LOW", "LOW_@_12"
+                    )
+                ),
+                Arguments.of(now.minus(16, ChronoUnit.HOURS),
+                null
+                )
+        );
+    }
+
     
-    @Test
-    public void testGetData() throws Exception {
-        testGetDataAsOf(now, 
-            Map.of(
-            "HIHI", "HIHI_@_3",
-            "LOLO", "LOLO_@_6",
-            "HIGH", "HIGH_@_12",
-            "LOW", "LOW_@_12"
-            )
-        );
-        testGetDataAsOf(now.minus(4, ChronoUnit.HOURS), 
-            Map.of(
-            "HIHI", "HIHI_@_6",
-            "LOLO", "LOLO_@_6",
-            "HIGH", "HIGH_@_12",
-            "LOW", "LOW_@_12"
-            )
-        );
-        testGetDataAsOf(now.minus(7, ChronoUnit.HOURS), 
-            Map.of(
-            "HIHI", "HIHI_@_9",
-            "LOLO", "LOLO_@_12",
-            "HIGH", "HIGH_@_12",
-            "LOW", "LOW_@_12"
-            )
-        );
-        testGetDataAsOf(now.minus(10, ChronoUnit.HOURS), 
-            Map.of(
-            "HIHI", "HIHI_@_12",
-            "LOLO", "LOLO_@_12",
-            "HIGH", "HIGH_@_12",
-            "LOW", "LOW_@_12"
-            )
-        );
-        testGetDataAsOf(now.minus(16, ChronoUnit.HOURS), null);
+    @ParameterizedTest
+    @MethodSource("provideTimesAndFields")
+    public void testGetData(Instant when, Map<String, String> expectedFieldVals) throws Exception {
+        testGetDataAsOf(when, expectedFieldVals);
     }
 
     public void testGetDataAsOf(Instant when, Map<String, String> expectedFieldVals) throws Exception {
