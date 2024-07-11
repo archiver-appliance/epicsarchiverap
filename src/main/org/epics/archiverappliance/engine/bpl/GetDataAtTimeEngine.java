@@ -20,6 +20,7 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
+import org.epics.archiverappliance.utils.ui.MetaFields;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
 
@@ -66,19 +67,6 @@ public class GetDataAtTimeEngine implements BPLAction {
         return alreadyExistingEvent;
     }
 
-    @SuppressWarnings("unchecked")
-    private static void addFieldValue(HashMap<String, Object> jsonval, String fieldName, String fieldValue) {
-        if(!jsonval.keySet().contains("meta")) {
-            HashMap<String, String> metaFields = new HashMap<String, String>();
-            jsonval.put("meta", metaFields);    
-        }
-        HashMap<String, String> meta = ((HashMap<String, String>)jsonval.get("meta"));
-        if(!meta.containsKey(fieldName)) {
-            meta.put(fieldName, fieldValue);
-        }
-    }
-
-
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
@@ -124,9 +112,9 @@ public class GetDataAtTimeEngine implements BPLAction {
                     evnt.put("status", potentialEvent.getStatus());
                     HashMap<String, String> metafields = archiveChannel.getLatestMetadata();
                     if(metafields != null) {
-                        addFieldValue(evnt, "source", "engine");
+                        MetaFields.addMetaFieldValue(evnt, "source", "engine");
                         for(String key: metafields.keySet()) {
-                            addFieldValue(evnt, key, metafields.get(key));
+                            MetaFields.addMetaFieldValue(evnt, key, metafields.get(key));
                         }
                     }
 

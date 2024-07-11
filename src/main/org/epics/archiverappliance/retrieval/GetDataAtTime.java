@@ -18,6 +18,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.epics.archiverappliance.utils.ui.MetaFields;
 import org.json.simple.JSONValue;
 
 import java.io.IOException;
@@ -130,20 +131,6 @@ public class GetDataAtTime {
         }
         return null;
     }
-
-    @SuppressWarnings("unchecked")
-    private static void addFieldValue(HashMap<String, Object> jsonval, String fieldName, String fieldValue) {
-        if(!jsonval.keySet().contains("meta")) {
-            HashMap<String, String> metaFields = new HashMap<String, String>();
-            jsonval.put("meta", metaFields);    
-        }
-        HashMap<String, String> meta = ((HashMap<String, String>)jsonval.get("meta"));
-        if(!meta.containsKey(fieldName)) {
-            meta.put(fieldName, fieldValue);
-        }
-    }
-
-
 
     private static <T> CompletableFuture<T>[] toArray(List<CompletableFuture<T>> list) {
         @SuppressWarnings("unchecked")
@@ -278,7 +265,7 @@ public class GetDataAtTime {
             String typeInfoName = pvName2TypeInfoName.get(pvName);
             if(typeInfoName != null) {
                 ProjRecord projRec = pvName2proj.get(typeInfoName);
-                addFieldValue(jsonval, "DBRType", projRec.DBRType().toString());
+                MetaFields.addMetaFieldValue(jsonval, "DBRType", projRec.DBRType().toString());
             }
         });
 
@@ -382,7 +369,7 @@ public class GetDataAtTime {
                     var evFields = dbrEvent.getFields();
                     if(evFields != null && !evFields.isEmpty()) {
                         for(String fieldName : evFields.keySet()) {
-                            addFieldValue(evnt, fieldName, evFields.get(fieldName));
+                            MetaFields.addMetaFieldValue(evnt, fieldName, evFields.get(fieldName));
                         }
                     }
                 }
