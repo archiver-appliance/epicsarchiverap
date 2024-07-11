@@ -7,8 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 
@@ -26,8 +24,7 @@ import java.nio.file.StandardOpenOption;
  *
  */
 public class ReverseLineByteStream implements Closeable {
-	private static final Logger logger = LogManager.getLogger(ReverseLineByteStream.class.getName());
-	public static int MAX_LINE_SIZE = 16 * 1024;
+	public static final int MAX_LINE_SIZE = 16 * 1024;
 	private SeekableByteChannel byteChannel = null;
 	private Path path = null;
 	private long stopAtPosition = 0L;
