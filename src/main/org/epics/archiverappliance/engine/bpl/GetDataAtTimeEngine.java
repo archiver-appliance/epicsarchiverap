@@ -47,8 +47,6 @@ public class GetDataAtTimeEngine implements BPLAction {
      * @param atTime
      * @param newEventToConsider
      * @param alreadyExistingEvent
-     * @param fieldIsEmbeddedInStream
-     * @param fieldName
      * @return
      */
     private static DBRTimeEvent evaluatePotentialEvent(
