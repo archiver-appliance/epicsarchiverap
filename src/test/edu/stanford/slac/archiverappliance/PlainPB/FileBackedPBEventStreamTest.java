@@ -9,7 +9,6 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.common.BiDirectionalIterable.IterationDirection;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
@@ -331,7 +330,55 @@ public class FileBackedPBEventStreamTest {
                 logger.info("Time for " + eventCount + " samples = " + (endMs - startMs) + "(ms)");
             }    
         }
-    }    
+    }
+
+    private Instant getFirstSampleTSUsingIteration(Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
+        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        Instant theInstant = null;
+        try (BasicContext context = new BasicContext()) {
+            Path path = PlainPBPathNameUtility.getPathNameForTime(
+                    storagePlugin,
+                    pvName,
+                    oneWeekIntoYear,
+                    context.getPaths(),
+                    configService.getPVNameToKeyConverter());
+            Assertions.assertNotNull(path, "Did we not write any data?");
+            long eventCount = 0;
+            try (FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType, startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS)) {
+                for (Event e : stream) {
+                    try {
+                        logger.info("Timestamp of first sample {} using direction {}", TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()), direction);
+                        theInstant = e.getEventTimeStamp();
+                        eventCount++;
+                        break;
+                    } catch(Exception ex) {
+                        logger.error("Exception at event " + eventCount, ex);
+                        throw ex;
+                    }
+                }
+            }            
+            Assertions.assertEquals(1, eventCount, "Expected " + 1 + " event got " + eventCount);
+        }
+        Assertions.assertNotNull(theInstant, "The first sample using forwards iteration is null");
+        return theInstant;
+    }
+
+    @Test
+    public void testBothDirectionsYieldSameInstant() throws IOException {
+        // Start iteration at the same time using forwards and backwards iteration and make sure we get the same first event.        
+
+        // Somewhere in the middle of the year.
+        Instant startAtTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()).plusSeconds(86400*30*6);
+        Instant firstUsingForwards = getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
+        Instant firstUsingBackwards = getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
+        Assertions.assertEquals(firstUsingForwards, firstUsingBackwards, 
+            "Forwards yields " 
+            + TimeUtils.convertToHumanReadableString(firstUsingForwards)
+            + " Backwards yields "
+            + TimeUtils.convertToHumanReadableString(firstUsingForwards)
+        );
+    } 
+
 
     @Test
     public void makeSureWeGetTheLastEventInTheFile() throws IOException {
