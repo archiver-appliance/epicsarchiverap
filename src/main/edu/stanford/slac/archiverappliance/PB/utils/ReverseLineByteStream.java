@@ -220,14 +220,14 @@ public class ReverseLineByteStream implements Closeable {
 	/**
 	 * Should only be used from the unit tests
 	 */
-	public boolean testFillBuffer() throws IOException {
+	boolean testFillBuffer() throws IOException {
 		return this.fillBuffer();
 	}	
 
 	/**
 	 * Should only be used from the unit tests
 	 */
-	public boolean testFillLineBuffer() throws IOException {
+	boolean testFillLineBuffer() throws IOException {
 		return this.fillLineBuffer();
 	}
 }
