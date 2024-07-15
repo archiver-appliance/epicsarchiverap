@@ -20,14 +20,13 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
+import org.epics.archiverappliance.utils.ui.MetaFields;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -49,37 +48,20 @@ public class GetDataAtTimeEngine implements BPLAction {
      * @param atTime
      * @param newEventToConsider
      * @param alreadyExistingEvent
-     * @param fieldIsEmbeddedInStream
-     * @param fieldName
      * @return
      */
     private static DBRTimeEvent evaluatePotentialEvent(
             Instant atTime,
             DBRTimeEvent newEventToConsider,
-            DBRTimeEvent alreadyExistingEvent,
-            boolean fieldIsEmbeddedInStream,
-            String fieldName) {
-        if (newEventToConsider != null && newEventToConsider.getEventTimeStamp().isBefore(atTime)
-                || newEventToConsider.getEventTimeStamp().equals(atTime)) {
+            DBRTimeEvent alreadyExistingEvent) {
+        if (newEventToConsider != null && (newEventToConsider.getEventTimeStamp().isBefore(atTime)
+                || newEventToConsider.getEventTimeStamp().equals(atTime))) {
             if (alreadyExistingEvent != null) {
                 if (newEventToConsider.getEventTimeStamp().isAfter(alreadyExistingEvent.getEventTimeStamp())) {
-                    if (fieldIsEmbeddedInStream) {
-                        if (newEventToConsider.hasFieldValues()
-                                && newEventToConsider.getFieldValue(fieldName) != null) {
-                            return newEventToConsider;
-                        }
-                    } else {
-                        return newEventToConsider;
-                    }
-                }
-            } else {
-                if (fieldIsEmbeddedInStream) {
-                    if (newEventToConsider.hasFieldValues() && newEventToConsider.getFieldValue(fieldName) != null) {
-                        return newEventToConsider;
-                    }
-                } else {
                     return newEventToConsider;
                 }
+            } else {
+                return newEventToConsider;
             }
         }
         return alreadyExistingEvent;
@@ -101,17 +83,11 @@ public class GetDataAtTimeEngine implements BPLAction {
         HashMap<String, HashMap<String, Object>> values = new HashMap<String, HashMap<String, Object>>();
         for (String pvName : pvNames) {
             String nameFromUser = pvName;
-            String fieldName = PVNames.getFieldName(pvName);
-            boolean fieldIsEmbeddedInStream = false;
 
             PVTypeInfo rootTypeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
             if (rootTypeInfo == null) continue;
             pvName = rootTypeInfo.getPvName();
 
-            if (fieldName != null
-                    && Arrays.asList(rootTypeInfo.getArchiveFields()).contains(fieldName)) {
-                fieldIsEmbeddedInStream = true;
-            }
 
             if (engineContext.getChannelList().containsKey(pvName)) {
                 ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
@@ -119,15 +95,13 @@ public class GetDataAtTimeEngine implements BPLAction {
                 DBRTimeEvent potentialEvent = null;
                 for (Event ev : st) {
                     potentialEvent = evaluatePotentialEvent(
-                            atTime, (DBRTimeEvent) ev, potentialEvent, fieldIsEmbeddedInStream, fieldName);
+                            atTime, (DBRTimeEvent) ev, potentialEvent);
                 }
                 if (archiveChannel.getLastArchivedValue() != null) {
                     potentialEvent = evaluatePotentialEvent(
                             atTime,
                             archiveChannel.getLastArchivedValue(),
-                            potentialEvent,
-                            fieldIsEmbeddedInStream,
-                            fieldName);
+                            potentialEvent);
                 }
 
                 if (potentialEvent != null) {
@@ -136,15 +110,14 @@ public class GetDataAtTimeEngine implements BPLAction {
                     evnt.put("nanos", potentialEvent.getEventTimeStamp().getNano());
                     evnt.put("severity", potentialEvent.getSeverity());
                     evnt.put("status", potentialEvent.getStatus());
-                    if (fieldIsEmbeddedInStream) {
-                        evnt.put(
-                                "val",
-                                JSONValue.parse(potentialEvent.getFields().get(fieldName)));
-                    } else {
-                        evnt.put(
-                                "val",
-                                JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
+                    HashMap<String, String> metafields = archiveChannel.getLatestMetadata();
+                    if(metafields != null) {
+                        MetaFields.addMetaFieldValue(evnt, "source", "engine");
+                        for(String key: metafields.keySet()) {
+                            MetaFields.addMetaFieldValue(evnt, key, metafields.get(key));
+                        }
                     }
+
                     values.put(nameFromUser, evnt);
                 }
             }

@@ -16,6 +16,7 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.NoDataException;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.mergededup.TimeSpanLimitEventStream;
@@ -50,6 +51,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +61,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
@@ -142,7 +145,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * @author mshankar
  *
  */
-public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics {
+public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
     private static final Logger logger = LogManager.getLogger(PlainPBStoragePlugin.class.getName());
     private final String append_extension;
 
@@ -424,6 +427,43 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 
         logger.debug(desc + ": did not even find the most recent file with data for " + pvName + " returning null.");
         return null;
+    }
+
+    @Override
+    public void iterate(BasicContext context, String pvName, Instant startAtTime, Predicate<Event> thePredicate, IterationDirection direction, Period searchPeriod) throws IOException {
+        Instant sTime = (direction == IterationDirection.FORWARDS) ? startAtTime : startAtTime.minus(searchPeriod);
+        Instant eTime = (direction == IterationDirection.FORWARDS) ? startAtTime.plus(searchPeriod) : startAtTime;
+        Path[] paths = PlainPBPathNameUtility.getPathsWithData(
+                context.getPaths(),
+                rootFolder,
+                pvName,
+                sTime,
+                eTime,
+                pbFileExtension,
+                partitionGranularity,
+                this.compressionMode,
+                this.pv2key);
+        if(paths == null) return;
+        List<Path> pathList = Arrays.asList(paths);
+        if(direction == IterationDirection.BACKWARDS) {
+            Collections.reverse(pathList);
+        }
+        for(Path path : pathList) {
+            logger.info("Iterating thru {}", path.toString());
+            PBFileInfo fileInfo = new PBFileInfo(path);
+            try(EventStream strm = FileStreamCreator.getStreamForIteration(
+                                    pvName,
+                                    path,
+                                    startAtTime,
+                                    fileInfo.getType(),
+                                    direction)) {
+                for(Event ev : strm) {
+                    if(!thePredicate.test(ev)) {
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     private AppendDataStateData getAppendDataState(BasicContext context, String pvName) throws IOException {

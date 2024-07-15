@@ -20,8 +20,8 @@
 
  <Loggers>
   <Logger name="config" level="debug"/>
-  <Logger name="hz" level="warn"/>
-  <Root level="debug">
+  <Logger name="hz" level="$${env:HZ_LOG_LEVEL:-warn}"/>
+  <Root level="info">
    <AppenderRef ref="RollingFile" level="$${env:LOG_LEVEL:-info}"/>
    <AppenderRef ref="STDOUT" level="info"/>
   </Root>

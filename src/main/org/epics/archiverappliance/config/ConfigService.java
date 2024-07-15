@@ -29,6 +29,9 @@ import org.epics.archiverappliance.retrieval.RetrievalState;
 
 import com.google.common.eventbus.EventBus;
 
+import com.hazelcast.projection.Projection;
+
+
 /**
  * Interface for appliance configuration.
  * One gets to a config service implementation thru dependency injection of one kind or the other.
@@ -250,8 +253,15 @@ public interface ConfigService {
 	 * Much goodness is facilitated if the objects are returned in the same order (perhaps order of creation) all the time.
 	 * @return String All PVs being archiveed for this appliance
 	 */
-	public Iterable<String> getPVsForThisAppliance();
-	
+	public Set<String> getPVsForThisAppliance();
+
+	/**
+	 * Project the pvTypeInfo's for the given PV's using the given projection operator
+	 * This runs using Hz's query functions and can be run from any war file
+	 * For example, to quickly determine the appliances for a bunch of PV's, project the applianceIdentity and then do a stream groupby.
+	 * @return
+	 */
+	public <T> Collection<T> projectPVTypeInfos(Set<String> pvNames, Projection<Map.Entry<String, PVTypeInfo>, T> projection);
 	
 	/**
 	 * Is this PV archived on this appliance.

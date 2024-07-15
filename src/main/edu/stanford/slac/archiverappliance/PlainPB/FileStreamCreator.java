@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.etl.ETLStreamCreator;
 
@@ -59,6 +60,18 @@ public class FileStreamCreator implements ETLStreamCreator {
 
         return new FileBackedPBEventStream(pvName, path, dbrType);
     }
+
+
+    public static EventStream getStreamForIteration(
+            String pvName,
+            Path path,
+            Instant startAtTime,
+            ArchDBRTypes archDBRTypes,
+            BiDirectionalIterable.IterationDirection direction) throws IOException {
+
+        return new FileBackedPBEventStream(pvName, path, archDBRTypes, startAtTime, direction);
+    }
+
 
     @Override
     public EventStream getStream() throws IOException {

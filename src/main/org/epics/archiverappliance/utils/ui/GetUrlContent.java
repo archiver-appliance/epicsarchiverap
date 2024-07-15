@@ -17,6 +17,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -340,7 +341,7 @@ public class GetUrlContent {
 	 * @return JSONArray  &emsp; 
 	 * @throws IOException  &emsp; 
 	 */
-	public static <T> T postStringListAndGetJSON(String url, String paramName, List<String> params) throws IOException {
+	public static <T> T postStringListAndGetJSON(String url, String paramName, Collection<String> params) throws IOException {
 		StringWriter buf = new StringWriter();
 		buf.append(paramName);
 		buf.append("=");
