@@ -206,7 +206,7 @@ public class DeadBandTest {
                 Assertions.assertTrue(compareIt.hasNext(), "We seem to have run out of events at " + eventCount);
                 Event compareEvent = compareIt.next();
                 Assertions.assertTrue(
-                        dbrEvent.getTimestamp().equals(compareEvent.getEventTimeStamp()),
+                    TimeUtils.fromSQLTimeStamp(dbrEvent.getTimestamp()).equals(compareEvent.getEventTimeStamp()),
                         "At event " + eventCount + ", from the operator we have an event at "
                                 + TimeUtils.convertToISO8601String(TimeUtils.fromSQLTimeStamp(dbrEvent.getTimestamp()))
                                 + " and from the compare stream, we have an event at "

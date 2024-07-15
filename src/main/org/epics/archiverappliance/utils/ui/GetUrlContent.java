@@ -55,7 +55,7 @@ public class GetUrlContent {
 	private static final Logger logger = LogManager.getLogger(GetUrlContent.class);
 	private GetUrlContent() {}
 	public static JSONArray getURLContentAsJSONArray(String urlStr) {
-		return getURLContentAsJSONArray(urlStr, true, true);
+		return getURLContentAsJSONArray(urlStr, true);
 	}
 	
 	/**
@@ -64,11 +64,11 @@ public class GetUrlContent {
 	 * @param logErrors If false, do not log any exceptions (they are expected)
 	 * @return URL content as JSONArray 
 	 */
-	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors, boolean redirect) {
+	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors) {
 		try {
 			logger.debug("Getting the contents of " + urlStr + " as a JSON array.");
 			JSONParser parser=new JSONParser();
-			try (InputStream is = getURLContentAsStream(urlStr, redirect)) {
+			try (InputStream is = getURLContentAsStream(urlStr)) {
 				return (JSONArray) parser.parse(new InputStreamReader(is));
 			}
 		} catch (IOException ex) {

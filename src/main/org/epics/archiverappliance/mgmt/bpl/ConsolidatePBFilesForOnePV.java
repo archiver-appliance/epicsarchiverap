@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
@@ -18,6 +19,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.sql.Time;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -48,6 +52,9 @@ public class ConsolidatePBFilesForOnePV implements BPLAction {
         }
 
         String date = req.getParameter("date");
+        if(date == null || date.equals("")) {
+            date = TimeUtils.convertToISO8601String(TimeUtils.plusDays(TimeUtils.now(), 366));
+        }
 
         String realName = configService.getRealNameForAlias(pvName);
         if (realName != null) pvName = realName;

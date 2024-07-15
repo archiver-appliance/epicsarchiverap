@@ -47,7 +47,7 @@ public class SampleRetrievalState extends RetrievalState {
 		if(pvName.equals(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "CAYearSpan")) {
 			try {
 				// pwd is build/tomcats/tomcat_CAYearSpanRetrievalTest/appliance0/logs
-				File dataFile = new File("../../../src/test/org/epics/archiverappliance/retrieval/channelarchiver");
+				File dataFile = new File("../../../../../src/test/org/epics/archiverappliance/retrieval/channelarchiver");
 				assert(dataFile.exists());
 				String dataSrcURL = "rtree://localhost?serverURL=" + URLEncoder.encode("file://" + dataFile.getAbsolutePath(), "UTF-8") + "&archiveKey=1";
 				StoragePlugin caStoragePlugin = StoragePluginURLParser.parseStoragePlugin(dataSrcURL, configService);

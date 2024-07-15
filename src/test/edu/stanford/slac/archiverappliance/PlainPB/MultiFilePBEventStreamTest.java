@@ -86,7 +86,8 @@ public class MultiFilePBEventStreamTest {
             Instant endTime = TimeUtils.convertFromISO8601String(currentYear + "-10-04T22:53:31.000Z");
 			long startEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
 			long endEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
-			long expectedEpochSeconds = startEpochSeconds-1;
+			long expectedEpochSeconds = startEpochSeconds;
+			logger.info("Asking for data between {} and {}", TimeUtils.convertToISO8601String(startTime), TimeUtils.convertToISO8601String(endTime));
 			try(BasicContext context = new BasicContext(); EventStream result = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, startTime, endTime))) {
 				long eventCount = 0;
 				for(Event e : result) {

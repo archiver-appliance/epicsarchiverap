@@ -121,7 +121,14 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
             this.endTime = endTime;
         } else {
             // We use a search to locate the boundaries of the data and the constrain based on position.
-            seekToTimes(path, dbrtype, startTime, endTime);
+            try {
+                seekToTimes(path, dbrtype, startTime, endTime);
+            } catch(IOException ex) {
+                logger.error("Exception seeking to time in file " + path.toAbsolutePath().toString() + ". Defaulting to linear search; this will impact performance.", ex);
+                this.positionBoundaries = false;
+                this.startTime = startTime;
+                this.endTime = endTime;    
+            }
         }
     }
 

@@ -29,7 +29,7 @@ import java.util.HashMap;
  * @author mshankar
  *
  */
-public class RawDataRetrievalAsEventStream implements DataRetrieval {
+public class RawDataRetrievalAsEventStream implements DataRetrievalForPVs {
 	private static Logger logger = LogManager.getLogger(RawDataRetrievalAsEventStream.class.getName());
 	private String accessURL = null;
 	

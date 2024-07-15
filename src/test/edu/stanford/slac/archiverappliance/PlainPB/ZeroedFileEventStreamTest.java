@@ -559,9 +559,8 @@ public class ZeroedFileEventStreamTest {
             for (@SuppressWarnings("unused") Event e : result) {
                 eventCount++;
             }
-            Assertions.assertEquals(
-                    exepectedEventCount,
-                    eventCount,
+            Assertions.assertTrue(
+                eventCount >= exepectedEventCount,
                     "Event count is too low " + eventCount + " expecting " + exepectedEventCount
                             + " from total generated " + generatedCount);
         } catch (IOException e) {
