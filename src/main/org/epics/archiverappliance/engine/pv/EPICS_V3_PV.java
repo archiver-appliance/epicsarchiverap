@@ -708,7 +708,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 } else {
                     assert (con != null);
                     if (generatedDBRType != archDBRType) {
-                        logger.warn("The type of PV " + this.name + " has changed from " + archDBRType + " to "
+                        logger.debug("The type of PV " + this.name + " has changed from " + archDBRType + " to "
                                 + generatedDBRType);
                         fireDroppedSampleTypeChange(generatedDBRType);
                         return;
