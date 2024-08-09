@@ -98,11 +98,11 @@ public class PostProcessors {
 						}
 						return implementationInstance;
 					}
+					logger.error("Did not find post processor for " + postProcessorUserArg);
 				}
 			} catch(Exception ex) {
 				logger.error("Exception initializing processor", ex);
 			}
-			logger.error("Did not find post processor for " + postProcessorUserArg);
 		}
 		return null;
 	}
