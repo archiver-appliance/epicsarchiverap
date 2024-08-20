@@ -421,6 +421,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             if (subscription != null) {
                 logger.error(
                         "When trying to establish a subscription, there is already a subscription for " + this.name);
+                this.transientErrorCount++;
                 return;
             }
             // Late callback, channel already closed?
@@ -428,6 +429,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             if (ch_ref == null) {
                 logger.error(
                         "When trying to establish a subscription, the refcounted channel is closed for " + this.name);
+                this.transientErrorCount++;
                 return;
             }
             final Channel channel = ch_ref.getChannel();
@@ -436,6 +438,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 if (channel.getConnectionState() != Channel.CONNECTED) {
                     logger.error("When trying to establish a subscription, the CA channel is not connected for "
                             + this.name);
+                    this.transientErrorCount++;
                     return;
                 }
                 //
@@ -602,6 +605,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             if (channel.getConnectionState() != Channel.CONNECTED) {
                 logger.error("While processing a handleConnected for " + this.name
                         + "; the channel is not in a connected state.");
+                this.transientErrorCount++;
                 return;
             }
         } catch (Exception ex) {
@@ -611,6 +615,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         if (state == PVConnectionState.Connected) {
             logger.error("While processing a handleConnected for " + this.name
                     + "; the state is already in a connected state.");
+            this.transientErrorCount++;
             return;
         }
         state = PVConnectionState.Connected;
@@ -699,6 +704,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 DBR dbr = ev.getDBR();
                 if (dbr == null) {
                     logger.error("Ignoring monitor events that does not have a valid DBR for " + this.name);
+                    this.transientErrorCount++;
                     return;
                 }
                 if (this.name.endsWith(".RTYP")) {
