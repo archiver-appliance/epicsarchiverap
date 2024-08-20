@@ -564,8 +564,13 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                         }
                     });
         } else {
-            state = PVConnectionState.Disconnected;
-            connected = false;
+            Monitor sub_copy;
+            synchronized (this) {
+                sub_copy = subscription;
+                state = PVConnectionState.Disconnected;
+                connected = false;
+                subscription = null;
+            }
             PVContext.scheduleCommand(
                     this.name,
                     this.jcaCommandThreadId,
@@ -574,10 +579,18 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                     new Runnable() {
                         @Override
                         public void run() {
-                            unsubscribe();
+                            if (sub_copy != null) {
+                                try {
+                                    sub_copy.clear();
+                                } catch (IllegalStateException ile) {
+                                    logger.warn("Illegal state exception when unsubscribing pv " + name, ile);
+                                } catch (final Exception ex) {
+                                    logger.error("exception when unsubscribing pv " + name, ex);
+                                }
+                            }                                                
                             fireDisconnected();
                         }
-                    });
+                    });            
         }
     }
 
