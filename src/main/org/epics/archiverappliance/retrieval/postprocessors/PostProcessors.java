@@ -85,7 +85,7 @@ public class PostProcessors {
 	}
 
 	public static PostProcessor findPostProcessor(String postProcessorUserArg) {
-		if(postProcessorUserArg != null) {
+		if(postProcessorUserArg != null && !postProcessorUserArg.trim().isEmpty()) {
 			try {
 				for(PostProcessorImplementation implementation : postprocessors) {
 					if(postProcessorUserArg.startsWith(implementation.key)) {
@@ -99,7 +99,7 @@ public class PostProcessors {
 						return implementationInstance;
 					}
 				}
-				logger.error("Did not find post processor for " + postProcessorUserArg);
+				logger.error("Did not find post processor for '" + postProcessorUserArg + "'");
 			} catch(Exception ex) {
 				logger.error("Exception initializing processor", ex);
 			}
