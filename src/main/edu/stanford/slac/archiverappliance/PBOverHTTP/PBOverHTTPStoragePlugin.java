@@ -120,7 +120,7 @@ public class PBOverHTTPStoragePlugin implements StoragePlugin {
                     if (entity != null) {
                         ByteArrayOutputStream sbuf = new ByteArrayOutputStream();
                         entity.writeTo(sbuf);
-                        logger.warn(sbuf.toString("UTF-8"));
+                        logger.debug(sbuf.toString("UTF-8"));
                     }
                 }
             }
