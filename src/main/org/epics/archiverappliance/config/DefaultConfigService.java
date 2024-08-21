@@ -529,7 +529,7 @@ public class DefaultConfigService implements ConfigService {
         } else {
             // All other webapps are "native" clients.
             try {
-                configlogger.debug(() -> "Initializing a non-mgmt webapp's clustering");
+                logger.debug(() -> "Initializing a non-mgmt webapp's clustering");
                 /*
                  * Loads the client config using the following resolution mechanism:
                  *   1. first it checks if a system property 'hazelcast.client.config' is set. If it exist and it begins with 'classpath:', then a classpath resource is loaded. Else it will assume it is a file reference
@@ -553,7 +553,7 @@ public class DefaultConfigService implements ConfigService {
                 }
                 int myClusterPort = Integer.parseInt(myAddrParts[1]);
 
-                configlogger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress()
+                logger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress()
                         + ":" + myClusterPort);
                 clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
 
@@ -561,15 +561,15 @@ public class DefaultConfigService implements ConfigService {
                     logger.info("Reducing the generic clustering thread counts.");
                     clientConfig.getProperties().putAll(hzThreadCounts);
                 }
-                configlogger.info("client network config conn timeout: "
+                logger.info("client network config conn timeout: "
                         + clientConfig.getNetworkConfig().getConnectionTimeout());
-                configlogger.info("client network config addresses: "
+                logger.info("client network config addresses: "
                         + clientConfig.getNetworkConfig().getAddresses().stream()
                                 .map(Object::toString)
                                 .collect(Collectors.joining(",")));
-                configlogger.info("client network config is redo: "
+                logger.info("client network config is redo: "
                         + clientConfig.getNetworkConfig().isRedoOperation());
-                configlogger.info("client config properties: "
+                logger.info("client config properties: "
                         + clientConfig.getProperties().toString());
                 hzinstance = HazelcastClient.newHazelcastClient(clientConfig);
             } catch (Exception ex) {
