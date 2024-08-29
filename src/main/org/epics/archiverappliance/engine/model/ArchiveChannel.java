@@ -152,6 +152,14 @@ public abstract class ArchiveChannel {
      * Is this channel currently enabled?
      */
     private boolean enabled = true;
+
+    /**
+     * Is this channel currently paused? The source of truth for this is the PVTypeInfo in the database. 
+     * But we cache this value here as a performance optimization for CapacityPlanning/EngineMetrics.
+     * By default, this is false because in DefaultConfigService.archivePVSonStartup, we skip starting PV's that are paused. 
+     */
+    private boolean paused = false;
+
     /** Buffer of received samples, periodically written */
     private SampleBuffer buffer;
     /**
@@ -827,5 +835,13 @@ public abstract class ArchiveChannel {
         if (this.pv != null) {
             this.pv.aboutToWriteBuffer(lastSample);
         }
+    }
+
+    public void setPaused(boolean pausedVal) {
+        this.paused = pausedVal;
+    }
+
+    public boolean isPaused() { 
+        return this.paused;
     }
 }

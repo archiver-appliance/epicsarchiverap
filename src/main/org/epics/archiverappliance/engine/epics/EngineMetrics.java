@@ -161,15 +161,13 @@ public class EngineMetrics implements Details {
         int disconnectedChannels = 0;
         int totalChannels = 0;
 
-        Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
-
         for (Entry<String, ArchiveChannel> tempEntry :
                 engineContext.getChannelList().entrySet()) {
             ArchiveChannel channel = tempEntry.getValue();
             String pvName = channel.getName();
             try {
-                if (pausedPVs.contains(pvName)) {
-                    // Skipping paused PV.
+                if (channel.isPaused()) {
+                    logger.debug("Skipping paused PV {}", pvName);
                     continue;
                 }
 
@@ -196,7 +194,7 @@ public class EngineMetrics implements Details {
         engineMetrics.setPvCount(totalChannels);
         engineMetrics.setConnectedPVCount(connectedChannels);
         engineMetrics.setDisconnectedPVCount(disconnectedChannels);
-        engineMetrics.setPausedPVCount(pausedPVs.size());
+        engineMetrics.setPausedPVCount(engineContext.getPausedPVCount());
         int totalchannelCount = engineContext.getChannelList().size();
         for (ArchiveChannel archiveChannel : engineContext.getChannelList().values()) {
             totalchannelCount += archiveChannel.getMetaChannelCount();
