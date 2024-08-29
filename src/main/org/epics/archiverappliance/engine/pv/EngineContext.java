@@ -115,6 +115,11 @@ public class EngineContext {
 	private ScheduledFuture<?> disconnectFuture = null;
 	
 	private double sampleBufferCapacityAdjustment = 1.0;
+
+	/**
+	 * An optimization for EngineMetrics. Note; this value may not be all that accurate but should be reasonably accurate.
+	 */
+	private int pausedPVCount = 0;
 	
 
 	/***
@@ -851,5 +856,17 @@ public class EngineContext {
 		obj.put("source", "engine");
 		ret.add(obj);
 		return ret;
+	}
+
+	public void incrementPausedPVCount() { 
+		this.pausedPVCount++;
+	}
+
+	public void decrementPausedPVCount() { 
+		this.pausedPVCount--;
+	}
+
+	public int getPausedPVCount() { 
+		return this.pausedPVCount;
 	}
 }
