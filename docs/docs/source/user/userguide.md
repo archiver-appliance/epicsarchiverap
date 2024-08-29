@@ -362,12 +362,15 @@ are
      PAST_CUTOFF_TIMESTAMP. PAST_CUTOFF_TIMESTAMP defaults to
      `1991-01-01T00:00:00.000Z`
   2. If the record processing timestamp from the IOC is after
-     (Appliance Current Time + FUTURE_CUTOFF_SECONDS) in the future.
-     FUTURE_CUTOFF_SECONDS defaults to 30\*60.
+     (Appliance Current Time + SERVER_IOC_DRIFT_SECONDS) in the future.
+     SERVER_IOC_DRIFT_SECONDS defaults to 30\*60.
   3. If the record processing timestamp from the IOC is before the
      timestamp of the previous sample.
   4. If the record processing timestamp from the IOC is identical to
      the timestamp of the previous sample.
+  5. If the record processing timestamp from the IOC of samples
+     from the second sample onwards are before the 
+     (Appliance Current Time - SERVER_IOC_DRIFT_SECONDS) in the past.
 - **PVs by dropped events from buffer overflows** - The
   EPICS archiver appliance discards events when the sampling buffers
   (as estimated from the sampling period) become full. These reports

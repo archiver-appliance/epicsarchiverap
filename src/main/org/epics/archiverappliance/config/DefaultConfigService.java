@@ -920,11 +920,12 @@ public class DefaultConfigService implements ConfigService {
      */
     private void archivePVSonStartup() {
         configlogger.debug(() -> "Start archiving PVs from persistence.");
-        int secondsToBuffer = PVTypeInfo.getSecondsToBuffer(this);
         // To prevent broadcast storms, we pause for pausePerGroup seconds for every pausePerGroup PVs
         int currentPVCount = 0;
-        int pausePerGroupPVCount = 2000;
-        int pausePerGroupPauseTimeInSeconds = 2;
+        int pausePerGroupPVCount = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPVCount", "2000"));
+        int pausePerGroupPauseTimeInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPauseTimeInSeconds", "2000"));
+        boolean determineLastKnownEventFromStores = Boolean.parseBoolean(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.determineLastKnownEventFromStores", "true"));
+
         for (String pvName : this.getPVsForThisAppliance()) {
             try {
                 PVTypeInfo typeInfo = typeInfos.get(pvName);
@@ -944,10 +945,14 @@ public class DefaultConfigService implements ConfigService {
                 SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
                 StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], this);
 
-                Instant lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(this);
-                if (logger.isDebugEnabled())
-                    logger.debug(() -> "Last known timestamp from ETL stores is for pv " + pvName + " is "
-                            + TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
+                Instant lastKnownTimestamp = null;
+                if(determineLastKnownEventFromStores) {
+                    lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(this);
+                    if(logger.isDebugEnabled()) {
+                        logger.debug("Last known timestamp from ETL stores is for pv {} is {} ", pvName,
+                            TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
+                    }
+                }
 
                 ArchiveEngine.archivePV(
                         pvName,

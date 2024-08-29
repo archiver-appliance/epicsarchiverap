@@ -64,7 +64,7 @@ public abstract class ArchiveChannel {
     private static final ThrottledLogger trouble_sample_log = new ThrottledLogger(LogLevel.info, 60);
 
     private static final Instant PAST_CUTOFF_TIMESTAMP = TimeUtils.convertFromISO8601String("1991-01-01T00:00:00.000Z");
-    private static final int FUTURE_CUTOFF_SECONDS = 30 * 60;
+    private static final int SERVER_IOC_DRIFT_SECONDS = 30 * 60;
     /**
      * Initialize the metafields for this channel. In addition to the metafields specified  here, we also generate PV's
      * for the runtime fields.
@@ -525,11 +525,13 @@ public abstract class ArchiveChannel {
             need_first_sample = true;
         }
 
-        if (!need_first_sample) return false;
+        if(need_first_sample) {
+            addValueToBuffer(timeevent);
+            need_first_sample = false;
+            return true;    
+        }
 
-        need_first_sample = false;
-        addValueToBuffer(timeevent);
-        return true;
+        return false; // I did not handle this; subclasses should handle the second sample and onwards.
     }
 
     /**
@@ -657,8 +659,24 @@ public abstract class ArchiveChannel {
             return true;
         }
 
+        if(!this.need_first_sample) {
+            // Second sample onwards
+            Instant pastCutOffTimeStamp =
+                TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() - SERVER_IOC_DRIFT_SECONDS, 0);
+            if (currentEventTimeStamp.isBefore(pastCutOffTimeStamp)) {
+                if(logger.isDebugEnabled()) {
+                    logger.debug("For {}: timestamp {} ( second sample onwards ) is too far in the past {} ",
+                    getName(),
+                    TimeUtils.convertToHumanReadableString(currentEventTimeStamp),
+                    TimeUtils.convertToHumanReadableString(pastCutOffTimeStamp)
+                    );
+                }
+                return true;
+            }    
+        }
+
         Instant futureCutOffTimeStamp =
-                TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() + FUTURE_CUTOFF_SECONDS, 0);
+                TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() + SERVER_IOC_DRIFT_SECONDS, 0);
         if (currentEventTimeStamp.isAfter(futureCutOffTimeStamp)) {
             trouble_sample_log.log(getName() + ":" + " record processing timestamp "
                     + TimeUtils.convertToHumanReadableString(currentEventTimeStamp) + " is after the future cutoff "
