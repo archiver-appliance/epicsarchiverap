@@ -923,7 +923,7 @@ public class DefaultConfigService implements ConfigService {
         // To prevent broadcast storms, we pause for pausePerGroup seconds for every pausePerGroup PVs
         int currentPVCount = 0;
         int pausePerGroupPVCount = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPVCount", "2000"));
-        int pausePerGroupPauseTimeInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPauseTimeInSeconds", "2000"));
+        int pausePerGroupPauseTimeInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPauseTimeInSeconds", "2"));
         boolean determineLastKnownEventFromStores = Boolean.parseBoolean(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.determineLastKnownEventFromStores", "true"));
 
         for (String pvName : this.getPVsForThisAppliance()) {
