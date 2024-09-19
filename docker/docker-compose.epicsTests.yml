@@ -3,8 +3,7 @@ name: epicsarchiver
 services:
   epicsarchiver-test:
     build:
-      dockerfile: docker/Dockerfile
-      context: ..
+      dockerfile: Dockerfile.dev
     container_name: epicsarchiver-test
     image: epicsarchiver-test
     command:

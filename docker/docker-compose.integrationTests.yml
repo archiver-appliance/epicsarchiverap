@@ -3,7 +3,7 @@ name: epicsarchiver
 services:
   epicsarchiver-test:
     build:
-      dockerfile: docker/Dockerfile
+      dockerfile: ../Dockerfile.dev
       context: ..
     container_name: epicsarchiver-test
     image: epicsarchiver-test
