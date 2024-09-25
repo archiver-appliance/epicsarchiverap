@@ -23,6 +23,7 @@ import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.utils.ui.MetaFields;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -107,6 +108,11 @@ public class GetDataAtTimeEngine implements BPLAction {
                 if (potentialEvent != null) {
                     HashMap<String, Object> evnt = new HashMap<String, Object>();
                     evnt.put("secs", potentialEvent.getEpochSeconds());
+                    evnt.put(
+                            "val",
+                            JSONValue.parse(potentialEvent
+                                    .getSampleValue()
+                                    .toJSONString()));
                     evnt.put("nanos", potentialEvent.getEventTimeStamp().getNano());
                     evnt.put("severity", potentialEvent.getSeverity());
                     evnt.put("status", potentialEvent.getStatus());
