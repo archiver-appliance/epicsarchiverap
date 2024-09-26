@@ -16,6 +16,7 @@ import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.mgmt.archivepv.CapacityPlanningData;
+import org.epics.archiverappliance.mgmt.archivepv.CapacityPlanningData.CPStaticData;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONArray;
@@ -89,18 +90,25 @@ public class ApplianceMetricsDetails implements BPLAction {
                     "PVs in archive workflow",
                     Integer.toString(configService.getMgmtRuntimeState().getPVsPendingInWorkflow()));
 
-            CapacityPlanningData capacityPlanningMetrics = CapacityPlanningData.getMetricsForAppliances(configService)
-                    .cpApplianceMetrics
-                    .get(configService.getMyApplianceInfo());
-            ApplianceAggregateInfo applianceAggregateDifferenceFromLastFetch =
-                    capacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
-            addDetailedStatus(
-                    result, "Capacity planning last update", capacityPlanningMetrics.getStaticDataLastUpdated());
-            addDetailedStatus(
-                    result,
-                    "Engine write thread usage",
-                    twoSignificantDigits.format(
-                            capacityPlanningMetrics.getEngineWriteThreadUsage(PVTypeInfo.DEFAULT_BUFFER_INTERVAL)));
+             CPStaticData cpStaticData = CapacityPlanningData.getCachedMetricsForAppliances(configService);
+             ApplianceAggregateInfo applianceAggregateDifferenceFromLastFetch = null;
+             if(cpStaticData != null) {
+                CapacityPlanningData capacityPlanningMetrics = cpStaticData
+                .cpApplianceMetrics
+                .get(configService.getMyApplianceInfo());
+                
+                applianceAggregateDifferenceFromLastFetch =
+                        capacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
+
+                addDetailedStatus(
+                        result, "Capacity planning last update", capacityPlanningMetrics.getStaticDataLastUpdated());
+                addDetailedStatus(
+                        result,
+                        "Engine write thread usage",
+                        twoSignificantDigits.format(
+                                capacityPlanningMetrics.getEngineWriteThreadUsage(PVTypeInfo.DEFAULT_BUFFER_INTERVAL)));
+            }
+
             addDetailedStatus(
                     result,
                     "Aggregated appliance storage rate (in GB/year)",
@@ -117,21 +125,23 @@ public class ApplianceMetricsDetails implements BPLAction {
                     "Aggregated appliance PV count",
                     noSignificantDigits.format(
                             configService.getAggregatedApplianceInfo(info).getTotalPVCount()));
-            addDetailedStatus(
-                    result,
-                    "Incremental appliance storage rate (in GB/year)",
-                    twoSignificantDigits.format(
-                            (applianceAggregateDifferenceFromLastFetch.getTotalStorageRate() * 60 * 60 * 24 * 365)
-                                    / (1024 * 1024 * 1024)));
-            addDetailedStatus(
-                    result,
-                    "Incremental appliance event rate (in events/sec)",
-                    twoSignificantDigits.format(applianceAggregateDifferenceFromLastFetch.getTotalEventRate()));
-            addDetailedStatus(
-                    result,
-                    "Incremental appliance PV count",
-                    noSignificantDigits.format(applianceAggregateDifferenceFromLastFetch.getTotalPVCount()));
-
+            if(applianceAggregateDifferenceFromLastFetch != null) {
+                addDetailedStatus(
+                        result,
+                        "Incremental appliance storage rate (in GB/year)",
+                        twoSignificantDigits.format(
+                                (applianceAggregateDifferenceFromLastFetch.getTotalStorageRate() * 60 * 60 * 24 * 365)
+                                        / (1024 * 1024 * 1024)));
+    
+                addDetailedStatus(
+                        result,
+                        "Incremental appliance event rate (in events/sec)",
+                        twoSignificantDigits.format(applianceAggregateDifferenceFromLastFetch.getTotalEventRate()));
+                addDetailedStatus(
+                        result,
+                        "Incremental appliance PV count",
+                        noSignificantDigits.format(applianceAggregateDifferenceFromLastFetch.getTotalPVCount()));
+            }
             out.println(JSONValue.toJSONString(result));
         }
     }
