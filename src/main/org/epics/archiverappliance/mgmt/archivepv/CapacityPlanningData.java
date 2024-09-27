@@ -133,6 +133,11 @@ public class CapacityPlanningData {
 		cachedCPStaticData = newStaticData;
 		return cachedCPStaticData;
 	}
+
+
+	public static CPStaticData getCachedMetricsForAppliances(ConfigService configService) throws IOException {
+		return cachedCPStaticData;
+	}
 	
 	public static class CPStaticData {
 		public ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> cpApplianceMetrics;
