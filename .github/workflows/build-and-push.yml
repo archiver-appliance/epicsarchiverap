@@ -5,13 +5,13 @@
 # This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
 
-name: Test and Build
+name: Build and Push
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+    tags:
+      - '**'
 
 permissions:
   contents: read
@@ -22,86 +22,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  unittests:
-    name: Build and run unit tests
+  build-jar-release:
+    name: Build Default site version
     runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-          fetch-depth: 0
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-      - name: Build with Gradle
-        run: ./gradlew test
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: '**/build/test-results/test/TEST-*.xml'
-      - name: Upload build reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: unitests-build-reports
-          path: build/reports/
-      - name: Upload package
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-package
-          path: build/distributions/*.tar.gz
-
-  epicstests:
-    name: Run all unit tests reliant on EPICS install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-          fetch-depth: 0
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Create Build Reports Folder
-        run: mkdir -p build/reports/tests
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-      - name: Run tests with docker compose
-        run: docker compose -f docker/docker-compose.epicsTests.yml run epicsarchiver-test
-        env:
-          DOCKER_DEFAULT_PLATFORM: linux/amd64
-          COMPOSE_DOCKER_CLI_BUILD: 1
-          DOCKER_BUILDKIT: 1
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
-        if: success() || failure() # always run even if the previous step fails
-        with:
-          report_paths: '**/build/test-results/epicsTests/TEST-*.xml'
-      - name: Upload build reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: epicstests-build-reports
-          path: build/reports/
-
-  build-custom-version:
-    needs: [unittests, epicstests]
-    name: Build Slacdev and Default site version
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        siteid: ["slacdev", "default"]
 
     steps:
       - uses: actions/checkout@v4
@@ -118,16 +41,15 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew assemble
         env:
-          ARCHAPPL_SITEID: ${{ matrix.siteid }}
+          ARCHAPPL_SITEID: "default"
       - name: Upload package
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.siteid }}-package
+          name: default-package
           path: build/distributions/*.tar.gz
 
   build-and-push-image:
-    needs: [unittests, epicstests]
     permissions:
       contents: read
       packages: write
