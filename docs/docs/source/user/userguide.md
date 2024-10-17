@@ -273,6 +273,41 @@ kurtosis
 skewness
 : Returns the skewness of a bin - Skewness is a measure of the asymmetry. This is computed using [DescriptiveStatistics](http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html) and is [DescriptiveStatistics.getSkewness()](<http://commons.apache.org/proper/commons-math/apidocs/org/apache/commons/math3/stat/descriptive/DescriptiveStatistics.html#getSkewness()>)
 
+linear
+: Implements the Linear arithmetic mean across an interval
+
+loess
+: Implements the Loess arithmetic mean across an interval
+
+optimized
+: Expects one parameter at initialization, which is the number of requested points.
+If there are less samples in the time interval than requested (with a certain deadband), all samples
+will be returned. If there are more samples than requested, the samples will be collected into bins.
+Mean, std, min, max and count of each bin is calculated and returned as a single sample.
+
+optimLastSample
+: This differs from the <code>optimized</code> post processor in that if a bin is empty, instead of
+repeating the last bin with samples, the bin uses the last value of the last recorded sample instead
+(as mean, min and max; stddev is zero and number of samples is also zero).
+
+caplotbinning
+: Approx implementation of ChannelArchiver plotbinning
+
+<li>If there is no sample for the time span of a bin, the bin remains empty.</li>
+<li>If there is one sample, it is placed in the bin.</li>
+<li>If there are two samples, they are placed in the bin</li>
+<li> If there are more than two samples, the first and last one are placed in the bin. 
+In addition, two artificial samples are created with a time stamp right
+between the first and last sample. One contains the minimum, the other
+the maximum of all raw samples who's time stamps fall into the bin. They
+are presented to the user in the sequence initial, minimum, maximum, final.
+
+deadBand
+: The intent is to mimic ADEL; this is principally targeted at decimation.
+
+errorbar
+:               Similar to the mean operator; in addition, the stdz is passed in as an extra column
+
 ## Save/Restore API
 
 The EPICS Archiver Appliance has a separate API targeted at getting the
