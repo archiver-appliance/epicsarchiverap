@@ -199,11 +199,16 @@ public final class PBThreeTierETLPVLookup {
                     }
 
                     // We schedule a ETLPVLookupItems with the appropriate thread using an ETLJob
-                    ETLJob etlJob = new ETLJob(etlpvLookupItems);
-                    ScheduledFuture<?> cancellingFuture = etlLifeTimeThreadPoolExecutors
-                            .get(etllifetimeid)
-                            .scheduleWithFixedDelay(etlJob, initialDelay, delaybetweenETLJobs, TimeUnit.SECONDS);
-                    etlpvLookupItems.setCancellingFuture(cancellingFuture);
+                    if (!etlLifeTimeThreadPoolExecutors.get(etllifetimeid).isShutdown()) {
+                        ETLJob etlJob = new ETLJob(etlpvLookupItems);
+                        ScheduledFuture<?> cancellingFuture = etlLifeTimeThreadPoolExecutors
+                                .get(etllifetimeid)
+                                .scheduleWithFixedDelay(etlJob, initialDelay, delaybetweenETLJobs, TimeUnit.SECONDS);
+                        etlpvLookupItems.setCancellingFuture(cancellingFuture);
+                    } else {
+                        logger.error("ETL thread pool executor for lifetime " + etllifetimeid
+                                + " is already shutdown. Should only happen in tests");
+                    }
                     logger.debug("Scheduled ETL job for " + pvName + " and lifetime " + etllifetimeid
                             + " with initial delay of " + initialDelay + " and between job delay of "
                             + delaybetweenETLJobs);
