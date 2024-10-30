@@ -31,6 +31,7 @@ processTestResources {
 	from(file("src/resources/test")) {
 		include "log4j2.xml"
 		include "appliances.xml.j2"
+		include "log4j2.component.properties"
 	}
 }
 
@@ -129,6 +130,7 @@ dependencies {
 	permitUnusedDeclared("org.apache.logging.log4j:log4j-jul:2.20.0")
 	runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
 	runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
+	implementation("com.lmax:disruptor:3.4.4") // Needed for async logging, needs to be in sync with log4j2
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 	implementation("com.opencsv:opencsv:5.7.1")
 	implementation("com.google.protobuf:protobuf-java:3.23.0")
