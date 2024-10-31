@@ -521,7 +521,7 @@ public class TimeUtils {
      * @return boolean True or False
      */
     public static boolean isDST(Instant ts) {
-        return !ZoneId.systemDefault().getRules().isDaylightSavings(ts);
+        return ZoneId.systemDefault().getRules().isDaylightSavings(ts);
     }
 
     /**
