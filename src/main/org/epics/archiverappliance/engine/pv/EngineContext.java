@@ -330,7 +330,7 @@ public class EngineContext {
 		// Start the metadata updates tomorrow afternoon; doesn't really matter what time; minimze impact with ETL etc
 		long tomorrowAfternoon = ((currentEpochSeconds/(24*60*60)) + 1)*24*60*60 + 22*60*60;
 		logger.info("Starting the metadata updater from " + TimeUtils.convertToHumanReadableString(tomorrowAfternoon));
-		miscTasksScheduler.scheduleAtFixedRate(new MetadataUpdater(), tomorrowAfternoon-currentEpochSeconds, 24*60*60, TimeUnit.SECONDS);
+		miscTasksScheduler.scheduleAtFixedRate(new MetadataUpdater(), tomorrowAfternoon-currentEpochSeconds, ArchiveChannel.SAVE_META_DATA_PERIOD_SECS, TimeUnit.SECONDS);
 	}
 	
 	public JCACommandThread getJCACommandThread(int jcaCommandThreadId) {

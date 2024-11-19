@@ -15,7 +15,7 @@ public class MetaFields {
      */
     @SuppressWarnings("unchecked")
     public static void addMetaFieldValue(HashMap<String, Object> jsonval, String fieldName, String fieldValue) {
-        if(!jsonval.keySet().contains("meta")) {
+        if(!jsonval.containsKey("meta")) {
             HashMap<String, String> metaFields = new HashMap<String, String>();
             jsonval.put("meta", metaFields);    
         }

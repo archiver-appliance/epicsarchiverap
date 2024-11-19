@@ -7,6 +7,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.pva.client.ClientChannelListener;
 import org.epics.pva.client.ClientChannelState;
 import org.epics.pva.client.MonitorListener;
@@ -568,8 +569,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     public void aboutToWriteBuffer(DBRTimeEvent lastEvent) {
         // save all the fields once every period
         // 24 hours
-        int saveMetaDataPeriodSecs = 86400;
-        if (newMetaDataSavePeriod(this.archiveFieldsSavedAtEpSec, saveMetaDataPeriodSecs)) {
+        if (newMetaDataSavePeriod(this.archiveFieldsSavedAtEpSec, ArchiveChannel.SAVE_META_DATA_PERIOD_SECS)) {
             HashMap<String, String> fieldValues = new HashMap<>();
             fieldValues.putAll(metaInfoToStore(totalMetaInfo));
             fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true, this.metaFields));

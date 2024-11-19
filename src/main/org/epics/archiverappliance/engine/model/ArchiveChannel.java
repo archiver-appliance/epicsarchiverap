@@ -56,6 +56,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings("nls")
 public abstract class ArchiveChannel {
+    public static final int SAVE_META_DATA_PERIOD_SECS = 86400;
     private static final Logger logger = LogManager.getLogger(ArchiveChannel.class);
 
     /**

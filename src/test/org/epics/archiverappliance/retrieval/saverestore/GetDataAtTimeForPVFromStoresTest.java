@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -30,6 +31,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.FieldValues;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.GetDataAtTime;
@@ -201,19 +203,19 @@ public class GetDataAtTimeForPVFromStoresTest {
     public void testGetDataAsOf(Instant when, Map<String, String> expectedFieldVals) throws Exception {
         Period searchPeriod = Period.parse("P1D");
         try (BasicContext context = new BasicContext()) {
-            HashMap<String, HashMap<String, Object>> pvDatas = GetDataAtTime.testGetDataAtTimeForPVFromStores(pvName, when, searchPeriod, configService);
-            HashMap<String, Object> pvData = pvDatas.get(pvName);
+            Map<String, Event> pvDatas = GetDataAtTime.testGetDataAtTimeForPVFromStores(pvName, when, searchPeriod, configService);
+            Event pvData = pvDatas.get(pvName);
             Assertions.assertNotNull(
                 pvData,
                 "Getting at time " + when + " returns null?"
                 );
             logger.info(JSONValue.toJSONString(pvDatas));
             Assertions.assertTrue(
-                Math.abs(((long)pvData.get("secs")) - when.getEpochSecond()) < 2,
-                "Expected " + when.getEpochSecond() + " got " + pvData.get("secs")
+                Math.abs(pvData.getEventTimeStamp().getEpochSecond() - when.getEpochSecond()) < 2,
+                "Expected " + when.getEpochSecond() + " got " + pvData.getEventTimeStamp().getEpochSecond()
             );
             @SuppressWarnings("unchecked")
-            HashMap<String, String> metas = (HashMap<String, String>) pvData.get("meta");
+            HashMap<String, String> metas = ((FieldValues) pvData).getFields();
             if(expectedFieldVals == null) {
                 Assertions.assertNull(metas);
             } else {
