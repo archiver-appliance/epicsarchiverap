@@ -281,9 +281,10 @@ public class FileBackedPBEventStreamTest {
         }
     }
 
-    @Test
-    public void testDirectionalIteration() throws IOException {
-        PlainStoragePlugin storagePlugin = getStoragePlugin();
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testDirectionalIteration(PlainStorageType plainStorageType) throws IOException {
+        PlainStoragePlugin storagePlugin = getStoragePlugin(plainStorageType);
 
         for(BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
             logger.info("Testing directional iteration {}", direction);
@@ -319,8 +320,8 @@ public class FileBackedPBEventStreamTest {
         }
     }
 
-    private Instant getFirstSampleTSUsingIteration(Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
-        PlainStoragePlugin storagePlugin = getStoragePlugin();
+    private Instant getFirstSampleTSUsingIteration(PlainStorageType plainStorageType, Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
+        PlainStoragePlugin storagePlugin = getStoragePlugin(plainStorageType);
         Instant theInstant = null;
         try (BasicContext context = new BasicContext()) {
             Path path = PathNameUtility.getPathNameForTime(
@@ -350,14 +351,15 @@ public class FileBackedPBEventStreamTest {
         return theInstant;
     }
 
-    @Test
-    public void testBothDirectionsYieldSameInstant() throws IOException {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testBothDirectionsYieldSameInstant(PlainStorageType plainStorageType) throws IOException {
         // Start iteration at the same time using forwards and backwards iteration and make sure we get the same first event.
 
         // Somewhere in the middle of the year.
         Instant startAtTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()).plusSeconds(86400*30*6);
-        Instant firstUsingForwards = getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
-        Instant firstUsingBackwards = getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
+        Instant firstUsingForwards = getFirstSampleTSUsingIteration(plainStorageType, startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
+        Instant firstUsingBackwards = getFirstSampleTSUsingIteration(plainStorageType, startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
         Assertions.assertEquals(firstUsingForwards, firstUsingBackwards,
             "Forwards yields "
                 + TimeUtils.convertToHumanReadableString(firstUsingForwards)

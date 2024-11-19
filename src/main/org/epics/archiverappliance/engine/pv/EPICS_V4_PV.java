@@ -7,6 +7,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.pva.client.ClientChannelListener;
 import org.epics.pva.client.ClientChannelState;
 import org.epics.pva.client.MonitorListener;

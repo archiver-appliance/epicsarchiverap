@@ -1,5 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -7,6 +8,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 
 public interface PlainStreams {
 
@@ -20,5 +22,11 @@ public interface PlainStreams {
 
     EventStream getStream(String pvName, Path path, ArchDBRTypes dbrType) throws IOException;
 
-    EventStream getStreamForIteration(String pvName, Path path, Instant startAtTime, ArchDBRTypes type, BiDirectionalIterable.IterationDirection direction) throws IOException;
+    Event dataAtTime(
+            List<Path> pathList,
+            String pvName,
+            Instant atTime,
+            Instant startAtTime,
+            BiDirectionalIterable.IterationDirection iterationDirection)
+            throws IOException;
 }

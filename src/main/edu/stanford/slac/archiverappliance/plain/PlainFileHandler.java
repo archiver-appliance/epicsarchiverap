@@ -89,4 +89,5 @@ public interface PlainFileHandler extends PlainStreams {
             throws IOException;
 
     ETLInfoListProcessor optimisedETLInfoListProcessor(ETLDest etlDest);
+
 }
