@@ -92,7 +92,6 @@ public class ParquetBackedPBEventIterator implements EventStreamIterator {
 
     private boolean readerHasNext(ParquetReader<Object> reader) {
         try {
-
             MessageOrBuilder readEvent = (MessageOrBuilder) reader.read();
             if (readEvent == null) {
                 cachedReaderFinished = true;
