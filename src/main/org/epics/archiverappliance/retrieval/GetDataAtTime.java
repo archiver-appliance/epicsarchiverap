@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.DataAtTime;
 import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -16,7 +15,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
-import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MetaFields;
@@ -28,7 +26,6 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -332,7 +328,7 @@ public class GetDataAtTime {
      * @param configService
      * @return
      */
-    private static PVWithData getDataAtTimeForPVFromStores(String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
+    public static PVWithData getDataAtTimeForPVFromStores(String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
         String nameFromUser = pvName;
 
         PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
@@ -346,7 +342,7 @@ public class GetDataAtTime {
         // Go thru the stores in reverse order...
         try {
             // Very important we make a copy of the datastores here...
-            List<String> datastores = new ArrayList<>(Arrays.asList(typeInfo.getDataStores()));
+            List<String> datastores = Arrays.asList(typeInfo.getDataStores());
             Collections.reverse(datastores);
             for (String store : datastores) {
                 StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
@@ -362,7 +358,10 @@ public class GetDataAtTime {
                         // The searchPeriod here is only to get enough chunks to facilitate the search. The iteration should stop at the specified time period.
 
                         Instant startAtTime = atTime.plus(5, ChronoUnit.MINUTES);
-                        dataAtTimePlugin.dataAtTime(context, pvName, atTime, startAtTime, searchPeriod, IterationDirection.BACKWARDS);
+                        Event e = dataAtTimePlugin.dataAtTime(context, pvName, atTime, startAtTime, searchPeriod, IterationDirection.BACKWARDS);
+                        if (e != null) {
+                            return new PVWithData(pvName, e);
+                        }
                     } else {
                         logger.info("Plugin {} does not implement the BiDirectionalIterable interface", storagePlugin.getName());
                     }
@@ -373,16 +372,6 @@ public class GetDataAtTime {
         }
 
         return null;
-    }
-
-    private static class PVWithData {
-        String pvName;
-        Event sample;
-
-        public PVWithData(String pvName, Event sample) {
-            this.pvName = pvName;
-            this.sample = sample;
-        }
     }
 
     /**
@@ -418,7 +407,7 @@ public class GetDataAtTime {
         for (CompletableFuture<PVWithData> res : retrievalCalls) {
             PVWithData pd = res.get();
             if (pd != null) {
-                ret.put(pd.pvName, pd.sample);
+                ret.put(pd.pvName(), pd.event());
             }
         }
 
@@ -427,10 +416,4 @@ public class GetDataAtTime {
         }
     }
 
-    public static Map<String, Event> testGetDataAtTimeForPVFromStores(String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
-        HashMap<String, Event> ret = new HashMap<>();
-        PVWithData pd = getDataAtTimeForPVFromStores(pvName, atTime, searchPeriod, configService);
-        ret.put(pd.pvName, pd.sample);
-        return ret;
-    }
 }
