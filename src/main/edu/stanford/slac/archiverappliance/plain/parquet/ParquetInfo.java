@@ -294,11 +294,24 @@ public class ParquetInfo extends FileInfo {
                                 hadoopInputFile, minOfSeconds, before, this.archDBRTypes, this.dataYear);
                     }
                     return getEventAtSeconds(
-                            hadoopInputFile, maxBeforeSeconds, before.getNano(), this.archDBRTypes, this.dataYear);
+                            hadoopInputFile,
+                            maxBeforeSeconds,
+                            getMaxBeforeNanos(before, maxBeforeSeconds),
+                            this.archDBRTypes,
+                            this.dataYear);
                 }
             }
         }
-        return null;
+        return getEventAtSeconds(
+                hadoopInputFile,
+                maxBeforeSeconds,
+                getMaxBeforeNanos(before, maxBeforeSeconds),
+                this.archDBRTypes,
+                this.dataYear);
+    }
+
+    private static Integer getMaxBeforeNanos(YearSecondTimestamp before, Integer maxBeforeSeconds) {
+        return maxBeforeSeconds == before.getSecondsintoyear() ? before.getNano() : null;
     }
 
     @Override

@@ -13,10 +13,12 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,6 +27,7 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
@@ -35,6 +38,7 @@ import org.epics.archiverappliance.data.FieldValues;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.GetDataAtTime;
+import org.epics.archiverappliance.retrieval.PVWithData;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterAll;
@@ -45,6 +49,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+
+import static org.epics.archiverappliance.retrieval.GetDataAtTime.getDataAtTimeForPVFromStores;
 
 
 /**
@@ -59,22 +65,24 @@ import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
  */
 public class GetDataAtTimeForPVFromStoresTest {
     private static final Logger logger = LogManager.getLogger(GetDataAtTimeForPVFromStoresTest.class.getName());
-    private static String pvName = "GetDataAtTimeForPVFromStoresTest";
-    private static ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-    private static ConfigServiceForTests configService;
-    private static short currentYear = TimeUtils.getCurrentYear();
-    private static Instant now = TimeUtils.now();
-    private static Instant yesterday = now.minus(86400, ChronoUnit.SECONDS);
-    private static Instant ago_3hrs = now.minus(60*60*3, ChronoUnit.SECONDS);
-    private static Instant ago_6hrs = now.minus(60*60*6, ChronoUnit.SECONDS);
-    private static Instant ago_9hrs = now.minus(60*60*9, ChronoUnit.SECONDS);
-    private static Instant ago_12hrs = now.minus(60*60*12, ChronoUnit.SECONDS);
+    private static final String pvNameBase = "GetDataAtTimeForPVFromStoresTest";
+    private static final ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+    private static final ConfigServiceForTests configService;
+    private static final short currentYear = TimeUtils.getCurrentYear();
+    private static final Instant now = TimeUtils.now();
+    private static final Instant yesterday = now.minus(86400, ChronoUnit.SECONDS);
+    private static final Instant ago_3hrs = now.minus(60*60*3, ChronoUnit.SECONDS);
+    private static final Instant ago_6hrs = now.minus(60*60*6, ChronoUnit.SECONDS);
+    private static final Instant ago_9hrs = now.minus(60*60*9, ChronoUnit.SECONDS);
+    private static final Instant ago_12hrs = now.minus(60*60*12, ChronoUnit.SECONDS);
 
     static File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder()
             + File.separator
             + GetDataAtTimeForPVFromStoresTest.class.getSimpleName());
-    static String storagePBPluginString = "pb://localhost?name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName()
-            + "&rootFolder=" + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR";
+    static Map<PlainStorageType, String> storageStrings = Map.of(PlainStorageType.PB, "pb://localhost?name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName()
+        + "&rootFolder=" + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR",PlainStorageType.PARQUET,
+    "parquet://localhost?name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName()
+        + "&rootFolder=" + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR");
 
     static {
         try {
@@ -83,9 +91,9 @@ public class GetDataAtTimeForPVFromStoresTest {
             throw new RuntimeException(e);
         }
     }
-    private static PlainStoragePlugin getStoragePlugin() throws IOException {
+    private static PlainStoragePlugin getStoragePlugin(PlainStorageType plainStorageType) throws IOException {
         return (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                storagePBPluginString,
+                storageStrings.get(plainStorageType),
                 configService);
     }
 
@@ -101,12 +109,18 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     private static void deleteData() throws IOException {
-        FileUtils.deleteDirectory(new File(getStoragePlugin().getRootFolder()));
+        FileUtils.deleteDirectory(new File(getStoragePlugin(PlainStorageType.PB).getRootFolder()));
+        FileUtils.deleteDirectory(new File(getStoragePlugin(PlainStorageType.PARQUET).getRootFolder()));
     }
 
     private static void createTestData() throws IOException {
-        PlainStoragePlugin storagePlugin = getStoragePlugin();
+        createTestDataType(PlainStorageType.PB);
+        createTestDataType(PlainStorageType.PARQUET);
+    }
 
+    private static void createTestDataType(PlainStorageType plainStorageType) throws IOException {
+        PlainStoragePlugin storagePlugin = getStoragePlugin(plainStorageType);
+        String pvName = pvNameBase + "_" + plainStorageType.name();
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream events = new ArrayListEventStream(currentYear, 
                 new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE,
@@ -114,7 +128,7 @@ public class GetDataAtTimeForPVFromStoresTest {
                     currentYear));
             Instant dataTs = yesterday;
             while(dataTs.isBefore(now)) {
-                DBRTimeEvent ev = (DBRTimeEvent) new POJOEvent(dbrType, dataTs, new ScalarValue<Long>(dataTs.getEpochSecond()), 0, 0).makeClone();
+                DBRTimeEvent ev = (DBRTimeEvent) new POJOEvent(dbrType, dataTs, new ScalarValue<>(dataTs.getEpochSecond()), 0, 0).makeClone();
                 if(dataTs.equals(ago_12hrs)) {
                     logger.info("Daily refresh of meta at -12hrs");
                     ev.addFieldValue("HIHI", "HIHI_@_12");
@@ -143,7 +157,7 @@ public class GetDataAtTimeForPVFromStoresTest {
 
         try {
             PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-            String[] dataStores = new String[] {storagePBPluginString};
+            String[] dataStores = new String[] {storageStrings.get(plainStorageType)};
             typeInfo.setDataStores(dataStores);
             typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
             configService.updateTypeInfoForPV(pvName, typeInfo);
@@ -154,14 +168,15 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     public static Stream<Arguments> provideTimesAndFields() {
-        return Stream.of(
-            Arguments.of(now,
+        return Arrays.stream(PlainStorageType.values()).flatMap(storageType ->
+            Stream.of(Arguments.of(now,
                 Map.of(
                     "HIHI", "HIHI_@_3",
                     "LOLO", "LOLO_@_6",
                     "HIGH", "HIGH_@_12",
                     "LOW", "LOW_@_12"
-                    )
+                    ),
+                storageType
                 ),
                 Arguments.of(now.minus(4, ChronoUnit.HOURS),
                 Map.of(
@@ -169,7 +184,8 @@ public class GetDataAtTimeForPVFromStoresTest {
                     "LOLO", "LOLO_@_6",
                     "HIGH", "HIGH_@_12",
                     "LOW", "LOW_@_12"
-                    )
+                    ),
+                    storageType
                 ),
                 Arguments.of(now.minus(7, ChronoUnit.HOURS),
                 Map.of(
@@ -177,7 +193,8 @@ public class GetDataAtTimeForPVFromStoresTest {
                     "LOLO", "LOLO_@_12",
                     "HIGH", "HIGH_@_12",
                     "LOW", "LOW_@_12"
-                    )
+                    ),
+                    storageType
                 ),
                 Arguments.of(now.minus(10, ChronoUnit.HOURS), 
                 Map.of(
@@ -185,48 +202,45 @@ public class GetDataAtTimeForPVFromStoresTest {
                     "LOLO", "LOLO_@_12",
                     "HIGH", "HIGH_@_12",
                     "LOW", "LOW_@_12"
-                    )
+                    ),
+                    storageType
                 ),
                 Arguments.of(now.minus(16, ChronoUnit.HOURS),
-                null
+                null,
+                    storageType
                 )
+            )
         );
     }
 
-    
+
     @ParameterizedTest
     @MethodSource("provideTimesAndFields")
-    public void testGetData(Instant when, Map<String, String> expectedFieldVals) throws Exception {
-        testGetDataAsOf(when, expectedFieldVals);
-    }
-
-    public void testGetDataAsOf(Instant when, Map<String, String> expectedFieldVals) throws Exception {
+    void testGetData(Instant when, Map<String, String> expectedFieldVals, PlainStorageType plainStorageType) throws Exception {
+        String pvName = pvNameBase + "_" + plainStorageType.name();
         Period searchPeriod = Period.parse("P1D");
-        try (BasicContext context = new BasicContext()) {
-            Map<String, Event> pvDatas = GetDataAtTime.testGetDataAtTimeForPVFromStores(pvName, when, searchPeriod, configService);
-            Event pvData = pvDatas.get(pvName);
-            Assertions.assertNotNull(
-                pvData,
-                "Getting at time " + when + " returns null?"
-                );
-            logger.info(JSONValue.toJSONString(pvDatas));
-            Assertions.assertTrue(
-                Math.abs(pvData.getEventTimeStamp().getEpochSecond() - when.getEpochSecond()) < 2,
-                "Expected " + when.getEpochSecond() + " got " + pvData.getEventTimeStamp().getEpochSecond()
+        PVWithData pvWithData = getDataAtTimeForPVFromStores(pvName, when, searchPeriod, configService);
+        Event pvData = pvWithData.event();
+        Assertions.assertNotNull(
+            pvData,
+            "Getting at time " + when + " returns null?"
             );
-            @SuppressWarnings("unchecked")
-            HashMap<String, String> metas = ((FieldValues) pvData).getFields();
-            if(expectedFieldVals == null) {
-                Assertions.assertNull(metas);
-            } else {
-                for(String key : expectedFieldVals.keySet()) {
-                    Assertions.assertNotNull(metas.get(key)); 
-                    Assertions.assertEquals(metas.get(key), expectedFieldVals.get(key));
-                }
-                for(String key : metas.keySet()){
-                    // Make sure every key in metas is expected.
-                    Assertions.assertTrue(expectedFieldVals.containsKey(key), "Unexpected key " + key);
-                }    
+        logger.info(JSONValue.toJSONString(pvWithData));
+        Assertions.assertTrue(
+            Math.abs(pvData.getEventTimeStamp().getEpochSecond() - when.getEpochSecond()) < 2,
+            "Expected " + when.getEpochSecond() + " got " + pvData.getEventTimeStamp().getEpochSecond()
+        );
+        HashMap<String, String> metas = ((FieldValues) pvData).getFields();
+        if(expectedFieldVals == null) {
+            Assertions.assertTrue(metas == null || metas.isEmpty());
+        } else {
+            for(String key : expectedFieldVals.keySet()) {
+                Assertions.assertNotNull(metas.get(key));
+                Assertions.assertEquals(metas.get(key), expectedFieldVals.get(key));
+            }
+            for(String key : metas.keySet()){
+                // Make sure every key in metas is expected.
+                Assertions.assertTrue(expectedFieldVals.containsKey(key), "Unexpected key " + key);
             }
         }
     }
