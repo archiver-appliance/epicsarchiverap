@@ -341,7 +341,7 @@ public class GetDataAtTime {
      * @param configService
      * @return
      */
-    private static PVWithData getDataAtTimeForPVFromStores(
+    public static PVWithData getDataAtTimeForPVFromStores(
             String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
         String nameFromUser = pvName;
 
@@ -374,13 +374,16 @@ public class GetDataAtTime {
                         // should stop at the specified time period.
 
                         Instant startAtTime = atTime.plus(5, ChronoUnit.MINUTES);
-                        dataAtTimePlugin.dataAtTime(
+                        Event e = dataAtTimePlugin.dataAtTime(
                                 context,
                                 pvName,
                                 atTime,
                                 startAtTime,
                                 searchPeriod,
                                 BiDirectionalIterable.IterationDirection.BACKWARDS);
+                        if (e != null) {
+                            return new PVWithData(pvName, e);
+                        }
                     } else {
                         logger.info(
                                 "Plugin {} does not implement the BiDirectionalIterable interface",
@@ -393,16 +396,6 @@ public class GetDataAtTime {
         }
 
         return null;
-    }
-
-    private static class PVWithData {
-        String pvName;
-        Event sample;
-
-        public PVWithData(String pvName, Event sample) {
-            this.pvName = pvName;
-            this.sample = sample;
-        }
     }
 
     /**
@@ -438,20 +431,12 @@ public class GetDataAtTime {
         for (CompletableFuture<PVWithData> res : retrievalCalls) {
             PVWithData pd = res.get();
             if (pd != null) {
-                ret.put(pd.pvName, pd.sample);
+                ret.put(pd.pvName(), pd.event());
             }
         }
 
         try (PrintWriter out = resp.getWriter()) {
             JSONValue.writeJSONString(ret, out);
         }
-    }
-
-    public static Map<String, Event> testGetDataAtTimeForPVFromStores(
-            String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
-        HashMap<String, Event> ret = new HashMap<>();
-        PVWithData pd = getDataAtTimeForPVFromStores(pvName, atTime, searchPeriod, configService);
-        ret.put(pd.pvName, pd.sample);
-        return ret;
     }
 }

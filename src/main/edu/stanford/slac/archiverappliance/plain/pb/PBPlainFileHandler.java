@@ -164,26 +164,33 @@ public class PBPlainFileHandler implements PlainFileHandler {
     private static Event findByTimeInStream(EventStream strm, Instant atTime, IterationDirection direction)
             throws IOException {
         Instant maxMetaDataTimeBefore = atTime.minus(ArchiveChannel.SAVE_META_DATA_PERIOD_SECS, ChronoUnit.SECONDS);
-        HashMapEvent event = null;
-        for (Event ev : strm) {
-            if (foundEvent(ev.getEventTimeStamp(), atTime, direction)) {
-                if (ev instanceof DBRTimeEvent dbrTimeEvent) {
-                    event = new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
+        HashMapEvent resultEvent = null;
+        for (Event event : strm) {
+            if (resultEvent == null && foundEvent(event.getEventTimeStamp(), atTime, direction)) {
+                if (event instanceof DBRTimeEvent dbrTimeEvent) {
+                    resultEvent = new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
                 }
             }
-            if (event != null && ev instanceof FieldValues fv) {
-                var evFields = fv.getFields();
-                if (evFields != null && !evFields.isEmpty()) {
-                    for (Map.Entry<String, String> fieldValue : evFields.entrySet()) {
-                        event.addFieldValue(fieldValue.getKey(), fieldValue.getValue());
-                    }
-                }
+            if (resultEvent != null && event instanceof FieldValues fv) {
+                copyNotSetFieldValues(fv, resultEvent);
             }
-            if (ev.getEventTimeStamp().isBefore(maxMetaDataTimeBefore)) {
+            if (event.getEventTimeStamp().isBefore(maxMetaDataTimeBefore)) {
                 break;
             }
         }
-        return event;
+        return resultEvent;
+    }
+
+    private static void copyNotSetFieldValues(FieldValues fv, HashMapEvent resultEvent) {
+        var evFields = fv.getFields();
+        if (evFields != null && !evFields.isEmpty()) {
+            for (Map.Entry<String, String> fieldValue : evFields.entrySet()) {
+                String fieldValueValue = resultEvent.getFieldValue(fieldValue.getKey());
+                if (fieldValueValue == null) {
+                    resultEvent.addFieldValue(fieldValue.getKey(), fieldValue.getValue());
+                }
+            }
+        }
     }
 
     @Override

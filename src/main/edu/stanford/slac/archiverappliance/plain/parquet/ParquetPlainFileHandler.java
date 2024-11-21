@@ -13,6 +13,7 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.data.DBRTimeEvent;
@@ -125,7 +126,8 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
             throws IOException {
         for (Path path : pathList) {
             ParquetInfo parquetInfo = new ParquetInfo(path);
-            DBRTimeEvent timeEvent = parquetInfo.getLastEventBefore(TimeUtils.convertToYearSecondTimestamp(atTime));
+            YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(atTime);
+            DBRTimeEvent timeEvent = parquetInfo.getLastEventBefore(yst);
             if (timeEvent != null) {
                 return fillInLatestMetadata(pvName, timeEvent, pathList, parquetInfo);
             }
