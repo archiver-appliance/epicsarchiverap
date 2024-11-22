@@ -273,7 +273,11 @@ tasks.register("sphinx", Exec) {
 	dependsOn "javadoc"
 	workingDir "docs"
 	it.outputs.dir("docs/docs/build")
-	commandLine "./build_docs.sh"
+	if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+		commandLine 'cmd', '/c', 'build_docs.bat'
+	} else {
+		commandLine "./build_docs.sh"
+	}
 }
 
 /**
