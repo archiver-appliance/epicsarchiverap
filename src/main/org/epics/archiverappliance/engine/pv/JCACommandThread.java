@@ -7,31 +7,33 @@
  ******************************************************************************/
 package org.epics.archiverappliance.engine.pv;
 
+import gov.aps.jca.CAException;
+import gov.aps.jca.Channel;
 import gov.aps.jca.Context;
 import gov.aps.jca.JCALibrary;
 import gov.aps.jca.configuration.Configuration;
 import gov.aps.jca.configuration.DefaultConfigurationBuilder;
+import gov.aps.jca.event.ConnectionListener;
 import gov.aps.jca.event.ContextExceptionListener;
 import gov.aps.jca.event.ContextMessageListener;
 
 import java.io.ByteArrayInputStream;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.engine.epics.JCAConfigGen;
 import org.epics.archiverappliance.engine.model.ContextErrorHandler;
 
+import com.cosylab.epics.caj.CAJChannel;
+import com.cosylab.epics.caj.CAJContext;
+
 /**
- * JCA command pump, added for two reasons:
- * <ol>
- * <li>JCA callbacks can't directly send JCA commands without danger of a
- * deadlock, at least not with JNI and the "DirectRequestDispatcher".
- * <li>Instead of calling 'flushIO' after each command, this thread allows for a
- * few requests to queue up, then periodically pumps them out with only a final
- * 'flush'
- * </ol>
  * 
  * @author Kay Kasemir
  * @version Initial version:CSS
@@ -48,10 +50,7 @@ public class JCACommandThread extends Thread {
 	private static final Logger logger = LogManager.getLogger(JCACommandThread.class.getName());
 
 	/** The JCA Context */
-	private volatile Context jca_context = null;
-
-	/** The Java CA Library instance. */
-	private JCALibrary jca = null;
+	private final CAJContext jca_context;
 
 	/**
 	 * Command queue.
@@ -74,65 +73,34 @@ public class JCACommandThread extends Thread {
 	 * @param configService ConfigService
 	 * @see #start()
 	 */
-	public JCACommandThread(ConfigService configService) {
+	public JCACommandThread(ConfigService configService) throws ConfigException {
 		super("JCA Command Thread");
-		// this.jca_context = jca_context;
 		this.configService = configService;
-
-	}
-
-	Context getContext() {
-		return jca_context;
-	}
-
-	private void initContext() {
 		try {
-			if (jca == null) {
-	
-				ByteArrayInputStream bis = JCAConfigGen.generateJCAConfig(configService);
-				jca = JCALibrary.getInstance();
-				DefaultConfigurationBuilder configBuilder = new DefaultConfigurationBuilder();
-				Configuration configuration;
-
-				configuration = configBuilder.build(bis);
-
-				jca_context = jca.createContext(configuration);
-
-				
-
-				// Per default, JNIContext adds a logger to System.err,
-				// but we want this one:
-				final ContextErrorHandler log_handler = new ContextErrorHandler();
-				jca_context.addContextExceptionListener(log_handler);
-				jca_context.addContextMessageListener(log_handler);
-
-				// Debugger shows that JNIContext adds the System.err
-				// loggers during initialize(), which for example happened
-				// in response to the last addContext... calls, so fix
-				// it after the fact:
-				final ContextExceptionListener[] ex_lsnrs = jca_context
-						.getContextExceptionListeners();
-				for (ContextExceptionListener exl : ex_lsnrs)
-					if (exl != log_handler)
-						jca_context.removeContextExceptionListener(exl);
-
-				// Same with message listeners
-				final ContextMessageListener[] msg_lsnrs = jca_context
-						.getContextMessageListeners();
-				for (ContextMessageListener cml : msg_lsnrs)
-					if (cml != log_handler)
-						jca_context.removeContextMessageListener(cml);
-
+			jca_context = new CAJContext();
+			jca_context.setDoNotShareChannels(true);
+			final ContextErrorHandler log_handler = new ContextErrorHandler();
+			jca_context.addContextExceptionListener(log_handler);
+			jca_context.addContextMessageListener(log_handler);
+			final ContextExceptionListener[] ex_lsnrs = jca_context.getContextExceptionListeners();
+			for (ContextExceptionListener exl : ex_lsnrs) {
+				if (exl != log_handler) {
+					jca_context.removeContextExceptionListener(exl);
+				}
 			}
-
-		} catch (Exception e) {
-			//
-			logger.error("exception when initing Context in JCACommandThread",
-					e);
-
+	
+			// Same with message listeners
+			final ContextMessageListener[] msg_lsnrs = jca_context.getContextMessageListeners();
+			for (ContextMessageListener cml : msg_lsnrs) {
+				if (cml != log_handler){
+					jca_context.removeContextMessageListener(cml);
+				}
+			}
+		} catch(CAException ex) {
+			logger.fatal("Fatal exception intializing CA context. Can't proceed", ex);
+			throw new ConfigException("Fatal exception intializing CA context. Can't proceed", ex);
 		}
 	}
-
 	/**
 	 * Version of <code>start</code> that may be called multiple times.
 	 * <p>
@@ -170,6 +138,43 @@ public class JCACommandThread extends Thread {
 		
 	}
 
+	public Channel createChannel(final String name, final ConnectionListener conn_callback) throws IllegalStateException, CAException {
+		Channel channel = this.jca_context.createChannel(name, conn_callback);
+		return channel;
+	}
+
+	public boolean hasContextBeenInitialized() {
+		return this.jca_context != null && this.jca_context.isInitialized();
+	}
+
+	public boolean doesChannelContextMatchThreadContext(Channel channel) {
+		return this.jca_context.equals(channel.getContext());
+	}
+
+	public List<Channel> getAllChannelsForPV(String pvNameOnly) {
+		var ret = new LinkedList<Channel>();
+		for(Channel channel : this.jca_context.getChannels()) {
+			String channelNameOnly = channel.getName().split("\\.")[0];
+			if(channelNameOnly.equals(pvNameOnly)) { 
+				ret.add(channel);
+			}
+		}
+		return ret;
+	}
+
+	public int getTotalChannelCount() { 
+		return this.jca_context.getChannels().length;
+	}
+
+	public int getChannelsWithPendingSearchRequests() {
+		int channelsWithPendingSearchRequests = 0;
+		for(Channel channel : this.jca_context.getChannels()) {
+			CAJChannel cajChannel = (CAJChannel) channel;
+			if(cajChannel.getTimerId() != null) channelsWithPendingSearchRequests++;
+		}
+		return channelsWithPendingSearchRequests;
+	}
+
 	/**
 	 * Add a command to the queue. add some cap on the command queue? At least
 	 * for value updates?
@@ -196,8 +201,6 @@ public class JCACommandThread extends Thread {
 
 	@Override
 	public void run() {
-		initContext();
-
 		while (run) {
 			// Execute all the commands currently queued...
 			Runnable command = getCommand();
@@ -240,8 +243,6 @@ public class JCACommandThread extends Thread {
 				try {
 					if (jca_context != null) {
 						jca_context.destroy();
-						jca_context = null;
-						jca = null;
 					}
 
 				} catch (Exception ex) {
@@ -249,6 +250,5 @@ public class JCACommandThread extends Thread {
 				}
 			}
 		});
-
 	}
 }

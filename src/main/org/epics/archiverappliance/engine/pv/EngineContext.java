@@ -27,6 +27,7 @@ import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.config.UserSpecifiedSamplingParams;
+import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.config.pubsub.PubSubEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
 import org.epics.archiverappliance.engine.metadata.MetaCompletedListener;
@@ -80,7 +81,6 @@ public class EngineContext {
 	
         /**the command thread for all  pvs*/
 	private JCACommandThread[] command_threads = null;
-	private Context[] context2CommandThreadId = null;
 	private PVAClient pvaClient;
 
 	
@@ -153,12 +153,13 @@ public class EngineContext {
 	 * This EngineContext should always be singleton
 	 * @param configService the config service to initialize the engine context
 	 */
-	public EngineContext(final ConfigService configService) {
+	public EngineContext(final ConfigService configService) throws ConfigException {
 		String commandThreadCountVarName = "org.epics.archiverappliance.engine.epics.commandThreadCount";
 		String commandThreadCountStr = configService.getInstallationProperties().getProperty(commandThreadCountVarName, "10");
 		configlogger.info("Creating " + commandThreadCountStr + " command threads as specified by " + commandThreadCountVarName + " in archappl.properties");
 		int commandThreadCount = Integer.parseInt(commandThreadCountStr);
 		command_threads = new JCACommandThread[commandThreadCount];
+		System.getProperties().setProperty("jca.use_env", "true");
 		for(int threadNum = 0; threadNum < command_threads.length; threadNum++) { 
 			command_threads[threadNum] = new JCACommandThread(configService);
 			command_threads[threadNum].start();			
@@ -267,28 +268,15 @@ public class EngineContext {
 		for(int loopcount = 0; loopcount < 60 && !allContextsHaveBeenInitialized; loopcount++) {
 			allContextsHaveBeenInitialized = true;
 			for(int threadNum = 0; threadNum < command_threads.length; threadNum++) {
-				Context context = this.command_threads[threadNum].getContext();
-				if(context == null) {
+				if(!this.command_threads[threadNum].hasContextBeenInitialized()) {
+					logger.debug("Waiting for all contexts to be initialized " + threadNum);
+					allContextsHaveBeenInitialized = false;
 					try {
-						logger.debug("Waiting for all contexts to be initialized " + threadNum);
-						allContextsHaveBeenInitialized = false;
 						Thread.sleep(1000);
-						break;
-					} catch(Exception ex) { 
-						// Ifnore
+					} catch (InterruptedException e) {
 					}
+					break;
 				}
-			}
-		}
-
-		context2CommandThreadId = new Context[command_threads.length];
-		for(int threadNum = 0; threadNum < command_threads.length; threadNum++) {
-			Context context = this.command_threads[threadNum].getContext();
-			if(context == null) { 
-				// We should have had enough time for all the contexts to have initialized...
-				logger.error("JCA Context not initialized for thread" + threadNum + ". If you see this, we should a sleep() ahead of this message.");
-			} else { 
-				this.context2CommandThreadId[threadNum] = context;
 			}
 		}
 		
@@ -359,15 +347,8 @@ public class EngineContext {
 	}
 	
 	
-	public boolean doesContextMatchThread(Context context, int jcaCommandThreadId) { 
-		Context contextForThreadId = this.context2CommandThreadId[jcaCommandThreadId];
-		if(contextForThreadId != null) { 
-			return contextForThreadId == context;
-		} else { 
-			logger.error("Null context for thread id " + jcaCommandThreadId);
-			// We should never get here; but in the case we do failing in this assertion is less harmful than spewing the message with logs...
-			return true;
-		}
+	public boolean doesChannelContextMatchThreadContext(Channel channel, int jcaCommandThreadId) { 
+		return this.command_threads[jcaCommandThreadId].doesChannelContextMatchThreadContext(channel);
 	}
 	
 /**
@@ -734,12 +715,8 @@ public class EngineContext {
 		LinkedList<CommandThreadChannel> retval = new LinkedList<CommandThreadChannel>();
 		String pvNameOnly = pvName.split("\\.")[0];
 		for(JCACommandThread command_thread : this.command_threads) { 
-			Context context = command_thread.getContext();
-			for(Channel channel : context.getChannels()) { 
-				String channelNameOnly = channel.getName().split("\\.")[0];
-				if(channelNameOnly.equals(pvNameOnly)) { 
-					retval.add(new CommandThreadChannel(command_thread, channel));
-				}
+			for(Channel channel : command_thread.getAllChannelsForPV(pvNameOnly)) { 
+				retval.add(new CommandThreadChannel(command_thread, channel));
 			}
 		}
 		return retval;
@@ -788,8 +765,7 @@ public class EngineContext {
 	public int getCAJChannelCount() { 
 		int totalCAJChannelCount = 0;
 		for(int threadNum = 0; threadNum < command_threads.length; threadNum++) {
-			Context context = this.command_threads[threadNum].getContext();
-			totalCAJChannelCount += context.getChannels().length;
+			totalCAJChannelCount += this.command_threads[threadNum].getTotalChannelCount();
 		}
 		return totalCAJChannelCount;
 	}
@@ -839,15 +815,9 @@ public class EngineContext {
 		int channelsWithPendingSearchRequests = 0;
 		int totalChannels = 0;
 
-		for(Context context : this.context2CommandThreadId) {
-			if(context instanceof CAJContext) {
-				CAJContext cajContext = (CAJContext) context;
-				for(Channel channel : cajContext.getChannels()) {
-					CAJChannel cajChannel = (CAJChannel) channel;
-					totalChannels++;
-					if(cajChannel.getTimerId() != null) channelsWithPendingSearchRequests++;
-				}
-			}
+		for(JCACommandThread commandThread : this.command_threads) {
+			totalChannels += commandThread.getTotalChannelCount();
+			channelsWithPendingSearchRequests += commandThread.getChannelsWithPendingSearchRequests();
 		}
 
 		Map<String, String> obj = new LinkedHashMap<String, String>();

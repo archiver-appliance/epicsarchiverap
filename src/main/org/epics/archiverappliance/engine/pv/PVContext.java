@@ -81,9 +81,6 @@ public class PVContext {
 	/** The JCA context reference count. */
 	static private long jca_refs = 0;
 
-	/** map of channels. */
-	static private HashMap<String, RefCountedChannel> channels = new HashMap<String, RefCountedChannel>();
-
 	private static ConfigService configservice;
 
 	public static void setConfigservice(ConfigService configservice) {
@@ -122,29 +119,16 @@ public class PVContext {
 	 *             on error
 	 * @see #releaseChannel
 	 */
-	public synchronized static RefCountedChannel getChannel(final String name, int jcaCommandThreadId, final ConnectionListener conn_callback) throws Exception {
+	public synchronized static Channel getChannel(final String name, int jcaCommandThreadId, final ConnectionListener conn_callback) throws Exception {
 
 		initJCA();
-		RefCountedChannel channel_ref = channels.get(name);
-		if (channel_ref == null) {
-			
-			final Channel channel = configservice.getEngineContext()
-					.getJCACommandThread(jcaCommandThreadId).getContext()
-					.createChannel(name, conn_callback);
+		final Channel channel = configservice.getEngineContext()
+				.getJCACommandThread(jcaCommandThreadId)
+				.createChannel(name, conn_callback);
 		
-			if (channel == null)
-				throw new Exception("Cannot create channel '" + name + "'");
-			channel_ref = new RefCountedChannel(channel);
-			channels.put(name, channel_ref);
-
-		} else {
-			channel_ref.incRefs();
-			//
-			// Must have been getChannel() == null, but how is that possible?
-			channel_ref.getChannel().addConnectionListener(conn_callback);
-		
-		}
-		return channel_ref;
+		if (channel == null)
+			throw new Exception("Cannot create channel '" + name + "'");
+		return channel;
 	}
 
 	/**
@@ -157,28 +141,18 @@ public class PVContext {
 	 * @see #getChannel(String)
 	 */
 	synchronized static void releaseChannel(
-			final RefCountedChannel channel_ref,
+			final Channel channel,
 			final ConnectionListener conn_callback)
 			throws IllegalStateException, CAException {
-		final String channelname = channel_ref.getChannel().getName();
+		final String channelname = channel.getName();
 
 		try { 
-			channel_ref.getChannel().removeConnectionListener(conn_callback);
+			channel.removeConnectionListener(conn_callback);
+			channel.destroy();
 		} catch(IllegalStateException ex) { 
 			// You'd get this if the channel is already closed
 			logger.debug("Exception removing connection listener from channel " + channelname, ex);
-		}
-
-		try { 
-			if (channel_ref.decRefs() <= 0) {
-				channels.remove(channelname);
-				channel_ref.dispose();
-			}
-		} catch(IllegalStateException ex) { 
-			// You'd get this if the channel is already closed
-			logger.debug("Exception disposing channel channel " + channelname, ex);
-		}
-		
+		}		
 		exitJCA();
 	}
 
@@ -190,11 +164,10 @@ public class PVContext {
 	 * @param msg  &emsp;
 	 * @param command The runnable that will run in the specified command thread 
 	 */
-	public static void scheduleCommand(String pvName, int jcaCommandThreadId, RefCountedChannel channel_ref, String msg, final Runnable command) {
+	public static void scheduleCommand(String pvName, int jcaCommandThreadId, Channel theChannel, String msg, final Runnable command) {
 		try { 
-			if(channel_ref != null && channel_ref.getChannel() != null) { 
-				Context context = channel_ref.getChannel().getContext();
-				if(!configservice.getEngineContext().doesContextMatchThread(context, jcaCommandThreadId)) { 
+			if(theChannel != null) { 
+				if(!configservice.getEngineContext().doesChannelContextMatchThreadContext(theChannel, jcaCommandThreadId)) { 
 					logger.error("Command for pv " + pvName + " is incorrectly scheduled on thread " + jcaCommandThreadId + " in " + msg);
 //					try { 
 //						throw new Exception();
@@ -216,16 +189,5 @@ public class PVContext {
 	 */
 	static boolean allReleased() {
 		return jca_refs == 0;
-	}
-	
-	
-	/**
-	 * Return the channel count as this class sees it.
-	 * @return int channels size
-	 */
-	public static int getChannelCount() { 
-		return channels.size();
-	}
-
-	
+	}	
 }

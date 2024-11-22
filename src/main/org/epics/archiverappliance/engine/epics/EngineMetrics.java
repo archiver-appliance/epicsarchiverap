@@ -134,8 +134,6 @@ public class EngineMetrics implements Details {
         }
         details.add(this.metricDetail(
                 "PVs pending computation of meta info", Integer.toString(MetaGet.getPendingMetaGetsSize())));
-        details.add(this.metricDetail(
-                "Total number of reference counted channels", Integer.toString(PVContext.getChannelCount())));
         details.add(this.metricDetail("Total number of CAJ channels", Integer.toString(context.getCAJChannelCount())));
 
         details.addAll(context.getCAJContextDetails());
