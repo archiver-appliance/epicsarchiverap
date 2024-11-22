@@ -35,8 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ValidatePBFile {
     private static final Logger logger = LogManager.getLogger(ValidatePBFile.class.getName());
 
-    public static boolean validatePBFile(Path path, boolean verboseMode)
-            throws IOException {
+    public static boolean validatePBFile(Path path, boolean verboseMode) throws IOException {
         PBFileInfo info = new PBFileInfo(path);
         logger.info("File " + path.getFileName().toString() + " is for PV " + info.getPVName() + " of type "
                 + info.getType() + " for year " + info.getDataYear());
@@ -58,8 +57,7 @@ public class ValidatePBFile {
                             + ". The current time stamp is "
                             + TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(epochSeconds, 0)));
                 }
-                if (firstEvent == null)
-                    firstEvent = ev;
+                if (firstEvent == null) firstEvent = ev;
                 lastEvent = ev;
                 eventnum++;
             }

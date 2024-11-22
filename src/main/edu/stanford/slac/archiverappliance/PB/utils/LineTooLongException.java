@@ -10,15 +10,16 @@ package edu.stanford.slac.archiverappliance.PB.utils;
 import java.io.IOException;
 
 /**
- * An exception thrown by the LineByteStream when we encounter lines that are too long. 
+ * An exception thrown by the LineByteStream when we encounter lines that are too long.
  * The LineByteStream can handle lines of any size; however to prevent infinite loops and such we have a safety factor
  * If a lines is longer than this safety factor, this exception is thrown.
  * @author mshankar
  *
  */
 public class LineTooLongException extends IOException {
-	private static final long serialVersionUID = 2786892485512623424L;
-	public LineTooLongException(String message) {
-		super(message);
-	}
+    private static final long serialVersionUID = 2786892485512623424L;
+
+    public LineTooLongException(String message) {
+        super(message);
+    }
 }

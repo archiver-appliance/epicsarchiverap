@@ -78,8 +78,8 @@ public class ETLJob implements Runnable {
         if (currentlyRunning) {
             logger.error("The previous ETL job (" + jobDesc + ") that began at "
                     + ((ETLRunStartEpochSeconds != 0)
-                    ? TimeUtils.convertToHumanReadableString(ETLRunStartEpochSeconds)
-                    : "Unknown")
+                            ? TimeUtils.convertToHumanReadableString(ETLRunStartEpochSeconds)
+                            : "Unknown")
                     + " is still running");
             return;
         }

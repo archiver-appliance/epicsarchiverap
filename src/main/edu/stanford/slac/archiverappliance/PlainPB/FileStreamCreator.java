@@ -33,30 +33,20 @@ public class FileStreamCreator implements ETLStreamCreator {
     }
 
     public static EventStream getTimeStream(
-            String pvName,
-            Path path,
-            ArchDBRTypes dbrType,
-            Instant start,
-            Instant end,
-            boolean skipSearch) throws IOException {
+            String pvName, Path path, ArchDBRTypes dbrType, Instant start, Instant end, boolean skipSearch)
+            throws IOException {
 
         return new FileBackedPBEventStream(pvName, path, dbrType, start, end, skipSearch);
     }
 
     public static EventStream getTimeStream(
-            String pvName,
-            Path path,
-            Instant start,
-            Instant end,
-            boolean skipSearch, ArchDBRTypes archDBRTypes) throws IOException {
+            String pvName, Path path, Instant start, Instant end, boolean skipSearch, ArchDBRTypes archDBRTypes)
+            throws IOException {
 
         return new FileBackedPBEventStream(pvName, path, archDBRTypes, start, end, skipSearch);
     }
 
-    public static EventStream getStream(
-            String pvName,
-            Path path,
-            ArchDBRTypes dbrType) throws IOException {
+    public static EventStream getStream(String pvName, Path path, ArchDBRTypes dbrType) throws IOException {
 
         return new FileBackedPBEventStream(pvName, path, dbrType);
     }
@@ -77,6 +67,4 @@ public class FileStreamCreator implements ETLStreamCreator {
     public EventStream getStream() throws IOException {
         return new FileBackedPBEventStream(pvName, path, info.getType());
     }
-
-
 }
