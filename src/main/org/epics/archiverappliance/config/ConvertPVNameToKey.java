@@ -109,9 +109,7 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	 */
 	@Override
 	public boolean containsSiteSeparators(String pvName) {
-		String separator = File.separator.equals("/") ? "/" : "\\\\";
-		String afterConversion = pvName.replaceAll(siteNameSpaceSeparators, separator);
-		return !afterConversion.equals(pvName);
+		return pvName.matches(siteNameSpaceSeparators);
 	}
 
 
