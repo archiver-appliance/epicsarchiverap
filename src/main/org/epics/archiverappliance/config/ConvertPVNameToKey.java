@@ -40,6 +40,7 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	private static final String SITE_NAME_SPACE_TERMINATOR = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator";
 	private String siteNameSpaceSeparators;
 	private char terminatorChar = ':';
+	private String fileSeparator;
 	
 	private ConfigService configService;
 	private ConcurrentHashMap<String, String> chunkKeys = new ConcurrentHashMap<String, String>();
@@ -86,6 +87,7 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 			throw new ConfigException("The appliance archiver cannot function without knowning the character that terminates the translated path name ");
 		}
 		this.terminatorChar = terminatorStr.charAt(0);
+		this.fileSeparator = File.separator.equals("/") ? "/" : "\\\\";
 		
 		configlogger.info("The pv name components in this installation are separated by these characters " + this.siteNameSpaceSeparators + 
 				" and the key names are terminated by " + this.terminatorChar);
@@ -99,8 +101,7 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	 * @return pvName  &emsp;
 	 */
 	protected String generateChunkKey(String pvName) { 
-		String separator = File.separator.equals("/") ? "/" : "\\\\";
-		return pvName.replaceAll(siteNameSpaceSeparators, separator) + terminatorChar;
+		return pvName.replaceAll(siteNameSpaceSeparators, fileSeparator) + terminatorChar;
 	}
 
 
