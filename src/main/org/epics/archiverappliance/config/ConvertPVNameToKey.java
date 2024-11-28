@@ -99,7 +99,8 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	 * @return pvName  &emsp;
 	 */
 	protected String generateChunkKey(String pvName) { 
-		return pvName.replaceAll(siteNameSpaceSeparators, File.separator) + terminatorChar;
+		String separator = File.separator.equals("/") ? "/" : "\\\\";
+		return pvName.replaceAll(siteNameSpaceSeparators, separator) + terminatorChar;
 	}
 
 
@@ -108,7 +109,8 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 	 */
 	@Override
 	public boolean containsSiteSeparators(String pvName) {
-		String afterConversion = pvName.replaceAll(siteNameSpaceSeparators, File.separator);
+		String separator = File.separator.equals("/") ? "/" : "\\\\";
+		String afterConversion = pvName.replaceAll(siteNameSpaceSeparators, separator);
 		return !afterConversion.equals(pvName);
 	}
 
