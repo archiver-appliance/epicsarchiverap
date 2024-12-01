@@ -506,7 +506,8 @@ function setupToolbarActions(reportTable) {
     curpage = 0;
     reportTable.data("paging", { pagesize: pagesize, currentpage: curpage });
     reportTable.children("tbody").empty();
-    getJSONDataAndRefreshTable(reportTable);
+    const json = reportTable.data("json");
+    getJSONDataAndRefreshTable(reportTable, json === undefined ? "GET": "POST");
   });
 }
 
