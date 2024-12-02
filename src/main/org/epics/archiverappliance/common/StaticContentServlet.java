@@ -422,7 +422,7 @@ public class StaticContentServlet extends HttpServlet {
 						ZipEntry zentry = zis.getNextEntry();
 						while(zentry != null) { 
 							// logger.debug("Zip entry '" + zentry.getName() + "'");
-							if(zentry.getName().equals(potentialPathWithinZip)) {
+							if((File.separator.equals("/") && zentry.getName().equals(potentialPathWithinZip)) || (File.separator.equals("\\") && zentry.getName().equals(potentialPathWithinZip.replace("\\", "/")))) {
 								this.length = zentry.getSize();
 								this.lastModified = zentry.getTime();
 								ByteArrayOutputStream bos = new ByteArrayOutputStream();
