@@ -55,7 +55,7 @@ def apiDocsDir = layout.projectDirectory.file("docs/api")
 def archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
 def defaultsitespecificpath = "src/sitespecific/${archapplsite}"
 // Allow the site to be outside of the repository
-def sitespecificpath = (new File("${defaultsitespecificpath}").exists()) ? defaultsitespecificpath : archapplsite
+def sitespecificpath = file("${defaultsitespecificpath}").exists() ? defaultsitespecificpath : archapplsite
 
 ant.stage = stageDir
 ant.archapplsite = archapplsite
