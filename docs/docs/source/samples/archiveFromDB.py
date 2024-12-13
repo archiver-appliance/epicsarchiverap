@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This is a simple script that demonstrates how to specify archiving parameters in the IOC's .db file and then use this information to add PV's to the EPICS archiver appliance.
 # The usecase for this is as follows
@@ -13,17 +13,17 @@
 # We use the Static Database Access routines provided by EPICS base in the libdbStaticHost.so to parse the IOC .db file
 # This requires us to process the .dbd files as well; so you need to explicitly pass those in or include them in your .db file and set the paths accordingly.
 #
-# For example - ./archiveFromDB.py http://archiver.jdoe.edu/mgmt ../dbd/softIoc.dbd ../db/arch.d
+# For example - ./archiveFromDB.py http://archiver.jdoe.edu/mgmt ../dbd/softIoc.dbd ../db/arch.db
 
 import sys
-import urllib
-import urllib2
+import requests
 import json
 import argparse
 from ctypes import *
 
 # Begin code where we use ctypes to load the functions we need from the .so
 
+# libdbStaticHost.so can be found in base-3.14.12.X/bin/linux-x86_64
 cdll.LoadLibrary("libdbStaticHost.so")
 libdbparse = CDLL("libdbStaticHost.so") 
 
@@ -136,25 +136,27 @@ if args.p:
 archivepvlist = []
 db = dbAllocBase()
 for dbfile in dbFiles:
-	status = dbReadDatabase(pointer(db), dbfile, path, macros)
+	status = dbReadDatabase(pointer(db), dbfile.encode('utf-8'), path.encode('utf-8'), macros.encode('utf-8'))
 	if status > 0:
-	    print "Could not read database " + dbfile
+	    print("Could not read database " + dbfile)
 	    sys.exit(1)
 	
 entry = dbAllocEntry(db)
 
 status = dbFirstRecordType(entry)
 if status > 0:
-    print "No record descriptions"
+    print("No record descriptions")
     sys.exit(1)
 while status == 0:
     recordTypeName = dbGetRecordTypeName(entry)
     status = dbFirstRecord(entry)
     while status == 0:
         recordName = dbGetRecordName(entry)
-        value = dbGetInfo(entry, "archiver")
+        recordName = recordName.decode('utf-8')
+        value = dbGetInfo(entry, b"archiver")
         if value != None:
             archparams = ""
+            value = value.decode('utf-8')
             if ';' in value:
                 archparams = value.split(";")
                 archparmsdict = {}
@@ -170,16 +172,15 @@ while status == 0:
     status = dbNextRecordType(entry)
 
 if archivepvlist:
-    data = json.dumps(archivepvlist)
+    json_data = archivepvlist
     url = serverURL + '/bpl/archivePV'
     headers = {"Content-type": "application/json", "Accept": "text/plain"}
-    print "Submitting PVs to appliance archiver at ", url
-    req = urllib2.Request(url, data, headers)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    status = json.loads(the_page)
+    print("Submitting PVs to appliance archiver at ", url)
+    response = requests.post(url, json=json_data, headers=headers)
+    response.raise_for_status()
+    status = response.json()
     for pvstatus in status:
-        print pvstatus['pvName'], pvstatus['status']
+        print(pvstatus['pvName'], pvstatus['status'])
 
 #dbFreeBase(db)
 #dbFreeEntry(entry)
