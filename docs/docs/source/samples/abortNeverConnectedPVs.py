@@ -31,7 +31,7 @@ if __name__ == "__main__":
                 abort = True
 
         if abort:
-            print(f"Aborting PV %s {neverConnectedPV['pvName']}")
+            print(f"Aborting PV {neverConnectedPV['pvName']}")
             aresp = requests.get(args.url + '/abortArchivingPV', params={"pv": neverConnectedPV['pvName']})
             aresp.raise_for_status()
             time.sleep(0.25)
