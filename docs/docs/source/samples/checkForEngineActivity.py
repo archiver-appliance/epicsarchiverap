@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script demonstrates how to check for recent engine activity if using PB files on the file system as the storage plugin.
 # It walks the entire folder tree and generates a snapshot. It then sleeps for some time and does this again.
@@ -8,12 +8,11 @@
 
 import os
 import sys
-import sets
 import time
 import argparse
 
 def generatePathSizeTree(folder):
-	pathSizeTree = sets.Set()
+	pathSizeTree = set()
 	for root, dirs, files in os.walk(folder):
 		for name in files:
 			fullPath = os.path.join(root, name)
@@ -24,12 +23,12 @@ def generatePathSizeTree(folder):
 
 # Set up argparse and parse command line options
 parser = argparse.ArgumentParser(description='Check for EPICS archiver appliance engine activity in a folder.')
-parser.add_argument('folder', help="The path to the folder storing the PB files", nargs=1)
-parser.add_argument('-t', help="Specify the timeout to wait between folder walks", nargs=1, default=30)
+parser.add_argument('folder', help="The path to the folder storing the PB files")
+parser.add_argument('-t', help="Specify the timeout to wait between folder walks", type=int, default=30)
 
 args = parser.parse_args()
 
-STSfolder = args.folder[0]
+STSfolder = args.folder
 timeout = args.t
 
 before = generatePathSizeTree(STSfolder)
@@ -38,8 +37,8 @@ after = generatePathSizeTree(STSfolder)
 
 filesWithChanges = after.difference(before)
 if filesWithChanges:
-	print len(filesWithChanges), " changes were detected in ", timeout, " seconds"
+	print(len(filesWithChanges), "changes were detected in", timeout, "seconds")
 else:
-	print "No changes detected in the last ", timeout, " seconds"
+	print("No changes detected in the last", timeout, "seconds")
 	sys.exit(-1)
 
