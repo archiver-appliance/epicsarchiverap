@@ -14,13 +14,6 @@ def getPVStatus(bplURL, pvParams, debug=False):
     resp.raise_for_status()
     return resp.json() if debug else resp.json()[0]['status']
 
-def consolidatePVData(bplURL, pvParams, debug=False):
-    url = bplURL + '/consolidateDataForPV'
-    resp = requests.get(url, params=pvParams)
-    if debug: print('Url: {}'.format(resp.url))
-    resp.raise_for_status()
-    return resp.json() if debug else resp.json()['desc']
-
 def getTypeInfo(bplURL, pvParams, debug=False):
     url = bplURL + '/getPVTypeInfo'
     resp = requests.get(url, params=pvParams)
@@ -38,9 +31,9 @@ def putTypeInfo(bplURL, pvParams, pvData, debug=False):
 def doAll(bplURL, pvParams, old=None, new=None, test=False, debug=False):
     resp = getTypeInfo(bplURL, pvParams)
     if debug:
-        resp = getPVStatus(bplURL, pvParams)
-        print('PV status: {}\n'.format(resp))
-        print('\nCurrent PV type info: {}\n'.format(json.dumps(resp, indent=4, sort_keys=True)))
+        status_resp = getPVStatus(bplURL, pvParams)
+        print('PV status: {}\n'.format(status_resp))
+        print('\nCurrent PV type info: {}\n'.format(json.dumps(status_resp, indent=4, sort_keys=True)))
     if 'dataStores' in resp:
         pv_type_info = resp
         stores = pv_type_info['dataStores']
