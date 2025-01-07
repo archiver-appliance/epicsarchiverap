@@ -1,7 +1,6 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-import urllib
-import urllib2
+import requests
 import json
 import sys
 
@@ -14,15 +13,17 @@ finalPVList = []
 applianceMGMTUrl = 'http://archiver.slac.stanford.edu:17665/mgmt/bpl/getAllPVs'
 if len(PVPatterns) > 0:
 	for pattern in PVPatterns:
-		resp = urllib2.urlopen(url=applianceMGMTUrl + "?" + urllib.urlencode({"pv" : pattern}))
-		matchingPVs = json.load(resp)
+		resp = requests.get(applianceMGMTUrl, params={"pv" : pattern})
+		resp.raise_for_status()
+		matchingPVs = resp.json()
 		finalPVList.extend(matchingPVs)
 else:
-		resp = urllib2.urlopen(url=applianceMGMTUrl)
-		matchingPVs = json.load(resp)
+		resp = requests.get(applianceMGMTUrl)
+		resp.raise_for_status()
+		matchingPVs = resp.json()
 		finalPVList.extend(matchingPVs)
 	
 
 for pv in sorted(finalPVList):
-	print pv
+	print(pv)
 
