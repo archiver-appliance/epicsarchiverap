@@ -1,23 +1,22 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Given a list of PVs, this deletes the PVs (including the data) in that list'''
 
 import os
 import sys
 import argparse
 import time
-import urllib
-import urllib2
+import requests
 import json
 import datetime
 import time
 
 def deletePV(bplURL, pvName):
     '''Deletes the pv specified by pvName'''
-    url = bplURL + '/deletePV?pv=' + urllib.quote_plus(pvName) + "&deleteData=true"
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    deletePVResponse = json.loads(the_page)
+    url = bplURL + '/deletePV'
+    params = {"pv": pvName, "deleteData": "true"}
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    deletePVResponse = response.json()
     return deletePVResponse
 
 
@@ -32,6 +31,6 @@ if __name__ == "__main__":
     for line in lines:
         pvName = line.strip()
         deleteResponse = deletePV(args.url, pvName)
-        print "{0} has been deleted with status {1}".format(pvName, deleteResponse['status'] if 'status' in deleteResponse else "N/A")
+        print("{0} has been deleted with status {1}".format(pvName, deleteResponse['status'] if 'status' in deleteResponse else "N/A"))
         time.sleep(1.0)
     
