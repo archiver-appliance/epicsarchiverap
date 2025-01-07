@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Find the list of paused PV's in the archiver and consolidate the data for these PV's all the way to the specified store'''
 
 import os
