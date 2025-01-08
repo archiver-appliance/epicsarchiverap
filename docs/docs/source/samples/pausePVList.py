@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Given a list of PVs, this pauses all the PVs in that list'''
 
 import os
 import sys
 import argparse
 import time
-import urllib
-import urllib2
+import requests
 import json
 import datetime
 import time
@@ -14,11 +13,9 @@ import time
 def pausePVs(bplURL, pvNames):
     '''Pauses the pvs specified by the list pvNames'''
     url = bplURL + '/pauseArchivingPV'
-    req = urllib2.Request(url)
-    req.add_header('Content-Type', 'application/json')
-    response = urllib2.urlopen(req, json.dumps(pvNames))
-    the_page = response.read()
-    pausePVResponse = json.loads(the_page)
+    resp = requests.post(url, json=pvNames)
+    resp.raise_for_status()
+    pausePVResponse = resp.json()
     return pausePVResponse
 
 
@@ -37,4 +34,4 @@ if __name__ == "__main__":
     
     pauseResponse = pausePVs(args.url, pvNames)
     for pvResponse in pauseResponse:
-        print "{0} => {1}".format(pvResponse['pvName'], pvResponse['status'] if 'status' in pvResponse else pvResponse['validation'])
+        print("{0} => {1}".format(pvResponse['pvName'], pvResponse['status'] if 'status' in pvResponse else pvResponse['validation']))
