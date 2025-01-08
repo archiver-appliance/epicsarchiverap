@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Get a list of PV's that have changed type and then display the previous/new type from the PV details'''
 import os
 import sys
