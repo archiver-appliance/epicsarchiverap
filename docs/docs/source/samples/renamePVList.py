@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Given a list of comma separated PVs, this renames  all the PVs in the first column to the second column.
 We assume that the PV's have been paused etc.
 For example, generate a list like so
@@ -16,19 +16,18 @@ import os
 import sys
 import argparse
 import time
-import urllib
-import urllib2
+import requests
 import json
 import datetime
 import time
 
 def renamePV(bplURL, oldName, newName):
     '''Renames the pv oldName to newName'''
-    url = bplURL + '/renamePV?pv=' + urllib.quote_plus(oldName) + "&newname=" + urllib.quote_plus(newName)
-    req = urllib2.Request(url)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    renamePVResponse = json.loads(the_page)
+    url = bplURL + '/renamePV'
+    params = {"pv" : oldName, "newname" : newName}
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    renamePVResponse = response.json()
     return renamePVResponse
 
 
@@ -45,11 +44,11 @@ if __name__ == "__main__":
         line = line.strip()
         parts = line.split(",")
         if len(parts) != 2:
-            print "Skipping line", line
+            print("Skipping line", line)
             continue
-        oldName = parts[0]
-        newName = parts[1]
+        oldName = parts[0].strip()
+        newName = parts[1].strip()
         renameResponse = renamePV(args.url, oldName, newName)
-        print "{0} has been renamed to {1} with status {2}".format(oldName, newName, renameResponse['status'] if 'status' in renameResponse else "N/A")
+        print("{0} has been renamed to {1} with status {2}".format(oldName, newName, renameResponse['status'] if 'status' in renameResponse else "N/A"))
         time.sleep(1.0)
     
