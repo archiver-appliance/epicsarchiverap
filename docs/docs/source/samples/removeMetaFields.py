@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script demonstrates how to modify the extra fields (HIHI, LOLO etc) that are typically archived as part of a PV.
 # These are set in a policy and can sometimes result in high casr connections on the IOC side.
@@ -6,31 +6,27 @@
 # The PV's must be paused and resumed before calling this script.
 
 import sys
-import urllib
-import urllib2
+import requests
 import json
 import argparse
 import csv
-import urlparse
 import time
 
 def getPVTypeInfo(bplURL, pvName):
 	'''Gets the PV TypeInfo for the pv'''
-	url = bplURL + '/getPVTypeInfo?pv=' + urllib.quote_plus(pvName)
-	req = urllib2.Request(url)
-	response = urllib2.urlopen(req)
-	the_page = response.read()
-	pvTypeInfo = json.loads(the_page)
+	url = bplURL + '/getPVTypeInfo'
+	response = requests.get(url, params={"pv" : pvName})
+	response.raise_for_status()
+	pvTypeInfo = response.json()
 	return pvTypeInfo
 
 def updatePVTypeInfo(bplURL, pvName, newTypeInfo):
-	'''Gets the PV TypeInfo for the pv'''
-	url = bplURL + '/putPVTypeInfo?pv=' + urllib.quote_plus(pvName) + "&override=true"
-	headers = {"Content-type": "application/json", "Accept": "text/plain"}
-	newTypeInfoStr = json.dumps(newTypeInfo)
-	req = urllib2.Request(url, data=newTypeInfoStr, headers=headers)
-	response = urllib2.urlopen(req)
-	updatedTypeInfo = json.load(response)
+	'''Updates the PV TypeInfo for the pv'''
+	url = bplURL + '/putPVTypeInfo'
+	params = { 'pv' : pvName, 'override' : 'true' }
+	response = requests.post(url, params=params, json=newTypeInfo)
+	response.raise_for_status()
+	updatedTypeInfo = response.json()
 	return updatedTypeInfo
 
 
@@ -46,10 +42,10 @@ if __name__ == "__main__":
 	typeInfo = getPVTypeInfo(serverURL, pvName)
 	time.sleep(0.25)
 	if len(typeInfo['archiveFields']) > 0:
-		print "PV", pvName, "is currently archiving", typeInfo['archiveFields']
+		print("PV", pvName, "is currently archiving", typeInfo['archiveFields'])
 		typeInfo['archiveFields'] = []
 		typeInfo = updatePVTypeInfo(serverURL, pvName, typeInfo)
 		time.sleep(0.25)
 	else:
-		print "PV", pvName, "is not currently archiving any metafields"
+		print("PV", pvName, "is not currently archiving any metafields")
 
