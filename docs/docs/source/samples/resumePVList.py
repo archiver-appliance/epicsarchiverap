@@ -1,12 +1,11 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Given a list of PVs, this resumes all the PVs in that list'''
 
 import os
 import sys
 import argparse
 import time
-import urllib
-import urllib2
+import requests
 import json
 import datetime
 import time
@@ -14,11 +13,9 @@ import time
 def resumePVs(bplURL, pvNames):
     '''Resumes the pvs specified by list pvNames'''
     url = bplURL + '/resumeArchivingPV'
-    req = urllib2.Request(url)
-    req.add_header('Content-Type', 'application/json')
-    response = urllib2.urlopen(req, json.dumps(pvNames))
-    the_page = response.read()
-    resumePVResponse = json.loads(the_page)
+    response = requests.post(url, json=pvNames)
+    response.raise_for_status()
+    resumePVResponse = response.json()
     return resumePVResponse
 
 
@@ -37,4 +34,4 @@ if __name__ == "__main__":
 
     resumeResponse = resumePVs(args.url, pvNames)
     for pvResponse in resumeResponse:
-        print "{0} => {1}".format(pvResponse['pvName'], pvResponse['status'] if 'status' in pvResponse else pvResponse['validation'])
+        print("{0} => {1}".format(pvResponse['pvName'], pvResponse['status'] if 'status' in pvResponse else pvResponse['validation']))
