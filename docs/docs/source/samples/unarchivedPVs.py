@@ -1,24 +1,21 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Given a list of comma separated PVs, determine all the PV's that are not being archived.'''
 
 import os
 import sys
 import argparse
 import time
-import urllib
-import urllib2
+import requests
 import json
 import datetime
-import time
 
 def getUnarchivedPVs(bplURL, pvNames):
     '''Of the PVs in the list, determine those that are unarchived. '''
     url = bplURL + '/unarchivedPVs'
-    data = "pv=" + ",".join(pvNames)
-    req = urllib2.Request(url, data)
-    response = urllib2.urlopen(req)
-    the_page = response.read()
-    retval = json.loads(the_page)
+    data = {"pv": ",".join(pvNames)}
+    response = requests.post(url, data=data)
+    response.raise_for_status()
+    retval = response.json()
     return retval
 
 
@@ -38,10 +35,10 @@ if __name__ == "__main__":
         parts = line.split(",")
         pvName = parts[0]
         pvName2Conf[pvName] = line
-        pvNames.append(urllib.quote_plus(pvName))
+        pvNames.append(pvName)
     unarchivedPVs = getUnarchivedPVs(args.url, pvNames)
     for unarchivedPV in sorted(unarchivedPVs):
-        print pvName2Conf[unarchivedPV]
+        print(pvName2Conf[unarchivedPV])
         
         
     
