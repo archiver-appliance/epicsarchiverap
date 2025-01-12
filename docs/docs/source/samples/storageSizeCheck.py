@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''Check the storage size report to make sure we do not have PV's archiving at more than the specified rate'''
 import os
 import sys
@@ -26,10 +26,9 @@ if __name__ == "__main__":
     parser.add_argument("maxsize", help="Report any PV's archiving at a rate greater than this rate. This is specified in GB/year.", type=float)
     parser.add_argument("--limit", help="Limit the number of entries in the report.", type=int, default=100)
     args = parser.parse_args()
-    bplURL = args.url + "/" if not args.url.endswith("/") else args.url
-    emailMsg = "PVs with estimated storage greater than {1}GB/year in {0}\n".format(bplURL, args.maxsize)
+    emailMsg = "PVs with estimated storage greater than {1}GB/year in {0}\n".format(args.url, args.maxsize)
     sendEmail = False
-    for (pv, gbperyear)  in getPVsWithEstimatedStorageGreaterThan(bplURL, args.maxsize, args.limit):
+    for (pv, gbperyear)  in getPVsWithEstimatedStorageGreaterThan(args.url, args.maxsize, args.limit):
         emailMsg = emailMsg + "PV: {} Size(GB/year): {}\n".format(pv, gbperyear)
         sendEmail = True
     if sendEmail:
