@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script adds a EPICS archiver appliance MySQL connection pool to a Tomcat context.xml
 # The location of context.xml is determined by the ${TOMCAT_HOME} environment variable
@@ -23,20 +23,20 @@ if tomcatHome == None:
 connpoolparams = {}
 for mysqlparam in mysql_connection_string.split():
 	paramnv = mysqlparam.split('=')
-	paramame = paramnv[0].replace('--', '')
+	paramname = paramnv[0].replace('--', '')
 	paramval = paramnv[1]
-	connpoolparams[paramame] = paramval
+	connpoolparams[paramname] = paramval
 
 if 'user' not in connpoolparams:
-	print('Cannot determine the user from ", mysql_connection_string, ". Please define like so "--user=archappl --password=archappl --database=archappl"')
+	print(f'Cannot determine the user from "{mysql_connection_string}". Please define like so "--user=archappl --password=archappl --database=archappl"')
 	sys.exit(1)
 
 if 'password' not in connpoolparams:
-	print('Cannot determine the user from ", mysql_connection_string, ". Please define like so "--user=archappl --password=archappl --database=archappl"')
+	print(f'Cannot determine the password from "{mysql_connection_string}". Please define like so "--user=archappl --password=archappl --database=archappl"')
 	sys.exit(1)
 
 if 'database' not in connpoolparams:
-	print('Cannot determine the user from ", mysql_connection_string, ". Please define like so "--user=archappl --password=archappl --database=archappl"')
+	print(f'Cannot determine the database from "{mysql_connection_string}". Please define like so "--user=archappl --password=archappl --database=archappl"')
 	sys.exit(1)
 
 if 'host' not in connpoolparams:
@@ -47,8 +47,8 @@ pwd=connpoolparams['password']
 db=connpoolparams['database']
 host=connpoolparams['host']
 
-tomcatContextXML = tomcatHome + '/conf/context.xml'
-serverdom = xml.dom.minidom.parse(tomcatContextXML);
+tomcatContextXML = os.path.join(tomcatHome, 'conf', 'context.xml')
+serverdom = xml.dom.minidom.parse(tomcatContextXML)
 resources = serverdom.getElementsByTagName('Resource')
 for resource in resources:
 	if resource.getAttribute('name') == 'jdbc/archappl':
