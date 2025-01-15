@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # This script deploys a archiver appliance build onto a appliance into four separate JVM's as per the documentation.
 # The artifacts from the build are four war files that are independent of each other. 
@@ -59,8 +59,8 @@ def deployMultipleTomcats(destFolder):
     
     # Parse the tomcat/conf/server.xml file and determine the stop start port
     # We start incrementing and use this port+1 for each of the new webapps
-    tomcatServerConfSrc = tomcatHome + '/conf/server.xml'
-    serverdom = xml.dom.minidom.parse(tomcatServerConfSrc);
+    tomcatServerConfSrc = os.path.join(tomcatHome, 'conf', 'server.xml')
+    serverdom = xml.dom.minidom.parse(tomcatServerConfSrc)
     serverStopStartPort = serverdom.getElementsByTagName('Server').item(0).getAttribute('port')
     if int(serverStopStartPort) == 8005:
     	print("The start/stop port is the standard Tomcat start/stop port. Changing it to something else random - 16000")
@@ -88,21 +88,21 @@ def deployMultipleTomcats(destFolder):
         
         for app in ['mgmt', 'engine', 'etl', 'retrieval']:
             # Delete any existing subfolders if any and make new ones.
-            subFolder = destFolder + '/' + app
+            subFolder = os.path.join(destFolder, app)
             if os.access(subFolder, os.W_OK):
                 print("Removing ", subFolder)
                 shutil.rmtree(subFolder)
             print("Generating tomcat folder for ", app, " in location", subFolder)
             os.makedirs(subFolder)
             # See http://kief.com/running-multiple-tomcat-instances-on-one-server.html for the steps we are using here.
-            shutil.copytree(tomcatHome + '/conf', subFolder + '/conf')
-            shutil.copytree(tomcatHome + '/webapps', subFolder + '/webapps')
-            os.makedirs(subFolder + '/logs')
-            os.makedirs(subFolder + '/temp')
-            os.makedirs(subFolder + '/work')
+            shutil.copytree(os.path.join(tomcatHome, 'conf'), os.path.join(subFolder, 'conf'))
+            shutil.copytree(os.path.join(tomcatHome, 'webapps'), os.path.join(subFolder, 'webapps'))
+            os.makedirs(os.path.join(subFolder, 'logs'))
+            os.makedirs(os.path.join(subFolder, 'temp'))
+            os.makedirs(os.path.join(subFolder, 'work'))
             
             # print 'StopStart for', app, ' is', newServerStopStartPort, "and the HTTP listener port as determined from appliances.xml is", httplistenerports[app]
-            newServerDom = xml.dom.minidom.parse(subFolder + '/conf/server.xml')
+            newServerDom = xml.dom.minidom.parse(os.path.join(subFolder, 'conf', 'server.xml'))
             newServerDom.getElementsByTagName('Server').item(0).setAttribute('port', str(newServerStopStartPort))
             # Find the 'Connector' whose 'protocol' is 'HTTP/1.1'
             haveSetConnector = False
@@ -114,11 +114,11 @@ def deployMultipleTomcats(destFolder):
                     print("Commenting connector with protocol ", httplistenerNode.getAttribute('protocol'), ". If you do need this connector, you should un-comment this.")
                     comment = httplistenerNode.ownerDocument.createComment(httplistenerNode.toxml())
                     httplistenerNode.parentNode.replaceChild(comment, httplistenerNode)
-                if haveSetConnector == False:
-                    raise AssertionError("We have not set the HTTP listener port for " + app);
+            if haveSetConnector == False:
+                raise AssertionError("We have not set the HTTP listener port for " + app)
             
 
-            with open(subFolder + '/conf/server.xml', 'w') as file: 
+            with open(os.path.join(subFolder, 'conf', 'server.xml'), 'w') as file: 
                 newServerDom.writexml(file)
             newServerStopStartPort =  newServerStopStartPort+1
 
