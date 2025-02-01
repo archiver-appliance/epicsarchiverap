@@ -154,7 +154,6 @@ public class FileBackedIteratorTest {
                         TimeUtils.plusDays(LKTS, 10),
                         TimeUtils.plusDays(LKTS, 1),
                         TimeUtils.plusDays(LKTS, 10),
-                        EmptyEventIterator.class,
                         mainIteratorClass));
     }
 
