@@ -50,6 +50,7 @@ import org.epics.archiverappliance.mgmt.bpl.ImportDataFromPlugin;
 import org.epics.archiverappliance.mgmt.bpl.MergeInDataFromExternalStore;
 import org.epics.archiverappliance.mgmt.bpl.ModifyMetaFieldsAction;
 import org.epics.archiverappliance.mgmt.bpl.ModifyStoreURLForPV;
+import org.epics.archiverappliance.mgmt.bpl.NamedFlagsAll;
 import org.epics.archiverappliance.mgmt.bpl.NamedFlagsGet;
 import org.epics.archiverappliance.mgmt.bpl.NamedFlagsSet;
 import org.epics.archiverappliance.mgmt.bpl.PauseArchivingPV;
@@ -149,6 +150,7 @@ public class BPLServlet extends HttpServlet {
         addAction("/resetFailoverCaches", ResetFailoverCaches.class);
         addAction("/getVersions", GetVersions.class);
         addAction("/modifyMetaFields", ModifyMetaFieldsAction.class);
+        addAction("/getAllNamedFlags", NamedFlagsAll.class);
         addAction("/getNamedFlag", NamedFlagsGet.class);
         addAction("/setNamedFlag", NamedFlagsSet.class);
         addAction("/getTypeInfoKeys", GetPVTypeInfoKeys.class);

@@ -103,6 +103,13 @@ public class DataSourceResolution {
 
 			for(TimeSpanDependentProcessor spannedProcessor : spannedProcessors) {
 				for(DataSourceforPV dataSource : dataSources) {
+					// Check to see if there is a named flag that turns off this data source. 
+					String namedFlagForSkippingDataSource = "SKIP_" + dataSource.getStoragePlugin().getName() + "_FOR_RETRIEVAL";
+					if(configService.getNamedFlag(namedFlagForSkippingDataSource)) {
+						logger.warn("Skipping " + dataSource.getStoragePlugin().getName() + " as the named flag " + namedFlagForSkippingDataSource + " is set");
+						continue;
+					}
+
 					// Ideally we'd check to see if this data source has data in this time span.
 					// However, this means we have to keep all the various infos updated. 
 					// The MergeDedup now takes care of merging from multiple sources.

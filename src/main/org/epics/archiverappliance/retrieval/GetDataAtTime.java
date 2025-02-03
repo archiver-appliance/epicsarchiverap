@@ -410,6 +410,13 @@ public class GetDataAtTime {
             Collections.reverse(datastores);
             for (String store : datastores) {
                 StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
+                // Check to see if there is a named flag that turns off this data source. 
+                String namedFlagForSkippingDataSource = "SKIP_" + storagePlugin.getName() + "_FOR_RETRIEVAL";
+                if(configService.getNamedFlag(namedFlagForSkippingDataSource)) {
+                    logger.warn("Skipping " + storagePlugin.getName() + " as the named flag " + namedFlagForSkippingDataSource + " is set");
+                    continue;
+                }
+
                 try (BasicContext context = new BasicContext()) {
                     if(storagePlugin instanceof BiDirectionalIterable) {
                         Instant startAtTime = atTime.plus(5, ChronoUnit.MINUTES);
