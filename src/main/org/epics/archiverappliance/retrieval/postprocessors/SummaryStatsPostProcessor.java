@@ -230,7 +230,7 @@ public abstract class SummaryStatsPostProcessor
                     }
 
                     return new SummaryStatsCollectorEventStream(
-                            firstBin,
+                            lastSampleBeforeStartAdded ? firstBin - 1 : firstBin,
                             lastBin,
                             intervalSecs,
                             srcDesc,
