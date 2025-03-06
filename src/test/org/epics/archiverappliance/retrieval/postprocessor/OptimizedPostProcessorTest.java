@@ -177,36 +177,37 @@ public class OptimizedPostProcessorTest {
                 ArchDBRTypes.DBR_SCALAR_DOUBLE,
                 new ScalarValue<>(50.0)));
 
-            Optimized optimizedPostProcessor = new Optimized();
-            try {
-                optimizedPostProcessor.initialize("optimized_9", optimizedTestPVName);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            Instant start = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToStart);
-            Instant end = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToEnd);
-            optimizedPostProcessor.estimateMemoryConsumption(optimizedTestPVName, new PVTypeInfo(optimizedTestPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
-            var callableEventStream = CallableEventStream.makeOneStreamCallable(testData, null, false);
-            try {
-                optimizedPostProcessor.wrap(callableEventStream).call();
-            } catch (Exception e) {
-                Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
-            }
+        Optimized optimizedPostProcessor = new Optimized();
+        try {
+            optimizedPostProcessor.initialize("optimized_9", optimizedTestPVName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Instant start = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToStart);
+        Instant end = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToEnd);
+        optimizedPostProcessor.estimateMemoryConsumption(optimizedTestPVName, new PVTypeInfo(optimizedTestPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+        var callableEventStream = CallableEventStream.makeOneStreamCallable(testData, null, false);
+        try {
+            optimizedPostProcessor.wrap(callableEventStream).call();
+        } catch (Exception e) {
+            Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
+        }
 
-            List<Event> events = new LinkedList<>();
-            for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
-                events.add(event);
+        List<Event> events = new LinkedList<>();
+        for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
+            events.add(event);
+        }
+
+        Assertions.assertEquals(expectedValues.size(), events.size());
+
+        for (int i = 0; i < expectedValues.size(); i++) {
+            double receivedValue = events.get(i).getSampleValue().getValue().doubleValue();
+            double expectedValue = expectedValues.get(i);
+
+            if (receivedValue != expectedValue) {
+                Assertions.fail("Received value '" + events.get(i).getSampleValue().getValue().doubleValue() + "' at index " + i + " does not equal the expected value '" + expectedValues.get(i) + "'.");
             }
-
-            for (Event event : events) {
-                double valueReceived = event.getSampleValue().getValue().doubleValue();
-                if (!expectedValues.stream().anyMatch(expectedValue -> expectedValue == valueReceived)) {
-                    Assertions.fail("Received value is not expected!");
-                }
-            }
-
-            Assertions.assertEquals(expectedValues.size(), events.size());
-
+        }
     }
 
     static Stream<Arguments> testInclusionOfLastValueBeforeFirstBinIntoFirstBin_generateData() {
