@@ -111,6 +111,7 @@ public abstract class SummaryStatsPostProcessor
     private boolean inheritValuesFromPreviousBins = true;
     Event lastSampleBeforeStart = null;
     boolean lastSampleBeforeStartAdded = false;
+    boolean shouldAddLastSampleBeforeStart = true;
 
     @Override
     public void initialize(String userarg, String pvName) throws IOException {
@@ -152,7 +153,7 @@ public abstract class SummaryStatsPostProcessor
                     // If we cache the mean/sigma etc, then we should add something to the desc telling us that this is
                     // cached data and then we can replace the stat value for that bin?
                     if (srcDesc == null) srcDesc = (RemotableEventStreamDesc) strm.getDescription();
-                    boolean shouldAddLastSampleBeforeStart = true;
+
                     for (Event e : strm) {
                         try {
                             DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
