@@ -187,25 +187,56 @@ public class OptimizedPostProcessorTest {
         Instant end = TimeUtils.convertFromYearSecondTimestamp(startOfSamples).plusMillis(millisToAddToEnd);
         optimizedPostProcessor.estimateMemoryConsumption(optimizedTestPVName, new PVTypeInfo(optimizedTestPVName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
         var callableEventStream = CallableEventStream.makeOneStreamCallable(testData, null, false);
-        try {
-            optimizedPostProcessor.wrap(callableEventStream).call();
-        } catch (Exception e) {
-            Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
+
+        var callable = optimizedPostProcessor.wrap(callableEventStream);
+        {
+            try {
+                callable.call();
+            } catch (Exception e) {
+                Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
+            }
+
+            List<Event> events = new LinkedList<>();
+            for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
+                events.add(event);
+            }
+
+            Assertions.assertEquals(expectedValues.size(), events.size());
+
+            for (int i = 0; i < expectedValues.size(); i++) {
+                double receivedValue = events.get(i).getSampleValue().getValue().doubleValue();
+                double expectedValue = expectedValues.get(i);
+
+                if (receivedValue != expectedValue) {
+                    Assertions.fail("Received value '" + events.get(i).getSampleValue().getValue().doubleValue() + "' at index " + i + " does not equal the expected value '" + expectedValues.get(i) + "'.");
+                }
+            }
         }
 
-        List<Event> events = new LinkedList<>();
-        for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
-            events.add(event);
-        }
 
-        Assertions.assertEquals(expectedValues.size(), events.size());
+        {
+            // Also test that calling callable.call() a second time doesn't affect the received values
+            // (callable(), which is the result of optimizedPostProcessor.wrap(callableEventStream),
+            // should be idempotent):
+            try {
+                callable.call();
+            } catch (Exception e) {
+                Assertions.fail("An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
+            }
 
-        for (int i = 0; i < expectedValues.size(); i++) {
-            double receivedValue = events.get(i).getSampleValue().getValue().doubleValue();
-            double expectedValue = expectedValues.get(i);
+            List<Event> eventsAfterCallingCallableTwice = new LinkedList<>();
+            for (Event event : optimizedPostProcessor.getConsolidatedEventStream()) {
+                eventsAfterCallingCallableTwice.add(event);
+            }
+            Assertions.assertEquals(expectedValues.size(), eventsAfterCallingCallableTwice.size());
 
-            if (receivedValue != expectedValue) {
-                Assertions.fail("Received value '" + events.get(i).getSampleValue().getValue().doubleValue() + "' at index " + i + " does not equal the expected value '" + expectedValues.get(i) + "'.");
+            for (int i = 0; i < expectedValues.size(); i++) {
+                double receivedValue = eventsAfterCallingCallableTwice.get(i).getSampleValue().getValue().doubleValue();
+                double expectedValue = expectedValues.get(i);
+
+                if (receivedValue != expectedValue) {
+                    Assertions.fail("callable() is not idempotent: after calling callable.call() twice, the received value '" + eventsAfterCallingCallableTwice.get(i).getSampleValue().getValue().doubleValue() + "' at index " + i + " does not equal the expected value '" + expectedValues.get(i) + "'.");
+                }
             }
         }
     }
