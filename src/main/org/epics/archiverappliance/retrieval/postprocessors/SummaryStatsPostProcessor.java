@@ -111,6 +111,7 @@ public abstract class SummaryStatsPostProcessor
     private boolean inheritValuesFromPreviousBins = true;
     Event lastSampleBeforeStart = null;
     boolean lastSampleBeforeStartAdded = false;
+    boolean shouldAddLastSampleBeforeStart = true;
 
     @Override
     public void initialize(String userarg, String pvName) throws IOException {
@@ -152,11 +153,10 @@ public abstract class SummaryStatsPostProcessor
                     // If we cache the mean/sigma etc, then we should add something to the desc telling us that this is
                     // cached data and then we can replace the stat value for that bin?
                     if (srcDesc == null) srcDesc = (RemotableEventStreamDesc) strm.getDescription();
-                    boolean shouldAddLastSampleBeforeStart = true;
+
                     for (Event e : strm) {
                         try {
                             DBRTimeEvent dbrTimeEvent = (DBRTimeEvent) e;
-                            long epochSeconds = dbrTimeEvent.getEpochSeconds();
                             if (dbrTimeEvent.getEventTimeStamp().isAfter(previousEventTimestamp)) {
                                 previousEventTimestamp = dbrTimeEvent.getEventTimeStamp();
                             } else {
@@ -171,36 +171,38 @@ public abstract class SummaryStatsPostProcessor
                                 continue;
                             }
                             Instant eventInstant = dbrTimeEvent.getEventTimeStamp();
-                            long binNumber = epochSeconds / intervalSecs;
-                            if (eventInstant.isAfter(start) || eventInstant.equals(start)) {
+                            
+                            if (eventInstant.isBefore(start)) {
+                                // Michael Davidsaver's special case; keep track of the last value before the start time
+                                // and then add that in as a single sample.
+                                if (lastSampleBeforeStart == null
+                                        || e.getEventTimeStamp().isAfter(lastSampleBeforeStart.getEventTimeStamp())) {
+                                    lastSampleBeforeStart = e.makeClone();
+                                }
+                            }
+                            else if (eventInstant.isAfter(start) || eventInstant.equals(start)) {
+                                
                                 if (eventInstant.equals(start)) {
                                     shouldAddLastSampleBeforeStart = false;
                                 }
+
+                                // We only add bins for the specified time frame.
+                                // The ArchiveViewer depends on the number of values being the same and because of different rates
+                                // for PVs, the bin number for the starting bin could be different...
+                                // We could add a firstbin-1 and put all values before the starting timestamp in that bin but that
+                                // would give incorrect summaries.
+                                if (lastSampleBeforeStart != null && shouldAddLastSampleBeforeStart && !lastSampleBeforeStartAdded) {
+                                    switchToNewBin(firstBin - 1);
+                                    currentBinCollector.addEvent(lastSampleBeforeStart);
+                                    lastSampleBeforeStartAdded = true;
+                                }
+
+                                long epochSeconds = dbrTimeEvent.getEpochSeconds();
+                                long binNumber = epochSeconds / intervalSecs;
+
                                 if (eventInstant.isBefore(end) || eventInstant.equals(end)) {
                                     if (binNumber != currentBin) {
-                                        if (currentBin != -1) {
-                                            SummaryValue summaryValue;
-                                            if (vectorType) {
-                                                summaryValue = new SummaryValue(
-                                                        ((SummaryStatsVectorCollector) currentBinCollector)
-                                                                .getVectorValues(),
-                                                        currentMaxSeverity,
-                                                        currentConnectionChangedEvents);
-                                            } else {
-                                                summaryValue = new SummaryValue(
-                                                        currentBinCollector.getStat(),
-                                                        currentMaxSeverity,
-                                                        currentConnectionChangedEvents);
-                                                if (currentBinCollector
-                                                        instanceof SummaryStatsCollectorAdditionalColumns) {
-                                                    summaryValue.addAdditionalColumn(
-                                                            ((SummaryStatsCollectorAdditionalColumns)
-                                                                            currentBinCollector)
-                                                                    .getAdditionalStats());
-                                                }
-                                            }
-                                            consolidatedData.put(currentBin, summaryValue);
-                                        }
+                                        commitSummaryToBin(vectorType);
                                         switchToNewBin(binNumber);
                                     }
                                     currentBinCollector.addEvent(e);
@@ -212,32 +214,24 @@ public abstract class SummaryStatsPostProcessor
                                         currentConnectionChangedEvents = true;
                                     }
                                 }
-                            } else if (eventInstant.isBefore(start)) {
-                                // Michael Davidsaver's special case; keep track of the last value before the start time
-                                // and then add that in as a single sample.
-                                if (lastSampleBeforeStart == null
-                                        || e.getEventTimeStamp().isAfter(lastSampleBeforeStart.getEventTimeStamp())) {
-                                    lastSampleBeforeStart = e.makeClone();
-                                }
                             }
                         } catch (PBParseException ex) {
                             logger.error("Skipping possible corrupted event for pv " + strm.getDescription());
                         }
                     }
 
-                    // We only add bins for the specified time frame.
-                    // The ArchiveViewer depends on the number of values being the same and because of different rates
-                    // for PVs, the bin number for the starting bin could be different...
-                    // We could add a firstbin-1 and put all values before the starting timestamp in that bin but that
-                    // would give incorrect summaries.
-                    if (lastSampleBeforeStart != null && shouldAddLastSampleBeforeStart) {
+                    // If there were zero events in the timespan defined by the query,
+                    // the last sample before start has not been added to a bin yet.
+                    // If that is the case, add it here:
+                    if (lastSampleBeforeStart != null && shouldAddLastSampleBeforeStart && !lastSampleBeforeStartAdded) {
                         switchToNewBin(firstBin - 1);
                         currentBinCollector.addEvent(lastSampleBeforeStart);
+                        commitSummaryToBin(vectorType);
                         lastSampleBeforeStartAdded = true;
                     }
 
                     return new SummaryStatsCollectorEventStream(
-                            firstBin,
+                            lastSampleBeforeStartAdded ? firstBin - 1 : firstBin,
                             lastBin,
                             intervalSecs,
                             srcDesc,
@@ -249,6 +243,32 @@ public abstract class SummaryStatsPostProcessor
                 }
             }
         };
+    }
+
+    private void commitSummaryToBin(boolean vectorType) {
+        if (currentBin != -1) {
+            SummaryValue summaryValue;
+            if (vectorType) {
+                summaryValue = new SummaryValue(
+                        ((SummaryStatsVectorCollector) currentBinCollector)
+                                .getVectorValues(),
+                        currentMaxSeverity,
+                        currentConnectionChangedEvents);
+            } else {
+                summaryValue = new SummaryValue(
+                        currentBinCollector.getStat(),
+                        currentMaxSeverity,
+                        currentConnectionChangedEvents);
+                if (currentBinCollector
+                        instanceof SummaryStatsCollectorAdditionalColumns) {
+                    summaryValue.addAdditionalColumn(
+                            ((SummaryStatsCollectorAdditionalColumns)
+                                            currentBinCollector)
+                                    .getAdditionalStats());
+                }
+            }
+            consolidatedData.put(currentBin, summaryValue);
+        }
     }
 
     private void switchToNewBin(long binNumber) {

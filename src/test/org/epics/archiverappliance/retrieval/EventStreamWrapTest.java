@@ -16,6 +16,7 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.retrieval.postprocessors.Mean;
+import org.epics.archiverappliance.retrieval.postprocessors.Optimized;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithConsolidatedEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -176,6 +178,72 @@ public class EventStreamWrapTest {
             while (continueprocessing) {
                 try {
                     for (Event e : consolidatedEventStream) {
+                        Assertions.assertEquals(
+                                1.0,
+                                e.getSampleValue().getValue().doubleValue(),
+                                0.0,
+                                "All values are 1 so mean should be 1. Instead we got "
+                                        + e.getSampleValue().getValue().doubleValue() + " at " + eventCount + " for pv "
+                                        + pvName);
+                        eventCount++;
+                    }
+                    continueprocessing = false;
+                } catch (ChangeInYearsException ex) {
+                    logger.debug("Change in years");
+                }
+                long t1 = System.currentTimeMillis();
+                executors.shutdown();
+                // assertTrue("Expecting 365 values got " + eventCount + " for pv " + pvName, eventCount == 365);
+                logger.info("Multi threaded wrapper took " + (t1 - t0) + "(ms)");
+            }
+        }
+    }
+
+    @Test
+    void testOptimizedWithMultiThreadWrapper() throws Exception {
+        PlainPBStoragePlugin storageplugin = storagePluginPB;
+
+        Instant end = TimeUtils.now();
+        Instant start = TimeUtils.minusDays(end, 365);
+        Optimized optimized_100 = (Optimized) PostProcessors.findPostProcessor("optimized_100");
+        optimized_100.initialize("optimized_100", pvName);
+        PVTypeInfo info = new PVTypeInfo();
+        info.setComputedStorageRate(40);
+        optimized_100.estimateMemoryConsumption(pvName, info, start, end, null);
+        try (BasicContext context = new BasicContext()) {
+            ExecutorService executors = Executors.newFixedThreadPool(2);
+            long t0 = System.currentTimeMillis();
+            assert storageplugin != null;
+            List<Callable<EventStream>> callables = storageplugin.getDataForPV(context, pvName, start, end, optimized_100);
+            List<Future<EventStream>> futures = new ArrayList<Future<EventStream>>();
+            for (Callable<EventStream> callable : callables) {
+                futures.add(executors.submit(callable));
+            }
+
+            for (Future<EventStream> future : futures) {
+                try {
+                    future.get();
+                } catch (Exception ex) {
+                    logger.error("Exception computing optimized_100", ex);
+                }
+            }
+
+            long eventCount = 0;
+            EventStream consolidatedEventStream =
+                    ((PostProcessorWithConsolidatedEventStream) optimized_100).getConsolidatedEventStream();
+            // In cases where the data spans year boundaries, we continue with the same stream.
+            boolean continueprocessing = true;
+            while (continueprocessing) {
+                try {
+                    Optional<Instant> previousEventTimeStamp = Optional.empty();
+                    for (Event e : consolidatedEventStream) {
+                        // Check that the output is ordered:
+                        if (previousEventTimeStamp.isPresent()) {
+                            Assertions.assertTrue(previousEventTimeStamp.get().isBefore(e.getEventTimeStamp()));
+                        }
+                        previousEventTimeStamp = Optional.of(e.getEventTimeStamp());
+
+                        // Check that the mean equals 1.0 for every datapoint in the output:
                         Assertions.assertEquals(
                                 1.0,
                                 e.getSampleValue().getValue().doubleValue(),
