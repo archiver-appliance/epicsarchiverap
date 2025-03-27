@@ -32,7 +32,6 @@ public class MonitoredArchiveChannel extends ArchiveChannel {
        /** @see ArchiveChannel#ArchiveChannel
 	 * @param name pv's name
 	 * @param writer the writer for this pv
-	 * @param enablement  start or stop archiving this pv when channel is created
 	 * @param buffer_capacity the sample buffer's capacity for this pv
 	 * @param last_archived_timestamp the last time stamp when this pv was archived
 	 * @param period_estimate  &emsp;
@@ -44,12 +43,12 @@ public class MonitoredArchiveChannel extends ArchiveChannel {
 	 * @throws Exception error when creating archive channel for this pv
 	 */
 	public MonitoredArchiveChannel(final String name, final Writer writer,
-			final Enablement enablement, final int buffer_capacity,
+			final int buffer_capacity,
                                    final Instant last_archived_timestamp,
 			final double period_estimate, final ConfigService configservice,
 			final ArchDBRTypes archdbrtype, final String controlPVname,
 			final int commandThreadID, final boolean usePVAccess) throws Exception {
-		super(name, writer, enablement, buffer_capacity,
+		super(name, writer, buffer_capacity,
 				last_archived_timestamp, configservice, archdbrtype,
 				controlPVname, commandThreadID, usePVAccess);
 		this.period_estimate = period_estimate;
@@ -74,14 +73,11 @@ public class MonitoredArchiveChannel extends ArchiveChannel {
 		} catch (Exception e) {
 			logger.error("exception in handleNewValue for pv" + this.getName(), e);
 		}
-		if (isEnabled()) {
-			try {
-				addValueToBuffer(timeevent);
-			} catch (Exception e) {
-				logger.error("exception in handleNewValue for pv " + this.getName(), e);
-			}
-			return true;
+		try {
+			addValueToBuffer(timeevent);
+		} catch (Exception e) {
+			logger.error("exception in handleNewValue for pv " + this.getName(), e);
 		}
-		return false;
+		return true;
 	}
 }

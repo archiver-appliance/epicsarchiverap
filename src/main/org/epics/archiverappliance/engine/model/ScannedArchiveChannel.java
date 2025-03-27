@@ -37,7 +37,6 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	/** @see ArchiveChannel#ArchiveChannel
 	 * @param name pv's name
 	 * @param writer the writer for this pv
-	 * @param enablement  start or stop archiving this pv when channel is created
 	 * @param buffer_capacity the sample buffer's capacity for this pv
 	 * @param last_timeestamp the last time stamp when this pv was archived
 	 * @param scan_period  &emsp;
@@ -49,12 +48,12 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	 * @throws Exception error when creating archive channel for this pv
 	 */
 	public ScannedArchiveChannel(final String name, final Writer writer,
-			Enablement enablement, final int buffer_capacity,
+			final int buffer_capacity,
                                  final Instant last_timeestamp, final double scan_period,
 			final ConfigService configservice, final ArchDBRTypes archdbrtype,
 			final String controlPVname, final int commandThreadID, final boolean usePVAccess)
 			throws Exception {
-		super(name, writer, enablement, buffer_capacity, last_timeestamp,
+		super(name, writer, buffer_capacity, last_timeestamp,
 				configservice, archdbrtype, controlPVname, commandThreadID, usePVAccess);
 		this.scan_period = scan_period;
 		this.pvMetrics.setSamplingPeriod(scan_period);
@@ -89,32 +88,30 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 				logger.error("exception in handleNewValue for pv" + this.getName(), e);
 			}
 			
-			if (isEnabled()) {
-				try {
-					if (latestDBRTimeEvent == null) {
-						return true;
-					}
-					// Is it a new value?
-					if (isMatchingTimeStamp(lastDBRTimeEvent, latestDBRTimeEvent)) {
-						return true;
-					}
-
-					if(isLessThanScanPeriod(lastDBRTimeEvent, latestDBRTimeEvent)) { 
-						// logger.debug("Latest event is less than scan periond; skipping for " + this.getName());
-						// We however keep track of the server time when we got a handle event for comparision in the SCAN thread.
-						this.serverTimeForStragglingScanValuesMillis = System.currentTimeMillis();
-						return true;
-					} else { 
-						// logger.debug("Latest event is more than scan periond; recording for " + this.getName());
-						addValueToBuffer(latestDBRTimeEvent);
-					}
-					
-				} catch (Exception e) {
-					logger.error("exception in handleNewValue for pv " + this.getName(), e);
+			try {
+				if (latestDBRTimeEvent == null) {
+					return true;
 				}
-				return true;
+				// Is it a new value?
+				if (isMatchingTimeStamp(lastDBRTimeEvent, latestDBRTimeEvent)) {
+					return true;
+				}
+
+				if(isLessThanScanPeriod(lastDBRTimeEvent, latestDBRTimeEvent)) {
+					// logger.debug("Latest event is less than scan periond; skipping for " + this.getName());
+					// We however keep track of the server time when we got a handle event for comparision in the SCAN thread.
+					this.serverTimeForStragglingScanValuesMillis = System.currentTimeMillis();
+					return true;
+				} else {
+					// logger.debug("Latest event is more than scan periond; recording for " + this.getName());
+					addValueToBuffer(latestDBRTimeEvent);
+				}
+
+			} catch (Exception e) {
+				logger.error("exception in handleNewValue for pv " + this.getName(), e);
 			}
-			return false;
+			return true;
+
 		}
 	}
 	
@@ -125,7 +122,6 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 	@Override
 	public void run() {
 		synchronized(this) { 
-			if (isEnabled()) {
 				try {
 					if (latestDBRTimeEvent == null || this.serverTimeForStragglingScanValuesMillis <= 0) {
 						// logger.debug("Latest event/straggling time is null " + this.getName());
@@ -149,8 +145,7 @@ public class ScannedArchiveChannel extends ArchiveChannel implements Runnable {
 					logger.error("exception in handleNewValue for pv " + this.getName(), e);
 				}
 				return;
-			}
-			return;
+
 		}
 	}
 
