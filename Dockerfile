@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk AS expand-wars
+FROM eclipse-temurin:21-jdk AS expand-wars
 
 WORKDIR /wars
 COPY build/libs/mgmt.war /wars/mgmt/
