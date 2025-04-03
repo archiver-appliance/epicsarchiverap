@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 
@@ -35,7 +37,11 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
     private static final int DEFAULT_NUMBER_OF_POINTS = 1000;
     private static final String IDENTITY = "optimized";
     
-    private int numEvents;
+    // Use AtomicInteger for thread-safe counting
+    private final AtomicInteger numEvents = new AtomicInteger(0);
+
+    // Use a lock to protect access to the event streams
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private ArrayListEventStream allEvents;
     private ArrayListEventStream transformedRawEvents;
     private int numberOfPoints = DEFAULT_NUMBER_OF_POINTS;
@@ -72,10 +78,19 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
                             
                 @Override
                 public void addEvent(Event e) {
-                    if (numEvents < numberOfPoints) {
-                        allEvents.add(e);
+                    int currentCount = numEvents.incrementAndGet();
+                    if (currentCount <= numberOfPoints) {
+                        // Use write lock when modifying allEvents
+                        lock.writeLock().lock();
+                        try {
+                            if (allEvents != null) {
+                                allEvents.add(e);
+                            }
+                        } finally {
+                            lock.writeLock().unlock();
+                        }
                     }
-                    numEvents++;
+
                     double val = e.getSampleValue().getValue().doubleValue();
                     if(!Double.isNaN(val)) { 
                         stats.addValue(val);
@@ -94,7 +109,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
             String numberStr = userparams[1];
             numberOfPoints = Integer.parseInt(numberStr);
         } 
-        numEvents = 0;
+        numEvents.set(0);
     }
     
     @Override
@@ -121,10 +136,16 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
 
     @Override
     public EventStream getConsolidatedEventStream() {
-        if (numEvents > allEvents.size()) {
-            return statisticsPostProcessor.getConsolidatedEventStream();
-        } else {
-            return new ArrayListCollectorEventStream(transformedRawEvents);
+        // Use read lock when reading allEvents
+        lock.readLock().lock();
+        try {
+            if (allEvents == null || numEvents.get() > allEvents.size()) {
+                return statisticsPostProcessor.getConsolidatedEventStream();
+            } else {
+                return new ArrayListCollectorEventStream(transformedRawEvents);
+            }
+        } finally {
+            lock.readLock().unlock();
         }
     }
 
@@ -161,22 +182,45 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
     public Callable<EventStream> wrap(final Callable<EventStream> callable) {
         return new Callable<EventStream>() {
             public EventStream call() throws Exception {
-                if (allEvents == null) {
-                    EventStream strm = callable.call();
-                    RemotableEventStreamDesc org = (RemotableEventStreamDesc)strm.getDescription();
-                    RemotableEventStreamDesc desc = new RemotableEventStreamDesc(org);
-                    allEvents = new ArrayListEventStream(numberOfPoints, desc);
+                // Thread-safe initialization of allEvents
+                lock.writeLock().lock();
+                try {
+                    if (allEvents == null) {
+                        EventStream strm = callable.call();
+                        RemotableEventStreamDesc org = (RemotableEventStreamDesc)strm.getDescription();
+                        RemotableEventStreamDesc desc = new RemotableEventStreamDesc(org);
+                        allEvents = new ArrayListEventStream(numberOfPoints, desc);
+                    }
+                } finally {
+                    lock.writeLock().unlock();
                 }
+
                 Callable<EventStream> stCall = statisticsPostProcessor.wrap(callable);
                 EventStream stream = stCall.call();
-                if (numEvents > allEvents.size()) {
+
+                // Use read lock when checking condition
+                lock.readLock().lock();
+                boolean useStatistics;
+                try {
+                    useStatistics = numEvents.get() > allEvents.size();
+                } finally {
+                    lock.readLock().unlock();
+                }
+
+                if (useStatistics) {
                     return stream;
                 } else {
-                    transformedRawEvents = new ArrayListEventStream(allEvents.size(),allEvents.getDescription());
-                    for (Event e : allEvents) {
-                        transformedRawEvents.add(DBR2PBTypeMapping.getPBClassFor(e.getDBRType()).getSerializingConstructor().newInstance(e));
+                    // Use write lock when creating transformedRawEvents
+                    lock.writeLock().lock();
+                    try {
+                        transformedRawEvents = new ArrayListEventStream(allEvents.size(), allEvents.getDescription());
+                        for (Event e : allEvents) {
+                            transformedRawEvents.add(DBR2PBTypeMapping.getPBClassFor(e.getDBRType()).getSerializingConstructor().newInstance(e));
+                        }
+                        return transformedRawEvents;
+                    } finally {
+                        lock.writeLock().unlock();
                     }
-                    return transformedRawEvents;
                 }
             }
         };
