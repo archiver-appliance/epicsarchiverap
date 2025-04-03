@@ -23,7 +23,8 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.TestInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -50,6 +51,9 @@ public class EventStreamWrapTest {
             ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "S_" + type.getPrimitiveName();
     static ConfigService configService;
     static PlainPBStoragePlugin storagePluginPB;
+
+    // Number of times to repeat each test
+    private static final int REPEAT_COUNT = 10;
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -91,8 +95,10 @@ public class EventStreamWrapTest {
         }
     }
 
-    @Test
-    public void testSimpleWrapper() throws Exception {
+    @RepeatedTest(REPEAT_COUNT)
+    public void testSimpleWrapper(TestInfo testInfo) throws Exception {
+        logger.info("Running testSimpleWrapper - iteration " + getCurrentRepetition(testInfo));
+
         PlainPBStoragePlugin storageplugin = storagePluginPB;
         Instant end = TimeUtils.now();
         Instant start = TimeUtils.minusDays(end, 365);
@@ -141,8 +147,10 @@ public class EventStreamWrapTest {
      * We wrap a thread around each source event stream. Since the source data is generated using month partitions, we
      * should get about 12 source event streams.
      */
-    @Test
-    void testMultiThreadWrapper() throws Exception {
+    @RepeatedTest(REPEAT_COUNT)
+    void testMeanMultiThreadWrapper(TestInfo testInfo) throws Exception {
+        logger.info("Running testMultiThreadWrapper - iteration " + getCurrentRepetition(testInfo));
+
         PlainPBStoragePlugin storageplugin = storagePluginPB;
 
         Instant end = TimeUtils.now();
@@ -199,8 +207,10 @@ public class EventStreamWrapTest {
         }
     }
 
-    @Test
-    void testOptimizedWithMultiThreadWrapper() throws Exception {
+    @RepeatedTest(REPEAT_COUNT)
+    void testOptimizedWithMultiThreadWrapper(TestInfo testInfo) throws Exception {
+        logger.info("Running testOptimizedWithMultiThreadWrapper - iteration " + getCurrentRepetition(testInfo));
+
         PlainPBStoragePlugin storageplugin = storagePluginPB;
 
         Instant end = TimeUtils.now();
@@ -263,5 +273,14 @@ public class EventStreamWrapTest {
                 logger.info("Multi threaded wrapper took " + (t1 - t0) + "(ms)");
             }
         }
+    }
+
+    // Helper method to get current repetition number from TestInfo
+    private int getCurrentRepetition(TestInfo testInfo) {
+        return testInfo.getTestMethod()
+                .flatMap(method -> testInfo.getDisplayName().matches(".*\\[\\d+\\].*") ?
+                        Optional.of(Integer.parseInt(testInfo.getDisplayName().replaceAll(".*\\[(\\d+)\\].*", "$1"))) :
+                        Optional.empty())
+                .orElse(0);
     }
 }
