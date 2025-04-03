@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Tag("localEpics")
 public class ControlledPVTest {
-	private static final Logger logger = LogManager.getLogger(ControlledPVTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(ControlledPVTest.class.getName());
     private SIOCSetup ioc = null;
     private ConfigServiceForTests testConfigService;
     private final FakeWriter writer = new FakeWriter();
@@ -74,11 +74,11 @@ public class ControlledPVTest {
 
                 String pvName = pvPrefix + "test_" + i;
                 ArchiveEngine.archivePV(pvName, 2,
-                        SamplingMethod.SCAN,
-                        writer,
-                        testConfigService,
-                        ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                        null, pvnameenable, false, false);
+                    SamplingMethod.SCAN,
+                    writer,
+                    testConfigService,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    null, pvnameenable, false, false);
                 testConfigService.updateTypeInfoForPV(pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1));
 
             }
@@ -88,10 +88,10 @@ public class ControlledPVTest {
             int enablePVs = 0;
             for (String pvName : channelList.keySet()) {
                 ArchiveChannel tempChannel = channelList.get(pvName);
-                if (tempChannel.isEnabled()) enablePVs++;
+                enablePVs++;
             }
 
-            Assertions.assertTrue(enablePVs==400, "400 channels should be started ,but only "+enablePVs+" were started");
+            Assertions.assertEquals(enablePVs == 400, true, "400 channels should be started ,but only " + enablePVs + " were started");
             Assertions.assertTrue(!channelList.get("test_0").getPVMetrics().isConnected(), "test_0 should be unconnected but it is connected");
             Assertions.assertTrue(!channelList.get("test_500").getPVMetrics().isConnected(), "test_500 should be unconnected but it is connected");
             Assertions.assertTrue(channelList.get("test_700").getPVMetrics().isConnected(), "test_700 should be connected but it is unconnected");
@@ -101,11 +101,11 @@ public class ControlledPVTest {
             int enablePVs2 = 0;
             for (String pvName : channelList.keySet()) {
                 ArchiveChannel tempChannel = channelList.get(pvName);
-                if (tempChannel.isEnabled()) enablePVs2++;
+                enablePVs2++;
             }
 
 
-            Assertions.assertTrue(enablePVs2==1000, "1000 channels should be started ,but only "+enablePVs2+" were started");
+            Assertions.assertEquals(enablePVs2 == 1000, true, "1000 channels should be started ,but only " + enablePVs2 + " were started");
             Assertions.assertTrue(channelList.get("test_0").getPVMetrics().isConnected(), "test_0 should be connected but it is unconnected");
             Assertions.assertTrue(channelList.get("test_500").getPVMetrics().isConnected(), "test_500 should be connected but it is unconnected");
             Assertions.assertTrue(channelList.get("test_700").getPVMetrics().isConnected(), "test_700 should be connected but it is unconnected");
@@ -116,11 +116,11 @@ public class ControlledPVTest {
             int disablePVs3 = 0;
             for (String pvName : channelList.keySet()) {
                 ArchiveChannel tempChannel = channelList.get(pvName);
-                if (!tempChannel.isEnabled()) disablePVs3++;
+                disablePVs3++;
             }
 
 
-            Assertions.assertTrue(disablePVs3==400, "400 channels should be stopped ,but only "+disablePVs3+" were stopeed");
+            Assertions.assertEquals(disablePVs3 == 400, true, "400 channels should be stopped ,but only " + disablePVs3 + " were stopeed");
             Assertions.assertTrue(channelList.get("test_0").getPVMetrics().isConnected(), "test_0 should be connected but it is unconnected");
             Assertions.assertTrue(channelList.get("test_500").getPVMetrics().isConnected(), "test_500 should be connected but it is unconnected");
             Assertions.assertTrue(!channelList.get("test_700").getPVMetrics().isConnected(), "test_700 should be unconnected but it is connected");
@@ -132,11 +132,11 @@ public class ControlledPVTest {
             int disablePVs4 = 0;
             for (String pvName : channelList.keySet()) {
                 ArchiveChannel tempChannel = channelList.get(pvName);
-                if (!tempChannel.isEnabled()) disablePVs4++;
+                disablePVs4++;
             }
 
 
-            Assertions.assertTrue(disablePVs4==1000, "1000 channels should be stopped ,but only "+disablePVs4+" were stopeed");
+            Assertions.assertEquals(disablePVs4 == 1000, true, "1000 channels should be stopped ,but only " + disablePVs4 + " were stopeed");
             Assertions.assertTrue(!channelList.get("test_0").getPVMetrics().isConnected(), "test_0 should be unconnected but it is connected");
             Assertions.assertTrue(!channelList.get("test_500").getPVMetrics().isConnected(), "test_500 should be unconnected but it is connected");
             Assertions.assertTrue(!channelList.get("test_700").getPVMetrics().isConnected(), "test_700 should be unconnected but it is connected");

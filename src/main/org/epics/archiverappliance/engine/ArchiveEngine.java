@@ -27,7 +27,6 @@ import org.epics.archiverappliance.engine.metadata.MetaCompletedListener;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.model.DeltaArchiveChannel;
-import org.epics.archiverappliance.engine.model.Enablement;
 import org.epics.archiverappliance.engine.model.MonitoredArchiveChannel;
 import org.epics.archiverappliance.engine.model.SampleMode;
 import org.epics.archiverappliance.engine.model.ScannedArchiveChannel;
@@ -111,12 +110,12 @@ public class ArchiveEngine {
 		// Create new channel
 		if (sample_mode.isMonitor()) {
 			if (sample_mode.getDelta() > 0) {
-				channel = new DeltaArchiveChannel(name, writer, Enablement.Enabling, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(), configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
+				channel = new DeltaArchiveChannel(name, writer, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, sample_mode.getDelta(), configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 			} else {
-				channel = new MonitoredArchiveChannel(name, writer, Enablement.Enabling, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
+				channel = new MonitoredArchiveChannel(name, writer, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 			}
 		} else {
-			channel = new ScannedArchiveChannel(name, writer, Enablement.Enabling, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
+			channel = new ScannedArchiveChannel(name, writer, buffer_capacity, last_sampleTimestamp, pvSamplingPeriod, configservice, archdbrtype, controlPVname, JCACommandThreadID, usePVAccess);
 		}
 
 		configservice.getEngineContext().getChannelList().put(channel.getName(), channel);

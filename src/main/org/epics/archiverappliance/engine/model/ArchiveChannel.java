@@ -21,7 +21,6 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.engine.pv.EPICS_V3_PV;
 import org.epics.archiverappliance.engine.pv.EPICS_V4_PV;
@@ -110,10 +109,6 @@ public abstract class ArchiveChannel {
      */
     private final String controlPVname;
     /**
-     * How channel affects its groups
-     */
-    private final Enablement enablement;
-    /**
      * The writer/storage plugin that receives the samples.
      * We place samples into SampleBufffer and then the write thread comes along periodically and flushes these samples into this storageplugin.
      */
@@ -148,10 +143,6 @@ public abstract class ArchiveChannel {
      * initial sample into the archive with current time stamp.
      */
     private boolean need_first_sample = true;
-    /**
-     * Is this channel currently enabled?
-     */
-    private boolean enabled = true;
 
     /**
      * Is this channel currently paused? The source of truth for this is the PVTypeInfo in the database. 
@@ -176,7 +167,6 @@ public abstract class ArchiveChannel {
      *
      * @param name                    pv's name
      * @param writer                  the writer for this pv
-     * @param enablement              start or stop archiving this pv when channel is created
      * @param buffer_capacity         the sample buffer's capacity for this pv
      * @param last_archived_timestamp the last time stamp when this pv was archived
      * @param configservice           the configservice of new archiver
@@ -190,7 +180,6 @@ public abstract class ArchiveChannel {
     public ArchiveChannel(
             final String name,
             final Writer writer,
-            final Enablement enablement,
             final int buffer_capacity,
             final Instant last_archived_timestamp,
             final ConfigService configservice,
@@ -203,7 +192,6 @@ public abstract class ArchiveChannel {
         this.SERVER_IOC_DRIFT_SECONDS = Integer.parseInt(configservice.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.epics.server_ioc_drift_seconds", "1800"));
         this.controlPVname = controlPVname;
         this.writer = writer;
-        this.enablement = enablement;
         this.last_archived_timestamp = last_archived_timestamp;
         this.pvMetrics = new PVMetrics(name, controlPVname, System.currentTimeMillis() / 1000, archdbrtype);
         this.buffer = new SampleBuffer(name, buffer_capacity, archdbrtype, this.pvMetrics);
@@ -217,7 +205,6 @@ public abstract class ArchiveChannel {
                 // PV already suppresses updates after 'stop', but check anyway
                 if (is_running) {
                     try {
-                        if (enablement != Enablement.Passive) handleEnablement(temptimeevent);
 
                         handleNewValue(temptimeevent);
                     } catch (Exception e) {
@@ -406,18 +393,6 @@ public abstract class ArchiveChannel {
         return name;
     }
 
-    /** @return How channel affects its groups */
-    public final Enablement getEnablement() {
-        return enablement;
-    }
-
-    /**
-     * @return <code>true</code> if channel is currently enabled
-     */
-    public final boolean isEnabled() {
-        return enabled;
-    }
-
     /**
      * @return Short description of sample mechanism
      */
@@ -436,7 +411,6 @@ public abstract class ArchiveChannel {
         if (is_running) return;
 
         is_running = true;
-        enabled = true;
         need_first_sample = true;
         pvMetrics.setEnable(true);
         pv.start();
@@ -451,7 +425,6 @@ public abstract class ArchiveChannel {
         if (!is_running) return;
 
         is_running = false;
-        enabled = false;
         pv.stop();
         pvMetrics.setEnable(false);
     }
@@ -481,28 +454,6 @@ public abstract class ArchiveChannel {
     }
 
     /**
-     * Enable or disable groups based on received value
-     *
-     * @param temptimeevent DBRTimeEvent
-     * @throws Exception  &emsp;
-     */
-    private void handleEnablement(final DBRTimeEvent temptimeevent) throws Exception {
-        if (enablement == Enablement.Passive) throw new Exception("Not to be called when passive");
-
-        SampleValue sampleValue = temptimeevent.getSampleValue();
-        final double number = ValueUtil.getDouble(sampleValue);
-        final boolean yes = number > 0.0;
-
-        // Do we enable or disable based on that value?
-        final boolean enable = (enablement == Enablement.Enabling) == yes;
-        try {
-            if (enable) updateEnabledState();
-        } catch (Exception e) {
-            logger.error("exception in handleEnablement", e);
-        }
-    }
-
-    /**
      * Called for each value received from PV.
      * <p>
      * Base class remembers the <code>most_recent_value</code>, and asserts that
@@ -517,8 +468,6 @@ public abstract class ArchiveChannel {
         synchronized (this) {
             latestDBRTimeEvent = timeevent;
         }
-
-        if (!enabled) return false;
 
         // Did we recover from write errors?
         if (need_write_error_sample && !SampleBuffer.isInErrorState()) {
@@ -627,18 +576,6 @@ public abstract class ArchiveChannel {
         if (SampleBuffer.isInErrorState()) need_write_error_sample = true;
     }
 
-    /**
-     * Update the enablement state in case of change
-     *
-     */
-    private void updateEnabledState() {
-        // Any change?
-        if (enabled) return;
-
-        enabled = true;
-
-        // In case this arrived after shutdown, don't log it.
-    }
 
     @Override
     public String toString() {

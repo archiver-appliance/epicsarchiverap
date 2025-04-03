@@ -30,6 +30,7 @@ public class VectorValue <T extends Number> implements SampleValue {
 	 */
 	@Override
 	public Number getValue() {
+		if (values.isEmpty()) return Double.NaN;
 		return values.get(0);
 	}
 

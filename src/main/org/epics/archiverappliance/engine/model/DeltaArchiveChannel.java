@@ -36,8 +36,6 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 	 * @param name
 	 *            Name of the channel (PV)
 	 * @param writer  &emsp;
-	 * @param enablement
-	 *            How channel affects its groups
 	 * @param buffer_capacity
 	 *            Size of sample buffer
 	 * @param last_timeestamp   &emsp;
@@ -54,12 +52,12 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 	 *             On error in PV setup
 	 */
 	public DeltaArchiveChannel(final String name, final Writer writer,
-			final Enablement enablement, final int buffer_capacity,
+			 final int buffer_capacity,
                                final Instant last_timeestamp, final double period_estimate,
 			final double delta, final ConfigService configservice,
 			final ArchDBRTypes archdbrtype, final String controlPVname,
 			final int commandThreadID, final boolean usePVAccess) throws Exception {
-		super(name, writer, enablement, buffer_capacity, last_timeestamp,
+		super(name, writer, buffer_capacity, last_timeestamp,
 				configservice, archdbrtype, controlPVname, commandThreadID, usePVAccess);
 		this.delta = delta;
 		this.period_estimate = period_estimate;
@@ -85,7 +83,7 @@ public class DeltaArchiveChannel extends ArchiveChannel {
 			//
 			logger.error("Exception handing new value", e1);
 		}
-		if (isEnabled() && isBeyondDelta(timeevent)) {
+		if (isBeyondDelta(timeevent)) {
 			// Activator.getLogger().log(Level.FINE,
 			// "Wrote sample for {0}: {1}", new Object[] { getName(), value });
 			try {
