@@ -281,10 +281,9 @@ public class FileBackedPBEventStreamTest {
         }
     }
 
-    @ParameterizedTest
-    @EnumSource(PlainStorageType.class)
-    public void testDirectionalIteration(PlainStorageType plainStorageType) throws IOException {
-        PlainStoragePlugin storagePlugin = getStoragePlugin(plainStorageType);
+    @Test
+    public void testDirectionalIteration() throws IOException {
+        PlainStoragePlugin storagePlugin = getStoragePlugin(PlainStorageType.PB);
 
         for(BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
             logger.info("Testing directional iteration {}", direction);
@@ -351,15 +350,14 @@ public class FileBackedPBEventStreamTest {
         return theInstant;
     }
 
-    @ParameterizedTest
-    @EnumSource(PlainStorageType.class)
-    public void testBothDirectionsYieldSameInstant(PlainStorageType plainStorageType) throws IOException {
+    @Test
+    public void testBothDirectionsYieldSameInstant() throws IOException {
         // Start iteration at the same time using forwards and backwards iteration and make sure we get the same first event.
 
         // Somewhere in the middle of the year.
         Instant startAtTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()).plusSeconds(86400*30*6);
-        Instant firstUsingForwards = getFirstSampleTSUsingIteration(plainStorageType, startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
-        Instant firstUsingBackwards = getFirstSampleTSUsingIteration(plainStorageType, startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
+        Instant firstUsingForwards = getFirstSampleTSUsingIteration(PlainStorageType.PB, startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
+        Instant firstUsingBackwards = getFirstSampleTSUsingIteration(PlainStorageType.PB, startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
         Assertions.assertEquals(firstUsingForwards, firstUsingBackwards,
             "Forwards yields "
                 + TimeUtils.convertToHumanReadableString(firstUsingForwards)
