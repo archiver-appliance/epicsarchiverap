@@ -128,7 +128,7 @@ For a quick deploy of a single appliance:
 ./quickstart.sh  apache-tomcat-9.*.tar.gz
 ```
 
-For more information see the [quickstart documentation](docs/quickstart.html). For more complicated
+For more information see the [quickstart documentation](https://epicsarchiver.readthedocs.io/en/latest/sysadmin/quickstart.html). For more complicated
 deployments see the [samples folder](docs/samples).
 
 ## Build Documentation
