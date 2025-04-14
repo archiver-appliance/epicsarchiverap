@@ -3,7 +3,7 @@ package org.epics.archiverappliance.retrieval.postprocessors;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -31,16 +31,16 @@ import org.epics.archiverappliance.retrieval.postprocessors.SummaryStatsPostProc
 public class SummaryStatsCollectorEventStream implements EventStream, RemotableOverRaw {
 	private static Logger logger = LogManager.getLogger(SummaryStatsCollectorEventStream.class.getName());
 	private final RemotableEventStreamDesc desc;
-	private LinkedHashMap<Long, SummaryValue> consolidatedData;
-	private long firstBin;
-	private long lastBin;
-	private int intervalSecs;
-	private boolean inheritValuesFromPreviousBins;
-	private boolean zeroOutEmptyBins;
+	private final Map<Long, SummaryValue> consolidatedData;
+	private final long firstBin;
+	private final long lastBin;
+	private final int intervalSecs;
+	private final boolean inheritValuesFromPreviousBins;
+	private final boolean zeroOutEmptyBins;
 	private Iterator<Event> theOneAndOnlyIterator;
 	private final boolean vectorType;
 	private final ArchDBRTypes dbrType;
-	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, LinkedHashMap<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins, boolean zeroOutEmptyBins, boolean vectorType, int elementCount) {
+	public SummaryStatsCollectorEventStream(long firstBin, long lastBin, int intervalSecs, RemotableEventStreamDesc desc, Map<Long, SummaryValue> consolidatedData, boolean inheritValuesFromPreviousBins, boolean zeroOutEmptyBins, boolean vectorType, int elementCount) {
 	    this.vectorType = vectorType;
 		this.firstBin = firstBin;
 		this.lastBin = lastBin;
@@ -63,13 +63,11 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 
 	@Override
 	public Iterator<Event> iterator() {
-		if(theOneAndOnlyIterator != null) { 
-			return theOneAndOnlyIterator;
-		} else { 
-			theOneAndOnlyIterator = new SummaryStatsCollectorEventStreamIterator(); 
-			return theOneAndOnlyIterator;
-		}
-	}
+        if (theOneAndOnlyIterator == null) {
+            theOneAndOnlyIterator = new SummaryStatsCollectorEventStreamIterator();
+        }
+        return theOneAndOnlyIterator;
+    }
 
 	@Override
 	public RemotableEventStreamDesc getDescription() {
@@ -94,14 +92,16 @@ public class SummaryStatsCollectorEventStream implements EventStream, RemotableO
 			}
 			
 			Set<Long> bins = consolidatedData.keySet();
-			if(firstBin == 0) { 
-				firstBin = Collections.min(bins); 
+			long iteratorFirstBin = firstBin;
+			if(iteratorFirstBin == 0) {
+				iteratorFirstBin = Collections.min(bins);
 			}
-			if(lastBin == Long.MAX_VALUE) { 
-				lastBin = Collections.max(bins);
+			long iteratorLastBin = lastBin;
+			if(iteratorLastBin == Long.MAX_VALUE) {
+				iteratorLastBin = Collections.max(bins);
 			}
 			
-			for(long binNum = firstBin; binNum <= lastBin; binNum++) {
+			for(long binNum = iteratorFirstBin; binNum <= iteratorLastBin; binNum++) {
 				if(consolidatedData.containsKey(binNum)) {
 					summaryValue = consolidatedData.get(binNum);
 					foundValue = true;
