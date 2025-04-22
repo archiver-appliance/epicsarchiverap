@@ -434,6 +434,11 @@ tasks.withType(Test).configureEach {
 		//include specific method in any of the tests
 		includeTestsMatching "*Test"
 	}
+
+	beforeTest { descriptor ->
+		logger.lifecycle("Running test: ${descriptor}")
+	}
+
 	maxHeapSize = "1G"
 	jvmArgs = [
 			"-Dwebdriver.gecko.driver=${libDir}/test/geckodriver-v0.24.0-linux64/geckodriver",
@@ -555,6 +560,18 @@ tasks.register("allTests", Test) {
 	dependsOn "integrationTests"
 	dependsOn "flakyTests"
 }
+
+tasks.register("automationTests", Test) {
+	group = "Test"
+	description = "Run all the tests in an automated environment"
+	forkEvery 1
+	maxParallelForks = 1
+	dependsOn("integrationTestSetup")
+	useJUnitPlatform {
+	}
+	finalizedBy "shutdownAllTomcats"
+}
+
 
 tasks.register("testRun", JavaExec) {
 	group = "test"
