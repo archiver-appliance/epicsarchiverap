@@ -20,6 +20,11 @@ import java.util.List;
  *
  */
 public interface ETLSource {
+    /*
+     * Same as the one in StoragePlugin
+     */
+    public String getName();
+
     /**
      * Given a pv and a time, this method returns all the streams that are ready for ETL.
      * For example, if the partition granularity of a source is an hour, then this method returns all the streams that are in this source for the previous hours.

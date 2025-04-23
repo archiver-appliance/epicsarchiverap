@@ -6,8 +6,8 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.common.ETLJob;
-import org.epics.archiverappliance.etl.common.ETLMetricsForLifetime;
-import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
+import org.epics.archiverappliance.etl.common.ETLMetricsIntoStore;
+import org.epics.archiverappliance.etl.common.ETLStage;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 
 import java.io.IOException;
@@ -33,15 +33,15 @@ public class ETLExecutor {
     public static void runETLs(ConfigService configService, Instant timeETLruns) throws IOException {
         for (String pvName : configService.getPVsForThisAppliance()) {
             logger.debug("Running ETL for " + pvName);
-            LinkedList<ETLPVLookupItems> lookupItems =
+            LinkedList<ETLStage> lookupItems =
                     configService.getETLLookup().getLookupItemsForPV(pvName);
-            for (ETLPVLookupItems lookupItem : lookupItems) {
+            for (ETLStage lookupItem : lookupItems) {
                 logger.debug("Running ETL for " + pvName + " for lifetime " + lookupItem.getLifetimeorder() + " from "
                         + lookupItem.getETLSource().getDescription() + " to "
                         + lookupItem.getETLDest().getDescription());
                 ETLJob job = new ETLJob(lookupItem, timeETLruns);
                 job.run();
-                if (job.getExceptionFromLastRun() != null) throw new IOException(job.getExceptionFromLastRun());
+                if (lookupItem.getExceptionFromLastRun() != null) throw new IOException(lookupItem.getExceptionFromLastRun());
             }
         }
     }
@@ -59,7 +59,7 @@ public class ETLExecutor {
             final ConfigService configService, final Instant timeETLRuns, final String pvName, final String storageName)
             throws IOException {
         PBThreeTierETLPVLookup etlLookup = configService.getETLLookup();
-        LinkedList<ETLPVLookupItems> lookupItems = etlLookup.getLookupItemsForPV(pvName);
+        LinkedList<ETLStage> lookupItems = etlLookup.getLookupItemsForPV(pvName);
         if (!lookupItems.isEmpty()) {
             throw new IOException(
                     "The pv " + pvName + " has entries in PBThreeTierETLPVLookup. Please remove these first");
@@ -79,13 +79,13 @@ public class ETLExecutor {
             logger.info("storage name:" + identifyDest);
             String sourceStr = dataStores[i - 1];
             ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
-            lookupItems.add(new ETLPVLookupItems(
+            lookupItems.add(new ETLStage(
                     pvName,
                     pvTypeInfo.getDBRType(),
                     etlSource,
                     etlDest,
                     i - 1,
-                    new ETLMetricsForLifetime(i - 1),
+                    new ETLMetricsIntoStore(etlDest.getName()),
                     PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService)));
             if (storageName.equals(identifyDest)) {
                 break;
@@ -93,7 +93,7 @@ public class ETLExecutor {
         }
 
         ScheduledThreadPoolExecutor threadPool = new ScheduledThreadPoolExecutor(1);
-        for (ETLPVLookupItems lookupItem : lookupItems) {
+        for (ETLStage lookupItem : lookupItems) {
             threadPool.execute(new ETLJob(lookupItem, timeETLRuns));
         }
         threadPool.shutdown();

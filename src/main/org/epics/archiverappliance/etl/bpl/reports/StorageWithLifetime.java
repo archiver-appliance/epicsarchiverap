@@ -15,20 +15,20 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
-import org.epics.archiverappliance.etl.common.ETLMetricsForLifetime;
-import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
+import org.epics.archiverappliance.etl.common.ETLMetricsIntoStore;
+import org.epics.archiverappliance.etl.common.ETLStage;
 import org.json.simple.JSONValue;
 
 public class StorageWithLifetime {
 	private static Logger logger = LogManager.getLogger(StorageWithLifetime.class.getName());
 	StorageMetrics storageMetricsAPI;
-	int lifetimeid;
+	String storageName;
 	double totalETLTimeIntoThisDestInMillis;
 	int maxTotalETLRunsIntoThisDest;
 	int minPartitionSourceGranularityInSecs = 366*24*60*60; // Init to a large value; below we use Math.min to pick the correct value.
-	public StorageWithLifetime(StorageMetrics storageMetricsAPI, int lifetimeid) {
+	public StorageWithLifetime(StorageMetrics storageMetricsAPI, String storageName) {
 		this.storageMetricsAPI = storageMetricsAPI;
-		this.lifetimeid = lifetimeid;
+		this.storageName = storageName;
 	}
 	
 	public static String getStorageMetrics(ConfigService configService) {
@@ -38,7 +38,7 @@ public class StorageWithLifetime {
 
 		for(StorageWithLifetime storage : finalStorages) {
 			try {
-				ETLMetricsForLifetime metricsForLifetime = configService.getETLLookup().getApplianceMetrics().get(storage.lifetimeid);
+				ETLMetricsIntoStore metricsForLifetime = configService.getETLLookup().getApplianceMetrics().get(storage.storageName);
 				HashMap<String, String> storageMetrics = new HashMap<String, String>();
 				allStorageMetrics.add(storageMetrics);
 
@@ -64,16 +64,18 @@ public class StorageWithLifetime {
 		LinkedList<StorageWithLifetime> finalStorages = getStorageWithLifetimes(configService);
 
 		for(StorageWithLifetime storage : finalStorages) {
-			ETLMetricsForLifetime metricsForLifetime = configService.getETLLookup().getApplianceMetrics().get(storage.lifetimeid);
+			ETLMetricsIntoStore metricsForLifetime = configService.getETLLookup().getApplianceMetrics().get(storage.storageName);
 			HashMap<String, String> detail = new HashMap<String, String>();
 			details.add(detail);
 			try {
 				detail.put("name", storage.storageMetricsAPI.getName());
-				double totalSpaceGB = storage.storageMetricsAPI.getTotalSpace(metricsForLifetime)*1.0/(1024*1024*1024);
-				detail.put("total_space", twoSignificantDigits.format(totalSpaceGB));
-				double availbleSpaceGB = storage.storageMetricsAPI.getUsableSpace(metricsForLifetime)*1.0/(1024*1024*1024);
-				detail.put("available_space", twoSignificantDigits.format(availbleSpaceGB));
-				detail.put("available_space_percent", twoSignificantDigits.format(availbleSpaceGB*100/totalSpaceGB));
+				if(metricsForLifetime != null) {
+					double totalSpaceGB = storage.storageMetricsAPI.getTotalSpace(metricsForLifetime)*1.0/(1024*1024*1024);
+					detail.put("total_space", twoSignificantDigits.format(totalSpaceGB));
+					double availbleSpaceGB = storage.storageMetricsAPI.getUsableSpace(metricsForLifetime)*1.0/(1024*1024*1024);
+					detail.put("available_space", twoSignificantDigits.format(availbleSpaceGB));	
+					detail.put("available_space_percent", twoSignificantDigits.format(availbleSpaceGB*100/totalSpaceGB));
+				}
 				double avgTimeIntoThisDestInMillis = storage.totalETLTimeIntoThisDestInMillis/storage.maxTotalETLRunsIntoThisDest;
 				detail.put("time_copy_data_into_store", twoSignificantDigits.format(avgTimeIntoThisDestInMillis/1000));
 				// Copy time as percent of source granularities
@@ -93,19 +95,19 @@ public class StorageWithLifetime {
 	private static LinkedList<StorageWithLifetime> getStorageWithLifetimes(ConfigService configService) {
 		LinkedHashMap<String, StorageWithLifetime> storages = new LinkedHashMap<String, StorageWithLifetime>();
 		for(String pvName : configService.getPVsForThisAppliance()) { 
-			for(ETLPVLookupItems lookupItem : configService.getETLLookup().getLookupItemsForPV(pvName)) {
+			for(ETLStage lookupItem : configService.getETLLookup().getLookupItemsForPV(pvName)) {
 				ETLSource etlSrc = lookupItem.getETLSource();
 				if(etlSrc instanceof StorageMetrics) {
 					StorageMetrics storageMetricsAPI = (StorageMetrics) etlSrc;
 					if(!storages.containsKey(storageMetricsAPI.getName())) {
-						storages.put(storageMetricsAPI.getName(), new StorageWithLifetime(storageMetricsAPI, lookupItem.getLifetimeorder()));
+						storages.put(storageMetricsAPI.getName(), new StorageWithLifetime(storageMetricsAPI, storageMetricsAPI.getName()));
 					}
 				}
 				ETLDest etlDest = lookupItem.getETLDest();
 				if(etlDest instanceof StorageMetrics) {
 					StorageMetrics storageMetricsAPI = (StorageMetrics) etlDest;
 					if(!storages.containsKey(storageMetricsAPI.getName())) {
-						storages.put(storageMetricsAPI.getName(), new StorageWithLifetime(storageMetricsAPI, lookupItem.getLifetimeorder()));
+						storages.put(storageMetricsAPI.getName(), new StorageWithLifetime(storageMetricsAPI, storageMetricsAPI.getName()));
 					}
 
 					storages.get(storageMetricsAPI.getName()).addETLDestTimes(lookupItem);
@@ -114,16 +116,10 @@ public class StorageWithLifetime {
 		}
 
 		LinkedList<StorageWithLifetime> finalStorages = new LinkedList<StorageWithLifetime>(storages.values());
-		Collections.sort(finalStorages, new Comparator<StorageWithLifetime>() {
-			@Override
-			public int compare(StorageWithLifetime o1, StorageWithLifetime o2) {
-				return o1.lifetimeid - o2.lifetimeid;
-			}
-		});
 		return finalStorages;
 	}
 	
-	private void addETLDestTimes(ETLPVLookupItems lookupItem) {
+	private void addETLDestTimes(ETLStage lookupItem) {
 		if(lookupItem.getNumberofTimesWeETLed() > 0) {
 			this.totalETLTimeIntoThisDestInMillis += lookupItem.getTotalTimeWeSpentInETLInMilliSeconds();
 			this.maxTotalETLRunsIntoThisDest = Math.max(this.maxTotalETLRunsIntoThisDest, lookupItem.getNumberofTimesWeETLed());
@@ -188,7 +184,7 @@ public class StorageWithLifetime {
 		HashMap<String, HashMap<String, StorageMetrics>> storesForAllPVs = new HashMap<String, HashMap<String, StorageMetrics>>();
 
 		for(String pvName : configService.getPVsForThisAppliance()) { 
-			for(ETLPVLookupItems lookupItem : configService.getETLLookup().getLookupItemsForPV(pvName)) {
+			for(ETLStage lookupItem : configService.getETLLookup().getLookupItemsForPV(pvName)) {
 				HashMap<String, StorageMetrics> pvStores = storesForAllPVs.get(pvName);
 				if(pvStores == null) {
 					pvStores = new HashMap<String, StorageMetrics>();

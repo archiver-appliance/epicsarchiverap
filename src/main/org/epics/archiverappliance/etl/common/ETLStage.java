@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.common;
 
+import java.time.Instant;
 import java.util.concurrent.ScheduledFuture;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -14,20 +15,22 @@ import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 
 /**
- * A POJO for PV name, ETLSource, and ETLDest items,
- * which can be used as elements in a list (e.g.,
- * implementations of the ETLPVLookup interface,
- * such as PBThreeTierETLPVLookup).
+ * ETL in the EAA often consists of multiple stages.
+ * This encapsulates one such stage for a PV between one store in the datastores list and the next,
+ * This also maintains the profiling details for this stage for this PV.
  * @author rdh
- *
  */
-public class ETLPVLookupItems {
+public class ETLStage {
 	private String pvName;
 	private ArchDBRTypes dbrType;
 	private ETLSource source;
 	private ETLDest dest;
 	private int lifetimeorder = 0;
-	private ETLMetricsForLifetime metricsForLifetime;
+	private ETLMetricsIntoStore metricsForLifetime;
+	// Profiling details start here
+	// This bool is to prevent multiple runs of ETL for the same PV for the same stage from interfering with each other
+	private boolean currentlyRunning = false;
+	private Instant lastETLStart = Instant.ofEpochSecond(0);
 	private long lastETLCompleteEpochSeconds = 0L;
 	private long lastETLTimeWeSpentInETLInMilliSeconds = 0L;
 	private long totalTimeWeSpentInETLInMilliSeconds = 0L;
@@ -46,9 +49,11 @@ public class ETLPVLookupItems {
 	
 	private OutOfSpaceHandling outOfSpaceHandling;
 	private long outOfSpaceChunksDeleted = 0;
+
+	private Exception exceptionFromLastRun = null;
 	
 	
-	public ETLPVLookupItems(String pvName, ArchDBRTypes dbrType, ETLSource source, ETLDest dest, int lifetimeorder, ETLMetricsForLifetime metricsForLifetime, OutOfSpaceHandling outOfSpaceHandling) {
+	public ETLStage(String pvName, ArchDBRTypes dbrType, ETLSource source, ETLDest dest, int lifetimeorder, ETLMetricsIntoStore metricsForLifetime, OutOfSpaceHandling outOfSpaceHandling) {
 		this.pvName = pvName;
 		this.dbrType = dbrType;
 		this.source = source;
@@ -88,7 +93,7 @@ public class ETLPVLookupItems {
 	
 	@Override
 	public boolean equals(Object obj) {
-		ETLPVLookupItems other = (ETLPVLookupItems) obj;
+		ETLStage other = (ETLStage) obj;
 		return this.pvName.equals(other.pvName) && this.lifetimeorder == other.lifetimeorder;
 	}
 	@Override
@@ -213,7 +218,39 @@ public class ETLPVLookupItems {
 	/**
 	 * @return the metricsForLifetime
 	 */
-	public ETLMetricsForLifetime getMetricsForLifetime() {
+	public ETLMetricsIntoStore getMetricsForLifetime() {
 		return metricsForLifetime;
+	}
+
+	/*
+	 * Is a ETLJob for this stage currently running
+	 */
+	public boolean isCurrentlyRunning() {
+		return currentlyRunning;
+	}
+	public Instant getLastETLStart() {
+		return lastETLStart;
+	}
+	public void beginRunning() {
+		this.currentlyRunning = true;
+		this.lastETLStart = Instant.now();
+		this.exceptionFromLastRun = null;
+	}
+	public void doneRunning() {
+		this.currentlyRunning = false;
+		this.lastETLStart = Instant.ofEpochSecond(0);
+	}
+
+    /**
+     * Was there an exception in the last ETL run for this job Mostly used by unit tests.
+     *
+     * @return exceptionFromLastRun  &emsp;
+     */
+	public Exception getExceptionFromLastRun() {
+		return exceptionFromLastRun;
+	}
+
+	public void setExceptionFromLastRun(Exception exceptionFromLastRun) {
+		this.exceptionFromLastRun = exceptionFromLastRun;
 	}
 }

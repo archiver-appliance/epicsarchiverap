@@ -62,8 +62,8 @@ public final class PBThreeTierETLPVLookup {
      * The first level index is the source lifetimeid
      * The seconds level index is the pv name.
      */
-    private final HashMap<Integer, ConcurrentHashMap<String, ETLPVLookupItems>> lifetimeId2PVName2LookupItem =
-            new HashMap<Integer, ConcurrentHashMap<String, ETLPVLookupItems>>();
+    private final HashMap<Integer, ConcurrentHashMap<String, ETLStage>> lifetimeId2PVName2LookupItem =
+            new HashMap<Integer, ConcurrentHashMap<String, ETLStage>>();
 
     /**
      * We have a thread pool for each lifetime id transition.
@@ -143,21 +143,22 @@ public final class PBThreeTierETLPVLookup {
                         etlLifeTimeThreadPoolExecutors.add(
                                 new ScheduledThreadPoolExecutor(1, new ETLLifeTimeThreadFactory(etllifetimeid)));
                         lifetimeId2PVName2LookupItem.put(
-                                etllifetimeid, new ConcurrentHashMap<String, ETLPVLookupItems>());
-                        applianceMetrics.add(etllifetimeid);
+                                etllifetimeid, new ConcurrentHashMap<String, ETLStage>());
                     }
 
                     String sourceStr = dataSources[etllifetimeid];
                     ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
                     String destStr = dataSources[etllifetimeid + 1];
                     ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
-                    ETLPVLookupItems etlpvLookupItems = new ETLPVLookupItems(
+                    applianceMetrics.createMetricIfNoExists(etlSource.getName());
+                    applianceMetrics.createMetricIfNoExists(etlDest.getName());
+                    ETLStage etlpvLookupItems = new ETLStage(
                             pvName,
                             typeInfo.getDBRType(),
                             etlSource,
                             etlDest,
                             etllifetimeid,
-                            applianceMetrics.get(etllifetimeid),
+                            applianceMetrics.get(etlDest.getName()),
                             determineOutOfSpaceHandling(configService));
                     if (etlDest instanceof StorageMetrics) {
                         // At least on some of the test machines, checking free space seems to take the longest time. In
@@ -233,7 +234,7 @@ public final class PBThreeTierETLPVLookup {
                     "deleting etl jobs for  pv " + pvName + " from the locally cached copy of pvs for this appliance");
             int lifetTimeIdTransitions = this.etlLifeTimeThreadPoolExecutors.size();
             for (int etllifetimeid = 0; etllifetimeid < lifetTimeIdTransitions; etllifetimeid++) {
-                ETLPVLookupItems lookupItem =
+                ETLStage lookupItem =
                         lifetimeId2PVName2LookupItem.get(etllifetimeid).get(pvName);
                 if (lookupItem != null) {
                     ScheduledFuture<?> cancellingFuture = lookupItem.getCancellingFuture();
@@ -268,12 +269,12 @@ public final class PBThreeTierETLPVLookup {
      * @param pvName The name of PV.
      * @return LinkedList  &emsp;
      */
-    public LinkedList<ETLPVLookupItems> getLookupItemsForPV(String pvName) {
-        LinkedList<ETLPVLookupItems> ret = new LinkedList<ETLPVLookupItems>();
+    public LinkedList<ETLStage> getLookupItemsForPV(String pvName) {
+        LinkedList<ETLStage> ret = new LinkedList<ETLStage>();
         if (pvsForWhomWeHaveAddedETLJobs.contains(pvName)) {
             int lifetTimeIdTransitions = this.etlLifeTimeThreadPoolExecutors.size();
             for (int etllifetimeid = 0; etllifetimeid < lifetTimeIdTransitions; etllifetimeid++) {
-                ETLPVLookupItems lookupItem =
+                ETLStage lookupItem =
                         lifetimeId2PVName2LookupItem.get(etllifetimeid).get(pvName);
                 if (lookupItem != null) {
                     ret.add(lookupItem);
@@ -294,9 +295,9 @@ public final class PBThreeTierETLPVLookup {
      * @throws IOException  &emsp;
      */
     public Event getLatestEventFromDataStores(String pvName) throws IOException {
-        LinkedList<ETLPVLookupItems> etlEntries = getLookupItemsForPV(pvName);
+        LinkedList<ETLStage> etlEntries = getLookupItemsForPV(pvName);
         try (BasicContext context = new BasicContext()) {
-            for (ETLPVLookupItems etlEntry : etlEntries) {
+            for (ETLStage etlEntry : etlEntries) {
                 Event e = etlEntry.getETLDest().getLastKnownEvent(context, pvName);
                 if (e != null) return e;
             }
@@ -320,11 +321,11 @@ public final class PBThreeTierETLPVLookup {
                 logger.debug("Shutting down ETL lifetimeid transition thread " + lifetimeId);
                 theLookup.etlLifeTimeThreadPoolExecutors.get(lifetimeId).shutdown();
 
-                ConcurrentHashMap<String, ETLPVLookupItems> lifetimeItems =
+                ConcurrentHashMap<String, ETLStage> lifetimeItems =
                         theLookup.lifetimeId2PVName2LookupItem.get(lifetimeId);
                 for (String pvName : lifetimeItems.keySet()) {
                     try {
-                        ETLPVLookupItems etlitem = lifetimeItems.get(pvName);
+                        ETLStage etlitem = lifetimeItems.get(pvName);
                         if (etlitem.getETLSource().consolidateOnShutdown()) {
                             ETLDest etlDest = etlitem.getETLDest();
                             StorageMetrics storageMetricsAPIDest = (StorageMetrics) etlDest;
