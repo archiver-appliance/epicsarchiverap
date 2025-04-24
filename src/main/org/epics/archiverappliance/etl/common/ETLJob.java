@@ -46,13 +46,7 @@ public class ETLJob implements Runnable {
     public void run() {
         try {
             if (this.runAsIfAtTime == null) {
-                // We run ETL as if it were 10% of src partition seconds ago to give the previous lifetime time to
-                // finish.
-                long padding = Math.round(
-                        this.etlStage.getETLSource().getPartitionGranularity().getApproxSecondsPerChunk() * 0.1);
-                Instant processingTime =
-                        TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() - padding, 0);
-                this.processETL(processingTime);
+                this.processETL(Instant.now());
             } else {
                 this.processETL(runAsIfAtTime);
             }
@@ -76,6 +70,17 @@ public class ETLJob implements Runnable {
             logger.error("The previous ETL job (" + jobDesc + ") that began at "
                     + TimeUtils.convertToHumanReadableString(this.etlStage.getLastETLStart())
                     + " is still running");
+            return;
+        }
+
+        if(processingTime.isBefore(this.etlStage.getNextETLStart())) {
+            logger.debug("Too early {} to trigger this stage for PV {} from {} to {}. Next job at {}",
+                TimeUtils.convertToHumanReadableString(processingTime),
+                etlStage.getPvName(),
+                etlStage.getETLSource().getName(),
+                etlStage.getETLDest().getName(),
+                TimeUtils.convertToHumanReadableString(this.etlStage.getNextETLStart())                
+            );
             return;
         }
 

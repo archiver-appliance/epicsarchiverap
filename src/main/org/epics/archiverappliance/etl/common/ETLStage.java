@@ -7,9 +7,14 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.common;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.ScheduledFuture;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
@@ -21,16 +26,19 @@ import org.epics.archiverappliance.etl.ETLSource;
  * @author rdh
  */
 public class ETLStage {
+	private static final Logger logger = LogManager.getLogger();
 	private String pvName;
 	private ArchDBRTypes dbrType;
 	private ETLSource source;
 	private ETLDest dest;
 	private int lifetimeorder = 0;
+	private long delaybetweenETLJobsInSecs = 8 * 60 * 60;
 	private ETLMetricsIntoStore metricsForLifetime;
 	// Profiling details start here
 	// This bool is to prevent multiple runs of ETL for the same PV for the same stage from interfering with each other
 	private boolean currentlyRunning = false;
 	private Instant lastETLStart = Instant.ofEpochSecond(0);
+	private Instant nextETLStart = Instant.now().plus(366, ChronoUnit.DAYS);
 	private long lastETLCompleteEpochSeconds = 0L;
 	private long lastETLTimeWeSpentInETLInMilliSeconds = 0L;
 	private long totalTimeWeSpentInETLInMilliSeconds = 0L;
@@ -126,7 +134,7 @@ public class ETLStage {
 	public ArchDBRTypes getDbrType() {
 		return dbrType;
 	}
-	
+
 	public ScheduledFuture<?> getCancellingFuture() {
 		return cancellingFuture;
 	}
@@ -134,7 +142,7 @@ public class ETLStage {
 	public void setCancellingFuture(ScheduledFuture<?> cancellingFuture) {
 		this.cancellingFuture = cancellingFuture;
 	}
-	
+
 	public String toString() { 
 		return pvName + "(" + lifetimeorder + ")";
 	}
@@ -228,12 +236,19 @@ public class ETLStage {
 	public boolean isCurrentlyRunning() {
 		return currentlyRunning;
 	}
+
 	public Instant getLastETLStart() {
 		return lastETLStart;
 	}
+	
+	public Instant getNextETLStart() {
+		return nextETLStart;
+	}
+
 	public void beginRunning() {
 		this.currentlyRunning = true;
 		this.lastETLStart = Instant.now();
+		this.nextETLStart = this.nextETLStart.plus(this.delaybetweenETLJobsInSecs, ChronoUnit.SECONDS);
 		this.exceptionFromLastRun = null;
 	}
 	public void doneRunning() {
@@ -253,4 +268,36 @@ public class ETLStage {
 	public void setExceptionFromLastRun(Exception exceptionFromLastRun) {
 		this.exceptionFromLastRun = exceptionFromLastRun;
 	}
+
+	public long getDelaybetweenETLJobsInSecs() {
+		return delaybetweenETLJobsInSecs;
+	}
+
+	public void setDelaybetweenETLJobsInSecs(long delaybetweenETLJobsInSecs) {
+		this.delaybetweenETLJobsInSecs = delaybetweenETLJobsInSecs;
+        // Given the delay; find the next modulo
+		// For example, if the delay is an hour we find the 0th min/0th second in the next hour
+		Instant nextModuloZerothSec = Instant.ofEpochSecond(
+			((Instant.now().getEpochSecond() + this.delaybetweenETLJobsInSecs)
+			/this.delaybetweenETLJobsInSecs)
+			*this.delaybetweenETLJobsInSecs);
+        
+        // Add a small buffer to this
+        this.nextETLStart = nextModuloZerothSec.plusSeconds(5L * 60);
+		logger.debug("Setting delay to {} with next ETL start at {} for stage {} -> {} for pv {}",
+			this.delaybetweenETLJobsInSecs,
+			TimeUtils.convertToHumanReadableString(this.nextETLStart),
+			this.getETLSource().getName(),
+			this.getETLDest().getName(),
+			this.pvName
+		);
+	}
+
+    public long getInitialDelay() { 
+        Instant currentTime = Instant.now();
+        // We compute the initial delay so that the ETL jobs run at a predictable time.
+        long initialDelay = Duration.between(currentTime, this.nextETLStart)
+                .getSeconds();
+		return initialDelay;
+    }
 }
