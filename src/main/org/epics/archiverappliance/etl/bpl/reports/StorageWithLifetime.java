@@ -17,6 +17,7 @@ import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
 import org.epics.archiverappliance.etl.common.ETLMetricsIntoStore;
 import org.epics.archiverappliance.etl.common.ETLStage;
+import org.epics.archiverappliance.etl.common.ETLStages;
 import org.json.simple.JSONValue;
 
 public class StorageWithLifetime {
@@ -95,22 +96,24 @@ public class StorageWithLifetime {
 	private static LinkedList<StorageWithLifetime> getStorageWithLifetimes(ConfigService configService) {
 		LinkedHashMap<String, StorageWithLifetime> storages = new LinkedHashMap<String, StorageWithLifetime>();
 		for(String pvName : configService.getPVsForThisAppliance()) { 
-			for(ETLStage lookupItem : configService.getETLLookup().getLookupItemsForPV(pvName)) {
-				ETLSource etlSrc = lookupItem.getETLSource();
+			ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
+			if(etlStages == null) continue;
+			for(ETLStage etlStage : etlStages.getStages()) {
+				ETLSource etlSrc = etlStage.getETLSource();
 				if(etlSrc instanceof StorageMetrics) {
 					StorageMetrics storageMetricsAPI = (StorageMetrics) etlSrc;
 					if(!storages.containsKey(storageMetricsAPI.getName())) {
 						storages.put(storageMetricsAPI.getName(), new StorageWithLifetime(storageMetricsAPI, storageMetricsAPI.getName()));
 					}
 				}
-				ETLDest etlDest = lookupItem.getETLDest();
+				ETLDest etlDest = etlStage.getETLDest();
 				if(etlDest instanceof StorageMetrics) {
 					StorageMetrics storageMetricsAPI = (StorageMetrics) etlDest;
 					if(!storages.containsKey(storageMetricsAPI.getName())) {
 						storages.put(storageMetricsAPI.getName(), new StorageWithLifetime(storageMetricsAPI, storageMetricsAPI.getName()));
 					}
 
-					storages.get(storageMetricsAPI.getName()).addETLDestTimes(lookupItem);
+					storages.get(storageMetricsAPI.getName()).addETLDestTimes(etlStage);
 				}
 			}
 		}
@@ -184,14 +187,16 @@ public class StorageWithLifetime {
 		HashMap<String, HashMap<String, StorageMetrics>> storesForAllPVs = new HashMap<String, HashMap<String, StorageMetrics>>();
 
 		for(String pvName : configService.getPVsForThisAppliance()) { 
-			for(ETLStage lookupItem : configService.getETLLookup().getLookupItemsForPV(pvName)) {
+			ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
+			if(etlStages == null) continue;
+			for(ETLStage etlStage : etlStages.getStages()) {
 				HashMap<String, StorageMetrics> pvStores = storesForAllPVs.get(pvName);
 				if(pvStores == null) {
 					pvStores = new HashMap<String, StorageMetrics>();
 					storesForAllPVs.put(pvName, pvStores);
 				}
 
-				ETLSource etlSrc = lookupItem.getETLSource();
+				ETLSource etlSrc = etlStage.getETLSource();
 				if(etlSrc instanceof StorageMetrics) {
 					StorageMetrics storageMetricsAPI = (StorageMetrics) etlSrc;
 					if(!pvStores.containsKey(storageMetricsAPI.getName())) {
@@ -199,7 +204,7 @@ public class StorageWithLifetime {
 					}
 				}
 
-				ETLDest etlDest = lookupItem.getETLDest();
+				ETLDest etlDest = etlStage.getETLDest();
 				if(etlDest instanceof StorageMetrics) {
 					StorageMetrics storageMetricsAPI = (StorageMetrics) etlDest;
 					if(!pvStores.containsKey(storageMetricsAPI.getName())) {

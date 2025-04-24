@@ -28,7 +28,17 @@ public class ETLStageDetails implements Details {
         DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
         LinkedList<Map<String, String>> statuses = new LinkedList<Map<String, String>>();
         statuses.add(metricDetail("Name (from ETL)", pvName));
-        for (ETLStage etlStage : configService.getETLLookup().getLookupItemsForPV(pvName)) {
+        ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
+        if(etlStages == null){
+            return statuses;
+        }
+
+        statuses.add(metricDetail(
+            "ETL Stages will be triggered at",
+            TimeUtils.convertToHumanReadableString(
+                TimeUtils.now().plusSeconds(etlStages.getCancellingFuture().getDelay(TimeUnit.SECONDS)))));
+
+        for (ETLStage etlStage : etlStages.getStages()) {
             statuses.add(metricDetail(
                 "<b>ETL " + etlStage.getLifetimeorder() + "</b>",
                 "<b>" + etlStage.getETLSource().getName()
@@ -42,6 +52,9 @@ public class ETLStageDetails implements Details {
             statuses.add(metricDetail(
                     "ETL " + etlStage.getLifetimeorder() + " partition granularity of dest",
                     etlStage.getETLDest().getPartitionGranularity().toString()));
+            statuses.add(metricDetail(
+                    "ETL " + etlStage.getLifetimeorder() + " delay between jobs (s)",
+                    Long.toString(etlStage.getDelaybetweenETLJobsInSecs())));
             if (etlStage.getLastETLCompleteEpochSeconds() != 0) {
                 statuses.add(metricDetail(
                         "ETL " + etlStage.getLifetimeorder() + " last completed",
@@ -53,8 +66,7 @@ public class ETLStageDetails implements Details {
             statuses.add(metricDetail(
                     "ETL " + etlStage.getLifetimeorder() + " next job runs at",
                     TimeUtils.convertToHumanReadableString(
-                            etlStage.getCancellingFuture().getDelay(TimeUnit.SECONDS)
-                                    + (TimeUtils.now().toEpochMilli() / 1000))));
+                        etlStage.getNextETLStart())));
             if (etlStage.getNumberofTimesWeETLed() != 0) {
                 statuses.add(metricDetail(
                         "ETL " + etlStage.getLifetimeorder() + " total time performing ETL(ms)",
