@@ -138,7 +138,7 @@ dependencies {
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 	testImplementation('org.awaitility:awaitility:4.2.0')
-	implementation("org.phoebus:core-pva:4.7.2")
+	implementation("org.phoebus:core-pva:5.0.0")
     runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.1.4")
 }
 

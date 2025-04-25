@@ -27,6 +27,7 @@ import org.epics.pva.data.PVAStructure;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -73,7 +74,7 @@ public class PBVectorString implements DBRTimeEvent {
 		YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(realtype.getTimeStamp());
 		year = yst.getYear();
 		ArrayList<String> vals = new ArrayList<String>(realtype.getCount());
-		for(String val : realtype.getStringValue()) vals.add(val);
+        vals.addAll(Arrays.asList(realtype.getStringValue()));
 		Builder builder = EPICSEvent.VectorString.newBuilder()
 				.setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
@@ -91,9 +92,7 @@ public class PBVectorString implements DBRTimeEvent {
 		PVAStringArray pvArray = v4Data.get("value");
 		ArrayList<String> vals = new ArrayList<String>();
 		String[] data = pvArray.get();
-		for(String dataitem : data) { 
-			vals.add(dataitem);
-		}
+        vals.addAll(Arrays.asList(data));
 
 		year = yst.getYear();
 		Builder builder = EPICSEvent.VectorString.newBuilder()
