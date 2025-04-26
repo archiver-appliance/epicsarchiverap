@@ -8,6 +8,8 @@
 package edu.stanford.slac.archiverappliance.PB.search;
 
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -16,11 +18,16 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.Random;
 
 /**
@@ -30,14 +37,25 @@ import java.util.Random;
  */
 public class FileEventStreamSearchTest {
     private static final Logger logger = LogManager.getLogger(FileEventStreamSearchTest.class);
+	public static final int MAXSAMPLEINT = 10000000;
     String pathName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "FileEventStreamSearchTest.txt";
     Path path = Paths.get(pathName);
+
+    private void generateSampleFile(String fileName) {
+        DecimalFormat df = new DecimalFormat("0000000000");
+        try(PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(new File(fileName), false)))) {
+            for(int i = 0; i <= MAXSAMPLEINT; i=i+2) {
+                fos.print("" + df.format(i) + LineEscaper.NEWLINE_CHAR_STR);
+            }
+        } catch (IOException ex){
+            logger.error(ex.getMessage(), ex);
+        }
+    }
 
     @BeforeEach
     public void setUp() throws Exception {
         Files.deleteIfExists(path);
-
-        EvenNumberSampleFileGenerator.generateSampleFile(pathName);
+        generateSampleFile(pathName);
     }
 
     @AfterEach
@@ -52,15 +70,15 @@ public class FileEventStreamSearchTest {
             seekAndCheck(path, i);
         }
         // Test in the middle
-        for (int i = EvenNumberSampleFileGenerator.MAXSAMPLEINT / 2;
-                i < EvenNumberSampleFileGenerator.MAXSAMPLEINT / 2 + 1000;
+        for (int i = MAXSAMPLEINT / 2;
+                i < MAXSAMPLEINT / 2 + 1000;
                 i++) {
             seekAndCheck(path, i);
         }
 
         // Check for upper boundary conditions
-        for (int i = EvenNumberSampleFileGenerator.MAXSAMPLEINT - 1000;
-                i < EvenNumberSampleFileGenerator.MAXSAMPLEINT + 1000;
+        for (int i = MAXSAMPLEINT - 1000;
+                i < MAXSAMPLEINT + 1000;
                 i++) {
             seekAndCheck(path, i);
         }
@@ -68,7 +86,7 @@ public class FileEventStreamSearchTest {
         // Test randomly
         Random random = new Random();
         for (int i = 0; i < 10000; i++) {
-            seekAndCheck(path, random.nextInt(EvenNumberSampleFileGenerator.MAXSAMPLEINT));
+            seekAndCheck(path, random.nextInt(MAXSAMPLEINT));
         }
     }
 
@@ -126,7 +144,7 @@ public class FileEventStreamSearchTest {
             FileEventStreamSearch bs = new FileEventStreamSearch(path, 0L);
             boolean found = bs.seekToTime(compare);
             if (!found) {
-                if (searchNum >= 0 && searchNum < EvenNumberSampleFileGenerator.MAXSAMPLEINT) {
+                if (searchNum >= 0 && searchNum < MAXSAMPLEINT) {
                     if (searchNum == 0) {
                         logger.debug(
                                 "0 is a special case as it is the first item on the list and technically we did not find an event that satisfies the conditions.");
@@ -143,7 +161,7 @@ public class FileEventStreamSearchTest {
                     byte[] line1 = lis.readLine();
                     byte[] line2 = lis.readLine();
                     if (line1 == null || line2 == null || line1.length == 0 || line2.length == 0) {
-                        if (searchNum >= 0 && searchNum < EvenNumberSampleFileGenerator.MAXSAMPLEINT) {
+                        if (searchNum >= 0 && searchNum < MAXSAMPLEINT) {
                             Assertions.fail("One of the lines was null but we could not find the number " + searchNum);
                         } else {
                             // In this case, we really did not find the event as it is out of range.
@@ -155,7 +173,7 @@ public class FileEventStreamSearchTest {
                         if (num1 < searchNum && searchNum <= num2) {
 
                         } else {
-                            if (searchNum >= 0 && searchNum < EvenNumberSampleFileGenerator.MAXSAMPLEINT) {
+                            if (searchNum >= 0 && searchNum < MAXSAMPLEINT) {
                                 Assertions.fail("Potential failure - could not locate " + searchNum);
                             } else {
                                 // In this case, we really did not find the event as it is out of range.

@@ -161,7 +161,10 @@ public class FileEventStreamSearch {
             do {
                 mid = min + ((max - min) / 2);
                 // System.out.println("Min: " + min + " Mid: " + mid + " Max: " + max);
-                try (LineByteStream lis = new LineByteStream(path, mid)) {
+                // The Math.max(2, mid-2) here and the max > (min - 4) in the while is because of the seekToFirstNewLine
+                // The seekToFirstNewLine can skip samples because of overflow issues and we subtract to make sure we go before any newlines.
+                // The max > (min - 4) should hopefully prevent infinite loops
+                try (LineByteStream lis = new LineByteStream(path, Math.max(2, mid-2))) {
                     lis.seekToFirstNewLine();
                     byte[] line1 = lis.readLine();
                     if (line1 == null || line1.length <= 0) {
@@ -180,7 +183,7 @@ public class FileEventStreamSearch {
                             min = mid + 1;
                             break;
                         case STAY_WHERE_YOU_ARE:
-                            foundPosition = mid;
+                            foundPosition = mid-2;
                             return true;
                         default:
                             logger.error("Compare function returned something unexpeected " + nextStep);
@@ -188,7 +191,7 @@ public class FileEventStreamSearch {
 
                     maxIterations--;
                 }
-            } while ((max > min) && maxIterations > 0);
+            } while ((max > (min - 4)) && maxIterations > 0); // See above
         } catch (Exception ex) {
             throw new IOException(
                     "Exception searching in input stream; min: " + min + " mid: " + mid + " max:" + max, ex);

@@ -83,7 +83,12 @@ public class SearchInPBFileTest {
                     ByteArray bar = new ByteArray(LineByteStream.MAX_LINE_SIZE);
                     lis.readLine(bar);
                     PBScalarDouble pbEvent = new PBScalarDouble(year, bar);
-                    Assertions.assertEquals(searchYst, pbEvent.getYearSecondTimestamp());
+                    Assertions.assertEquals(searchYst, pbEvent.getYearSecondTimestamp(),
+                        "Looking for "
+                        + TimeUtils.convertToISO8601String(TimeUtils.convertFromYearSecondTimestamp(searchYst)) + 
+                        " got "
+                        + TimeUtils.convertToISO8601String(pbEvent.getEventTimeStamp())
+                    );
                 }
             }
         } catch (Exception ex) {
