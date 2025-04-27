@@ -3,7 +3,7 @@ version: "2"
 build:
   os: "ubuntu-22.04"
   apt_packages:
-    - openjdk-17-jdk
+    - openjdk-21-jdk
   tools:
     python: "3.10"
   jobs:
