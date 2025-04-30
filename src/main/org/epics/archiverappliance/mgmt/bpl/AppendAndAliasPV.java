@@ -219,8 +219,8 @@ public class AppendAndAliasPV implements BPLAction {
 		destTypeInfo.setCreationTime(newerTypeInfo.getCreationTime());
 		destTypeInfo.setModificationTime(TimeUtils.now());
 		try { 
-			configService.registerPVToAppliance(destPVName, configService.getMyApplianceInfo());
 			destTypeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
+			configService.registerPVToAppliance(destPVName, configService.getMyApplianceInfo());
 			configService.updateTypeInfoForPV(destPVName, destTypeInfo);
 		} catch(AlreadyRegisteredException ex) { 
 			try(PrintWriter out = resp.getWriter()) {

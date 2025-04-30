@@ -30,6 +30,7 @@ import org.epics.archiverappliance.retrieval.RetrievalState;
 import com.google.common.eventbus.EventBus;
 
 import com.hazelcast.projection.Projection;
+import com.hazelcast.query.Predicate;
 
 
 /**
@@ -245,7 +246,7 @@ public interface ConfigService {
 	 * @param info ApplianceInfo
 	 * @return string All PVs being archiveed by this appliance
 	 */
-	public Iterable<String> getPVsForAppliance(ApplianceInfo info);
+	public Set<String> getPVsForAppliance(ApplianceInfo info);
 	
 	
 	/**
@@ -256,22 +257,13 @@ public interface ConfigService {
 	public Set<String> getPVsForThisAppliance();
 
 	/**
-	 * Project the pvTypeInfo's for the given PV's using the given projection operator
+	 * Query this cluster's pvTypeInfos using the supplied the predicate and then run the supplied projection operator.
 	 * This runs using Hz's query functions and can be run from any war file
 	 * For example, to quickly determine the appliances for a bunch of PV's, project the applianceIdentity and then do a stream groupby.
 	 * @return
 	 */
-	public <T> Collection<T> projectPVTypeInfos(Set<String> pvNames, Projection<Map.Entry<String, PVTypeInfo>, T> projection);
+	public <T> Collection<T> queryPVTypeInfos(Predicate<String, PVTypeInfo> predicate, Projection<Map.Entry<String, PVTypeInfo>, T> projection);
 	
-	/**
-	 * Is this PV archived on this appliance.
-	 * This method also checks aliases and fields.
-	 * @param pvName The name of PV.
-	 * @return boolean True or False
-	 */
-	public boolean isBeingArchivedOnThisAppliance(String pvName);
-	
-
 	/**
 	 * Get the pvNames for this appliance matching the given regex.
 	 * @param nameToMatch  &emsp;
