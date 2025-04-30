@@ -18,6 +18,8 @@ import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.XmlClientConfigBuilder;
 import com.hazelcast.config.Config;
+import com.hazelcast.config.IndexConfig;
+import com.hazelcast.config.IndexType;
 import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.cluster.Cluster;
 import com.hazelcast.core.Hazelcast;
@@ -31,6 +33,7 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.projection.Projection;
+
 import com.hazelcast.query.Predicate;
 import com.hazelcast.query.PredicateBuilder.EntryObject;
 import com.hazelcast.query.Predicates;
@@ -79,7 +82,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -137,17 +139,26 @@ public class DefaultConfigService implements ConfigService {
     protected ApplianceInfo myApplianceInfo = null;
     protected Map<String, ApplianceInfo> appliances = null;
     // Persisted state begins here.
-    protected Map<String, PVTypeInfo> typeInfos = null;
-    protected Map<String, UserSpecifiedSamplingParams> archivePVRequests = null;
-    protected Map<String, String> channelArchiverDataServers = null;
-    protected Map<String, String> aliasNamesToRealNames = null;
+    protected IMap<String, PVTypeInfo> typeInfos = null;
+    protected IMap<String, UserSpecifiedSamplingParams> archivePVRequests = null;
+    protected IMap<String, String> channelArchiverDataServers = null;
+    protected IMap<String, String> aliasNamesToRealNames = null;
     // These are not persisted but derived from other info
-    protected Map<String, ApplianceInfo> pv2appliancemapping = null;
-    protected Map<String, String> clusterInet2ApplianceIdentity = null;
-    protected Map<String, Boolean> appliancesConfigLoaded = null;
-    protected Map<String, List<ChannelArchiverDataServerPVInfo>> pv2ChannelArchiverDataServer = null;
+    // Derived state starts here
+    // The following two maintain a couple of reverse indices for performance optimization
+    // When we make changes to the typeInfo <-> appliance identity mapping, please make sure to keep these upto date
+    protected IMap<String, ApplianceInfo> pv2appliancemapping = null;
+    // Maintain a TRIE index for the pvNames in this appliance.
+    protected ConcurrentHashMap<String, ConcurrentSkipListSet<String>> parts2PVNamesForThisAppliance =
+            new ConcurrentHashMap<String, ConcurrentSkipListSet<String>>();
+    
+    // Map IP address to appliance identity
+    protected IMap<String, String> clusterInet2ApplianceIdentity = null;
+    protected IMap<String, Boolean> appliancesConfigLoaded = null;
+    protected IMap<String, List<ChannelArchiverDataServerPVInfo>> pv2ChannelArchiverDataServer = null;
     protected ITopic<PubSubEvent> pubSub = null;
-    protected Map<String, Boolean> namedFlags = null;
+    protected IMap<String, Boolean> namedFlags = null;
+    // Derived state ends here
     // Configuration state ends here.
 
     // Runtime state begins here
@@ -159,12 +170,6 @@ public class DefaultConfigService implements ConfigService {
     protected ConcurrentSkipListSet<String> appliancesInCluster = new ConcurrentSkipListSet<String>();
     // Runtime state ends here
 
-    // This is an optimization; we cache a copy of PVs that are registered for this appliance.
-    protected ConcurrentSkipListSet<String> pvsForThisAppliance = null;
-    // Maintain a TRIE index for the pvNames in this appliance.
-    protected ConcurrentHashMap<String, ConcurrentSkipListSet<String>> parts2PVNamesForThisAppliance =
-            new ConcurrentHashMap<String, ConcurrentSkipListSet<String>>();
-    protected ConcurrentSkipListSet<String> pausedPVsForThisAppliance = null;
     protected ApplianceAggregateInfo applianceAggregateInfo = new ApplianceAggregateInfo();
     protected EventBus eventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(r -> new Thread(r, "Event bus")));
     protected Properties archapplproperties = new Properties();
@@ -475,6 +480,7 @@ public class DefaultConfigService implements ConfigService {
             }
 
             config.setProperty( "hazelcast.logging.type", "log4j2" );
+            // config.setProperty("hazelcast.query.result.size.limit", "10000000");
 
             try {
                 String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
@@ -578,8 +584,9 @@ public class DefaultConfigService implements ConfigService {
         }
 
         pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
-        namedFlags = hzinstance.getMap("namedflags");
+        namedFlags = hzinstance.getMap("namedflags");        
         typeInfos = hzinstance.getMap(TYPEINFO);
+        typeInfos.addIndex(new IndexConfig(IndexType.HASH, "applianceIdentity", "paused", "usePVAccess"));
         archivePVRequests = hzinstance.getMap("archivePVRequests");
         channelArchiverDataServers = hzinstance.getMap("channelArchiverDataServers");
         clusterInet2ApplianceIdentity = hzinstance.getMap(CLUSTER_INET_2_APPLIANCE_IDENTITY);
@@ -719,9 +726,6 @@ public class DefaultConfigService implements ConfigService {
         } else if (this.warFile == WAR_FILE.ETL) {
             this.etlPVLookup.postStartup();
         } else if (this.warFile == WAR_FILE.MGMT) {
-            pvsForThisAppliance = new ConcurrentSkipListSet<String>();
-            pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
-
             initializePersistenceLayer();
 
             loadTypeInfosFromPersistence();
@@ -740,9 +744,7 @@ public class DefaultConfigService implements ConfigService {
             logger.debug(() -> "Building a local aggregate of PV infos that are registered to this appliance");
             try {
                 for (String pvName : getPVsForThisAppliance()) {
-                    if (!pvsForThisAppliance.contains(pvName)) {
-                        applianceAggregateInfo.addInfoForPV(pvName, this.getTypeInfoForPV(pvName), this);
-                    }
+                    applianceAggregateInfo.addInfoForPV(pvName, this.getTypeInfoForPV(pvName), this);
                 }
             } catch (Exception ex) {
                 logger.error("Exception building data for capacity planning", ex);
@@ -850,46 +852,19 @@ public class DefaultConfigService implements ConfigService {
         String pvName = typeInfo.getPvName();
         if (typeInfo.getApplianceIdentity().equals(myApplianceInfo.getIdentity())) {
             if (event.getChangeType() == ChangeType.TYPEINFO_DELETED) {
-                if (pvsForThisAppliance != null) {
-                    if (pvsForThisAppliance.contains(pvName)) {
-                        logger.debug(
-                                "Removing pv " + pvName + " from the locally cached copy of pvs for this appliance");
-                        pvsForThisAppliance.remove(pvName);
-                        pausedPVsForThisAppliance.remove(pvName);
-                        // For now, we do not anticipate many PVs being deleted from the cache to worry about keeping
-                        // applianceAggregateInfo upto date...
-                        // This may change later...
-                        String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
-                        for (String part : parts) {
-                            parts2PVNamesForThisAppliance.get(part).remove(pvName);
-                        }
-                    }
+                String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
+                for (String part : parts) {
+                    parts2PVNamesForThisAppliance.get(part).remove(pvName);
                 }
             } else {
-                if (pvsForThisAppliance != null) {
-                    if (!pvsForThisAppliance.contains(pvName)) {
-                        logger.debug(
-                                () -> "Adding pv " + pvName + " to the locally cached copy of pvs for this appliance");
-                        pvsForThisAppliance.add(pvName);
-                        if (typeInfo.isPaused()) {
-                            pausedPVsForThisAppliance.add(typeInfo.getPvName());
-                        }
-                        String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
-                        for (String part : parts) {
-                            if (!parts2PVNamesForThisAppliance.containsKey(part)) {
-                                parts2PVNamesForThisAppliance.put(part, new ConcurrentSkipListSet<String>());
-                            }
-                            parts2PVNamesForThisAppliance.get(part).add(pvName);
-                        }
-                        applianceAggregateInfo.addInfoForPV(pvName, typeInfo, this);
-                    } else {
-                        if (typeInfo.isPaused()) {
-                            pausedPVsForThisAppliance.add(typeInfo.getPvName());
-                        } else {
-                            pausedPVsForThisAppliance.remove(typeInfo.getPvName());
-                        }
+                String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
+                for (String part : parts) {
+                    if (!parts2PVNamesForThisAppliance.containsKey(part)) {
+                        parts2PVNamesForThisAppliance.put(part, new ConcurrentSkipListSet<String>());
                     }
+                    parts2PVNamesForThisAppliance.get(part).add(pvName);
                 }
+                applianceAggregateInfo.addInfoForPV(pvName, typeInfo, this);
             }
         }
     }
@@ -1056,87 +1031,24 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
-    public Iterable<String> getPVsForAppliance(ApplianceInfo info) {
+    public Set<String> getPVsForAppliance(ApplianceInfo info) {
         String identity = info.getIdentity();
-        List<PVApplianceCombo> sortedCombos = getSortedPVApplianceCombo();
-        ArrayList<String> pvsForAppliance = new ArrayList<String>();
-        for (PVApplianceCombo combo : sortedCombos) {
-            if (combo.applianceIdentity.equals(identity)) {
-                pvsForAppliance.add(combo.pvName);
-            }
-        }
-        return pvsForAppliance;
+        Predicate<String, PVTypeInfo> predicate = Predicates.equal("this.applianceIdentity", identity);
+        Set<String> queryResult = this.typeInfos.keySet(predicate);
+        logger.debug("Got {} PVs for this appliance using predicate", queryResult.size());
+        return queryResult;
     }
 
     @Override
     public Set<String> getPVsForThisAppliance() {
-        if (pvsForThisAppliance != null) {
-            logger.debug(() -> "Returning the locally cached copy of the pvs for this appliance");
-            return Collections.unmodifiableSet(pvsForThisAppliance);
-        } else {
-            logger.debug(() -> "Generating the list of PVs for this appliance from pv2appliancemapping");
-            ConcurrentSkipListSet<String> retval = new ConcurrentSkipListSet<String>();
-            for (Map.Entry<String, ApplianceInfo> entry : pv2appliancemapping.entrySet()) {
-                if(entry.getValue().getIdentity().equals(this.myIdentity)) {
-                    retval.add(entry.getKey());
-                }
-            }
-            return Collections.unmodifiableSet(retval);
-        }
+        Set<String> ret = this.getPVsForAppliance(this.myApplianceInfo);
+        return ret;
     }
 
     @Override
-	public <T> Collection<T> projectPVTypeInfos(Set<String> pvNames, Projection<Map.Entry<String, PVTypeInfo>, T> projection) {
-        IMap<String, PVTypeInfo> hztypeinfos = hzinstance.getMap(TYPEINFO);
-        EntryObject e = Predicates.newPredicateBuilder().getEntryObject();
-        Predicate<String, PVTypeInfo> predicate = e.key().in(pvNames.toArray(new String[0]));
-        Collection<T> projectedTypeInfos = hztypeinfos.project(projection, predicate);
+	public <T> Collection<T> queryPVTypeInfos(Predicate<String, PVTypeInfo> predicate, Projection<Map.Entry<String, PVTypeInfo>, T> projection) {
+        Collection<T> projectedTypeInfos = this.typeInfos.project(projection, predicate);
         return projectedTypeInfos;
-    }
-
-    @Override
-    public boolean isBeingArchivedOnThisAppliance(String pvName) {
-        boolean isField = PVNames.isFieldOrFieldModifier(pvName);
-        String plainPVName = PVNames.channelNamePVName(pvName);
-        String fieldName = PVNames.getFieldName(pvName);
-        if (isField) {
-            // If this is a field, we have two possibilities.
-            // Either the plainPVname is being archived and the field is an extra field
-            // Or the whole pv (with the field) is being archived.
-            if (this.pvsForThisAppliance.contains(pvName)
-                    || (this.pvsForThisAppliance.contains(plainPVName)
-                            && Arrays.asList(this.getTypeInfoForPV(plainPVName).getArchiveFields())
-                                    .contains(fieldName))) {
-                return true;
-            }
-
-        } else {
-            if (this.pvsForThisAppliance.contains(plainPVName)) {
-                return true;
-            }
-        }
-
-        if (this.aliasNamesToRealNames.containsKey(pvName)
-                && this.pvsForThisAppliance.contains(this.aliasNamesToRealNames.get(pvName))) {
-            return true;
-        }
-
-        if (this.aliasNamesToRealNames.containsKey(plainPVName)) {
-            plainPVName = this.aliasNamesToRealNames.get(plainPVName);
-
-            if (isField) {
-                return this.pvsForThisAppliance.contains(PVNames.transferField(pvName, plainPVName))
-                        || (this.pvsForThisAppliance.contains(plainPVName)
-                                && Arrays.asList(this.getTypeInfoForPV(plainPVName)
-                                                .getArchiveFields())
-                                        .contains(fieldName));
-
-            } else {
-                return this.pvsForThisAppliance.contains(plainPVName);
-            }
-        }
-
-        return false;
     }
 
     @Override
@@ -1220,7 +1132,7 @@ public class DefaultConfigService implements ConfigService {
     @Override
     public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
         ApplianceInfo info = pv2appliancemapping.get(pvName);
-        if (info != null) throw new AlreadyRegisteredException(info);
+        if (info != null && !info.getIdentity().equals(applianceInfo.getIdentity())) throw new AlreadyRegisteredException(info);
         pv2appliancemapping.put(pvName, applianceInfo);
     }
 
@@ -1249,9 +1161,7 @@ public class DefaultConfigService implements ConfigService {
     public void removePVFromCluster(String pvName) {
         logger.info("Removing PV from cluster.." + pvName);
         pv2appliancemapping.remove(pvName);
-        pvsForThisAppliance.remove(pvName);
         typeInfos.remove(pvName);
-        pausedPVsForThisAppliance.remove(pvName);
         String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
         for (String part : parts) {
             ConcurrentSkipListSet<String> pvNamesForPart = parts2PVNamesForThisAppliance.get(part);
@@ -1814,10 +1724,6 @@ public class DefaultConfigService implements ConfigService {
                     String pvName = typeInfo.getPvName();
                     newTypeInfos.put(pvName, typeInfo);
                     newPVMappings.put(pvName, appliances.get(typeInfo.getApplianceIdentity()));
-                    pvsForThisAppliance.add(pvName);
-                    if (typeInfo.isPaused()) {
-                        pausedPVsForThisAppliance.add(pvName);
-                    }
                     String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
                     for (String part : parts) {
                         if (!parts2PVNamesForThisAppliance.containsKey(part)) {
@@ -1891,7 +1797,8 @@ public class DefaultConfigService implements ConfigService {
             int clusterPVCount = 0;
             for (String pvNameFromPersistence : pvNamesFromPersistence) {
                 String realName = persistanceLayer.getAliasNamesToRealName(pvNameFromPersistence);
-                if (this.pvsForThisAppliance.contains(realName)) {
+                PVTypeInfo typeInfo = this.typeInfos.get(realName);
+                if(typeInfo != null && typeInfo.getApplianceIdentity().equals(this.myIdentity)) {
                     newAliases.put(pvNameFromPersistence, realName);
                     // Add the alias into the trie
                     String[] parts = this.pvName2KeyConverter.breakIntoParts(pvNameFromPersistence);
@@ -1901,6 +1808,8 @@ public class DefaultConfigService implements ConfigService {
                         }
                         parts2PVNamesForThisAppliance.get(part).add(pvNameFromPersistence);
                     }
+                } else {
+                    logger.warn("Skipping adding alias for {} as the real PV {} is no longer archied on this appliance", pvNameFromPersistence, realName);
                 }
             }
 
@@ -2046,19 +1955,13 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public Set<String> getPausedPVsInThisAppliance() {
-        if (pausedPVsForThisAppliance != null) {
-            logger.debug(() -> "Returning the locally cached copy of the paused pvs for this appliance");
-            return pausedPVsForThisAppliance;
-        } else {
-            logger.debug(() -> "Fetching the list of paused PVs for this appliance from the mgmt app");
-            JSONArray pvs = GetUrlContent.getURLContentAsJSONArray(
-                    myApplianceInfo.getMgmtURL() + "/getPausedPVsForThisAppliance");
-            HashSet<String> retval = new HashSet<String>();
-            for (Object pv : pvs) {
-                retval.add((String) pv);
-            }
-            return retval;
-        }
+        EntryObject e = Predicates.newPredicateBuilder().getEntryObject();
+        Predicate<String, PVTypeInfo> predicate = Predicates.and(
+            Predicates.equal("applianceIdentity", this.myIdentity),
+            Predicates.equal("paused", true)
+            );
+        Set<String> queryResult = ((IMap<String, PVTypeInfo>)this.typeInfos).keySet(predicate);
+        return queryResult;
     }
 
     @Override

@@ -211,9 +211,9 @@ public class ReshardPV implements BPLAction {
 		destTypeInfo.setCreationTime(srcTypeInfo.getCreationTime());
 		destTypeInfo.setModificationTime(TimeUtils.now());
 		try { 
-			configService.registerPVToAppliance(destPVName, configService.getMyApplianceInfo());
 			destTypeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
 			configService.updateTypeInfoForPV(destPVName, destTypeInfo);
+			configService.registerPVToAppliance(destPVName, configService.getMyApplianceInfo());
 		} catch(AlreadyRegisteredException ex) { 
 			try(PrintWriter out = resp.getWriter()) {
 				String errorMsg = "Temporary PV name is already registered " + destPVName + ". Giving up on resharding " + srcPVName;
