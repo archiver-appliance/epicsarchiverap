@@ -87,12 +87,16 @@ public class ETLStages implements Runnable {
 
     @Override
     public void run() {
+        this.runAsIfAtTime(Instant.now());
+    }
+
+    public void runAsIfAtTime(Instant runAsIfAtTime) {
         try {
             CompletableFuture<Void> f = null;
             for(ETLStage etlStage : this.etlStages) {
                 f = (f == null)
-                    ? CompletableFuture.runAsync(new ETLJob(etlStage), this.theWorker)
-                    : f.thenCompose((b) -> CompletableFuture.runAsync(new ETLJob(etlStage), this.theWorker));
+                    ? CompletableFuture.runAsync(new ETLJob(etlStage, runAsIfAtTime), this.theWorker)
+                    : f.thenCompose((b) -> CompletableFuture.runAsync(new ETLJob(etlStage, runAsIfAtTime), this.theWorker));
             }
             if(f == null) { throw new IOException("Completable future is null");}
             f.get(); // Wait for the future to complete

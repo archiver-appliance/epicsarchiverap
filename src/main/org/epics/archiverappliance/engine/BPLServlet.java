@@ -31,9 +31,7 @@ import org.epics.archiverappliance.engine.bpl.GetDataAtTimeEngine;
 import org.epics.archiverappliance.engine.bpl.GetEngineDataAction;
 import org.epics.archiverappliance.engine.bpl.GetLatestMetaDataAction;
 import org.epics.archiverappliance.engine.bpl.PVStatusAction;
-import org.epics.archiverappliance.engine.bpl.PauseArchivingPV;
 import org.epics.archiverappliance.engine.bpl.PausePVsOnShutdown;
-import org.epics.archiverappliance.engine.bpl.ResumeArchivingPV;
 import org.epics.archiverappliance.engine.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.engine.bpl.reports.ApplianceMetricsDetails;
 import org.epics.archiverappliance.engine.bpl.reports.ConnectedPVCountForAppliance;
@@ -82,8 +80,6 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
 		getActions.put("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
 		getActions.put("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
-		getActions.put("/pauseArchivingPV", PauseArchivingPV.class);
-		getActions.put("/resumeArchivingPV", ResumeArchivingPV.class);
 		getActions.put("/deletePV", DeletePV.class);
 		getActions.put("/listAllChannels", ListAllChannels.class);
 		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
@@ -106,8 +102,6 @@ public class BPLServlet extends HttpServlet {
 	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
 	static {
 		postActions.put("/status", PVStatusAction.class);
-		postActions.put("/pauseArchivingPV", PauseArchivingPV.class);
-		postActions.put("/resumeArchivingPV", ResumeArchivingPV.class);
 		postActions.put("/getDataAtTime", GetDataAtTimeEngine.class);
 	}
 	
