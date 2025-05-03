@@ -19,6 +19,8 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.PVTypeInfoEvent;
+import org.epics.archiverappliance.config.PVTypeInfoEvent.ChangeType;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.config.UserSpecifiedSamplingParams;
 import org.epics.archiverappliance.config.exception.ConfigException;
@@ -433,62 +435,84 @@ public class EngineContext {
                                 "MetaInfoRequested",
                                 pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
                                 pvName);
-                        configService.getEventBus().post(confirmationEvent);
-                    } catch (Exception ex) {
-                        logger.error("Exception requesting metainfo for pv " + pvName, ex);
-                    }
-                }
-                case "StartArchivingPV" -> {
-                    String pvName = pubSubEvent.getPvName();
-                    try {
-                        this.startArchivingPV(pvName);
-                        PubSubEvent confirmationEvent = new PubSubEvent(
-                                "StartedArchivingPV",
-                                pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
-                                pvName);
-                        configService.getEventBus().post(confirmationEvent);
-                    } catch (Exception ex) {
-                        logger.error("Exception beginnning archiving pv " + pvName, ex);
-                    }
-                }
-                case "AbortComputeMetaInfo" -> {
-                    String pvName = pubSubEvent.getPvName();
-                    try {
-                        logger.warn("AbortComputeMetaInfo called for " + pvName);
-                        this.abortComputeMetaInfo(pvName);
-                        // PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() +
-                        // "_"
-                        // + ConfigService.WAR_FILE.MGMT, pvName);
-                        // configService.getEventBus().post(confirmationEvent);
-                    } catch (Exception ex) {
-                        logger.error("Exception aborting metainfo for PV " + pvName, ex);
-                    }
-                }
-            }
-        } else {
-            logger.debug("Skipping processing event meant for " + pubSubEvent.getDestination());
+					configService.getEventBus().post(confirmationEvent);
+				} catch(Exception ex) {
+					logger.error("Exception requesting metainfo for pv " + pvName, ex);
+				}
+			} else if(pubSubEvent.getType().equals("StartArchivingPV")) {
+				String pvName = pubSubEvent.getPvName();
+				try { 
+					this.startArchivingPV(pvName);
+                    PubSubEvent confirmationEvent = new PubSubEvent(
+                        "StartedArchivingPV",
+                        pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
+                        pvName);
+                configService.getEventBus().post(confirmationEvent);
+            configService.getEventBus().post(confirmationEvent);
+				} catch(Exception ex) {
+					logger.error("Exception beginnning archiving pv " + pvName, ex);
+				}
+			} else if(pubSubEvent.getType().equals("AbortComputeMetaInfo")) {
+				String pvName = pubSubEvent.getPvName();
+				try { 
+					logger.warn("AbortComputeMetaInfo called for " + pvName);
+					this.abortComputeMetaInfo(pvName);
+                    // PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() +
+                    // "_"
+                    // + ConfigService.WAR_FILE.MGMT, pvName);
+                    // configService.getEventBus().post(confirmationEvent);
+                    } catch(Exception ex) { 
+					logger.error("Exception aborting metainfo for PV " + pvName, ex);
+				}
+			}
+		} else {
+			logger.debug("Skipping processing event meant for " + pubSubEvent.getDestination());
+		}
+		
+	}
+
+    @Subscribe
+    public void pvTypeInfoChanged(PVTypeInfoEvent event) {
+        logger.debug("Received PVTypeInfo changed event for {}", event.getPvName());
+        String pvName = event.getPvName();
+        PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        if(event.getChangeType() == ChangeType.TYPEINFO_DELETED || typeInfo.isPaused() || !typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
+			try {
+				logger.debug("Stopping CA/PVA channels for {} based on PVTypeInfo change", pvName);
+				ArchiveEngine.pauseArchivingPV(pvName, configService);
+			} catch(Exception ex) {
+				logger.error("Exception pausing PV " + pvName, ex);
+			}
+        } else if(!typeInfo.isPaused() && typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
+			try {
+				logger.debug("Resuming CA/PVA channels for {} based on PVTypeInfo change", pvName);
+				ArchiveEngine.resumeArchivingPV(pvName, configService);
+			} catch(Exception ex) {
+				logger.error("Exception resuming PV " + pvName, ex);
+			}
         }
     }
 
-    /**
-     * @param newDisconnectCheckTimeoutSeconds
-     * This is to be used only for unit testing purposes...
-     * There are no guarantees that using this on a running server will be benign.
-     */
-    public void setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(int newDisconnectCheckTimeoutSeconds) {
+	    
+	/**
+	 * @param newDisconnectCheckTimeoutSeconds
+	 * This is to be used only for unit testing purposes...
+	 * There are no guarantees that using this on a running server will be benign.
+	 */
+	public void setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(int newDisconnectCheckTimeoutSeconds) {
         logger.error(
                 "Changing the disconnect timer to {} seconds - this should be done only in the unit tests.",
                 newDisconnectCheckTimeoutSeconds);
-        disconnectFuture.cancel(false);
-        this.disconnectCheckTimeoutInSeconds = newDisconnectCheckTimeoutSeconds;
-        this.disconnectCheckerPeriodInSeconds = newDisconnectCheckTimeoutSeconds;
-        if (this.miscTasksScheduler != null) {
-            logger.info("Shutting down the engine scheduler for misc tasks.");
-            miscTasksScheduler.shutdown();
-            this.miscTasksScheduler = null;
-        }
-        this.startMiscTasksScheduler(configService);
-    }
+		disconnectFuture.cancel(false);
+		this.disconnectCheckTimeoutInSeconds = newDisconnectCheckTimeoutSeconds;
+		this.disconnectCheckerPeriodInSeconds = newDisconnectCheckTimeoutSeconds;
+		if(this.miscTasksScheduler != null) {
+			logger.info("Shutting down the engine scheduler for misc tasks.");
+			miscTasksScheduler.shutdown();
+			this.miscTasksScheduler = null;
+		}
+		this.startMiscTasksScheduler(configService);
+	}
 
     static class ArchivePVMetaCompletedListener implements MetaCompletedListener {
         String pvName;

@@ -12,13 +12,18 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.epics.archiverappliance.config.PVTypeInfoEvent;
+import org.epics.archiverappliance.config.PVTypeInfoEvent.ChangeType;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
 
+import com.google.common.eventbus.Subscribe;
+
 import java.io.IOException;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -64,55 +69,53 @@ public final class PBThreeTierETLPVLookup {
         configService.addShutdownHook(new ETLShutdownThread(this));
     }
 
-    private class FetchPVs implements Runnable {
-        @Override
-        public void run() {
-            try {
-                Iterable<String> pVsForThisAppliance = configService.getPVsForThisAppliance();
-                if (pVsForThisAppliance != null) {
-                    for (String pvName : pVsForThisAppliance) {
-                        if (!etlStagesForPVs.containsKey(pvName)) {
-                            PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-                            if (!typeInfo.isPaused()) {
-                                addETLJobs(pvName, typeInfo);
-                            } else {
-                                logger.info("Skipping adding ETL jobs for paused PV " + pvName);
-                            }
-                        }
-                    }
-                } else {
-                    configlogger.info("There are no PVs on this appliance yet");
-                }
-            } catch (Throwable t) {
-                configlogger.error("Excepting syncing ETL jobs with config service", t);
-            }
-        }        
-    }
-
     /**
      * Initialize the ETL background scheduled executors and create the runtime state for various ETL components.
      */
     public void postStartup() {
         configlogger.info(
                 "Beginning ETL post startup; scheduling the configServiceSyncThread to keep the local ETL lifetimeId2PVName2LookupItem in sync");
-        // Seconds; needs to be the smallest time interval in the PartitionGranularity.
-        int DEFAULT_ETL_PERIOD = 60 * 5;
-        // Seconds.
-        int DEFAULT_ETL_INITIAL_DELAY = 60;
-        scheduleWorker.scheduleWithFixedDelay(
-                () -> {
-                    try {
-                        CompletableFuture<Void> f = CompletableFuture.runAsync(new FetchPVs(), this.theWorker);
-                        f.get();
-                    } catch (Throwable t) {
-                        configlogger.error("Excepting syncing ETL jobs with config service", t);
-                    }
-                },
-                DEFAULT_ETL_INITIAL_DELAY,
-                DEFAULT_ETL_PERIOD,
-                TimeUnit.SECONDS);
+        configService.getEventBus().register(this);
+        this.startETLJobsOnStartup();
         configlogger.debug("Done initializing ETL post startup.");
     }
+
+    @Subscribe
+    public void pvTypeInfoChanged(PVTypeInfoEvent event) {
+        logger.debug("Received PVTypeInfo changed event for {}", event.getPvName());
+        String pvName = event.getPvName();
+        PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        if(event.getChangeType() == ChangeType.TYPEINFO_DELETED || typeInfo.isPaused() || !typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
+            logger.debug("Deleting ETL jobs for {} based on PVTypeInfo change", pvName);
+            deleteETLJobs(pvName);
+        } else if(!typeInfo.isPaused() && typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
+            logger.debug("Adding ETL jobs for {} based on PVTypeInfo change", pvName);
+            addETLJobs(pvName, typeInfo);
+        }
+    }
+
+    private void startETLJobsOnStartup() { 
+        try {
+            Set<String> pVsForThisAppliance = configService.getPVsForThisAppliance();
+            if (pVsForThisAppliance != null) {
+                for (String pvName : pVsForThisAppliance) {
+                    if (!etlStagesForPVs.containsKey(pvName)) {
+                        PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+                        if (!typeInfo.isPaused()) {
+                            addETLJobs(pvName, typeInfo);
+                        } else {
+                            logger.info("Skipping adding ETL jobs for paused PV " + pvName);
+                        }
+                    }
+                }
+            } else {
+                configlogger.info("There are no PVs on this appliance yet");
+            }
+        } catch (Throwable t) {
+            configlogger.error("Excepting syncing ETL jobs with config service", t);
+        }
+    }
+
 
     /**
      * Add jobs for each of the ETL lifetime transitions.

@@ -24,15 +24,9 @@ import java.util.List;
 public class ETLJob implements Runnable {
     private static final Logger logger = LogManager.getLogger(ETLJob.class.getName());
     private final ETLStage etlStage;
-    private Instant runAsIfAtTime = null;
-
-    public ETLJob(ETLStage etlStage) {
-        this.etlStage = etlStage;
-        this.runAsIfAtTime = null;
-    }
+    private final Instant runAsIfAtTime;
 
     /**
-     * Mostly used by ETL unit tests.
      *
      * @param lookupItem    ETLPVLookupItems
      * @param runAsIfAtTime Instant
@@ -45,11 +39,7 @@ public class ETLJob implements Runnable {
     @Override
     public void run() {
         try {
-            if (this.runAsIfAtTime == null) {
-                this.processETL(Instant.now());
-            } else {
-                this.processETL(runAsIfAtTime);
-            }
+            this.processETL(runAsIfAtTime);
         } catch (Exception e) {
             logger.error("Exception processing ETL for " + etlStage.toString(), e);
             this.etlStage.setExceptionFromLastRun(e);

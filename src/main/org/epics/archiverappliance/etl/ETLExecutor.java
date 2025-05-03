@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
-import org.epics.archiverappliance.etl.common.ETLJob;
 import org.epics.archiverappliance.etl.common.ETLMetricsIntoStore;
 import org.epics.archiverappliance.etl.common.ETLStage;
 import org.epics.archiverappliance.etl.common.ETLStages;
@@ -13,13 +12,10 @@ import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.LinkedList;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Run ETLs for one PV; mostly for unit tests..
@@ -41,7 +37,13 @@ public class ETLExecutor {
             ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
             try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
                 try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
-                    Future<?> f = scheduleWorker.submit(etlStages);
+                    Future<?> f = scheduleWorker.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            etlStages.runAsIfAtTime(timeETLruns);
+                        } 
+                        
+                    });
                     f.get();
                 }
             } catch(Exception ex) {
