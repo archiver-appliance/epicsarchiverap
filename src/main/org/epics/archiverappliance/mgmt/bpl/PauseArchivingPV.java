@@ -53,94 +53,19 @@ public class PauseArchivingPV implements BPLAction {
 			pauseMultiplePVs(req, resp, configService);
 		} else { 
 			// We only have one PV in the request
-			pauseSinglePV(req, resp, configService);
-		}
-	}
-
-	private void pauseSinglePV(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
-		// String pvNameFromRequest = pvName;
-		String pvName = req.getParameter("pv");
-		String realName = configService.getRealNameForAlias(pvName);
-		if(realName != null) pvName = realName;
-
-
-		HashMap<String, Object> infoValues = new HashMap<String, Object>();
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-
-		ApplianceInfo info = configService.getApplianceForPV(pvName);
-		if(info == null) {
-			infoValues.put("validation", "Trying to pause PV " + pvName + " that is not currently being archived.");
-			logger.error(infoValues.get("validation"));
-			try(PrintWriter out = resp.getWriter()) {
-				infoValues.put("validation", "Unable to pause PV " + pvName);
-				out.println(JSONValue.toJSONString(infoValues));
-			}
-			return;
-		} else {
-			PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-			if(typeInfo.isPaused()) {
-				infoValues.put("validation", "Trying to pause PV " + pvName + " that is already paused.");
-				logger.error(infoValues.get("validation"));
-				try(PrintWriter out = resp.getWriter()) {
-					infoValues.put("validation", "PV " + pvName + " is already paused");
-					out.println(JSONValue.toJSONString(infoValues));
-				}
-				return;
-			}
-			typeInfo.setPaused(true);
-			typeInfo.setModificationTime(TimeUtils.now());
-			configService.updateTypeInfoForPV(pvName, typeInfo);
-			
-			
-			String ETLPauseURL = info.getEtlURL() + "/pauseArchivingPV" + "?pv=" + URLEncoder.encode(pvName, "UTF-8"); 
-			logger.info("Pausing ETL using URL " + ETLPauseURL);
-			JSONArray etlStatus = GetUrlContent.getURLContentAsJSONArray(ETLPauseURL);
-			
-			String enginePauseURL = info.getEngineURL() + "/pauseArchivingPV" + "?pv=" + URLEncoder.encode(pvName, "UTF-8"); 
-			logger.info("Pausing engine using URL " + enginePauseURL);
-
-			JSONArray engineStatus = GetUrlContent.getURLContentAsJSONArray(enginePauseURL);
-			
-			HashMap<String, String> retVal = new HashMap<String, String>();
-			if(etlStatus != null) {
-				for(Object statusObj : etlStatus) {
-					@SuppressWarnings("unchecked")
-					HashMap<String, String> status = (HashMap<String, String>) statusObj;
-					for(String key : status.keySet()) {
-						retVal.put("etl_" + key, status.get(key));
-					}
-				}
-			}
-			
-			if(engineStatus != null && !engineStatus.equals("")) {
-				for(Object statusObj : engineStatus) {
-					@SuppressWarnings("unchecked")
-					HashMap<String, String> status = (HashMap<String, String>) statusObj;
-					for(String key : status.keySet()) {
-						retVal.put("engine_" + key, status.get(key));
-					}
-				}
-			}		
-			
-			if(retVal.containsKey("engine_status")
-					&& retVal.containsKey("etl_status")
-					&& retVal.get("engine_status").equals("ok")
-					&& retVal.get("etl_status").equals("ok")
-					) {
-				retVal.put("status", "ok");
-			} else { 
-				infoValues.put("validation", "Either the engine or ETL did not return a valid status for " + pvName);
-			}				
-			
-			try(PrintWriter out = resp.getWriter()) {
-				out.println(JSONValue.toJSONString(retVal));
-			}			
+			List<String> pvNames = new LinkedList<String>();
+			pvNames.add(pvName);
+			pauseMultiplePVs(req, resp, configService);
 		}
 	}
 	
 	private void pauseMultiplePVs(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
 		// String pvNameFromRequest = pvName;
 		LinkedList<String> pvNames = BulkPauseResumeUtils.getPVNames(req, configService);
+		pauseMultiplePVs(pvNames, resp, configService);
+	}
+
+	private void pauseMultiplePVs(List<String> pvNames, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
 		boolean askingToPausePV = true; 
 		List<HashMap<String, String>> response = BulkPauseResumeUtils.pauseResumeByAppliance(pvNames, configService, askingToPausePV);
 		
