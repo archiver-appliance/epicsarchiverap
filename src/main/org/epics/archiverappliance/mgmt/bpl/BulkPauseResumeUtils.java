@@ -41,7 +41,7 @@ public class BulkPauseResumeUtils {
     }
 
     public static List<HashMap<String, String>> pauseResumeByAppliance(
-            LinkedList<String> pvNames, ConfigService configService, boolean askingToPausePV) throws IOException {
+            List<String> pvNames, ConfigService configService, boolean askingToPausePV) throws IOException {
         List<HashMap<String, String>> retVal = new LinkedList<HashMap<String, String>>();
         HashMap<String, HashMap<String, String>> retValMap = new HashMap<String, HashMap<String, String>>();
         HashMap<String, LinkedList<String>> pvsByAppliance = new HashMap<String, LinkedList<String>>();
