@@ -61,6 +61,14 @@ public class WriterRunnable implements Runnable {
  * @param channelName the name of the channel who and whose sample buffer are removed
  */
 	public void removeChannel(final String channelName) {
+		SampleBuffer buffer = buffers.get(channelName);		
+		if(buffer != null) {
+			try {
+				write(buffer);
+			} catch(Throwable e) {
+				logger.error("Exception flushing data for " + channelName, e);
+			}
+		}
 		buffers.remove(channelName);
 	}
 

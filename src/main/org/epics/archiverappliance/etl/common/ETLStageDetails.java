@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.etl.common;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.reports.Details;
 import org.epics.archiverappliance.config.ConfigService;
@@ -10,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ETLStageDetails implements Details {
+    private static final Logger logger = LogManager.getLogger();
 
     private final String pvName;
 
@@ -29,7 +32,8 @@ public class ETLStageDetails implements Details {
         LinkedList<Map<String, String>> statuses = new LinkedList<Map<String, String>>();
         statuses.add(metricDetail("Name (from ETL)", pvName));
         ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
-        if(etlStages == null){
+        if(etlStages == null) {
+            logger.info("Cannot find ETLStages for pv {}", pvName);
             return statuses;
         }
 

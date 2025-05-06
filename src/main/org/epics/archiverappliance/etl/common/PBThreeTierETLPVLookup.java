@@ -24,7 +24,6 @@ import com.google.common.eventbus.Subscribe;
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -84,12 +83,13 @@ public final class PBThreeTierETLPVLookup {
 
     @Subscribe
     public void pvTypeInfoChanged(PVTypeInfoEvent event) {
-        logger.debug("Received PVTypeInfo changed event for {}", event.getPvName());
         String pvName = event.getPvName();
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        logger.debug("Received PVTypeInfo changed event for {} ChangeType: {} Paused: {} Appliance: {}",
+            pvName, event.getChangeType(), typeInfo.isPaused(), typeInfo.getApplianceIdentity());
         if(event.getChangeType() == ChangeType.TYPEINFO_DELETED || typeInfo.isPaused() || !typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
-            logger.debug("Deleting ETL jobs for {} based on PVTypeInfo change", pvName);
-            deleteETLJobs(pvName);
+            logger.debug("Deleting ETL jobs for {} based on PVTypeInfo change ", pvName);
+            deleteETLJobs(pvName); 
         } else if(!typeInfo.isPaused() && typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
             logger.debug("Adding ETL jobs for {} based on PVTypeInfo change", pvName);
             addETLJobs(pvName, typeInfo);

@@ -117,7 +117,22 @@ public class BulkPauseResumeUtils {
             if(retValMap.get(pvName).containsKey("validation") || retValMap.get(pvName).containsKey("status")) {
                 // We got some status
             } else {
-                retValMap.get(pvName).put("validation", "Trying to pause PV " + pvName + " that is not currently being archived or on an instance that is not active.");
+                PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+                if (askingToPausePV && typeInfo.isPaused()) {
+                    pvPauseResumeStatus.put("validation", "Trying to pause PV " + pvName + " that is already paused.");
+                    logger.error(pvPauseResumeStatus.get("validation"));
+                    pvPauseResumeStatus.put("validation", "PV " + pvName + " is already paused");
+                } else if (!askingToPausePV && !typeInfo.isPaused()) {
+                    pvPauseResumeStatus.put("validation", "Trying to resume PV " + pvName + " that is not paused.");
+                    logger.error(pvPauseResumeStatus.get("validation"));
+                    pvPauseResumeStatus.put("validation", "PV " + pvName + " is not paused");
+                } else {
+                    logger.debug("Changing the typeinfo for pause/resume for PV " + pvName + " paused " + askingToPausePV);
+                    typeInfo.setPaused(askingToPausePV);
+                    typeInfo.setModificationTime(TimeUtils.now());
+                    configService.updateTypeInfoForPV(pvName, typeInfo);
+                    pvPauseResumeStatus.put("status", "ok");
+                }
             }
         }
         return retVal;

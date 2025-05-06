@@ -54,6 +54,7 @@ import org.epics.archiverappliance.mgmt.bpl.NamedFlagsGet;
 import org.epics.archiverappliance.mgmt.bpl.NamedFlagsSet;
 import org.epics.archiverappliance.mgmt.bpl.PauseArchivingPV;
 import org.epics.archiverappliance.mgmt.bpl.PutPVTypeInfo;
+import org.epics.archiverappliance.mgmt.bpl.ReassignAppliance;
 import org.epics.archiverappliance.mgmt.bpl.RefreshPVDataFromChannelArchivers;
 import org.epics.archiverappliance.mgmt.bpl.RemoveAliasAction;
 import org.epics.archiverappliance.mgmt.bpl.RemoveExternalArchiverServer;
@@ -139,6 +140,7 @@ public class BPLServlet extends HttpServlet {
         addAction("/getAppliancesInCluster", GetAppliancesInCluster.class);
         addAction("/renamePV", RenamePVAction.class);
         addAction("/reshardPV", ReshardPV.class);
+        addAction("/reassignAppliance", ReassignAppliance.class);
         addAction("/appendAndAliasPV", AppendAndAliasPV.class);
         addAction("/addAlias", AddAliasAction.class);
         addAction("/removeAlias", RemoveAliasAction.class);
@@ -238,6 +240,7 @@ public class BPLServlet extends HttpServlet {
         addPostAction("/unarchivedPVs", UnarchivedPVsAction.class);
         addPostAction("/archivedPVs", ArchivedPVsAction.class);
         addPostAction("/archivedPVsNotInList", ArchivedPVsNotInListAction.class);
+        addPostAction("/reassignAppliance", ReassignAppliance.class);
     }
 
     @Override

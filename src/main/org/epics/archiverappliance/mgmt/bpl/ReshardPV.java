@@ -48,7 +48,7 @@ import java.util.concurrent.Callable;
  * </ol>
  * </div>
  * 
- * @epics.BPLAction - This BPL reassigns the PV to another appliance. This is a complex BPL that also moves data over to the other appliance. For more details on the sequence of steps, see the Javadoc for the BPL.
+ * @epics.BPLAction - This BPL reshards the PV to another appliance. This is a complex BPL that also moves data over to the other appliance. For more details on the sequence of steps, see the Javadoc for the BPL.
  * @epics.BPLActionParam pv - The name of the pv. The PV needs to be paused first and will remain in a paused state after the resharding is complete.
  * @epics.BPLActionParam appliance - The new appliance to assign the PV to. This is the same string as the <code>identity</code> element in the <code>appliances.xml</code> that identifies this appliance.
  * @epics.BPLActionParam storage - The name of the store until which we'll consolidate data before resharding. The data is moved over to the store with the same name on the new appliance. This is typically a string like LTS.

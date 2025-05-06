@@ -476,9 +476,10 @@ public class EngineContext {
 
     @Subscribe
     public void pvTypeInfoChanged(PVTypeInfoEvent event) {
-        logger.debug("Received PVTypeInfo changed event for {}", event.getPvName());
         String pvName = event.getPvName();
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        logger.debug("Received PVTypeInfo changed event for {} ChangeType: {} Paused: {} Appliance: {}",
+            pvName, event.getChangeType(), typeInfo.isPaused(), typeInfo.getApplianceIdentity());
         if(event.getChangeType() == ChangeType.TYPEINFO_DELETED || typeInfo.isPaused() || !typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
 			try {
 				logger.debug("Stopping CA/PVA channels for {} based on PVTypeInfo change", pvName);
