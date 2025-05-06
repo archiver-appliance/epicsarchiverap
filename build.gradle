@@ -42,7 +42,7 @@ java {
 }
 
 ext {
-    runTestsSequentially = findProperty('ARCHAPPL_SEQUENTIAL_TESTS') ?: false
+	runTestsSequentially = findProperty('ARCHAPPL_SEQUENTIAL_TESTS') ?: false
 }
 
 // Allows: gradle -PprojVersion=X build
@@ -139,7 +139,7 @@ dependencies {
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 	testImplementation('org.awaitility:awaitility:4.2.0')
 	implementation("org.phoebus:core-pva:5.0.0")
-    runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.1.4")
+	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.1.4")
 }
 
 tasks.register("cleanApiDocs", Delete) {
@@ -429,7 +429,7 @@ tasks.withType(Test).configureEach {
 		mkdir file("${temporaryDir}/lts")
 		logger.info("Running the tests using {} maxParallelForks", maxParallelForks)
 	}
-	
+
 	filter {
 		//include specific method in any of the tests
 		includeTestsMatching "*Test"
