@@ -28,7 +28,7 @@ import java.util.HashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.pva.data.PVAStructure;
+
 /** this class is used for getting the meta data
  *  <p>
  *  @author luofeng li
@@ -36,8 +36,8 @@ import org.epics.pva.data.PVAStructure;
 
 public class MetaInfo {
 
-	private static Logger logger = LogManager.getLogger(MetaInfo.class.getName());
-	private static Logger configLogger = LogManager.getLogger("config." + MetaInfo.class.getName());
+	private static final Logger logger = LogManager.getLogger(MetaInfo.class.getName());
+	private static final Logger configLogger = LogManager.getLogger("config." + MetaInfo.class.getName());
 
 	/**
 	 * the name of ioc where this pv is
@@ -453,11 +453,7 @@ public class MetaInfo {
 	public void computeRate(DBRTimeEvent dbrtimeevent) {
 		long now = System.currentTimeMillis();
 		this.count=dbrtimeevent.getSampleValue().getElementCount();
-		if(count>1)  { 
-			isVector=true;
-		} else { 
-			isVector=false;
-		}
+        isVector= count > 1;
 		
 		long tempmax=Long.MAX_VALUE-100000;
 
@@ -467,7 +463,7 @@ public class MetaInfo {
 			startTime= System.currentTimeMillis();
 			this.second=0.01;
 		} else {
-			this.second=(now-this.startTime)/1000;
+			this.second= (double) (now - this.startTime) /1000;
 		}
 		eventCount++;
 		this.archDBRTypes=dbrtimeevent.getDBRType();
@@ -730,7 +726,4 @@ public class MetaInfo {
 		}
 	}
 
-    public void applyV4BasicInfo(String pvName, PVAStructure pvStructure, ConfigService configService) {
-        // TODO Copy over meta info from the pvStructure...
-    }
 }

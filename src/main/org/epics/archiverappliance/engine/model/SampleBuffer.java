@@ -33,7 +33,7 @@ public class SampleBuffer {
 	 * Name of channel that writes to this buffer. (we keep only the name, not
 	 * the full channel, to decouple stuff).
 	 */
-	final private String channel_name;
+	private final String channel_name;
        /**
 	* current ArrayListEventStream
 	*/
@@ -53,15 +53,15 @@ public class SampleBuffer {
 	 * Is the buffer in an error state because of RDB write errors? Note that
 	 * this is global for all buffers, not per instance!
 	 */
-	private static volatile boolean error = false;
+	private static final boolean error = false;
         /**
 	 * the buffer size
 	 */
-	final private int capacity;
+		private final int capacity;
 	/**
 	 * the arch dbr type of the pv who has this sample buffer
 	 */
-	final private ArchDBRTypes archdbrtype;
+	private final ArchDBRTypes archdbrtype;
 	private short year;
 	/**
 	 * pVMetrics kept for this sample buffer
@@ -164,13 +164,6 @@ public class SampleBuffer {
 		return error;
 	}
 
-	/** Set the error state. 
-	 * @param error  &emsp;
-	 */
-	public static void setErrorState(final boolean error) {
-		SampleBuffer.error = error;
-	}
-
 	/**
 	 * Add a sample to the queue, maybe dropping older samples
 	 * 
@@ -203,7 +196,7 @@ public class SampleBuffer {
 				if (remainSize < 1) {
 					retval = false;
 					// The buffer is full, drop the first sample and increment the bufferFull lost event count. 
-					currentSamples.remove(0);
+					currentSamples.removeFirst();
 					pVMetrics.addSampleBufferFullLostEventCount();
 				}
 

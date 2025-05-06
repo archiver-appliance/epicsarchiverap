@@ -425,6 +425,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
                 var pvaStructure = pvaChannel.read("").get();
                 this.setupDBRType(pvaStructure);
                 DBRTimeEvent dbrTimeEvent = fromStructure(pvaStructure, null);
+                saveAllMetaData(dbrTimeEvent);
                 fireValueUpdate(dbrTimeEvent);
             } catch (Exception e) {
                 logger.error("exception when reading pv", e);
@@ -570,12 +571,16 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         // 24 hours
         int saveMetaDataPeriodSecs = 86400;
         if (newMetaDataSavePeriod(this.archiveFieldsSavedAtEpSec, saveMetaDataPeriodSecs)) {
-            HashMap<String, String> fieldValues = new HashMap<>();
-            fieldValues.putAll(metaInfoToStore(totalMetaInfo));
-            fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true, this.metaFields));
-            this.archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
-            lastEvent.setFieldValues(fieldValues, false);
+            saveAllMetaData(lastEvent);
         }
+    }
+
+    private void saveAllMetaData(DBRTimeEvent lastEvent) {
+        HashMap<String, String> fieldValues = new HashMap<>();
+        fieldValues.putAll(metaInfoToStore(totalMetaInfo));
+        fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true, this.metaFields));
+        this.archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
+        lastEvent.setFieldValues(fieldValues, false);
     }
 
     /**

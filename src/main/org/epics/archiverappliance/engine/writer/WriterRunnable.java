@@ -34,7 +34,7 @@ public class WriterRunnable implements Runnable {
 	/** Minimum write period [seconds] */
 	private static final double MIN_WRITE_PERIOD = 1.0;
     /**the sample buffer hash map*/
-	final private ConcurrentHashMap<String, SampleBuffer> buffers = new ConcurrentHashMap<String, SampleBuffer>();
+	private final ConcurrentHashMap<String, SampleBuffer> buffers = new ConcurrentHashMap<String, SampleBuffer>();
 
 	/**the configservice used by this WriterRunnable*/
 	private ConfigService configservice = null;
@@ -72,29 +72,19 @@ public class WriterRunnable implements Runnable {
 	void addSampleBuffer(final String name, final SampleBuffer buffer) {
 		// buffers.add(buffer);
 		buffers.put(name, buffer);
-		buffer.addYearListener(new YearListener() {
+		buffer.addYearListener(sampleBuffer -> {
+            //
+            configservice.getEngineContext().getScheduler().execute(() -> {
+                try {
+                    write(sampleBuffer);
+                    logger.info(sampleBuffer.getChannelName() + ":year change");
+                } catch (IOException e) {
+                    logger.error("Exception", e);
+                }
 
-			@Override
-			public void yearChanged(final SampleBuffer sampleBuffer) {
-				//
-				configservice.getEngineContext().getScheduler().execute(new Runnable(){
+            });
 
-					@Override
-					public void run() {
-						try {
-							write(sampleBuffer);
-							logger.info(sampleBuffer.getChannelName() + ":year change");
-						} catch (IOException e) {
-							logger.error("Exception", e);
-						}
-						
-					}
-					
-				});
-				
-			}
-
-		});
+        });
 	}
 
 /**
@@ -146,7 +136,7 @@ public class WriterRunnable implements Runnable {
 
 		try (BasicContext basicContext = new BasicContext()) {
 
-			if (previousSamples.size() > 0) {
+			if (!previousSamples.isEmpty()) {
 				ArchiveChannel tempChannel = channelList.get(channelNname);
 				tempChannel.setlastRotateLogsEpochSeconds(System
 						.currentTimeMillis() / 1000);
@@ -170,42 +160,32 @@ public class WriterRunnable implements Runnable {
 		isRunning=true;
 		ConcurrentHashMap<String, ArchiveChannel> channelList = configservice
 				.getEngineContext().getChannelList();
-		
 
-		Iterator<Entry<String, SampleBuffer>> it = buffers.entrySet()
-				.iterator();
 
-		
-		while (it.hasNext())
-		
-		{
-		
-			Entry<String, SampleBuffer> entry = (Entry<String, SampleBuffer>) it
-					.next();
-			SampleBuffer buffer = entry.getValue();
-		
-			String channelNname = buffer.getChannelName();
-			
-			buffer.resetSamples();
-			ArrayListEventStream previousSamples = buffer.getPreviousSamples();
-			try (BasicContext basicContext = new BasicContext()) {
-				if (previousSamples.size() > 0)
+        for (Entry<String, SampleBuffer> entry : buffers.entrySet()) {
 
-				{
-					ArchiveChannel tempChannel = channelList.get(channelNname);
-					tempChannel.aboutToWriteBuffer((DBRTimeEvent)previousSamples.get(previousSamples.size() -1));
-					tempChannel.setlastRotateLogsEpochSeconds(System
-							.currentTimeMillis() / 1000);
-					tempChannel.getWriter().appendData(basicContext,
-							channelNname, previousSamples);
-				}
-			} catch (IOException e) {
-				throw (e);
-			}finally{
-				isRunning=false;
-			}
+            SampleBuffer buffer = entry.getValue();
 
-		}
+            String channelNname = buffer.getChannelName();
+
+            buffer.resetSamples();
+            ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+            try (BasicContext basicContext = new BasicContext()) {
+                if (!previousSamples.isEmpty()) {
+                    ArchiveChannel tempChannel = channelList.get(channelNname);
+                    tempChannel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
+                    tempChannel.setlastRotateLogsEpochSeconds(System
+                        .currentTimeMillis() / 1000);
+                    tempChannel.getWriter().appendData(basicContext,
+                        channelNname, previousSamples);
+                }
+            } catch (IOException e) {
+                throw (e);
+            } finally {
+                isRunning = false;
+            }
+
+        }
 		
 		isRunning=false;
 		

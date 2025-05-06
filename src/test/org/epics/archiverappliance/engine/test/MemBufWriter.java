@@ -34,9 +34,7 @@ public class MemBufWriter implements Writer {
 	}
 
 	private ArrayListEventStream initBuffer(String pvName, ArchDBRTypes dbrType) {
-		final ArrayListEventStream buf;
-		buf = new ArrayListEventStream(1024, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
-		return buf;
+		return new ArrayListEventStream(1024, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
 	}
 
 	@Override

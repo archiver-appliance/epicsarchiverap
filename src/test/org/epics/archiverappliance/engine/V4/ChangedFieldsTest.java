@@ -267,7 +267,7 @@ public class ChangedFieldsTest {
         Thread.sleep((long) secondsToBuffer * 1000);
         Map<Instant, HashMap<String, String>> actualValues =
                 getReceivedEvents(writer, configService).entrySet().stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, (e) -> ((DBRTimeEvent) e.getValue()).getFields()));
+                        .collect(Collectors.toMap(Map.Entry::getKey, e -> ((DBRTimeEvent) e.getValue()).getFields()));
 
         logger.info("expectedValues: " + expectedInstantFieldValues);
         logger.info("actualValues: " + actualValues);
