@@ -98,7 +98,7 @@ dependencies {
 	testImplementation files("lib/test/BPLTaglets.jar")
 	testImplementation(":pbrawclient:0.2.1")
 	// github
-	viewer("archiver-appliance:svg_viewer:v1.2.0@zip") // Not compileOnly to avoid check by analyze
+	viewer("archiver-appliance:svg_viewer:v1.2.1@zip") // Not compileOnly to avoid check by analyze
 	// Maven dependencies
 	testImplementation("org.seleniumhq.selenium:selenium-java:4.22.0")
 	testImplementation("org.seleniumhq.selenium:selenium-firefox-driver:4.22.0")
