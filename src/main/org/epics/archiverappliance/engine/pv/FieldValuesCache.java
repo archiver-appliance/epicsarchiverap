@@ -343,7 +343,7 @@ public class FieldValuesCache {
                 logger.error("Structure changed " + pvaStructure + " changes " + changes + " bit2FieldNameMapping " + bit2FieldNameMapping);
                 continue;
             }
-            if (!(fName.equals("") ||
+            if (!(fName.isEmpty() ||
                     fName.startsWith("value.") ||
                     fName.startsWith("timeStamp.") ||
                     fName.startsWith("alarm.") ||
@@ -373,7 +373,7 @@ public class FieldValuesCache {
         final HashMap<String, String> result = new HashMap<>();
         for (final Entry<String, String> e : fieldValues.entrySet()) {
 
-            final var v3Name = ((Map<String, String>) FieldValuesCache.v4FieldNames2v3FieldNames).get(e.getKey());
+            final var v3Name = (FieldValuesCache.v4FieldNames2v3FieldNames).get(e.getKey());
             if (v3Name != null) {
                 result.put(v3Name, e.getValue());
             } else {

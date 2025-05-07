@@ -155,12 +155,8 @@ public class PVAccessUtil {
     public static String formatInput(PVAData value) {
         String dataString = value.toString();
         var firstValueSubString = dataString.indexOf("value", 0);
-        String valueString = dataString.substring(firstValueSubString + 5).replaceAll(" ", "");
-        if (dataString.startsWith("string[]")) { // Bug in phoebus core-pva 4.7.2 fixed in next release
-            return "[" + valueString;
-        }
 
-        return valueString;
+        return dataString.substring(firstValueSubString + 5).replaceAll(" ", "");
     }
 
     public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl) {

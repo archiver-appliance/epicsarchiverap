@@ -1,5 +1,3 @@
-
-
 /*******************************************************************************
  * Copyright (c) 2011 The Board of Trustees of the Leland Stanford Junior University
  * as Operator of the SLAC National Accelerator Laboratory.
@@ -7,14 +5,10 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-
 package org.epics.archiverappliance.engine.pv;
 
-import com.cosylab.epics.caj.CAJChannel;
-import com.cosylab.epics.caj.CAJContext;
 import com.google.common.eventbus.Subscribe;
 import gov.aps.jca.Channel;
-import gov.aps.jca.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -44,7 +38,6 @@ import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,514 +47,528 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+
 /***
  * the context for the Archiver Engine
  * @author Luofeng Li
  *
  */
 public class EngineContext {
-	private static final Logger logger = LogManager.getLogger(EngineContext.class.getName());
-	private static final Logger configlogger = LogManager.getLogger("config." + EngineContext.class.getName());
+    private static final Logger logger = LogManager.getLogger(EngineContext.class.getName());
+    private static final Logger configlogger = LogManager.getLogger("config." + EngineContext.class.getName());
 
-	private static double MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = 5.0;
-	private static int METACHANNELS_TO_START_AT_A_TIME = 10000;
+    private static double MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = 5.0;
+    private static int METACHANNELS_TO_START_AT_A_TIME = 10000;
 
-	/** writing thread to write samplebuffer to protocol buffer */
-	final private WriterRunnable writer;
-        /**is the write thread started or not*/
-	private boolean isWriteThreadStarted = false;
-	/**the thread pool to schedule all the runnable of the engine*/
-	private ScheduledThreadPoolExecutor scheduler = null;
-	/**the writing period*/
-	private double write_period;
-	/**the channel list of channels for  all pvs,but  without the channels created for the meta fields*/
-	private final ConcurrentHashMap<String, ArchiveChannel> channelList;
-	
-        /**the command thread for all  pvs*/
-	private JCACommandThread[] command_threads = null;
-	private PVAClient pvaClient;
+    /** writing thread to write samplebuffer to protocol buffer */
+    private final WriterRunnable writer;
+    /**is the write thread started or not*/
+    private boolean isWriteThreadStarted = false;
+    /**the thread pool to schedule all the runnable of the engine*/
+    private ScheduledThreadPoolExecutor scheduler = null;
+    /**the writing period*/
+    private double write_period;
+    /**the channel list of channels for  all pvs,but  without the channels created for the meta fields*/
+    private final ConcurrentHashMap<String, ArchiveChannel> channelList;
 
-	
-	/**the total time consumed by the writer*/
-	private double totalTimeConsumedByWriter;
-	/**the total times of writer executed*/
-	private long countOfWrittingByWriter = 0;
-	/**the list of pvs controlling other pvs*/
-	private ConcurrentHashMap<String, ControllingPV> controlingPVList = new ConcurrentHashMap<String, ControllingPV>();
-	
-	private ConfigService configService;
-	private String myIdentity;
-	
-	/** A scheduler for all the SCAN PV's in the archiver. */
-	private ScheduledThreadPoolExecutor scanScheduler;
-	/** A scheduled thread pool executor misc tasks - these tasks can take an unspecified amount of time. */
-	private ScheduledThreadPoolExecutor miscTasksScheduler;
+    /**the command thread for all  pvs*/
+    private JCACommandThread[] command_threads = null;
 
-	/**
-	 * On disconnects, we add tasks that wait for this timeout to convert reconnects into ca searches into pause resumes.
-	 * Ideally, Channel Access is supposed to take care of this but occasionally, we do see connections not reconnecting for a long time.
-	 * This tries to address that problem. 
-	 */
-	private int disconnectCheckTimeoutInSeconds = 20 * 60;
-	
-	/**
-	 * The disconnectChecker thread runs in this time frame.
-	 * Note this controls both the connect/disconnect checks and the metafields connection initiations.
-	 */
-	private int disconnectCheckerPeriodInSeconds = 20 * 60;
-	
-	private ScheduledFuture<?> disconnectFuture = null;
-	
-	private double sampleBufferCapacityAdjustment = 1.0;
+    private PVAClient pvaClient;
 
-	/**
-	 * An optimization for EngineMetrics. Note; this value may not be all that accurate but should be reasonably accurate.
-	 */
-	private int pausedPVCount = 0;
-	
+    /**the total time consumed by the writer*/
+    private double totalTimeConsumedByWriter;
+    /**the total times of writer executed*/
+    private long countOfWrittingByWriter = 0;
+    /**the list of pvs controlling other pvs*/
+    private final ConcurrentHashMap<String, ControllingPV> controlingPVList =
+            new ConcurrentHashMap<String, ControllingPV>();
 
-	/***
-	 * 
-	 * @return the list of pvs controlling other pvs
-	 */
-	public ConcurrentHashMap<String, ControllingPV> getControlingPVList() {
-		return controlingPVList;
-	}
-        /**
-	 * set the time consumed by writer to write the sample buffer once
-	 * @param secondsConsumedByWriter  the time in second consumed by writer to write the sample buffer once
-	 *  
-	 */
-	public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
-		countOfWrittingByWriter++;
-		totalTimeConsumedByWriter = totalTimeConsumedByWriter
-				+ secondsConsumedByWriter;
-	}
-        /**
-	 * 
-	 * @return the average time in second consumed by writer
-	 */
-        public double getAverageSecondsConsumedByWriter() {
-		if (countOfWrittingByWriter == 0)
-			return 0;
-		return totalTimeConsumedByWriter / (double) countOfWrittingByWriter;
-	}
+    private final ConfigService configService;
+    private final String myIdentity;
 
-        /**
-	 * This EngineContext should always be singleton
-	 * @param configService the config service to initialize the engine context
-	 */
-	public EngineContext(final ConfigService configService) throws ConfigException {
-		String commandThreadCountVarName = "org.epics.archiverappliance.engine.epics.commandThreadCount";
-		String commandThreadCountStr = configService.getInstallationProperties().getProperty(commandThreadCountVarName, "10");
-		configlogger.info("Creating " + commandThreadCountStr + " command threads as specified by " + commandThreadCountVarName + " in archappl.properties");
-		int commandThreadCount = Integer.parseInt(commandThreadCountStr);
-		command_threads = new JCACommandThread[commandThreadCount];
-		System.getProperties().setProperty("jca.use_env", "true");
-		for(int threadNum = 0; threadNum < command_threads.length; threadNum++) { 
-			command_threads[threadNum] = new JCACommandThread(configService);
-			command_threads[threadNum].start();			
-		}
-		
-		MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = Double.valueOf(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.maximum_disconnected_channel_percentage_before_starting_metachannels", Double.toString(MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS)));
-		METACHANNELS_TO_START_AT_A_TIME = Integer.valueOf(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.metachannels_to_start_at_a_time", Integer.toString(METACHANNELS_TO_START_AT_A_TIME)));
-		configlogger.info("Starting metachannels after " + (100.0 - MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) + "% of channels have connected. We'll start metachannels " + METACHANNELS_TO_START_AT_A_TIME + " at a time");
+    /** A scheduler for all the SCAN PV's in the archiver. */
+    private ScheduledThreadPoolExecutor scanScheduler;
+    /** A scheduled thread pool executor misc tasks - these tasks can take an unspecified amount of time. */
+    private ScheduledThreadPoolExecutor miscTasksScheduler;
 
-		
-		writer = new WriterRunnable(configService);
-		channelList = new ConcurrentHashMap<String, ArchiveChannel>();
-		logger.debug("Registering EngineContext for events");
-		this.configService = configService;
-		this.myIdentity = configService.getMyApplianceInfo().getIdentity();
-		this.configService.getEventBus().register(this);
-		
-		String scanThreadCountName = "org.epics.archiverappliance.engine.epics.scanThreadCount";
-		String scanThreadCountStr = configService.getInstallationProperties().getProperty(scanThreadCountName, "1");
-		configlogger.info("Creating " + scanThreadCountStr + " scan threads as specified by " + scanThreadCountName + " in archappl.properties");
-		int scanThreadCount = Integer.parseInt(scanThreadCountStr);
+    /**
+     * On disconnects, we add tasks that wait for this timeout to convert reconnects into ca searches into pause resumes.
+     * Ideally, Channel Access is supposed to take care of this but occasionally, we do see connections not reconnecting for a long time.
+     * This tries to address that problem.
+     */
+    private int disconnectCheckTimeoutInSeconds = 20 * 60;
 
-		
-		// Start the scan thread
-		scanScheduler = new ScheduledThreadPoolExecutor(scanThreadCount, new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread ret = new Thread(r, "The SCAN scheduler.");
-				return ret;
-			}
-		});
+    /**
+     * The disconnectChecker thread runs in this time frame.
+     * Note this controls both the connect/disconnect checks and the metafields connection initiations.
+     */
+    private int disconnectCheckerPeriodInSeconds = 20 * 60;
 
+    private ScheduledFuture<?> disconnectFuture = null;
 
-		configService.addShutdownHook(new Runnable() {
+    private double sampleBufferCapacityAdjustment = 1.0;
 
-			@Override
-			public void run() {
+    /**
+     * An optimization for EngineMetrics. Note; this value may not be all that accurate but should be reasonably accurate.
+     */
+    private int pausedPVCount = 0;
 
-				logger.info("the archive engine will shutdown");
-				try {
+    /***
+     *
+     * @return the list of pvs controlling other pvs
+     */
+    public ConcurrentHashMap<String, ControllingPV> getControlingPVList() {
+        return controlingPVList;
+    }
+    /**
+     * set the time consumed by writer to write the sample buffer once
+     * @param secondsConsumedByWriter  the time in second consumed by writer to write the sample buffer once
+     *
+     */
+    public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
+        countOfWrittingByWriter++;
+        totalTimeConsumedByWriter = totalTimeConsumedByWriter + secondsConsumedByWriter;
+    }
+    /**
+     *
+     * @return the average time in second consumed by writer
+     */
+    public double getAverageSecondsConsumedByWriter() {
+        if (countOfWrittingByWriter == 0) return 0;
+        return totalTimeConsumedByWriter / countOfWrittingByWriter;
+    }
 
-					if (scheduler != null) {
-						scheduler.shutdown();
-					}
-					
-					scanScheduler.shutdown();
-					scanScheduler = null;
-					
-					Iterator<Entry<String, ArchiveChannel>> itChannel = channelList.entrySet().iterator();
-					while (itChannel.hasNext()) {
-						Entry<String, ArchiveChannel> channelentry = (Entry<String, ArchiveChannel>) itChannel.next();
-						ArchiveChannel channeltemp = channelentry.getValue();
-						channeltemp.shutdownMetaChannels();
-						channeltemp.stop();
-					}
-					
-					writer.flushBuffer();
-					channelList.clear();
-					
-					// stop the controlling pv
+    /**
+     * This EngineContext should always be singleton
+     * @param configService the config service to initialize the engine context
+     */
+    public EngineContext(final ConfigService configService) throws ConfigException {
+        String commandThreadCountVarName = "org.epics.archiverappliance.engine.epics.commandThreadCount";
+        String commandThreadCountStr =
+                configService.getInstallationProperties().getProperty(commandThreadCountVarName, "10");
+        configlogger.info("Creating " + commandThreadCountStr + " command threads as specified by "
+                + commandThreadCountVarName + " in archappl.properties");
+        int commandThreadCount = Integer.parseInt(commandThreadCountStr);
+        command_threads = new JCACommandThread[commandThreadCount];
+        System.getProperties().setProperty("jca.use_env", "true");
+        for (int threadNum = 0; threadNum < command_threads.length; threadNum++) {
+            command_threads[threadNum] = new JCACommandThread();
+            command_threads[threadNum].start();
+        }
 
-					for (String pvName : controlingPVList.keySet()) {
-						controlingPVList.get(pvName).stop();
-					}
+        MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS = Double.parseDouble(configService
+                .getInstallationProperties()
+                .getProperty(
+                        "org.epics.archiverappliance.engine.maximum_disconnected_channel_percentage_before_starting_metachannels",
+                        Double.toString(MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS)));
+        METACHANNELS_TO_START_AT_A_TIME = Integer.parseInt(configService
+                .getInstallationProperties()
+                .getProperty(
+                        "org.epics.archiverappliance.engine.metachannels_to_start_at_a_time",
+                        Integer.toString(METACHANNELS_TO_START_AT_A_TIME)));
+        configlogger.info("Starting metachannels after "
+                + (100.0 - MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS)
+                + "% of channels have connected. We'll start metachannels " + METACHANNELS_TO_START_AT_A_TIME
+                + " at a time");
 
-					controlingPVList.clear();
-					
-			        if (pvaClient != null) {
-						pvaClient.close();
-			        }
+        writer = new WriterRunnable(configService);
+        channelList = new ConcurrentHashMap<String, ArchiveChannel>();
+        logger.debug("Registering EngineContext for events");
+        this.configService = configService;
+        this.myIdentity = configService.getMyApplianceInfo().getIdentity();
+        this.configService.getEventBus().register(this);
 
+        String scanThreadCountName = "org.epics.archiverappliance.engine.epics.scanThreadCount";
+        String scanThreadCountStr = configService.getInstallationProperties().getProperty(scanThreadCountName, "1");
+        configlogger.info("Creating " + scanThreadCountStr + " scan threads as specified by " + scanThreadCountName
+                + " in archappl.properties");
+        int scanThreadCount = Integer.parseInt(scanThreadCountStr);
 
-					scheduler = null;
-					isWriteThreadStarted = false;
-					for(int threadNum = 0; threadNum < command_threads.length; threadNum++) { 
-						command_threads[threadNum].shutdown();
-					}
+        // Start the scan thread
+        scanScheduler = new ScheduledThreadPoolExecutor(scanThreadCount, r -> new Thread(r, "The SCAN scheduler."));
 
-				} catch (Exception e) {
-					logger.error(
-							"Exception when execuing ShutdownHook inconfigservice",
-							e);
-				}
+        configService.addShutdownHook(() -> {
+            logger.info("the archive engine will shutdown");
+            try {
 
-				logger.info("the archive engine has been shutdown");
+                if (scheduler != null) {
+                    scheduler.shutdown();
+                }
 
-			}
+                scanScheduler.shutdown();
+                scanScheduler = null;
 
-		});
-		
-		if(configService.getInstallationProperties() != null) { 
-			try {
-				String disConnStr = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.util.EngineContext.disconnectCheckTimeoutInMinutes", "10");
-				if(disConnStr != null) {
-					this.disconnectCheckTimeoutInSeconds = Integer.parseInt(disConnStr);
-					logger.debug("Setting disconnectCheckTimeoutInMinutes to " + this.disconnectCheckTimeoutInSeconds);
-				}
-			} catch(Throwable t) { 
-				logger.error("Exception initializing disconnectCheckTimeoutInMinutes", t);
-			}
-		}
-		
-		startMiscTasksScheduler(configService);
-		
-		boolean allContextsHaveBeenInitialized = false;
-		for(int loopcount = 0; loopcount < 60 && !allContextsHaveBeenInitialized; loopcount++) {
-			allContextsHaveBeenInitialized = true;
-			for(int threadNum = 0; threadNum < command_threads.length; threadNum++) {
-				if(!this.command_threads[threadNum].hasContextBeenInitialized()) {
-					logger.debug("Waiting for all contexts to be initialized " + threadNum);
-					allContextsHaveBeenInitialized = false;
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-					}
-					break;
-				}
-			}
-		}
-		
-		this.iniV4ChannelProvidert();
-		
-		this.sampleBufferCapacityAdjustment = Double.parseDouble(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.config.PVTypeInfo.sampleBufferCapacityAdjustment", "1.0"));
-		logger.debug("Buffer capacity adjustment is " + this.sampleBufferCapacityAdjustment);
-	}
+                for (Entry<String, ArchiveChannel> channelentry : channelList.entrySet()) {
+                    ArchiveChannel channeltemp = channelentry.getValue();
+                    channeltemp.shutdownMetaChannels();
+                    channeltemp.stop();
+                }
 
-	/**
-	 * Start up the scheduler for misc tasks. 
-	 * @param configService
-	 */
-	private void startMiscTasksScheduler(final ConfigService configService) {
-		miscTasksScheduler = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable r) {
-				Thread ret = new Thread(r, "Engine scheduler for misc tasks.");
-				return ret;
-			}
-		});
+                writer.flushBuffer();
+                channelList.clear();
 
-		configService.addShutdownHook(new Runnable() {
-			@Override
-			public void run() {
-				logger.info("Shutting down the engine scheduler for misc tasks.");
-				miscTasksScheduler.shutdown();
-			}
-		});
+                // stop the controlling pv
 
-		// Add an assertion in case we accidentally set this to 0 from the props file.
-		assert (disconnectCheckerPeriodInSeconds > 0);
-		disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(new DisconnectChecker(configService), disconnectCheckerPeriodInSeconds, disconnectCheckerPeriodInSeconds, TimeUnit.SECONDS);
-		
-		// Add a task to update the metadata fields for each PV
-		// We start this at a well known time; this code was previously suspected of a small memory leak.
-		// Need to make sure this leak is no more.
-		long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
-		// Start the metadata updates tomorrow afternoon; doesn't really matter what time; minimze impact with ETL etc
-		long tomorrowAfternoon = ((currentEpochSeconds/(24*60*60)) + 1)*24*60*60 + 22*60*60;
-		logger.info("Starting the metadata updater from " + TimeUtils.convertToHumanReadableString(tomorrowAfternoon));
-		miscTasksScheduler.scheduleAtFixedRate(new MetadataUpdater(), tomorrowAfternoon-currentEpochSeconds, 24*60*60, TimeUnit.SECONDS);
-	}
-	
-	public JCACommandThread getJCACommandThread(int jcaCommandThreadId) {
-		return this.command_threads[jcaCommandThreadId];
-	}
+                for (String pvName : controlingPVList.keySet()) {
+                    controlingPVList.get(pvName).stop();
+                }
 
+                controlingPVList.clear();
 
-	/**
-	 * Use this to assign JCA command threads to PV's
-	 * @param pvName The name of PV
-	 * @param iocHostName Note this can and will often be null.
-	 * @return threadId  &emsp;
-	 */
-	public int assignJCACommandThread(String pvName, String iocHostName) { 
-		String pvNameOnly = pvName.split("\\.")[0];
-		ArchiveChannel channel = this.channelList.get(pvNameOnly);
-		if(channel != null) {
-			// Note this is expected for metachannels but not for main channels.
-			if(pvName.equals(pvNameOnly)) { 
-				logger.debug("We seem to have a channel already for " + pvName + ". Returning its JCA Command thread id.");
-			}
-			return channel.getJCACommandThreadID();			
-		}
-		int threadId =  Math.abs(pvNameOnly.hashCode()) % command_threads.length;
-		return threadId;
-	}
-	
-	
-	public boolean doesChannelContextMatchThreadContext(Channel channel, int jcaCommandThreadId) { 
-		return this.command_threads[jcaCommandThreadId].doesChannelContextMatchThreadContext(channel);
-	}
-	
-/**
- * 
- * @return the channel list of pvs, without the pvs for meta fields
- */
-	public ConcurrentHashMap<String, ArchiveChannel> getChannelList() {
-		return channelList;
-	}
+                if (pvaClient != null) {
+                    pvaClient.close();
+                }
 
-/**
- * 
- * @return  the scheduler for the whole engine
- */
-	public ScheduledThreadPoolExecutor getScheduler() {
-		if (scheduler == null)
-			scheduler = (ScheduledThreadPoolExecutor) Executors
-					.newScheduledThreadPool(1, new ThreadFactory() {
-                        @Override
-                        public Thread newThread(Runnable r) {
-                                Thread ret = new Thread(r, "Scheduler for the whole engine");
-                                return ret;
+                scheduler = null;
+                isWriteThreadStarted = false;
+                for (JCACommandThread commandThread : command_threads) {
+                    commandThread.shutdown();
+                }
+
+            } catch (Exception e) {
+                logger.error("Exception when execuing ShutdownHook inconfigservice", e);
+            }
+
+            logger.info("the archive engine has been shutdown");
+        });
+
+        if (configService.getInstallationProperties() != null) {
+            try {
+                String disConnStr = configService
+                        .getInstallationProperties()
+                        .getProperty(
+                                "org.epics.archiverappliance.engine.util.EngineContext.disconnectCheckTimeoutInMinutes",
+                                "10");
+                if (disConnStr != null) {
+                    this.disconnectCheckTimeoutInSeconds = Integer.parseInt(disConnStr);
+                    logger.debug("Setting disconnectCheckTimeoutInMinutes to " + this.disconnectCheckTimeoutInSeconds);
+                }
+            } catch (Throwable t) {
+                logger.error("Exception initializing disconnectCheckTimeoutInMinutes", t);
+            }
+        }
+
+        startMiscTasksScheduler(configService);
+
+        boolean allContextsHaveBeenInitialized = false;
+        for (int loopcount = 0; loopcount < 60 && !allContextsHaveBeenInitialized; loopcount++) {
+            allContextsHaveBeenInitialized = true;
+            for (int threadNum = 0; threadNum < command_threads.length; threadNum++) {
+                if (!this.command_threads[threadNum].hasContextBeenInitialized()) {
+                    logger.debug("Waiting for all contexts to be initialized " + threadNum);
+                    allContextsHaveBeenInitialized = false;
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                    }
+                    break;
+                }
+            }
+        }
+
+        this.iniV4ChannelProvidert();
+
+        this.sampleBufferCapacityAdjustment = Double.parseDouble(configService
+                .getInstallationProperties()
+                .getProperty("org.epics.archiverappliance.config.PVTypeInfo.sampleBufferCapacityAdjustment", "1.0"));
+        logger.debug("Buffer capacity adjustment is " + this.sampleBufferCapacityAdjustment);
+    }
+
+    /**
+     * Start up the scheduler for misc tasks.
+     * @param configService
+     */
+    private void startMiscTasksScheduler(final ConfigService configService) {
+        miscTasksScheduler = new ScheduledThreadPoolExecutor(1, r -> new Thread(r, "Engine scheduler for misc tasks."));
+
+        configService.addShutdownHook(() -> {
+            logger.info("Shutting down the engine scheduler for misc tasks.");
+            miscTasksScheduler.shutdown();
+        });
+
+        // Add an assertion in case we accidentally set this to 0 from the props file.
+        assert (disconnectCheckerPeriodInSeconds > 0);
+        disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(
+                new DisconnectChecker(configService),
+                disconnectCheckerPeriodInSeconds,
+                disconnectCheckerPeriodInSeconds,
+                TimeUnit.SECONDS);
+
+        // Add a task to update the metadata fields for each PV
+        // We start this at a well known time; this code was previously suspected of a small memory leak.
+        // Need to make sure this leak is no more.
+        long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
+        // Start the metadata updates tomorrow afternoon; doesn't really matter what time; minimze impact with ETL etc
+        long tomorrowAfternoon = ((currentEpochSeconds / (24 * 60 * 60)) + 1) * 24 * 60 * 60 + 22 * 60 * 60;
+        logger.info("Starting the metadata updater from " + TimeUtils.convertToHumanReadableString(tomorrowAfternoon));
+        miscTasksScheduler.scheduleAtFixedRate(
+                new MetadataUpdater(), tomorrowAfternoon - currentEpochSeconds, 24 * 60 * 60, TimeUnit.SECONDS);
+    }
+
+    public JCACommandThread getJCACommandThread(int jcaCommandThreadId) {
+        return this.command_threads[jcaCommandThreadId];
+    }
+
+    /**
+     * Use this to assign JCA command threads to PV's
+     * @param pvName The name of PV
+     * @param iocHostName Note this can and will often be null.
+     * @return threadId  &emsp;
+     */
+    public int assignJCACommandThread(String pvName, String iocHostName) {
+        String pvNameOnly = pvName.split("\\.")[0];
+        ArchiveChannel channel = this.channelList.get(pvNameOnly);
+        if (channel != null) {
+            // Note this is expected for metachannels but not for main channels.
+            if (pvName.equals(pvNameOnly)) {
+                logger.debug(
+                        "We seem to have a channel already for " + pvName + ". Returning its JCA Command thread id.");
+            }
+            return channel.getJCACommandThreadID();
+        }
+        return Math.abs(pvNameOnly.hashCode()) % command_threads.length;
+    }
+
+    public boolean doesChannelContextMatchThreadContext(Channel channel, int jcaCommandThreadId) {
+        return this.command_threads[jcaCommandThreadId].doesChannelContextMatchThreadContext(channel);
+    }
+
+    /**
+     *
+     * @return the channel list of pvs, without the pvs for meta fields
+     */
+    public ConcurrentHashMap<String, ArchiveChannel> getChannelList() {
+        return channelList;
+    }
+
+    /**
+     *
+     * @return  the scheduler for the whole engine
+     */
+    public ScheduledThreadPoolExecutor getScheduler() {
+        if (scheduler == null)
+            scheduler = (ScheduledThreadPoolExecutor)
+                    Executors.newScheduledThreadPool(1, r -> new Thread(r, "Scheduler for the whole engine"));
+        return scheduler;
+    }
+
+    /**
+     * Get the scheduler used for SCAN PV's
+     * @return scanScheduler  &emsp;
+     */
+    public ScheduledThreadPoolExecutor getScanScheduler() {
+        return scanScheduler;
+    }
+
+    /**
+     *
+     * @return the WriterRunnable for the engines
+     */
+    public WriterRunnable getWriteThead() {
+        return writer;
+    }
+
+    /**
+     * start the write thread of the engine and this is actually called by the first pv when creating channel
+     * @param configservice  configservice used by this writer
+     */
+    public void startWriteThread(ConfigService configservice) {
+        int defaultWritePeriod = PVTypeInfo.getSecondsToBuffer(configservice);
+        double actualWrite_period = writer.setWritingPeriod(defaultWritePeriod);
+        this.write_period = actualWrite_period;
+        if (scheduler == null) {
+            scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);
+        }
+        scheduler.scheduleAtFixedRate(writer, 0, (long) (this.write_period * 1000), TimeUnit.MILLISECONDS);
+        isWriteThreadStarted = true;
+    }
+    /**
+     *
+     * @return the writing period in second
+     */
+    public double getWritePeriod() {
+        return write_period;
+    }
+    /**
+     *
+     * @return the status of the writing thread. return true, if it is started.Otherwise, return false;
+     */
+    public boolean isWriteThreadStarted() {
+
+        return isWriteThreadStarted;
+    }
+
+    @Subscribe
+    public void computeMetaInfo(PubSubEvent pubSubEvent) {
+        if (pubSubEvent.getDestination().equals("ALL")
+                || (pubSubEvent.getDestination().startsWith(myIdentity)
+                        && pubSubEvent.getDestination().endsWith(ConfigService.WAR_FILE.ENGINE.toString()))) {
+            switch (pubSubEvent.getType()) {
+                case "ComputeMetaInfo" -> {
+                    String pvName = pubSubEvent.getPvName();
+                    try {
+                        logger.debug("ComputeMetaInfo called for " + pvName);
+                        String fieldName = PVNames.getFieldName(pvName);
+                        String[] extraFields = configService.getExtraFields();
+                        if (fieldName != null && !fieldName.isEmpty()) {
+                            logger.debug("We are not asking for extra fields for a field value " + fieldName
+                                    + " for pv " + pvName);
+                            extraFields = new String[0];
                         }
-					}
-							);
-		return scheduler;
+                        UserSpecifiedSamplingParams userSpec = new UserSpecifiedSamplingParams();
+                        JSONObject jsonObj = (JSONObject) JSONValue.parse(pubSubEvent.getEventData());
+                        JSONDecoder<UserSpecifiedSamplingParams> decoder =
+                                JSONDecoder.getDecoder(UserSpecifiedSamplingParams.class);
+                        decoder.decode(jsonObj, userSpec);
 
-	}
-	
-	
-	/**
-	 * Get the scheduler used for SCAN PV's
-	 * @return scanScheduler  &emsp;
-	 */
-	public ScheduledThreadPoolExecutor getScanScheduler() { 
-		return scanScheduler;
-	}
-	
-/**
- * 
- * @return the WriterRunnable for the engines
- */
-	public WriterRunnable getWriteThead() {
-		return writer;
+                        ArchiveEngine.getArchiveInfo(
+                                pvName,
+                                configService,
+                                extraFields,
+                                userSpec.isUsePVAccess(),
+                                new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
+                        PubSubEvent confirmationEvent = new PubSubEvent(
+                                "MetaInfoRequested",
+                                pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
+                                pvName);
+                        configService.getEventBus().post(confirmationEvent);
+                    } catch (Exception ex) {
+                        logger.error("Exception requesting metainfo for pv " + pvName, ex);
+                    }
+                }
+                case "StartArchivingPV" -> {
+                    String pvName = pubSubEvent.getPvName();
+                    try {
+                        this.startArchivingPV(pvName);
+                        PubSubEvent confirmationEvent = new PubSubEvent(
+                                "StartedArchivingPV",
+                                pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
+                                pvName);
+                        configService.getEventBus().post(confirmationEvent);
+                    } catch (Exception ex) {
+                        logger.error("Exception beginnning archiving pv " + pvName, ex);
+                    }
+                }
+                case "AbortComputeMetaInfo" -> {
+                    String pvName = pubSubEvent.getPvName();
+                    try {
+                        logger.warn("AbortComputeMetaInfo called for " + pvName);
+                        this.abortComputeMetaInfo(pvName);
+                        // PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() +
+                        // "_"
+                        // + ConfigService.WAR_FILE.MGMT, pvName);
+                        // configService.getEventBus().post(confirmationEvent);
+                    } catch (Exception ex) {
+                        logger.error("Exception aborting metainfo for PV " + pvName, ex);
+                    }
+                }
+            }
+        } else {
+            logger.debug("Skipping processing event meant for " + pubSubEvent.getDestination());
+        }
+    }
 
-	}
+    /**
+     * @param newDisconnectCheckTimeoutSeconds
+     * This is to be used only for unit testing purposes...
+     * There are no guarantees that using this on a running server will be benign.
+     */
+    public void setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(int newDisconnectCheckTimeoutSeconds) {
+        logger.error(
+                "Changing the disconnect timer to {} seconds - this should be done only in the unit tests.",
+                newDisconnectCheckTimeoutSeconds);
+        disconnectFuture.cancel(false);
+        this.disconnectCheckTimeoutInSeconds = newDisconnectCheckTimeoutSeconds;
+        this.disconnectCheckerPeriodInSeconds = newDisconnectCheckTimeoutSeconds;
+        if (this.miscTasksScheduler != null) {
+            logger.info("Shutting down the engine scheduler for misc tasks.");
+            miscTasksScheduler.shutdown();
+            this.miscTasksScheduler = null;
+        }
+        this.startMiscTasksScheduler(configService);
+    }
 
-/**
- * start the write thread of the engine and this is actually called by the first pv when creating channel
- * @param configservice  configservice used by this writer
- */ 
-	public void startWriteThread(ConfigService configservice) {
-		int defaultWritePeriod = PVTypeInfo.getSecondsToBuffer(configservice);
-		double actualWrite_period=writer.setWritingPeriod(defaultWritePeriod);
-		this.write_period = actualWrite_period;
-		if (scheduler == null) { 
-			scheduler = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);
-		}
-		scheduler.scheduleAtFixedRate(writer, 0, (long) (this.write_period * 1000), TimeUnit.MILLISECONDS);
-		isWriteThreadStarted = true;
-	}
-/**
- * 
- * @return the writing period in second
- */
-	public double getWritePeriod() {
-		return write_period;
-	}
-/**
- * 
- * @return the status of the writing thread. return true, if it is started.Otherwise, return false;
- */
-	public boolean isWriteThreadStarted() {
+    static class ArchivePVMetaCompletedListener implements MetaCompletedListener {
+        String pvName;
+        ConfigService configService;
+        String myIdentity;
 
-		return isWriteThreadStarted;
-	}
-	
-	@Subscribe public void computeMetaInfo(PubSubEvent pubSubEvent) {
-		if(pubSubEvent.getDestination().equals("ALL") 
-				|| (pubSubEvent.getDestination().startsWith(myIdentity) && pubSubEvent.getDestination().endsWith(ConfigService.WAR_FILE.ENGINE.toString()))) {
-			if(pubSubEvent.getType().equals("ComputeMetaInfo")) {
-				String pvName = pubSubEvent.getPvName();
-				try { 
-					logger.debug("ComputeMetaInfo called for " + pvName);
-					String fieldName = PVNames.getFieldName(pvName);
-					String[] extraFields = configService.getExtraFields();
-					if(fieldName != null && !fieldName.equals("")) {
-						logger.debug("We are not asking for extra fields for a field value " + fieldName + " for pv " + pvName);
-						extraFields = new String[0];
-					}
-					UserSpecifiedSamplingParams userSpec = new UserSpecifiedSamplingParams();
-					JSONObject jsonObj = (JSONObject) JSONValue.parse(pubSubEvent.getEventData());
-					JSONDecoder<UserSpecifiedSamplingParams> decoder = JSONDecoder.getDecoder(UserSpecifiedSamplingParams.class);
-					decoder.decode(jsonObj, userSpec);
+        ArchivePVMetaCompletedListener(String pvName, ConfigService configService, String myIdentity) {
+            this.pvName = pvName;
+            this.configService = configService;
+            this.myIdentity = myIdentity;
+        }
 
-					ArchiveEngine.getArchiveInfo(pvName, configService, extraFields, userSpec.isUsePVAccess(), new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
-					PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoRequested", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
-					configService.getEventBus().post(confirmationEvent);
-				} catch(Exception ex) {
-					logger.error("Exception requesting metainfo for pv " + pvName, ex);
-				}
-			} else if(pubSubEvent.getType().equals("StartArchivingPV")) {
-				String pvName = pubSubEvent.getPvName();
-				try { 
-					this.startArchivingPV(pvName);
-					PubSubEvent confirmationEvent = new PubSubEvent("StartedArchivingPV", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
-					configService.getEventBus().post(confirmationEvent);
-				} catch(Exception ex) {
-					logger.error("Exception beginnning archiving pv " + pvName, ex);
-				}
-			} else if(pubSubEvent.getType().equals("AbortComputeMetaInfo")) {
-				String pvName = pubSubEvent.getPvName();
-				try { 
-					logger.warn("AbortComputeMetaInfo called for " + pvName);
-					this.abortComputeMetaInfo(pvName);
-					// PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT, pvName);
-					// configService.getEventBus().post(confirmationEvent);
-				} catch(Exception ex) { 
-					logger.error("Exception aborting metainfo for PV " + pvName, ex);
-				}
-			}
-		} else {
-			logger.debug("Skipping processing event meant for " + pubSubEvent.getDestination());
-		}
-		
-	}
-	
-	/**
-	 * @param newDisconnectCheckTimeoutSeconds
-	 * This is to be used only for unit testing purposes...
-	 * There are no guarantees that using this on a running server will be benign.
-	 */
-	public void setDisconnectCheckTimeoutInSecondsForTestingPurposesOnly(int newDisconnectCheckTimeoutSeconds) {
-		logger.error("Changing the disconnect timer to {} seconds - this should be done only in the unit tests.", newDisconnectCheckTimeoutSeconds);
-		disconnectFuture.cancel(false);
-		this.disconnectCheckTimeoutInSeconds = newDisconnectCheckTimeoutSeconds;
-		this.disconnectCheckerPeriodInSeconds = newDisconnectCheckTimeoutSeconds;
-		if(this.miscTasksScheduler != null) {
-			logger.info("Shutting down the engine scheduler for misc tasks.");
-			miscTasksScheduler.shutdown();
-			this.miscTasksScheduler = null;
-		}
-		this.startMiscTasksScheduler(configService);
-	}
+        @Override
+        public void completed(MetaInfo metaInfo) {
+            try {
+                logger.debug("Completed computing archive info for pv " + pvName);
+                PubSubEvent confirmationEvent =
+                        new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
+                JSONEncoder<MetaInfo> encoder = JSONEncoder.getEncoder(MetaInfo.class);
+                JSONObject metaInfoObj = encoder.encode(metaInfo);
+                confirmationEvent.setEventData(JSONValue.toJSONString(metaInfoObj));
+                configService.getEventBus().post(confirmationEvent);
+            } catch (Exception ex) {
+                logger.error("Exception sending across metainfo for pv " + pvName, ex);
+            }
+        }
+    }
 
-	static class ArchivePVMetaCompletedListener implements MetaCompletedListener {
-		String pvName;
-		ConfigService configService;
-		String myIdentity;
-		ArchivePVMetaCompletedListener(String pvName, ConfigService configService, String myIdentity) {
-			this.pvName = pvName;
-			this.configService = configService;
-			this.myIdentity = myIdentity;
-		}
+    private void startArchivingPV(String pvName) throws Exception {
+        PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        if (typeInfo == null) {
+            logger.error(
+                    "Unable to find pvTypeInfo for PV" + pvName
+                            + ". This is an error; this method should be called after the pvTypeInfo has been determined and settled in the DHT");
+            throw new IOException("Unable to find pvTypeInfo for PV" + pvName);
+        }
 
+        ArchDBRTypes dbrType = typeInfo.getDBRType();
+        // The first data store in the policy is always the first destination; hence thePolicy.getDataStores()[0]
+        StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configService);
+        SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
+        float samplingPeriod = typeInfo.getSamplingPeriod();
 
-		@Override
-		public void completed(MetaInfo metaInfo) {
-			try {
-				logger.debug("Completed computing archive info for pv " + pvName);
-				PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoFinished", myIdentity + "_" + ConfigService.WAR_FILE.MGMT, pvName);
-				JSONEncoder<MetaInfo> encoder = JSONEncoder.getEncoder(MetaInfo.class);
-				JSONObject metaInfoObj = encoder.encode(metaInfo);
-				confirmationEvent.setEventData(JSONValue.toJSONString(metaInfoObj));
-				configService.getEventBus().post(confirmationEvent);
-			} catch(Exception ex) {
-				logger.error("Exception sending across metainfo for pv " + pvName, ex);
-			}
-		}
-	}
-
-
-	private void startArchivingPV(String pvName) throws Exception {
-		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-		if(typeInfo == null) {
-			logger.error("Unable to find pvTypeInfo for PV" + pvName + ". This is an error; this method should be called after the pvTypeInfo has been determined and settled in the DHT");
-			throw new IOException("Unable to find pvTypeInfo for PV" + pvName);
-		}
-
-		ArchDBRTypes dbrType = typeInfo.getDBRType();
-		// The first data store in the policy is always the first destination; hence thePolicy.getDataStores()[0]
-		StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], configService);
-		SamplingMethod samplingMethod = typeInfo.getSamplingMethod();
-		float samplingPeriod = typeInfo.getSamplingPeriod();
-		int secondsToBuffer = PVTypeInfo.getSecondsToBuffer(configService);
         Instant lastKnownTimeStamp = typeInfo.determineLastKnownEventFromStores(configService);
-		String controllingPV = typeInfo.getControllingPV();
-		String[] archiveFields = typeInfo.getArchiveFields();
+        String controllingPV = typeInfo.getControllingPV();
+        String[] archiveFields = typeInfo.getArchiveFields();
 
-		logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "+ samplingPeriod + "(s)");
-		ArchiveEngine.archivePV(pvName, samplingPeriod, samplingMethod,
-				firstDest, configService,
-				dbrType, lastKnownTimeStamp, controllingPV,
-				archiveFields, typeInfo.getHostName(), typeInfo.isUsePVAccess(), typeInfo.isUseDBEProperties());
-	}
+        logger.info("Archiving PV " + pvName + "using " + samplingMethod.toString() + " with a sampling period of "
+                + samplingPeriod + "(s)");
+        ArchiveEngine.archivePV(
+                pvName,
+                samplingPeriod,
+                samplingMethod,
+                firstDest,
+                configService,
+                dbrType,
+                lastKnownTimeStamp,
+                controllingPV,
+                archiveFields,
+                typeInfo.getHostName(),
+                typeInfo.isUsePVAccess(),
+                typeInfo.isUseDBEProperties());
+    }
 
+    public boolean abortComputeMetaInfo(String pvName) {
+        return MetaGet.abortMetaGet(pvName);
+    }
 
-	public boolean abortComputeMetaInfo(String pvName) {
-		return MetaGet.abortMetaGet(pvName);
-	}
+    /**
+     * A class that loops thru the archive channels and checks for connectivity.
+     * We start connecting up the metachannels only after a certain percentage of channels have connected up.
+     * @author mshankar
+     *
+     */
+    private final class DisconnectChecker implements Runnable {
+        private final ConfigService configService;
 
-	/**
-	 * A class that loops thru the archive channels and checks for connectivity.
-	 * We start connecting up the metachannels only after a certain percentage of channels have connected up.
-	 * @author mshankar
-	 *
-	 */
-	private final class DisconnectChecker implements Runnable {
-		private final ConfigService configService;
-
-		private DisconnectChecker(ConfigService configService) {
-			this.configService = configService;
-		}
+        private DisconnectChecker(ConfigService configService) {
+            this.configService = configService;
+        }
 
         @Override
         public void run() {
@@ -577,11 +584,10 @@ public class EngineContext {
                 LinkedList<String> disconnectedPVNames = new LinkedList<String>();
                 LinkedList<String> needToStartMetaChannelPVNames = new LinkedList<String>();
                 int totalChannels = EngineContext.this.channelList.size();
-	            long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInSeconds;
+                long disconnectTimeoutInSeconds = EngineContext.this.disconnectCheckTimeoutInSeconds;
                 for (ArchiveChannel channel : EngineContext.this.channelList.values()) {
-	                checkChannelDisconnectTime(disconnectedPVNames,
-			                needToStartMetaChannelPVNames, disconnectTimeoutInSeconds, channel);
-
+                    checkChannelDisconnectTime(
+                            disconnectedPVNames, needToStartMetaChannelPVNames, disconnectTimeoutInSeconds, channel);
                 }
 
                 int disconnectedChannels = disconnectedPVNames.size();
@@ -591,252 +597,251 @@ public class EngineContext {
                 // We fire up the metachannels gradually only after the entire cluster's connected PV count has reached
                 // a certain threshold.
                 // First we see if the percentage of disconnected channels in this appliance is lower than a threshold
-                if (!needToStartMetaChannelPVNames.isEmpty()) {
-                    if ((disconnectedChannels * 100.0) / totalChannels
-                            < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
-                        boolean kickOffMetaChannels = true;
-                        // Then we repeat the same check for the other appliances in this cluster
-                        for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
-                            if (applianceInfo
-                                    .getIdentity()
-                                    .equals(configService.getMyApplianceInfo().getIdentity())) {
-                                // We do not check for ourself...
-                            } else {
-                                String connectedPVCountURL =
-                                        applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
-                                try {
-                                    JSONObject connectedPVCount =
-                                            GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
-                                    int applianceTotalPVCount =
-                                            Integer.parseInt((String) connectedPVCount.get("total"));
-                                    int applianceDisconnectedPVCount =
-                                            Integer.parseInt((String) connectedPVCount.get("disconnected"));
-                                    if ((applianceDisconnectedPVCount * 100.0 / applianceTotalPVCount)
-                                            < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
-                                        logger.debug("Appliance " + applianceInfo.getIdentity()
-                                                + " has connected to most of its channels");
-                                    } else {
-                                        logger.info(
-                                                "Appliance " + applianceInfo.getIdentity()
-                                                        + " has not connected to most of its channels. Skipping starting of meta channels");
-                                        kickOffMetaChannels = false;
-                                        break;
-                                    }
-                                } catch (Exception ex) {
-                                    logger.error(
-                                            "Exception checking for disconnected PVs on appliance "
-                                                    + applianceInfo.getIdentity() + " using URL " + connectedPVCountURL,
-                                            ex);
-                                }
-                            }
-                        }
-
-                        if (kickOffMetaChannels) {
-                            // We can kick off the metachannels. We kick them off a few at a time.
-                            for (int i = 0; i < METACHANNELS_TO_START_AT_A_TIME; i++) {
-                                String channelPVNameToKickOffMetaFields = needToStartMetaChannelPVNames.poll();
-                                if (channelPVNameToKickOffMetaFields != null) {
-                                    logger.debug("Starting meta channels for " + channelPVNameToKickOffMetaFields);
-                                    ArchiveChannel channelToKickOffMetaFields =
-                                            EngineContext.this.channelList.get(channelPVNameToKickOffMetaFields);
-                                    channelToKickOffMetaFields.startUpMetaChannels();
+                if (!needToStartMetaChannelPVNames.isEmpty()
+                        && (disconnectedChannels * 100.0) / totalChannels
+                                < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
+                    boolean kickOffMetaChannels = true;
+                    // Then we repeat the same check for the other appliances in this cluster
+                    for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
+                        if (applianceInfo
+                                .getIdentity()
+                                .equals(configService.getMyApplianceInfo().getIdentity())) {
+                            // We do not check for ourself...
+                        } else {
+                            String connectedPVCountURL =
+                                    applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
+                            try {
+                                JSONObject connectedPVCount =
+                                        GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
+                                int applianceTotalPVCount = Integer.parseInt((String) connectedPVCount.get("total"));
+                                int applianceDisconnectedPVCount =
+                                        Integer.parseInt((String) connectedPVCount.get("disconnected"));
+                                if ((applianceDisconnectedPVCount * 100.0 / applianceTotalPVCount)
+                                        < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
+                                    logger.debug("Appliance " + applianceInfo.getIdentity()
+                                            + " has connected to most of its channels");
                                 } else {
-                                    logger.debug("No more metachannels to start");
+                                    logger.info(
+                                            "Appliance " + applianceInfo.getIdentity()
+                                                    + " has not connected to most of its channels. Skipping starting of meta channels");
+                                    kickOffMetaChannels = false;
                                     break;
                                 }
+                            } catch (Exception ex) {
+                                logger.error(
+                                        "Exception checking for disconnected PVs on appliance "
+                                                + applianceInfo.getIdentity() + " using URL " + connectedPVCountURL,
+                                        ex);
+                            }
+                        }
+                    }
+
+                    if (kickOffMetaChannels) {
+                        // We can kick off the metachannels. We kick them off a few at a time.
+                        for (int i = 0; i < METACHANNELS_TO_START_AT_A_TIME; i++) {
+                            String channelPVNameToKickOffMetaFields = needToStartMetaChannelPVNames.poll();
+                            if (channelPVNameToKickOffMetaFields != null) {
+                                logger.debug("Starting meta channels for " + channelPVNameToKickOffMetaFields);
+                                ArchiveChannel channelToKickOffMetaFields =
+                                        EngineContext.this.channelList.get(channelPVNameToKickOffMetaFields);
+                                channelToKickOffMetaFields.startUpMetaChannels();
+                            } else {
+                                logger.debug("No more metachannels to start");
+                                break;
                             }
                         }
                     }
                 }
+
             } catch (Throwable t) {
                 logger.error("Exception doing the pause/resume checks", t);
             }
         }
 
-		private boolean checkChannelDisconnectTime(LinkedList<String> disconnectedPVNames,
-		                                        LinkedList<String> needToStartMetaChannelPVNames,
-		                                        long disconnectTimeoutInSeconds, ArchiveChannel channel) {
-			if (!channel.isConnected()) {
-			    logger.debug(
-			            "{} is not connected since {}. "
-			                    + "See if we have requested for it greater than {} and have still not connected.",
-			            channel.getName(),
-			            channel.getSecondsElapsedSinceSearchRequest(),
-					    disconnectTimeoutInSeconds);
-			    if (disconnectTimeoutInSeconds > 0
-			            && channel.getSecondsElapsedSinceSearchRequest() > disconnectTimeoutInSeconds) {
-			        disconnectedPVNames.add(channel.getName());
-			    } else {
-			        if (disconnectTimeoutInSeconds > 0) {
-			            logger.debug(channel.getName()
-			                    + " is not connected but we still have some time to go before attempting pause/resume "
-			                    + channel.getSecondsElapsedSinceSearchRequest()
-			                    + " and disconnectTimeoutInSeconds " + disconnectTimeoutInSeconds);
-			        } else {
-			            return true;
-
-			        }
-			    }
-			} else {
-			    // Channel is connected.
-			    logger.debug(channel.getName()
-			            + " is connected. Seeing if we need to start up the meta channels for the fields.");
-			    if (channel.metaChannelsNeedStartingUp()) {
-			        needToStartMetaChannelPVNames.add(channel.getName());
-			    }
-			}
-			return false;
-		}
-	}
-	
-	
-	/**
-	 * Go thru all the contexts and return channels whose names match this
-	 * This is to be used for for testing purposes only.
-	 * This may not work in running servers; so, please avoid use outside unit tests.
-	 */
-	public class CommandThreadChannel { 
-		JCACommandThread commandThread;
-		Channel channel;
-		public CommandThreadChannel(JCACommandThread commandThread, Channel channel) {
-			this.commandThread = commandThread;
-			this.channel = channel;
-		}
-		public JCACommandThread getCommandThread() {
-			return commandThread;
-		}
-		public Channel getChannel() {
-			return channel;
-		}
-	}
-	
-	
-	public List<CommandThreadChannel> getAllChannelsForPV(String pvName) {
-		LinkedList<CommandThreadChannel> retval = new LinkedList<CommandThreadChannel>();
-		String pvNameOnly = pvName.split("\\.")[0];
-		for(JCACommandThread command_thread : this.command_threads) { 
-			for(Channel channel : command_thread.getAllChannelsForPV(pvNameOnly)) { 
-				retval.add(new CommandThreadChannel(command_thread, channel));
-			}
-		}
-		return retval;
-	}
-
-	/**
-	 * Per FRIB/PSI, we have a configuration knob to increase/decrease the sample buffer size used by the engine for all PV's.
-	 * This comes from archappl.properties and is a double - by default 1.0 which means we leave the buffer size computation as is.
-	 * If you want to increase buffer size globally to 150% of what is normally computed, set this to 1.5  
-	 * @return sampleBufferCapacityAdjustment  &emsp;
-	 */
-	public double getSampleBufferCapacityAdjustment() {
-		return sampleBufferCapacityAdjustment;
-	}
-	
-	
-	/**
-	 * Use EPICS_V3_PV's updateTotalMetaInfo to update the metadata once every 24 hours.  
-	 * @author mshankar
-	 *
-	 */
-	private class MetadataUpdater implements Runnable { 
-		public void run() {
-			logger.info("Starting the daily update of metadata information");
-			int pvCount = 0;
-			for(ArchiveChannel channel : EngineContext.this.channelList.values()) {
-				if(channel.isConnected()) {
-					logger.debug("Updating metadata for " + channel.getName());
-					channel.updateMetadataOnceADay(EngineContext.this);
-					pvCount++;
-					// 100,000 PVs should complete in 100,000/(100*(1000/250)) seconds approx 5 minutes
-					if(pvCount %100 == 0) { 
-						try {Thread.sleep(250); } catch(Throwable t) {}
-					}
-				}
-			}
-			logger.info("Completed scheduling the daily update of metadata information");
-		}
-	}
-	
-	
-	/**
-	 * Get the total channel count as CAJ sees it.
-	 * @return totalCAJChannelCount  &emsp;
-	 */
-	public int getCAJChannelCount() { 
-		int totalCAJChannelCount = 0;
-		for(int threadNum = 0; threadNum < command_threads.length; threadNum++) {
-			totalCAJChannelCount += this.command_threads[threadNum].getTotalChannelCount();
-		}
-		return totalCAJChannelCount;
-	}
-	
-	
-    private void iniV4ChannelProvidert() {
-        if (pvaClient == null) {
-                logger.info("Registered the pvAccess client factory.");
-                try {
-					pvaClient = new PVAClient();
-				} catch (Exception e) {
-					logger.error(
-							"Exception when initializing PVA Client",
-							e);
-				}
+        private boolean checkChannelDisconnectTime(
+                LinkedList<String> disconnectedPVNames,
+                LinkedList<String> needToStartMetaChannelPVNames,
+                long disconnectTimeoutInSeconds,
+                ArchiveChannel channel) {
+            if (!channel.isConnected()) {
+                logger.debug(
+                        "{} is not connected since {}. "
+                                + "See if we have requested for it greater than {} and have still not connected.",
+                        channel.getName(),
+                        channel.getSecondsElapsedSinceSearchRequest(),
+                        disconnectTimeoutInSeconds);
+                if (disconnectTimeoutInSeconds > 0
+                        && channel.getSecondsElapsedSinceSearchRequest() > disconnectTimeoutInSeconds) {
+                    disconnectedPVNames.add(channel.getName());
+                } else {
+                    if (disconnectTimeoutInSeconds > 0) {
+                        logger.debug(channel.getName()
+                                + " is not connected but we still have some time to go before attempting pause/resume "
+                                + channel.getSecondsElapsedSinceSearchRequest()
+                                + " and disconnectTimeoutInSeconds " + disconnectTimeoutInSeconds);
+                    } else {
+                        return true;
+                    }
+                }
+            } else {
+                // Channel is connected.
+                logger.debug(channel.getName()
+                        + " is connected. Seeing if we need to start up the meta channels for the fields.");
+                if (channel.metaChannelsNeedStartingUp()) {
+                    needToStartMetaChannelPVNames.add(channel.getName());
+                }
+            }
+            return false;
         }
     }
-	public PVAClient getPVAClient() {
-		return pvaClient;
-	}
 
-	public ScheduledThreadPoolExecutor getMiscTasksScheduler() {
-		return miscTasksScheduler;
-	}
-	
-	/**
-	 * Get the number of tasks pending in the main scheduler. 
-	 * This is the one that powers the write thread.
-	 * @return
-	 */
-	public int getMainSchedulerPendingTasks() {
-		if(scheduler != null) { 
-			return scheduler.getQueue().size();
-		} else {
-			return -1;
-		}
-	}
-	
-	
-	/**
-	 * Return some details on the CAJ contexts for the metrics page.
-	 * @return
-	 */
-	public List<Map<String, String>> getCAJContextDetails() {
-		List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
+    /**
+     * Go thru all the contexts and return channels whose names match this
+     * This is to be used for for testing purposes only.
+     * This may not work in running servers; so, please avoid use outside unit tests.
+     */
+    public static class CommandThreadChannel {
+        JCACommandThread commandThread;
+        Channel channel;
 
-		int channelsWithPendingSearchRequests = 0;
-		int totalChannels = 0;
+        public CommandThreadChannel(JCACommandThread commandThread, Channel channel) {
+            this.commandThread = commandThread;
+            this.channel = channel;
+        }
 
-		for(JCACommandThread commandThread : this.command_threads) {
-			totalChannels += commandThread.getTotalChannelCount();
-			channelsWithPendingSearchRequests += commandThread.getChannelsWithPendingSearchRequests();
-		}
+        public JCACommandThread getCommandThread() {
+            return commandThread;
+        }
 
-		Map<String, String> obj = new LinkedHashMap<String, String>();
-		obj.put("name", "Channels with pending search requests");
-		obj.put("value", channelsWithPendingSearchRequests + " of " + totalChannels);
-		obj.put("source", "engine");
-		ret.add(obj);
-		return ret;
-	}
+        public Channel getChannel() {
+            return channel;
+        }
+    }
 
-	public void incrementPausedPVCount() { 
-		this.pausedPVCount++;
-	}
+    public List<CommandThreadChannel> getAllChannelsForPV(String pvName) {
+        LinkedList<CommandThreadChannel> retval = new LinkedList<CommandThreadChannel>();
+        String pvNameOnly = pvName.split("\\.")[0];
+        for (JCACommandThread command_thread : this.command_threads) {
+            for (Channel channel : command_thread.getAllChannelsForPV(pvNameOnly)) {
+                retval.add(new CommandThreadChannel(command_thread, channel));
+            }
+        }
+        return retval;
+    }
 
-	public void decrementPausedPVCount() { 
-		this.pausedPVCount--;
-	}
+    /**
+     * Per FRIB/PSI, we have a configuration knob to increase/decrease the sample buffer size used by the engine for all PV's.
+     * This comes from archappl.properties and is a double - by default 1.0 which means we leave the buffer size computation as is.
+     * If you want to increase buffer size globally to 150% of what is normally computed, set this to 1.5
+     * @return sampleBufferCapacityAdjustment  &emsp;
+     */
+    public double getSampleBufferCapacityAdjustment() {
+        return sampleBufferCapacityAdjustment;
+    }
 
-	public int getPausedPVCount() { 
-		return this.pausedPVCount;
-	}
+    /**
+     * Use EPICS_V3_PV's updateTotalMetaInfo to update the metadata once every 24 hours.
+     * @author mshankar
+     *
+     */
+    private class MetadataUpdater implements Runnable {
+        public void run() {
+            logger.info("Starting the daily update of metadata information");
+            int pvCount = 0;
+            for (ArchiveChannel channel : EngineContext.this.channelList.values()) {
+                if (channel.isConnected()) {
+                    logger.debug("Updating metadata for " + channel.getName());
+                    channel.updateMetadataOnceADay(EngineContext.this);
+                    pvCount++;
+                    // 100,000 PVs should complete in 100,000/(100*(1000/250)) seconds approx 5 minutes
+                    if (pvCount % 100 == 0) {
+                        try {
+                            Thread.sleep(250);
+                        } catch (Throwable t) {
+                        }
+                    }
+                }
+            }
+            logger.info("Completed scheduling the daily update of metadata information");
+        }
+    }
+
+    /**
+     * Get the total channel count as CAJ sees it.
+     * @return totalCAJChannelCount  &emsp;
+     */
+    public int getCAJChannelCount() {
+        int totalCAJChannelCount = 0;
+        for (JCACommandThread commandThread : command_threads) {
+            totalCAJChannelCount += commandThread.getTotalChannelCount();
+        }
+        return totalCAJChannelCount;
+    }
+
+    private void iniV4ChannelProvidert() {
+        if (pvaClient == null) {
+            logger.info("Registered the pvAccess client factory.");
+            try {
+                pvaClient = new PVAClient();
+            } catch (Exception e) {
+                logger.error("Exception when initializing PVA Client", e);
+            }
+        }
+    }
+
+    public PVAClient getPVAClient() {
+        return pvaClient;
+    }
+
+    public ScheduledThreadPoolExecutor getMiscTasksScheduler() {
+        return miscTasksScheduler;
+    }
+
+    /**
+     * Get the number of tasks pending in the main scheduler.
+     * This is the one that powers the write thread.
+     * @return
+     */
+    public int getMainSchedulerPendingTasks() {
+        if (scheduler != null) {
+            return scheduler.getQueue().size();
+        } else {
+            return -1;
+        }
+    }
+
+    /**
+     * Return some details on the CAJ contexts for the metrics page.
+     * @return
+     */
+    public List<Map<String, String>> getCAJContextDetails() {
+        List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
+
+        int channelsWithPendingSearchRequests = 0;
+        int totalChannels = 0;
+
+        for (JCACommandThread commandThread : this.command_threads) {
+            totalChannels += commandThread.getTotalChannelCount();
+            channelsWithPendingSearchRequests += commandThread.getChannelsWithPendingSearchRequests();
+        }
+
+        Map<String, String> obj = new LinkedHashMap<String, String>();
+        obj.put("name", "Channels with pending search requests");
+        obj.put("value", channelsWithPendingSearchRequests + " of " + totalChannels);
+        obj.put("source", "engine");
+        ret.add(obj);
+        return ret;
+    }
+
+    public void incrementPausedPVCount() {
+        this.pausedPVCount++;
+    }
+
+    public void decrementPausedPVCount() {
+        this.pausedPVCount--;
+    }
+
+    public int getPausedPVCount() {
+        return this.pausedPVCount;
+    }
 }
