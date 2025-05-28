@@ -33,8 +33,12 @@ public class ETLExecutor {
      */
     public static void runETLs(ConfigService configService, Instant timeETLruns) throws IOException {
         for (String pvName : configService.getPVsForThisAppliance()) {
-            logger.debug("Running ETL for " + pvName);
             ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
+            if(etlStages == null) {
+                logger.debug("Skipping ETL for {} as it has no ETL stages", pvName);
+                continue;
+            }
+            logger.debug("Running ETL for {} with stages {}", pvName, etlStages.getStages().size());
             try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
                 try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
                     Future<?> f = scheduleWorker.submit(new Runnable() {

@@ -291,28 +291,29 @@ public class EngineContext {
             miscTasksScheduler.shutdown();
         });
 
-        // Add an assertion in case we accidentally set this to 0 from the props file.
-        assert (disconnectCheckerPeriodInSeconds > 0);
+		// Add an assertion in case we accidentally set this to 0 from the props file.
+		assert (disconnectCheckerPeriodInSeconds > 0);
         disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(
                 new DisconnectChecker(configService),
                 disconnectCheckerPeriodInSeconds,
                 disconnectCheckerPeriodInSeconds,
                 TimeUnit.SECONDS);
+        logger.info("Starting the DisconnectChecker with an initial delay of {}", disconnectCheckerPeriodInSeconds);
+		
+		// Add a task to update the metadata fields for each PV
+		// We start this at a well known time; this code was previously suspected of a small memory leak.
+		// Need to make sure this leak is no more.
+		long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
+		// Start the metadata updates tomorrow afternoon; doesn't really matter what time; minimze impact with ETL etc
+		long tomorrowAfternoon = ((currentEpochSeconds/(24*60*60)) + 1)*24*60*60 + 22*60*60;
+		logger.info("Starting the metadata updater from " + TimeUtils.convertToHumanReadableString(tomorrowAfternoon));
+		miscTasksScheduler.scheduleAtFixedRate(new MetadataUpdater(), tomorrowAfternoon-currentEpochSeconds, 24*60*60, TimeUnit.SECONDS);
+	}
+	
+	public JCACommandThread getJCACommandThread(int jcaCommandThreadId) {
+		return this.command_threads[jcaCommandThreadId];
+	}
 
-        // Add a task to update the metadata fields for each PV
-        // We start this at a well known time; this code was previously suspected of a small memory leak.
-        // Need to make sure this leak is no more.
-        long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
-        // Start the metadata updates tomorrow afternoon; doesn't really matter what time; minimze impact with ETL etc
-        long tomorrowAfternoon = ((currentEpochSeconds / (24 * 60 * 60)) + 1) * 24 * 60 * 60 + 22 * 60 * 60;
-        logger.info("Starting the metadata updater from " + TimeUtils.convertToHumanReadableString(tomorrowAfternoon));
-        miscTasksScheduler.scheduleAtFixedRate(
-                new MetadataUpdater(), tomorrowAfternoon - currentEpochSeconds, 24 * 60 * 60, TimeUnit.SECONDS);
-    }
-
-    public JCACommandThread getJCACommandThread(int jcaCommandThreadId) {
-        return this.command_threads[jcaCommandThreadId];
-    }
 
     /**
      * Use this to assign JCA command threads to PV's
@@ -426,46 +427,48 @@ public class EngineContext {
                                 JSONDecoder.getDecoder(UserSpecifiedSamplingParams.class);
                         decoder.decode(jsonObj, userSpec);
 
-                        ArchiveEngine.getArchiveInfo(
-                                pvName,
-                                configService,
-                                extraFields,
-                                userSpec.isUsePVAccess(),
-                                new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
-                        PubSubEvent confirmationEvent = new PubSubEvent(
-                                "MetaInfoRequested",
-                                pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
-                                pvName);
+					ArchiveEngine.getArchiveInfo(
+						pvName,
+						configService,
+						extraFields,
+						userSpec.isUsePVAccess(),
+						new ArchivePVMetaCompletedListener(pvName, configService, myIdentity));
+					PubSubEvent confirmationEvent = new PubSubEvent(
+						"MetaInfoRequested",
+						pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
+						pvName);
 					configService.getEventBus().post(confirmationEvent);
-				} catch(Exception ex) {
-					logger.error("Exception requesting metainfo for pv " + pvName, ex);
-				}
-			} else if(pubSubEvent.getType().equals("StartArchivingPV")) {
-				String pvName = pubSubEvent.getPvName();
-				try { 
-					this.startArchivingPV(pvName);
-                    PubSubEvent confirmationEvent = new PubSubEvent(
-                        "StartedArchivingPV",
-                        pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
-                        pvName);
-                configService.getEventBus().post(confirmationEvent);
-            configService.getEventBus().post(confirmationEvent);
-				} catch(Exception ex) {
-					logger.error("Exception beginnning archiving pv " + pvName, ex);
-				}
-			} else if(pubSubEvent.getType().equals("AbortComputeMetaInfo")) {
-				String pvName = pubSubEvent.getPvName();
-				try { 
-					logger.warn("AbortComputeMetaInfo called for " + pvName);
-					this.abortComputeMetaInfo(pvName);
-                    // PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() +
-                    // "_"
-                    // + ConfigService.WAR_FILE.MGMT, pvName);
-                    // configService.getEventBus().post(confirmationEvent);
-                    } catch(Exception ex) { 
-					logger.error("Exception aborting metainfo for PV " + pvName, ex);
-				}
-			}
+				    } catch(Exception ex) {
+					    logger.error("Exception requesting metainfo for pv " + pvName, ex);
+				    }
+			    }
+                case "StartArchivingPV" -> {
+                    String pvName = pubSubEvent.getPvName();
+                    try { 
+                        this.startArchivingPV(pvName);
+                        PubSubEvent confirmationEvent = new PubSubEvent(
+                            "StartedArchivingPV",
+                            pubSubEvent.getSource() + "_" + ConfigService.WAR_FILE.MGMT,
+                            pvName);
+                        configService.getEventBus().post(confirmationEvent);
+                    } catch(Exception ex) {
+                        logger.error("Exception beginnning archiving pv " + pvName, ex);
+                    }
+    			}
+                case "AbortComputeMetaInfo" -> {
+                    String pvName = pubSubEvent.getPvName();
+                    try { 
+                        logger.warn("AbortComputeMetaInfo called for " + pvName);
+                        this.abortComputeMetaInfo(pvName);
+                        // PubSubEvent confirmationEvent = new PubSubEvent("MetaInfoAborted", pubSubEvent.getSource() +
+                        // "_"
+                        // + ConfigService.WAR_FILE.MGMT, pvName);
+                        // configService.getEventBus().post(confirmationEvent);
+                        } catch(Exception ex) { 
+                        logger.error("Exception aborting metainfo for PV " + pvName, ex);
+                    }
+                }
+           }
 		} else {
 			logger.debug("Skipping processing event meant for " + pubSubEvent.getDestination());
 		}
@@ -605,7 +608,7 @@ public class EngineContext {
                     logger.debug("Skipping checking for disconnected channels as the system is shutting down.");
                     return;
                 }
-                logger.debug("Checking for disconnected channels.");
+                logger.info("Checking for disconnected channels.");
                 LinkedList<String> disconnectedPVNames = new LinkedList<String>();
                 LinkedList<String> needToStartMetaChannelPVNames = new LinkedList<String>();
                 int totalChannels = EngineContext.this.channelList.size();
@@ -615,69 +618,75 @@ public class EngineContext {
                             disconnectedPVNames, needToStartMetaChannelPVNames, disconnectTimeoutInSeconds, channel);
                 }
 
-                int disconnectedChannels = disconnectedPVNames.size();
+                int disconnectedChannelCount = disconnectedPVNames.size();
+				
+				logger.info("Disconnected channels {} channels needing to start meta channels {} out of a total of {}", disconnectedChannelCount, needToStartMetaChannelPVNames.size(), totalChannels);
 
                 // Need to start up the metachannels here after we determine that the cluster has started up..
                 // To do this we update the connected/disconnected count for this appliance.
                 // We fire up the metachannels gradually only after the entire cluster's connected PV count has reached
                 // a certain threshold.
                 // First we see if the percentage of disconnected channels in this appliance is lower than a threshold
-                if (!needToStartMetaChannelPVNames.isEmpty()
-                        && (disconnectedChannels * 100.0) / totalChannels
-                                < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
-                    boolean kickOffMetaChannels = true;
-                    // Then we repeat the same check for the other appliances in this cluster
-                    for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
-                        if (applianceInfo
-                                .getIdentity()
-                                .equals(configService.getMyApplianceInfo().getIdentity())) {
-                            // We do not check for ourself...
-                        } else {
-                            String connectedPVCountURL =
-                                    applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
-                            try {
-                                JSONObject connectedPVCount =
-                                        GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
-                                int applianceTotalPVCount = Integer.parseInt((String) connectedPVCount.get("total"));
-                                int applianceDisconnectedPVCount =
-                                        Integer.parseInt((String) connectedPVCount.get("disconnected"));
-                                if ((applianceDisconnectedPVCount * 100.0 / applianceTotalPVCount)
-                                        < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
-                                    logger.debug("Appliance " + applianceInfo.getIdentity()
-                                            + " has connected to most of its channels");
-                                } else {
-                                    logger.info(
-                                            "Appliance " + applianceInfo.getIdentity()
-                                                    + " has not connected to most of its channels. Skipping starting of meta channels");
-                                    kickOffMetaChannels = false;
-                                    break;
+                if (!needToStartMetaChannelPVNames.isEmpty()) {
+                    if ((disconnectedChannelCount * 100.0) / totalChannels
+                            < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
+                        boolean kickOffMetaChannels = true;
+                        // Then we repeat the same check for the other appliances in this cluster
+                        for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
+                            if (applianceInfo
+                                    .getIdentity()
+                                    .equals(configService.getMyApplianceInfo().getIdentity())) {
+                                // We do not check for ourself...
+                            } else {
+                                String connectedPVCountURL =
+                                        applianceInfo.getEngineURL() + "/getConnectedPVCountForAppliance";
+                                try {
+                                    JSONObject connectedPVCount =
+                                            GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
+                                    int applianceTotalPVCount =
+                                            Integer.parseInt((String) connectedPVCount.get("total"));
+                                    int applianceDisconnectedPVCount =
+                                            Integer.parseInt((String) connectedPVCount.get("disconnected"));
+                                    if ((applianceDisconnectedPVCount * 100.0 / applianceTotalPVCount)
+                                            < MAXIMUM_DISCONNECTED_CHANNEL_PERCENTAGE_BEFORE_STARTING_METACHANNELS) {
+                                        logger.debug("Appliance " + applianceInfo.getIdentity()
+                                                + " has connected to most of its channels");
+                                    } else {
+										if(configService.hasClusterFinishedInitialization() && applianceTotalPVCount != 0) {
+											logger.info(
+                                                "Appliance " + applianceInfo.getIdentity()
+                                                        + " has not connected to most of its channels. Skipping starting of meta channels");
+                                        	kickOffMetaChannels = false;
+										}
+                                        break;
+                                    }
+                                } catch (Throwable t) {
+                                    logger.error(
+                                            "Exception checking for disconnected PVs on appliance "
+                                                    + applianceInfo.getIdentity() + " using URL " + connectedPVCountURL,
+                                            t);
                                 }
-                            } catch (Exception ex) {
-                                logger.error(
-                                        "Exception checking for disconnected PVs on appliance "
-                                                + applianceInfo.getIdentity() + " using URL " + connectedPVCountURL,
-                                        ex);
                             }
                         }
-                    }
 
-                    if (kickOffMetaChannels) {
-                        // We can kick off the metachannels. We kick them off a few at a time.
-                        for (int i = 0; i < METACHANNELS_TO_START_AT_A_TIME; i++) {
-                            String channelPVNameToKickOffMetaFields = needToStartMetaChannelPVNames.poll();
-                            if (channelPVNameToKickOffMetaFields != null) {
-                                logger.debug("Starting meta channels for " + channelPVNameToKickOffMetaFields);
-                                ArchiveChannel channelToKickOffMetaFields =
-                                        EngineContext.this.channelList.get(channelPVNameToKickOffMetaFields);
-                                channelToKickOffMetaFields.startUpMetaChannels();
-                            } else {
-                                logger.debug("No more metachannels to start");
-                                break;
+                        if (kickOffMetaChannels) {
+							logger.info("Kicking off metachannel connections");
+                            // We can kick off the metachannels. We kick them off a few at a time.
+                            for (int i = 0; i < METACHANNELS_TO_START_AT_A_TIME; i++) {
+                                String channelPVNameToKickOffMetaFields = needToStartMetaChannelPVNames.poll();
+                                if (channelPVNameToKickOffMetaFields != null) {
+                                    logger.debug("Starting meta channels for " + channelPVNameToKickOffMetaFields);
+                                    ArchiveChannel channelToKickOffMetaFields =
+                                            EngineContext.this.channelList.get(channelPVNameToKickOffMetaFields);
+                                    channelToKickOffMetaFields.startUpMetaChannels();
+                                } else {
+                                    logger.debug("No more metachannels to start");
+                                    break;
+                                }
                             }
                         }
                     }
                 }
-
             } catch (Throwable t) {
                 logger.error("Exception doing the pause/resume checks", t);
             }

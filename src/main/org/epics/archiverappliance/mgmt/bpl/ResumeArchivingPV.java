@@ -69,6 +69,14 @@ public class ResumeArchivingPV implements BPLAction {
 		List<HashMap<String, String>> response = BulkPauseResumeUtils.pauseResumePVs(pvNames, configService, askingToPausePV);
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+
+		if(pvNames.size() == 1) {
+			try(PrintWriter out = resp.getWriter()) {
+				out.println(JSONValue.toJSONString(response.getFirst()));
+			}
+			return;
+		}
+
 		try(PrintWriter out = resp.getWriter()) {
 			out.println(JSONValue.toJSONString(response));
 		}

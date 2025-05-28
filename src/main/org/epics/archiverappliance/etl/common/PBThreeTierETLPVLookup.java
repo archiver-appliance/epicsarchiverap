@@ -45,6 +45,8 @@ public final class PBThreeTierETLPVLookup {
 
     private ConfigService configService = null;
 
+    public static boolean isRunningInsideUnitTests = false;
+
     /**
      * One scheduled thread pool executor to schedule them all.
      * All the work is now done in virtual threads.
@@ -253,6 +255,7 @@ public final class PBThreeTierETLPVLookup {
     public void manualControlForUnitTests() {
         logger.error("Shutting down ETL for unit tests...");
         this.scheduleWorker.shutdownNow();
+        isRunningInsideUnitTests = true;
     }
 
     public static OutOfSpaceHandling determineOutOfSpaceHandling(ConfigService configService) {

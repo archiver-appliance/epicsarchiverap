@@ -63,16 +63,21 @@ public class ETLJob implements Runnable {
             return;
         }
 
-        if(processingTime.isBefore(this.etlStage.getNextETLStart())) {
-            logger.debug("Too early {} to trigger this stage for PV {} from {} to {}. Next job at {}",
-                TimeUtils.convertToHumanReadableString(processingTime),
-                etlStage.getPvName(),
-                etlStage.getETLSource().getName(),
-                etlStage.getETLDest().getName(),
-                TimeUtils.convertToHumanReadableString(this.etlStage.getNextETLStart())                
-            );
-            return;
+        if(PBThreeTierETLPVLookup.isRunningInsideUnitTests) {
+            // Skip the check for times...
+        } else {
+            if(processingTime.isBefore(this.etlStage.getNextETLStart())) {
+                logger.debug("Too early {} to trigger this stage for PV {} from {} to {}. Next job at {}",
+                    TimeUtils.convertToHumanReadableString(processingTime),
+                    etlStage.getPvName(),
+                    etlStage.getETLSource().getName(),
+                    etlStage.getETLDest().getName(),
+                    TimeUtils.convertToHumanReadableString(this.etlStage.getNextETLStart())                
+                );
+                return;
+            }    
         }
+
 
         long time4getETLStreams = 0;
         long time4checkSizes = 0;

@@ -220,8 +220,8 @@ public class AppendAndAliasPV implements BPLAction {
 		destTypeInfo.setModificationTime(TimeUtils.now());
 		try { 
 			destTypeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
-			configService.registerPVToAppliance(destPVName, configService.getMyApplianceInfo());
 			configService.updateTypeInfoForPV(destPVName, destTypeInfo);
+			configService.registerPVToAppliance(destPVName, configService.getMyApplianceInfo());
 		} catch(AlreadyRegisteredException ex) { 
 			try(PrintWriter out = resp.getWriter()) {
 				String errorMsg = "Temporary PV name is already registered " + destPVName + ". Giving up on appending " + newerPVName;
