@@ -66,8 +66,7 @@ public class ETLExecutor {
             final ConfigService configService, final Instant timeETLRuns, final String pvName, final String storageName)
             throws IOException {
         PBThreeTierETLPVLookup etlLookup = configService.getETLLookup();
-        ETLStages etlStages = etlLookup.getETLStages(pvName);
-        if (etlStages != null) {
+        if (etlLookup.getETLStages(pvName) != null) {
             throw new IOException(
                     "The pv " + pvName + " has entries in PBThreeTierETLPVLookup. Please remove these first");
         }
@@ -79,7 +78,7 @@ public class ETLExecutor {
 
         try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
             try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
-                etlStages = new ETLStages(pvName, theWorker);
+                final ETLStages etlStages = new ETLStages(pvName, theWorker);
                 for (int i = 1; i < dataStores.length; i++) {
                     String destStr = dataStores[i];
                     ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
@@ -100,7 +99,13 @@ public class ETLExecutor {
                         break;
                     }
                 }
-                Future<?> f = scheduleWorker.submit(etlStages);
+                Future<?> f = scheduleWorker.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        etlStages.runAsIfAtTime(timeETLRuns);
+                    } 
+                    
+                });
                 f.get();
             }
         } catch(Exception ex) {
