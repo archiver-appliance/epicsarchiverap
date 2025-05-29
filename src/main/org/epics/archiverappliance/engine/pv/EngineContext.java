@@ -8,6 +8,10 @@
 package org.epics.archiverappliance.engine.pv;
 
 import com.google.common.eventbus.Subscribe;
+import com.hazelcast.projection.Projection;
+import com.hazelcast.projection.Projections;
+import com.hazelcast.query.Predicates;
+
 import gov.aps.jca.Channel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,6 +44,8 @@ import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -95,27 +101,22 @@ public class EngineContext {
     /** A scheduled thread pool executor misc tasks - these tasks can take an unspecified amount of time. */
     private ScheduledThreadPoolExecutor miscTasksScheduler;
 
-    /**
-     * On disconnects, we add tasks that wait for this timeout to convert reconnects into ca searches into pause resumes.
-     * Ideally, Channel Access is supposed to take care of this but occasionally, we do see connections not reconnecting for a long time.
-     * This tries to address that problem.
-     */
-    private int disconnectCheckTimeoutInSeconds = 20 * 60;
-
-    /**
-     * The disconnectChecker thread runs in this time frame.
-     * Note this controls both the connect/disconnect checks and the metafields connection initiations.
-     */
-    private int disconnectCheckerPeriodInSeconds = 20 * 60;
-
-    private ScheduledFuture<?> disconnectFuture = null;
-
-    private double sampleBufferCapacityAdjustment = 1.0;
-
-    /**
-     * An optimization for EngineMetrics. Note; this value may not be all that accurate but should be reasonably accurate.
-     */
-    private int pausedPVCount = 0;
+	/**
+	 * On disconnects, we add tasks that wait for this timeout to convert reconnects into ca searches into pause resumes.
+	 * Ideally, Channel Access is supposed to take care of this but occasionally, we do see connections not reconnecting for a long time.
+	 * This tries to address that problem. 
+	 */
+	private int disconnectCheckTimeoutInSeconds = 20 * 60;
+	
+	/**
+	 * The disconnectChecker thread runs in this time frame.
+	 * Note this controls both the connect/disconnect checks and the metafields connection initiations.
+	 */
+	private int disconnectCheckerPeriodInSeconds = 20 * 60;
+	
+	private ScheduledFuture<?> disconnectFuture = null;
+	
+	private double sampleBufferCapacityAdjustment = 1.0;
 
     /***
      *
@@ -853,23 +854,21 @@ public class EngineContext {
             channelsWithPendingSearchRequests += commandThread.getChannelsWithPendingSearchRequests();
         }
 
-        Map<String, String> obj = new LinkedHashMap<String, String>();
-        obj.put("name", "Channels with pending search requests");
-        obj.put("value", channelsWithPendingSearchRequests + " of " + totalChannels);
-        obj.put("source", "engine");
-        ret.add(obj);
-        return ret;
-    }
+		Map<String, String> obj = new LinkedHashMap<String, String>();
+		obj.put("name", "Channels with pending search requests");
+		obj.put("value", channelsWithPendingSearchRequests + " of " + totalChannels);
+		obj.put("source", "engine");
+		ret.add(obj);
+		return ret;
+	}
 
-    public void incrementPausedPVCount() {
-        this.pausedPVCount++;
-    }
-
-    public void decrementPausedPVCount() {
-        this.pausedPVCount--;
-    }
-
-    public int getPausedPVCount() {
-        return this.pausedPVCount;
-    }
+	public int getPausedPVCount() { 
+		Collection<Object> pausedPVs = configService.queryPVTypeInfos(
+			Predicates.and(
+				Predicates.equal("applianceIdentity", configService.getMyApplianceInfo().getIdentity()),
+				Predicates.equal("paused", true)
+			), 
+			Projections.singleAttribute("pvName"));
+		return pausedPVs.size();
+	}
 }

@@ -911,7 +911,6 @@ public class DefaultConfigService implements ConfigService {
 
                 if (typeInfo.isPaused()) {
                     logger.debug(() -> "Skipping archiving paused PV " + pvName + " on startup");
-                    this.engineContext.incrementPausedPVCount();
                     continue;
                 }
 
