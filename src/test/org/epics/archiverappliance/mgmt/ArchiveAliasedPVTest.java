@@ -24,6 +24,8 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import java.io.IOException;
 import java.time.Instant;
 
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+
 /**
  * Use the firefox driver to test operator's adding a PV to the system.
  * @author mshankar
@@ -33,6 +35,7 @@ import java.time.Instant;
 @Tag("localEpics")
 public class ArchiveAliasedPVTest {
 	private static Logger logger = LogManager.getLogger(ArchiveAliasedPVTest.class.getName());
+    private static final String mgmtUrl = "http://localhost:17665/mgmt/bpl/";
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
@@ -67,7 +70,8 @@ public class ArchiveAliasedPVTest {
 		 archiveButton.click();
 		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
 		 // In addition, we are also getting .HIHI etc the monitors for which get established many minutes after the beginning of archiving 
-		 Thread.sleep(15*60*1000);
+		 waitForStatusChange(pvNameToArchive, "Being archived", 60, mgmtUrl, 10);
+
 		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		 checkStatusButton.click();
 		 Thread.sleep(2*1000);
