@@ -10,12 +10,6 @@ import org.epics.archiverappliance.config.exception.ConfigException;
  */
 public interface PVNameToKeyMapping {
 	public void initialize(ConfigService configService) throws ConfigException;
-	/**
-	 * Return true if the given pvName contains any site specific separators.
-	 * @param pvName The name of PV.
-	 * @return boolean True or False
-	 */
-	public boolean containsSiteSeparators(String pvName);
 	public abstract String convertPVNameToKey(String pvName);
 	/**
 	 * Break a PV name into parts separated by the site specific separators

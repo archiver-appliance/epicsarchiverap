@@ -104,16 +104,6 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
 		return pvName.replaceAll(siteNameSpaceSeparators, fileSeparator) + terminatorChar;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see org.epics.archiverappliance.config.PVNameToKeyMapping#containsSiteSeparators(java.lang.String)
-	 */
-	@Override
-	public boolean containsSiteSeparators(String pvName) {
-		return pvName.matches(siteNameSpaceSeparators);
-	}
-
-
 	@Override
 	public String[] breakIntoParts(String pvName) {
 		return pvName.split(siteNameSpaceSeparators);
