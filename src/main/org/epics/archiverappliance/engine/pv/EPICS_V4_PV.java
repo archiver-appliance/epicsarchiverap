@@ -221,14 +221,16 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         logger.info("channelStateChanged:" + clientChannelState + " " + channel.getName());
         if (clientChannelState == ClientChannelState.CONNECTED) {
             this.scheduleCommand(this::handleConnected);
-        } else if (connected) {
-            this.scheduleCommand(() -> {
-                state = PVConnectionState.Disconnected;
-                connected = false;
-                unsubscribe();
-                fireDisconnected();
-            });
+        } else if (connected && clientChannelState != ClientChannelState.FOUND) {
+            this.scheduleCommand(this::handleDisconnected);
         }
+    }
+
+    private void handleDisconnected() {
+        state = PVConnectionState.Disconnected;
+        connected = false;
+        unsubscribe();
+        fireDisconnected();
     }
 
     private void setupDBRType(PVAStructure data) {
@@ -288,8 +290,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         logger.debug("handleMonitor: {}", data);
         if (data == null) {
             logger.warn("Server ends subscription for " + this.name);
-            unsubscribe();
-            fireDisconnected();
+            this.scheduleCommand(this::handleDisconnected);
         }
 
         state = PVConnectionState.GotMonitor;
