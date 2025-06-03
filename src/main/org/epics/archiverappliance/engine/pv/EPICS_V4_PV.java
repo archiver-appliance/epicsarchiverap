@@ -134,6 +134,12 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
             listener.pvDisconnected(this);
         }
     }
+    /** Notify all listeners. */
+    private void fireConnected() {
+        for (final PVListener listener : listeners) {
+            listener.pvConnected(this);
+        }
+    }
 
     /** Notify all listeners. */
     private void fireValueUpdate(DBRTimeEvent ev) {
@@ -218,7 +224,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     @Override
     public void channelStateChanged(PVAChannel channel, ClientChannelState clientChannelState) {
 
-        logger.info("channelStateChanged:" + clientChannelState + " " + channel.getName());
+        logger.info(channel.getName() + " channelStateChanged:" + clientChannelState);
         if (clientChannelState == ClientChannelState.CONNECTED) {
             this.scheduleCommand(this::handleConnected);
         } else if (connected && clientChannelState != ClientChannelState.FOUND) {
@@ -226,15 +232,9 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         }
     }
 
-    private void handleDisconnected() {
-        state = PVConnectionState.Disconnected;
-        connected = false;
-        unsubscribe();
-        fireDisconnected();
-    }
 
     private void setupDBRType(PVAStructure data) {
-        logger.info("Construct the fieldValuesCache for PV " + this.getName());
+        logger.debug("Construct the fieldValuesCache for PV " + this.getName());
         boolean excludeV4Changes = true;
         this.fieldValuesCache = new FieldValuesCache(data, excludeV4Changes);
         this.timeStampBits = this.fieldValuesCache.getTimeStampBits();
@@ -247,18 +247,18 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
         if (archDBRType == null || con == null) {
             String structureID = data.formatType();
-            logger.info("Type from structure in monitorConnect is " + structureID);
+            logger.debug("Type from structure in monitorConnect is " + structureID);
 
             PVAData valueField = data.get("value");
             if (valueField == null) {
                 archDBRType = ArchDBRTypes.DBR_V4_GENERIC_BYTES;
             } else {
-                logger.info("Value field in monitorConnect is of type " + valueField.getType());
+                logger.debug("Value field in monitorConnect is of type " + valueField.getType());
                 archDBRType = determineDBRType(structureID, valueField.getType(), valueField.formatType());
             }
 
             con = configservice.getArchiverTypeSystem().getV4Constructor(archDBRType);
-            logger.info("Determined ArchDBRTypes for " + this.name + " as " + archDBRType);
+            logger.debug("Determined ArchDBRTypes for " + this.name + " as " + archDBRType);
         }
     }
 
@@ -336,7 +336,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     }
 
     private void connect() {
-        logger.info("Connecting to PV " + this.name);
+        logger.debug("Connecting to PV " + this.name);
         this.scheduleCommand(new Runnable() {
             @Override
             public void run() {
@@ -374,13 +374,11 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
         state = PVConnectionState.Connected;
 
-        for (final PVListener listener : listeners) {
-            listener.pvConnected(this);
-        }
+        fireConnected();
 
         if (!running) {
-            connected = true;
             synchronized (this) {
+                connected = true;
                 this.notifyAll();
             }
             return;
@@ -404,6 +402,17 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
             logger.error("exception when disconnecting pv", e);
         }
 
+        fireDisconnected();
+    }
+
+    private void handleDisconnected() {
+        if (state == PVConnectionState.Disconnected) return;
+        state = PVConnectionState.Disconnected;
+        synchronized (this) {
+            connected = false;
+        }
+
+        unsubscribe();
         fireDisconnected();
     }
 
