@@ -196,18 +196,12 @@ public class ArchivePVState {
                                 // the alias.
                                 // In this case, we make sure that the real name matches the PV name by checking that it
                                 // at least has one or more separators.
-                                if (!configService.getPVNameToKeyConverter().containsSiteSeparators(realName)) {
-                                    logger.debug("There seem to be no siteNameSpaceSeparators in the real name "
-                                            + realName + " in workflow for pv " + pvName
-                                            + ". Archiving under the PV name instead");
-                                } else {
-                                    convertAliasToRealWorkflow(userSpec, realName);
-                                    abortReason = "Aborting this pv " + pvName
-                                            + " (which is an alias) and using the real name " + realName + " instead.";
-                                    logger.debug(abortReason);
-                                    currentState = ArchivePVStateMachine.ABORTED;
-                                    return;
-                                }
+                                convertAliasToRealWorkflow(userSpec, realName);
+                                abortReason = "Aborting this pv " + pvName
+                                        + " (which is an alias) and using the real name " + realName + " instead.";
+                                logger.debug(abortReason);
+                                currentState = ArchivePVStateMachine.ABORTED;
+                                return;
                             } else {
                                 logger.debug("Name from alias and normalized name are the same");
                             }
