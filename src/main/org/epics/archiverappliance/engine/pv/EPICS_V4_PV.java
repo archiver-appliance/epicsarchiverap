@@ -227,7 +227,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         logger.info(channel.getName() + " channelStateChanged:" + clientChannelState);
         if (clientChannelState == ClientChannelState.CONNECTED) {
             this.scheduleCommand(this::handleConnected);
-        } else if (connected && clientChannelState != ClientChannelState.FOUND) {
+        } else if (connected) {
             this.scheduleCommand(this::handleDisconnected);
         }
     }
@@ -291,6 +291,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         if (data == null) {
             logger.warn("Server ends subscription for " + this.name);
             this.scheduleCommand(this::handleDisconnected);
+            return;
         }
 
         state = PVConnectionState.GotMonitor;
