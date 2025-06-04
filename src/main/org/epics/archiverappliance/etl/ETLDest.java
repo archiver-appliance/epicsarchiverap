@@ -23,6 +23,11 @@ import java.io.IOException;
  */
 public interface ETLDest extends Writer {
 
+    /*
+     * Same as the one in StoragePlugin
+     */
+    public String getName();
+
     /**
      * This informs the destination that we are switching to a new partition and this dest needs to execute its pre-processing for a new partition.
      * For example, in a PlainPBStorage plugin, this will close the previous fileoutputstreams if any, open a new stream to the file backing the new partition writing a header if needed.

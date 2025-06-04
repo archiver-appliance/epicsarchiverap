@@ -63,8 +63,8 @@ public class ImportConfigForAppliance implements BPLAction {
 					continue;
 				}
 				
-				configService.registerPVToAppliance(pvName, myApplianceInfo);
 				configService.updateTypeInfoForPV(pvName, unmarshalledTypeInfo);
+				configService.registerPVToAppliance(pvName, myApplianceInfo);
 				ArchivePVState.startArchivingPV(pvName, configService, myApplianceInfo);
 			}
 		} catch(Exception ex) {

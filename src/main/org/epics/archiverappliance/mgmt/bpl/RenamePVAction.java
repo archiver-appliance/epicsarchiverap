@@ -132,9 +132,9 @@ public class RenamePVAction implements BPLAction {
 			PVTypeInfo newPVTypeInfo = new PVTypeInfo(newPVName, typeInfo);
 			newPVTypeInfo.setCreationTime(typeInfo.getCreationTime());
 			newPVTypeInfo.setModificationTime(TimeUtils.now());
-			configService.registerPVToAppliance(newPVName, info);
 			newPVTypeInfo.setApplianceIdentity(info.getIdentity());
 			configService.updateTypeInfoForPV(newPVName, newPVTypeInfo);
+			configService.registerPVToAppliance(newPVName, info);
 			logger.debug("Done registering typeinfo when renaming PV  " + currentPVName + " to " + newPVName);
 
 			for(String store : newPVTypeInfo.getDataStores()) {

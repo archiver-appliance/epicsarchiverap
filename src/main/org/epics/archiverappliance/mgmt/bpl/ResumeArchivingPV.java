@@ -53,80 +53,30 @@ public class ResumeArchivingPV implements BPLAction {
 			resumeMultiplePVs(req, resp, configService);
 		} else { 
 			// We only have one PV in the request
-			resumeSinglePV(req, resp, configService);
-		}
-
-	}
-
-	private void resumeSinglePV(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
-		String pvName = req.getParameter("pv");
-		// String pvNameFromRequest = pvName;
-		String realName = configService.getRealNameForAlias(pvName);
-		if(realName != null) pvName = realName;
-
-
-		HashMap<String, Object> infoValues = new HashMap<String, Object>();
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-
-		ApplianceInfo info = configService.getApplianceForPV(pvName);
-		if(info == null) {
-			infoValues.put("validation", "Trying to resume PV " + pvName + " that is not currently being archived.");
-			logger.error(infoValues.get("validation"));
-			try(PrintWriter out = resp.getWriter()) {
-				infoValues.put("validation", "Unable to resume PV " + pvName);
-				out.println(JSONValue.toJSONString(infoValues));
-			}
-			return;
-		} else {
-			PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-			if(!typeInfo.isPaused()) {
-				infoValues.put("validation", "Trying to resume PV " + pvName + " that is not paused.");
-				logger.error(infoValues.get("validation"));
-				try(PrintWriter out = resp.getWriter()) {
-					infoValues.put("validation", "PV " + pvName + " is not paused");
-					out.println(JSONValue.toJSONString(infoValues));
-				}
-				return;
-			}
-			typeInfo.setPaused(false);
-			typeInfo.setModificationTime(TimeUtils.now());
-			configService.updateTypeInfoForPV(pvName, typeInfo);
-
-			logger.debug("Asking engine to start archiving PV. This should create a channel object if it does not exist");
-			String engineResumeURL = info.getEngineURL() + "/resumeArchivingPV" + "?pv=" + URLEncoder.encode(pvName, "UTF-8"); 
-			JSONArray engineStatus = GetUrlContent.getURLContentAsJSONArray(engineResumeURL);
-			
-			HashMap<String, String> retVal = new HashMap<String, String>();
-			if(engineStatus != null && !engineStatus.equals("")) {
-				for(Object statusObj : engineStatus) {
-					@SuppressWarnings("unchecked")
-					HashMap<String, String> status = (HashMap<String, String>) statusObj;
-					for(String key : status.keySet()) {
-						retVal.put("engine_" + key, status.get(key));
-					}
-				}
-			}		
-			
-			if(retVal.containsKey("engine_status")
-					&& retVal.get("engine_status").equals("ok")
-					) {
-				retVal.put("status", "ok");
-			} else { 
-				infoValues.put("validation", "The did not return a valid status for " + pvName);
-			}				
-			
-			try(PrintWriter out = resp.getWriter()) {
-				out.println(JSONValue.toJSONString(retVal));
-			}			
+			List<String> pvNames = new LinkedList<String>();
+			pvNames.add(pvName);
+			resumeMultiplePVs(pvNames, resp, configService);
 		}
 	}
 
 	private void resumeMultiplePVs(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
 		LinkedList<String> pvNames = BulkPauseResumeUtils.getPVNames(req, configService);
+		resumeMultiplePVs(pvNames, resp, configService);
+	}
+
+	private void resumeMultiplePVs(List<String> pvNames, HttpServletResponse resp, ConfigService configService) throws IOException, UnsupportedEncodingException {
 		boolean askingToPausePV = false; 
-		List<HashMap<String, String>> response = BulkPauseResumeUtils.pauseResumeByAppliance(pvNames, configService, askingToPausePV);
+		List<HashMap<String, String>> response = BulkPauseResumeUtils.pauseResumePVs(pvNames, configService, askingToPausePV);
 		
 		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+
+		if(pvNames.size() == 1) {
+			try(PrintWriter out = resp.getWriter()) {
+				out.println(JSONValue.toJSONString(response.getFirst()));
+			}
+			return;
+		}
+
 		try(PrintWriter out = resp.getWriter()) {
 			out.println(JSONValue.toJSONString(response));
 		}
