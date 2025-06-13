@@ -24,6 +24,8 @@ import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.cluster.Cluster;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
+import com.hazelcast.core.IExecutorService;
 import com.hazelcast.map.IMap;
 import com.hazelcast.topic.ITopic;
 import com.hazelcast.cluster.Member;
@@ -73,6 +75,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URL;
@@ -90,12 +93,15 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -117,6 +123,7 @@ public class DefaultConfigService implements ConfigService {
     public static final String LOCAL_HOST_ADDRESS = "127.0.0.1";
     public static final String TYPEINFO = "typeinfo";
     public static final String CLUSTER_INET_2_APPLIANCE_IDENTITY = "clusterInet2ApplianceIdentity";
+    private static final String CONFIGSERVICE_HZ_NAME = "EAA_DefaultConfigService";
     private static final Logger logger = LogManager.getLogger(DefaultConfigService.class.getName());
     private static final Logger configlogger = LogManager.getLogger("config." + DefaultConfigService.class.getName());
     private static final Logger clusterLogger = LogManager.getLogger("cluster." + DefaultConfigService.class.getName());
@@ -583,6 +590,7 @@ public class DefaultConfigService implements ConfigService {
             }
         }
 
+        hzinstance.getUserContext().put(CONFIGSERVICE_HZ_NAME, this);
         pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
         namedFlags = hzinstance.getMap("namedflags");        
         typeInfos = hzinstance.getMap(TYPEINFO);
@@ -1049,6 +1057,78 @@ public class DefaultConfigService implements ConfigService {
         Collection<T> projectedTypeInfos = this.typeInfos.project(projection, predicate);
         return projectedTypeInfos;
     }
+
+    private static record PVAppId ( String pvName, String appliance ) implements Serializable {};
+    private static class PVAppidProj implements Projection<Map.Entry<String, PVTypeInfo>, PVAppId> {
+        @Override
+        public PVAppId transform(Map.Entry<String, PVTypeInfo> entry) {
+            String pvName = entry.getKey();
+            PVTypeInfo value = entry.getValue();
+            return new PVAppId(pvName, value.getApplianceIdentity());
+        }
+    }
+
+    @Override
+	public Map<String, List<String>> breakDownPVsByAppliance(List<String> pvNames) {
+        Collection<PVAppId> vals = this.queryPVTypeInfos(Predicates.in("__key", pvNames.toArray(new String[0])), new PVAppidProj());
+         return vals.stream().collect(Collectors.groupingBy(PVAppId::appliance, Collectors.mapping(PVAppId::pvName, Collectors.toList())));
+    }
+
+
+    public record Tuple<T>(String applianceIdentity, T result) implements Serializable {        
+    }
+
+    private static class EAAClusterWideOperation<T> implements Callable<Tuple<T>>, Serializable, HazelcastInstanceAware {
+        private transient ConfigService theConfigService;
+        private final EAABulkOperation<T> theOperation;
+        public EAAClusterWideOperation(EAABulkOperation<T> theOperation) {
+            this.theOperation = theOperation;
+        }
+        public void setHazelcastInstance( HazelcastInstance hazelcastInstance ) {
+            theConfigService = (ConfigService) hazelcastInstance.getUserContext().get(CONFIGSERVICE_HZ_NAME);
+        }
+
+        public Tuple<T> call() {
+            return new Tuple<T>(this.theConfigService.getMyApplianceInfo().getIdentity(), this.theOperation.call(theConfigService));
+        }
+    }
+
+    @Override
+    public <T> Map<String, T> executeClusterWide(EAABulkOperation<T> theOperation) {
+        HashMap<String, T> ret = new HashMap<String, T>();
+        IExecutorService executorService = this.hzinstance.getExecutorService( "default" );
+        Map<Member, Future<Tuple<T>>> futures = executorService.submitToMembers( new EAAClusterWideOperation<T>(theOperation), this.hzinstance.getCluster().getMembers() );
+        for ( Entry<Member, Future<Tuple<T>>> future : futures.entrySet() ) {
+            try {
+                Tuple<T> operationResult = future.getValue().get();
+                ret.put(operationResult.applianceIdentity, operationResult.result);
+
+            } catch(InterruptedException|ExecutionException ex) {
+                logger.error("Exception running batch job", ex);
+            }
+        }
+        return ret;
+    }
+
+    @Override
+    public <T> T executeOnAppliance(ApplianceInfo applianceInfo, EAABulkOperation<T> theOperation) {
+        IExecutorService executorService = this.hzinstance.getExecutorService( "default" );
+        for(Entry<String, String> c2a : this.clusterInet2ApplianceIdentity.entrySet()){
+            if(c2a.getValue().equals(applianceInfo.getIdentity())) {
+                for(Member member : this.hzinstance.getCluster().getMembers()) {
+                    if(this.getMemberKey(member).equals(c2a.getKey())) {
+                        try {
+                            Future<Tuple<T>> future = executorService.submitToMember(new EAAClusterWideOperation<T>(theOperation), member);
+                            return future.get().result;
+                        } catch(InterruptedException|ExecutionException ex) {
+                            logger.error("Exception running batch job", ex);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }    
 
     @Override
     public Set<String> getPVsForApplianceMatchingRegex(String nameToMatch) {
