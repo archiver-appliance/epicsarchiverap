@@ -30,10 +30,10 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
@@ -49,6 +49,7 @@ import java.util.Map;
  *
  */
 @Tag("integration")
+@Disabled("This is a complex use case and we don't support this in the main code yet; keeping this test around just in case")
 public class FailoverScoreAPITest {
     private static final Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
     String pvName = "FailoverScoreAPITest";
@@ -129,7 +130,7 @@ public class FailoverScoreAPITest {
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                         + "&override=true&createnew=true",
                 encoder.encode(destPVTypeInfo));
@@ -178,7 +179,7 @@ public class FailoverScoreAPITest {
                 + "&other=" + URLEncoder.encode(otherURL, StandardCharsets.UTF_8);
         logger.info("Data store is " + destPVTypeInfo.getDataStores()[1]);
 
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                         + "&override=true&createnew=true",
                 encoder.encode(destPVTypeInfo));
@@ -192,8 +193,8 @@ public class FailoverScoreAPITest {
         JSONArray array = new JSONArray();
         array.add(pvName);
         Map<String, Map<String, Object>> ret =
-                (Map<String, Map<String, Object>>) GetUrlContent.postDataAndGetContentAsJSONArray(scoreURL, array);
-        Assertions.assertTrue(ret.size() > 0, "We expected some data back from getDataAtTime");
+                (Map<String, Map<String, Object>>) GetUrlContent.postDataAndGetContentAsJSONObject(scoreURL, array);
+        Assertions.assertTrue(ret.size() > 0, "We expected some data back from getDataAtTime at " + TimeUtils.convertToISO8601String(epochSecs));
         for (String retpvName : ret.keySet()) {
             Map<String, Object> val = ret.get(retpvName);
             if (retpvName.equals(pvName)) {

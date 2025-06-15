@@ -16,10 +16,12 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -39,6 +41,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -54,59 +57,75 @@ public class GetUrlContent {
 	public static final String ARCHAPPL_COMPONENT = "ARCHAPPL_COMPONENT";
 	private static final Logger logger = LogManager.getLogger(GetUrlContent.class);
 	private GetUrlContent() {}
+
+	/*
+	 * Given a URL and some query parameters, generate a query string
+	 */
+	public static String generateURLWithQueryString(String url, Map<String, String> queryParameters) {
+		StringWriter buf = new StringWriter();
+		buf.append(url);
+		boolean firstArg = true;
+		Charset utf8 = Charset.forName("utf-8");
+		for(String key : queryParameters.keySet()) {
+			buf.append(firstArg ? "?" : "&");
+			firstArg = false;
+			buf.append(URLEncoder.encode(key, utf8));
+			buf.append("=");
+			buf.append(URLEncoder.encode(queryParameters.get(key), utf8));
+		}
+		return buf.toString();
+	}
+
+	/**
+	 * Given an URL and some query parameters, get the content of the URL
+	 * @param urlStr URL 
+	 * @param queryParameters Map
+	 * @return URL content as a JSON Object
+	 */
+	public static JSONAware getURLContentWithQueryParameters(String url, Map<String, String> queryParameters, boolean logErrors) {
+		try {
+			String urlStr = generateURLWithQueryString(url, queryParameters);
+			logger.debug("Getting the contents of " + urlStr + " as a JSON array");
+			JSONParser parser=new JSONParser();
+			try (InputStream is = getURLContentAsStream(urlStr)) {
+				return (JSONAware) parser.parse(new InputStreamReader(is));
+			}
+		} catch (IOException ex) {
+			if (logErrors) { logger.error("Exception getting contents of internal URL {}", url, ex); }
+		} catch (ParseException pex) {
+			if (logErrors) { logger.error("Parse exception getting contents of internal URL " + url + " at " + pex.getPosition(), pex); }
+		}
+		return null;
+	}
+
+	public static JSONObject getURLContentWithQueryParametersAsJSONObject(String url, Map<String, String> queryParameters, boolean logErrors) {
+		return (JSONObject) getURLContentWithQueryParameters(url, queryParameters, logErrors);
+	}
+	public static JSONArray getURLContentWithQueryParametersAsJSONArray(String url, Map<String, String> queryParameters, boolean logErrors) {
+		return (JSONArray) getURLContentWithQueryParameters(url, queryParameters, logErrors);
+	}
+
+	public static JSONObject getURLContentWithQueryParametersAsJSONObject(String url, Map<String, String> queryParameters) {
+		return (JSONObject) getURLContentWithQueryParameters(url, queryParameters, true);
+	}
+	public static JSONArray getURLContentWithQueryParametersAsJSONArray(String url, Map<String, String> queryParameters) {
+		return (JSONArray) getURLContentWithQueryParameters(url, queryParameters, true);
+	}
+
 	public static JSONArray getURLContentAsJSONArray(String urlStr) {
-		return getURLContentAsJSONArray(urlStr, true);
+		return getURLContentWithQueryParametersAsJSONArray(urlStr, new HashMap<String, String>(), true);
 	}
 	
-	/**
-	 * Given a URL, get the contents as a JSON Array
-	 * @param urlStr URL
-	 * @param logErrors If false, do not log any exceptions (they are expected)
-	 * @return URL content as JSONArray 
-	 */
 	public static JSONArray getURLContentAsJSONArray(String urlStr, boolean logErrors) {
-		try {
-			logger.debug("Getting the contents of " + urlStr + " as a JSON array.");
-			JSONParser parser=new JSONParser();
-			try (InputStream is = getURLContentAsStream(urlStr)) {
-				return (JSONArray) parser.parse(new InputStreamReader(is));
-			}
-		} catch (IOException ex) {
-			if (logErrors) { logger.error("Exception getting contents of internal URL {}", urlStr, ex); }
-		} catch (ParseException pex) {
-			if (logErrors) { logger.error("Parse exception getting contents of internal URL " + urlStr + " at " + pex.getPosition(), pex); }
-		}
-		return null;
+		return getURLContentWithQueryParametersAsJSONArray(urlStr, new HashMap<String, String>(), logErrors);
 	}
 	
-	/**
-	 * Given an URL, get the contents as a JSON Object
-	 * @param urlStr URL 
-	 * @return URL content as a JSON Object
-	 */
 	public static JSONObject getURLContentAsJSONObject(String urlStr) {
-		return getURLContentAsJSONObject(urlStr, true);
+		return getURLContentWithQueryParametersAsJSONObject(urlStr, new HashMap<String, String>(), true);
 	}
 	
-	/**
-	 * Given an URL, get the contents as a JSON Object; control logging.
-	 * @param urlStr URL 
-	 * @param logErrors If false, do not log any exceptions (they are expected)
-	 * @return URL content as a JSON Object
-	 */
 	public static JSONObject getURLContentAsJSONObject(String urlStr, boolean logErrors) {
-		try {
-			logger.debug("Getting the contents of " + urlStr + " as a JSON object.");
-			JSONParser parser=new JSONParser();
-			try (InputStream is = getURLContentAsStream(urlStr)) {
-				return (JSONObject) parser.parse(new InputStreamReader(is));
-			}
-		} catch (IOException ex) {
-			if(logErrors) logger.error("Exception getting contents of internal URL " + urlStr, ex);
-		} catch (ParseException pex) {
-			if(logErrors) logger.error("Parse exception getting contents of internal URL " + urlStr + " at " + pex.getPosition(), pex);
-		}
-		return null;
+		return getURLContentWithQueryParametersAsJSONObject(urlStr, new HashMap<String, String>(), logErrors);
 	}
 	
 	/**
@@ -201,22 +220,16 @@ public class GetUrlContent {
 		if(additionalDetails != null) dest.putAll(additionalDetails);
 	}
 	
-	
-	
-	/**
-	 * Post a JSONArray to a remote server and get the response as a JSON object.
-	 * @param url URL
-	 * @param array JSONObject Array
-	 * @return JSONObject  &emsp; 
-	 * @throws IOException  &emsp; 
+	/*
+	 * Post a JSON object/array and get the results as JSON
 	 */
-	public static JSONObject postDataAndGetContentAsJSONObject(String url, List<JSONObject> array) throws IOException {
+	public static JSONAware postDataAndGetContent(String url, JSONAware postBody) throws IOException {
 		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
 			HttpPost postMethod = new HttpPost(url);
 			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
 			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
 			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
+			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(postBody), ContentType.APPLICATION_JSON);
 			postMethod.setEntity(archiverValues);
 			if (logger.isDebugEnabled()) {
 				logger.debug("About to make a POST with " + url);
@@ -227,112 +240,30 @@ public class GetUrlContent {
 				logger.debug("Obtained a HTTP entity of length {}", entity.getContentLength());
 				// ArchiverValuesHandler takes over the burden of closing the input stream.
 				try (InputStream is = entity.getContent()) {
-					return (JSONObject) JSONValue.parse(new InputStreamReader(is));
+					return (JSONAware) JSONValue.parse(new InputStreamReader(is));
 				}
 			} else {
 				throw new IOException("HTTP response did not have an entity associated with it");
 			}
 		}
+	}
+
+	
+	public static JSONObject postDataAndGetContentAsJSONObject(String url, JSONAware postBody) throws IOException {
+		return (JSONObject) postDataAndGetContent(url, postBody);
+	}
+
+	public static JSONArray postDataAndGetContentAsJSONArray(String url, JSONAware postBody) throws IOException {
+		return (JSONArray) postDataAndGetContent(url, postBody);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static JSONAware	from(List<JSONObject> objs) {
+		JSONArray ret = new JSONArray();
+		ret.addAll(objs);
+		return ret;
 	}
 	
-	/**
-	 * Post a JSONArray to a remote server and get the response as a JSON object.
-	 * @param url  URL 
-	 * @param array JSONObject Array 
-	 * @return JSONArray  &emsp; 
-	 * @throws IOException  &emsp; 
-	 */
-	public static JSONArray postDataAndGetContentAsJSONArray(String url, LinkedList<JSONObject> array) throws IOException {
-		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-			HttpPost postMethod = new HttpPost(url);
-			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
-			postMethod.setEntity(archiverValues);
-			if (logger.isDebugEnabled()) {
-				logger.debug("About to make a POST with " + url);
-			}
-			HttpResponse response = httpclient.execute(postMethod);
-			HttpEntity entity = response.getEntity();
-			if (entity != null) {
-				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-				// ArchiverValuesHandler takes over the burden of closing the input stream.
-				try (InputStream is = entity.getContent()) {
-					return (JSONArray) JSONValue.parse(new InputStreamReader(is));
-				}
-			} else {
-				throw new IOException("HTTP response did not have an entity associated with it");
-			}
-		}
-	}
-	
-	/**
-	 * Post a JSONArray to a remote server and get the response as a JSON object.
-	 * @param url  URL 
-	 * @param array JSONArray Array 
-	 * @return JSONArray  &emsp; 
-	 * @throws IOException  &emsp; 
-	 */
-	public static JSONObject postDataAndGetContentAsJSONArray(String url, JSONArray array) throws IOException {
-		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-			HttpPost postMethod = new HttpPost(url);
-			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(array), ContentType.APPLICATION_JSON);
-			postMethod.setEntity(archiverValues);
-			if(logger.isDebugEnabled()) {
-				logger.debug("About to make a POST with " + url);
-			}
-			HttpResponse response = httpclient.execute(postMethod);
-			HttpEntity entity = response.getEntity();
-			if (entity != null) {
-				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-				// ArchiverValuesHandler takes over the burden of closing the input stream.
-				try(InputStream is = entity.getContent()) {
-					return (JSONObject) JSONValue.parse(new InputStreamReader(is));
-				}
-			} else {
-				throw new IOException("HTTP response did not have an entity associated with it");
-			}
-
-		}
-	}
-
-	/**
-	 * Post a JSONObject to a remote server and get the response as a JSON object.
-	 * @param url URL
-	 * @param object A JSONObject 
-	 * @return JSONObject &emsp;
-	 * @throws IOException  &emsp;  
-	 */
-	public static JSONObject postObjectAndGetContentAsJSONObject(String url, JSONObject object) throws IOException {
-		try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
-			HttpPost postMethod = new HttpPost(url);
-			postMethod.addHeader(ARCHAPPL_COMPONENT, "true");
-			postMethod.addHeader("Content-Type", MimeTypeConstants.APPLICATION_JSON);
-			postMethod.addHeader("Connection", "close"); // https://www.nuxeo.com/blog/using-httpclient-properly-avoid-closewait-tcp-connections/
-			StringEntity archiverValues = new StringEntity(JSONValue.toJSONString(object), ContentType.APPLICATION_JSON);
-			postMethod.setEntity(archiverValues);
-			if (logger.isDebugEnabled()) {
-				logger.debug("About to make a POST with " + url);
-			}
-			HttpResponse response = httpclient.execute(postMethod);
-			HttpEntity entity = response.getEntity();
-			if (entity != null) {
-				logger.debug("Obtained a HTTP entity of length " + entity.getContentLength());
-				// ArchiverValuesHandler takes over the burden of closing the input stream.
-				try (InputStream is = entity.getContent()) {
-					return (JSONObject) JSONValue.parse(new InputStreamReader(is));
-				}
-			} else {
-				throw new IOException("HTTP response did not have an entity associated with it");
-			}
-		}
-	}
-
-
 	/**
 	 * Post a list of strings to the remove server as a CSV and return the results as a array of JSONObjects
 	 * @param url URL

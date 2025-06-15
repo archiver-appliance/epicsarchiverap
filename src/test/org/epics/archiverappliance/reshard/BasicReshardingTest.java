@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.reshard;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +15,7 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
@@ -27,14 +27,9 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.io.StringWriter;
@@ -42,6 +37,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Simple test to test resharding a PV from one appliance to another...
@@ -70,15 +66,9 @@ public class BasicReshardingTest {
 	private ConfigServiceForTests configService;
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup(pvPrefix);
-	WebDriver driver;
 	String folderSTS = ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "reshardSTS";
 	String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardMTS";
 	String folderLTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardLTS";
-
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -94,12 +84,10 @@ public class BasicReshardingTest {
 		
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 
@@ -111,27 +99,11 @@ public class BasicReshardingTest {
 	
 	@Test
 	public void testReshardPV() throws Exception {
-		// This section is straight from the ArchivePVTest
-		// Let's archive the PV and wait for it to connect.
-		driver.get("http://localhost:17665/mgmt/ui/index.html");
-		WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		pvstextarea.sendKeys(pvName);
-		WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		logger.debug("About to submit");
-		archiveButton.click();
-		// We have to wait for some time here as it does take a while for the workflow to complete.
-		Thread.sleep(4*60*1000);
-		WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		checkStatusButton.click();
-		Thread.sleep(2*1000);
-		WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		String pvNameObtainedFromTable = statusPVName.getText();
-		Assertions.assertEquals(pvName, pvNameObtainedFromTable, "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
-		WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		String expectedPVStatus = "Being archived";
-		Assertions.assertEquals(expectedPVStatus, pvArchiveStatusObtainedFromTable, "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-		
+        String pvNameToArchive = pvName;
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+	
 		PVTypeInfo typeInfoBeforePausing = getPVTypeInfo();
 		// We determine the appliance for the PV by getting it's typeInfo.
 		String applianceIdentity = typeInfoBeforePausing.getApplianceIdentity();
@@ -142,7 +114,7 @@ public class BasicReshardingTest {
 		// The LTS data spans 2 years, so we set a creation time of about 4 years ago.
 		typeInfoBeforePausing.setCreationTime(TimeUtils.getStartOfYear(TimeUtils.getCurrentYear() - 4));
 		String updatePVTypeInfoURL = "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true";
-		GetUrlContent.postObjectAndGetContentAsJSONObject(updatePVTypeInfoURL, JSONEncoder.getEncoder(PVTypeInfo.class).encode(typeInfoBeforePausing));
+		GetUrlContent.postDataAndGetContentAsJSONObject(updatePVTypeInfoURL, JSONEncoder.getEncoder(PVTypeInfo.class).encode(typeInfoBeforePausing));
 
         Instant beforeReshardingCreationTimedstamp = typeInfoBeforePausing.getCreationTime();
 
@@ -196,30 +168,19 @@ public class BasicReshardingTest {
 		Assertions.assertTrue(pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Cannot pause PV");
 		Thread.sleep(1000);
 		logger.info("Successfully paused the PV; other appliance is " + otherAppliance);
-		
-		driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvName);
-		Thread.sleep(2*1000);
-		WebElement reshardPVButton = driver.findElement(By.id("pvDetailsReshardPV"));
-		logger.info("About to click on reshard button.");
-		reshardPVButton.click();
-		WebElement dialogOkButton = driver.findElement(By.id("pvReshardOk"));
-		logger.info("About to click on reshard ok button");
-		dialogOkButton.click();
-		Thread.sleep(5*60*1000);
-		WebElement pvDetailsTable = driver.findElement(By.id("pvDetailsTable"));
-		List<WebElement> pvDetailsTableRows = pvDetailsTable.findElements(By.cssSelector("tbody tr"));
-		for(WebElement pvDetailsTableRow : pvDetailsTableRows) {
-			WebElement pvDetailsTableFirstCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(1)"));
-			if(pvDetailsTableFirstCol.getText().contains("Instance archiving PV")) {
-				WebElement pvDetailsTableSecondCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
-				String obtainedAppliance = pvDetailsTableSecondCol.getText();
-				Assertions.assertEquals(otherAppliance, obtainedAppliance, "Expecting appliance to be " + otherAppliance + "; instead it is " + obtainedAppliance);
-				break;
-			}
-		}
-		
-		logger.info("Resharding UI is done.");
 
+        GetUrlContent.getURLContentWithQueryParameters(
+			mgmtURL + "reshardPV",
+			Map.of(
+				"pv", pvNameToArchive,
+				"storage", "LTS",
+				"appliance", otherAppliance
+			), false);
+        Thread.sleep(2 * 1000);
+
+		String obtainedAppliance = PVAccessUtil.getPVDetail(pvNameToArchive, mgmtURL, "Instance archiving PV");
+		Assertions.assertEquals(otherAppliance, obtainedAppliance, "Expecting appliance to be " + otherAppliance + "; instead it is " + obtainedAppliance);
+		logger.info("Resharding BPL is done.");
 
 		PVTypeInfo typeInfoAfterResharding = getPVTypeInfo();
 		String afterReshardingAppliance = typeInfoAfterResharding.getApplianceIdentity();

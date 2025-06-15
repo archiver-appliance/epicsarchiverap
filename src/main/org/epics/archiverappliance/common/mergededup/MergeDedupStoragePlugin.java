@@ -6,6 +6,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -29,9 +30,11 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
+import java.time.Period;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 
 /**
  * The MergeDedupStoragePlugin is primarily meant for achieving a small amount of failover in the archiving of a PV.
@@ -77,7 +80,7 @@ import java.util.concurrent.Callable;
  * @author mshankar
  *
  */
-public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics {
+public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
     private static final Logger logger = LogManager.getLogger(MergeDedupStoragePlugin.class.getName());
     private String name;
     private StoragePlugin dest;
@@ -302,6 +305,21 @@ public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDes
                 return new MergeDedupWithCallablesEventStream(
                         CallableEventStream.makeOneStreamCallableList(srcStream), othrStrms);
             }
+        }
+    }
+
+    @Override
+    public void iterate(BasicContext context, String pvName, Instant startAtTime, Predicate<Event> thePredicate,
+            IterationDirection direction, Period searchPeriod) throws IOException {
+        if(dest instanceof BiDirectionalIterable) {
+            logger.info("The dest plugin {} implements the BiDirectionalIterable interface", dest.getDescription());
+            ((BiDirectionalIterable)dest).iterate(context, pvName, startAtTime, thePredicate, direction, searchPeriod);
+            return;
+        }
+        if(other instanceof BiDirectionalIterable) {
+            logger.info("The other plugin {} implements the BiDirectionalIterable interface", other.getDescription());
+            ((BiDirectionalIterable)other).iterate(context, pvName, startAtTime, thePredicate, direction, searchPeriod);
+            return;
         }
     }
 }

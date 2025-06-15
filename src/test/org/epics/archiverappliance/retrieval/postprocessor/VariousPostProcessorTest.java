@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,21 +10,21 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This tests various post processors using sample data generated from within Matlab
@@ -38,7 +37,6 @@ public class VariousPostProcessorTest {
 	private static Logger logger = LogManager.getLogger(VariousPostProcessorTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
 	String pvName = "UnitTestNoNamingConvention:inactive1";
 
 	// These values were generated from Matlab.
@@ -48,11 +46,6 @@ public class VariousPostProcessorTest {
 	double expectedStd = 1.7370;
 	double expectedJitter = 1.5851;
 	double expectedVariance = 3.0172;
-
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -66,12 +59,10 @@ public class VariousPostProcessorTest {
 		}
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 		FileUtils.deleteDirectory(new File(ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "UnitTestNoNamingConvention"));
@@ -80,42 +71,25 @@ public class VariousPostProcessorTest {
 
 	@Test
 	public void testPostProcessors() throws Exception {
-		 driver.get("http://localhost:17665/mgmt/ui/index.html");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 String pvNameToArchive = pvName;
-		 pvstextarea.sendKeys(pvNameToArchive);
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
-		 Thread.sleep(5*60*1000);
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
-		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		 String pvNameObtainedFromTable = statusPVName.getText();
-		 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
-		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		 String expectedPVStatus = "Being archived";
-		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-		 
-		 // Change the values for the PV
-		 logger.info("Changing pv " + pvName + " and generating " + sampleValues.length + " values");
-		 new PVCaPut().caPutValues(pvName,sampleValues, 3000);
+		String pvNameToArchive = pvName;
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
-		 Thread.sleep(3*1000);
-		 
-		 testRetrievalCount(pvName, sampleValues);
-		 testRetrievalCount("mean_432000(" + pvName + ")", new double[] {expectedMean});
-		 testRetrievalCount("median_432000(" + pvName + ")", new double[] {expectedMedian});
-		 testRetrievalCount("std_432000(" + pvName + ")", new double[] {expectedStd});
-		 testRetrievalCount("jitter_432000(" + pvName + ")", new double[] {expectedJitter});
-		 testRetrievalCount("variance_432000(" + pvName + ")", new double[] {expectedVariance});
+		// Change the values for the PV
+		logger.info("Changing pv " + pvName + " and generating " + sampleValues.length + " values");
+		new PVCaPut().caPutValues(pvName,sampleValues, 3000);
+
+		Thread.sleep(3*1000);
+		
+		testRetrievalCount(pvName, sampleValues);
+		testRetrievalCount("mean_432000(" + pvName + ")", new double[] {expectedMean});
+		testRetrievalCount("median_432000(" + pvName + ")", new double[] {expectedMedian});
+		testRetrievalCount("std_432000(" + pvName + ")", new double[] {expectedStd});
+		testRetrievalCount("jitter_432000(" + pvName + ")", new double[] {expectedJitter});
+		testRetrievalCount("variance_432000(" + pvName + ")", new double[] {expectedVariance});
 	}
-	
-	
-	
+
 	private void testRetrievalCount(String pvName, double[] expectedValues) throws IOException {
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
         Instant end = TimeUtils.plusDays(TimeUtils.now(), 1);
@@ -150,5 +124,4 @@ public class VariousPostProcessorTest {
 			Assertions.assertTrue(eventCount == expectedValues.length, "Expecting " + expectedValues.length + " got " + eventCount + " for pv " + pvName);
 		}
 	}
-
 }

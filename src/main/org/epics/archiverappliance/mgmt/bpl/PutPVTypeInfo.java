@@ -134,7 +134,7 @@ public class PutPVTypeInfo implements BPLAction {
 					+ URLEncoder.encode(pvName, "UTF-8") 
 					+ "&override=" + Boolean.toString(override)
 					+ "&createnew=" + Boolean.toString(createnew);
-			GetUrlContent.postObjectAndGetContentAsJSONObject(updateTypeInfoURL, updatedTypeInfo.jsonObject);
+			GetUrlContent.postDataAndGetContentAsJSONObject(updateTypeInfoURL, updatedTypeInfo.jsonObject);
 		} else { 
 			logger.info("Updating typeInfo for PV " + pvName);
 			if(newPVTypeInfo) {

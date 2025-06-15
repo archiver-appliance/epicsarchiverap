@@ -129,7 +129,7 @@ public class FailoverUpgradeTest {
 		destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
 		destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
 		destPVTypeInfo.setModificationTime(TimeUtils.now());
-		GetUrlContent.postObjectAndGetContentAsJSONObject(applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
+		GetUrlContent.postDataAndGetContentAsJSONObject(applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
 		logger.info("Added " + pvName + " to the appliance " + applianceName);
 		
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");
@@ -172,7 +172,7 @@ public class FailoverUpgradeTest {
 			logger.info("Data store is " + destPVTypeInfo.getDataStores()[1]);
 		}
 		
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
+		GetUrlContent.postDataAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
 		logger.info("Changed " + pvName + " to a merge dedup plugin");
 
 	}
@@ -189,7 +189,7 @@ public class FailoverUpgradeTest {
 					+ URLEncoder.encode(destPVTypeInfo.getDataStores()[0], "UTF-8") 
 					+ "&other=" + URLEncoder.encode(otherURL, "UTF-8");
 		}
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
+		GetUrlContent.postDataAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&override=true&createnew=true", encoder.encode(destPVTypeInfo));
 		logger.info("Changed " + pvName + " to a merge dedup plugin");
 
 	}

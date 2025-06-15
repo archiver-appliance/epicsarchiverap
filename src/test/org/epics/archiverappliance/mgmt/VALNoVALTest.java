@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,22 +9,21 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A common use case is where we archive the .VAL and ask for data either way.
@@ -39,15 +37,9 @@ public class VALNoVALTest {
 	private static Logger logger = LogManager.getLogger(VALNoVALTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
 	String folderSTS = ConfigServiceForTests.getDefaultShortTermFolder() + File.separator + "reshardSTS";
 	String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardMTS";
 	String folderLTS = ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "reshardLTS";
-
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -61,12 +53,10 @@ public class VALNoVALTest {
 
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 
@@ -77,47 +67,22 @@ public class VALNoVALTest {
 
 	@Test
 	public void testVALNoVALTest() throws Exception {
-		 driver.get("http://localhost:17665/mgmt/ui/index.html");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 String pvNameToArchive1 = "UnitTestNoNamingConvention:sine";
-		 pvstextarea.sendKeys(pvNameToArchive1);
-		 pvstextarea.sendKeys(Keys.RETURN);
-		 String pvNameToArchive2 = "UnitTestNoNamingConvention:cosine.VAL";
-		 pvstextarea.sendKeys(pvNameToArchive2);
-		 pvstextarea.sendKeys(Keys.RETURN);
-		 
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
-		 Thread.sleep(5*60*1000);
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
-		 checkArchiveStatus(pvNameToArchive1, 1);
-		 checkArchiveStatus(pvNameToArchive2, 2);
-		 Thread.sleep(60*1000);
-		 testRetrievalCountOnServer(pvNameToArchive1, 55);
-		 testRetrievalCountOnServer(pvNameToArchive1 + ".VAL", 55);
-		 testRetrievalCountOnServer(pvNameToArchive1, 55);
-		 testRetrievalCountOnServer(pvNameToArchive1 + ".VAL", 55);
-	}
+		String pvNameToArchive1 = "UnitTestNoNamingConvention:sine";
+		String pvNameToArchive2 = "UnitTestNoNamingConvention:cosine.VAL";
 
-	/**
-	 * Check to see that we get a Being archived status. We take the pvName and also the row in the table we expect the data.
-	 * @param pvNameToArchive
-	 * @param rowNum
-	 */
-	private void checkArchiveStatus(String pvNameToArchive, int rowNum) {
-		{
-			 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowNum + ") td:nth-child(1)"));
-			 String pvNameObtainedFromTable = statusPVName.getText();
-			 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
-			 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowNum + ") td:nth-child(2)"));
-			 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-			 String expectedPVStatus = "Being archived";
-			 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-		 }
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV",
+			GetUrlContent.from(List.of(
+				new JSONObject(Map.of("pv", pvNameToArchive1)),
+				new JSONObject(Map.of("pv", pvNameToArchive2))
+			)));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive1, "Being archived", 10, mgmtURL, 15);
+        PVAccessUtil.waitForStatusChange(pvNameToArchive2, "Being archived", 10, mgmtURL, 15);
+
+		testRetrievalCountOnServer(pvNameToArchive1, 2);
+		testRetrievalCountOnServer(pvNameToArchive1 + ".VAL", 2);
+		testRetrievalCountOnServer(pvNameToArchive1, 2);
+		testRetrievalCountOnServer(pvNameToArchive1 + ".VAL", 2);
 	}
 	
 	/**

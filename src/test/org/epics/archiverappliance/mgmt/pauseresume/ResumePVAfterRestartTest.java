@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.mgmt.pauseresume;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,20 +10,18 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Create a paused PV in persistence; start the appserver and make sure we can resume
@@ -40,12 +37,6 @@ public class ResumePVAfterRestartTest {
     private String pvNameToArchive = "UnitTestNoNamingConvention:sine";
     TomcatSetup tomcatSetup = new TomcatSetup();
     SIOCSetup siocSetup = new SIOCSetup();
-    WebDriver driver;
-
-    @BeforeAll
-    public static void setupClass() {
-        WebDriverManager.firefoxdriver().setup();
-    }
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -72,85 +63,39 @@ public class ResumePVAfterRestartTest {
                         JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
                         persistenceFolder.getPath() + File.separator + "testconfig.jdbm2");
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-        driver = new FirefoxDriver();
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        driver.quit();
         tomcatSetup.tearDown();
         siocSetup.stopSIOC();
     }
 
+    private void assertPVDetails(List<Map<String, String>> pvDetails, String detailName, String expectedValue) {
+        for(Map<String, String> pvDetail: pvDetails) {
+            if(pvDetail.get("name").equals(detailName)) {
+                Assertions.assertEquals(
+                    pvDetail.get("value"),
+                    expectedValue,
+                    "Expecting " + expectedValue + " for detail " + detailName + " instead we got " + pvDetail.get("value")
+                );
+                return;
+            }
+        }
+        Assertions.assertTrue(false, "Did not find detail " + detailName + " in getPVDetails");
+    }
+
     @Test
     public void testResumePVAfterRestart() throws Exception {
-        driver.get("http://localhost:17665/mgmt/ui/index.html");
-        {
-            WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-            pvstextarea.sendKeys(pvNameToArchive);
-            WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-            checkStatusButton.click();
-            Thread.sleep(2 * 1000);
-            WebElement statusPVName =
-                    driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-            String pvNameObtainedFromTable = statusPVName.getText();
-            Assertions.assertTrue(
-                    pvNameToArchive.equals(pvNameObtainedFromTable),
-                    "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
-            WebElement statusPVStatus =
-                    driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-            String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-            String expectedPVStatus = "Paused";
-            Assertions.assertTrue(
-                    expectedPVStatus.equals(pvArchiveStatusObtainedFromTable),
-                    "Expecting PV archive status to be " + expectedPVStatus + "; instead it is "
-                            + pvArchiveStatusObtainedFromTable);
-        }
-
-        logger.info("Let's go to the details page and resume the PV");
-        driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvNameToArchive);
-        {
-            Thread.sleep(2 * 1000);
-            WebElement resumeArchivingButn = driver.findElement(By.id("pvDetailsResumeArchiving"));
-            logger.info("Clicking on the button to resume archiving the PV");
-            resumeArchivingButn.click();
-        }
-        Thread.sleep(30 * 1000);
-        driver.get("http://localhost:17665/mgmt/ui/pvdetails.html?pv=" + pvNameToArchive);
-        {
-            Thread.sleep(2 * 1000);
-            WebElement pvDetailsTable = driver.findElement(By.id("pvDetailsTable"));
-            List<WebElement> pvDetailsTableRows = pvDetailsTable.findElements(By.cssSelector("tbody tr"));
-            boolean foundConnectedStatus = false;
-            for (WebElement pvDetailsTableRow : pvDetailsTableRows) {
-                WebElement pvDetailsTableFirstCol = pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(1)"));
-                String firstCol = pvDetailsTableFirstCol.getText();
-                if (firstCol.contains("Is this PV paused:")) {
-                    WebElement pvDetailsTableSecondCol =
-                            pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
-                    String obtainedPauseStatus = pvDetailsTableSecondCol.getText();
-                    String expectedPauseStatus = "No";
-                    Assertions.assertTrue(
-                            expectedPauseStatus.equals(obtainedPauseStatus),
-                            "Expecting paused status to be " + expectedPauseStatus + "; instead it is "
-                                    + obtainedPauseStatus);
-                } else if (firstCol.contains("Is this PV currently connected?")) {
-                    WebElement pvDetailsTableSecondCol =
-                            pvDetailsTableRow.findElement(By.cssSelector("td:nth-child(2)"));
-                    String obtainedConnectedStatus = pvDetailsTableSecondCol.getText();
-                    String expectedConnectedStatus = "yes";
-                    Assertions.assertTrue(
-                            expectedConnectedStatus.equals(obtainedConnectedStatus),
-                            "Expecting connected status to be " + expectedConnectedStatus + "; instead it is "
-                                    + obtainedConnectedStatus);
-                    foundConnectedStatus = true;
-                }
-            }
-            Thread.sleep(30 * 1000);
-            Assertions.assertTrue(
-                    foundConnectedStatus,
-                    "We are not able to find a connected status string in the PV details. This means the channel has not been started up in the engine");
-        }
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
+        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
+        Thread.sleep(2 * 1000);
+        logger.debug("Resuming PV");
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> pvDetails = (List<Map<String, String>>) GetUrlContent.getURLContentWithQueryParametersAsJSONArray(mgmtURL + "getPVDetails", Map.of("pv", pvNameToArchive), false);
+        assertPVDetails(pvDetails, "Is this PV paused:", "No");
+        assertPVDetails(pvDetails, "Is this PV currently connected?", "yes");
     }
 
     private static PVTypeInfo generatePVTypeInfo(String pvName, String applianceIdentity) {

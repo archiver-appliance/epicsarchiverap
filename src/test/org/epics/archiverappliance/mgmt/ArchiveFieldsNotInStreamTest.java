@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -9,24 +8,21 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * This relates to issue - https://github.com/slacmshankar/epicsarchiverap/issues/69
@@ -79,76 +75,53 @@ public class ArchiveFieldsNotInStreamTest {
 	private static Logger logger = LogManager.getLogger(ArchiveFieldsNotInStreamTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
 
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 	@BeforeEach
 	public void setUp() throws Exception {
 		System.getProperties().put("ARCHAPPL_POLICIES", System.getProperty("user.dir") + "/src/test/org/epics/archiverappliance/mgmt/ArchiveFieldsNotInStream.py");
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 	}
 
 	@Test
 	public void testArchiveFieldsPV() throws Exception {
-		 driver.get("http://localhost:17665/mgmt/ui/index.html");
-		 ((JavascriptExecutor)driver).executeScript("window.skipAutoRefresh = true;");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 String[] fieldsToArchive = new String[] {
-				 "ArchUnitTest:fieldtstalias"
-		 };
-		 pvstextarea.sendKeys(String.join("\n", fieldsToArchive));
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 Thread.sleep(4*60*1000);
-		 logger.debug("Checking for archive status");
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(17*1000);
-		 for(int i = 0; i < fieldsToArchive.length; i++) { 
-			 int rowWithInfo = i+1;
-			 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(1)"));
-			 String pvNameObtainedFromTable = statusPVName.getText();
-			 Assertions.assertTrue(fieldsToArchive[i].equals(pvNameObtainedFromTable), "PV Name is not " + fieldsToArchive[i] + "; instead we get " + pvNameObtainedFromTable);
-			 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(" + rowWithInfo + ") td:nth-child(2)"));
-			 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-			 String expectedPVStatus = "Being archived";
-			 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable + " for field " + fieldsToArchive[i]);
-		 }
-		 
-		 // Check that we have PVTypeInfo's for the main PV. Also check the archiveFields.
-		 JSONObject valInfo = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=ArchUnitTest:fieldtst", true);
-		 logger.debug(valInfo.toJSONString());
-		 @SuppressWarnings("unchecked")
-		 List<String> archiveFields = (List<String>) valInfo.get("archiveFields");
-		 Assertions.assertTrue(archiveFields.contains("HIHI"), "TypeInfo should contain the HIHI field but it does not");
-		 Assertions.assertTrue(archiveFields.contains("LOLO"), "TypeInfo should contain the LOLO field but it does not");
-		 Assertions.assertTrue(!archiveFields.contains("DESC"), "TypeInfo should not contain the DESC field but it does");
-		 Assertions.assertTrue(!archiveFields.contains("C"), "TypeInfo should not contain the C field but it does");
+        String[] fieldsToArchive = { "ArchUnitTest:fieldtstalias", "ArchUnitTest:fieldtstalias.C" };
+        List<JSONObject> arSpecs = List.of(fieldsToArchive).stream().map((x) -> new JSONObject(Map.of("pv", x))).collect(Collectors.toList());
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        logger.info("Archiving multiple PVs");
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
+        for(String pv : fieldsToArchive) {
+            PVAccessUtil.waitForStatusChange(pv, "Being archived", 20, mgmtURL, 15);
+        }
 
-		 JSONObject C_Info = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=ArchUnitTest:fieldtst.C", true);
-		 Assertions.assertTrue(C_Info != null, "Did not find a typeinfo for ArchUnitTest:fieldtst.C");
-		 logger.debug(C_Info.toJSONString());
-		 
-		 testRetrievalCount("ArchUnitTest:fieldtst", new double[] { 0.0 } );
-		 siocSetup.caput("ArchUnitTest:fieldtst:cnt", "0.0");
-		 Thread.sleep(2*60*1000);
-		 testRetrievalCount("ArchUnitTest:fieldtst", new double[] { 0.0 } );
-		 testRetrievalCount("ArchUnitTest:fieldtst.C", new double[] { 3.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5 } );
-		 testRetrievalCount("ArchUnitTest:fieldtstalias", new double[] { 0.0 } );
-		 testRetrievalCount("ArchUnitTest:fieldtstalias.C", new double[] { 3.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5 } );
+		// Check that we have PVTypeInfo's for the main PV. Also check the archiveFields.
+		JSONObject valInfo = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=ArchUnitTest:fieldtst", true);
+		logger.debug(valInfo.toJSONString());
+		@SuppressWarnings("unchecked")
+		List<String> archiveFields = (List<String>) valInfo.get("archiveFields");
+		Assertions.assertTrue(archiveFields.contains("HIHI"), "TypeInfo should contain the HIHI field but it does not");
+		Assertions.assertTrue(archiveFields.contains("LOLO"), "TypeInfo should contain the LOLO field but it does not");
+		Assertions.assertTrue(!archiveFields.contains("DESC"), "TypeInfo should not contain the DESC field but it does");
+		Assertions.assertTrue(!archiveFields.contains("C"), "TypeInfo should not contain the C field but it does");
+
+		JSONObject C_Info = GetUrlContent.getURLContentAsJSONObject("http://localhost:17665/mgmt/bpl/getPVTypeInfo?pv=ArchUnitTest:fieldtst.C", true);
+		Assertions.assertTrue(C_Info != null, "Did not find a typeinfo for ArchUnitTest:fieldtst.C");
+		logger.debug(C_Info.toJSONString());
+
+		// This test is very sensitive to older data ( PB files ) handing around etc since we are comparing actual values
+		testRetrievalCount("ArchUnitTest:fieldtst", new double[] { 0.0 } );
+		SIOCSetup.caput("ArchUnitTest:fieldtst:cnt", "0.0");
+		Thread.sleep(2*60*1000);
+		testRetrievalCount("ArchUnitTest:fieldtst", new double[] { 0.0 } );
+		testRetrievalCount("ArchUnitTest:fieldtst.C", new double[] { 3.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5 } );
+		testRetrievalCount("ArchUnitTest:fieldtstalias", new double[] { 0.0 } );
+		testRetrievalCount("ArchUnitTest:fieldtstalias.C", new double[] { 3.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5 } );
 	}
 	
 	private void testRetrievalCount(String pvName, double[] expectedValues) throws IOException {
