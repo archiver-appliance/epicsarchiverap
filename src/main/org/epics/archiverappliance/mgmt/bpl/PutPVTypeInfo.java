@@ -139,8 +139,8 @@ public class PutPVTypeInfo implements BPLAction {
 			logger.info("Updating typeInfo for PV " + pvName);
 			if(newPVTypeInfo) {
 				try { 
-					configService.registerPVToAppliance(pvName, configService.getAppliance(applianceIdentity));
 					configService.updateTypeInfoForPV(pvName, updatedTypeInfo.typeInfo);
+					configService.registerPVToAppliance(pvName, configService.getAppliance(applianceIdentity));
 				} catch(AlreadyRegisteredException ex) { 
 					String msg = "Exception registering new PV " + pvName + " to appliance " + applianceIdentity;
 					logger.info(msg);

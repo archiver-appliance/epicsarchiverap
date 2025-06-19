@@ -14,6 +14,7 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -28,6 +29,13 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+import org.awaitility.Awaitility;
+
 
 /**
  * Test data retrieval with aliasing and clustering.
@@ -40,6 +48,7 @@ import java.time.Instant;
 public class ClusterAliasTest {
 	private static final Logger logger = LogManager.getLogger(ClusterAliasTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ClusterAliasTest");
+    private static final String mgmtUrl = "http://localhost:17665/mgmt/bpl/";
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 	WebDriver driver;
@@ -82,7 +91,12 @@ public class ClusterAliasTest {
 		 archiveButton.click();
 		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
 		 // In addition, we are also getting .HIHI etc the monitors for which get established many minutes after the beginning of archiving 
-		 Thread.sleep(15*60*1000);
+		 waitForStatusChange(pvNameToArchive, "Being archived", 60, mgmtUrl, 10);
+		 Awaitility.await()
+                .pollInterval(10, TimeUnit.SECONDS)
+                .atMost(10 * 20, TimeUnit.SECONDS)
+                .untilAsserted(() -> Assertions.assertTrue(getConectedMetaChannelCount(pvNameToArchive) > 0));
+
 		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
 		 checkStatusButton.click();
 		 Thread.sleep(2*1000);
@@ -105,10 +119,10 @@ public class ClusterAliasTest {
 		 String aapl0 = checkInPersistence("UnitTestNoNamingConvention:sine", 0);
 		 String aapl1 = checkInPersistence("UnitTestNoNamingConvention:sine", 1);
 		 Assertions.assertTrue(aapl0.equals(aapl1), "Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1");
-		 testRetrievalCount("UnitTestNoNamingConvention:sinealias");
 		 testRetrievalCount("UnitTestNoNamingConvention:sine");		 
+		 testRetrievalCount("UnitTestNoNamingConvention:sinealias");
+		 testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");
 		 testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
-		 testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");		 
 	}
 	
 	private String checkInPersistence(String pvName, int clusterIndex) throws Exception {
@@ -134,7 +148,7 @@ public class ClusterAliasTest {
 	
 	
 	private void testRetrievalCountOnServer(String pvName, String serverRetrievalURL) throws IOException { 
-		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(serverRetrievalURL);
+		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(serverRetrievalURL);
         Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
         Instant start = TimeUtils.minusDays(end, 6);
 		 try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
@@ -156,4 +170,16 @@ public class ClusterAliasTest {
 		 }
 	}
 
+	@SuppressWarnings("unchecked")
+	private int getConectedMetaChannelCount(String pvName) { 
+		List<Map<String, String>> pvDetails =  (List<Map<String, String>>) GetUrlContent.getURLContentAsJSONArray(mgmtUrl + "/getPVDetails?pv=" + pvName);
+		for(Map<String, String> pvDetail : pvDetails) {
+			String name = pvDetail.getOrDefault("name", "");
+			if(name.equals("Connected channels for the extra fields")) {
+				String val = pvDetail.getOrDefault("value", "0");
+				return Integer.parseInt(val);
+			}
+		}
+		return 0;
+	}
 }

@@ -36,7 +36,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.concurrent.ExecutionException;
@@ -47,6 +46,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.hazelcast.projection.Projection;
+import com.hazelcast.query.Predicates;
 
 public class GetDataAtTime {
     private static final Logger logger = LogManager.getLogger(GetDataAtTime.class);
@@ -203,7 +203,11 @@ public class GetDataAtTime {
         HashMap<String, String> pvName2TypeInfoName = new HashMap<String, String>();
 
         HashMap<String, Appliance2PVs> valuesGatherer = new HashMap<String, Appliance2PVs>();
-        Collection<ProjRecord> projRecords = configService.projectPVTypeInfos(new HashSet<String>(paddedPVNames), new GDATProjection());
+        HashSet<String> namesForPredicate = new HashSet<String>(paddedPVNames);
+
+        Collection<ProjRecord> projRecords = configService.queryPVTypeInfos(
+            Predicates.in("__key", namesForPredicate.toArray(new String[0])),
+            new GDATProjection());
         Map<String, ProjRecord> pvName2proj = projRecords.stream().collect(Collectors.toMap(pr -> pr.pvName(), pr -> pr));
 
         pmansProfiler.mark("After running projection");

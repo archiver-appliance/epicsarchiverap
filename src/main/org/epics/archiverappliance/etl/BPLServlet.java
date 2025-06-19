@@ -25,7 +25,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.bpl.ConsolidatePBFilesForOnePV;
 import org.epics.archiverappliance.etl.bpl.DeletePV;
 import org.epics.archiverappliance.etl.bpl.GetLastKnownEventTimeStamp;
-import org.epics.archiverappliance.etl.bpl.PauseArchivingPV;
 import org.epics.archiverappliance.etl.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.etl.bpl.reports.ApplianceMetricsDetails;
 import org.epics.archiverappliance.etl.bpl.reports.InstanceReportDetails;
@@ -54,7 +53,6 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
 		getActions.put("/getLastKnownEvent", GetLastKnownEventTimeStamp.class);
 		getActions.put("/consolidateDataForPV", ConsolidatePBFilesForOnePV.class);
-		getActions.put("/pauseArchivingPV", PauseArchivingPV.class);
 		getActions.put("/deletePV", DeletePV.class);
 		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
 		getActions.put("/getVersion", GetVersion.class);
@@ -66,20 +64,7 @@ public class BPLServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		BasicDispatcher.dispatch(req, resp, configService, getActions);
-	}
-
-	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
-	static {
-		postActions.put("/pauseArchivingPV", PauseArchivingPV.class);
-	}
-	
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		logger.info("Beginning POST request into ETL servlet " + req.getPathInfo());
-		BasicDispatcher.dispatch(req, resp, configService, postActions);
-	}
-
-	
+	}	
 
 	@Override
 	public void init() throws ServletException {

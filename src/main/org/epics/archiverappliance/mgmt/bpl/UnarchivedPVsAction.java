@@ -9,6 +9,7 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.ArchivedPVsInList;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.servlet.http.HttpServletRequest;
@@ -42,21 +44,15 @@ public class UnarchivedPVsAction implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         logger.info("Determining PVs that are unarchived ");
-        Set<String> pvNamesFromUser = new HashSet<String>(PVsMatchingParameter.getPVNamesFromPostBody(req));
 
-        Set<String> expandedNames = new HashSet<String>();
-        configService.getAllExpandedNames(new Consumer<String>() {
-            @Override
-            public void accept(String t) {
-                expandedNames.add(t);
-            }
-        });
+        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
+		List<String> archivedPVs = ArchivedPVsInList.getArchivedPVs(pvNames, configService);
+        Set<String> unarchivedPVs = (new HashSet<String>(pvNames));
+        unarchivedPVs.removeAll(archivedPVs);
 
-        pvNamesFromUser.removeAll(expandedNames);
-
-        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         try (PrintWriter out = resp.getWriter()) {
-            JSONValue.writeJSONString(new LinkedList<String>(pvNamesFromUser), out);
+            JSONValue.writeJSONString(unarchivedPVs, out);
         }
     }
 }
