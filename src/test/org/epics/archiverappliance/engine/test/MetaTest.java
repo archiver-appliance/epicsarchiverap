@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
@@ -84,8 +86,9 @@ public class MetaTest {
         }
     }
 
-    @Test
-    public void testAliasNames() {
+    @ValueSource(booleans = {true, false})
+    @ParameterizedTest
+    public void testAliasNames(boolean usePVAccess) {
         HashMap<String, AliasNames> aliasNames = new HashMap<String, AliasNames>();
         aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sine", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine"));
         aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sine.DESC", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.DESC"));
@@ -95,43 +98,43 @@ public class MetaTest {
         aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sinealias.HIHI", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.HIHI"));
 
         CountDownLatch latch = new CountDownLatch(6);
-        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine", aliasNames);
-        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine.DESC", aliasNames);
-        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine.HIHI", aliasNames);
-        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias", aliasNames);
-        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias.DESC", aliasNames);
-        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias.HIHI", aliasNames);
+        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine", aliasNames, usePVAccess);
+        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine.DESC", aliasNames, usePVAccess);
+        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine.HIHI", aliasNames, usePVAccess);
+        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias", aliasNames, usePVAccess);
+        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias.DESC", aliasNames, usePVAccess);
+        testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias.HIHI", aliasNames, usePVAccess);
 
-		try {
+        try {
             Assertions.assertTrue(latch.await(90, TimeUnit.SECONDS), "MetaGet did not complete for all PV's " + latch.getCount());
-		} catch(InterruptedException ex) { 
-			logger.error(ex);
-		}
-		
-		for(String pvName : aliasNames.keySet()) {
-			AliasNames aliasName = aliasNames.get(pvName);
-            Assertions.assertTrue(aliasName.expectedName.equals(aliasName.metaGetAliasName), "AliasName for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetAliasName);
-            Assertions.assertTrue(aliasName.expectedName.equals(aliasName.metaGetOtherInfoName), "NAME info hashmap for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetOtherInfoName);
+        } catch(InterruptedException ex) {
+            logger.error(ex);
         }
-	}
-	
-	/**
-	 * Test the NAME and NAME$ for various PV's and fields of PV's
-	 */
-	private void testAliasNamesForPV(final CountDownLatch latch, final String pvName, HashMap<String, AliasNames> aliasNames) {
+
+        for(String pvName : aliasNames.keySet()) {
+            AliasNames aliasName = aliasNames.get(pvName);
+            Assertions.assertEquals(aliasName.expectedName, aliasName.metaGetAliasName, "AliasName for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetAliasName);
+            Assertions.assertEquals(aliasName.expectedName, aliasName.metaGetOtherInfoName, "NAME info hashmap for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetOtherInfoName);
+        }
+    }
+
+    /**
+     * Test the NAME and NAME$ for various PV's and fields of PV's
+     */
+    private void testAliasNamesForPV(final CountDownLatch latch, final String pvName, HashMap<String, AliasNames> aliasNames, boolean usePVAccess) {
         String[] metaFied = {"MDEL", "ADEL", "RTYP"};
-		try {
-			ArchiveEngine.getArchiveInfo(pvName, testConfigService, metaFied, false, metaInfo -> {
-					logger.info("Metadata completed for " + pvName + "aliasName " + metaInfo.getAliasName() + "Name: " + metaInfo.getOtherMetaInfo().get("NAME"));
-					aliasNames.get(pvName).metaGetAliasName = metaInfo.getAliasName();
-					aliasNames.get(pvName).metaGetOtherInfoName = metaInfo.getOtherMetaInfo().get("NAME");
-					latch.countDown();
-				});
-		} catch (Exception ex) {
-			logger.error(ex);
-            Assertions.assertTrue(false, "Exception thrown " + ex.getMessage());
-		}
-	}
+        try {
+            ArchiveEngine.getArchiveInfo(pvName, testConfigService, metaFied, usePVAccess, metaInfo -> {
+                logger.info("Metadata completed for " + pvName + "aliasName " + metaInfo.getAliasName() + "Name: " + metaInfo.getOtherMetaInfo().get("NAME"));
+                aliasNames.get(pvName).metaGetAliasName = metaInfo.getAliasName();
+                aliasNames.get(pvName).metaGetOtherInfoName = metaInfo.getOtherMetaInfo().get("NAME");
+                latch.countDown();
+            });
+        } catch (Exception ex) {
+            logger.error(ex);
+            Assertions.fail("Exception thrown " + ex.getMessage());
+        }
+    }
 
     static class AliasNames {
         String expectedName;
