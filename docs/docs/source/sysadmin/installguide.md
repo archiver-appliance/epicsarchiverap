@@ -134,15 +134,7 @@ javadoc. A sample `appliances.xml` with two appliances looks like
   production. Certain BPL, most importantly, the `/archivePV` BPL,
   are suspended until all the appliances defined in the
   `appliances.xml` have started up and registered their PVs in the
-  cluster. Previously, we would allow any number of appliances to be
-  defined in the `appliances.xml` regardless of whether they are in
-  production or not. However, it\'s becoming more and more untenable
-  to support this feature. So, from Mar 2023 onwards, please only
-  define live appliances in `appliances.xml`. ~~You can have more
-  entries than you have appliances; that is, if you plan to eventually
-  deploy a cluster of 10 machines but only have a budget for 2, you
-  can go ahead and add entries for the other machines. The cluster
-  should start up even if one or more appliances are missing.~~
+  cluster.
 
 - The `identity` for each appliance is unique to each appliance. For
   example, the string `appliance0` serves to uniquely identify the
