@@ -163,25 +163,43 @@ The response typically contains
 3. Other elements - This set includes the value, status, severity and
    many other optional fields stored by the appliance.
 
-Here\'s an example of loading data into Python using JSON and then using
-Chaco to render a plot.
+Here\'s an example of loading data into Python in a Jupyter notebook and using Bokeh to display the data
 
 ```python
-import numpy as np
-from chaco.shell import *
-import urllib2
+from datetime import datetime, timedelta
+import pytz
 import json
 
-req = urllib2.urlopen("http://archiver.slac.stanford.edu/retrieval/data/getData.json?pv=test%3Apv%3A123&donotchunk")
-data = json.load(req)
-secs = [x['secs'] for x in data[0]['data']]
-vals = [x['val'] for x in data[0]['data']]
-plot(secs, vals, "r-")
-xscale('time')
-show()
+import requests
+from bokeh.plotting import figure, show
+from bokeh.io import output_notebook
+
+utc = pytz.utc
+tz = pytz.timezone('America/Los_Angeles')
+end = datetime.now().astimezone(utc)
+start = end - timedelta(days=1)
+pvName = "ROOM:BSY0:1:OUTSIDETEMP"
+
+resp = requests.get("http://archappl.epics-controls.org/retrieval/data/getData.json",
+        params={
+            "pv": pvName,
+            "from": start.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+            "to": end.strftime('%Y-%m-%dT%H:%M:%S.%fZ'),
+        })
+resp.raise_for_status()
+samples = resp.json()[0]["data"]
+egu = resp.json()[0].get("meta", {}).get("EGU", "")
+xpoints = [datetime.fromtimestamp(x["secs"]).astimezone(tz) for x in samples]
+ypoints = [x["val"] for x in samples]
+
+output_notebook()
+
+fig = figure(title=pvName, x_axis_label='Time', x_axis_type='datetime', y_axis_label=egu)
+fig.line(xpoints, ypoints)
+show(fig)
 ```
 
-![image](../images/chaco_plot.png)
+![image](../images/bokeh_in_jupyter.png)
 
 ## Processing of data
 
