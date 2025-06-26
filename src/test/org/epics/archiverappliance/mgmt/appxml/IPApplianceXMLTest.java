@@ -7,6 +7,7 @@ import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONArray;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,10 +15,9 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.io.InputStreamReader;
-import java.io.LineNumberReader;
 import java.io.PrintWriter;
 import java.net.InetAddress;
+import java.util.Map;
 
 /**
  * Test various versions of appliances.xml and make sure we can start the config service correctly.
@@ -41,6 +41,7 @@ public class IPApplianceXMLTest {
     @AfterEach
     public void tearDown() throws Exception {
         FileUtils.deleteDirectory(testFolder);
+        tomcatSetup.tearDown();
     }
 
     @Test
@@ -60,19 +61,10 @@ public class IPApplianceXMLTest {
         System.getProperties().put(ConfigService.ARCHAPPL_APPLIANCES, appliancesFilename);
 
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-        boolean found = false;
-        try(LineNumberReader rdr = new LineNumberReader(new InputStreamReader(GetUrlContent.getURLContentAsStream("http://localhost:17665/mgmt/ui/index.html")))) {
-            String line = rdr.readLine();
-            while(line != null) {
-                if(line.contains("id=\"archstatpVNames\"")) {
-                    found = true;
-                    break;
-                }
-                line = rdr.readLine();
-            }
-        }
 
-        Assertions.assertTrue(found, "Cannot find the element with id archstatpVNames");
-        tomcatSetup.tearDown();
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        JSONArray statuses = GetUrlContent.getURLContentWithQueryParametersAsJSONArray(mgmtURL + "getPVStatus", Map.of("pv", "*"));
+        Assertions.assertTrue(statuses != null);
+        Assertions.assertTrue(statuses.size() == 0);
     }
 }
