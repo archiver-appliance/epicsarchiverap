@@ -70,7 +70,7 @@ public class ImportConfig implements BPLAction {
 			if(pvsForAppliance.size() > 1) {
 				ApplianceInfo applianceInfo = configService.getAppliance(applianceIdentity);
 				String importConfigURL = applianceInfo.getMgmtURL() + "/importConfigForAppliance";
-				JSONObject response = GetUrlContent.postDataAndGetContentAsJSONObject(importConfigURL, pvsForAppliance);
+				JSONObject response = GetUrlContent.postDataAndGetContentAsJSONObject(importConfigURL, GetUrlContent.from(pvsForAppliance));
 				responses.add(response);
 			} else {
 				logger.warn("No pvs when importing configuration for appliance " + applianceIdentity);

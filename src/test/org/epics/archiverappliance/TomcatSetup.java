@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -38,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TomcatSetup {
 	private static final Logger logger = LogManager.getLogger(TomcatSetup.class.getName());
-	LinkedList<Process> watchedProcesses = new LinkedList<Process>();
+	HashMap<String, Process> watchedProcesses = new HashMap<String, Process>();
 	LinkedList<File> cleanupFolders = new LinkedList<File>();
 	protected static final int DEFAULT_SERVER_STARTUP_PORT = 16000;
 
@@ -111,8 +112,31 @@ public class TomcatSetup {
 		cleanupFolders.add(testFolder);
 
 	}
+
+	public void shutDownAppliance(String applianceName) throws Exception {
+		Process process = watchedProcesses.get(applianceName);
+		if(process == null) {
+			throw new Exception("Cannot find process for appliance " + applianceName);
+		}
+		// First try to kill the process cleanly
+		process.destroy();
+		logger.info("Sending a signal to " + process.pid());
+		try {
+			Thread.sleep(15 * 1000);
+		} catch (Exception ignored) {}
+
+		if (process.isAlive()) {
+			logger.warn("Tomcat process did not stop properly within time. Forcibly stopping it.");
+			process.destroyForcibly();
+			try {
+				Thread.sleep(60 * 1000);
+			} catch (Exception ignored) {}
+		}
+		watchedProcesses.remove(applianceName);
+	}
+
 	public void tearDown() throws Exception {
-		for(Process process : watchedProcesses) {
+		for(Process process : watchedProcesses.values()) {
 			// First try to kill the process cleanly
 			process.destroy();
 			logger.info("Sending a signal to " + process.pid());
@@ -159,7 +183,7 @@ public class TomcatSetup {
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
 		Process p = pb.start();
-		watchedProcesses.add(p);
+		watchedProcesses.put(applianceName, p);
 
 		final CountDownLatch latch = new CountDownLatch(1);
 

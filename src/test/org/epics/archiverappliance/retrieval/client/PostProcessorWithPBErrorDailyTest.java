@@ -4,7 +4,6 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,19 +17,17 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +39,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
@@ -62,7 +61,6 @@ public class PostProcessorWithPBErrorDailyTest {
 	private static final Logger logger = LogManager.getLogger(PostProcessorWithPBErrorDailyTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
 	private final String pvName = "UnitTestNoNamingConvention:inactive1";
 	private final short currentYear = TimeUtils.getCurrentYear();
 	StoragePlugin storageplugin;
@@ -70,12 +68,6 @@ public class PostProcessorWithPBErrorDailyTest {
 	private final short dataGeneratedForYears = 5;
 	private String mtsFolderName = "build/tomcats/tomcat_" + PostProcessorWithPBErrorDailyTest.class.getSimpleName() + "/appliance0/mts";
 	private File mtsFolder = new File(mtsFolderName + "/UnitTestNoNamingConvention");
-
-
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -90,12 +82,10 @@ public class PostProcessorWithPBErrorDailyTest {
 		storageplugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=MTS&rootFolder=" + mtsFolderName + "&partitionGranularity=PARTITION_DAY", configService);
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 
@@ -106,25 +96,10 @@ public class PostProcessorWithPBErrorDailyTest {
 
 	@Test
 	public void testRetrievalWithPostprocessingAndCorruption() throws Exception {
-		 driver.get("http://localhost:17665/mgmt/ui/index.html");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 pvstextarea.sendKeys(pvName);
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 // We have to wait for a few minutes here here as it does take a while for the workflow to complete.
-		 Thread.sleep(5*60*1000);
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
-		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		 String pvNameObtainedFromTable = statusPVName.getText();
-		Assertions.assertEquals(pvName, pvNameObtainedFromTable, "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
-		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		 String expectedPVStatus = "Being archived";
-		Assertions.assertEquals(expectedPVStatus, pvArchiveStatusObtainedFromTable, "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-		 Thread.sleep(60 * 1000);
+        String pvNameToArchive = pvName;
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
 		try(BasicContext context = new BasicContext()) { 
 			for(short y = dataGeneratedForYears; y > 0; y--) { 

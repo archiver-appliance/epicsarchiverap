@@ -129,7 +129,7 @@ public class ClusterSinglePVTest {
         pvTypeInfo1.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
         pvTypeInfo1.setModificationTime(TimeUtils.now());
         pvTypeInfo1.setApplianceIdentity("appliance1");
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                         + "&override=false&createnew=true",
                 encoder.encode(pvTypeInfo1));

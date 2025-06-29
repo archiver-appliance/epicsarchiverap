@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,21 +12,21 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Test data retrieval with aliasing and clustering.
@@ -42,12 +41,6 @@ public class ClusterAliasTest {
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ClusterAliasTest");
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
-
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -59,12 +52,10 @@ public class ClusterAliasTest {
 		System.getProperties().put(ConfigService.ARCHAPPL_PERSISTENCE_LAYER, "org.epics.archiverappliance.config.persistence.JDBM2Persistence");
 		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFolder.getPath() + File.separator + "testconfig.jdbm2");
 		tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 		FileUtils.deleteDirectory(persistenceFolder);
@@ -72,43 +63,30 @@ public class ClusterAliasTest {
 
 	@Test
 	public void testSimpleArchivePV() throws Exception {
-		 int port = ConfigServiceForTests.RETRIEVAL_TEST_PORT+1;
-		 driver.get("http://localhost:" + port + "/mgmt/ui/index.html");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 String pvNameToArchive = "UnitTestNoNamingConvention:sinealias";
-		 pvstextarea.sendKeys(pvNameToArchive);
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
-		 // In addition, we are also getting .HIHI etc the monitors for which get established many minutes after the beginning of archiving 
-		 Thread.sleep(15*60*1000);
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
-		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		 String pvNameObtainedFromTable = statusPVName.getText();
-		 Assertions.assertTrue(pvNameToArchive.equals(pvNameObtainedFromTable), "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
-		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		 String expectedPVStatus = "Being archived";
-		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
-		 Thread.sleep(2*1000);
-		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
-		 Thread.sleep(2*1000);
-		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
-		 Thread.sleep(2*1000);
-		 logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-		 Thread.sleep(2*60*1000);
+		String pvNameToArchive = "UnitTestNoNamingConvention:sinealias";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
 
-		 String aapl0 = checkInPersistence("UnitTestNoNamingConvention:sine", 0);
-		 String aapl1 = checkInPersistence("UnitTestNoNamingConvention:sine", 1);
-		 Assertions.assertTrue(aapl0.equals(aapl1), "Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1");
-		 testRetrievalCount("UnitTestNoNamingConvention:sinealias");
-		 testRetrievalCount("UnitTestNoNamingConvention:sine");		 
-		 testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
-		 testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");		 
+		// Wait for the fields to connect using "Connected channels for the extra fields"
+		PVAccessUtil.waitForPVDetail(pvNameToArchive, "Connected channels for the extra fields", "7", 10, mgmtURL, 15);
+
+		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
+		Thread.sleep(2*1000);
+		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
+		Thread.sleep(2*1000);
+		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
+		Thread.sleep(2*1000);
+		logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
+		Thread.sleep(2*60*1000);
+
+		String aapl0 = checkInPersistence("UnitTestNoNamingConvention:sine", 0);
+		String aapl1 = checkInPersistence("UnitTestNoNamingConvention:sine", 1);
+		Assertions.assertTrue(aapl0.equals(aapl1), "Expecting the same appliance identity in both typeinfos, instead it is " + aapl0 + " in cluster member 0 and " + aapl1 + " in cluster member 1");
+		testRetrievalCount("UnitTestNoNamingConvention:sinealias");
+		testRetrievalCount("UnitTestNoNamingConvention:sine");		 
+		testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
+		testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");		 
 	}
 	
 	private String checkInPersistence(String pvName, int clusterIndex) throws Exception {

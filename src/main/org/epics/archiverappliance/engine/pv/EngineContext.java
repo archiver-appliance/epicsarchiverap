@@ -290,6 +290,7 @@ public class EngineContext {
 
         // Add an assertion in case we accidentally set this to 0 from the props file.
         assert (disconnectCheckerPeriodInSeconds > 0);
+        logger.info("Running the disconnect checker every {} seconds", disconnectCheckerPeriodInSeconds);
         disconnectFuture = miscTasksScheduler.scheduleAtFixedRate(
                 new DisconnectChecker(configService),
                 disconnectCheckerPeriodInSeconds,
@@ -614,6 +615,9 @@ public class EngineContext {
                                 JSONObject connectedPVCount =
                                         GetUrlContent.getURLContentAsJSONObject(connectedPVCountURL);
                                 int applianceTotalPVCount = Integer.parseInt((String) connectedPVCount.get("total"));
+                                // This really needs to be based on some cluster-wide event where all the appliances have had their chance at connecting to their PVs.
+                                // All of these approaches are only approximations
+                                if(applianceTotalPVCount <= 0) continue;
                                 int applianceDisconnectedPVCount =
                                         Integer.parseInt((String) connectedPVCount.get("disconnected"));
                                 if ((applianceDisconnectedPVCount * 100.0 / applianceTotalPVCount)

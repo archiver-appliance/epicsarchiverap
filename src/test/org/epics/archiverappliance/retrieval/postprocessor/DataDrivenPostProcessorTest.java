@@ -84,7 +84,7 @@ public class DataDrivenPostProcessorTest {
 		newPVTypeInfo.setPaused(true);
 		newPVTypeInfo.setChunkKey("LN/AM/RadMon/2/DoseRate/I:");
 		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(newPVName, "UTF-8") + "&createnew=true", encoder.encode(newPVTypeInfo));
+		GetUrlContent.postDataAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(newPVName, "UTF-8") + "&createnew=true", encoder.encode(newPVTypeInfo));
 
 		logger.info("Sample file copied to " + destFile.getAbsolutePath());
 

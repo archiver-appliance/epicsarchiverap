@@ -108,7 +108,7 @@ public class MergeDataFromExternalStoreTest {
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8")
                         + "&override=true&createnew=true",
                 encoder.encode(destPVTypeInfo));

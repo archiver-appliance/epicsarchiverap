@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.mgmt.pauseresume;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,18 +8,17 @@ import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -37,12 +35,6 @@ public class DeleteMultiplePVTest {
             new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
     TomcatSetup tomcatSetup = new TomcatSetup();
     SIOCSetup siocSetup = new SIOCSetup();
-    WebDriver driver;
-
-    @BeforeAll
-    public static void setupClass() {
-        WebDriverManager.firefoxdriver().setup();
-    }
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -61,125 +53,44 @@ public class DeleteMultiplePVTest {
 
         siocSetup.startSIOCWithDefaultDB();
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-        driver = new FirefoxDriver();
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        driver.quit();
         tomcatSetup.tearDown();
         siocSetup.stopSIOC();
     }
 
     @Test
     public void testDeleteMultiplePV() throws Exception {
-        driver.get("http://localhost:17665/mgmt/ui/index.html");
-
+        String[] pvs = { "UnitTestNoNamingConvention:sine", "UnitTestNoNamingConvention:cosine", "test_0", "test_1", "test_2" };
+        List<JSONObject> arSpecs = List.of(pvs).stream().map((x) -> new JSONObject(Map.of("pv", x))).collect(Collectors.toList());
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         logger.info("Archiving 5 PV");
-        WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-        String pvNameToArchive =
-                "UnitTestNoNamingConvention:sine\nUnitTestNoNamingConvention:cosine\ntest_0\ntest_1\ntest_2";
-        pvstextarea.sendKeys(pvNameToArchive);
-        WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-        archiveButton.click();
-        // We have to wait for about 4 minutes here as it does take a while for the workflow to complete.
-        Thread.sleep(4 * 60 * 1000);
-        WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-        checkStatusButton.click();
-        Thread.sleep(2 * 1000);
-        String pvNameObtainedFromTable =
-                driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(1)")).stream()
-                        .map(e -> e.getText())
-                        .collect(Collectors.joining("\n"));
-        Assertions.assertTrue(
-                pvNameToArchive.equals(pvNameObtainedFromTable),
-                "PV Name is not " + pvNameToArchive + "; instead we get " + pvNameObtainedFromTable);
-        String pvArchiveStatusObtainedFromTable =
-                driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(2)")).stream()
-                        .map(e -> e.getText())
-                        .collect(Collectors.joining("\n"));
-        String expectedPVStatus = "Being archived\nBeing archived\nBeing archived\nBeing archived\nBeing archived";
-        Assertions.assertTrue(
-                expectedPVStatus.equals(pvArchiveStatusObtainedFromTable),
-                "Expecting PV archive status to be " + expectedPVStatus + "; instead it is "
-                        + pvArchiveStatusObtainedFromTable);
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
+        for(String pv : pvs) {
+            PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
+        }
 
         logger.info("Pausing 2 PV");
-        pvstextarea = driver.findElement(By.id("archstatpVNames"));
-        String pvNameToPause = "test_0\ntest_1";
-        pvstextarea.clear();
-        pvstextarea.sendKeys(pvNameToPause);
-        WebElement pauseButton = driver.findElement(By.id("pause"));
-        pauseButton.click();
-        Thread.sleep(2 * 1000);
-        checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-        checkStatusButton.click();
-        Thread.sleep(2 * 1000);
-        pvNameObtainedFromTable = driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(1)")).stream()
-                .map(e -> e.getText())
-                .collect(Collectors.joining("\n"));
-        Assertions.assertTrue(
-                pvNameToPause.equals(pvNameObtainedFromTable),
-                "PV Name is not " + pvNameToPause + "; instead we get " + pvNameObtainedFromTable);
-        pvArchiveStatusObtainedFromTable =
-                driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(2)")).stream()
-                        .map(e -> e.getText())
-                        .collect(Collectors.joining("\n"));
-        expectedPVStatus = "Paused\nPaused";
-        Assertions.assertTrue(
-                expectedPVStatus.equals(pvArchiveStatusObtainedFromTable),
-                "Expecting PV archive status to be " + expectedPVStatus + "; instead it is "
-                        + pvArchiveStatusObtainedFromTable);
+        List<String> pvsToDelete = List.of("test_0", "test_1");
+        for(String pv : pvsToDelete) {
+            GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pv), false);
+            Thread.sleep(2 * 1000);
+            PVAccessUtil.waitForStatusChange(pv, "Paused", 10, mgmtURL, 15);
+        }
 
-        logger.info("Deleting 2 PV");
-        pvstextarea = driver.findElement(By.id("archstatpVNames"));
-        String pvNameToDelete = "test_0\ntest_1";
-        pvstextarea.clear();
-        pvstextarea.sendKeys(pvNameToDelete);
-        WebElement deleteButton = driver.findElement(By.id("delete"));
-        deleteButton.click();
-        Thread.sleep(2 * 1000);
-        checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-        checkStatusButton.click();
-        Thread.sleep(2 * 1000);
-        pvNameObtainedFromTable = driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(1)")).stream()
-                .map(e -> e.getText())
-                .collect(Collectors.joining("\n"));
-        Assertions.assertTrue(
-                pvNameToDelete.equals(pvNameObtainedFromTable),
-                "PV Name is not " + pvNameToDelete + "; instead we get " + pvNameObtainedFromTable);
-        pvArchiveStatusObtainedFromTable =
-                driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(2)")).stream()
-                        .map(e -> e.getText())
-                        .collect(Collectors.joining("\n"));
-        expectedPVStatus = "Not being archived\nNot being archived";
-        Assertions.assertTrue(
-                expectedPVStatus.equals(pvArchiveStatusObtainedFromTable),
-                "Expecting PV archive status to be " + expectedPVStatus + "; instead it is "
-                        + pvArchiveStatusObtainedFromTable);
+        for(String pv : pvsToDelete) {
+            GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pv), false);
+            Thread.sleep(2 * 1000);
+            PVAccessUtil.waitForStatusChange(pv, "Not being archived", 10, mgmtURL, 15);
+        }
 
         logger.info("Checking other PV are still there");
-        pvstextarea = driver.findElement(By.id("archstatpVNames"));
-        String pvNameToCheck = "UnitTestNoNamingConvention:sine\nUnitTestNoNamingConvention:cosine\ntest_2";
-        pvstextarea.clear();
-        pvstextarea.sendKeys(pvNameToCheck);
-        checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-        checkStatusButton.click();
-        Thread.sleep(2 * 1000);
-        pvNameObtainedFromTable = driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(1)")).stream()
-                .map(e -> e.getText())
-                .collect(Collectors.joining("\n"));
-        Assertions.assertTrue(
-                pvNameToCheck.equals(pvNameObtainedFromTable),
-                "PV Name is not " + pvNameToCheck + "; instead we get " + pvNameObtainedFromTable);
-        pvArchiveStatusObtainedFromTable =
-                driver.findElements(By.cssSelector("#archstatsdiv_table tr td:nth-child(2)")).stream()
-                        .map(e -> e.getText())
-                        .collect(Collectors.joining("\n"));
-        expectedPVStatus = "Being archived\nBeing archived\nBeing archived";
-        Assertions.assertTrue(
-                expectedPVStatus.equals(pvArchiveStatusObtainedFromTable),
-                "Expecting PV archive status to be " + expectedPVStatus + "; instead it is "
-                        + pvArchiveStatusObtainedFromTable);
+        for(String pv : pvs) {
+            if(!pvsToDelete.contains(pv)) {
+                PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
+            }
+        }
     }
 }

@@ -1,6 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -9,22 +8,20 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
+import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.IOException;
 import java.time.Instant;
-
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Use the firefox driver to test operator's adding a PV to the system.
@@ -38,68 +35,40 @@ public class ArchiveAliasedPVTest {
     private static final String mgmtUrl = "http://localhost:17665/mgmt/bpl/";
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
-
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 
 	@BeforeEach
 	public void setUp() throws Exception {
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 	}
 
 	@Test
 	public void testSimpleArchivePV() throws Exception {
-		 driver.get("http://localhost:17665/mgmt/ui/index.html");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 String pvNameToArchive = "UnitTestNoNamingConvention:sinealias";
-		 pvstextarea.sendKeys(pvNameToArchive);
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 // We have to wait for a few minutes here as it does take a while for the workflow to complete.
-		 // In addition, we are also getting .HIHI etc the monitors for which get established many minutes after the beginning of archiving 
-		 waitForStatusChange(pvNameToArchive, "Being archived", 60, mgmtUrl, 10);
+        String pvNameToArchive = "UnitTestNoNamingConvention:sinealias";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
 
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
-		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		 String pvNameObtainedFromTable = statusPVName.getText();
-		 String expectedPVName = "UnitTestNoNamingConvention:sinealias";
-		 Assertions.assertTrue(expectedPVName.equals(pvNameObtainedFromTable), "Expecting PV name to be " + expectedPVName + "; instead we get " + pvNameObtainedFromTable);
-		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		 String expectedPVStatus = "Being archived";
-		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-
-		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
-		 Thread.sleep(2*1000);
-		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
-		 Thread.sleep(2*1000);
-		 SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
-		 Thread.sleep(2*1000);
-		 logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-		 Thread.sleep(2*60*1000);
-		 
-		 // Test retrieval of data using the real name and the aliased name
-		 testRetrievalCount("UnitTestNoNamingConvention:sine");
-		 testRetrievalCount("UnitTestNoNamingConvention:sinealias");
-		 testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");
-		 testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
-			
-		 
+		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
+		Thread.sleep(2*1000);
+		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
+		Thread.sleep(2*1000);
+		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
+		Thread.sleep(2*1000);
+		logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
+		Thread.sleep(2*60*1000);
+		
+		// Test retrieval of data using the real name and the aliased name
+		testRetrievalCount("UnitTestNoNamingConvention:sine");
+		testRetrievalCount("UnitTestNoNamingConvention:sinealias");
+		testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");
+		testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
 	}
 
 	/**

@@ -103,7 +103,7 @@ public class AppendAndAliasPVTest {
 		newPVTypeInfo.setCreationTime(creationTime);
 		Assertions.assertTrue(newPVTypeInfo.getPvName().equals(pvName), "Expecting PV typeInfo for " + pvName + "; instead it is " + srcPVTypeInfo.getPvName());
 		JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-		GetUrlContent.postObjectAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&createnew=true", encoder.encode(newPVTypeInfo));
+		GetUrlContent.postDataAndGetContentAsJSONObject("http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&createnew=true", encoder.encode(newPVTypeInfo));
 	}
 
     private void generateData(String pvName, Instant startTime, Instant endTime) throws IOException {

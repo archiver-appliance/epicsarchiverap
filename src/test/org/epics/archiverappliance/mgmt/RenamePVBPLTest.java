@@ -1,7 +1,6 @@
 package org.epics.archiverappliance.mgmt;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +13,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
@@ -25,21 +25,17 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.firefox.FirefoxDriver;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Test rename PV with data at the backend.
@@ -52,7 +48,6 @@ public class RenamePVBPLTest {
 	private static Logger logger = LogManager.getLogger(RenamePVBPLTest.class.getName());
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
-	WebDriver driver;
 	private String pvName = "UnitTestNoNamingConvention:inactive1";
 	private short currentYear = TimeUtils.getCurrentYear();
 	private File ltsFolder = new File(System.getenv("ARCHAPPL_LONG_TERM_FOLDER") + "/UnitTestNoNamingConvention");
@@ -60,10 +55,6 @@ public class RenamePVBPLTest {
 	StoragePlugin storageplugin;
 	private ConfigServiceForTests configService;
 
-	@BeforeAll
-	public static void setupClass() {
-		WebDriverManager.firefoxdriver().setup();
-	}
 	@BeforeEach
 	public void setUp() throws Exception {
 		if(ltsFolder.exists()) { 
@@ -77,7 +68,6 @@ public class RenamePVBPLTest {
 		storageplugin = StoragePluginURLParser.parseStoragePlugin("pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR", configService);
 		siocSetup.startSIOCWithDefaultDB();
 		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-		driver = new FirefoxDriver();
 		
 
 		try(BasicContext context = new BasicContext()) {
@@ -99,7 +89,6 @@ public class RenamePVBPLTest {
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		driver.quit();
 		tomcatSetup.tearDown();
 		siocSetup.stopSIOC();
 
@@ -113,66 +102,46 @@ public class RenamePVBPLTest {
 
 	@Test
 	public void testSimpleArchivePV() throws Exception {
-		 driver.get("http://localhost:17665/mgmt/ui/index.html");
-		 WebElement pvstextarea = driver.findElement(By.id("archstatpVNames"));
-		 pvstextarea.sendKeys(pvName);
-		 WebElement archiveButton = driver.findElement(By.id("archstatArchive"));
-		 logger.debug("About to submit");
-		 archiveButton.click();
-		 // We have to wait for a few minutes here here as it does take a while for the workflow to complete.
-		 Thread.sleep(5*60*1000);
-		 WebElement checkStatusButton = driver.findElement(By.id("archstatCheckStatus"));
-		 checkStatusButton.click();
-		 Thread.sleep(2*1000);
-		 WebElement statusPVName = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(1)"));
-		 String pvNameObtainedFromTable = statusPVName.getText();
-		 Assertions.assertTrue(pvName.equals(pvNameObtainedFromTable), "PV Name is not " + pvName + "; instead we get " + pvNameObtainedFromTable);
-		 WebElement statusPVStatus = driver.findElement(By.cssSelector("#archstatsdiv_table tr:nth-child(1) td:nth-child(2)"));
-		 String pvArchiveStatusObtainedFromTable = statusPVStatus.getText();
-		 String expectedPVStatus = "Being archived";
-		 Assertions.assertTrue(expectedPVStatus.equals(pvArchiveStatusObtainedFromTable), "Expecting PV archive status to be " + expectedPVStatus + "; instead it is " + pvArchiveStatusObtainedFromTable);
-		 Thread.sleep(1*60*1000);
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvName)))));
+        PVAccessUtil.waitForStatusChange(pvName, "Being archived", 10, mgmtURL, 15);		 
+		// We have now archived this PV, get some data and validate we got the expected number of events
+		long beforeRenameCount = checkRetrieval(pvName, 3*365*86400);
+		logger.info("Before renaming, we had this many events from retrieval" +  beforeRenameCount);
+		Assertions.assertTrue(beforeRenameCount > 0, "We should see at least a few event before renaming the PV");
 		 
-		 // We have now archived this PV, get some data and validate we got the expected number of events
-		 long beforeRenameCount = checkRetrieval(pvName, 3*365*86400);
-		 logger.info("Before renaming, we had this many events from retrieval" +  beforeRenameCount);
-		 Assertions.assertTrue(beforeRenameCount > 0, "We should see at least a few event before renaming the PV");
-		 
-		 // Let's pause the PV.
-		 String pausePVURL = "http://localhost:17665/mgmt/bpl/pauseArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
-		 JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
-		 Assertions.assertTrue(pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Cannot pause PV");
-		 Thread.sleep(5000);
-		 logger.info("Successfully paused the PV " + pvName);
+		// Let's pause the PV.
+        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pvName), false);
+        Thread.sleep(2 * 1000);
+        PVAccessUtil.waitForStatusChange(pvName, "Paused", 10, mgmtURL, 15);
+		logger.info("Successfully paused the PV " + pvName);
 
-		 // Let's rename the PV.
-		 String newPVName = "NewName_" + pvName;
-		 String renamePVURL = "http://localhost:17665/mgmt/bpl/renamePV?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&newname=" + URLEncoder.encode(newPVName, "UTF-8");
-		 JSONObject renameStatus = GetUrlContent.getURLContentAsJSONObject(renamePVURL);
-		 Assertions.assertTrue(renameStatus.containsKey("status") && renameStatus.get("status").equals("ok"), "Cannot rename PV");
-		 Thread.sleep(5000);
+		// Let's rename the PV.
+		String newPVName = "NewName_" + pvName;
+        JSONObject renameStatus = GetUrlContent.getURLContentWithQueryParametersAsJSONObject(mgmtURL + "renamePV", Map.of("pv", pvName, "newname", newPVName), false);
+		Assertions.assertTrue(renameStatus.containsKey("status") && renameStatus.get("status").equals("ok"), "Cannot rename PV");
+        Thread.sleep(2 * 1000);
 
-		 long afterRenameCount = checkRetrieval(newPVName, 3*365*86400);
-		 logger.info("After renaming, we had this many events from retrieval" +  beforeRenameCount);
-		 // The  Math.abs(beforeRenameCount-afterRenameCount) < 2 is to cater to the engine not sending data after rename as the PV is still paused.
-		 Assertions.assertTrue(Math.abs(beforeRenameCount-afterRenameCount) < 2, "Different event counts before and after renaming. Before " + beforeRenameCount + " and after " + afterRenameCount);
+		long afterRenameCount = checkRetrieval(newPVName, 3*365*86400);
+		logger.info("After renaming, we had this many events from retrieval" +  beforeRenameCount);
+		// The  Math.abs(beforeRenameCount-afterRenameCount) < 2 is to cater to the engine not sending data after rename as the PV is still paused.
+		Assertions.assertTrue(Math.abs(beforeRenameCount-afterRenameCount) < 2, "Different event counts before and after renaming. Before " + beforeRenameCount + " and after " + afterRenameCount);
 
-		 // Make sure the old PV still exists
-		 long afterRenameOldPVCount = checkRetrieval(pvName, 3*365*86400);
-		 Assertions.assertTrue(Math.abs(beforeRenameCount-afterRenameOldPVCount) < 2, "After the rename, we were still expecting data for the old PV " + afterRenameOldPVCount);
+		// Make sure the old PV still exists
+		long afterRenameOldPVCount = checkRetrieval(pvName, 3*365*86400);
+		Assertions.assertTrue(Math.abs(beforeRenameCount-afterRenameOldPVCount) < 2, "After the rename, we were still expecting data for the old PV " + afterRenameOldPVCount);
 		 
-		 // Delete the old PV
-		 String deletePVURL = "http://localhost:17665/mgmt/bpl/deletePV?pv=" + URLEncoder.encode(pvName, "UTF-8") + "&deleteData=true";
-		 JSONObject deletePVtatus = GetUrlContent.getURLContentAsJSONObject(deletePVURL);
-		 Assertions.assertTrue(deletePVtatus.containsKey("status") && deletePVtatus.get("status").equals("ok"), "Cannot delete old PV");
-		 logger.info("Done with deleting the old PV....." + pvName);
-		 Thread.sleep(30000);
-		 
+		// Delete the old PV
+        JSONObject deletePVtatus = GetUrlContent.getURLContentWithQueryParametersAsJSONObject(mgmtURL + "deletePV", Map.of("pv", pvName, "deleteData", "true"), false);
+		Assertions.assertTrue(deletePVtatus.containsKey("status") && deletePVtatus.get("status").equals("ok"), "Cannot delete old PV");
+		Thread.sleep(2 * 1000);
+        PVAccessUtil.waitForStatusChange(pvName, "Not being archived", 10, mgmtURL, 15);
+		logger.info("Done with deleting the old PV....." + pvName);
+
 		 // Let's rename the PV back to its original name
-		 String renamePVBackURL = "http://localhost:17665/mgmt/bpl/renamePV?pv=" + URLEncoder.encode(newPVName, "UTF-8") + "&newname=" + URLEncoder.encode(pvName, "UTF-8");
-		 JSONObject renameBackStatus = GetUrlContent.getURLContentAsJSONObject(renamePVBackURL);
-		 Assertions.assertTrue(renameBackStatus.containsKey("status") && renameBackStatus.get("status").equals("ok"), "Cannot rename PV");
-		 Thread.sleep(5000);
+        JSONObject renameBackStatus = GetUrlContent.getURLContentWithQueryParametersAsJSONObject(mgmtURL + "renamePV", Map.of("pv", newPVName, "newname", pvName), false);
+		Assertions.assertTrue(renameBackStatus.containsKey("status") && renameBackStatus.get("status").equals("ok"), "Cannot rename PV");
+		Thread.sleep(5000);
 
 		 long afterRenamingBackCount = checkRetrieval(pvName, 3*365*86400);
 		 logger.info("After renaming back to original, we had this many events from retrieval" +  afterRenamingBackCount);

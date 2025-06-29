@@ -108,7 +108,7 @@ public class FailoverRetrievalTest {
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 applURL + "/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8")
                         + "&override=true&createnew=true",
                 encoder.encode(destPVTypeInfo));
@@ -165,7 +165,7 @@ public class FailoverRetrievalTest {
                 + "&other=" + URLEncoder.encode(otherURL, "UTF-8");
         logger.info("Data store is " + destPVTypeInfo.getDataStores()[1]);
 
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8")
                         + "&override=true&createnew=true",
                 encoder.encode(destPVTypeInfo));
