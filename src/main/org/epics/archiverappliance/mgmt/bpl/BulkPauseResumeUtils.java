@@ -77,7 +77,7 @@ public class BulkPauseResumeUtils {
                         logger.error(pvPauseResumeStatus.get("validation"));
                         pvPauseResumeStatus.put("validation", "PV " + pvName + " is not paused");
                     } else {
-                        logger.debug("Changing the typeinfo for pause/resume for PV {} tp {}", pvName, this.askingToPausePV);
+                        logger.debug("Setting the paused status in the typeinfo for PV {} to {}", pvName, this.askingToPausePV);
                         typeInfo.setPaused(askingToPausePV);
                         typeInfo.setModificationTime(TimeUtils.now());
                         configService.updateTypeInfoForPV(pvName, typeInfo);

@@ -94,6 +94,7 @@ public class FailoverRetrievalTest {
             plugin.appendData(context, pvName, strm);
         }
         logger.info("Done generating dest data");
+        Thread.sleep(10*1000);
 
         JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File(
                 "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
