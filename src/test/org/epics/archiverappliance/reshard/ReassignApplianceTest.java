@@ -121,7 +121,7 @@ public class ReassignApplianceTest {
 		};
 		typeInfo.setDataStores(dataStores);
 	
-        GetUrlContent.postObjectAndGetContentAsJSONObject(
+        GetUrlContent.postDataAndGetContentAsJSONObject(
                 MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                         + "&override=false&createnew=true",
                 encoder.encode(typeInfo));
