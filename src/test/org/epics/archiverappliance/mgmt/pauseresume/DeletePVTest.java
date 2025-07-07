@@ -65,6 +65,8 @@ public class DeletePVTest {
         String pvNameToArchive = "UnitTestNoNamingConvention:sine";
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        // Need this delay to make sure the typeinfo is stable in the cluster
+        Thread.sleep(90 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
         logger.info("We are now archiving the PV; let's go into the details page; pause and delete");
 

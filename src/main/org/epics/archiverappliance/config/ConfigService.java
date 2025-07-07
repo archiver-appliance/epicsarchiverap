@@ -9,6 +9,7 @@ package org.epics.archiverappliance.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.epics.archiverappliance.retrieval.RetrievalState;
 import com.google.common.eventbus.EventBus;
 
 import com.hazelcast.projection.Projection;
+import com.hazelcast.query.Predicate;
 
 
 /**
@@ -245,7 +247,7 @@ public interface ConfigService {
 	 * @param info ApplianceInfo
 	 * @return string All PVs being archiveed by this appliance
 	 */
-	public Iterable<String> getPVsForAppliance(ApplianceInfo info);
+	public Set<String> getPVsForAppliance(ApplianceInfo info);
 	
 	
 	/**
@@ -256,22 +258,47 @@ public interface ConfigService {
 	public Set<String> getPVsForThisAppliance();
 
 	/**
-	 * Project the pvTypeInfo's for the given PV's using the given projection operator
+	 * Query this cluster's pvTypeInfos using the supplied the predicate and then run the supplied projection operator.
 	 * This runs using Hz's query functions and can be run from any war file
 	 * For example, to quickly determine the appliances for a bunch of PV's, project the applianceIdentity and then do a stream groupby.
 	 * @return
 	 */
-	public <T> Collection<T> projectPVTypeInfos(Set<String> pvNames, Projection<Map.Entry<String, PVTypeInfo>, T> projection);
-	
-	/**
-	 * Is this PV archived on this appliance.
-	 * This method also checks aliases and fields.
-	 * @param pvName The name of PV.
-	 * @return boolean True or False
-	 */
-	public boolean isBeingArchivedOnThisAppliance(String pvName);
-	
+	public <T> Collection<T> queryPVTypeInfos(Predicate<String, PVTypeInfo> predicate, Projection<Map.Entry<String, PVTypeInfo>, T> projection);
 
+	/**
+	 * Prepare for batch jobs by breaking down a list of PV's into a Map that maps appliance identity to a list of PV's being archived on that appliance.
+	 * @return
+	 */
+	public Map<String, List<String>> breakDownPVsByAppliance(List<String> pvNames);
+
+	/*
+	 * Like a callable but for bulk operations within the EAA cluster.
+	 * The EAABulkOperation is serialized and send to all ( active ) mgmt members in the cluster using the Hz Executor service. 
+	 * 
+	 */
+	public interface EAABulkOperation<T> extends Serializable {
+        public T call(ConfigService configService);
+    }
+
+	/*
+	 * Execute the specified EAABulkOperation on all active members in the cluster. 
+	 * Gather the results into a hashmap indexed by appliance identity.
+	 * In a typical usecase, we first breakdown a list of PVs into a per appliance Map ( String -> List<String> ) using breakDownPVsByAppliance.
+	 * We send this entire Map to all the active members in the cluster.
+	 * The operation can then use the appliance identity from the configservice to determine which subset of PVs are applicable
+	 * to this instance and perform the appropriate operation on this subset.
+	 * The results are returned in a Map ( Appliance Identity -> Result ) and callee is then expected to merge the results appropriately
+	 * This is mainly intended for quick turn around operations that change state ( like changing the pause/resume status for example )
+	 * One can easily overload the HZ executor so maybe we should not use it for bulk renaming/resharding or any other operation that take a significant amount of time.
+	 * But small changes to PVTypeInfo's in bulk are the intended usecase.
+	 */
+	public <T> Map<String, T> executeClusterWide(EAABulkOperation<T> theOperation);
+
+	/*
+	 * Same as above but only on specified appliance.
+	 */
+	public <T> T executeOnAppliance(ApplianceInfo applianceInfo, EAABulkOperation<T> theOperation);
+	
 	/**
 	 * Get the pvNames for this appliance matching the given regex.
 	 * @param nameToMatch  &emsp;

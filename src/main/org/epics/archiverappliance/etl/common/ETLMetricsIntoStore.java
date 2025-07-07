@@ -13,13 +13,13 @@ import org.epics.archiverappliance.etl.StorageMetricsContext;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 
 /**
- * ETL metrics for the appliance as a whole for one lifetime
+ * ETL metrics for the appliance as a whole into one destination
  * @author mshankar
  *
  */
-public class ETLMetricsForLifetime implements StorageMetricsContext {
-	private static Logger logger = LogManager.getLogger(ETLMetricsForLifetime.class.getName());
-	int lifeTimeId;
+public class ETLMetricsIntoStore implements StorageMetricsContext {
+	private static Logger logger = LogManager.getLogger(ETLMetricsIntoStore.class.getName());
+	private final String destName;
 	long totalETLRuns;
 	long timeForOverallETLInMilliSeconds;
 	
@@ -39,18 +39,13 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 	private long[] weeklyETLUsageInMillis = new long[7];
 
 	private HashMap<String, FileStore> storageMetricsFileStores = new HashMap<String, FileStore>();
-	
-	
-	public ETLMetricsForLifetime(int lifeTimeId) { 
-		this.lifeTimeId = lifeTimeId;
+		
+	public ETLMetricsIntoStore(String destName) { 
+		this.destName = destName;
 		this.startOfMetricsMeasurementInEpochSeconds = TimeUtils.getCurrentEpochSeconds();
 		for(int i = 0; i < 7; i++) { 
 			weeklyETLUsageInMillis[i] = -1;
 		}
-	}
-
-	public int getLifeTimeId() {
-		return lifeTimeId;
 	}
 
 	public long getTotalETLRuns() {
@@ -116,7 +111,7 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 			// What this means is that this number is more accurate if the time between one global ETL job and the next is at least this interval.
 			// Otherwise this tends to accumulate times from multiple jobs.
 			if((epochSeconds - lastTimeGlobalETLTimeWasUpdatedInEpochSeconds) > 15*60) { 
-				logger.debug("Resetting approximateLastGlobalETLTimeInMillis for updated for " + this.lifeTimeId);
+				logger.debug("Resetting approximateLastGlobalETLTimeInMillis for updated for " + this.destName);
 				approximateLastGlobalETLTimeInMillis = 0;
 			}
 			lastTimeGlobalETLTimeWasUpdatedInEpochSeconds = epochSeconds;
@@ -187,5 +182,10 @@ public class ETLMetricsForLifetime implements StorageMetricsContext {
 			logger.debug("Filestore for rootFolder " + rootFolder + " is already in ETLMetricsForLifetime cache");
 		}
 		return fileStore;
+	}
+
+	@Override
+	public String toString() {
+		return this.destName;
 	}
 }

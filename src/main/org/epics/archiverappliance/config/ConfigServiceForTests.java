@@ -9,6 +9,9 @@ import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
 
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,9 +19,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import javax.servlet.ServletContext;
 
@@ -92,17 +93,19 @@ public class ConfigServiceForTests extends DefaultConfigService {
     public ConfigServiceForTests(File WebInfClassesFolder, int jcaCommandThreadCount) throws ConfigException {
         this.webInfClassesFolder = WebInfClassesFolder;
         configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
+
+        HazelcastInstance hzinstance = Hazelcast.newHazelcastInstance();
+        pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
+        namedFlags = hzinstance.getMap("namedflags");
+        typeInfos = hzinstance.getMap(TYPEINFO);
+        archivePVRequests = hzinstance.getMap("archivePVRequests");
+        channelArchiverDataServers = hzinstance.getMap("channelArchiverDataServers");
+        clusterInet2ApplianceIdentity = hzinstance.getMap(CLUSTER_INET_2_APPLIANCE_IDENTITY);
+        appliancesConfigLoaded = hzinstance.getMap("appliancesConfigLoaded");
+        aliasNamesToRealNames = hzinstance.getMap("aliasNamesToRealNames");
+        pv2ChannelArchiverDataServer = hzinstance.getMap("pv2ChannelArchiverDataServer");
+
         appliances = new HashMap<String, ApplianceInfo>();
-        pv2appliancemapping = new ConcurrentHashMap<String, ApplianceInfo>();
-        namedFlags = new ConcurrentHashMap<String, Boolean>();
-        typeInfos = new ConcurrentHashMap<String, PVTypeInfo>();
-        archivePVRequests = new ConcurrentHashMap<String, UserSpecifiedSamplingParams>();
-        aliasNamesToRealNames = new ConcurrentHashMap<String, String>();
-        channelArchiverDataServers = new ConcurrentHashMap<String, String>();
-        pvsForThisAppliance = new ConcurrentSkipListSet<String>();
-        pausedPVsForThisAppliance = new ConcurrentSkipListSet<String>();
-        pv2ChannelArchiverDataServer = new ConcurrentHashMap<String, List<ChannelArchiverDataServerPVInfo>>();
-        appliancesConfigLoaded = new ConcurrentHashMap<String, Boolean>();
 
         myApplianceInfo = new ApplianceInfo(
                 TESTAPPLIANCE0, MGMT_URL, ENGINE_URL, RETRIEVAL_URL, ETL_URL, "localhost:16670", DATA_RETRIEVAL_URL);
@@ -214,10 +217,21 @@ public class ConfigServiceForTests extends DefaultConfigService {
      */
     @Override
     public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
+        // When we register a PV to an appliance in the unit tests, we often forget to set the appliance identity
+        PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
+        if(typeInfo != null) {
+            if(typeInfo.getApplianceIdentity() == null || !typeInfo.getApplianceIdentity().equals(applianceInfo.getIdentity())) {
+                typeInfo.setApplianceIdentity(applianceInfo.getIdentity());
+                typeInfos.put(pvName, typeInfo);
+            }
+        }
         super.registerPVToAppliance(pvName, applianceInfo);
+        Set<String> queryResult = this.getPVsForAppliance(applianceInfo);
+        if(!queryResult.contains(pvName)) {
+            throw new RuntimeException("After registering PV " + pvName + ", getPVsForAppliance does not contains this PV");
+        }
         if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
             logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");
-            this.pvsForThisAppliance.add(pvName);
             if (this.getETLLookup() != null) {
                 this.getETLLookup().addETLJobsForUnitTests(pvName, this.getTypeInfoForPV(pvName));
             }

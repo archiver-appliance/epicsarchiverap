@@ -245,9 +245,9 @@ public class ArchivePVState {
                     applianceIdentityAfterCapacityPlanning = applianceInfoForPV.getIdentity();
 
                     try {
-                        configService.registerPVToAppliance(pvName, applianceInfoForPV);
                         typeInfo.setApplianceIdentity(applianceIdentityAfterCapacityPlanning);
                         configService.updateTypeInfoForPV(pvName, typeInfo);
+                        configService.registerPVToAppliance(pvName, applianceInfoForPV);
                         currentState = ArchivePVStateMachine.POLICY_COMPUTED;
                     } catch (AlreadyRegisteredException ex) {
                         logger.error("PV " + pvName + " is already registered. Aborting this request");
