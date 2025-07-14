@@ -95,6 +95,7 @@ public class FailoverETLTest {
 		logger.info("Added " + pvName + " to the appliance " + applianceName);
 
 		int genEventCount = generateData(applianceName, lastMonth, startingOffset);
+		Thread.sleep(10*1000);
 
 
 		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");

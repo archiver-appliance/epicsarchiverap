@@ -322,7 +322,6 @@ public class ArchiveEngine {
 			channel.shutdownMetaChannels();
 			channel.stop();
 			channel.setPaused(true);
-			engineContext.incrementPausedPVCount();
 			destoryPv(pvName, configservice);
 		}
 	}
@@ -352,7 +351,6 @@ public class ArchiveEngine {
 			logger.debug("We had not created the channel on startup. Creating it " + pvName);
 			startChannelsForPV(pvName, configservice);
 		}
-		engineContext.decrementPausedPVCount();
 	}
 
 

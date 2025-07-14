@@ -8,7 +8,7 @@
 package org.epics.archiverappliance.etl.bpl.reports;
 
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.etl.common.ETLDetails;
+import org.epics.archiverappliance.etl.common.ETLStageDetails;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -22,7 +22,7 @@ public class PVDetails implements org.epics.archiverappliance.common.reports.PVD
 
     @Override
     public LinkedList<Map<String, String>> pvDetails(ConfigService configService, String pvName) throws Exception {
-        ETLDetails details = new ETLDetails(pvName);
+        ETLStageDetails details = new ETLStageDetails(pvName);
         return details.details(configService);
     }
 }

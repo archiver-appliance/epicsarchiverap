@@ -16,52 +16,33 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * We schedule a ETLPVLookupItems with the appropriate thread using an ETLJob
+ * An ETLJob does the actual work of moving data from one data source to another.
+ * This is a runnable, we expect to execute this on some executor.
  * @author mshankar
  *
  */
 public class ETLJob implements Runnable {
     private static final Logger logger = LogManager.getLogger(ETLJob.class.getName());
-    private final ETLPVLookupItems lookupItem;
-    private boolean currentlyRunning = false;
-    private long ETLRunStartEpochSeconds = 0;
-    private Instant runAsIfAtTime = null;
-    private Exception exceptionFromLastRun = null;
-
-    public ETLJob(ETLPVLookupItems lookupItem) {
-        this.lookupItem = lookupItem;
-        this.runAsIfAtTime = null;
-    }
+    private final ETLStage etlStage;
+    private final Instant runAsIfAtTime;
 
     /**
-     * Mostly used by ETL unit tests.
      *
      * @param lookupItem    ETLPVLookupItems
      * @param runAsIfAtTime Instant
      */
-    public ETLJob(ETLPVLookupItems lookupItem, Instant runAsIfAtTime) {
-        this.lookupItem = lookupItem;
+    public ETLJob(ETLStage etlStage, Instant runAsIfAtTime) {
+        this.etlStage = etlStage;
         this.runAsIfAtTime = runAsIfAtTime;
     }
 
     @Override
     public void run() {
         try {
-            exceptionFromLastRun = null;
-            if (this.runAsIfAtTime == null) {
-                // We run ETL as if it were 10% of src partition seconds ago to give the previous lifetime time to
-                // finish.
-                long padding = Math.round(
-                        this.lookupItem.getETLSource().getPartitionGranularity().getApproxSecondsPerChunk() * 0.1);
-                Instant processingTime =
-                        TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() - padding, 0);
-                this.processETL(processingTime);
-            } else {
-                this.processETL(runAsIfAtTime);
-            }
+            this.processETL(runAsIfAtTime);
         } catch (Exception e) {
-            logger.error("Exception processing ETL for " + lookupItem.toString(), e);
-            exceptionFromLastRun = e;
+            logger.error("Exception processing ETL for " + etlStage.toString(), e);
+            this.etlStage.setExceptionFromLastRun(e);
         }
     }
 
@@ -73,16 +54,30 @@ public class ETLJob implements Runnable {
      * @throws IOException &emsp;
      */
     public void processETL(Instant processingTime) throws IOException {
-        String pvName = lookupItem.getPvName();
-        String jobDesc = lookupItem.toString();
-        if (currentlyRunning) {
+        String pvName = etlStage.getPvName();
+        String jobDesc = etlStage.toString();
+        if (this.etlStage.isCurrentlyRunning()) {
             logger.error("The previous ETL job (" + jobDesc + ") that began at "
-                    + ((ETLRunStartEpochSeconds != 0)
-                            ? TimeUtils.convertToHumanReadableString(ETLRunStartEpochSeconds)
-                            : "Unknown")
+                    + TimeUtils.convertToHumanReadableString(this.etlStage.getLastETLStart())
                     + " is still running");
             return;
         }
+
+        if(PBThreeTierETLPVLookup.isRunningInsideUnitTests) {
+            // Skip the check for times...
+        } else {
+            if(processingTime.isBefore(this.etlStage.getNextETLStart())) {
+                logger.debug("Too early {} to trigger this stage for PV {} from {} to {}. Next job at {}",
+                    TimeUtils.convertToHumanReadableString(processingTime),
+                    etlStage.getPvName(),
+                    etlStage.getETLSource().getName(),
+                    etlStage.getETLDest().getName(),
+                    TimeUtils.convertToHumanReadableString(this.etlStage.getNextETLStart())                
+                );
+                return;
+            }    
+        }
+
 
         long time4getETLStreams = 0;
         long time4checkSizes = 0;
@@ -95,20 +90,19 @@ public class ETLJob implements Runnable {
 
         // We create a brand new context for each run.
         try (ETLContext etlContext = new ETLContext()) {
-            currentlyRunning = true;
-            ETLRunStartEpochSeconds = TimeUtils.getCurrentEpochSeconds();
+            this.etlStage.beginRunning();
 
             long pvETLStartEpochMilliSeconds = TimeUtils.getCurrentEpochMilliSeconds();
 
             if (logger.isDebugEnabled()) {
-                logger.debug("Processing ETL for pv " + lookupItem.getPvName() + " from "
-                        + lookupItem.getETLSource().getDescription()
-                        + lookupItem.getETLDest().getDescription() + " as if it is "
+                logger.debug("Processing ETL for pv " + etlStage.getPvName() + " from "
+                        + etlStage.getETLSource().getDescription()
+                        + etlStage.getETLDest().getDescription() + " as if it is "
                         + TimeUtils.convertToHumanReadableString(processingTime));
             }
 
-            ETLSource curETLSource = lookupItem.getETLSource();
-            ETLDest curETLDest = lookupItem.getETLDest();
+            ETLSource curETLSource = etlStage.getETLSource();
+            ETLDest curETLDest = etlStage.getETLDest();
             assert (curETLSource != null);
             assert (curETLDest != null);
 
@@ -138,7 +132,7 @@ public class ETLJob implements Runnable {
                     long sizeOfSrcStream = infoItem.getSize();
                     totalSrcBytes += sizeOfSrcStream;
                     if (sizeOfSrcStream > 0 && destMetrics != null) {
-                        long freeSpace = destMetrics.getUsableSpace(lookupItem.getMetricsForLifetime());
+                        long freeSpace = destMetrics.getUsableSpace(etlStage.getMetricsForLifetime());
                         long freeSpaceBuffer = 1024 * 1024;
                         // We leave space for at lease freeSpaceBuffer in the dest so that you can login and have some
                         // room to repair damage coming in from an out of space condition.
@@ -148,21 +142,21 @@ public class ETLJob implements Runnable {
                                     + " for PV " + pvName + "itemInfo partitionGranularity = "
                                     + infoItem.getGranularity().toString() + " as we estimate we need "
                                     + estimatedSpaceNeeded + " bytes but we only have " + freeSpace);
-                            OutOfSpaceHandling outOfSpaceHandling = this.lookupItem.getOutOfSpaceHandling();
+                            OutOfSpaceHandling outOfSpaceHandling = this.etlStage.getOutOfSpaceHandling();
                             if (outOfSpaceHandling == OutOfSpaceHandling.DELETE_SRC_STREAMS_WHEN_OUT_OF_SPACE) {
                                 logger.error("Not enough space on dest. Deleting src stream " + infoItem.getKey());
                                 movedList.add(infoItem);
-                                lookupItem.outOfSpaceChunkDeleted();
+                                etlStage.outOfSpaceChunkDeleted();
                                 continue;
                             } else if (outOfSpaceHandling == OutOfSpaceHandling.SKIP_ETL_WHEN_OUT_OF_SPACE) {
                                 logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
                                 break;
                             } else {
                                 // By default, we use the DELETE_SRC_STREAMS_IF_FIRST_DEST_WHEN_OUT_OF_SPACE...
-                                if (lookupItem.getLifetimeorder() == 0) {
+                                if (etlStage.getLifetimeorder() == 0) {
                                     logger.error("Not enough space on dest. Deleting src stream " + infoItem.getKey());
                                     movedList.add(infoItem);
-                                    lookupItem.outOfSpaceChunkDeleted();
+                                    etlStage.outOfSpaceChunkDeleted();
                                     continue;
                                 } else {
                                     logger.warn("Not enough space on dest. Skipping ETL this time for pv " + pvName);
@@ -234,7 +228,7 @@ public class ETLJob implements Runnable {
 
                 try {
                     long time5 = System.currentTimeMillis();
-                    curETLDest.runPostProcessors(pvName, lookupItem.getDbrType(), etlContext);
+                    curETLDest.runPostProcessors(pvName, etlStage.getDbrType(), etlContext);
                     time4runPostProcessors = time4runPostProcessors + System.currentTimeMillis() - time5;
                 } catch (Exception e) {
                     logger.error("Exception running post processors for pv " + pvName, e);
@@ -246,8 +240,8 @@ public class ETLJob implements Runnable {
                 logger.debug("Done executing post ETL tasks for this run");
 
                 long pvETLEndEpochMilliSeconds = TimeUtils.getCurrentEpochMilliSeconds();
-                lookupItem.addETLDurationInMillis(pvETLStartEpochMilliSeconds, pvETLEndEpochMilliSeconds);
-                lookupItem.addInfoAboutDetailedTime(
+                etlStage.addETLDurationInMillis(pvETLStartEpochMilliSeconds, pvETLEndEpochMilliSeconds);
+                etlStage.addInfoAboutDetailedTime(
                         time4getETLStreams,
                         time4checkSizes,
                         time4prepareForNewPartition,
@@ -261,18 +255,10 @@ public class ETLJob implements Runnable {
                 logger.debug("There were no ETL streams when running ETL for " + jobDesc);
             }
         } catch (IOException ex) {
-            logger.error("IOException processing ETL for pv " + lookupItem.getPvName(), ex);
+            logger.error("IOException processing ETL for pv " + etlStage.getPvName(), ex);
+            // Maybe we should throw this exception here?
         } finally {
-            currentlyRunning = false;
+            this.etlStage.doneRunning();
         }
-    }
-
-    /**
-     * Was there an exception in the last ETL run for this job Mostly used by unit tests.
-     *
-     * @return exceptionFromLastRun  &emsp;
-     */
-    public Exception getExceptionFromLastRun() {
-        return exceptionFromLastRun;
     }
 }

@@ -27,6 +27,11 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+import org.awaitility.Awaitility;
+
 
 /**
  * Test data retrieval with aliasing and clustering.
@@ -39,6 +44,7 @@ import java.util.Map;
 public class ClusterAliasTest {
 	private static final Logger logger = LogManager.getLogger(ClusterAliasTest.class.getName());
 	File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ClusterAliasTest");
+    private static final String mgmtUrl = "http://localhost:17665/mgmt/bpl/";
 	TomcatSetup tomcatSetup = new TomcatSetup();
 	SIOCSetup siocSetup = new SIOCSetup();
 
@@ -112,7 +118,7 @@ public class ClusterAliasTest {
 	
 	
 	private void testRetrievalCountOnServer(String pvName, String serverRetrievalURL) throws IOException { 
-		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(serverRetrievalURL);
+		RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(serverRetrievalURL);
         Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
         Instant start = TimeUtils.minusDays(end, 6);
 		 try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
@@ -134,4 +140,16 @@ public class ClusterAliasTest {
 		 }
 	}
 
+	@SuppressWarnings("unchecked")
+	private int getConectedMetaChannelCount(String pvName) { 
+		List<Map<String, String>> pvDetails =  (List<Map<String, String>>) GetUrlContent.getURLContentAsJSONArray(mgmtUrl + "/getPVDetails?pv=" + pvName);
+		for(Map<String, String> pvDetail : pvDetails) {
+			String name = pvDetail.getOrDefault("name", "");
+			if(name.equals("Connected channels for the extra fields")) {
+				String val = pvDetail.getOrDefault("value", "0");
+				return Integer.parseInt(val);
+			}
+		}
+		return 0;
+	}
 }

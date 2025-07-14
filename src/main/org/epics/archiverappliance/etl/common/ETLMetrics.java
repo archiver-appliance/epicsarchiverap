@@ -6,19 +6,23 @@ import org.epics.archiverappliance.config.ConfigService;
 
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 public class ETLMetrics implements Details {
-    private final List<ETLMetricsForLifetime> etlMetricsForLifetimeList = new LinkedList<ETLMetricsForLifetime>();
+    private final LinkedHashMap<String, ETLMetricsIntoStore> etlMetricsIntoStores = new LinkedHashMap<String, ETLMetricsIntoStore>();
 
-    public void add(int lifetimeID) {
-        etlMetricsForLifetimeList.add(new ETLMetricsForLifetime(lifetimeID));
+    public void createMetricIfNoExists(String destName) {
+        synchronized(etlMetricsIntoStores) {
+            if(!etlMetricsIntoStores.containsKey(destName)) {
+                etlMetricsIntoStores.put(destName, new ETLMetricsIntoStore(destName));
+            }            
+        }
     }
 
-    public ETLMetricsForLifetime get(int lifetimeID) {
-        return etlMetricsForLifetimeList.get(lifetimeID);
+    public ETLMetricsIntoStore get(String destName) {
+        return etlMetricsIntoStores.get(destName);
     }
 
     public Map<String, String> metrics() {
@@ -26,16 +30,16 @@ public class ETLMetrics implements Details {
 
         double maxETLPercentage = 0.0;
         long currentEpochSeconds = TimeUtils.getCurrentEpochSeconds();
-        for (ETLMetricsForLifetime metricForLifetime : etlMetricsForLifetimeList) {
-            double etlPercentage = (double) ((metricForLifetime.getTimeForOverallETLInMilliSeconds() / 1000) * 100)
-                    / (currentEpochSeconds - metricForLifetime.getStartOfMetricsMeasurementInEpochSeconds());
+        for (ETLMetricsIntoStore etlMetricsIntoStore : etlMetricsIntoStores.values()) {
+            double etlPercentage = (double) ((etlMetricsIntoStore.getTimeForOverallETLInMilliSeconds() / 1000) * 100)
+                    / (currentEpochSeconds - etlMetricsIntoStore.getStartOfMetricsMeasurementInEpochSeconds());
             maxETLPercentage = Math.max(etlPercentage, maxETLPercentage);
             metrics.put(
-                    "totalETLRuns(" + metricForLifetime.getLifeTimeId() + ")",
-                    Long.toString(metricForLifetime.getTotalETLRuns()));
+                    "totalETLRuns(" + etlMetricsIntoStore.toString() + ")",
+                    Long.toString(etlMetricsIntoStore.getTotalETLRuns()));
             metrics.put(
-                    "timeForOverallETLInSeconds(" + metricForLifetime.getLifeTimeId() + ")",
-                    Long.toString(metricForLifetime.getTimeForOverallETLInMilliSeconds() / 1000));
+                    "timeForOverallETLInSeconds(" + etlMetricsIntoStore.toString() + ")",
+                    Long.toString(etlMetricsIntoStore.getTimeForOverallETLInMilliSeconds() / 1000));
         }
         DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
         metrics.put("maxETLPercentage", twoSignificantDigits.format(maxETLPercentage));
@@ -46,65 +50,63 @@ public class ETLMetrics implements Details {
     public LinkedList<Map<String, String>> details(ConfigService configService) {
         DecimalFormat twoSignificantDigits = new DecimalFormat("###,###,###,###,###,###.##");
         LinkedList<Map<String, String>> details = new LinkedList<Map<String, String>>();
-        List<ETLMetricsForLifetime> metricsForLifetime = etlMetricsForLifetimeList;
-        if (metricsForLifetime.isEmpty()) {
+        if (etlMetricsIntoStores.isEmpty()) {
             details.add(metricDetail("Startup", "In Progress"));
         } else {
-            for (ETLMetricsForLifetime metricForLifetime : metricsForLifetime) {
-                String lifetimeIdentifier =
-                        metricForLifetime.getLifeTimeId() + "&raquo;" + (metricForLifetime.getLifeTimeId() + 1);
-                long totalRunsNum = metricForLifetime.getTotalETLRuns();
+            for (ETLMetricsIntoStore etlMetricsIntoStore : etlMetricsIntoStores.values()) {
+                String destIdentifier = etlMetricsIntoStore.toString();
+                long totalRunsNum = etlMetricsIntoStore.getTotalETLRuns();
                 RunsFormatter runsFormatter = new RunsFormatter(twoSignificantDigits, totalRunsNum);
                 if (totalRunsNum != 0) {
-                    long timeForOverallETLInMillis = metricForLifetime.getTimeForOverallETLInMilliSeconds();
+                    long timeForOverallETLInMillis = etlMetricsIntoStore.getTimeForOverallETLInMilliSeconds();
                     details.add(metricDetail(
-                            "Total number of ETL(" + lifetimeIdentifier + ") runs so far",
+                            "<b>Total number of ETL runs into " + destIdentifier + " so far</b>",
                             Long.toString(totalRunsNum)));
                     double avgETLTimeInSeconds = ((double) timeForOverallETLInMillis) / (totalRunsNum * 1000.0);
                     details.add(metricDetail(
-                            "Average time spent in ETL(" + lifetimeIdentifier + ") (s/run)",
+                            "Average time spent in ETL into " + destIdentifier + " (s/run)",
                             runsFormatter.getFormatted(timeForOverallETLInMillis)));
                     double timeSpentInETLPercent = (avgETLTimeInSeconds * 100)
                             / (TimeUtils.getCurrentEpochSeconds()
-                                    - metricForLifetime.getStartOfMetricsMeasurementInEpochSeconds());
+                                    - etlMetricsIntoStore.getStartOfMetricsMeasurementInEpochSeconds());
                     details.add(metricDetail(
-                            "Average percentage of time spent in ETL(" + lifetimeIdentifier + ")",
+                            "Average percentage of time spent in ETL",
                             twoSignificantDigits.format(timeSpentInETLPercent)));
                     details.add(metricDetail(
-                            "Approximate time taken by last job in ETL(" + lifetimeIdentifier + ") (s)",
+                            "Approximate time taken by last ETL job (s)",
                             twoSignificantDigits.format(
-                                    metricForLifetime.getApproximateLastGlobalETLTimeInMillis() / 1000)));
+                                    etlMetricsIntoStore.getApproximateLastGlobalETLTimeInMillis() / 1000)));
                     details.add(metricDetail(
-                            "Estimated weekly usage in ETL(" + lifetimeIdentifier + ") (%)",
-                            twoSignificantDigits.format(metricForLifetime.getWeeklyETLUsageInPercent())));
+                            "Estimated weekly usage in ETL (%)",
+                            twoSignificantDigits.format(etlMetricsIntoStore.getWeeklyETLUsageInPercent())));
                     details.add(metricDetail(
-                            "Avg time spent by getETLStreams() in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4getETLStreams())));
+                            "Avg time spent by getETLStreams (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4getETLStreams())));
                     details.add(metricDetail(
-                            "Avg time spent by free space checks in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4checkSizes())));
+                            "Avg time spent by free space checks (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4checkSizes())));
                     details.add(metricDetail(
-                            "Avg time spent by prepareForNewPartition() in ETL(" + lifetimeIdentifier + ") (s/run)",
+                            "Avg time spent by prepareForNewPartition() (s/run)",
                             runsFormatter.getFormatted(
-                                    metricForLifetime.getTimeinMillSecond4prepareForNewPartition())));
+                                    etlMetricsIntoStore.getTimeinMillSecond4prepareForNewPartition())));
                     details.add(metricDetail(
-                            "Avg time spent by appendToETLAppendData() in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4appendToETLAppendData())));
+                            "Avg time spent by appendToETLAppendData() (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4appendToETLAppendData())));
                     details.add(metricDetail(
-                            "Avg time spent by commitETLAppendData() in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4commitETLAppendData())));
+                            "Avg time spent by commitETLAppendData() (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4commitETLAppendData())));
                     details.add(metricDetail(
-                            "Avg time spent by markForDeletion() in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4markForDeletion())));
+                            "Avg time spent by markForDeletion() in ETL (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4markForDeletion())));
                     details.add(metricDetail(
-                            "Avg time spent by runPostProcessors() in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4runPostProcessors())));
+                            "Avg time spent by runPostProcessors() in ETL (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4runPostProcessors())));
                     details.add(metricDetail(
-                            "Avg time spent by executePostETLTasks() in ETL(" + lifetimeIdentifier + ") (s/run)",
-                            runsFormatter.getFormatted(metricForLifetime.getTimeinMillSecond4executePostETLTasks())));
+                            "Avg time spent by executePostETLTasks() in ETL (s/run)",
+                            runsFormatter.getFormatted(etlMetricsIntoStore.getTimeinMillSecond4executePostETLTasks())));
 
                     String bytesTransferedUnits = "";
-                    long bytesTransferred = metricForLifetime.getTotalSrcBytes();
+                    long bytesTransferred = etlMetricsIntoStore.getTotalSrcBytes();
                     double bytesTransferredInUnits = bytesTransferred;
                     if (bytesTransferred > 1024 * 10 && bytesTransferred <= 1024 * 1024) {
                         bytesTransferredInUnits = bytesTransferred / 1024.0;
@@ -118,7 +120,7 @@ public class ETLMetrics implements Details {
                     }
 
                     details.add(metricDetail(
-                            "Estimated bytes transferred in ETL (" + lifetimeIdentifier + ")" + bytesTransferedUnits,
+                            "Estimated bytes transferred in ETL (" + destIdentifier + ")" + bytesTransferedUnits,
                             twoSignificantDigits.format(bytesTransferredInUnits)));
                 }
             }

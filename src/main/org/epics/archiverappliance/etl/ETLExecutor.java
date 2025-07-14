@@ -5,16 +5,17 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
-import org.epics.archiverappliance.etl.common.ETLJob;
-import org.epics.archiverappliance.etl.common.ETLMetricsForLifetime;
-import org.epics.archiverappliance.etl.common.ETLPVLookupItems;
+import org.epics.archiverappliance.etl.common.ETLMetricsIntoStore;
+import org.epics.archiverappliance.etl.common.ETLStage;
+import org.epics.archiverappliance.etl.common.ETLStages;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.LinkedList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Run ETLs for one PV; mostly for unit tests..
@@ -32,17 +33,27 @@ public class ETLExecutor {
      */
     public static void runETLs(ConfigService configService, Instant timeETLruns) throws IOException {
         for (String pvName : configService.getPVsForThisAppliance()) {
-            logger.debug("Running ETL for " + pvName);
-            LinkedList<ETLPVLookupItems> lookupItems =
-                    configService.getETLLookup().getLookupItemsForPV(pvName);
-            for (ETLPVLookupItems lookupItem : lookupItems) {
-                logger.debug("Running ETL for " + pvName + " for lifetime " + lookupItem.getLifetimeorder() + " from "
-                        + lookupItem.getETLSource().getDescription() + " to "
-                        + lookupItem.getETLDest().getDescription());
-                ETLJob job = new ETLJob(lookupItem, timeETLruns);
-                job.run();
-                if (job.getExceptionFromLastRun() != null) throw new IOException(job.getExceptionFromLastRun());
+            ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
+            if(etlStages == null) {
+                logger.debug("Skipping ETL for {} as it has no ETL stages", pvName);
+                continue;
             }
+            logger.debug("Running ETL for {} with stages {}", pvName, etlStages.getStages().size());
+            try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
+                try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
+                    Future<?> f = scheduleWorker.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            etlStages.runAsIfAtTime(timeETLruns);
+                        } 
+                        
+                    });
+                    f.get();
+                }
+            } catch(Exception ex) {
+                throw new IOException(ex);
+            }                
+            if (etlStages.getAnyExceptionFromLastRun() != null) throw new IOException(etlStages.getAnyExceptionFromLastRun());
         }
     }
 
@@ -59,8 +70,7 @@ public class ETLExecutor {
             final ConfigService configService, final Instant timeETLRuns, final String pvName, final String storageName)
             throws IOException {
         PBThreeTierETLPVLookup etlLookup = configService.getETLLookup();
-        LinkedList<ETLPVLookupItems> lookupItems = etlLookup.getLookupItemsForPV(pvName);
-        if (!lookupItems.isEmpty()) {
+        if (etlLookup.getETLStages(pvName) != null) {
             throw new IOException(
                     "The pv " + pvName + " has entries in PBThreeTierETLPVLookup. Please remove these first");
         }
@@ -70,36 +80,40 @@ public class ETLExecutor {
             throw new IOException("The pv " + pvName + " has not enough stores.");
         }
 
-        lookupItems = new LinkedList<>();
-        for (int i = 1; i < dataStores.length; i++) {
-            String destStr = dataStores[i];
-            ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
-            StorageMetrics storageMetricsAPIDest = (StorageMetrics) etlDest;
-            String identifyDest = storageMetricsAPIDest.getName();
-            logger.info("storage name:" + identifyDest);
-            String sourceStr = dataStores[i - 1];
-            ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
-            lookupItems.add(new ETLPVLookupItems(
-                    pvName,
-                    pvTypeInfo.getDBRType(),
-                    etlSource,
-                    etlDest,
-                    i - 1,
-                    new ETLMetricsForLifetime(i - 1),
-                    PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService)));
-            if (storageName.equals(identifyDest)) {
-                break;
+        try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
+            try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
+                final ETLStages etlStages = new ETLStages(pvName, theWorker);
+                for (int i = 1; i < dataStores.length; i++) {
+                    String destStr = dataStores[i];
+                    ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
+                    StorageMetrics storageMetricsAPIDest = (StorageMetrics) etlDest;
+                    String identifyDest = storageMetricsAPIDest.getName();
+                    logger.info("storage name:" + identifyDest);
+                    String sourceStr = dataStores[i - 1];
+                    ETLSource etlSource = StoragePluginURLParser.parseETLSource(sourceStr, configService);
+                    etlStages.addStage(new ETLStage(
+                            pvName,
+                            pvTypeInfo.getDBRType(),
+                            etlSource,
+                            etlDest,
+                            i - 1,
+                            new ETLMetricsIntoStore(etlDest.getName()),
+                            PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService)));
+                    if (storageName.equals(identifyDest)) {
+                        break;
+                    }
+                }
+                Future<?> f = scheduleWorker.submit(new Runnable() {
+                    @Override
+                    public void run() {
+                        etlStages.runAsIfAtTime(timeETLRuns);
+                    } 
+                    
+                });
+                f.get();
             }
-        }
-
-        ScheduledThreadPoolExecutor threadPool = new ScheduledThreadPoolExecutor(1);
-        for (ETLPVLookupItems lookupItem : lookupItems) {
-            threadPool.execute(new ETLJob(lookupItem, timeETLRuns));
-        }
-        threadPool.shutdown();
-        try {
-            threadPool.awaitTermination(10, TimeUnit.MINUTES);
-        } catch (InterruptedException ex) {
+        } catch(Exception ex) {
+            logger.error("Exception consolidating data for PV " + pvName, ex);
         }
     }
 }

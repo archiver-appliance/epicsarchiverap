@@ -8,13 +8,17 @@ import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
+import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
 import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.epics.archiverappliance.utils.ui.JSONDecoder;
+import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,12 +26,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 /**
  * Start an appserver with persistence; start archiving a PV; then start and restart the SIOC and make sure we get the expected cnxlost headers.
@@ -88,9 +94,29 @@ public class CnxLostTest {
 	public void testConnectionLossHeaders() throws Exception {
 		String pvNameToArchive = "UnitTestNoNamingConvention:inactive1";
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+
+		JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File(
+                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
+        PVTypeInfo destPVTypeInfo = new PVTypeInfo();
+        JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
+        JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
+        decoder.decode(srcPVTypeInfoJSON, destPVTypeInfo);
+
+        destPVTypeInfo.setPaused(true);
+        destPVTypeInfo.setPvName(pvNameToArchive);
+        destPVTypeInfo.setApplianceIdentity("appliance0");
+        destPVTypeInfo.setCreationTime(TimeUtils.now());
+        destPVTypeInfo.setModificationTime(TimeUtils.now());
+        GetUrlContent.postDataAndGetContentAsJSONObject(
+			mgmtURL + "putPVTypeInfo?pv=" + URLEncoder.encode(pvNameToArchive, "UTF-8")
+                        + "&override=true&createnew=true",
+                encoder.encode(destPVTypeInfo));
+        logger.info("Added " + pvNameToArchive + " to the appliance ");
+
+        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
+        Thread.sleep(2 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
-		 
+
 		// UnitTestNoNamingConvention:inactive1 is SCAN passive without autosave so it should have an invalid timestamp.
 		// We caput something to generate a valid timestamp..
 		SIOCSetup.caput(pvNameToArchive, "1.0");

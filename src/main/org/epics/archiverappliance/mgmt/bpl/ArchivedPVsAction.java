@@ -9,6 +9,7 @@ package org.epics.archiverappliance.mgmt.bpl;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.ArchivedPVsInList;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
@@ -20,6 +21,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -29,7 +32,7 @@ import javax.servlet.http.HttpServletResponse;
  * All this does is check the configservice...
  *
  * @epics.BPLAction - Given a list of PVs, determine those that are being archived.
- * @epics.BPLActionParam pv - A list of pv names. Send as a CSV using a POST.
+ * @epics.BPLActionParam pv - A list of pv names. Send as a CSV using a POST or as JSON
  * @epics.BPLActionEnd
  *
  * @author mshankar
@@ -42,47 +45,12 @@ public class ArchivedPVsAction implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         logger.info("Determining PVs that are archived ");
-        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
-        LinkedList<String> archivedPVs = new LinkedList<String>();
-        for (String pvName : pvNames) {
-            PVTypeInfo typeInfo = null;
-            logger.debug("Check for the name as it came in from the user " + pvName);
-            typeInfo = configService.getTypeInfoForPV(pvName);
-            if (typeInfo != null) {
-                archivedPVs.add(pvName);
-                continue;
-            }
-            logger.debug("Check for the normalized name");
-            typeInfo = configService.getTypeInfoForPV(PVNames.normalizeChannelName(pvName));
-            if (typeInfo != null) {
-                archivedPVs.add(pvName);
-                continue;
-            }
-            logger.debug("Check for aliases");
-            String aliasRealName = configService.getRealNameForAlias(PVNames.normalizeChannelName(pvName));
-            if (aliasRealName != null) {
-                typeInfo = configService.getTypeInfoForPV(aliasRealName);
-                if (typeInfo != null) {
-                    archivedPVs.add(pvName);
-                    continue;
-                }
-            }
-            logger.debug("Check for fields");
-            String fieldName = PVNames.getFieldName(pvName);
-            if (fieldName != null) {
-                typeInfo = configService.getTypeInfoForPV(PVNames.channelNamePVName(pvName));
-                if (typeInfo != null) {
-                    if (Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
-                        archivedPVs.add(pvName);
-                        continue;
-                    }
-                }
-            }
-        }
+		LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
+		List<String> archivedPVs = ArchivedPVsInList.getArchivedPVs(pvNames, configService);
 
-        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         try (PrintWriter out = resp.getWriter()) {
             JSONValue.writeJSONString(archivedPVs, out);
-        }
+        }	
     }
 }

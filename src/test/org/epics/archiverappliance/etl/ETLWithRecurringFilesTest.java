@@ -184,8 +184,8 @@ public class ETLWithRecurringFilesTest {
             String[] dataStores2 =
                     new String[] {etlTestPlugins.src().getURLRepresentation(), etlNewDest.getURLRepresentation()};
             typeInfo2.setDataStores(dataStores2);
-            newConfigService.registerPVToAppliance(pvName, newConfigService.getMyApplianceInfo());
             newConfigService.updateTypeInfoForPV(pvName, typeInfo2);
+            newConfigService.registerPVToAppliance(pvName, newConfigService.getMyApplianceInfo());
             newConfigService.getETLLookup().manualControlForUnitTests();
 
             logger.debug(
