@@ -1,6 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.pbFileExtension;
+import static org.epics.archiverappliance.config.ConvertPVNameToKey.SITE_NAME_SPACE_TERMINATOR;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +22,8 @@ import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,22 +56,31 @@ public class DataAroundPartitionEndTest {
         }
     }
 
-    ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-
     private static final short dataYear = (short) (TimeUtils.getCurrentYear() - 1);
-    private static Instant generatedEndDate = Instant.parse(dataYear + "-06-01T00:00:00.00Z");
-    private static Instant generatedStartDate = generatedEndDate.minus(2, ChronoUnit.DAYS);
+    private static final Instant generatedEndDate = Instant.parse(dataYear + "-06-01T00:00:00.00Z");
+    private static final Instant generatedStartDate = generatedEndDate.minus(2, ChronoUnit.DAYS);
 
-    private static final Path pbFilePath = Paths.get(
-            testFolder.getAbsolutePath(),
-            pvName.replace(":", "/").replace("--", "") + ":" + dataYear + pbFileExtension);
+    private static Path filePath(String extensionString) {
+        return filePath(extensionString, String.valueOf(dataYear));
+    }
 
-    private static void generateData() throws Exception {
-        logger.info("Generating data info to " + pbFilePath);
+    private static Path filePath(String extensionString, String timestamp) {
+        return Paths.get(
+                testFolder.getAbsolutePath(),
+                pvName.replace(":", "/").replace("--", "")
+                        + configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_TERMINATOR)
+                        + timestamp
+                        + extensionString);
+    }
+
+    private static void generateData(PlainStorageType plainStorageType) throws Exception {
+        logger.info("Generating data " + plainStorageType + " info to "
+                + filePath(plainStorageType.plainFileHandler().getExtensionString()));
 
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileExtension + "://localhost?name=DataAroundPartitionEndTest&rootFolder="
-                        + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_DAY",
+                plainStorageType.plainFileHandler().pluginIdentifier()
+                        + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
+                        + "&partitionGranularity=PARTITION_DAY",
                 DataAroundPartitionEndTest.configService);
         ArrayListEventStream strm = new ArrayListEventStream(
                 PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 3,
@@ -98,14 +108,13 @@ public class DataAroundPartitionEndTest {
         }
     }
 
-    @Test
-    public void checkLowerLevelRetrieval() throws Exception {
-        Path pbFilePath = Paths.get(
-                testFolder.getAbsolutePath(),
-                pvName.replace(":", "/").replace("--", "") + ":" + dataYear + "_05_30.pb");
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void checkLowerLevelRetrieval(PlainStorageType plainStorageType) throws Exception {
+        Path pbFilePath = filePath(plainStorageType.plainFileHandler().getExtensionString(), dataYear + "_05_30");
 
         try (BasicContext context = new BasicContext()) {
-            EventStream strm = PlainStorageType.PB
+            EventStream strm = plainStorageType
                     .plainFileHandler()
                     .getTimeStream(
                             pvName,
@@ -124,11 +133,13 @@ public class DataAroundPartitionEndTest {
         }
     }
 
-    @Test
-    public void checkRetrieval() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void checkRetrieval(PlainStorageType plainStorageType) throws Exception {
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileExtension + "://localhost?name=DataAroundPartitionEndTest&rootFolder="
-                        + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_DAY",
+                plainStorageType.plainFileHandler().pluginIdentifier()
+                        + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
+                        + "&partitionGranularity=PARTITION_DAY",
                 DataAroundPartitionEndTest.configService);
         try (BasicContext context = new BasicContext()) {
             Instant rstart = generatedStartDate;
@@ -166,7 +177,8 @@ public class DataAroundPartitionEndTest {
     public static void setUp() throws Exception {
         try {
             FileUtils.deleteDirectory(testFolder);
-            generateData();
+            generateData(PlainStorageType.PB);
+            generateData(PlainStorageType.PARQUET);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

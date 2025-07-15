@@ -152,9 +152,8 @@ public class ParquetBackedPBEventFileStream implements ETLParquetFilesStream, Re
             YearSecondTimestamp endYst = TimeUtils.convertToYearSecondTimestamp(endTime);
             // if no overlap in year return empty
             YearSecondTimestamp firstEventTime = ((PartionedTime) this.getFirstEvent()).getYearSecondTimestamp();
-            YearSecondTimestamp lastEventTime =
-                    ((PartionedTime) getLastFileInfo().getLastEvent()).getYearSecondTimestamp();
-            if (endYst.compareTo(firstEventTime) < 0 || startYst.compareTo(lastEventTime) > 0) {
+            YearSecondTimestamp lastEventTime = (getLastFileInfo().getLastEvent()).getYearSecondTimestamp();
+            if (endYst.compareTo(firstEventTime) < 0) {
                 return new EmptyEventIterator();
             }
             YearSecondTimestamp lastEventBeforeTime = getLastEventBeforeTime(startYst);

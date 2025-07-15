@@ -19,7 +19,6 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
-import org.epics.archiverappliance.retrieval.client.InfoChangeHandler;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -203,12 +202,7 @@ public class RenamePVBPLTest {
             info = strm.getPayLoadInfo();
             Assertions.assertTrue(info != null, "Stream has no payload info");
             mergeHeaders(info, metaFields);
-            strm.onInfoChange(new InfoChangeHandler() {
-                @Override
-                public void handleInfoChange(PayloadInfo info) {
-                    mergeHeaders(info, metaFields);
-                }
-            });
+            strm.onInfoChange(info1 -> mergeHeaders(info1, metaFields));
 
             long endTimeMillis = System.currentTimeMillis();
 
