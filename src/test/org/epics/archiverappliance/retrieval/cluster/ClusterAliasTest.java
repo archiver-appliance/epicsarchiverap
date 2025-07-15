@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 import org.awaitility.Awaitility;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 
 /**
@@ -67,9 +69,13 @@ public class ClusterAliasTest {
 		FileUtils.deleteDirectory(persistenceFolder);
 	}
 
-	@Test
-	public void testSimpleArchivePV() throws Exception {
+	@ParameterizedTest
+	@ValueSource(booleans = {true, false})
+	public void testSimpleArchivePV(boolean pvAccess) throws Exception {
 		String pvNameToArchive = "UnitTestNoNamingConvention:sinealias";
+		if (pvAccess) {
+			pvNameToArchive = "pva://" + pvNameToArchive;
+		}
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
