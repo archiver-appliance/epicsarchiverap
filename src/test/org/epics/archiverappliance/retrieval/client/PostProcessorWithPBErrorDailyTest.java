@@ -191,7 +191,7 @@ public class PostProcessorWithPBErrorDailyTest {
 				context.getPaths(),
 				mtsFolderName,
 				pvName,
-                PlainStorageType.PB.plainFileHandler().getExtensionString(),
+                PBPlainFileHandler.pbFileExtension,
                 PathResolver.BASE_PATH_RESOLVER,
 				configService.getPVNameToKeyConverter());
 			Assertions.assertNotNull(paths);

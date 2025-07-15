@@ -19,7 +19,6 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
-import org.epics.archiverappliance.retrieval.client.InfoChangeHandler;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -38,8 +37,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_INDEX_URL;
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 
 /**
  * Test rename PV with data at the backend.
@@ -183,12 +180,7 @@ public class RenamePVBPLTest {
 			 info =  strm.getPayLoadInfo();
 			 Assertions.assertTrue(info != null, "Stream has no payload info");
 			 mergeHeaders(info, metaFields);
-			 strm.onInfoChange(new InfoChangeHandler() {
-				 @Override
-				 public void handleInfoChange(PayloadInfo info) {
-					 mergeHeaders(info, metaFields);
-				 }
-			 });
+			 strm.onInfoChange(info1 -> mergeHeaders(info1, metaFields));
 
             long endTimeMillis = System.currentTimeMillis();
 
@@ -204,4 +196,14 @@ public class RenamePVBPLTest {
                 "Expecting " + expectedAtLeastEvents + "events. We got " + eventCount);
         return eventCount;
     }
+
+	private static void mergeHeaders(PayloadInfo info, HashMap<String, String> headers) {
+		int headerCount = info.getHeadersCount();
+		for(int i = 0; i < headerCount; i++) {
+			String headerName = info.getHeaders(i).getName();
+			String headerValue = info.getHeaders(i).getVal();
+			logger.info("Adding header " + headerName + " = " + headerValue);
+			headers.put(headerName, headerValue);
+		}
+	}
 }
