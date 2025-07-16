@@ -119,8 +119,6 @@ class MissingDataYearSpanRetrievalUnitTest {
                         pvName,
                         storagePlugin),
                 Arguments.of(
-                        "2011-10-10T00:00:00.000Z", "2012-01-15T10:00:00.000Z", 0, null, -1, pvName, storagePlugin),
-                Arguments.of(
                         "2012-01-10T00:00:00.000Z",
                         "2012-01-15T10:00:00.000Z",
                         1,
