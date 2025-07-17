@@ -17,17 +17,23 @@ import java.util.List;
  * @author mshankar
  */
 public interface SampleValue {
-	public String toString();
-	public int getElementCount();
-	public Number getValue();
-	public Number getValue(int index);
-	public String getStringValue(int index);
-	public String toJSONString();
-	@SuppressWarnings("rawtypes")
-	public List getValues();
-	/**
-	 * Return the value as a ByteBuffer that is ready to read.
-	 * @return ByteBuffer  &emsp;
-	 */
-	public ByteBuffer getValueAsBytes();
+    public String toString();
+
+    public int getElementCount();
+
+    public Number getValue();
+
+    public Number getValue(int index);
+
+    public String getStringValue(int index);
+
+    public String toJSONString();
+
+    @SuppressWarnings("rawtypes")
+    public List getValues();
+    /**
+     * Return the value as a ByteBuffer that is ready to read.
+     * @return ByteBuffer  &emsp;
+     */
+    public ByteBuffer getValueAsBytes();
 }

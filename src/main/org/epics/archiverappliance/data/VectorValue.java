@@ -17,88 +17,95 @@ import java.util.List;
  *
  * @param <T>  &emsp;
  */
-public class VectorValue <T extends Number> implements SampleValue {
+public class VectorValue<T extends Number> implements SampleValue {
     private final List<T> values;
-	
-	public VectorValue(List<T> vals) {
-		this.values = vals;
-	}
 
-	/* (non-Javadoc)
-	 * @see org.epics.archiverappliance.data.SampleValue#getValue()
-	 * For the scalar getValue, we always return the first value
-	 */
-	@Override
-	public Number getValue() {
-		if (values.isEmpty()) return Double.NaN;
-		return values.get(0);
-	}
+    public VectorValue(List<T> vals) {
+        this.values = vals;
+    }
 
-	@Override
-	public int getElementCount() {
-		return values.size();
-	}
+    /* (non-Javadoc)
+     * @see org.epics.archiverappliance.data.SampleValue#getValue()
+     * For the scalar getValue, we always return the first value
+     */
+    @Override
+    public Number getValue() {
+        if (values.isEmpty()) return Double.NaN;
+        return values.get(0);
+    }
 
-	@Override
-	public Number getValue(int index) {
-		return values.get(index);
-	}
+    @Override
+    public int getElementCount() {
+        return values.size();
+    }
 
-	/* (non-Javadoc)
-	 * The toString for vectors generates a JSON vector...
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		boolean first = true;
-		StringWriter buf = new StringWriter();
-		buf.append('[');
-		for(T value : values) {
-			if(first) { first = false; } else { buf.append(","); }
-			buf.append(value.toString());
-		}
-		buf.append(']');
-		return buf.toString();
-	}
+    @Override
+    public Number getValue(int index) {
+        return values.get(index);
+    }
 
-	
-	@Override
-	public String getStringValue(int index) {
-		return getValue(index).toString();
-	}
+    /* (non-Javadoc)
+     * The toString for vectors generates a JSON vector...
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        boolean first = true;
+        StringWriter buf = new StringWriter();
+        buf.append('[');
+        for (T value : values) {
+            if (first) {
+                first = false;
+            } else {
+                buf.append(",");
+            }
+            buf.append(value.toString());
+        }
+        buf.append(']');
+        return buf.toString();
+    }
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public List getValues() {
-		return values;
-	}
+    @Override
+    public String getStringValue(int index) {
+        return getValue(index).toString();
+    }
 
-	@Override
-	public int hashCode() {
-		return values.hashCode();
-	}
+    @SuppressWarnings("rawtypes")
+    @Override
+    public List getValues() {
+        return values;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		@SuppressWarnings("unchecked")
-		VectorValue<T> other = (VectorValue<T>) obj; 
-		return values.equals(other.getValues());
-	}
+    @Override
+    public int hashCode() {
+        return values.hashCode();
+    }
 
-	@Override
-	public String toJSONString() {
-		boolean first = true;
-		StringWriter buf = new StringWriter();
-		buf.append('[');
-		for(T value : values) {
-			if(first) { first = false; } else { buf.append(","); }
-			buf.append(value.toString());
-		}
-		buf.append(']');
-		return buf.toString();
-	}
+    @Override
+    public boolean equals(Object obj) {
+        @SuppressWarnings("unchecked")
+        VectorValue<T> other = (VectorValue<T>) obj;
+        return values.equals(other.getValues());
+    }
 
-	@Override
-	public ByteBuffer getValueAsBytes() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String toJSONString() {
+        boolean first = true;
+        StringWriter buf = new StringWriter();
+        buf.append('[');
+        for (T value : values) {
+            if (first) {
+                first = false;
+            } else {
+                buf.append(",");
+            }
+            buf.append(value.toString());
+        }
+        buf.append(']');
+        return buf.toString();
+    }
+
+    @Override
+    public ByteBuffer getValueAsBytes() {
+        throw new UnsupportedOperationException();
+    }
 }
