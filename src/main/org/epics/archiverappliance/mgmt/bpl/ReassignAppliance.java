@@ -50,6 +50,10 @@ public class ReassignAppliance implements BPLAction {
 			throw new IOException("Waiting for all the appliances listed in appliances.xml to finish loading up their PVs into the cluster");
 		}
 
+		if(!Boolean.parseBoolean((String)configService.getInstallationProperties().getOrDefault(ReassignAppliance.class.getCanonicalName(), false))) {
+			throw new IOException("This installation has not been configured to support dynamic reassignment of PV's to appliances");
+		}
+
 		String destApplianceIdentity = req.getParameter("appliance");
 		if(destApplianceIdentity==null || destApplianceIdentity.equals("")) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
