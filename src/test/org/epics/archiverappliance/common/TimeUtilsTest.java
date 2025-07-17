@@ -5,15 +5,11 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package edu.stanford.slac.PB.utils;
+package org.epics.archiverappliance.common;
 
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.common.PartitionGranularity;
-import org.epics.archiverappliance.common.TimeSpan;
-import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
