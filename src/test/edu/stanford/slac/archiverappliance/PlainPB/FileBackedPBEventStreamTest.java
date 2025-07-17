@@ -62,9 +62,9 @@ public class FileBackedPBEventStreamTest {
             + "&rootFolder=" + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR";
     private static long events;
 
-    private static final Instant oneWeekIntoYear =
-            TimeUtils.getStartOfYear(TimeUtils.getCurrentYear())
-                    .plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
+    private static final Instant oneWeekIntoYear = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear())
+            .plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 7L);
+
     static {
         try {
             configService = new ConfigServiceForTests(-1);
@@ -94,12 +94,7 @@ public class FileBackedPBEventStreamTest {
         Instant start = TimeUtils.getStartOfYear(currentYear);
         Instant end = TimeUtils.getEndOfYear(currentYear);
         logger.info("start {} end {}", start, end);
-        SimulationEventStream simstream = new SimulationEventStream(
-                dbrType,
-                new SineGenerator(10),
-                start,
-                end,
-                1);
+        SimulationEventStream simstream = new SimulationEventStream(dbrType, new SineGenerator(10), start, end, 1);
         try (BasicContext context = new BasicContext()) {
             assert storagePlugin != null;
             return storagePlugin.appendData(context, pvName, simstream);
@@ -107,14 +102,12 @@ public class FileBackedPBEventStreamTest {
     }
 
     private static PlainPBStoragePlugin getStoragePlugin() throws IOException {
-        return (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                storagePBPluginString,
-                configService);
+        return (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(storagePBPluginString, configService);
     }
 
     private static Stream<Arguments> provideTimeBasedIterator() {
         long twoDays = PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 2L;
-        return Arrays.stream(new Boolean[]{true, false})
+        return Arrays.stream(new Boolean[] {true, false})
                 .flatMap(sS -> Stream.of(
                         // Start 11 seconds into the year and get two seconds worth of data.
                         Arguments.of(
@@ -133,15 +126,8 @@ public class FileBackedPBEventStreamTest {
                         // Start at one second before end of year and end 2 seconds later to get 1 second
                         Arguments.of(
                                 sS,
-                                convertFromEpochSeconds(
-                                        getStartOfYearInSeconds(getCurrentYear())
-                                                - 1,
-                                        0),
-                                convertFromEpochSeconds(
-                                        getStartOfYearInSeconds(getCurrentYear())
-                                                - 1
-                                                + 2,
-                                        0),
+                                convertFromEpochSeconds(getStartOfYearInSeconds(getCurrentYear()) - 1, 0),
+                                convertFromEpochSeconds(getStartOfYearInSeconds(getCurrentYear()) - 1 + 2, 0),
                                 1 + 1)));
     }
 
@@ -157,7 +143,7 @@ public class FileBackedPBEventStreamTest {
                     oneWeekIntoYear,
                     context.getPaths(),
                     configService.getPVNameToKeyConverter());
-	        Assertions.assertNotNull(path, "Did we not write any data?");
+            Assertions.assertNotNull(path, "Did we not write any data?");
             long eventCount = 0;
             try (FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType)) {
                 for (Event e : stream) {
@@ -227,7 +213,7 @@ public class FileBackedPBEventStreamTest {
                     configService.getPVNameToKeyConverter());
             long eventCount = 0;
             try (FileBackedPBEventStream stream =
-                         new FileBackedPBEventStream(pvName, path, dbrType, start, end, skipSearch)) {
+                    new FileBackedPBEventStream(pvName, path, dbrType, start, end, skipSearch)) {
                 long eventEpochSeconds = 0;
                 for (Event e : stream) {
                     eventEpochSeconds = e.getEpochSeconds();
@@ -274,10 +260,13 @@ public class FileBackedPBEventStreamTest {
                 boolean firstEvent = true;
                 for (Event e : stream) {
                     if (firstEvent) {
-                        Assertions.assertEquals(e.getEventTimeStamp(), time, "The first event should be equal timestamp "
-                                + convertToISO8601String(time)
-                                + " got "
-                                + convertToISO8601String(e.getEventTimeStamp()));
+                        Assertions.assertEquals(
+                                e.getEventTimeStamp(),
+                                time,
+                                "The first event should be equal timestamp "
+                                        + convertToISO8601String(time)
+                                        + " got "
+                                        + convertToISO8601String(e.getEventTimeStamp()));
                         firstEvent = false;
                     } else {
                         // All other events should be after timestamp
@@ -298,11 +287,11 @@ public class FileBackedPBEventStreamTest {
     public void testDirectionalIteration() throws IOException {
         PlainPBStoragePlugin storagePlugin = getStoragePlugin();
 
-        for(BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
+        for (BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
             logger.info("Testing directional iteration {}", direction);
-            Instant startAtTime = (direction == BiDirectionalIterable.IterationDirection.BACKWARDS) 
-                ? TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()+1) 
-                : TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
+            Instant startAtTime = (direction == BiDirectionalIterable.IterationDirection.BACKWARDS)
+                    ? TimeUtils.getStartOfYear(TimeUtils.getCurrentYear() + 1)
+                    : TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
 
             try (BasicContext context = new BasicContext()) {
                 long startMs = System.currentTimeMillis();
@@ -314,11 +303,14 @@ public class FileBackedPBEventStreamTest {
                         configService.getPVNameToKeyConverter());
                 Assertions.assertNotNull(path, "Did we not write any data?");
                 long eventCount = 0;
-                try (FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType, startAtTime, direction)) {
+                try (FileBackedPBEventStream stream =
+                        new FileBackedPBEventStream(pvName, path, dbrType, startAtTime, direction)) {
                     for (Event e : stream) {
                         try {
-                            logger.debug("Timestamp of sample {}", TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
-                        } catch(Exception ex) {
+                            logger.debug(
+                                    "Timestamp of sample {}",
+                                    TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()));
+                        } catch (Exception ex) {
                             logger.error("Exception at event " + eventCount, ex);
                             throw ex;
                         }
@@ -328,11 +320,12 @@ public class FileBackedPBEventStreamTest {
                 Assertions.assertEquals(events, eventCount, "Expected " + events + " got " + eventCount);
                 long endMs = System.currentTimeMillis();
                 logger.info("Time for " + eventCount + " samples = " + (endMs - startMs) + "(ms)");
-            }    
+            }
         }
     }
 
-    private Instant getFirstSampleTSUsingIteration(Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
+    private Instant getFirstSampleTSUsingIteration(
+            Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
         PlainPBStoragePlugin storagePlugin = getStoragePlugin();
         Instant theInstant = null;
         try (BasicContext context = new BasicContext()) {
@@ -344,19 +337,23 @@ public class FileBackedPBEventStreamTest {
                     configService.getPVNameToKeyConverter());
             Assertions.assertNotNull(path, "Did we not write any data?");
             long eventCount = 0;
-            try (FileBackedPBEventStream stream = new FileBackedPBEventStream(pvName, path, dbrType, startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS)) {
+            try (FileBackedPBEventStream stream = new FileBackedPBEventStream(
+                    pvName, path, dbrType, startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS)) {
                 for (Event e : stream) {
                     try {
-                        logger.info("Timestamp of first sample {} using direction {}", TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()), direction);
+                        logger.info(
+                                "Timestamp of first sample {} using direction {}",
+                                TimeUtils.convertToHumanReadableString(e.getEventTimeStamp()),
+                                direction);
                         theInstant = e.getEventTimeStamp();
                         eventCount++;
                         break;
-                    } catch(Exception ex) {
+                    } catch (Exception ex) {
                         logger.error("Exception at event " + eventCount, ex);
                         throw ex;
                     }
                 }
-            }            
+            }
             Assertions.assertEquals(1, eventCount, "Expected " + 1 + " event got " + eventCount);
         }
         Assertions.assertNotNull(theInstant, "The first sample using forwards iteration is null");
@@ -365,20 +362,24 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void testBothDirectionsYieldSameInstant() throws IOException {
-        // Start iteration at the same time using forwards and backwards iteration and make sure we get the same first event.        
+        // Start iteration at the same time using forwards and backwards iteration and make sure we get the same first
+        // event.
 
         // Somewhere in the middle of the year.
-        Instant startAtTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()).plusSeconds(86400*30*6);
-        Instant firstUsingForwards = getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
-        Instant firstUsingBackwards = getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
-        Assertions.assertEquals(firstUsingForwards, firstUsingBackwards, 
-            "Forwards yields " 
-            + TimeUtils.convertToHumanReadableString(firstUsingForwards)
-            + " Backwards yields "
-            + TimeUtils.convertToHumanReadableString(firstUsingForwards)
-        );
-    } 
-
+        Instant startAtTime =
+                TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()).plusSeconds(86400 * 30 * 6);
+        Instant firstUsingForwards =
+                getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.FORWARDS);
+        Instant firstUsingBackwards =
+                getFirstSampleTSUsingIteration(startAtTime, BiDirectionalIterable.IterationDirection.BACKWARDS);
+        Assertions.assertEquals(
+                firstUsingForwards,
+                firstUsingBackwards,
+                "Forwards yields "
+                        + TimeUtils.convertToHumanReadableString(firstUsingForwards)
+                        + " Backwards yields "
+                        + TimeUtils.convertToHumanReadableString(firstUsingForwards));
+    }
 
     @Test
     public void makeSureWeGetTheLastEventInTheFile() throws IOException {
@@ -439,8 +440,8 @@ public class FileBackedPBEventStreamTest {
                     PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                     new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, highRatePVName, currentYear));
             for (int secondintoday = 0;
-                 secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
-                 secondintoday++) {
+                    secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                    secondintoday++) {
                 // The value should be the secondsIntoYear integer divided by 600.
                 // Add 10 events per second
                 for (int i = 0; i < 10; i++) {
@@ -479,10 +480,13 @@ public class FileBackedPBEventStreamTest {
                 for (Event e : stream) {
                     eventCount++;
                     if (firstEvent) {
-                        Assertions.assertEquals(e.getEventTimeStamp(), startTime, "The first event should be equal timestamp "
-                                + convertToISO8601String(startTime)
-                                + " got "
-                                + convertToISO8601String(e.getEventTimeStamp()));
+                        Assertions.assertEquals(
+                                e.getEventTimeStamp(),
+                                startTime,
+                                "The first event should be equal timestamp "
+                                        + convertToISO8601String(startTime)
+                                        + " got "
+                                        + convertToISO8601String(e.getEventTimeStamp()));
                         firstEvent = false;
                     }
                 }

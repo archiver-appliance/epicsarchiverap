@@ -85,8 +85,12 @@ public class HoldAndGatherTest {
         typeInfo.setDataStores(dataStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
-        try{Thread.sleep(10000);} catch(Exception ex) {}
-        Assertions.assertNotNull(configService.getETLLookup().getETLStages(pvName), "ETL stages have not been registered for " + pvName);
+        try {
+            Thread.sleep(10000);
+        } catch (Exception ex) {
+        }
+        Assertions.assertNotNull(
+                configService.getETLLookup().getETLStages(pvName), "ETL stages have not been registered for " + pvName);
 
         configService.getETLLookup().manualControlForUnitTests();
 

@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 
@@ -53,6 +52,7 @@ public class LargePBLineTest {
     public void tearDown() throws Exception {
         largeLineSetup.deleteTestFolder();
     }
+
     @Test
     public void testLargeLines() throws Exception {
         PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
@@ -75,7 +75,7 @@ public class LargePBLineTest {
         try (BasicContext context = new BasicContext()) {
             storagePlugin.appendData(context, pvName, strm);
         } catch (Exception ex) {
-            logger.error("Exception appending data " +strm, ex);
+            logger.error("Exception appending data " + strm, ex);
             Assertions.fail(ex.getMessage());
         }
 

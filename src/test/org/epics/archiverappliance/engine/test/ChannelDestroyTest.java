@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-
 /**
  * test of destroying channels
  * @author Luofeng Li
@@ -32,22 +31,22 @@ public class ChannelDestroyTest {
     private static final Logger logger = LogManager.getLogger(ChannelDestroyTest.class.getName());
     private final String pvPrefix = ChannelDestroyTest.class.getSimpleName().substring(0, 10);
     private SIOCSetup ioc = null;
-	private ConfigServiceForTests testConfigService;
+    private ConfigServiceForTests testConfigService;
     private final FakeWriter writer = new FakeWriter();
 
     @BeforeEach
-	public void setUp() throws Exception {
+    public void setUp() throws Exception {
         ioc = new SIOCSetup(pvPrefix);
-		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(-1);
-		Thread.sleep(3000);
-	}
+        ioc.startSIOCWithDefaultDB();
+        testConfigService = new ConfigServiceForTests(-1);
+        Thread.sleep(3000);
+    }
 
     @AfterEach
-	public void tearDown() throws Exception {
-		testConfigService.shutdownNow();
-		ioc.stopSIOC();
-	}
+    public void tearDown() throws Exception {
+        testConfigService.shutdownNow();
+        ioc.stopSIOC();
+    }
 
     /**
      * test of destroying the channel of the pv in scan mode
@@ -68,12 +67,11 @@ public class ChannelDestroyTest {
                     false);
             Thread.sleep(2000);
 
-			ArchiveEngine.destoryPv(pvName, testConfigService);
-			Thread.sleep(2000);
-			ArchiveChannel archiveChannel = testConfigService
-					.getEngineContext().getChannelList().get(pvName);
-            Assertions.assertNull(archiveChannel, "the channel for " + pvName
-                    + " should be destroyed but it is not");
+            ArchiveEngine.destoryPv(pvName, testConfigService);
+            Thread.sleep(2000);
+            ArchiveChannel archiveChannel =
+                    testConfigService.getEngineContext().getChannelList().get(pvName);
+            Assertions.assertNull(archiveChannel, "the channel for " + pvName + " should be destroyed but it is not");
 
         } catch (Exception e) {
             //
@@ -105,8 +103,7 @@ public class ChannelDestroyTest {
             Thread.sleep(2000);
             ArchiveChannel archiveChannel =
                     testConfigService.getEngineContext().getChannelList().get(pvName);
-            Assertions.assertNull(archiveChannel, "the channel for " + pvName
-                    + " should be destroyed but it is not");
+            Assertions.assertNull(archiveChannel, "the channel for " + pvName + " should be destroyed but it is not");
         } catch (Exception e) {
             //
             logger.error("Exception", e);

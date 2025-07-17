@@ -91,13 +91,11 @@ public class PlainPBFileNameUtilityTest {
         Instant startOfYear = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
         String pvName = granularity.name() + "Part_1";
         String extension = PlainPBStoragePlugin.pbFileExtension;
-        long nIntervals = 1 + granularity.getNextLargerGranularity().getApproxSecondsPerChunk()
-                / granularity.getApproxSecondsPerChunk();
+        long nIntervals = 1
+                + granularity.getNextLargerGranularity().getApproxSecondsPerChunk()
+                        / granularity.getApproxSecondsPerChunk();
         Instant fileTime = null;
-        for (long nGranularity = 0;
-             nGranularity
-                     < nIntervals;
-             nGranularity++) {
+        for (long nGranularity = 0; nGranularity < nIntervals; nGranularity++) {
             fileTime = startOfYear.plusSeconds(nGranularity * granularity.getApproxSecondsPerChunk());
             mkPath(PlainPBPathNameUtility.getPathNameForTime(
                     rootFolderStr,
@@ -144,7 +142,8 @@ public class PlainPBFileNameUtilityTest {
                 .toFile();
         Assertions.assertNotNull(mostRecentFile, "Most recent file is null?");
         assert fileTime != null;
-        String fileEnding = fileTime.atZone(ZoneId.of("Z")).format(DateTimeFormatter.ofPattern(getFormatString(granularity)));
+        String fileEnding =
+                fileTime.atZone(ZoneId.of("Z")).format(DateTimeFormatter.ofPattern(getFormatString(granularity)));
         Assertions.assertTrue(
                 mostRecentFile.getName().endsWith(fileEnding + extension),
                 "Unxpected most recent file " + mostRecentFile.getAbsolutePath() + " expected ending " + fileEnding);
@@ -160,8 +159,7 @@ public class PlainPBFileNameUtilityTest {
         String pvName = "First:Second:Third:YearPart_1";
         PartitionGranularity partition = PartitionGranularity.PARTITION_YEAR;
         String extension = PlainPBStoragePlugin.pbFileExtension;
-        ZonedDateTime endYear =
-                null;
+        ZonedDateTime endYear = null;
         for (int years = 0; years < 20; years++) {
             mkPath(PlainPBPathNameUtility.getPathNameForTime(
                     rootFolderStr,
@@ -230,5 +228,4 @@ public class PlainPBFileNameUtilityTest {
                 mostRecentFile2.getName().endsWith(expectedEnd2),
                 "Unxpected most recent file " + mostRecentFile2.getAbsolutePath() + " expecting " + expectedEnd2);
     }
-
 }

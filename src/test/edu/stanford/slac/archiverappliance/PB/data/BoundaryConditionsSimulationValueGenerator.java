@@ -31,12 +31,12 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Generates a sample value based on secondsintoyear for each DBR_type. 
- * The value generated is predictable; therefore, it can be used for unit tests. 
+ * Generates a sample value based on secondsintoyear for each DBR_type.
+ * The value generated is predictable; therefore, it can be used for unit tests.
  * @author mshankar
  *
  */
-public class BoundaryConditionsSimulationValueGenerator implements SimulationValueGenerator{
+public class BoundaryConditionsSimulationValueGenerator implements SimulationValueGenerator {
 
     private static List getVector(ArchDBRTypes dbrType, int secondsIntoYear) {
         switch (dbrType) {
@@ -67,14 +67,14 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
         }
     }
 
-	/**
-	 * Get a value based on the DBR type.
-	 * We should check for boundary conditions here and make sure PB does not throw exceptions when we come close to MIN_ and MAX_ values
-	 * @param type
-	 * @param secondsIntoYear
-	 * @return
-	 */
-	public SampleValue getSampleValue(ArchDBRTypes type, int secondsIntoYear) {
+    /**
+     * Get a value based on the DBR type.
+     * We should check for boundary conditions here and make sure PB does not throw exceptions when we come close to MIN_ and MAX_ values
+     * @param type
+     * @param secondsIntoYear
+     * @return
+     */
+    public SampleValue getSampleValue(ArchDBRTypes type, int secondsIntoYear) {
         switch (type) {
             case DBR_SCALAR_STRING -> {
                 return new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
@@ -99,7 +99,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
                     // Check for some numbers around the maximum value
                     return new ScalarValue<Float>(Float.MAX_VALUE - (secondsIntoYear - 1000));
                 } else {
-                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of precision digits
+                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of
+                    // precision digits
                     return new ScalarValue<Float>((secondsIntoYear - 2000.0f) / secondsIntoYear);
                 }
             }
@@ -129,7 +130,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
                     // Check for some numbers around the maximum value
                     return new ScalarValue<Double>(Double.MAX_VALUE - (secondsIntoYear - 1000));
                 } else {
-                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of precision digits
+                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of
+                    // precision digits
                     return new ScalarValue<Double>((secondsIntoYear - 2000.0) / (secondsIntoYear * 1000000));
                 }
             }
@@ -166,15 +168,15 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             default -> throw new RuntimeException("We seemed to have missed a DBR type when generating sample data");
         }
     }
-	
-	private static gov.aps.jca.dbr.TimeStamp convertSecondsIntoYear2JCATimeStamp(int secondsintoYear) {
-		return new gov.aps.jca.dbr.TimeStamp(TimeUtils.getStartOfCurrentYearInSeconds() + secondsintoYear);
-	}
 
-	public DBR getJCASampleValue(ArchDBRTypes type, int secondsIntoYear) {
+    private static gov.aps.jca.dbr.TimeStamp convertSecondsIntoYear2JCATimeStamp(int secondsintoYear) {
+        return new gov.aps.jca.dbr.TimeStamp(TimeUtils.getStartOfCurrentYearInSeconds() + secondsintoYear);
+    }
+
+    public DBR getJCASampleValue(ArchDBRTypes type, int secondsIntoYear) {
         switch (type) {
             case DBR_SCALAR_STRING -> {
-                DBR_TIME_String retvalss = new DBR_TIME_String(new String[]{Integer.toString(secondsIntoYear)});
+                DBR_TIME_String retvalss = new DBR_TIME_String(new String[] {Integer.toString(secondsIntoYear)});
                 retvalss.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvalss.setSeverity(1);
                 retvalss.setStatus(0);
@@ -184,13 +186,13 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
                 DBR_TIME_Short retvalsh;
                 if (0 <= secondsIntoYear && secondsIntoYear < 1000) {
                     // Check for some numbers around the minimum value
-                    retvalsh = new DBR_TIME_Short(new short[]{(short) (Short.MIN_VALUE + secondsIntoYear)});
+                    retvalsh = new DBR_TIME_Short(new short[] {(short) (Short.MIN_VALUE + secondsIntoYear)});
                 } else if (1000 <= secondsIntoYear && secondsIntoYear < 2000) {
                     // Check for some numbers around the maximum value
-                    retvalsh = new DBR_TIME_Short(new short[]{(short) (Short.MAX_VALUE - (secondsIntoYear - 1000))});
+                    retvalsh = new DBR_TIME_Short(new short[] {(short) (Short.MAX_VALUE - (secondsIntoYear - 1000))});
                 } else {
                     // Check for some numbers around 0
-                    retvalsh = new DBR_TIME_Short(new short[]{(short) (secondsIntoYear - 2000)});
+                    retvalsh = new DBR_TIME_Short(new short[] {(short) (secondsIntoYear - 2000)});
                 }
                 retvalsh.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvalsh.setSeverity(1);
@@ -201,13 +203,14 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
                 DBR_TIME_Float retvalfl;
                 if (0 <= secondsIntoYear && secondsIntoYear < 1000) {
                     // Check for some numbers around the minimum value
-                    retvalfl = new DBR_TIME_Float(new float[]{Float.MIN_VALUE + secondsIntoYear});
+                    retvalfl = new DBR_TIME_Float(new float[] {Float.MIN_VALUE + secondsIntoYear});
                 } else if (1000 <= secondsIntoYear && secondsIntoYear < 2000) {
                     // Check for some numbers around the maximum value
-                    retvalfl = new DBR_TIME_Float(new float[]{Float.MAX_VALUE - (secondsIntoYear - 1000)});
+                    retvalfl = new DBR_TIME_Float(new float[] {Float.MAX_VALUE - (secondsIntoYear - 1000)});
                 } else {
-                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of precision digits
-                    retvalfl = new DBR_TIME_Float(new float[]{(secondsIntoYear - 2000.0f) / secondsIntoYear});
+                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of
+                    // precision digits
+                    retvalfl = new DBR_TIME_Float(new float[] {(secondsIntoYear - 2000.0f) / secondsIntoYear});
                 }
                 retvalfl.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvalfl.setSeverity(1);
@@ -216,7 +219,7 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             }
             case DBR_SCALAR_ENUM -> {
                 DBR_TIME_Enum retvalen;
-                retvalen = new DBR_TIME_Enum(new short[]{(short) (secondsIntoYear)});
+                retvalen = new DBR_TIME_Enum(new short[] {(short) (secondsIntoYear)});
                 retvalen.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvalen.setSeverity(1);
                 retvalen.setStatus(0);
@@ -224,7 +227,7 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             }
             case DBR_SCALAR_BYTE -> {
                 DBR_TIME_Byte retvalby;
-                retvalby = new DBR_TIME_Byte(new byte[]{((byte) (secondsIntoYear % 255))});
+                retvalby = new DBR_TIME_Byte(new byte[] {((byte) (secondsIntoYear % 255))});
                 retvalby.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvalby.setSeverity(1);
                 retvalby.setStatus(0);
@@ -234,13 +237,13 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
                 DBR_TIME_Int retvalint;
                 if (0 <= secondsIntoYear && secondsIntoYear < 1000) {
                     // Check for some numbers around the minimum value
-                    retvalint = new DBR_TIME_Int(new int[]{Integer.MIN_VALUE + secondsIntoYear});
+                    retvalint = new DBR_TIME_Int(new int[] {Integer.MIN_VALUE + secondsIntoYear});
                 } else if (1000 <= secondsIntoYear && secondsIntoYear < 2000) {
                     // Check for some numbers around the maximum value
-                    retvalint = new DBR_TIME_Int(new int[]{Integer.MAX_VALUE - (secondsIntoYear - 1000)});
+                    retvalint = new DBR_TIME_Int(new int[] {Integer.MAX_VALUE - (secondsIntoYear - 1000)});
                 } else {
                     // Check for some numbers around 0
-                    retvalint = new DBR_TIME_Int(new int[]{(secondsIntoYear - 2000)});
+                    retvalint = new DBR_TIME_Int(new int[] {(secondsIntoYear - 2000)});
                 }
                 retvalint.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvalint.setSeverity(1);
@@ -251,13 +254,15 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
                 DBR_TIME_Double retvaldb;
                 if (0 <= secondsIntoYear && secondsIntoYear < 1000) {
                     // Check for some numbers around the minimum value
-                    retvaldb = new DBR_TIME_Double(new double[]{(Double.MIN_VALUE + secondsIntoYear)});
+                    retvaldb = new DBR_TIME_Double(new double[] {(Double.MIN_VALUE + secondsIntoYear)});
                 } else if (1000 <= secondsIntoYear && secondsIntoYear < 2000) {
                     // Check for some numbers around the maximum value
-                    retvaldb = new DBR_TIME_Double(new double[]{(Double.MAX_VALUE - (secondsIntoYear - 1000))});
+                    retvaldb = new DBR_TIME_Double(new double[] {(Double.MAX_VALUE - (secondsIntoYear - 1000))});
                 } else {
-                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of precision digits
-                    retvaldb = new DBR_TIME_Double(new double[]{((secondsIntoYear - 2000.0) / (secondsIntoYear * 1000000))});
+                    // Check for some numbers around 0. Divide by a large number to make sure we cater to the number of
+                    // precision digits
+                    retvaldb = new DBR_TIME_Double(
+                            new double[] {((secondsIntoYear - 2000.0) / (secondsIntoYear * 1000000))});
                 }
                 retvaldb.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvaldb.setSeverity(1);
@@ -267,7 +272,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             case DBR_WAVEFORM_STRING -> {
                 DBR_TIME_String retvst;
                 // Varying number of copies of a typical value
-                retvst = new DBR_TIME_String(((List<String>) (getVector(type, secondsIntoYear))).toArray(new String[0]));
+                retvst =
+                        new DBR_TIME_String(((List<String>) (getVector(type, secondsIntoYear))).toArray(new String[0]));
                 retvst.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvst.setSeverity(1);
                 retvst.setStatus(0);
@@ -275,7 +281,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             }
             case DBR_WAVEFORM_SHORT -> {
                 DBR_TIME_Short retvsh;
-                retvsh = new DBR_TIME_Short(ArrayUtils.toPrimitive(((List<Short>) (getVector(type, secondsIntoYear))).toArray(new Short[0])));
+                retvsh = new DBR_TIME_Short(ArrayUtils.toPrimitive(
+                        ((List<Short>) (getVector(type, secondsIntoYear))).toArray(new Short[0])));
                 retvsh.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvsh.setSeverity(1);
                 retvsh.setStatus(0);
@@ -284,7 +291,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             case DBR_WAVEFORM_FLOAT -> {
                 DBR_TIME_Float retvf;
                 // Varying number of copies of a typical value
-                retvf = new DBR_TIME_Float(ArrayUtils.toPrimitive(((List<Float>) (getVector(type, secondsIntoYear))).toArray(new Float[0])));
+                retvf = new DBR_TIME_Float(ArrayUtils.toPrimitive(
+                        ((List<Float>) (getVector(type, secondsIntoYear))).toArray(new Float[0])));
                 retvf.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvf.setSeverity(1);
                 retvf.setStatus(0);
@@ -292,7 +300,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             }
             case DBR_WAVEFORM_ENUM -> {
                 DBR_TIME_Enum retven;
-                retven = new DBR_TIME_Enum(ArrayUtils.toPrimitive(((List<Short>) (getVector(type, secondsIntoYear))).toArray(new Short[0])));
+                retven = new DBR_TIME_Enum(ArrayUtils.toPrimitive(
+                        ((List<Short>) (getVector(type, secondsIntoYear))).toArray(new Short[0])));
                 retven.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retven.setSeverity(1);
                 retven.setStatus(0);
@@ -301,7 +310,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             case DBR_WAVEFORM_BYTE -> {
                 DBR_TIME_Byte retvb;
                 // Large number of elements in the array
-                retvb = new DBR_TIME_Byte(ArrayUtils.toPrimitive(((List<Byte>) (getVector(type, secondsIntoYear))).toArray(new Byte[0])));
+                retvb = new DBR_TIME_Byte(
+                        ArrayUtils.toPrimitive(((List<Byte>) (getVector(type, secondsIntoYear))).toArray(new Byte[0])));
                 retvb.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvb.setSeverity(1);
                 retvb.setStatus(0);
@@ -310,7 +320,8 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             case DBR_WAVEFORM_INT -> {
                 DBR_TIME_Int retvint;
                 // Varying number of copies of a typical value
-                retvint = new DBR_TIME_Int(ArrayUtils.toPrimitive(((List<Integer>) (getVector(type, secondsIntoYear))).toArray(new Integer[0])));
+                retvint = new DBR_TIME_Int(ArrayUtils.toPrimitive(
+                        ((List<Integer>) (getVector(type, secondsIntoYear))).toArray(new Integer[0])));
                 retvint.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvint.setSeverity(1);
                 retvint.setStatus(0);
@@ -319,15 +330,16 @@ public class BoundaryConditionsSimulationValueGenerator implements SimulationVal
             case DBR_WAVEFORM_DOUBLE -> {
                 DBR_TIME_Double retvd;
                 // Varying number of copies of a typical value
-                retvd = new DBR_TIME_Double(ArrayUtils.toPrimitive(((List<Double>) (getVector(type, secondsIntoYear))).toArray(new Double[0])));
+                retvd = new DBR_TIME_Double(ArrayUtils.toPrimitive(
+                        ((List<Double>) (getVector(type, secondsIntoYear))).toArray(new Double[0])));
                 retvd.setTimeStamp(convertSecondsIntoYear2JCATimeStamp(secondsIntoYear));
                 retvd.setSeverity(1);
                 retvd.setStatus(0);
                 return retvd;
             }
-            case DBR_V4_GENERIC_BYTES ->
-                    throw new RuntimeException("Currently don't support " + type + " when generating sample data");
+            case DBR_V4_GENERIC_BYTES -> throw new RuntimeException(
+                    "Currently don't support " + type + " when generating sample data");
             default -> throw new RuntimeException("We seemed to have missed a DBR type when generating sample data");
         }
-	}
+    }
 }

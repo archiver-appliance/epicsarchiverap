@@ -27,90 +27,127 @@ import java.time.Instant;
  *
  */
 public class SummaryStatsPostProcessorTest {
-	private static Logger logger = LogManager.getLogger(SummaryStatsPostProcessorTest.class.getName());
-	private String pvName = "Test_SummaryStats1";
+    private static Logger logger = LogManager.getLogger(SummaryStatsPostProcessorTest.class.getName());
+    private String pvName = "Test_SummaryStats1";
 
+    /**
+     * Generate data from Jun 1 for a couple of months; one every two days.
+     * Ask for summary with a bin of one day and different periods and see that we get appropriate results.
+     * @throws Exception
+     */
+    @Test
+    public void testBeforeAndAfter() throws Exception {
+        short currentYear = TimeUtils.getCurrentYear();
+        int totalDays = 60;
+        YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(
+                TimeUtils.convertFromISO8601String(currentYear + "-06-01T10:00:00.000Z"));
+        for (int sampleIntervalInHours = 3; sampleIntervalInHours < 24 * 4; sampleIntervalInHours += 3) {
+            int totSamples = totalDays * 24 / sampleIntervalInHours;
+            logger.info("Creating " + totSamples + " samples " + sampleIntervalInHours + " hours apart");
+            ArrayListEventStream testData = new ArrayListEventStream(
+                    0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
+            for (int s = 0; s < totSamples; s++) {
+                testData.add(new SimulationEvent(
+                        startOfSamples.getSecondsintoyear()
+                                + s
+                                        * sampleIntervalInHours
+                                        * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
+                        currentYear,
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                        new ScalarValue<Double>((double) s)));
+            }
 
-	/**
-	 * Generate data from Jun 1 for a couple of months; one every two days.
-	 * Ask for summary with a bin of one day and different periods and see that we get appropriate results.
-	 * @throws Exception
-	 */
-	@Test
-	public void testBeforeAndAfter() throws Exception {
-		short currentYear = TimeUtils.getCurrentYear();
-		int totalDays = 60;
-		YearSecondTimestamp startOfSamples = TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String(currentYear + "-06-01T10:00:00.000Z"));
-		for(int sampleIntervalInHours = 3; sampleIntervalInHours < 24*4; sampleIntervalInHours+=3) {
-			int totSamples = totalDays*24/sampleIntervalInHours;
-			logger.info("Creating " + totSamples + " samples " + sampleIntervalInHours + " hours apart");
-			ArrayListEventStream testData = new ArrayListEventStream(0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
-			for(int s = 0; s < totSamples; s++) {
-				testData.add(new SimulationEvent(startOfSamples.getSecondsintoyear() + s * sampleIntervalInHours * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(), currentYear, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>((double) s)));
-			}
+            {
+                Mean meanProcessor = new Mean();
+                meanProcessor.initialize(
+                        "mean_" + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), pvName);
+                Instant start = TimeUtils.convertFromISO8601String(currentYear + "-06-03T10:00:00.000Z");
+                Instant end = TimeUtils.convertFromISO8601String(currentYear + "-06-23T10:00:00.000Z");
+                meanProcessor.estimateMemoryConsumption(
+                        pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+                meanProcessor
+                        .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                        .call();
 
-			{ 
-				Mean meanProcessor = new Mean();
-				meanProcessor.initialize("mean_" + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), pvName);
-				Instant start = TimeUtils.convertFromISO8601String(currentYear + "-06-03T10:00:00.000Z");
-				Instant end = TimeUtils.convertFromISO8601String(currentYear + "-06-23T10:00:00.000Z");
-				meanProcessor.estimateMemoryConsumption(pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
-				meanProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
+                int eventCount = 0;
+                Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
+                for (Event e : meanProcessor.getConsolidatedEventStream()) {
+                    logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "="
+                            + e.getSampleValue().toString());
+                    Instant eventTs = e.getEventTimeStamp();
+                    Assertions.assertTrue(
+                            eventTs.isAfter(previousTimeStamp),
+                            "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
+                                    + " is the same or after previous timestamp "
+                                    + TimeUtils.convertToISO8601String(previousTimeStamp));
+                    previousTimeStamp = eventTs;
+                    eventCount++;
+                }
+                Assertions.assertTrue(
+                        eventCount >= 19 && eventCount <= 22, "Expected around 21 events got " + eventCount);
+            }
 
-				int eventCount = 0;
-				Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
-				for(Event e : meanProcessor.getConsolidatedEventStream()) {
-					logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "=" + e.getSampleValue().toString());
-					Instant eventTs = e.getEventTimeStamp();
-					Assertions.assertTrue(eventTs.isAfter(previousTimeStamp), "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
-					previousTimeStamp = eventTs;
-					eventCount++;
-				}
-				Assertions.assertTrue(eventCount >= 19 && eventCount <= 22, "Expected around 21 events got " + eventCount);
-			}
+            // Test where we are missing the starting bin.
+            {
+                Mean meanProcessor = new Mean();
+                meanProcessor.initialize(
+                        "mean_" + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), pvName);
+                Instant start = TimeUtils.convertFromISO8601String(currentYear + "-06-04T10:00:00.000Z");
+                Instant end = TimeUtils.convertFromISO8601String(currentYear + "-06-23T10:00:00.000Z");
+                meanProcessor.estimateMemoryConsumption(
+                        pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+                meanProcessor
+                        .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                        .call();
 
-			// Test where we are missing the starting bin.
-			{ 
-				Mean meanProcessor = new Mean();
-				meanProcessor.initialize("mean_" + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), pvName);
-				Instant start = TimeUtils.convertFromISO8601String(currentYear + "-06-04T10:00:00.000Z");
-				Instant end = TimeUtils.convertFromISO8601String(currentYear + "-06-23T10:00:00.000Z");
-				meanProcessor.estimateMemoryConsumption(pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
-				meanProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
+                int eventCount = 0;
+                Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
+                for (Event e : meanProcessor.getConsolidatedEventStream()) {
+                    logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "="
+                            + e.getSampleValue().toString());
+                    Instant eventTs = e.getEventTimeStamp();
+                    Assertions.assertTrue(
+                            eventTs.isAfter(previousTimeStamp),
+                            "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
+                                    + " is the same or after previous timestamp "
+                                    + TimeUtils.convertToISO8601String(previousTimeStamp));
+                    previousTimeStamp = eventTs;
+                    eventCount++;
+                }
+                Assertions.assertTrue(
+                        eventCount >= 17 && eventCount <= 22, "Expected around 20 events got " + eventCount);
+            }
 
-				int eventCount = 0;
-				Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
-				for(Event e : meanProcessor.getConsolidatedEventStream()) {
-					logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "=" + e.getSampleValue().toString());
-					Instant eventTs = e.getEventTimeStamp();
-					Assertions.assertTrue(eventTs.isAfter(previousTimeStamp), "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
-					previousTimeStamp = eventTs;
-					eventCount++;
-				}
-				Assertions.assertTrue(eventCount >= 17 && eventCount <= 22, "Expected around 20 events got " + eventCount);
-			}
-			
-			// Test where we are missing data in the start.
-			{ 
-				Mean meanProcessor = new Mean();
-				meanProcessor.initialize("mean_" + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), pvName);
-				Instant start = TimeUtils.convertFromISO8601String(currentYear + "-05-21T10:00:00.000Z");
-				Instant end = TimeUtils.convertFromISO8601String(currentYear + "-06-21T10:00:00.000Z");
-				meanProcessor.estimateMemoryConsumption(pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
-				meanProcessor.wrap(CallableEventStream.makeOneStreamCallable(testData, null, false)).call();
+            // Test where we are missing data in the start.
+            {
+                Mean meanProcessor = new Mean();
+                meanProcessor.initialize(
+                        "mean_" + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), pvName);
+                Instant start = TimeUtils.convertFromISO8601String(currentYear + "-05-21T10:00:00.000Z");
+                Instant end = TimeUtils.convertFromISO8601String(currentYear + "-06-21T10:00:00.000Z");
+                meanProcessor.estimateMemoryConsumption(
+                        pvName, new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1), start, end, null);
+                meanProcessor
+                        .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                        .call();
 
-				int eventCount = 0;
-				Instant previousTimeStamp = start;
-				for(Event e : meanProcessor.getConsolidatedEventStream()) {
-					logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "=" + e.getSampleValue().toString());
-					Instant eventTs = e.getEventTimeStamp();
-					Assertions.assertTrue(eventTs.isAfter(previousTimeStamp), "Event timestamp " + TimeUtils.convertToISO8601String(eventTs) + " is the same or after previous timestamp " + TimeUtils.convertToISO8601String(previousTimeStamp));
-					previousTimeStamp = eventTs;
-					eventCount++;
-				}
-				Assertions.assertTrue(eventCount >= 17 && eventCount <= 23, "Expected around 21 events got " + eventCount);
-			}
-
-		}
-	}
+                int eventCount = 0;
+                Instant previousTimeStamp = start;
+                for (Event e : meanProcessor.getConsolidatedEventStream()) {
+                    logger.debug(TimeUtils.convertToISO8601String(e.getEventTimeStamp()) + "="
+                            + e.getSampleValue().toString());
+                    Instant eventTs = e.getEventTimeStamp();
+                    Assertions.assertTrue(
+                            eventTs.isAfter(previousTimeStamp),
+                            "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
+                                    + " is the same or after previous timestamp "
+                                    + TimeUtils.convertToISO8601String(previousTimeStamp));
+                    previousTimeStamp = eventTs;
+                    eventCount++;
+                }
+                Assertions.assertTrue(
+                        eventCount >= 17 && eventCount <= 23, "Expected around 21 events got " + eventCount);
+            }
+        }
+    }
 }

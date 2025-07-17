@@ -29,7 +29,6 @@ public class SampleV4PVAClientTest {
     public void setUp() throws Exception {
         ioc = new SIOCSetup(pvPrefix);
         ioc.startSIOCWithDefaultDB();
-
     }
 
     @AfterEach

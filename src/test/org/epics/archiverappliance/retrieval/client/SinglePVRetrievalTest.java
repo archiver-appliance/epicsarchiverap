@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.TomcatSetup;
-import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -49,8 +48,7 @@ public class SinglePVRetrievalTest {
 
     @Test
     public void testGetDataForSinglePV() throws Exception {
-        testGetOneDaysDataForYear(
-                TimeUtils.getCurrentYear(), 86401);
+        testGetOneDaysDataForYear(TimeUtils.getCurrentYear(), 86401);
         testGetOneDaysDataForYear(TimeUtils.getCurrentYear() - 1, 0);
         testGetOneDaysDataForYear(TimeUtils.getCurrentYear() + 1, 1);
     }

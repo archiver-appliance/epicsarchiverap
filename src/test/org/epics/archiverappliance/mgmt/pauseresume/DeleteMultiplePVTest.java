@@ -63,32 +63,36 @@ public class DeleteMultiplePVTest {
 
     @Test
     public void testDeleteMultiplePV() throws Exception {
-        String[] pvs = { "UnitTestNoNamingConvention:sine", "UnitTestNoNamingConvention:cosine", "test_0", "test_1", "test_2" };
-        List<JSONObject> arSpecs = List.of(pvs).stream().map((x) -> new JSONObject(Map.of("pv", x))).collect(Collectors.toList());
+        String[] pvs = {
+            "UnitTestNoNamingConvention:sine", "UnitTestNoNamingConvention:cosine", "test_0", "test_1", "test_2"
+        };
+        List<JSONObject> arSpecs = List.of(pvs).stream()
+                .map((x) -> new JSONObject(Map.of("pv", x)))
+                .collect(Collectors.toList());
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         logger.info("Archiving 5 PV");
         GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
-        for(String pv : pvs) {
+        for (String pv : pvs) {
             PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
         }
 
         logger.info("Pausing 2 PV");
         List<String> pvsToDelete = List.of("test_0", "test_1");
-        for(String pv : pvsToDelete) {
+        for (String pv : pvsToDelete) {
             GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pv), false);
             Thread.sleep(2 * 1000);
             PVAccessUtil.waitForStatusChange(pv, "Paused", 10, mgmtURL, 15);
         }
 
-        for(String pv : pvsToDelete) {
+        for (String pv : pvsToDelete) {
             GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pv), false);
             Thread.sleep(2 * 1000);
             PVAccessUtil.waitForStatusChange(pv, "Not being archived", 10, mgmtURL, 15);
         }
 
         logger.info("Checking other PV are still there");
-        for(String pv : pvs) {
-            if(!pvsToDelete.contains(pv)) {
+        for (String pv : pvs) {
+            if (!pvsToDelete.contains(pv)) {
                 PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
             }
         }
