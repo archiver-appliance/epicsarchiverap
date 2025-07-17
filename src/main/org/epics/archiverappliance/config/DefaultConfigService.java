@@ -17,29 +17,27 @@ import com.google.common.eventbus.Subscribe;
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;
 import com.hazelcast.client.config.XmlClientConfigBuilder;
+import com.hazelcast.cluster.Cluster;
+import com.hazelcast.cluster.Member;
+import com.hazelcast.cluster.MembershipEvent;
+import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.IndexConfig;
 import com.hazelcast.config.IndexType;
 import com.hazelcast.config.XmlConfigBuilder;
-import com.hazelcast.cluster.Cluster;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.core.IExecutorService;
 import com.hazelcast.map.IMap;
-import com.hazelcast.topic.ITopic;
-import com.hazelcast.cluster.Member;
-import com.hazelcast.cluster.MembershipEvent;
-import com.hazelcast.cluster.MembershipListener;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.projection.Projection;
-
 import com.hazelcast.query.Predicate;
 import com.hazelcast.query.PredicateBuilder.EntryObject;
 import com.hazelcast.query.Predicates;
-
+import com.hazelcast.topic.ITopic;
 import edu.stanford.slac.archiverappliance.PB.data.PBTypeSystem;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.logging.log4j.LogManager;
@@ -67,7 +65,6 @@ import org.epics.archiverappliance.retrieval.channelarchiver.XMLRPCClient;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
 import org.epics.archiverappliance.utils.ui.URIUtils;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.xml.sax.SAXException;
 
@@ -158,7 +155,7 @@ public class DefaultConfigService implements ConfigService {
     // Maintain a TRIE index for the pvNames in this appliance.
     protected ConcurrentHashMap<String, ConcurrentSkipListSet<String>> parts2PVNamesForThisAppliance =
             new ConcurrentHashMap<String, ConcurrentSkipListSet<String>>();
-    
+
     // Map IP address to appliance identity
     protected IMap<String, String> clusterInet2ApplianceIdentity = null;
     protected IMap<String, Boolean> appliancesConfigLoaded = null;
@@ -334,8 +331,6 @@ public class DefaultConfigService implements ConfigService {
             }
         }
 
-
-
         switch (contextPath) {
             case "/mgmt":
                 warFile = WAR_FILE.MGMT;
@@ -486,7 +481,7 @@ public class DefaultConfigService implements ConfigService {
                 config.getProperties().putAll(hzThreadCounts);
             }
 
-            config.setProperty( "hazelcast.logging.type", "log4j2" );
+            config.setProperty("hazelcast.logging.type", "log4j2");
             // config.setProperty("hazelcast.query.result.size.limit", "10000000");
 
             try {
@@ -552,8 +547,8 @@ public class DefaultConfigService implements ConfigService {
                  */
                 ClientConfig clientConfig = new XmlClientConfigBuilder().build();
                 clientConfig.setClusterName(ARCHAPPL_NAME);
-                clientConfig.setInstanceName(myIdentity+"_"+this.warFile);
-                clientConfig.setProperty( "hazelcast.logging.type", "log4j2" );
+                clientConfig.setInstanceName(myIdentity + "_" + this.warFile);
+                clientConfig.setProperty("hazelcast.logging.type", "log4j2");
 
                 // Non mgmt client can only connect to their MGMT webapp.
                 String[] myAddrParts = myApplianceInfo.getClusterInetPort().split(":");
@@ -566,8 +561,8 @@ public class DefaultConfigService implements ConfigService {
                 }
                 int myClusterPort = Integer.parseInt(myAddrParts[1]);
 
-                logger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress()
-                        + ":" + myClusterPort);
+                logger.debug(this.warFile + " connecting as a native client to " + myInetAddr.getHostAddress() + ":"
+                        + myClusterPort);
                 clientConfig.getNetworkConfig().addAddress(myInetAddr.getHostAddress() + ":" + myClusterPort);
 
                 if (!hzThreadCounts.isEmpty()) {
@@ -592,7 +587,7 @@ public class DefaultConfigService implements ConfigService {
 
         hzinstance.getUserContext().put(CONFIGSERVICE_HZ_NAME, this);
         pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
-        namedFlags = hzinstance.getMap("namedflags");        
+        namedFlags = hzinstance.getMap("namedflags");
         typeInfos = hzinstance.getMap(TYPEINFO);
         typeInfos.addIndex(new IndexConfig(IndexType.HASH, "applianceIdentity", "paused", "usePVAccess"));
         archivePVRequests = hzinstance.getMap("archivePVRequests");
@@ -905,9 +900,15 @@ public class DefaultConfigService implements ConfigService {
         configlogger.debug(() -> "Start archiving PVs from persistence.");
         // To prevent broadcast storms, we pause for pausePerGroup seconds for every pausePerGroup PVs
         int currentPVCount = 0;
-        int pausePerGroupPVCount = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPVCount", "2000"));
-        int pausePerGroupPauseTimeInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPauseTimeInSeconds", "2"));
-        boolean determineLastKnownEventFromStores = Boolean.parseBoolean(this.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.determineLastKnownEventFromStores", "true"));
+        int pausePerGroupPVCount = Integer.parseInt(this.getInstallationProperties()
+                .getProperty("org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPVCount", "2000"));
+        int pausePerGroupPauseTimeInSeconds = Integer.parseInt(this.getInstallationProperties()
+                .getProperty(
+                        "org.epics.archiverappliance.engine.archivePVSonStartup.pausePerGroupPauseTimeInSeconds", "2"));
+        boolean determineLastKnownEventFromStores = Boolean.parseBoolean(this.getInstallationProperties()
+                .getProperty(
+                        "org.epics.archiverappliance.engine.archivePVSonStartup.determineLastKnownEventFromStores",
+                        "true"));
 
         for (String pvName : this.getPVsForThisAppliance()) {
             try {
@@ -928,11 +929,13 @@ public class DefaultConfigService implements ConfigService {
                 StoragePlugin firstDest = StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[0], this);
 
                 Instant lastKnownTimestamp = null;
-                if(determineLastKnownEventFromStores) {
+                if (determineLastKnownEventFromStores) {
                     lastKnownTimestamp = typeInfo.determineLastKnownEventFromStores(this);
-                    if(logger.isDebugEnabled()) {
-                        logger.debug("Last known timestamp from ETL stores is for pv {} is {} ", pvName,
-                            TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
+                    if (logger.isDebugEnabled()) {
+                        logger.debug(
+                                "Last known timestamp from ETL stores is for pv {} is {} ",
+                                pvName,
+                                TimeUtils.convertToHumanReadableString(lastKnownTimestamp));
                     }
                 }
 
@@ -1053,12 +1056,15 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
-	public <T> Collection<T> queryPVTypeInfos(Predicate<String, PVTypeInfo> predicate, Projection<Map.Entry<String, PVTypeInfo>, T> projection) {
+    public <T> Collection<T> queryPVTypeInfos(
+            Predicate<String, PVTypeInfo> predicate, Projection<Map.Entry<String, PVTypeInfo>, T> projection) {
         Collection<T> projectedTypeInfos = this.typeInfos.project(projection, predicate);
         return projectedTypeInfos;
     }
 
-    private static record PVAppId ( String pvName, String appliance ) implements Serializable {};
+    private static record PVAppId(String pvName, String appliance) implements Serializable {}
+    ;
+
     private static class PVAppidProj implements Projection<Map.Entry<String, PVTypeInfo>, PVAppId> {
         @Override
         public PVAppId transform(Map.Entry<String, PVTypeInfo> entry) {
@@ -1069,41 +1075,49 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
-	public Map<String, List<String>> breakDownPVsByAppliance(List<String> pvNames) {
-        Collection<PVAppId> vals = this.queryPVTypeInfos(Predicates.in("__key", pvNames.toArray(new String[0])), new PVAppidProj());
-         return vals.stream().collect(Collectors.groupingBy(PVAppId::appliance, Collectors.mapping(PVAppId::pvName, Collectors.toList())));
+    public Map<String, List<String>> breakDownPVsByAppliance(List<String> pvNames) {
+        Collection<PVAppId> vals =
+                this.queryPVTypeInfos(Predicates.in("__key", pvNames.toArray(new String[0])), new PVAppidProj());
+        return vals.stream()
+                .collect(Collectors.groupingBy(
+                        PVAppId::appliance, Collectors.mapping(PVAppId::pvName, Collectors.toList())));
     }
 
+    public record Tuple<T>(String applianceIdentity, T result) implements Serializable {}
 
-    public record Tuple<T>(String applianceIdentity, T result) implements Serializable {        
-    }
-
-    private static class EAAClusterWideOperation<T> implements Callable<Tuple<T>>, Serializable, HazelcastInstanceAware {
+    private static class EAAClusterWideOperation<T>
+            implements Callable<Tuple<T>>, Serializable, HazelcastInstanceAware {
         private transient ConfigService theConfigService;
         private final EAABulkOperation<T> theOperation;
+
         public EAAClusterWideOperation(EAABulkOperation<T> theOperation) {
             this.theOperation = theOperation;
         }
-        public void setHazelcastInstance( HazelcastInstance hazelcastInstance ) {
-            theConfigService = (ConfigService) hazelcastInstance.getUserContext().get(CONFIGSERVICE_HZ_NAME);
+
+        public void setHazelcastInstance(HazelcastInstance hazelcastInstance) {
+            theConfigService =
+                    (ConfigService) hazelcastInstance.getUserContext().get(CONFIGSERVICE_HZ_NAME);
         }
 
         public Tuple<T> call() {
-            return new Tuple<T>(this.theConfigService.getMyApplianceInfo().getIdentity(), this.theOperation.call(theConfigService));
+            return new Tuple<T>(
+                    this.theConfigService.getMyApplianceInfo().getIdentity(), this.theOperation.call(theConfigService));
         }
     }
 
     @Override
     public <T> Map<String, T> executeClusterWide(EAABulkOperation<T> theOperation) {
         HashMap<String, T> ret = new HashMap<String, T>();
-        IExecutorService executorService = this.hzinstance.getExecutorService( "default" );
-        Map<Member, Future<Tuple<T>>> futures = executorService.submitToMembers( new EAAClusterWideOperation<T>(theOperation), this.hzinstance.getCluster().getMembers() );
-        for ( Entry<Member, Future<Tuple<T>>> future : futures.entrySet() ) {
+        IExecutorService executorService = this.hzinstance.getExecutorService("default");
+        Map<Member, Future<Tuple<T>>> futures = executorService.submitToMembers(
+                new EAAClusterWideOperation<T>(theOperation),
+                this.hzinstance.getCluster().getMembers());
+        for (Entry<Member, Future<Tuple<T>>> future : futures.entrySet()) {
             try {
                 Tuple<T> operationResult = future.getValue().get();
                 ret.put(operationResult.applianceIdentity, operationResult.result);
 
-            } catch(InterruptedException|ExecutionException ex) {
+            } catch (InterruptedException | ExecutionException ex) {
                 logger.error("Exception running batch job", ex);
             }
         }
@@ -1112,15 +1126,16 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public <T> T executeOnAppliance(ApplianceInfo applianceInfo, EAABulkOperation<T> theOperation) {
-        IExecutorService executorService = this.hzinstance.getExecutorService( "default" );
-        for(Entry<String, String> c2a : this.clusterInet2ApplianceIdentity.entrySet()){
-            if(c2a.getValue().equals(applianceInfo.getIdentity())) {
-                for(Member member : this.hzinstance.getCluster().getMembers()) {
-                    if(this.getMemberKey(member).equals(c2a.getKey())) {
+        IExecutorService executorService = this.hzinstance.getExecutorService("default");
+        for (Entry<String, String> c2a : this.clusterInet2ApplianceIdentity.entrySet()) {
+            if (c2a.getValue().equals(applianceInfo.getIdentity())) {
+                for (Member member : this.hzinstance.getCluster().getMembers()) {
+                    if (this.getMemberKey(member).equals(c2a.getKey())) {
                         try {
-                            Future<Tuple<T>> future = executorService.submitToMember(new EAAClusterWideOperation<T>(theOperation), member);
+                            Future<Tuple<T>> future = executorService.submitToMember(
+                                    new EAAClusterWideOperation<T>(theOperation), member);
                             return future.get().result;
-                        } catch(InterruptedException|ExecutionException ex) {
+                        } catch (InterruptedException | ExecutionException ex) {
                             logger.error("Exception running batch job", ex);
                         }
                     }
@@ -1128,7 +1143,7 @@ public class DefaultConfigService implements ConfigService {
             }
         }
         return null;
-    }    
+    }
 
     @Override
     public Set<String> getPVsForApplianceMatchingRegex(String nameToMatch) {
@@ -1211,7 +1226,8 @@ public class DefaultConfigService implements ConfigService {
     @Override
     public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
         ApplianceInfo info = pv2appliancemapping.get(pvName);
-        if (info != null && !info.getIdentity().equals(applianceInfo.getIdentity())) throw new AlreadyRegisteredException(info);
+        if (info != null && !info.getIdentity().equals(applianceInfo.getIdentity()))
+            throw new AlreadyRegisteredException(info);
         pv2appliancemapping.put(pvName, applianceInfo);
     }
 
@@ -1330,7 +1346,10 @@ public class DefaultConfigService implements ConfigService {
 
     @Override
     public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
-        int initialDelayInSeconds = Integer.parseInt(this.getInstallationProperties().getProperty("org.epics.archiverappliance.mgmt.MgmtRuntimeState.initialDelayBeforeStartingArchiveRequests", "10"));
+        int initialDelayInSeconds = Integer.parseInt(this.getInstallationProperties()
+                .getProperty(
+                        "org.epics.archiverappliance.mgmt.MgmtRuntimeState.initialDelayBeforeStartingArchiveRequests",
+                        "10"));
         return initialDelayInSeconds;
     }
 
@@ -1375,7 +1394,7 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
-    public List<String> getAliasesForRealName(String realName) { 
+    public List<String> getAliasesForRealName(String realName) {
         try {
             return persistanceLayer.getAliasNamesForRealName(realName);
         } catch (IOException ex) {
@@ -1877,7 +1896,7 @@ public class DefaultConfigService implements ConfigService {
             for (String pvNameFromPersistence : pvNamesFromPersistence) {
                 String realName = persistanceLayer.getAliasNamesToRealName(pvNameFromPersistence);
                 PVTypeInfo typeInfo = this.typeInfos.get(realName);
-                if(typeInfo != null && typeInfo.getApplianceIdentity().equals(this.myIdentity)) {
+                if (typeInfo != null && typeInfo.getApplianceIdentity().equals(this.myIdentity)) {
                     newAliases.put(pvNameFromPersistence, realName);
                     // Add the alias into the trie
                     String[] parts = this.pvName2KeyConverter.breakIntoParts(pvNameFromPersistence);
@@ -1888,7 +1907,10 @@ public class DefaultConfigService implements ConfigService {
                         parts2PVNamesForThisAppliance.get(part).add(pvNameFromPersistence);
                     }
                 } else {
-                    logger.warn("Skipping adding alias for {} as the real PV {} is no longer archied on this appliance", pvNameFromPersistence, realName);
+                    logger.warn(
+                            "Skipping adding alias for {} as the real PV {} is no longer archied on this appliance",
+                            pvNameFromPersistence,
+                            realName);
                 }
             }
 
@@ -2036,10 +2058,8 @@ public class DefaultConfigService implements ConfigService {
     public Set<String> getPausedPVsInThisAppliance() {
         EntryObject e = Predicates.newPredicateBuilder().getEntryObject();
         Predicate<String, PVTypeInfo> predicate = Predicates.and(
-            Predicates.equal("applianceIdentity", this.myIdentity),
-            Predicates.equal("paused", true)
-            );
-        Set<String> queryResult = ((IMap<String, PVTypeInfo>)this.typeInfos).keySet(predicate);
+                Predicates.equal("applianceIdentity", this.myIdentity), Predicates.equal("paused", true));
+        Set<String> queryResult = ((IMap<String, PVTypeInfo>) this.typeInfos).keySet(predicate);
         return queryResult;
     }
 
