@@ -7,7 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
@@ -59,7 +58,7 @@ public class PlainPBPathNameUtility {
             Instant ts,
             PartitionGranularity partitionGranularity,
             ArchPaths paths,
-            CompressionMode compressionMode,
+            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         return getFileName(
@@ -93,7 +92,7 @@ public class PlainPBPathNameUtility {
             Instant ts,
             PartitionGranularity partitionGranularity,
             ArchPaths paths,
-            CompressionMode compressionMode,
+            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         return getFileName(rootFolder, pvName, ts, ".pbs", partitionGranularity, false, paths, compressionMode, pv2key);
@@ -130,7 +129,7 @@ public class PlainPBPathNameUtility {
             final Instant endts,
             final String extension,
             final PartitionGranularity granularity,
-            final CompressionMode compressionMode,
+            final PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
@@ -189,7 +188,7 @@ public class PlainPBPathNameUtility {
             final Instant currentTime,
             final String extension,
             final PartitionGranularity granularity,
-            final CompressionMode compressionMode,
+            final PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         final long reqStartEpochSeconds = 1;
@@ -229,7 +228,7 @@ public class PlainPBPathNameUtility {
             final String pvName,
             final String extension,
             final PartitionGranularity granularity,
-            final CompressionMode compressionMode,
+            final PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         ArrayList<Path> retval = new ArrayList<>();
@@ -271,7 +270,7 @@ public class PlainPBPathNameUtility {
             final Instant startts,
             final String extension,
             final PartitionGranularity granularity,
-            final CompressionMode compressionMode,
+            final PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws Exception {
         if (logger.isDebugEnabled())
@@ -327,7 +326,7 @@ public class PlainPBPathNameUtility {
             final Instant startts,
             final String extension,
             final PartitionGranularity granularity,
-            final CompressionMode compressionMode,
+            final PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws Exception {
         if (logger.isDebugEnabled())
@@ -379,7 +378,7 @@ public class PlainPBPathNameUtility {
             PartitionGranularity partitionGranularity,
             boolean createParentFolder,
             ArchPaths paths,
-            CompressionMode compressionMode,
+            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String partitionNameComponent = TimeUtils.getPartitionName(ts, partitionGranularity);
@@ -427,7 +426,7 @@ public class PlainPBPathNameUtility {
             String rootFolder,
             final String pvName,
             final PartitionGranularity granularity,
-            CompressionMode compressionMode,
+            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String pvKey = pv2key.convertPVNameToKey(pvName);
@@ -489,7 +488,7 @@ public class PlainPBPathNameUtility {
             final String pvName,
             final String extension,
             final PartitionGranularity granularity,
-            CompressionMode compressionMode,
+            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key)
             throws IOException {
         try {

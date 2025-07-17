@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
@@ -152,7 +153,7 @@ public class ETLWithRecurringFilesTest {
                 pvName,
                 etlTestPlugins.src().getExtensionString(),
                 etlTestPlugins.src().getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         for (Path srcPath : allSrcPaths) {
             Path destPath = srcPath.resolveSibling(srcPath.getFileName()

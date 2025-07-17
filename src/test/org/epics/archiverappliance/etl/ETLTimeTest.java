@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.etl;
 
+import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -59,13 +60,13 @@ public class ETLTimeTest {
 
     private static Stream<Arguments> provideTestTime() {
         return Stream.of(
-                Arguments.of(PlainPBStoragePlugin.CompressionMode.NONE, PlainPBStoragePlugin.CompressionMode.NONE),
+                Arguments.of(PBCompressionMode.NONE, PBCompressionMode.NONE),
                 Arguments.of(
-                        PlainPBStoragePlugin.CompressionMode.NONE,
-                        PlainPBStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV")),
+                        PBCompressionMode.NONE,
+                        PBCompressionMode.valueOf("ZIP_PER_PV")),
                 Arguments.of(
-                        PlainPBStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV"),
-                        PlainPBStoragePlugin.CompressionMode.valueOf("ZIP_PER_PV")));
+                        PBCompressionMode.valueOf("ZIP_PER_PV"),
+                        PBCompressionMode.valueOf("ZIP_PER_PV")));
     }
 
     private static double getDataSizeInGBPerHour(CountFiles stsSizeVisitor) {
@@ -94,7 +95,7 @@ public class ETLTimeTest {
     @ParameterizedTest
     @MethodSource("provideTestTime")
     public void testTime(
-            PlainPBStoragePlugin.CompressionMode srcCompression, PlainPBStoragePlugin.CompressionMode destCompression)
+        PBCompressionMode srcCompression, PBCompressionMode destCompression)
             throws Exception {
         PlainPBStoragePlugin stsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder="
@@ -176,7 +177,7 @@ public class ETLTimeTest {
         logger.info("File size left in dest folder " + getDataSizeInGBPerHour(postETLDestVisitor));
 
         Assertions.assertEquals(
-                srcCompression != PlainPBStoragePlugin.CompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
+                srcCompression != PBCompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
                 postETLSrcVisitor.filesPresent,
                 "We have some files that have not moved " + postETLSrcVisitor.filesPresent);
         int expectedFiles = pvs.size();
