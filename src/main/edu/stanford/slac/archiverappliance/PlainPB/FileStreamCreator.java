@@ -51,17 +51,16 @@ public class FileStreamCreator implements ETLStreamCreator {
         return new FileBackedPBEventStream(pvName, path, dbrType);
     }
 
-
     public static EventStream getStreamForIteration(
             String pvName,
             Path path,
             Instant startAtTime,
             ArchDBRTypes archDBRTypes,
-            BiDirectionalIterable.IterationDirection direction) throws IOException {
+            BiDirectionalIterable.IterationDirection direction)
+            throws IOException {
 
         return new FileBackedPBEventStream(pvName, path, archDBRTypes, startAtTime, direction);
     }
-
 
     @Override
     public EventStream getStream() throws IOException {
