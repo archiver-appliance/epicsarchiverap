@@ -7,9 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -49,15 +51,15 @@ public class BlackHoleETLTest {
     public static Stream<Arguments> provideBlackHoleETL() {
         return Arrays.stream(PartitionGranularity.values())
                 .filter(g -> g.getNextLargerGranularity() != null)
-                .flatMap(g -> Stream.of(Arguments.of(g)));
+                .flatMap(g -> Arrays.stream(PlainStorageType.values()).flatMap(f -> Stream.of(Arguments.of(g, f))));
     }
 
     @ParameterizedTest
     @MethodSource("provideBlackHoleETL")
-    void testBlackHoleETL(PartitionGranularity granularity) throws Exception {
+    void testBlackHoleETL(PartitionGranularity granularity, PlainStorageType plainStorageType) throws Exception {
 
-        PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
-        PBCommonSetup srcSetup = new PBCommonSetup();
+        PlainStoragePlugin etlSrc = new PlainStoragePlugin(plainStorageType);
+        PlainCommonSetup srcSetup = new PlainCommonSetup();
         BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
         ConfigServiceForTests configService = new ConfigServiceForTests(-1);
 
@@ -109,16 +111,15 @@ public class BlackHoleETLTest {
         srcSetup.deleteTestFolder();
     }
 
-    private int getFilesWithData(String pvName, PlainPBStoragePlugin etlSrc, ConfigService configService)
+    private int getFilesWithData(String pvName, PlainStoragePlugin etlSrc, ConfigService configService)
             throws Exception {
         // Check that all the files in the destination store are valid files.
-        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlSrc.getRootFolder(),
                 pvName,
                 etlSrc.getExtensionString(),
-                etlSrc.getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         return allPaths.length;
     }

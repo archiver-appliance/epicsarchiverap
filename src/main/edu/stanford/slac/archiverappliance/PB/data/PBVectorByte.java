@@ -68,10 +68,8 @@ public class PBVectorByte implements DBRTimeEvent {
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
                 .setVal(ByteString.copyFrom(vals));
-        if (ev.getSeverity() != 0)
-            builder.setSeverity(ev.getSeverity());
-        if (ev.getStatus() != 0)
-            builder.setStatus(ev.getStatus());
+        if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
+        if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
         if (ev.hasFieldValues()) {
             HashMap<String, String> fields = ev.getFields();
             for (String fieldName : fields.keySet()) {
@@ -108,22 +106,34 @@ public class PBVectorByte implements DBRTimeEvent {
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
     }
 
-	public PBVectorByte(PVAStructure v4Data) {
+    public PBVectorByte(PVAStructure v4Data) {
         YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
-		DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
+        DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
-		PVAByteArray pvArray = (PVAByteArray) v4Data.get("value");
-		byte[] data = pvArray.get();
+        PVAByteArray pvArray = (PVAByteArray) v4Data.get("value");
+        byte[] data = pvArray.get();
 
         year = yst.getYear();
         Builder builder = EPICSEvent.VectorChar.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
                 .setVal(ByteString.copyFrom(data));
-		if(alarm.severity != 0) builder.setSeverity(alarm.severity);
-		if(alarm.status != 0) builder.setStatus(alarm.status);
+        if (alarm.severity != 0) builder.setSeverity(alarm.severity);
+        if (alarm.status != 0) builder.setStatus(alarm.status);
         dbevent = builder.build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+    }
+
+    @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.VectorChar.class;
     }
 
     @Override
@@ -137,7 +147,6 @@ public class PBVectorByte implements DBRTimeEvent {
         return TimeUtils.convertFromYearSecondTimestamp(
                 new YearSecondTimestamp(year, dbevent.getSecondsintoyear(), dbevent.getNano()));
     }
-
 
     @Override
     public YearSecondTimestamp getYearSecondTimestamp() {

@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.BiDirectionalIterable;
+import org.epics.archiverappliance.common.DataAtTime;
 import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.BiDirectionalIterable.IterationDirection;
@@ -15,7 +15,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
-import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.mgmt.bpl.PVsMatchingParameter;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MetaFields;
@@ -27,7 +26,6 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -39,7 +37,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Predicate;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -322,71 +319,6 @@ public class GetDataAtTime {
         logger.info("Retrieval time for " + pvNames.size() + " PVs at " + timeStr + pmansProfiler.toString());
     }
 
-    private static class PVWithData {
-        String pvName;
-        HashMap<String, Object> sample;
-
-        public PVWithData(String pvName, HashMap<String, Object> sample) {
-            this.pvName = pvName;
-            this.sample = sample;
-        }
-    }
-
-    private static class GetDataPredicate implements Predicate<Event> {
-        String pvName;
-        Instant atTime;
-        Instant stopAtTime;
-        HashMap<String, Object> evnt;
-        boolean pickedUpValue = false;
-        public GetDataPredicate(String pvName, Instant atTime) {
-            this.pvName = pvName;
-            this.atTime = atTime;
-            this.stopAtTime = atTime.minus(1, ChronoUnit.DAYS);
-            evnt = new HashMap<String, Object>();
-        }
-
-        public boolean test(Event event) {
-            DBRTimeEvent dbrEvent = (DBRTimeEvent) event;
-            // We are cruising backwards in time.
-            // At the first sample whose record processing timestamp is before or equal to the specified time, we pick up the value
-            // After that, we collect all the metadata 
-            // We stop after a days worth of iteration.
-            if(dbrEvent.getEventTimeStamp().isBefore(atTime) || dbrEvent.getEventTimeStamp().equals(atTime)) {
-                if(!pickedUpValue) {
-                    pickedUpValue = true;
-                    evnt.put("secs", dbrEvent.getEpochSeconds());
-                    this.stopAtTime = dbrEvent.getEventTimeStamp().minus(1, ChronoUnit.DAYS);
-                    evnt.put(
-                            "nanos",
-                            dbrEvent
-                                    .getEventTimeStamp()
-                                    .getNano());
-                    evnt.put("severity", dbrEvent.getSeverity());
-                    evnt.put("status", dbrEvent.getStatus());
-                    evnt.put(
-                            "val",
-                            JSONValue.parse(dbrEvent
-                                    .getSampleValue()
-                                    .toJSONString()));
-                }
-                if(pickedUpValue) {
-                    var evFields = dbrEvent.getFields();
-                    if(evFields != null && !evFields.isEmpty()) {
-                        for(String fieldName : evFields.keySet()) {
-                            MetaFields.addMetaFieldValue(evnt, fieldName, evFields.get(fieldName));
-                        }
-                    }
-                }
-            }
-
-            if(dbrEvent.getEventTimeStamp().isBefore(this.stopAtTime)) {
-                logger.debug("Stopping iteration for {} at {}", this.pvName, TimeUtils.convertToHumanReadableString(dbrEvent.getEventTimeStamp()));
-                return false;
-            }
-
-            return true;
-        }
-    }
 
     /**
      * Async method for getting data for a pv from its list of stores.
@@ -396,7 +328,7 @@ public class GetDataAtTime {
      * @param configService
      * @return
      */
-    private static PVWithData getDataAtTimeForPVFromStores(String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
+    public static PVWithData getDataAtTimeForPVFromStores(String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
         String nameFromUser = pvName;
 
         PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
@@ -410,7 +342,7 @@ public class GetDataAtTime {
         // Go thru the stores in reverse order...
         try {
             // Very important we make a copy of the datastores here...
-            List<String> datastores = new ArrayList<String>(Arrays.asList(typeInfo.getDataStores()));
+            List<String> datastores = Arrays.asList(typeInfo.getDataStores());
             Collections.reverse(datastores);
             for (String store : datastores) {
                 StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
@@ -422,14 +354,14 @@ public class GetDataAtTime {
                 }
 
                 try (BasicContext context = new BasicContext()) {
-                    if(storagePlugin instanceof BiDirectionalIterable) {
-                        Instant startAtTime = atTime.plus(5, ChronoUnit.MINUTES);
-                        GetDataPredicate thePredicate = new GetDataPredicate(pvName, atTime);
+                    if (storagePlugin instanceof DataAtTime dataAtTimePlugin) {
                         // The searchPeriod here is only to get enough chunks to facilitate the search. The iteration should stop at the specified time period.
-                        ((BiDirectionalIterable)storagePlugin).iterate(context, pvName, startAtTime, thePredicate, IterationDirection.BACKWARDS, searchPeriod.plusDays(31));
-                        if(thePredicate.pickedUpValue) {
-                            return new PVWithData(nameFromUser, thePredicate.evnt);
-                        }                        
+
+                        Instant startAtTime = atTime.plus(5, ChronoUnit.MINUTES);
+                        Event e = dataAtTimePlugin.dataAtTime(context, pvName, atTime, startAtTime, searchPeriod, IterationDirection.BACKWARDS);
+                        if (e != null) {
+                            return new PVWithData(pvName, e);
+                        }
                     } else {
                         logger.info("Plugin {} does not implement the BiDirectionalIterable interface", storagePlugin.getName());
                     }
@@ -467,17 +399,15 @@ public class GetDataAtTime {
 
         List<CompletableFuture<PVWithData>> retrievalCalls = new LinkedList<CompletableFuture<PVWithData>>();
         for (String pvName : pvNames) {
-            retrievalCalls.add(CompletableFuture.supplyAsync(() -> {
-                return getDataAtTimeForPVFromStores(pvName, atTime, searchPeriod, configService);
-            }));
+            retrievalCalls.add(CompletableFuture.supplyAsync(() -> getDataAtTimeForPVFromStores(pvName, atTime, searchPeriod, configService)));
         }
 
         CompletableFuture.allOf(toArray(retrievalCalls)).join();
-        HashMap<String, HashMap<String, Object>> ret = new HashMap<String, HashMap<String, Object>>();
+        HashMap<String, Event> ret = new HashMap<>();
         for (CompletableFuture<PVWithData> res : retrievalCalls) {
             PVWithData pd = res.get();
             if (pd != null) {
-                ret.put(pd.pvName, pd.sample);
+                ret.put(pd.pvName(), pd.event());
             }
         }
 
@@ -486,10 +416,4 @@ public class GetDataAtTime {
         }
     }
 
-    public static HashMap<String, HashMap<String, Object>> testGetDataAtTimeForPVFromStores(String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
-        HashMap<String, HashMap<String, Object>> ret = new HashMap<String, HashMap<String, Object>>();
-        PVWithData pd = getDataAtTimeForPVFromStores(pvName, atTime, searchPeriod, configService);
-        ret.put(pd.pvName, pd.sample);
-        return ret;
-    }
 }

@@ -1,6 +1,9 @@
 package org.epics.archiverappliance.retrieval;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
+import edu.stanford.slac.archiverappliance.plain.parquet.ParquetPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,7 +26,8 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +53,8 @@ public class EventStreamWrapTest {
     private static final String pvName =
             ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "S_" + type.getPrimitiveName();
     static ConfigService configService;
-    static PlainPBStoragePlugin storagePluginPB;
+    static PlainStoragePlugin storagePluginPB;
+    static PlainStoragePlugin storagePluginParquet;
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -58,12 +63,20 @@ public class EventStreamWrapTest {
             FileUtils.deleteDirectory(new File(shortTermFolderName));
         }
         assert new File(shortTermFolderName).mkdirs();
-        storagePluginPB = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_MONTH",
+        storagePluginPB = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PBPlainFileHandler.PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + shortTermFolderName
+                        + "/&partitionGranularity=PARTITION_MONTH",
+                configService);
+
+        storagePluginParquet = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                ParquetPlainFileHandler.PARQUET_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder="
+                        + shortTermFolderName + "/&partitionGranularity=PARTITION_MONTH",
                 configService);
 
         logger.info("Start insert data");
         insertData(storagePluginPB);
+        logger.info("Start insert parquet data");
+        insertData(storagePluginParquet);
         logger.info("Finished setup");
     }
 
@@ -75,7 +88,7 @@ public class EventStreamWrapTest {
         configService.shutdownNow();
     }
 
-    static void insertData(PlainPBStoragePlugin storagePlugin) throws IOException {
+    static void insertData(PlainStoragePlugin storagePlugin) throws IOException {
         short currentYear = TimeUtils.getCurrentYear();
         try (BasicContext context = new BasicContext()) {
             storagePlugin.appendData(
@@ -91,9 +104,17 @@ public class EventStreamWrapTest {
         }
     }
 
-    @Test
-    public void testSimpleWrapper() throws Exception {
-        PlainPBStoragePlugin storageplugin = storagePluginPB;
+    static PlainStoragePlugin storagePlugin(PlainStorageType plainStorageType) {
+        return switch (plainStorageType) {
+            case PARQUET -> storagePluginParquet;
+            case PB -> storagePluginPB;
+        };
+    }
+
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testSimpleWrapper(PlainStorageType plainStorageType) throws Exception {
+        PlainStoragePlugin storageplugin = storagePlugin(plainStorageType);
         Instant end = TimeUtils.now();
         Instant start = TimeUtils.minusDays(end, 365);
         Mean mean_86400 = (Mean) PostProcessors.findPostProcessor("mean_86400");
@@ -141,9 +162,10 @@ public class EventStreamWrapTest {
      * We wrap a thread around each source event stream. Since the source data is generated using month partitions, we
      * should get about 12 source event streams.
      */
-    @Test
-    void testMultiThreadWrapper() throws Exception {
-        PlainPBStoragePlugin storageplugin = storagePluginPB;
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    void testMultiThreadWrapper(PlainStorageType plainStorageType) throws Exception {
+        PlainStoragePlugin storageplugin = storagePlugin(plainStorageType);
 
         Instant end = TimeUtils.now();
         Instant start = TimeUtils.minusDays(end, 365);

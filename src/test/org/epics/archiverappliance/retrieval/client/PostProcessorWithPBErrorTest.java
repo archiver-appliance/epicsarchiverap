@@ -1,8 +1,9 @@
 package org.epics.archiverappliance.retrieval.client;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -143,7 +144,8 @@ public class PostProcessorWithPBErrorTest {
     private int checkRetrieval(String retrievalPVName, int expectedAtLeastEvents, boolean exactMatch)
             throws IOException {
         long startTimeMillis = System.currentTimeMillis();
-        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(ConfigServiceForTests.RAW_RETRIEVAL_URL);
+        RawDataRetrieval rawDataRetrieval = new RawDataRetrieval(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
         Instant now = TimeUtils.now();
         Instant start = TimeUtils.minusDays(now, (dataGeneratedForYears + 1) * 366);
         int eventCount = 0;
@@ -189,13 +191,12 @@ public class PostProcessorWithPBErrorTest {
 
     private void corruptSomeData() throws Exception {
         try (BasicContext context = new BasicContext()) {
-            Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(
+            Path[] paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     ltsFolderName,
                     pvName,
-                    PlainPBStoragePlugin.pbFileExtension,
-                    PartitionGranularity.PARTITION_DAY,
-                    PlainPBStoragePlugin.CompressionMode.NONE,
+                    PlainStorageType.PB.plainFileHandler().getExtensionString(),
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter());
             Assertions.assertTrue(true);
             Assertions.assertTrue(paths.length > 0);

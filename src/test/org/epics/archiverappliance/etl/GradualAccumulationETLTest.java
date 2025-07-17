@@ -7,8 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -85,8 +85,8 @@ public class GradualAccumulationETLTest {
     public void testGradualAccumulation(
             PartitionGranularity granularity, boolean backupFiles, ETLTestPlugins testPlugins) throws Exception {
 
-        PBCommonSetup srcSetup = new PBCommonSetup();
-        PBCommonSetup destSetup = new PBCommonSetup();
+        PlainCommonSetup srcSetup = new PlainCommonSetup();
+        PlainCommonSetup destSetup = new PlainCommonSetup();
         testPlugins.dest().setBackupFilesBeforeETL(backupFiles);
 
         srcSetup.setUpRootFolder(testPlugins.src(), "GradualAccumulationETLTestSrc_" + granularity, granularity);
@@ -149,8 +149,8 @@ public class GradualAccumulationETLTest {
 
     private void checkDataValidity(
             String pvName,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest,
+            PlainStoragePlugin etlSrc,
+            PlainStoragePlugin etlDest,
             long startOfYearInEpochSeconds,
             int incrementSeconds,
             int eventsgenerated,

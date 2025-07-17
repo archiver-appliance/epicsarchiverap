@@ -8,7 +8,8 @@
 package org.epics.archiverappliance.utils.ui;
 
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
@@ -33,49 +34,49 @@ import java.time.Instant;
  */
 @SuppressWarnings("serial")
 public class RetrievalServlet  extends HttpServlet {
-	private static Logger logger = LogManager.getLogger(RetrievalServlet.class.getName());
-	String pbRootFolder = null;
+    private static Logger logger = LogManager.getLogger(RetrievalServlet.class.getName());
+    String pbRootFolder = null;
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
-		storagePlugin.setRootFolder(pbRootFolder);
-		logger.info("Initialized the root folder to " + pbRootFolder);
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin(PlainStorageType.PB);
+        storagePlugin.setRootFolder(pbRootFolder);
+        logger.info("Initialized the root folder to " + pbRootFolder);
 
-		String PV = req.getParameter("pv");
-		String startTimeStr = req.getParameter("from"); 
-		String endTimeStr = req.getParameter("to");
-		
-		if(PV == null || startTimeStr == null || endTimeStr == null) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
+        String PV = req.getParameter("pv");
+        String startTimeStr = req.getParameter("from");
+        String endTimeStr = req.getParameter("to");
 
-		Instant start = TimeUtils.convertFromISO8601String(startTimeStr);
-		Instant end = TimeUtils.convertFromISO8601String(endTimeStr);
-		// resp.addHeader("Transfer-Encoding", "chunked");
-		
-		try(OutputStream os = resp.getOutputStream(); 
-				BasicContext context = new BasicContext(); 
-				EventStream st = new CurrentThreadWorkerEventStream(PV, storagePlugin.getDataForPV(context, PV, start, end, new DefaultRawPostProcessor()))) {
-			long s = System.currentTimeMillis();
-			int totalEvents = StreamPBIntoOutput.streamPBIntoOutputStream(st, os, start, end);
-			long e = System.currentTimeMillis();
-			logger.info("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
-		}
-	}
+        if(PV == null || startTimeStr == null || endTimeStr == null) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
 
-	@Override
-	public void init() throws ServletException {
-	}
-	
-	/**
-	 * Should only be used by the unit tests for setup...
-	 * @param rootFolder  &emsp; 
-	 * @return this  &emsp; 
-	 */  
-	public RetrievalServlet setpbRootFolder(String rootFolder) {
-		pbRootFolder = rootFolder;
-		return this;
-	}
+        Instant start = TimeUtils.convertFromISO8601String(startTimeStr);
+        Instant end = TimeUtils.convertFromISO8601String(endTimeStr);
+        // resp.addHeader("Transfer-Encoding", "chunked");
+
+        try(OutputStream os = resp.getOutputStream();
+            BasicContext context = new BasicContext();
+            EventStream st = new CurrentThreadWorkerEventStream(PV, storagePlugin.getDataForPV(context, PV, start, end, new DefaultRawPostProcessor()))) {
+            long s = System.currentTimeMillis();
+            int totalEvents = StreamPBIntoOutput.streamPBIntoOutputStream(st, os, start, end);
+            long e = System.currentTimeMillis();
+            logger.info("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
+        }
+    }
+
+    @Override
+    public void init() throws ServletException {
+    }
+
+    /**
+     * Should only be used by the unit tests for setup...
+     * @param rootFolder  &emsp;
+     * @return this  &emsp;
+     */
+    public RetrievalServlet setpbRootFolder(String rootFolder) {
+        pbRootFolder = rootFolder;
+        return this;
+    }
 }

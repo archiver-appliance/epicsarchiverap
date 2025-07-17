@@ -7,10 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -30,7 +31,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -63,13 +65,14 @@ public class DataRetrievalServletTest {
     /**
      * Test that makes sure that the merge dedup gives data whose timestamps are ascending.
      */
-    @Test
-    public void testTimesAreSequential() throws Exception {
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testTimesAreSequential(PlainStorageType plainStorageType) throws Exception {
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + plainStorageType + "_dataretrieval";
 
-        PBCommonSetup pbSetup = new PBCommonSetup();
+        PlainCommonSetup pbSetup = new PlainCommonSetup();
 
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(plainStorageType);
         pbSetup.setUpRootFolder(pbplugin);
 
         PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
@@ -82,7 +85,7 @@ public class DataRetrievalServletTest {
                                 StandardCharsets.UTF_8),
                 configService);
 
-        Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+        Files.deleteIfExists(PathNameUtility.getPathNameForTime(
                 pbplugin,
                 pvName,
                 TimeUtils.getStartOfYear(year),
@@ -129,7 +132,7 @@ public class DataRetrievalServletTest {
             logger.info("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
             Assertions.assertEquals(end.getEpochSecond() - start.getEpochSecond() + 1, totalEvents);
         }
-        Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+        Files.deleteIfExists(PathNameUtility.getPathNameForTime(
                 pbplugin,
                 pvName,
                 TimeUtils.getStartOfYear(year),

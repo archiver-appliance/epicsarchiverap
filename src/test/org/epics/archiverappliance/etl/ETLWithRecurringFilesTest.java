@@ -7,9 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -88,16 +89,17 @@ public class ETLWithRecurringFilesTest {
     public void testRecurringFiles(
             PartitionGranularity granularity, boolean backUpFiles, boolean useNewDest, ETLTestPlugins etlTestPlugins)
             throws Exception {
-        PBCommonSetup srcSetup = new PBCommonSetup();
-        PBCommonSetup destSetup = new PBCommonSetup();
+        PlainCommonSetup srcSetup = new PlainCommonSetup();
+        PlainCommonSetup destSetup = new PlainCommonSetup();
         etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
-        PlainPBStoragePlugin etlNewDest = new PlainPBStoragePlugin();
+        PlainStoragePlugin etlNewDest =
+                new PlainStoragePlugin(etlTestPlugins.dest().getPlainFileHandler());
 
         srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
                 etlTestPlugins.dest(), "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
 
-        PBCommonSetup newDestSetup = new PBCommonSetup();
+        PlainCommonSetup newDestSetup = new PlainCommonSetup();
         newDestSetup.setUpRootFolder(
                 etlNewDest, "RecurringFilesTestDest" + granularity, granularity.getNextLargerGranularity());
 
@@ -146,13 +148,12 @@ public class ETLWithRecurringFilesTest {
         String tempFileExtension = ".etltest" + etlTestPlugins.src().pluginIdentifier();
         // We should now have some data in the src root folder...
         // Make a copy of these files so that we can restore them back later after ETL.
-        Path[] allSrcPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allSrcPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlTestPlugins.src().getRootFolder(),
                 pvName,
                 etlTestPlugins.src().getExtensionString(),
-                etlTestPlugins.src().getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         for (Path srcPath : allSrcPaths) {
             Path destPath = srcPath.resolveSibling(srcPath.getFileName()
@@ -221,8 +222,8 @@ public class ETLWithRecurringFilesTest {
 
     private void checkDataValidity(
             String pvName,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest,
+            PlainStoragePlugin etlSrc,
+            PlainStoragePlugin etlDest,
             Instant start,
             int incrementSeconds,
             int eventsGenerated,

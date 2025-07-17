@@ -7,9 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -28,7 +29,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,11 +54,11 @@ public class YearSpanRetrievalTest {
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 
-    private void generateDataForYears(PlainPBStoragePlugin pbplugin, String pvName) throws IOException {
+    private void generateDataForYears(PlainStoragePlugin pbplugin, String pvName) throws IOException {
         // We skip generation of the file only if all the files exist.
         boolean deletefilesandgeneratedata = false;
         for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
-            if (!PlainPBPathNameUtility.getPathNameForTime(
+            if (!PathNameUtility.getPathNameForTime(
                             pbplugin,
                             pvName,
                             TimeUtils.getStartOfYear(currentyear),
@@ -72,7 +74,7 @@ public class YearSpanRetrievalTest {
         // Delete all the files for the specified span
         if (deletefilesandgeneratedata) {
             for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
-                Files.deleteIfExists(PlainPBPathNameUtility.getPathNameForTime(
+                Files.deleteIfExists(PathNameUtility.getPathNameForTime(
                         pbplugin,
                         pvName,
                         TimeUtils.getStartOfYear(currentyear),
@@ -98,12 +100,13 @@ public class YearSpanRetrievalTest {
         tomcatSetup.tearDown();
     }
 
-    @Test
-    public void testYearSpan() throws Exception {
-        PBCommonSetup pbSetup = new PBCommonSetup();
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testYearSpan(PlainStorageType plainStorageType) throws Exception {
+        PlainCommonSetup pbSetup = new PlainCommonSetup();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(plainStorageType);
         pbSetup.setUpRootFolder(pbplugin);
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan";
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + plainStorageType + "yspan";
         generateDataForYears(pbplugin, pvName);
         RawDataRetrievalAsEventStream rawDataRetrieval =
                 new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
