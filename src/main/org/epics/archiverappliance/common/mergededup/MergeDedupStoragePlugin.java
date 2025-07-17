@@ -80,7 +80,8 @@ import java.util.function.Predicate;
  * @author mshankar
  *
  */
-public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
+public class MergeDedupStoragePlugin
+        implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
     private static final Logger logger = LogManager.getLogger(MergeDedupStoragePlugin.class.getName());
     private String name;
     private StoragePlugin dest;
@@ -309,16 +310,23 @@ public class MergeDedupStoragePlugin implements StoragePlugin, ETLSource, ETLDes
     }
 
     @Override
-    public void iterate(BasicContext context, String pvName, Instant startAtTime, Predicate<Event> thePredicate,
-            IterationDirection direction, Period searchPeriod) throws IOException {
-        if(dest instanceof BiDirectionalIterable) {
+    public void iterate(
+            BasicContext context,
+            String pvName,
+            Instant startAtTime,
+            Predicate<Event> thePredicate,
+            IterationDirection direction,
+            Period searchPeriod)
+            throws IOException {
+        if (dest instanceof BiDirectionalIterable) {
             logger.info("The dest plugin {} implements the BiDirectionalIterable interface", dest.getDescription());
-            ((BiDirectionalIterable)dest).iterate(context, pvName, startAtTime, thePredicate, direction, searchPeriod);
+            ((BiDirectionalIterable) dest).iterate(context, pvName, startAtTime, thePredicate, direction, searchPeriod);
             return;
         }
-        if(other instanceof BiDirectionalIterable) {
+        if (other instanceof BiDirectionalIterable) {
             logger.info("The other plugin {} implements the BiDirectionalIterable interface", other.getDescription());
-            ((BiDirectionalIterable)other).iterate(context, pvName, startAtTime, thePredicate, direction, searchPeriod);
+            ((BiDirectionalIterable) other)
+                    .iterate(context, pvName, startAtTime, thePredicate, direction, searchPeriod);
             return;
         }
     }
