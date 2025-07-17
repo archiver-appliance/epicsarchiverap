@@ -16,67 +16,68 @@ import java.util.List;
  * @param <T>  &emsp;
  */
 public class ScalarValue<T extends Number> implements SampleValue {
-	private T value;
-	public ScalarValue(T val) {
-		this.value = val;
-	}
+    private T value;
 
-	@Override
-	public Number getValue() {
-		return value;
-	}
-	
-	@Override
-	public String toString() {
-		return value.toString();
-	}
+    public ScalarValue(T val) {
+        this.value = val;
+    }
 
-	@Override
-	public int getElementCount() {
-		return 1;
-	}
+    @Override
+    public Number getValue() {
+        return value;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.epics.archiverappliance.data.SampleValue#getValue(int)
-	 * We return the same value for all indices
-	 * Perhaps we can throw an exception here for invalid indices
-	 */
-	@Override
-	public Number getValue(int index) {
-		assert(index >= 0 && index < 1);
-		return value;
-	}
-	
-	@Override
-	public String getStringValue(int index) {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public String toString() {
+        return value.toString();
+    }
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public List getValues() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public int getElementCount() {
+        return 1;
+    }
 
-	@Override
-	public int hashCode() {
-		return value.hashCode();
-	}
+    /* (non-Javadoc)
+     * @see org.epics.archiverappliance.data.SampleValue#getValue(int)
+     * We return the same value for all indices
+     * Perhaps we can throw an exception here for invalid indices
+     */
+    @Override
+    public Number getValue(int index) {
+        assert (index >= 0 && index < 1);
+        return value;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		@SuppressWarnings("unchecked")
-		ScalarValue<T> other = (ScalarValue<T>) obj; 
-		return value.equals(other.getValue());
-	}
+    @Override
+    public String getStringValue(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public String toJSONString() {
-		return value.toString();
-	}
+    @SuppressWarnings("rawtypes")
+    @Override
+    public List getValues() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public ByteBuffer getValueAsBytes() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public int hashCode() {
+        return value.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        @SuppressWarnings("unchecked")
+        ScalarValue<T> other = (ScalarValue<T>) obj;
+        return value.equals(other.getValue());
+    }
+
+    @Override
+    public String toJSONString() {
+        return value.toString();
+    }
+
+    @Override
+    public ByteBuffer getValueAsBytes() {
+        throw new UnsupportedOperationException();
+    }
 }
