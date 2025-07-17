@@ -62,7 +62,9 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
                 events.popEvent();
                 events.readEvents(lbs);
             }
-            logger.info("after start search event1 {}", (events.event1 != null) ? events.event1.getEventTimeStamp(): "null");
+            logger.info(
+                    "after start search event1 {}",
+                    (events.event1 != null) ? events.event1.getEventTimeStamp() : "null");
         } catch (Exception ex) {
             logger.error("Exception getting next event from path " + path.toString(), ex);
             events.clear();

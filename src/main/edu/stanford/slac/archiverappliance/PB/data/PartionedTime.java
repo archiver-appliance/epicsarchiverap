@@ -15,5 +15,5 @@ import org.epics.archiverappliance.common.YearSecondTimestamp;
  *
  */
 public interface PartionedTime {
-	YearSecondTimestamp getYearSecondTimestamp();
+    YearSecondTimestamp getYearSecondTimestamp();
 }
