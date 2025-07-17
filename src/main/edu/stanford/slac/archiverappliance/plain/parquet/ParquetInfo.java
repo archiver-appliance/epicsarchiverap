@@ -11,9 +11,9 @@ import static org.apache.parquet.filter2.predicate.FilterApi.or;
 import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.parquet.ParquetReadOptions;
 import org.apache.parquet.column.statistics.Statistics;
 import org.apache.parquet.filter2.compat.FilterCompat;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
@@ -21,8 +21,8 @@ import org.apache.parquet.hadoop.ParquetFileReader;
 import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
-import org.apache.parquet.hadoop.util.HadoopInputFile;
 import org.apache.parquet.io.InputFile;
+import org.apache.parquet.io.LocalInputFile;
 import org.apache.parquet.proto.ProtoParquetReader;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -40,7 +40,7 @@ public class ParquetInfo extends FileInfo {
     static final String SECONDS_COLUMN_NAME = "secondsintoyear";
     static final String NANOSECONDS_COLUMN_NAME = "nano";
     private static final Logger logger = LogManager.getLogger(ParquetInfo.class);
-    final InputFile hadoopInputFile;
+    final InputFile inputFile;
     String pvName;
     short dataYear;
     ArchDBRTypes archDBRTypes;
@@ -49,11 +49,10 @@ public class ParquetInfo extends FileInfo {
     boolean fetchedLastEvent = false;
     boolean fetchedFirstEvent = false;
 
-    public ParquetInfo(Path pvPath, Configuration configuration) throws IOException {
+    public ParquetInfo(Path pvPath, ParquetReadOptions readOptions) throws IOException {
         super();
-        var hadoopPath = new org.apache.hadoop.fs.Path(pvPath.toUri());
-        hadoopInputFile = HadoopInputFile.fromPath(hadoopPath, configuration);
-        fileReader = ParquetFileReader.open(hadoopInputFile);
+        inputFile = new LocalInputFile(pvPath);
+        fileReader = ParquetFileReader.open(inputFile, readOptions);
         footer = fileReader.getFooter();
         var metadata = footer.getFileMetaData();
         this.dataYear = Short.parseShort(metadata.getKeyValueMetaData().get(YEAR));
@@ -71,7 +70,7 @@ public class ParquetInfo extends FileInfo {
     }
 
     public ParquetInfo(Path pvPath) throws IOException {
-        this(pvPath, new Configuration());
+        this(pvPath, (new ParquetReadOptions.Builder()).build());
     }
 
     /**
@@ -318,9 +317,9 @@ public class ParquetInfo extends FileInfo {
     public DBRTimeEvent getFirstEvent() {
         if (!fetchedFirstEvent) {
             try {
-                getFirstEvent(hadoopInputFile);
+                getFirstEvent(inputFile);
             } catch (IOException e) {
-                logger.error("Failed to get first event for file {}", hadoopInputFile, e);
+                logger.error("Failed to get first event for file {}", inputFile, e);
             }
         }
         return this.firstEvent;
@@ -330,9 +329,9 @@ public class ParquetInfo extends FileInfo {
     public DBRTimeEvent getLastEvent() {
         if (!fetchedLastEvent) {
             try {
-                getLastEvent(hadoopInputFile, footer);
+                getLastEvent(inputFile, footer);
             } catch (IOException e) {
-                logger.error("Failed to get last event for file {}", hadoopInputFile, e);
+                logger.error("Failed to get last event for file {}", inputFile, e);
             }
         }
         return this.lastEvent;
@@ -346,9 +345,9 @@ public class ParquetInfo extends FileInfo {
      */
     DBRTimeEvent getLastEventBefore(YearSecondTimestamp before) {
         try {
-            return this.getLastEventBeforeTimestamp(this.hadoopInputFile, this.footer, before);
+            return this.getLastEventBeforeTimestamp(this.inputFile, this.footer, before);
         } catch (IOException e) {
-            logger.error("Failed to get last event for file {}", hadoopInputFile, e);
+            logger.error("Failed to get last event for file {}", inputFile, e);
         }
         return this.firstEvent;
     }

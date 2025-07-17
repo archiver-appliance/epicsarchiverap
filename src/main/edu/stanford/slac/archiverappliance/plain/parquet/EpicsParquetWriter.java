@@ -3,6 +3,7 @@ package edu.stanford.slac.archiverappliance.plain.parquet;
 import com.google.protobuf.Message;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.parquet.conf.ParquetConfiguration;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.api.WriteSupport;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
@@ -17,7 +18,7 @@ import java.io.IOException;
  * @param <T> The type of EPICSMessage to write.
  * @author Sky Brewer
  */
-public class EpicsParquetWriter<T extends Message> extends ParquetWriter<T> {
+public class EpicsParquetWriter extends ParquetWriter<Message> {
     /**
      * The builder for {@link EpicsParquetWriter}.
      *
@@ -30,7 +31,7 @@ public class EpicsParquetWriter<T extends Message> extends ParquetWriter<T> {
      */
     public EpicsParquetWriter(
             Path file,
-            WriteSupport<T> writeSupport,
+            WriteSupport<Message> writeSupport,
             CompressionCodecName compressionCodecName,
             int blockSize,
             int pageSize)
@@ -45,58 +46,55 @@ public class EpicsParquetWriter<T extends Message> extends ParquetWriter<T> {
      * @param <T>  The type of EPICSMessage to write.
      * @return The builder.
      */
-    public static <T> EpicsParquetWriter.Builder<T> builder(Path file) {
-        return new EpicsParquetWriter.Builder<>(file);
+    public static EpicsParquetWriter.Builder builder(OutputFile file) {
+        return new EpicsParquetWriter.Builder(file);
     }
 
-    public static <T> EpicsParquetWriter.Builder<T> builder(OutputFile file) {
-        return new EpicsParquetWriter.Builder<>(file);
-    }
-
-    private static <T extends Message> EpicsWriteSupport<T> writeSupport(
+    private static EpicsWriteSupport<Message> writeSupport(
             Class<? extends Message> messageClass, String pvName, short year, ArchDBRTypes archDBRTypes) {
         return new EpicsWriteSupport<>(messageClass, pvName, year, archDBRTypes);
     }
 
-    public static class Builder<T> extends ParquetWriter.Builder<T, Builder<T>> {
+    public static class Builder extends ParquetWriter.Builder<Message, Builder> {
         Class<? extends Message> messageClass = null;
         String pvName;
         short year;
         ArchDBRTypes archDBRTypes;
 
-        private Builder(Path file) {
-            super(file);
-        }
-
         private Builder(OutputFile file) {
             super(file);
         }
 
-        protected Builder<T> self() {
+        protected Builder self() {
             return this;
         }
 
-        protected WriteSupport<T> getWriteSupport(Configuration conf) {
-            return (WriteSupport<T>)
-                    EpicsParquetWriter.writeSupport(this.messageClass, this.pvName, this.year, this.archDBRTypes);
+        @Override
+        protected WriteSupport<Message> getWriteSupport(Configuration conf) {
+            return getWriteSupport((ParquetConfiguration) null);
         }
 
-        public EpicsParquetWriter.Builder<T> withMessage(Class<? extends Message> messageClass) {
+        @Override
+        protected WriteSupport<Message> getWriteSupport(ParquetConfiguration conf) {
+            return EpicsParquetWriter.writeSupport(this.messageClass, this.pvName, this.year, this.archDBRTypes);
+        }
+
+        public EpicsParquetWriter.Builder withMessage(Class<? extends Message> messageClass) {
             this.messageClass = messageClass;
             return this;
         }
 
-        public EpicsParquetWriter.Builder<T> withPVName(String pvName) {
+        public EpicsParquetWriter.Builder withPVName(String pvName) {
             this.pvName = pvName;
             return this;
         }
 
-        public EpicsParquetWriter.Builder<T> withYear(short year) {
+        public EpicsParquetWriter.Builder withYear(short year) {
             this.year = year;
             return this;
         }
 
-        public EpicsParquetWriter.Builder<T> withType(ArchDBRTypes archDBRTypes) {
+        public EpicsParquetWriter.Builder withType(ArchDBRTypes archDBRTypes) {
             this.archDBRTypes = archDBRTypes;
             return this;
         }
