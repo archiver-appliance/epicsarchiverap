@@ -29,7 +29,6 @@ import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusCh
 @Tag("localEpics")
 public class PVAEpicsIntegrationTest {
 
-
     private static final Logger logger = LogManager.getLogger(PVAEpicsIntegrationTest.class.getName());
     TomcatSetup tomcatSetup = new TomcatSetup();
     SIOCSetup siocSetup = new SIOCSetup();
@@ -46,6 +45,7 @@ public class PVAEpicsIntegrationTest {
         tomcatSetup.tearDown();
         siocSetup.stopSIOC();
     }
+
     @Test
     public void testEpicsIocPVA() throws Exception {
 
@@ -81,28 +81,31 @@ public class PVAEpicsIntegrationTest {
         Thread.sleep((long) secondsToBuffer * 1000);
         Instant end = Instant.now();
 
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
         EventStream stream = null;
         Map<Instant, SampleValue> actualValues = new HashMap<>();
         try {
-            stream = rawDataRetrieval.getDataForPVS(new String[]{pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
+            stream = rawDataRetrieval.getDataForPVS(
+                    new String[] {pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
             // Make sure we get the DBR type we expect
-            Assertions.assertEquals(ArchDBRTypes.DBR_SCALAR_DOUBLE, stream.getDescription().getArchDBRType());
+            Assertions.assertEquals(
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE, stream.getDescription().getArchDBRType());
 
             // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
                 actualValues.put(e.getEventTimeStamp(), e.getSampleValue());
             }
         } finally {
-            if (stream != null) try {
-                stream.close();
-            } catch (Throwable ignored) {
-            }
+            if (stream != null)
+                try {
+                    stream.close();
+                } catch (Throwable ignored) {
+                }
         }
         logger.info("Data was {}", actualValues);
         Assertions.assertTrue(actualValues.size() > secondsToBuffer);
     }
-
 }

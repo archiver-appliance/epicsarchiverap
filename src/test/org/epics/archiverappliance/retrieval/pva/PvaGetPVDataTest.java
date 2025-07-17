@@ -89,14 +89,17 @@ public class PvaGetPVDataTest {
         return String.join("", subArray);
     }
 
-    private static void archivePVsViaPVAccess(List<String> pvNames) throws MustBeArrayException, InterruptedException, ExecutionException, TimeoutException {
-        PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable().name(PvaArchivePVAction.NAME)
+    private static void archivePVsViaPVAccess(List<String> pvNames)
+            throws MustBeArrayException, InterruptedException, ExecutionException, TimeoutException {
+        PVATable archivePvStatusReqTable = PVATable.PVATableBuilder.aPVATable()
+                .name(PvaArchivePVAction.NAME)
                 .descriptor(PvaArchivePVAction.NAME)
-                .addColumn(new PVAStringArray("pv",  pvNames.stream().map(n -> "pva://" + n).toArray(String[]::new)))
+                .addColumn(new PVAStringArray(
+                        "pv", pvNames.stream().map(n -> "pva://" + n).toArray(String[]::new)))
                 .build();
         pvaMgmtChannel.invoke(archivePvStatusReqTable).get(30, TimeUnit.SECONDS);
         Map<String, String> archivingStatus = new HashMap<>();
-        for (String pvName: pvNames) {
+        for (String pvName : pvNames) {
             archivingStatus.put(pvName, "Being archived");
         }
 
@@ -104,8 +107,7 @@ public class PvaGetPVDataTest {
                 .pollInterval(fibonacci(TimeUnit.SECONDS))
                 .atMost(5, TimeUnit.MINUTES)
                 .untilAsserted(() ->
-                        Assertions.assertEquals(archivingStatus, PVAccessUtil.getStatuses(pvNames, pvaMgmtChannel))
-                );
+                        Assertions.assertEquals(archivingStatus, PVAccessUtil.getStatuses(pvNames, pvaMgmtChannel)));
     }
 
     @Test
@@ -113,8 +115,7 @@ public class PvaGetPVDataTest {
 
         // Create a pv
 
-        String pvName = "PV:" + PvaGetPVDataTest.class.getSimpleName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + PvaGetPVDataTest.class.getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
         var value = new PVADouble("value", 10.0);
@@ -124,8 +125,7 @@ public class PvaGetPVDataTest {
         PVATimeStamp timeStamp = new PVATimeStamp(instant);
         String struct_name = "epics:nt/NTScalar:1.0";
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-        PVAStructure data = new PVAStructure("demo", struct_name, value,
-                timeStamp, alarm);
+        PVAStructure data = new PVAStructure("demo", struct_name, value, timeStamp, alarm);
         ServerPV serverPV = pvaServer.createPV(pvName, data);
 
         Thread.sleep(1000);
@@ -154,9 +154,9 @@ public class PvaGetPVDataTest {
 
         PVAny[] allPVValues = valuesAnyArray.get();
         Map<Instant, String> actualData = new HashMap<>();
-        for (PVAny any: allPVValues) {
+        for (PVAny any : allPVValues) {
             PVAStructureArray structureArray = any.get();
-            for (PVAStructure structure: structureArray.get()) {
+            for (PVAStructure structure : structureArray.get()) {
                 actualData.put(PVATimeStamp.getTimeStamp(structure).instant(), formatInput(structure.get("value")));
             }
         }
@@ -165,11 +165,12 @@ public class PvaGetPVDataTest {
         Assertions.assertEquals(expectedData, actualData);
     }
 
-    private static PVAStructure getRetrievalPvaAnyArray(List<String> pvNames) throws InterruptedException, ExecutionException, TimeoutException {
+    private static PVAStructure getRetrievalPvaAnyArray(List<String> pvNames)
+            throws InterruptedException, ExecutionException, TimeoutException {
         logger.info("Retrieving data of pv " + pvNames);
         Map<String, String> query = new HashMap<>();
         query.put("pv", String.join(";", pvNames));
-        PVAURI getPVDataURI = new PVAURI("name", "pva",null, PvaGetPVData.NAME,query );
+        PVAURI getPVDataURI = new PVAURI("name", "pva", null, PvaGetPVData.NAME, query);
         PVAStructure result = pvaRetrievalChannel.invoke(getPVDataURI).get(20, TimeUnit.SECONDS);
         logger.info("retrieved " + result);
         return result;
@@ -181,31 +182,35 @@ public class PvaGetPVDataTest {
         // Create a set of pvs
 
         String randomModifier = String.valueOf(UUID.randomUUID());
-        List<String> pvNames = IntStream.range(0, 10).mapToObj((i) -> "PV:" + i + ":" + PvaGetPVDataTest.class.getSimpleName() + ":"
-                + randomModifier).toList();
+        List<String> pvNames = IntStream.range(0, 10)
+                .mapToObj((i) -> "PV:" + i + ":" + PvaGetPVDataTest.class.getSimpleName() + ":" + randomModifier)
+                .toList();
 
         logger.info("Starting pvAccess test for pv " + pvNames);
 
         Instant instant = Instant.now();
         Map<String, HashMap<Instant, String>> expectedData = new HashMap<>();
         Instant finalInstant = instant;
-        Map<String, PVAStructure> structures = pvNames.stream().map((pvName) -> {
-            var value = new PVAString("value", pvName + "0");
-            PVATimeStamp timeStamp = new PVATimeStamp(finalInstant);
-            String struct_name = "epics:nt/NTScalar:1.0";
-            var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-            return new PVAStructure(pvName, struct_name, value,
-                    timeStamp, alarm);
-        }).collect(Collectors.toMap(PVAStructure::getName, (s) -> s));
+        Map<String, PVAStructure> structures = pvNames.stream()
+                .map((pvName) -> {
+                    var value = new PVAString("value", pvName + "0");
+                    PVATimeStamp timeStamp = new PVATimeStamp(finalInstant);
+                    String struct_name = "epics:nt/NTScalar:1.0";
+                    var alarm =
+                            new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
+                    return new PVAStructure(pvName, struct_name, value, timeStamp, alarm);
+                })
+                .collect(Collectors.toMap(PVAStructure::getName, (s) -> s));
 
         structures.forEach((key, value) -> {
             HashMap<Instant, String> initialMap = new HashMap<>();
             initialMap.put(finalInstant, formatInput(value.get("value")));
-            expectedData.put(key,initialMap);
+            expectedData.put(key, initialMap);
         });
 
-        Map<String, ServerPV> serverPVS = structures.entrySet().stream().map((e) ->
-        pvaServer.createPV(e.getKey(), e.getValue())).collect(Collectors.toMap(ServerPV::getName, (s) -> s));
+        Map<String, ServerPV> serverPVS = structures.entrySet().stream()
+                .map((e) -> pvaServer.createPV(e.getKey(), e.getValue()))
+                .collect(Collectors.toMap(ServerPV::getName, (s) -> s));
         Thread.sleep(1000);
 
         // Archive pv using pv access
@@ -246,7 +251,7 @@ public class PvaGetPVDataTest {
         for (int i = 0; i < labels.length; i++) {
             Map<Instant, String> pvDataResult = new HashMap<>();
             PVAStructureArray structureArray = anyArray[i].get();
-            for (PVAStructure structure: structureArray.get()) {
+            for (PVAStructure structure : structureArray.get()) {
                 pvDataResult.put(PVATimeStamp.getTimeStamp(structure).instant(), formatInput(structure.get("value")));
             }
             actualData.put(labels[i], pvDataResult);

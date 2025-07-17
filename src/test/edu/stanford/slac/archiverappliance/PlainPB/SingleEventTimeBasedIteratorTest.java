@@ -46,8 +46,7 @@ public class SingleEventTimeBasedIteratorTest {
     @Test
     public void testSingleEvent() throws Exception {
         PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_HOUR",
+                "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=PARTITION_HOUR",
                 configService);
 
         File rootFolder = new File(pbplugin.getRootFolder());

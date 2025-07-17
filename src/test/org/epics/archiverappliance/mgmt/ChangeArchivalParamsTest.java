@@ -23,7 +23,6 @@ public class ChangeArchivalParamsTest {
     TomcatSetup tomcatSetup = new TomcatSetup();
     SIOCSetup siocSetup = new SIOCSetup();
 
-
     @BeforeEach
     public void setUp() throws Exception {
         siocSetup.startSIOCWithDefaultDB();
@@ -40,14 +39,18 @@ public class ChangeArchivalParamsTest {
     public void testChangeArchivalParams() throws Exception {
         String pvNameToArchive = "UnitTestNoNamingConvention:sine";
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+                mgmtURL + "archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
         @SuppressWarnings("unchecked")
-        Map<String, String> chst = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONObject(mgmtURL + "changeArchivalParameters",
-            Map.of("pv", pvNameToArchive, "samplingperiod", "11")); // A sample every 11 seconds
+        Map<String, String> chst = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONObject(
+                mgmtURL + "changeArchivalParameters",
+                Map.of("pv", pvNameToArchive, "samplingperiod", "11")); // A sample every 11 seconds
         Assertions.assertEquals(chst.get("status"), "ok");
         @SuppressWarnings("unchecked")
-        Map<String, String> pvst = (Map<String, String>)(GetUrlContent.getURLContentWithQueryParametersAsJSONArray(mgmtURL + "getPVStatus", Map.of("pv", pvNameToArchive)).get(0));
+        Map<String, String> pvst = (Map<String, String>) (GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
+                        mgmtURL + "getPVStatus", Map.of("pv", pvNameToArchive))
+                .get(0));
         Assertions.assertEquals(pvst.get("samplingPeriod"), "11.0");
     }
 }

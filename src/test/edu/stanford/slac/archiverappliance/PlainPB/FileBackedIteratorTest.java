@@ -176,8 +176,8 @@ public class FileBackedIteratorTest {
             // Generate data for  10 days
             for (int day = 0; day < 10; day++) {
                 for (int second = 0;
-                     second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
-                     second += 15) {
+                        second < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                        second += 15) {
                     strm.add(new POJOEvent(
                             ArchDBRTypes.DBR_SCALAR_DOUBLE,
                             TimeUtils.convertFromEpochSeconds(
@@ -218,8 +218,7 @@ public class FileBackedIteratorTest {
                 logger.debug("Checking " + testCase + " for QTS " + TimeUtils.convertToISO8601String(QTS) + " and QTE "
                         + TimeUtils.convertToISO8601String(QTE));
 
-                try (EventStream strm =
-                             FileStreamCreator.getTimeStream(pvName, pbFilePath, dbrType, QTS, QTE, false)) {
+                try (EventStream strm = FileStreamCreator.getTimeStream(pvName, pbFilePath, dbrType, QTS, QTE, false)) {
                     Assertions.assertSame(
                             expectedIteratorClass,
                             strm.iterator().getClass(),

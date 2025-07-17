@@ -182,7 +182,12 @@ public class PVAccessUtil {
     }
 
     public static void waitForPVDetail(
-            String pvName, String detailName, String expectedValue, int maxTries, String mgmtUrl, long waitPeriodSeconds) {
+            String pvName,
+            String detailName,
+            String expectedValue,
+            int maxTries,
+            String mgmtUrl,
+            long waitPeriodSeconds) {
         Awaitility.await()
                 .pollInterval(waitPeriodSeconds, TimeUnit.SECONDS)
                 .atMost(maxTries * waitPeriodSeconds, TimeUnit.SECONDS)
@@ -191,15 +196,15 @@ public class PVAccessUtil {
 
     public static String getPVDetail(String pvName, String mgmtUrl, String detailName) {
         String pvDetailsURL = mgmtUrl + "getPVDetails?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
-        List<Map<String, String>> pvDetails = (List<Map<String, String>>) GetUrlContent.getURLContentAsJSONArray(pvDetailsURL);
-        for(Map<String, String> pvDetail : pvDetails){
-            if(pvDetail.get("name").equals(detailName)) {
+        List<Map<String, String>> pvDetails =
+                (List<Map<String, String>>) GetUrlContent.getURLContentAsJSONArray(pvDetailsURL);
+        for (Map<String, String> pvDetail : pvDetails) {
+            if (pvDetail.get("name").equals(detailName)) {
                 return pvDetail.get("value");
             }
         }
         return null;
     }
-
 
     /**
      * Bytes to string method for debugging the byte buffers.

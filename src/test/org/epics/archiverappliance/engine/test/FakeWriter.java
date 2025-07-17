@@ -13,6 +13,7 @@ import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.BasicContext;
 
 import java.io.IOException;
+
 /**
  * do nothing ,just used for creating channels
  * @author Luofeng Li
@@ -20,18 +21,14 @@ import java.io.IOException;
  */
 public class FakeWriter implements Writer {
 
-
-	@Override
-    public int appendData(BasicContext context, String arg0,
-			EventStream arg1) throws IOException {
-		//
+    @Override
+    public int appendData(BasicContext context, String arg0, EventStream arg1) throws IOException {
+        //
         return 0;
-	}
+    }
 
-	@Override
-	public Event getLastKnownEvent(BasicContext context, String pvName)
-			throws IOException {
-		return null;
-	}
-
+    @Override
+    public Event getLastKnownEvent(BasicContext context, String pvName) throws IOException {
+        return null;
+    }
 }

@@ -31,70 +31,74 @@ import java.util.Map;
 @Tag("integration")
 @Tag("localEpics")
 public class ArchiveAliasedPVTest {
-	private static Logger logger = LogManager.getLogger(ArchiveAliasedPVTest.class.getName());
+    private static Logger logger = LogManager.getLogger(ArchiveAliasedPVTest.class.getName());
     private static final String mgmtUrl = "http://localhost:17665/mgmt/bpl/";
-	TomcatSetup tomcatSetup = new TomcatSetup();
-	SIOCSetup siocSetup = new SIOCSetup();
+    TomcatSetup tomcatSetup = new TomcatSetup();
+    SIOCSetup siocSetup = new SIOCSetup();
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		siocSetup.startSIOCWithDefaultDB();
-		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-	}
+    @BeforeEach
+    public void setUp() throws Exception {
+        siocSetup.startSIOCWithDefaultDB();
+        tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		tomcatSetup.tearDown();
-		siocSetup.stopSIOC();
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        tomcatSetup.tearDown();
+        siocSetup.stopSIOC();
+    }
 
-	@Test
-	public void testSimpleArchivePV() throws Exception {
+    @Test
+    public void testSimpleArchivePV() throws Exception {
         String pvNameToArchive = "UnitTestNoNamingConvention:sinealias";
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+                mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
 
-		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
-		Thread.sleep(2*1000);
-		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
-		Thread.sleep(2*1000);
-		SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
-		Thread.sleep(2*1000);
-		logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-		Thread.sleep(2*60*1000);
-		
-		// Test retrieval of data using the real name and the aliased name
-		testRetrievalCount("UnitTestNoNamingConvention:sine");
-		testRetrievalCount("UnitTestNoNamingConvention:sinealias");
-		testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");
-		testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
-	}
+        SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
+        Thread.sleep(2 * 1000);
+        SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 3.0);
+        Thread.sleep(2 * 1000);
+        SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
+        Thread.sleep(2 * 1000);
+        logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
+        Thread.sleep(2 * 60 * 1000);
 
-	/**
-	 * Make sure we get some data when retriving under the given name
-	 * @throws IOException
-	 */
-	private void testRetrievalCount(String pvName) throws IOException {
-		 RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream("http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT+ "/retrieval/data/getData.raw");
+        // Test retrieval of data using the real name and the aliased name
+        testRetrievalCount("UnitTestNoNamingConvention:sine");
+        testRetrievalCount("UnitTestNoNamingConvention:sinealias");
+        testRetrievalCount("UnitTestNoNamingConvention:sine.HIHI");
+        testRetrievalCount("UnitTestNoNamingConvention:sinealias.HIHI");
+    }
+
+    /**
+     * Make sure we get some data when retriving under the given name
+     * @throws IOException
+     */
+    private void testRetrievalCount(String pvName) throws IOException {
+        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
         Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
         Instant start = TimeUtils.minusDays(end, 6);
-		try(EventStream stream = rawDataRetrieval.getDataForPVS(new String[] { pvName}, start, end, null)) {
-			 long previousEpochSeconds = 0;
-			 int eventCount = 0;
+        try (EventStream stream = rawDataRetrieval.getDataForPVS(new String[] {pvName}, start, end, null)) {
+            long previousEpochSeconds = 0;
+            int eventCount = 0;
 
-			 // We are making sure that the stream we get back has times in sequential order...
-			 if(stream != null) {
-				 for(Event e : stream) {
-					 long actualSeconds = e.getEpochSeconds();
-					 Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
-					 previousEpochSeconds = actualSeconds;
-					 eventCount++;
-				 }
-			 }
+            // We are making sure that the stream we get back has times in sequential order...
+            if (stream != null) {
+                for (Event e : stream) {
+                    long actualSeconds = e.getEpochSeconds();
+                    Assertions.assertTrue(actualSeconds >= previousEpochSeconds);
+                    previousEpochSeconds = actualSeconds;
+                    eventCount++;
+                }
+            }
 
-			 logger.info("Got " + eventCount + " event for pv " + pvName);
-			 Assertions.assertTrue(eventCount > 0, "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
-		 }
-	}
+            logger.info("Got " + eventCount + " event for pv " + pvName);
+            Assertions.assertTrue(
+                    eventCount > 0,
+                    "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
+        }
+    }
 }

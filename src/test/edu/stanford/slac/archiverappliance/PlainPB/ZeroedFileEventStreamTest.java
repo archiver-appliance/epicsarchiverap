@@ -64,7 +64,7 @@ public class ZeroedFileEventStreamTest {
 
     private static int generateFreshData(PlainPBStoragePlugin pbplugin4data, String pvName) throws Exception {
         File rootFolder = new File(pbplugin4data.getRootFolder());
-		if(rootFolder.exists()) {
+        if (rootFolder.exists()) {
             try {
                 FileUtils.deleteDirectory(rootFolder);
             } catch (IOException e) {
@@ -90,7 +90,6 @@ public class ZeroedFileEventStreamTest {
     public static void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
     }
-
 
     @AfterEach
     public void tearDown() throws Exception {
@@ -129,8 +128,7 @@ public class ZeroedFileEventStreamTest {
         }
 
         Assertions.assertTrue(
-                paths.length > 0,
-                "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
+                paths.length > 0, "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
@@ -150,9 +148,10 @@ public class ZeroedFileEventStreamTest {
             }
 
             PBFileInfo info = new PBFileInfo(path);
-	        Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
-	        Assertions.assertEquals(info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
-	        Assertions.assertNotNull(info.getLastEvent(), "Last event is null");
+            Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
+            Assertions.assertEquals(
+                    info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
+            Assertions.assertNotNull(info.getLastEvent(), "Last event is null");
             Instant lastEventTs = info.getLastEvent().getEventTimeStamp();
             logger.info(TimeUtils.convertToHumanReadableString(lastEventTs));
             Assertions.assertTrue(
@@ -204,8 +203,7 @@ public class ZeroedFileEventStreamTest {
         }
 
         Assertions.assertTrue(
-                paths.length > 0,
-                "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
+                paths.length > 0, "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
@@ -228,7 +226,7 @@ public class ZeroedFileEventStreamTest {
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores = new String[] {
             srcPlugin.getURLRepresentation(),
-                pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName + "Dest"
+            pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName + "Dest"
                     + "&partitionGranularity=PARTITION_YEAR"
         };
         typeInfo.setDataStores(dataStores);
@@ -248,7 +246,7 @@ public class ZeroedFileEventStreamTest {
             timeETLruns = TimeUtils.plusDays(timeETLruns, 35);
         }
         try {
-        ETLExecutor.runETLs(configService, timeETLruns);
+            ETLExecutor.runETLs(configService, timeETLruns);
         } catch (IOException e) {
             logger.error(e);
             Assertions.fail();
@@ -275,9 +273,10 @@ public class ZeroedFileEventStreamTest {
         long eventCount = 0;
         for (Path path : paths) {
             PBFileInfo info = new PBFileInfo(path);
-	        Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
-	        Assertions.assertEquals(info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
-	        Assertions.assertNotNull(info.getLastEvent(), "Last event is null");
+            Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
+            Assertions.assertEquals(
+                    info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
+            Assertions.assertNotNull(info.getLastEvent(), "Last event is null");
             Instant lastEventTs = info.getLastEvent().getEventTimeStamp();
             logger.info(TimeUtils.convertToHumanReadableString(lastEventTs));
             Assertions.assertTrue(
@@ -304,7 +303,7 @@ public class ZeroedFileEventStreamTest {
      * Generate PB file with bad footers in the ETL dest and then see if we survive ETL
      */
     @Test
-	public void testBadFootersInDestETL() throws Exception {
+    public void testBadFootersInDestETL() throws Exception {
         String pvName = pvNamePrefix + "testBadFootersInDestETL";
 
         PlainPBStoragePlugin destPlugin = null;
@@ -319,9 +318,9 @@ public class ZeroedFileEventStreamTest {
         }
         assert destPlugin != null;
         File destFolder = new File(destPlugin.getRootFolder());
-		if(destFolder.exists()) {
+        if (destFolder.exists()) {
             try {
-            FileUtils.deleteDirectory(destFolder);
+                FileUtils.deleteDirectory(destFolder);
             } catch (IOException e) {
                 logger.error(e);
                 Assertions.fail();
@@ -333,8 +332,8 @@ public class ZeroedFileEventStreamTest {
                         + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         File srcFolder = new File(srcPlugin.getRootFolder());
-		if(srcFolder.exists()) {
-            try{
+        if (srcFolder.exists()) {
+            try {
                 FileUtils.deleteDirectory(srcFolder);
             } catch (IOException e) {
                 logger.error(e);
@@ -350,8 +349,8 @@ public class ZeroedFileEventStreamTest {
                         new RemotableEventStreamDesc(type, pvName, currentYear));
                 int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
                 for (int secondintoday = 0;
-                     secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
-                     secondintoday += defaultPeriodInSeconds) {
+                        secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                        secondintoday += defaultPeriodInSeconds) {
                     testData.add(new SimulationEvent(
                             startofdayinseconds + secondintoday, currentYear, type, new ScalarValue<Double>((double)
                                     secondintoday)));
@@ -379,7 +378,7 @@ public class ZeroedFileEventStreamTest {
         }
 
         Assertions.assertTrue(
-		        paths.length > 0,
+                paths.length > 0,
                 "Cannot seem to find any plain pb files in " + destPlugin.getRootFolder() + " for pv " + pvName);
 
         // Overwrite the tail end of each file with some garbage.
@@ -407,8 +406,8 @@ public class ZeroedFileEventStreamTest {
                         new RemotableEventStreamDesc(type, pvName, currentYear));
                 int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
                 for (int secondintoday = 0;
-                     secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
-                     secondintoday += defaultPeriodInSeconds) {
+                        secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                        secondintoday += defaultPeriodInSeconds) {
                     testData.add(new SimulationEvent(
                             startofdayinseconds + secondintoday, currentYear, type, new ScalarValue<Double>((double)
                                     secondintoday)));
@@ -472,9 +471,10 @@ public class ZeroedFileEventStreamTest {
                 logger.error(e);
                 Assertions.fail();
             }
-	        Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
-	        Assertions.assertEquals(info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
-	        Assertions.assertNotNull(info.getLastEvent(), "Last event is null");
+            Assertions.assertNotNull(info, "Cannot generate PBFileInfo from " + path);
+            Assertions.assertEquals(
+                    info.getPVName(), pvName, "pvNames are different " + info.getPVName() + " expecting " + pvName);
+            Assertions.assertNotNull(info.getLastEvent(), "Last event is null");
             Instant lastEventTs = info.getLastEvent().getEventTimeStamp();
             logger.info(TimeUtils.convertToHumanReadableString(lastEventTs));
             Assertions.assertTrue(
@@ -527,8 +527,7 @@ public class ZeroedFileEventStreamTest {
         }
 
         Assertions.assertTrue(
-		        paths.length > 0,
-                "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
+                paths.length > 0, "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
 
         // Overwrite the tail end of each file with some garbage.
         for (Path path : paths) {
@@ -559,7 +558,7 @@ public class ZeroedFileEventStreamTest {
                 eventCount++;
             }
             Assertions.assertTrue(
-                eventCount >= exepectedEventCount,
+                    eventCount >= exepectedEventCount,
                     "Event count is too low " + eventCount + " expecting " + exepectedEventCount
                             + " from total generated " + generatedCount);
         } catch (IOException e) {
@@ -570,10 +569,10 @@ public class ZeroedFileEventStreamTest {
 
     /**
      * Generate PB file with zeroes at random places and then see if we survive retrieval
-	 * @throws Exception
-	 */
-	@Test
-	public void testZeroedDataRetrieval() throws Exception {
+     * @throws Exception
+     */
+    @Test
+    public void testZeroedDataRetrieval() throws Exception {
         PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_YEAR",
@@ -592,13 +591,12 @@ public class ZeroedFileEventStreamTest {
                     PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
-          logger.warn(e);
-          Assertions.fail();
+            logger.warn(e);
+            Assertions.fail();
         }
 
         Assertions.assertTrue(
-                paths.length > 0,
-                "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
+                paths.length > 0, "Cannot seem to find any plain pb files in " + rootFolderName + " for pv " + pvName);
 
         // Overwrite some lines in the file at random places.
         int zeroedLines = 100;

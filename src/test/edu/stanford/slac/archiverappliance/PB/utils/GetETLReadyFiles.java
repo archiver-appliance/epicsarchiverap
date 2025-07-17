@@ -7,8 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -28,30 +28,36 @@ import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.p
  */
 public class GetETLReadyFiles {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) throws Exception {
-		if(args.length < 3) {
-			System.err.println("Usage: java edu.stanford.slac.archiverappliance.PlainPB.utils.GetETLReadyFiles <PVName> <FolderName> <Granularity>");
-			return;
-		}
-		ConfigService configService = new ConfigServiceForTests(-1);
-		String pvName = args[0];
-		File folder = new File(args[1]);
-		PartitionGranularity granularity = PartitionGranularity.valueOf(args[2]);
-		if(granularity == null) {
-			throw new Exception("Unable to determine granularity for " + args[2]);
-		}
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length < 3) {
+            System.err.println(
+                    "Usage: java edu.stanford.slac.archiverappliance.PlainPB.utils.GetETLReadyFiles <PVName> <FolderName> <Granularity>");
+            return;
+        }
+        ConfigService configService = new ConfigServiceForTests(-1);
+        String pvName = args[0];
+        File folder = new File(args[1]);
+        PartitionGranularity granularity = PartitionGranularity.valueOf(args[2]);
+        if (granularity == null) {
+            throw new Exception("Unable to determine granularity for " + args[2]);
+        }
 
         Instant now = TimeUtils.now();
-		Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(new ArchPaths(), folder.getAbsolutePath(), pvName, now, pbFileExtension, granularity, PBCompressionMode.NONE, configService.getPVNameToKeyConverter());
-		if(paths == null || paths.length == 0) {
-			System.out.println("No files for pv " + pvName + " before current partition using time " + TimeUtils.convertToHumanReadableString(now));
-		}
-		
-		
-
-	}
-
+        Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(
+                new ArchPaths(),
+                folder.getAbsolutePath(),
+                pvName,
+                now,
+                pbFileExtension,
+                granularity,
+                PBCompressionMode.NONE,
+                configService.getPVNameToKeyConverter());
+        if (paths == null || paths.length == 0) {
+            System.out.println("No files for pv " + pvName + " before current partition using time "
+                    + TimeUtils.convertToHumanReadableString(now));
+        }
+    }
 }

@@ -17,26 +17,23 @@ import org.junit.jupiter.api.Test;
  */
 public class JSONEncodeDecodeMethodCheckTest {
 
-	@BeforeEach
-	public void setUp() throws Exception {
-	}
+    @BeforeEach
+    public void setUp() throws Exception {}
 
-	@AfterEach
-	public void tearDown() throws Exception {
-	}
+    @AfterEach
+    public void tearDown() throws Exception {}
 
-	@Test
-	public void testJSONEncodeDecodeMethodCheck() throws Exception {
-		// Add one line for each class that we expect to be encoded/decoded into JSON
-		checkEncoderDecoder(PVTypeInfo.class);
-		checkEncoderDecoder(UserSpecifiedSamplingParams.class);
-		checkEncoderDecoder(ApplianceAggregateInfo.class);
-		checkEncoderDecoder(MetaInfo.class);
-	}
-	
-	private void checkEncoderDecoder(Class<? extends Object> clazz) throws Exception { 
-		JSONEncoder.getEncoder(clazz);
-		JSONDecoder.getDecoder(clazz);
-	}
+    @Test
+    public void testJSONEncodeDecodeMethodCheck() throws Exception {
+        // Add one line for each class that we expect to be encoded/decoded into JSON
+        checkEncoderDecoder(PVTypeInfo.class);
+        checkEncoderDecoder(UserSpecifiedSamplingParams.class);
+        checkEncoderDecoder(ApplianceAggregateInfo.class);
+        checkEncoderDecoder(MetaInfo.class);
+    }
 
+    private void checkEncoderDecoder(Class<? extends Object> clazz) throws Exception {
+        JSONEncoder.getEncoder(clazz);
+        JSONDecoder.getDecoder(clazz);
+    }
 }

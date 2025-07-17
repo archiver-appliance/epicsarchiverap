@@ -1,9 +1,8 @@
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import org.epics.archiverappliance.ByteArray;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,27 +28,29 @@ public class ReverseLineByteStreamTest {
     public void testWeAreReadingAllBytes() throws Exception {
         logger.info("testWeAreReadingAllBytes");
         String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ReverseLineByteStreamTest.txt";
-        for(int fileSize = 2*ReverseLineByteStream.MAX_LINE_SIZE; fileSize < 4*ReverseLineByteStream.MAX_LINE_SIZE; fileSize += 1) {
+        for (int fileSize = 2 * ReverseLineByteStream.MAX_LINE_SIZE;
+                fileSize < 4 * ReverseLineByteStream.MAX_LINE_SIZE;
+                fileSize += 1) {
             File f = new File(fileName);
             if (f.exists()) {
                 f.delete();
             }
-    
+
             Random rand = new Random();
-            try(BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(f, false))) {
+            try (BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(f, false))) {
                 byte[] buffer = new byte[fileSize];
                 rand.nextBytes(buffer); // Don't really care what we put into the buffer
                 os.write(buffer);
             }
-            
+
             logger.debug("Testing with file length {} ", f.length());
             try (ReverseLineByteStream lis = new ReverseLineByteStream(f.toPath())) {
                 boolean bRead = lis.testFillBuffer();
-                while(bRead) {
+                while (bRead) {
                     bRead = lis.testFillBuffer();
                 }
                 Assertions.assertEquals(f.length(), lis.getTotalBytesRead(), "Mismatch in bytes read and file length");
-    
+
                 f.delete();
             }
             logger.debug("Done testing with file length {} ", f.length());
@@ -65,16 +66,16 @@ public class ReverseLineByteStreamTest {
     public void testWeAreReadingAllLines() throws Exception {
         logger.info("testWeAreReadingAllLines");
         String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ReverseLineByteStreamTest.txt";
-        for(int numLines = 2; numLines < 100; numLines++) {
+        for (int numLines = 2; numLines < 100; numLines++) {
             File f = new File(fileName);
             if (f.exists()) {
                 f.delete();
             }
 
-            int expectedLines = 10*1024 + numLines;
+            int expectedLines = 10 * 1024 + numLines;
 
-            try(PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)))) {
-                for(int i = 0; i <= expectedLines; i++) {
+            try (PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)))) {
+                for (int i = 0; i <= expectedLines; i++) {
                     fos.print("We print the same line over and over again" + LineEscaper.NEWLINE_CHAR_STR);
                 }
             }
@@ -83,13 +84,13 @@ public class ReverseLineByteStreamTest {
             try (ReverseLineByteStream lis = new ReverseLineByteStream(f.toPath())) {
                 int linesRead = 0;
                 boolean bRead = lis.testFillLineBuffer();
-                while(bRead) {
+                while (bRead) {
                     linesRead++;
                     bRead = lis.testFillLineBuffer();
                 }
                 // The -1 is because the ReverseLineByteStream constructors do a fillLineBuffer
-                Assertions.assertEquals(expectedLines-1, linesRead, "Mismatch in lines read");
-    
+                Assertions.assertEquals(expectedLines - 1, linesRead, "Mismatch in lines read");
+
                 f.delete();
             }
             logger.debug("Done testing with numlines {} ", numLines);
@@ -104,17 +105,17 @@ public class ReverseLineByteStreamTest {
     public void testTheActualLines() throws Exception {
         logger.info("testTheActualLines");
         String fileName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ReverseLineByteStreamTest.txt";
-        for(int numLines = 2; numLines < 100; numLines++) {
+        for (int numLines = 2; numLines < 100; numLines++) {
             File f = new File(fileName);
             if (f.exists()) {
                 f.delete();
             }
 
-            int expectedLines = 10*1024 + numLines;
+            int expectedLines = 10 * 1024 + numLines;
             int maxInt = -1;
 
-            try(PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)))) {
-                for(int i = 0; i < expectedLines; i++) {
+            try (PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)))) {
+                for (int i = 0; i < expectedLines; i++) {
                     fos.print("This is a line " + i + LineEscaper.NEWLINE_CHAR_STR);
                     maxInt = i;
                 }
@@ -126,18 +127,18 @@ public class ReverseLineByteStreamTest {
                 ByteArray bar = new ByteArray(ReverseLineByteStream.MAX_LINE_SIZE);
                 boolean bRead = lis.readLine(bar);
                 String theline = new String(bar.toBytes());
-                while(bRead) {
+                while (bRead) {
                     Assertions.assertEquals("This is a line " + expectedInt, theline, "Mismatch");
                     linesRead++;
                     expectedInt--;
                     bRead = lis.readLine(bar);
-                    if(bRead) {
+                    if (bRead) {
                         theline = new String(bar.toBytes());
                     }
                 }
                 Assertions.assertEquals("This is a line " + 0, theline, "Mismatch at line 0");
                 Assertions.assertEquals(expectedLines, linesRead, "Mismatch in lines read");
-    
+
                 f.delete();
             }
             logger.debug("Done testing with numlines {} ", numLines);
@@ -156,9 +157,9 @@ public class ReverseLineByteStreamTest {
             f.delete();
         }
 
-        DecimalFormat fmt = new DecimalFormat( "0000" );
-        try(PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)));) {
-            for(int i = 0; i < 10000; i++) {
+        DecimalFormat fmt = new DecimalFormat("0000");
+        try (PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false))); ) {
+            for (int i = 0; i < 10000; i++) {
                 fos.print(fmt.format(i) + LineEscaper.NEWLINE_CHAR_STR);
             }
         }
@@ -174,19 +175,20 @@ public class ReverseLineByteStreamTest {
         seekandCheck(f, 107, "0020"); // x71
         seekandCheck(f, 108, "0020"); // x72
 
-        // The seekToBeforePreviousLine discards a line; so if we seek to the end of the file and read, we should skip one number
+        // The seekToBeforePreviousLine discards a line; so if we seek to the end of the file and read, we should skip
+        // one number
         seekandCheck(f, f.length(), "9998");
 
         // To read from the last line, use the plain constructor
         ByteArray bar = new ByteArray(LineByteStream.MAX_LINE_SIZE);
         try (ReverseLineByteStream lis = new ReverseLineByteStream(f.toPath())) {
             lis.readLine(bar);
-            Assertions.assertEquals("9999", new String(bar.toBytes()), "Mismatch when reading from the end of the file");
+            Assertions.assertEquals(
+                    "9999", new String(bar.toBytes()), "Mismatch when reading from the end of the file");
         }
 
         f.delete();
     }
-
 
     private static void seekandCheck(File f, long position, String expectedNumberStr) throws IOException {
         logger.info("Seeking to " + position + " and checking for " + expectedNumberStr);

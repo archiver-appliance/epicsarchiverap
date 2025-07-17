@@ -165,10 +165,8 @@ public class ClusterSinglePVTest {
         }
     }
 
-    private Map<String, List<JSONObject>> retrieveJsonResults(String startString, String endString)
-            throws IOException {
-        logger.info(
-                "Retrieving data using JSON/HTTP and comparing it to retrieval over PBStoragePlugin");
+    private Map<String, List<JSONObject>> retrieveJsonResults(String startString, String endString) throws IOException {
+        logger.info("Retrieving data using JSON/HTTP and comparing it to retrieval over PBStoragePlugin");
 
         // Establish a connection with appliance0
         URL obj = new URL(DATA_RETRIEVAL_URL + "/data/getData.json?pv="

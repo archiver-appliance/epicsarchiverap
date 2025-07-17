@@ -7,10 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;
@@ -52,6 +52,7 @@ public class LargePBLineTest {
     public void tearDown() throws Exception {
         largeLineSetup.deleteTestFolder();
     }
+
     @Test
     public void testLargeLines() throws Exception {
         PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
@@ -74,7 +75,7 @@ public class LargePBLineTest {
         try (BasicContext context = new BasicContext()) {
             storagePlugin.appendData(context, pvName, strm);
         } catch (Exception ex) {
-            logger.error("Exception appending data " +strm, ex);
+            logger.error("Exception appending data " + strm, ex);
             Assertions.fail(ex.getMessage());
         }
 

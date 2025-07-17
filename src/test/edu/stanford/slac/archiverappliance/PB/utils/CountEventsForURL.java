@@ -17,7 +17,6 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 
-import java.io.File;
 import java.net.URLEncoder;
 import java.time.Instant;
 
@@ -28,38 +27,44 @@ import java.time.Instant;
  */
 public class CountEventsForURL {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) throws Exception {
-		if(args.length < 4) { 
-			System.err.println("Usage: java edu.stanford.slac.archiverappliance.PB.utils.CountEventsForURL <URL to raw response> <PVName> <Start> <End>");
-			return;
-		}
-		PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
-		ConfigService configService = new ConfigServiceForTests(-1);
-		String url = args[0];
-		storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode(url, "UTF-8"), configService);
-		String pvName = args[1];
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+        if (args.length < 4) {
+            System.err.println(
+                    "Usage: java edu.stanford.slac.archiverappliance.PB.utils.CountEventsForURL <URL to raw response> <PVName> <Start> <End>");
+            return;
+        }
+        PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
+        ConfigService configService = new ConfigServiceForTests(-1);
+        String url = args[0];
+        storagePlugin.initialize("pbraw://localhost?rawURL=" + URLEncoder.encode(url, "UTF-8"), configService);
+        String pvName = args[1];
         Instant start = TimeUtils.convertFromISO8601String(args[2]);
         Instant end = TimeUtils.convertFromISO8601String(args[3]);
-		
-		
-		long s = System.currentTimeMillis();
-		try(BasicContext context = new BasicContext(); EventStream st = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
-			int totalEvents = 0;
-			try {
-				for(@SuppressWarnings("unused") Event e : st) {
-					// Here's where we do something to events.
-					totalEvents++;
-				}
-			} finally {
-				try { st.close(); } catch(Exception ex) { }					
-			}
-			long e = System.currentTimeMillis();
-			System.out.println("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
-		}
-		
-		configService.shutdownNow();
-	}
+
+        long s = System.currentTimeMillis();
+        try (BasicContext context = new BasicContext();
+                EventStream st = new CurrentThreadWorkerEventStream(
+                        pvName,
+                        storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
+            int totalEvents = 0;
+            try {
+                for (@SuppressWarnings("unused") Event e : st) {
+                    // Here's where we do something to events.
+                    totalEvents++;
+                }
+            } finally {
+                try {
+                    st.close();
+                } catch (Exception ex) {
+                }
+            }
+            long e = System.currentTimeMillis();
+            System.out.println("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
+        }
+
+        configService.shutdownNow();
+    }
 }

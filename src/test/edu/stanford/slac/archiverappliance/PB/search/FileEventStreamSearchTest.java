@@ -9,7 +9,6 @@ package edu.stanford.slac.archiverappliance.PB.search;
 
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -37,17 +36,18 @@ import java.util.Random;
  */
 public class FileEventStreamSearchTest {
     private static final Logger logger = LogManager.getLogger(FileEventStreamSearchTest.class);
-	public static final int MAXSAMPLEINT = 10000000;
+    public static final int MAXSAMPLEINT = 10000000;
     String pathName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "FileEventStreamSearchTest.txt";
     Path path = Paths.get(pathName);
 
     private void generateSampleFile(String fileName) {
         DecimalFormat df = new DecimalFormat("0000000000");
-        try(PrintStream fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(new File(fileName), false)))) {
-            for(int i = 0; i <= MAXSAMPLEINT; i=i+2) {
+        try (PrintStream fos =
+                new PrintStream(new BufferedOutputStream(new FileOutputStream(new File(fileName), false)))) {
+            for (int i = 0; i <= MAXSAMPLEINT; i = i + 2) {
                 fos.print("" + df.format(i) + LineEscaper.NEWLINE_CHAR_STR);
             }
-        } catch (IOException ex){
+        } catch (IOException ex) {
             logger.error(ex.getMessage(), ex);
         }
     }
@@ -70,16 +70,12 @@ public class FileEventStreamSearchTest {
             seekAndCheck(path, i);
         }
         // Test in the middle
-        for (int i = MAXSAMPLEINT / 2;
-                i < MAXSAMPLEINT / 2 + 1000;
-                i++) {
+        for (int i = MAXSAMPLEINT / 2; i < MAXSAMPLEINT / 2 + 1000; i++) {
             seekAndCheck(path, i);
         }
 
         // Check for upper boundary conditions
-        for (int i = MAXSAMPLEINT - 1000;
-                i < MAXSAMPLEINT + 1000;
-                i++) {
+        for (int i = MAXSAMPLEINT - 1000; i < MAXSAMPLEINT + 1000; i++) {
             seekAndCheck(path, i);
         }
 

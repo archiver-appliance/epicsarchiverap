@@ -8,8 +8,6 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
-
 public class PlainPBURLRepresentationTest {
     @Test
     public void testToAndFromURL() throws Exception {

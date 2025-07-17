@@ -25,7 +25,6 @@ import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusCh
 @Tag("localEpics")
 public class PauseResumeV4Test {
 
-
     private static final Logger logger = LogManager.getLogger(SampleV4PVAClientTest.class.getName());
     private SIOCSetup ioc;
     TomcatSetup tomcatSetup = new TomcatSetup();
@@ -53,8 +52,7 @@ public class PauseResumeV4Test {
         String mgmtUrl = "http://localhost:17665/mgmt/bpl/";
         String archivePVURL = mgmtUrl + "archivePV?pv=pva://";
 
-        GetUrlContent
-                .getURLContentAsJSONArray(archivePVURL + pvURLName);
+        GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
         waitForStatusChange(pvName, "Being archived", 100, mgmtUrl);
 
         usingPvAccessCheck(pvURLName, mgmtUrl);
@@ -62,17 +60,20 @@ public class PauseResumeV4Test {
         // Let's pause the PV.
         String pausePVURL = mgmtUrl + "pauseArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         JSONObject pauseStatus = GetUrlContent.getURLContentAsJSONObject(pausePVURL);
-        Assertions.assertTrue(pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Pause PV");
+        Assertions.assertTrue(
+                pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Pause PV");
         waitForStatusChange(pvName, "Paused", 20, mgmtUrl);
 
         // Resume PV
         String resumePVURL = mgmtUrl + "resumeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
         JSONObject pvResumeStatus = GetUrlContent.getURLContentAsJSONObject(resumePVURL);
-        Assertions.assertTrue(pvResumeStatus.containsKey("status") && pvResumeStatus.get("status").equals("ok"), "Resume PV");
+        Assertions.assertTrue(
+                pvResumeStatus.containsKey("status")
+                        && pvResumeStatus.get("status").equals("ok"),
+                "Resume PV");
         waitForStatusChange(pvName, "Being archived", 20, mgmtUrl);
 
         usingPvAccessCheck(pvURLName, mgmtUrl);
-
     }
 
     private void usingPvAccessCheck(String pvURLName, String mgmtUrl) {
@@ -83,5 +84,4 @@ public class PauseResumeV4Test {
         Assertions.assertEquals("Are we using PVAccess?", pvAccessInfo.get("name"));
         Assertions.assertEquals("Yes", pvAccessInfo.get("value"));
     }
-
 }

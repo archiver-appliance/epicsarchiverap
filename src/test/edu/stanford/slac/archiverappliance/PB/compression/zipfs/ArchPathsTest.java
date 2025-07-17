@@ -67,8 +67,8 @@ public class ArchPathsTest {
         assert rootFolder.mkdirs();
         // We create some sample files for testing.
         for (int filenum = 1; filenum < 100; filenum++) {
-            try (PrintWriter out = new PrintWriter(
-                    new FileOutputStream(rootFolderStr + File.separator + "text" + filenum + ".txt"))) {
+            try (PrintWriter out =
+                    new PrintWriter(new FileOutputStream(rootFolderStr + File.separator + "text" + filenum + ".txt"))) {
                 for (int i = 0; i < 1000; i++) {
                     out.println("Line " + i);
                 }

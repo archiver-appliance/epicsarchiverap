@@ -7,16 +7,15 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.search;
 
+import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 
 /**
  * @author mshankar
@@ -25,22 +24,27 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
  *
  */
 public class EvenNumberSampleFileGenerator {
-	private static final Logger logger = LogManager.getLogger(EvenNumberSampleFileGenerator.class);
-	public static final int MAXSAMPLEINT = 10000000;
+    private static final Logger logger = LogManager.getLogger(EvenNumberSampleFileGenerator.class);
+    public static final int MAXSAMPLEINT = 10000000;
 
-	public static void generateSampleFile(String fileName) {
-		File f = new File(fileName);
-		PrintStream fos = null;
-		try {
-			fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)));
-			for(int i = 0; i <= MAXSAMPLEINT; i=i+2) {
-				fos.print("" + i + LineEscaper.NEWLINE_CHAR_STR);
-			}
-		} catch (IOException ex){
-			logger.error(ex.getMessage(), ex);
-		} finally {
-			if(fos != null) { try { fos.close(); fos = null; } catch (Throwable t) {} } 
-		}
-	}
-	
+    public static void generateSampleFile(String fileName) {
+        File f = new File(fileName);
+        PrintStream fos = null;
+        try {
+            fos = new PrintStream(new BufferedOutputStream(new FileOutputStream(f, false)));
+            for (int i = 0; i <= MAXSAMPLEINT; i = i + 2) {
+                fos.print("" + i + LineEscaper.NEWLINE_CHAR_STR);
+            }
+        } catch (IOException ex) {
+            logger.error(ex.getMessage(), ex);
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                    fos = null;
+                } catch (Throwable t) {
+                }
+            }
+        }
+    }
 }

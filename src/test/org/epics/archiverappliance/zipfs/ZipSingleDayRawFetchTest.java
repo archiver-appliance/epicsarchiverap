@@ -63,11 +63,11 @@ public class ZipSingleDayRawFetchTest {
                         new RemotableEventStreamDesc(type, pvName, currentYear));
                 int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
                 for (int secondintoday = 0;
-                     secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
-                     secondintoday++) {
+                        secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                        secondintoday++) {
                     testData.add(new SimulationEvent(
                             startofdayinseconds + secondintoday, currentYear, type, new ScalarValue<Double>((double)
-                            secondintoday)));
+                                    secondintoday)));
                 }
                 pbplugin.appendData(context, pvName, testData);
             }
@@ -132,11 +132,7 @@ public class ZipSingleDayRawFetchTest {
         long start = System.currentTimeMillis();
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(
-                    pbplugin,
-                    pvName,
-                    startTime,
-                    context.getPaths(),
-                    configService.getPVNameToKeyConverter());
+                    pbplugin, pvName, startTime, context.getPaths(), configService.getPVNameToKeyConverter());
             for (Event e : new FileBackedPBEventStream(pvName, path, ArchDBRTypes.DBR_SCALAR_DOUBLE)) {
                 Instant actualTime = e.getEventTimeStamp();
                 // The PlainPBStorage plugin will also yield the last event of the previous partition.
