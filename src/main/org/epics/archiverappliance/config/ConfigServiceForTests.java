@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.config;
 
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
@@ -8,9 +10,6 @@ import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
-
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -219,16 +218,18 @@ public class ConfigServiceForTests extends DefaultConfigService {
     public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
         // When we register a PV to an appliance in the unit tests, we often forget to set the appliance identity
         PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
-        if(typeInfo != null) {
-            if(typeInfo.getApplianceIdentity() == null || !typeInfo.getApplianceIdentity().equals(applianceInfo.getIdentity())) {
+        if (typeInfo != null) {
+            if (typeInfo.getApplianceIdentity() == null
+                    || !typeInfo.getApplianceIdentity().equals(applianceInfo.getIdentity())) {
                 typeInfo.setApplianceIdentity(applianceInfo.getIdentity());
                 typeInfos.put(pvName, typeInfo);
             }
         }
         super.registerPVToAppliance(pvName, applianceInfo);
         Set<String> queryResult = this.getPVsForAppliance(applianceInfo);
-        if(!queryResult.contains(pvName)) {
-            throw new RuntimeException("After registering PV " + pvName + ", getPVsForAppliance does not contains this PV");
+        if (!queryResult.contains(pvName)) {
+            throw new RuntimeException(
+                    "After registering PV " + pvName + ", getPVsForAppliance does not contains this PV");
         }
         if (applianceInfo.getIdentity().equals(myApplianceInfo.getIdentity())) {
             logger.info("Adding pv " + pvName + " to this appliance's pvs and to ETL");

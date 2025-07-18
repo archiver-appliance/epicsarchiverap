@@ -18,18 +18,17 @@ import org.apache.logging.log4j.Logger;
  *
  */
 public class PBParseException extends RuntimeException {
-	private static final long serialVersionUID = 5552973945298428020L;
-	private static Logger logger = LogManager.getLogger(PBParseException.class.getName());
+    private static final long serialVersionUID = 5552973945298428020L;
+    private static Logger logger = LogManager.getLogger(PBParseException.class.getName());
 
-	public PBParseException(Exception ex) {
-		super(ex);
-	}
-	
-	public PBParseException(byte[] databytes, Exception ex) {
-		super("Length of byte array = " + ((databytes != null) ? databytes.length : "null"), ex);
-		if(logger.isDebugEnabled() && databytes != null) {
-			logger.debug(Hex.encodeHexString(databytes));
-		}
-	}
+    public PBParseException(Exception ex) {
+        super(ex);
+    }
 
+    public PBParseException(byte[] databytes, Exception ex) {
+        super("Length of byte array = " + ((databytes != null) ? databytes.length : "null"), ex);
+        if (logger.isDebugEnabled() && databytes != null) {
+            logger.debug(Hex.encodeHexString(databytes));
+        }
+    }
 }

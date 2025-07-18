@@ -1,8 +1,5 @@
 package org.epics.archiverappliance.mgmt;
 
-import java.util.List;
-import java.util.Map;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
@@ -17,6 +14,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
 
 /**
  * Use the firefox driver to test operator's adding a PV to the system.
@@ -46,14 +45,17 @@ public class ArchivePVTest {
     public void testSimpleArchivePV() throws Exception {
         String pvNameToArchive = "UnitTestNoNamingConvention:sine";
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+                mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
-        JSONArray statuses = GetUrlContent.getURLContentAsJSONArray(mgmtURL + "/getPVStatus?pv="+pvNameToArchive);
+        JSONArray statuses = GetUrlContent.getURLContentAsJSONArray(mgmtURL + "/getPVStatus?pv=" + pvNameToArchive);
         Assertions.assertNotNull(statuses);
         Assertions.assertTrue(statuses.size() > 0);
         @SuppressWarnings("unchecked")
         Map<String, String> status = (Map<String, String>) statuses.get(0);
-        Assertions.assertEquals(status.getOrDefault("pvName", ""), pvNameToArchive, 
-            "PV Name is not " + pvNameToArchive + "; instead we get " + status.getOrDefault("pvName", ""));
+        Assertions.assertEquals(
+                status.getOrDefault("pvName", ""),
+                pvNameToArchive,
+                "PV Name is not " + pvNameToArchive + "; instead we get " + status.getOrDefault("pvName", ""));
     }
 }

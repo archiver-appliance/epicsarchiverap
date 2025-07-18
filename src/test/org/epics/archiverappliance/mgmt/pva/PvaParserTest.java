@@ -12,21 +12,21 @@ import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringA
 
 public class PvaParserTest {
 
-	private static final Logger logger = LogManager.getLogger(PvaParserTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(PvaParserTest.class.getName());
 
-	@Test
-	public void test() throws ResponseConstructionException {
-		String json = """
+    @Test
+    public void test() throws ResponseConstructionException {
+        String json =
+                """
 				{ "pvName": "mshankar:arch:sine", "status": "Archive request submitted" }\r
 				{ "pvName": "mshankar:arch:cosine", "status": "Archive request submitted" }\r
 				""";
-		PVATable result = PvaArchivePVAction.parseArchivePvResult(json);
+        PVATable result = PvaArchivePVAction.parseArchivePvResult(json);
 
-		String[] expextedKePvNames = new String[] { "mshankar:arch:sine", "mshankar:arch:cosine" };
-		String[] expectedStatus = new String[] { "Archive request submitted", "Archive request submitted" };
-		logger.info("results" + result.toString());
-		Assertions.assertArrayEquals(expextedKePvNames, extractStringArray(result.getColumn("pvName")));
-		Assertions.assertArrayEquals(expectedStatus, extractStringArray(result.getColumn("status")));
-
-	}
+        String[] expextedKePvNames = new String[] {"mshankar:arch:sine", "mshankar:arch:cosine"};
+        String[] expectedStatus = new String[] {"Archive request submitted", "Archive request submitted"};
+        logger.info("results" + result.toString());
+        Assertions.assertArrayEquals(expextedKePvNames, extractStringArray(result.getColumn("pvName")));
+        Assertions.assertArrayEquals(expectedStatus, extractStringArray(result.getColumn("status")));
+    }
 }

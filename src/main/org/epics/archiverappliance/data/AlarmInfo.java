@@ -12,8 +12,11 @@ package org.epics.archiverappliance.data;
  * @author mshankar
  */
 public interface AlarmInfo {
-	public int getStatus();
-	public int getSeverity();
-	public void setStatus(int status);
-	public void setSeverity(int severity);
+    public int getStatus();
+
+    public int getSeverity();
+
+    public void setStatus(int status);
+
+    public void setSeverity(int severity);
 }

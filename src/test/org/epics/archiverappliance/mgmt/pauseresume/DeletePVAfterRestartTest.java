@@ -30,65 +30,75 @@ import java.util.Map;
 @Tag("localEpics")
 public class DeletePVAfterRestartTest {
     private static final Logger logger = LogManager.getLogger(DeletePVAfterRestartTest.class.getName());
-    private final File persistenceFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
+    private final File persistenceFolder =
+            new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "DeletePVTest");
 
     private final String pvPrefix = DeletePVAfterRestartTest.class.getSimpleName();
     private final String pvNameToArchive = pvPrefix + "UnitTestNoNamingConvention:sine";
     TomcatSetup tomcatSetup = new TomcatSetup();
     SIOCSetup siocSetup = new SIOCSetup(pvPrefix);
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		if(persistenceFolder.exists()) {
-			FileUtils.deleteDirectory(persistenceFolder);
-		}
-		persistenceFolder.mkdirs();
-		System.getProperties().put(ConfigService.ARCHAPPL_PERSISTENCE_LAYER, "org.epics.archiverappliance.config.persistence.JDBM2Persistence");
-		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFolder.getPath() + File.separator + "testconfig_appliance0.jdbm2");
-		JDBM2Persistence persistenceLayer = new JDBM2Persistence();
-		persistenceLayer.putTypeInfo(pvNameToArchive, generatePVTypeInfo(pvNameToArchive, "appliance0"));
+    @BeforeEach
+    public void setUp() throws Exception {
+        if (persistenceFolder.exists()) {
+            FileUtils.deleteDirectory(persistenceFolder);
+        }
+        persistenceFolder.mkdirs();
+        System.getProperties()
+                .put(
+                        ConfigService.ARCHAPPL_PERSISTENCE_LAYER,
+                        "org.epics.archiverappliance.config.persistence.JDBM2Persistence");
+        System.getProperties()
+                .put(
+                        JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
+                        persistenceFolder.getPath() + File.separator + "testconfig_appliance0.jdbm2");
+        JDBM2Persistence persistenceLayer = new JDBM2Persistence();
+        persistenceLayer.putTypeInfo(pvNameToArchive, generatePVTypeInfo(pvNameToArchive, "appliance0"));
 
-		siocSetup.startSIOCWithDefaultDB();
-		// Replace the testconfig_appliance0.jdbm2 with testconfig.jdbm2 as TomcatSetup adds this to the JDBM2 file name to make the tests work in a cluster
-		System.getProperties().put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFolder.getPath() + File.separator + "testconfig.jdbm2");
-		tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
-	}
+        siocSetup.startSIOCWithDefaultDB();
+        // Replace the testconfig_appliance0.jdbm2 with testconfig.jdbm2 as TomcatSetup adds this to the JDBM2 file name
+        // to make the tests work in a cluster
+        System.getProperties()
+                .put(
+                        JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
+                        persistenceFolder.getPath() + File.separator + "testconfig.jdbm2");
+        tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		tomcatSetup.tearDown();
-		siocSetup.stopSIOC();
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        tomcatSetup.tearDown();
+        siocSetup.stopSIOC();
+    }
 
-	@Test
-	public void testSimpleDeletePV() throws Exception {
+    @Test
+    public void testSimpleDeletePV() throws Exception {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
         GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pvNameToArchive), false);
-		Thread.sleep(2 * 1000);
+        Thread.sleep(2 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 15);
-	}
-	
-	
-	private static PVTypeInfo generatePVTypeInfo(String pvName, String applianceIdentity) { 
-		PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, false, 1);
-		typeInfo.setUpperDisplayLimit(Double.valueOf(1.0));
-		typeInfo.setLowerDisplayLimit(Double.valueOf(-1.0));
-		typeInfo.setHasReducedDataSet(true);
-		typeInfo.setComputedEventRate(1.0f);
-		typeInfo.setComputedStorageRate(12.0f);
-		typeInfo.setUserSpecifiedEventRate(1.0f);
-		typeInfo.setApplianceIdentity(applianceIdentity);
-		typeInfo.addArchiveField("HIHI");
-		typeInfo.addArchiveField("LOLO");
-		typeInfo.setSamplingPeriod(1.0f);
-		typeInfo.setSamplingMethod(SamplingMethod.MONITOR);
-		typeInfo.setPaused(true);
-		typeInfo.setDataStores(new String[] { 
-				"pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR",
-				"pb://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY",
-				"pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR"
-		});
-		return typeInfo;
-	}
+    }
+
+    private static PVTypeInfo generatePVTypeInfo(String pvName, String applianceIdentity) {
+        PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, false, 1);
+        typeInfo.setUpperDisplayLimit(Double.valueOf(1.0));
+        typeInfo.setLowerDisplayLimit(Double.valueOf(-1.0));
+        typeInfo.setHasReducedDataSet(true);
+        typeInfo.setComputedEventRate(1.0f);
+        typeInfo.setComputedStorageRate(12.0f);
+        typeInfo.setUserSpecifiedEventRate(1.0f);
+        typeInfo.setApplianceIdentity(applianceIdentity);
+        typeInfo.addArchiveField("HIHI");
+        typeInfo.addArchiveField("LOLO");
+        typeInfo.setSamplingPeriod(1.0f);
+        typeInfo.setSamplingMethod(SamplingMethod.MONITOR);
+        typeInfo.setPaused(true);
+        typeInfo.setDataStores(new String[] {
+            "pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR",
+            "pb://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY",
+            "pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR"
+        });
+        return typeInfo;
+    }
 }

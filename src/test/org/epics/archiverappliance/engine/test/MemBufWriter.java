@@ -17,6 +17,7 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
 import java.io.IOException;
+
 /**
  * Store all samples in a buffer
  * @author Murali Shankar
@@ -25,40 +26,39 @@ import java.io.IOException;
 public class MemBufWriter implements Writer {
     private final String pvName;
     private final ArchDBRTypes dbrType;
-	private ArrayListEventStream buf;
+    private ArrayListEventStream buf;
 
-	public MemBufWriter(String pvName, ArchDBRTypes dbrType) {
-		this.pvName = pvName;
-		this.dbrType = dbrType;
-		buf = initBuffer(pvName, dbrType);
-	}
+    public MemBufWriter(String pvName, ArchDBRTypes dbrType) {
+        this.pvName = pvName;
+        this.dbrType = dbrType;
+        buf = initBuffer(pvName, dbrType);
+    }
 
-	private ArrayListEventStream initBuffer(String pvName, ArchDBRTypes dbrType) {
-		return new ArrayListEventStream(1024, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
-	}
+    private ArrayListEventStream initBuffer(String pvName, ArchDBRTypes dbrType) {
+        return new ArrayListEventStream(
+                1024, new RemotableEventStreamDesc(dbrType, pvName, TimeUtils.getCurrentYear()));
+    }
 
-	@Override
+    @Override
     public int appendData(BasicContext context, String arg0, EventStream arg1) throws IOException {
         int eventsAppended = 0;
-		for(Event e : arg1) {
-			buf.add(e);
+        for (Event e : arg1) {
+            buf.add(e);
             eventsAppended++;
-		}
+        }
         return eventsAppended;
-	}
+    }
 
-	@Override
-	public Event getLastKnownEvent(BasicContext context, String pvName)
-			throws IOException {
-		return null;
-	}
+    @Override
+    public Event getLastKnownEvent(BasicContext context, String pvName) throws IOException {
+        return null;
+    }
 
-	public ArrayListEventStream getCollectedSamples() throws IOException {
-		return buf;
-	}
+    public ArrayListEventStream getCollectedSamples() throws IOException {
+        return buf;
+    }
 
-	public void clear() {
-		buf = initBuffer(pvName, dbrType);
-	}
-
+    public void clear() {
+        buf = initBuffer(pvName, dbrType);
+    }
 }

@@ -430,7 +430,14 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
     }
 
     @Override
-    public void iterate(BasicContext context, String pvName, Instant startAtTime, Predicate<Event> thePredicate, IterationDirection direction, Period searchPeriod) throws IOException {
+    public void iterate(
+            BasicContext context,
+            String pvName,
+            Instant startAtTime,
+            Predicate<Event> thePredicate,
+            IterationDirection direction,
+            Period searchPeriod)
+            throws IOException {
         Instant sTime = (direction == IterationDirection.FORWARDS) ? startAtTime : startAtTime.minus(searchPeriod);
         Instant eTime = (direction == IterationDirection.FORWARDS) ? startAtTime.plus(searchPeriod) : startAtTime;
         Path[] paths = PlainPBPathNameUtility.getPathsWithData(
@@ -443,22 +450,18 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
                 partitionGranularity,
                 this.compressionMode,
                 this.pv2key);
-        if(paths == null) return;
+        if (paths == null) return;
         List<Path> pathList = Arrays.asList(paths);
-        if(direction == IterationDirection.BACKWARDS) {
+        if (direction == IterationDirection.BACKWARDS) {
             Collections.reverse(pathList);
         }
-        for(Path path : pathList) {
+        for (Path path : pathList) {
             logger.info("Iterating thru {}", path.toString());
             PBFileInfo fileInfo = new PBFileInfo(path);
-            try(EventStream strm = FileStreamCreator.getStreamForIteration(
-                                    pvName,
-                                    path,
-                                    startAtTime,
-                                    fileInfo.getType(),
-                                    direction)) {
-                for(Event ev : strm) {
-                    if(!thePredicate.test(ev)) {
+            try (EventStream strm =
+                    FileStreamCreator.getStreamForIteration(pvName, path, startAtTime, fileInfo.getType(), direction)) {
+                for (Event ev : strm) {
+                    if (!thePredicate.test(ev)) {
                         return;
                     }
                 }

@@ -58,17 +58,17 @@ public class InactiveClusterMemberArchivePVTest {
                         "org.epics.archiverappliance.config.persistence.JDBM2Persistence");
         {
             System.getProperties()
-                .put(
-                    JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
-                    persistenceFolder.getPath() + File.separator + "testconfig_appliance0.jdbm2");
+                    .put(
+                            JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
+                            persistenceFolder.getPath() + File.separator + "testconfig_appliance0.jdbm2");
             JDBM2Persistence persistenceLayer = new JDBM2Persistence();
             persistenceLayer.putTypeInfo(pvNameToArchive1, generatePVTypeInfo(pvNameToArchive1, "appliance0"));
         }
         {
             System.getProperties()
-                .put(
-                    JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
-                    persistenceFolder.getPath() + File.separator + "testconfig_appliance1.jdbm2");
+                    .put(
+                            JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
+                            persistenceFolder.getPath() + File.separator + "testconfig_appliance1.jdbm2");
             JDBM2Persistence persistenceLayer = new JDBM2Persistence();
             persistenceLayer.putTypeInfo(pvNameToArchive2, generatePVTypeInfo(pvNameToArchive2, "appliance1"));
         }
@@ -112,7 +112,8 @@ public class InactiveClusterMemberArchivePVTest {
         logger.info("Asking to archive pv " + pvName);
         String pvNameToArchive = pvName;
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+                mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, expectedPVStatus, 10, mgmtURL, 15);
     }
 
