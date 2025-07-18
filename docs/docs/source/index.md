@@ -1,6 +1,6 @@
 # EPICS Archiver Appliance
 
-The EPICS Archiver Appliance is an implementation of an archiver for
+The EPICS Archiver Appliance (EAA) is an implementation of an archiver for
 [EPICS](http://www.aps.anl.gov/epics/index.php) control systems that
 aims to archive millions of PVs.
 
@@ -49,6 +49,7 @@ sysadmin/customization.md
 sysadmin/installguide.md
 sysadmin/quickstart.md
 sysadmin/redundancy.md
+sysadmin/reassign.md
 sysadmin/site_specific.md
 sysadmin/sqlite.md
 ```
