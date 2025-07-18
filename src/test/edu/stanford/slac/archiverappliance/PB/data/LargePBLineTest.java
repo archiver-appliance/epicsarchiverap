@@ -10,7 +10,7 @@ package edu.stanford.slac.archiverappliance.PB.data;
 import edu.stanford.slac.archiverappliance.PlainPB.PBFileInfo;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
+import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;
@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collections;
 
@@ -85,7 +84,7 @@ public class LargePBLineTest {
                 pvName,
                 PlainPBStoragePlugin.pbFileExtension,
                 storagePlugin.getPartitionGranularity(),
-                CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "testLargeLines returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(

@@ -1,6 +1,5 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.CompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -122,7 +121,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -197,7 +196,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -264,7 +263,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -372,7 +371,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     destPlugin.getPartitionGranularity(),
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -455,7 +454,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -520,7 +519,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -590,7 +589,7 @@ public class ZeroedFileEventStreamTest {
                     pvName,
                     pbFileExtension,
                     PartitionGranularity.PARTITION_YEAR,
-                    CompressionMode.NONE,
+                    PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
           logger.warn(e);

@@ -39,7 +39,7 @@ public class AppendDataStateData {
     private final String rootFolder;
 
     private OutputStream os = null;
-    private final PlainPBStoragePlugin.CompressionMode compressionMode;
+    private final PBCompressionMode compressionMode;
     protected short previousYear = -1;
     protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
     private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
@@ -65,7 +65,7 @@ public class AppendDataStateData {
             String desc,
             Instant lastKnownTimestamp,
             PVNameToKeyMapping pv2key,
-            PlainPBStoragePlugin.CompressionMode compressionMode) {
+            PBCompressionMode compressionMode) {
         this.partitionGranularity = partitionGranularity;
         this.rootFolder = rootFolder;
         this.desc = desc;
@@ -145,7 +145,7 @@ public class AppendDataStateData {
             String pvName,
             String extension,
             Instant ts,
-            PlainPBStoragePlugin.CompressionMode compressionMode)
+            PBCompressionMode compressionMode)
             throws IOException {
 
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
@@ -251,7 +251,7 @@ public class AppendDataStateData {
             String extensionToCopyFrom,
             Instant ts,
             Path pvPath,
-            PlainPBStoragePlugin.CompressionMode compressionMode)
+            PBCompressionMode compressionMode)
             throws IOException {
         if (pvPath == null) {
             pvPath = PlainPBPathNameUtility.getFileName(

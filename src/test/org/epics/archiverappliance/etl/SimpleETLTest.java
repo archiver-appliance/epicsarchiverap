@@ -8,8 +8,8 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -147,7 +147,7 @@ public class SimpleETLTest {
                 pvName,
                 testPlugins.dest().getExtensionString(),
                 testPlugins.dest().getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(

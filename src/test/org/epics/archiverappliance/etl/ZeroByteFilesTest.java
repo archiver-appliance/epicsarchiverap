@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
+import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
 import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
@@ -219,7 +220,7 @@ public class ZeroByteFilesTest {
                 pvName,
                 etlDest.getExtensionString(),
                 etlDest.getPartitionGranularity(),
-                PlainPBStoragePlugin.CompressionMode.NONE,
+                PBCompressionMode.NONE,
                 pvNameToKeyConverter);
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(
