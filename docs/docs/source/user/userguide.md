@@ -342,6 +342,10 @@ where
    defaults to false, so, by default, we do not proxy external
    appliances for this API call. As of now, we also do not support
    Channel Archiver integration for this API call.
+3. `searchPeriod` - Optional argument to control how far back in time to go to find data.
+   Defaults to about a month. EAA uses a chunked data store; this argument determines
+   which chunks to include in the search. The syntax is as specied in `java.time.Period.parse`,
+   for example, to specify a year, use `P365D`.
 
 The response is a JSON dict of dicts with the name of the PV as the key.
 For example, here\'s a call asking for the value of a few PV\'s as of
