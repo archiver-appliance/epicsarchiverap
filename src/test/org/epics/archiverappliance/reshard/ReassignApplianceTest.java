@@ -12,6 +12,7 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.mgmt.bpl.ReassignAppliance;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.JSONDecoder;
@@ -21,7 +22,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -33,7 +33,6 @@ import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -84,6 +83,7 @@ public class ReassignApplianceTest {
 		System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", folderLTS);
 		FileUtils.deleteDirectory(new File(folderLTS));	
 		siocSetup.startSIOCWithDefaultDB();
+		System.getProperties().put(ReassignAppliance.class.getCanonicalName(), "true");
 		tomcatSetup.setUpClusterWithWebApps(this.getClass().getSimpleName(), 2);
 	}
 
@@ -146,7 +146,7 @@ public class ReassignApplianceTest {
 		Assertions.assertTrue(valsBefore.size() >= expectedSampleCount, "Expected at least " + expectedSampleCount + " got " + valsBefore.size());
 
 		GetUrlContent.getURLContentAsJSONObject(
-			MGMT_URL + "/reassignAppliance?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8) + "&appliance=appliance1", false);
+			MGMT_URL + "/reassignAppliance?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8) + "&appliance=appliance1", true);
 
 		logger.info("Reassigned " + pvName + " to appliance1");
 		Thread.sleep(60*1000 + 10*1000);
