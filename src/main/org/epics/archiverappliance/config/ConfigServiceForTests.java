@@ -47,6 +47,8 @@ public class ConfigServiceForTests extends DefaultConfigService {
     public static final String RETRIEVAL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + RETRIEVAL_BPL;
     public static final String RETRIEVAL_DATA = "/retrieval/data/getData.raw";
     public static final String RAW_RETRIEVAL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + RETRIEVAL_DATA;
+    public static final String GETDATAATTIME_DATA = "/retrieval/data/getDataAtTime";
+    public static final String GETDATAATTIME_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + GETDATAATTIME_DATA;
     public static final String ETL_BPL = "/etl/bpl";
     public static final String ETL_URL = HTTP_LOCALHOST + DEFAULT_MGMT_PORT + ETL_BPL;
     protected static final String DEFAULT_PB_SHORT_TERM_TEST_DATA_FOLDER = getDefaultShortTermFolder();

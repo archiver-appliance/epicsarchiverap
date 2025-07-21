@@ -164,9 +164,13 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
             this.endFilePos = Files.size(path);
         } else {
             this.startFilePos = this.fileInfo.positionOfFirstSample;
-            this.endFilePos = this.seekToEndTime(path, dbrtype, startAtTime);
-            if (this.endFilePos <= 0) {
-                this.endFilePos = Files.size(path);
+            if(this.fileInfo.getFirstEvent().getEventTimeStamp().isAfter(startAtTime)) {
+                this.endFilePos = this.fileInfo.positionOfFirstSample;
+            } else {
+                this.endFilePos = this.seekToEndTime(path, dbrtype, startAtTime);
+                if (this.endFilePos <= 0) {
+                    this.endFilePos = Files.size(path);
+                }
             }
         }
     }
