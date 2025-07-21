@@ -60,8 +60,7 @@ public class FlakyPVTest {
     @Test
     public void testDisconnect() throws Exception {
 
-        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
 
@@ -73,8 +72,7 @@ public class FlakyPVTest {
         PVATimeStamp timeStamp = new PVATimeStamp(instant);
         String struct_name = "epics:nt/NTScalar:1.0";
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-        PVAStructure data = new PVAStructure("demo", struct_name, value,
-                timeStamp, alarm);
+        PVAStructure data = new PVAStructure("demo", struct_name, value, timeStamp, alarm);
 
         ServerPV serverPV = pvaServer.createPV(pvName, data);
 
@@ -119,8 +117,8 @@ public class FlakyPVTest {
         }
         Thread.sleep(5000);
 
-        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
         Assertions.assertEquals(expectedData, actualValues);
     }
@@ -132,8 +130,7 @@ public class FlakyPVTest {
     @Test
     public void testDestroyServer() throws Exception {
 
-        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
 
@@ -145,8 +142,7 @@ public class FlakyPVTest {
         PVATimeStamp timeStamp = new PVATimeStamp(instant);
         String struct_name = "epics:nt/NTScalar:1.0";
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-        PVAStructure data = new PVAStructure("demo", struct_name, value,
-                timeStamp, alarm);
+        PVAStructure data = new PVAStructure("demo", struct_name, value, timeStamp, alarm);
 
         ServerPV serverPV = pvaServer.createPV(pvName, data);
 
@@ -189,8 +185,8 @@ public class FlakyPVTest {
         }
         Thread.sleep(5000);
 
-        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
         Assertions.assertEquals(expectedData, actualValues);
     }
@@ -202,8 +198,7 @@ public class FlakyPVTest {
     @Test
     public void testDestroyServerPV() throws Exception {
 
-        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
 
@@ -215,8 +210,7 @@ public class FlakyPVTest {
         PVATimeStamp timeStamp = new PVATimeStamp(instant);
         String struct_name = "epics:nt/NTScalar:1.0";
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-        PVAStructure data = new PVAStructure("demo", struct_name, value,
-                timeStamp, alarm);
+        PVAStructure data = new PVAStructure("demo", struct_name, value, timeStamp, alarm);
 
         ServerPV serverPV = pvaServer.createPV(pvName, data);
 
@@ -259,8 +253,8 @@ public class FlakyPVTest {
         }
         Thread.sleep(5000);
 
-        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
         Assertions.assertEquals(expectedData, actualValues);
     }
@@ -273,8 +267,7 @@ public class FlakyPVTest {
     @Test
     public void testPVStartAfterArchive() throws Exception {
 
-        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":"
-                + UUID.randomUUID();
+        String pvName = "PV:" + FlakyPVTest.class.getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for pv " + pvName);
 
@@ -285,9 +278,7 @@ public class FlakyPVTest {
         PVATimeStamp timeStamp = new PVATimeStamp(instant);
         String struct_name = "epics:nt/NTScalar:1.0";
         var alarm = new PVAStructure("alarm", "alarm_t", new PVAInt("status", 0), new PVAInt("severity", 0));
-        PVAStructure data = new PVAStructure("demo", struct_name, value,
-                timeStamp, alarm);
-
+        PVAStructure data = new PVAStructure("demo", struct_name, value, timeStamp, alarm);
 
         var type = ArchDBRTypes.DBR_SCALAR_STRING;
         MemBufWriter writer = new MemBufWriter(pvName, type);
@@ -295,7 +286,11 @@ public class FlakyPVTest {
         Thread.sleep(1000);
 
         try {
-            var meta = configService.getEngineContext().getChannelList().get(pvName).getCurrentCopyOfMetaFields();
+            var meta = configService
+                    .getEngineContext()
+                    .getChannelList()
+                    .get(pvName)
+                    .getCurrentCopyOfMetaFields();
         } catch (Exception e) {
             e.printStackTrace();
             Assertions.fail(e.getMessage());
@@ -314,7 +309,6 @@ public class FlakyPVTest {
             Assertions.fail(e.getMessage());
         }
         Thread.sleep(samplingPeriodMilliSeconds);
-
 
         // Disconnect the pv
         serverPV.close();
@@ -339,11 +333,9 @@ public class FlakyPVTest {
         }
         Thread.sleep(5000);
 
-
-        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet()
-                .stream().collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
+        Map<Instant, String> actualValues = getReceivedValues(writer, configService).entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, (e) -> e.getValue().toString()));
 
         Assertions.assertEquals(expectedData, actualValues);
     }
-
 }

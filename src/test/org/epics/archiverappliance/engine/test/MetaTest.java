@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2011 The Board of Trustees of the Leland Stanford Junior University
  * as Operator of the SLAC National Accelerator Laboratory.
@@ -52,7 +51,6 @@ public class MetaTest {
         ioc.stopSIOC();
     }
 
-
     /**
      * test of getting meta data for one pv.
      */
@@ -63,22 +61,18 @@ public class MetaTest {
         try {
 
             String[] metaFied = {"MDEL", "ADEL", "RTYP"};
-            ArchiveEngine.getArchiveInfo(pvPrefix + "test_0", testConfigService, metaFied, false,
-		            metaInfo -> {
-		                System.out.println(metaInfo.toString());
-		                String MDELStr = metaInfo.getOtherMetaInfo().get(
-		                        "MDEL");
-		                String ADELStr = metaInfo.getOtherMetaInfo().get(
-		                        "ADEL");
-		                String RTYPStr = metaInfo.getOtherMetaInfo().get(
-		                        "RTYP");
-                        Assertions.assertTrue(MDELStr != null, "MDEL of meta data should not be null");
-                        Assertions.assertTrue(ADELStr != null, "ADEL of meta data should not be null");
-                        Assertions.assertTrue(RTYPStr != null, "RTYP of meta data should not be null");
-                        latch.countDown();
-		            });
+            ArchiveEngine.getArchiveInfo(pvPrefix + "test_0", testConfigService, metaFied, false, metaInfo -> {
+                System.out.println(metaInfo.toString());
+                String MDELStr = metaInfo.getOtherMetaInfo().get("MDEL");
+                String ADELStr = metaInfo.getOtherMetaInfo().get("ADEL");
+                String RTYPStr = metaInfo.getOtherMetaInfo().get("RTYP");
+                Assertions.assertTrue(MDELStr != null, "MDEL of meta data should not be null");
+                Assertions.assertTrue(ADELStr != null, "ADEL of meta data should not be null");
+                Assertions.assertTrue(RTYPStr != null, "RTYP of meta data should not be null");
+                latch.countDown();
+            });
 
-			Assertions.assertTrue(latch.await(70, TimeUnit.SECONDS));
+            Assertions.assertTrue(latch.await(70, TimeUnit.SECONDS));
 
         } catch (Exception e) {
             //
@@ -90,12 +84,24 @@ public class MetaTest {
     @ParameterizedTest
     public void testAliasNames(boolean usePVAccess) {
         HashMap<String, AliasNames> aliasNames = new HashMap<String, AliasNames>();
-        aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sine", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine"));
-        aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sine.DESC", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.DESC"));
-        aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sine.HIHI", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.HIHI"));
-        aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sinealias", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine"));
-        aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sinealias.DESC", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.DESC"));
-        aliasNames.put(pvPrefix + "UnitTestNoNamingConvention:sinealias.HIHI", new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.HIHI"));
+        aliasNames.put(
+                pvPrefix + "UnitTestNoNamingConvention:sine",
+                new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine"));
+        aliasNames.put(
+                pvPrefix + "UnitTestNoNamingConvention:sine.DESC",
+                new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.DESC"));
+        aliasNames.put(
+                pvPrefix + "UnitTestNoNamingConvention:sine.HIHI",
+                new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.HIHI"));
+        aliasNames.put(
+                pvPrefix + "UnitTestNoNamingConvention:sinealias",
+                new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine"));
+        aliasNames.put(
+                pvPrefix + "UnitTestNoNamingConvention:sinealias.DESC",
+                new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.DESC"));
+        aliasNames.put(
+                pvPrefix + "UnitTestNoNamingConvention:sinealias.HIHI",
+                new AliasNames(pvPrefix + "UnitTestNoNamingConvention:sine.HIHI"));
 
         CountDownLatch latch = new CountDownLatch(6);
         testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sine", aliasNames, usePVAccess);
@@ -106,28 +112,43 @@ public class MetaTest {
         testAliasNamesForPV(latch, pvPrefix + "UnitTestNoNamingConvention:sinealias.HIHI", aliasNames, usePVAccess);
 
         try {
-            Assertions.assertTrue(latch.await(90, TimeUnit.SECONDS), "MetaGet did not complete for all PV's " + latch.getCount());
-        } catch(InterruptedException ex) {
+            Assertions.assertTrue(
+                    latch.await(90, TimeUnit.SECONDS), "MetaGet did not complete for all PV's " + latch.getCount());
+        } catch (InterruptedException ex) {
             logger.error(ex);
         }
 
-        for(String pvName : aliasNames.keySet()) {
+        for (String pvName : aliasNames.keySet()) {
             AliasNames aliasName = aliasNames.get(pvName);
-            Assertions.assertEquals(aliasName.expectedName, aliasName.metaGetAliasName, "AliasName for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetAliasName);
-            Assertions.assertEquals(aliasName.expectedName, aliasName.metaGetOtherInfoName, "NAME info hashmap for " + pvName + " is not " + aliasName.expectedName + ". Instead it is " + aliasName.metaGetOtherInfoName);
+            Assertions.assertEquals(
+                    aliasName.expectedName,
+                    aliasName.metaGetAliasName,
+                    "AliasName for " + pvName + " is not " + aliasName.expectedName + ". Instead it is "
+                            + aliasName.metaGetAliasName);
+            Assertions.assertEquals(
+                    aliasName.expectedName,
+                    aliasName.metaGetOtherInfoName,
+                    "NAME info hashmap for " + pvName + " is not " + aliasName.expectedName + ". Instead it is "
+                            + aliasName.metaGetOtherInfoName);
         }
     }
 
     /**
      * Test the NAME and NAME$ for various PV's and fields of PV's
      */
-    private void testAliasNamesForPV(final CountDownLatch latch, final String pvName, HashMap<String, AliasNames> aliasNames, boolean usePVAccess) {
+    private void testAliasNamesForPV(
+            final CountDownLatch latch,
+            final String pvName,
+            HashMap<String, AliasNames> aliasNames,
+            boolean usePVAccess) {
         String[] metaFied = {"MDEL", "ADEL", "RTYP"};
         try {
             ArchiveEngine.getArchiveInfo(pvName, testConfigService, metaFied, usePVAccess, metaInfo -> {
-                logger.info("Metadata completed for " + pvName + "aliasName " + metaInfo.getAliasName() + "Name: " + metaInfo.getOtherMetaInfo().get("NAME"));
+                logger.info("Metadata completed for " + pvName + "aliasName " + metaInfo.getAliasName() + "Name: "
+                        + metaInfo.getOtherMetaInfo().get("NAME"));
                 aliasNames.get(pvName).metaGetAliasName = metaInfo.getAliasName();
-                aliasNames.get(pvName).metaGetOtherInfoName = metaInfo.getOtherMetaInfo().get("NAME");
+                aliasNames.get(pvName).metaGetOtherInfoName =
+                        metaInfo.getOtherMetaInfo().get("NAME");
                 latch.countDown();
             });
         } catch (Exception ex) {
@@ -145,5 +166,4 @@ public class MetaTest {
             this.expectedName = expectedName;
         }
     }
-
 }

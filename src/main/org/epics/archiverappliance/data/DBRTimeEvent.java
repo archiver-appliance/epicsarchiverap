@@ -22,5 +22,4 @@ public interface DBRTimeEvent extends Event, SamplingInfo, AlarmInfo, FieldValue
     public default YearSecondTimestamp getYearSecondTimestamp() {
         return TimeUtils.convertToYearSecondTimestamp(this.getEventTimeStamp());
     }
-
 }

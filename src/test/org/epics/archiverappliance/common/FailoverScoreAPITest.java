@@ -49,7 +49,8 @@ import java.util.Map;
  *
  */
 @Tag("integration")
-@Disabled("This is a complex use case and we don't support this in the main code yet; keeping this test around just in case")
+@Disabled(
+        "This is a complex use case and we don't support this in the main code yet; keeping this test around just in case")
 public class FailoverScoreAPITest {
     private static final Logger logger = LogManager.getLogger(FailoverScoreAPITest.class.getName());
     String pvName = "FailoverScoreAPITest";
@@ -82,10 +83,10 @@ public class FailoverScoreAPITest {
             throws Exception {
         int genEventCount = 0;
         String folderName = "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + applianceName + "/mts";
-        logger.info("Generating data into folder " + Paths.get(folderName).toAbsolutePath().toString());
+        logger.info("Generating data into folder "
+                + Paths.get(folderName).toAbsolutePath().toString());
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + folderName
-                        + "&partitionGranularity=PARTITION_DAY",
+                "pb://localhost?name=LTS&rootFolder=" + folderName + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream strm = new ArrayListEventStream(
@@ -95,9 +96,9 @@ public class FailoverScoreAPITest {
                             pvName,
                             TimeUtils.convertToYearSecondTimestamp(theMonth).getYear()));
             for (Instant s = TimeUtils.getPreviousPartitionLastSecond(theMonth, PartitionGranularity.PARTITION_DAY)
-                    .plusSeconds(1);
-                 s.isBefore(TimeUtils.now());
-                 s = s.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())) {
+                            .plusSeconds(1);
+                    s.isBefore(TimeUtils.now());
+                    s = s.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())) {
 
                 POJOEvent pojoEvent = new POJOEvent(
                         ArchDBRTypes.DBR_SCALAR_DOUBLE,
@@ -114,11 +115,11 @@ public class FailoverScoreAPITest {
                 genEventCount++;
             }
             plugin.appendData(context, pvName, strm);
-
         }
         logger.info("Done generating data for appliance " + applianceName);
 
-        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream("src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
+        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(
+                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
         PVTypeInfo destPVTypeInfo = new PVTypeInfo();
         JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
@@ -140,7 +141,7 @@ public class FailoverScoreAPITest {
                 new RawDataRetrievalAsEventStream(applURL + "/retrieval/data/getData.raw");
         long rtvlEventCount = 0;
         try (EventStream stream = rawDataRetrieval.getDataForPVS(
-                new String[]{pvName},
+                new String[] {pvName},
                 TimeUtils.minusDays(TimeUtils.now(), 90),
                 TimeUtils.plusDays(TimeUtils.now(), 31),
                 null)) {
@@ -149,7 +150,13 @@ public class FailoverScoreAPITest {
                 for (Event e : stream) {
                     long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
                     if (lastEvEpoch != 0) {
-                        Assertions.assertTrue((evEpoch - lastEvEpoch) == PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), "We got events more than " + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  " + TimeUtils.convertToHumanReadableString(evEpoch));
+                        Assertions.assertTrue(
+                                (evEpoch - lastEvEpoch)
+                                        == PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                                "We got events more than "
+                                        + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk()
+                                        + " seconds apart " + TimeUtils.convertToHumanReadableString(lastEvEpoch)
+                                        + " and  " + TimeUtils.convertToHumanReadableString(evEpoch));
                     }
                     lastEvEpoch = evEpoch;
                     rtvlEventCount++;
@@ -194,7 +201,9 @@ public class FailoverScoreAPITest {
         array.add(pvName);
         Map<String, Map<String, Object>> ret =
                 (Map<String, Map<String, Object>>) GetUrlContent.postDataAndGetContentAsJSONObject(scoreURL, array);
-        Assertions.assertTrue(ret.size() > 0, "We expected some data back from getDataAtTime at " + TimeUtils.convertToISO8601String(epochSecs));
+        Assertions.assertTrue(
+                ret.size() > 0,
+                "We expected some data back from getDataAtTime at " + TimeUtils.convertToISO8601String(epochSecs));
         for (String retpvName : ret.keySet()) {
             Map<String, Object> val = ret.get(retpvName);
             if (retpvName.equals(pvName)) {
@@ -215,7 +224,7 @@ public class FailoverScoreAPITest {
     @Test
     public void testRetrieval() throws Exception {
         // Register the PV with both appliances and generate data.
-        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2*31);
+        Instant lastMonth = TimeUtils.minusDays(TimeUtils.now(), 2 * 31);
         generateMTSData("http://localhost:17665", "dest_appliance", lastMonth, true);
         generateMTSData("http://localhost:17669", "other_appliance", lastMonth, false);
 
@@ -223,12 +232,12 @@ public class FailoverScoreAPITest {
 
         for (int i = 0; i < 20; i++) {
             long startOfDay = (TimeUtils.convertToEpochSeconds(TimeUtils.minusDays(TimeUtils.now(), -1 * (i - 25)))
-                    / PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())
+                            / PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk())
                     * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
             for (int h = 0; h < 24; h++) {
                 logger.info("Looking for value of PV at  "
                         + TimeUtils.convertToHumanReadableString(startOfDay
-                        + (long) h * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk()));
+                                + (long) h * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk()));
                 testDataAtTime(
                         startOfDay + (long) h * PartitionGranularity.PARTITION_HOUR.getApproxSecondsPerChunk(),
                         (h >= 10 && h < 20));

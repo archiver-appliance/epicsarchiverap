@@ -8,9 +8,9 @@ public class DBRAlarm {
     public int status;
 
     public DBRAlarm(int severity, int status) {
-            this.severity = severity;
-            this.status = status;
-        }
+        this.severity = severity;
+        this.status = status;
+    }
 
     public static DBRAlarm convertPVAlarm(PVAStructure alarmPVStructure) {
         return new DBRAlarm(

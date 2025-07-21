@@ -63,9 +63,9 @@ public class FQDNApplianceXMLTest {
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
 
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        JSONArray statuses = GetUrlContent.getURLContentWithQueryParametersAsJSONArray(mgmtURL + "getPVStatus", Map.of("pv", "*"));
+        JSONArray statuses =
+                GetUrlContent.getURLContentWithQueryParametersAsJSONArray(mgmtURL + "getPVStatus", Map.of("pv", "*"));
         Assertions.assertTrue(statuses != null);
         Assertions.assertTrue(statuses.size() == 0);
-
     }
 }

@@ -7,11 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import org.json.simple.JSONValue;
+
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.List;
-
-import org.json.simple.JSONValue;
 
 /**
  * An implementation of SampleValue for vector strings.
@@ -19,84 +19,92 @@ import org.json.simple.JSONValue;
  *
  */
 public class VectorStringSampleValue implements SampleValue {
-	private List<String> values;
+    private List<String> values;
 
-	public VectorStringSampleValue(List<String> vals) {
-		this.values = vals;
-	}
-	
-	/* (non-Javadoc)
-	 * The toString for vectors generates a a JSON vector...
-	 * @see java.lang.Object#toString()
-	 */
-	public String toString() {
-		boolean first = true;
-		StringWriter buf = new StringWriter();
-		buf.append('[');
-		for(String value : values) {
-			if(first) { first = false; } else { buf.append(","); }
-			buf.append(value);
-		}
-		buf.append(']');
-		return buf.toString();		
-	}
+    public VectorStringSampleValue(List<String> vals) {
+        this.values = vals;
+    }
 
-	@Override
-	public Number getValue() {
-		throw new UnsupportedOperationException();
-	}
+    /* (non-Javadoc)
+     * The toString for vectors generates a a JSON vector...
+     * @see java.lang.Object#toString()
+     */
+    public String toString() {
+        boolean first = true;
+        StringWriter buf = new StringWriter();
+        buf.append('[');
+        for (String value : values) {
+            if (first) {
+                first = false;
+            } else {
+                buf.append(",");
+            }
+            buf.append(value);
+        }
+        buf.append(']');
+        return buf.toString();
+    }
 
-	@Override
-	public int getElementCount() {
-		return values.size();
-	}
+    @Override
+    public Number getValue() {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public Number getValue(int index) {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
-	public String getStringValue(int index) {
-		return values.get(index);
-	}
+    @Override
+    public int getElementCount() {
+        return values.size();
+    }
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public List getValues() {
-		return values;
-	}
+    @Override
+    public Number getValue(int index) {
+        throw new UnsupportedOperationException();
+    }
 
-	@Override
-	public int hashCode() {
-		return values.hashCode();
-	}
+    @Override
+    public String getStringValue(int index) {
+        return values.get(index);
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		VectorStringSampleValue other = (VectorStringSampleValue) obj; 
-		return values.equals(other.getValues());
-	}
+    @SuppressWarnings("rawtypes")
+    @Override
+    public List getValues() {
+        return values;
+    }
 
-	@Override
-	public String toJSONString() {
-		boolean first = true;
-		StringWriter buf = new StringWriter();
-		buf.append('[');
-		for(String value : values) {
-			if(!value.isEmpty()) { 
-				if(first) { first = false; } else { buf.append(","); }
-				buf.append("\"");
-				buf.append(JSONValue.escape(value));
-				buf.append("\"");
-			}
-		}
-		buf.append(']');
-		return buf.toString();
-	}
+    @Override
+    public int hashCode() {
+        return values.hashCode();
+    }
 
-	@Override
-	public ByteBuffer getValueAsBytes() {
-		throw new UnsupportedOperationException();
-	}
+    @Override
+    public boolean equals(Object obj) {
+        VectorStringSampleValue other = (VectorStringSampleValue) obj;
+        return values.equals(other.getValues());
+    }
+
+    @Override
+    public String toJSONString() {
+        boolean first = true;
+        StringWriter buf = new StringWriter();
+        buf.append('[');
+        for (String value : values) {
+            if (!value.isEmpty()) {
+                if (first) {
+                    first = false;
+                } else {
+                    buf.append(",");
+                }
+                buf.append("\"");
+                buf.append(JSONValue.escape(value));
+                buf.append("\"");
+            }
+        }
+        buf.append(']');
+        return buf.toString();
+    }
+
+    @Override
+    public ByteBuffer getValueAsBytes() {
+        throw new UnsupportedOperationException();
+    }
 }

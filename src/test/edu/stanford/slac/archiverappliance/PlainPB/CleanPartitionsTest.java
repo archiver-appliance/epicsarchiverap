@@ -78,8 +78,8 @@ public class CleanPartitionsTest {
                 Assertions.assertTrue(
                         fileInfo.getFirstEvent().getEventTimeStamp().isAfter(chunkTimes.pathDataStartTime.toInstant())
                                 || fileInfo.getFirstEvent()
-                                .getEventTimeStamp()
-                                .equals(chunkTimes.pathDataStartTime.toInstant()),
+                                        .getEventTimeStamp()
+                                        .equals(chunkTimes.pathDataStartTime.toInstant()),
                         "Start time as determined by PBFileinfo "
                                 + fileInfo.getFirstEvent().getEventTimeStamp()
                                 + " is earlier than earliest time as determined by partition name"
@@ -87,8 +87,8 @@ public class CleanPartitionsTest {
                 Assertions.assertTrue(
                         fileInfo.getLastEvent().getEventTimeStamp().isBefore(chunkTimes.pathDataEndTime.toInstant())
                                 || fileInfo.getLastEvent()
-                                .getEventTimeStamp()
-                                .equals(chunkTimes.pathDataEndTime.toInstant()),
+                                        .getEventTimeStamp()
+                                        .equals(chunkTimes.pathDataEndTime.toInstant()),
                         "End time as determined by PBFileinfo "
                                 + fileInfo.getLastEvent().getEventTimeStamp()
                                 + " is later than latest time as determined by partition name "

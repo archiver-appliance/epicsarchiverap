@@ -124,7 +124,8 @@ public class PostProcessorWithPBErrorTest {
     public void testRetrievalWithPostprocessingAndCorruption() throws Exception {
         String pvNameToArchive = pvName;
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+                mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         int totalCount = checkRetrieval(pvName, dataGeneratedForYears * 365 * 24 * 60, true);
@@ -152,7 +153,11 @@ public class PostProcessorWithPBErrorTest {
         final HashMap<String, String> metaFields = new HashMap<String, String>();
         // Make sure we get the EGU as part of a regular VAL call.
         try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(
-                Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
+                Arrays.asList(retrievalPVName),
+                TimeUtils.toSQLTimeStamp(start),
+                TimeUtils.toSQLTimeStamp(now),
+                false,
+                null)) {
             PayloadInfo info = null;
             Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
             info = strm.getPayLoadInfo();

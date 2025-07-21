@@ -26,35 +26,41 @@ import java.io.IOException;
  *
  */
 public class GraphicLimitsMonitor {
-	private Context context = null;
-	private JCALibrary jca =null;
+    private Context context = null;
+    private JCALibrary jca = null;
 
-	private void initialize() throws CAException, SAXException, IOException, ConfigurationException, ConfigException {
-		ConfigServiceForTests configService = new ConfigServiceForTests(-1);
-		jca = JCALibrary.getInstance();
-		ByteArrayInputStream bis = JCAConfigGen.generateJCAConfig(configService);
-		DefaultConfigurationBuilder configBuilder = new DefaultConfigurationBuilder();
-		Configuration configuration;
-		configuration = configBuilder.build(bis);
-		context = jca.createContext(configuration);
-	}
+    private void initialize() throws CAException, SAXException, IOException, ConfigurationException, ConfigException {
+        ConfigServiceForTests configService = new ConfigServiceForTests(-1);
+        jca = JCALibrary.getInstance();
+        ByteArrayInputStream bis = JCAConfigGen.generateJCAConfig(configService);
+        DefaultConfigurationBuilder configBuilder = new DefaultConfigurationBuilder();
+        Configuration configuration;
+        configuration = configBuilder.build(bis);
+        context = jca.createContext(configuration);
+    }
 
-	public void establishGraphicLimitsMonitorAndPrint(String pvName) throws CAException, IllegalStateException, TimeoutException, SAXException, IOException, ConfigurationException, ConfigException {
-		initialize();
-		Channel channel = context.createChannel(pvName);
-		context.pendIO(3.0);
-		channel.addMonitor(DBRType.GR_DOUBLE, 1, 2 /* DBE_Archive */, new MonitorListener() {
-			
-			@Override
-			public void monitorChanged(MonitorEvent event) {
-				DBR_GR_Double dbr = (DBR_GR_Double) event.getDBR();
-				dbr.printInfo(System.out);
-			}
-		});
-		context.pendIO(3.0);
-	}
+    public void establishGraphicLimitsMonitorAndPrint(String pvName)
+            throws CAException, IllegalStateException, TimeoutException, SAXException, IOException,
+                    ConfigurationException, ConfigException {
+        initialize();
+        Channel channel = context.createChannel(pvName);
+        context.pendIO(3.0);
+        channel.addMonitor(
+                DBRType.GR_DOUBLE,
+                1,
+                2 /* DBE_Archive */,
+                new MonitorListener() {
 
-	 public static void main(String[] args) throws Exception {
-		 new GraphicLimitsMonitor().establishGraphicLimitsMonitorAndPrint(args[0]);
-	 }
+                    @Override
+                    public void monitorChanged(MonitorEvent event) {
+                        DBR_GR_Double dbr = (DBR_GR_Double) event.getDBR();
+                        dbr.printInfo(System.out);
+                    }
+                });
+        context.pendIO(3.0);
+    }
+
+    public static void main(String[] args) throws Exception {
+        new GraphicLimitsMonitor().establishGraphicLimitsMonitorAndPrint(args[0]);
+    }
 }

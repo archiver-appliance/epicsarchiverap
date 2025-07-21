@@ -16,15 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.IntStream;
 
-
 public class AppliancesXMLGenerator {
     private static final Logger logger = LogManager.getLogger(AppliancesXMLGenerator.class);
     static final int CLUSTER_INETPORT = 16670;
 
-    record AppliancePorts(String hostname, String identity,
-                          int clusterInetport,
-                          int mgmtPort, int enginePort, int etlPort,
-                          int retrievalPort, int serverStartUpPort) {
+    record AppliancePorts(
+            String hostname,
+            String identity,
+            int clusterInetport,
+            int mgmtPort,
+            int enginePort,
+            int etlPort,
+            int retrievalPort,
+            int serverStartUpPort) {
         String getHostname() {
             return this.hostname();
         }
@@ -33,16 +37,17 @@ public class AppliancesXMLGenerator {
     record ApplianceXMLConfig(String testName, int clusterSize) {
 
         List<AppliancePorts> appliancePortsList() {
-            return IntStream.range(0, this.clusterSize).mapToObj(i -> new AppliancePorts(
-                    "localhost",
-                    "appliance" + i,
-                    CLUSTER_INETPORT + i,
-                    ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
-                    ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
-                    ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
-                    ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
-                    TomcatSetup.DEFAULT_SERVER_STARTUP_PORT + i
-            )).toList();
+            return IntStream.range(0, this.clusterSize)
+                    .mapToObj(i -> new AppliancePorts(
+                            "localhost",
+                            "appliance" + i,
+                            CLUSTER_INETPORT + i,
+                            ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
+                            ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
+                            ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
+                            ConfigServiceForTests.RETRIEVAL_TEST_PORT + i,
+                            TomcatSetup.DEFAULT_SERVER_STARTUP_PORT + i))
+                    .toList();
         }
 
         public Path writeAppliancesXML() throws IOException {
@@ -60,5 +65,4 @@ public class AppliancesXMLGenerator {
         RenderResult renderResult = jinjava.renderForResult(template, Map.of("cluster", appliancePorts));
         return renderResult.getOutput();
     }
-
 }

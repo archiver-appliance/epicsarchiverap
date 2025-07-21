@@ -324,7 +324,7 @@ deadBand
 : The intent is to mimic ADEL; this is principally targeted at decimation.
 
 errorbar
-:               Similar to the mean operator; in addition, the stdz is passed in as an extra column
+: Similar to the mean operator; in addition, the stdz is passed in as an extra column
 
 ## Save/Restore API
 
@@ -426,7 +426,7 @@ are
   4. If the record processing timestamp from the IOC is identical to
      the timestamp of the previous sample.
   5. If the record processing timestamp from the IOC of samples
-     from the second sample onwards are before the 
+     from the second sample onwards are before the
      (Appliance Current Time - SERVER_IOC_DRIFT_SECONDS) in the past.
 - **PVs by dropped events from buffer overflows** - The
   EPICS archiver appliance discards events when the sampling buffers

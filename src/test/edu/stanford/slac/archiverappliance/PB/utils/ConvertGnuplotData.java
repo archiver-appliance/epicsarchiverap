@@ -26,50 +26,53 @@ import java.time.Instant;
 /**
  * @author mshankar
  * Dumps data for a PV into something that can be used to plot into gnuplot.
- * 
+ *
  */
 public class ConvertGnuplotData {
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) throws Exception {
-		PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+        PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
         ConfigService configService = new ConfigServiceForTests(-1);
-		storagePlugin.initialize("http://archiver:15646/retrieval/data/getData.raw", configService);
+        storagePlugin.initialize("http://archiver:15646/retrieval/data/getData.raw", configService);
 
-		// Ask for a days worth of data
+        // Ask for a days worth of data
         Instant start = TimeUtils.convertFromISO8601String("2011-02-01T08:00:00.000Z");
         Instant end = TimeUtils.convertFromISO8601String("2011-02-02T08:00:00.000Z");
-		
-		String pvName = "Sine1";
-		if(args.length > 0) {
-			pvName = args[0];
-		}
-		
-		String dataFileName = "/tmp/archappdat";
-		if(args.length > 1) {
-			dataFileName = args[1];
-		}
-		
-		File f = new File(dataFileName);
-		FileOutputStream fos = new FileOutputStream(f);
-		PrintWriter out = new PrintWriter(new BufferedOutputStream(fos));
-		long s = System.currentTimeMillis();
-		try(BasicContext context = new BasicContext(); EventStream st = new CurrentThreadWorkerEventStream(pvName, storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
-			int totalEvents = 0;
-			try {
-				for(Event e : st) {
-					out.println(e.getEpochSeconds() + "\t" +  e.getSampleValue().toString());
-					totalEvents++;
-				}
-			} finally {
-				st.close();					
-			}
-			long e = System.currentTimeMillis();
-			System.out.println("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
-		}
-		out.flush();
-		out.close();
-	}
+
+        String pvName = "Sine1";
+        if (args.length > 0) {
+            pvName = args[0];
+        }
+
+        String dataFileName = "/tmp/archappdat";
+        if (args.length > 1) {
+            dataFileName = args[1];
+        }
+
+        File f = new File(dataFileName);
+        FileOutputStream fos = new FileOutputStream(f);
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(fos));
+        long s = System.currentTimeMillis();
+        try (BasicContext context = new BasicContext();
+                EventStream st = new CurrentThreadWorkerEventStream(
+                        pvName,
+                        storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor()))) {
+            int totalEvents = 0;
+            try {
+                for (Event e : st) {
+                    out.println(e.getEpochSeconds() + "\t" + e.getSampleValue().toString());
+                    totalEvents++;
+                }
+            } finally {
+                st.close();
+            }
+            long e = System.currentTimeMillis();
+            System.out.println("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
+        }
+        out.flush();
+        out.close();
+    }
 }

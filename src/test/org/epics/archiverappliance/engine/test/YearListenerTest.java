@@ -27,42 +27,44 @@ import org.junit.jupiter.api.Test;
  */
 @Tag("localEpics")
 public class YearListenerTest {
-	private static final Logger logger = LogManager.getLogger(YearListenerTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(YearListenerTest.class.getName());
     private final String pvPrefix = YearListenerTest.class.getSimpleName();
     private SIOCSetup ioc = null;
-	private DefaultConfigService testConfigService;
-	private final FakeWriter writer = new FakeWriter();
+    private DefaultConfigService testConfigService;
+    private final FakeWriter writer = new FakeWriter();
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		ioc = new SIOCSetup(pvPrefix);
-		ioc.startSIOCWithDefaultDB();
-		testConfigService = new ConfigServiceForTests(-1);
-		Thread.sleep(3000);
-	}
+    @BeforeEach
+    public void setUp() throws Exception {
+        ioc = new SIOCSetup(pvPrefix);
+        ioc.startSIOCWithDefaultDB();
+        testConfigService = new ConfigServiceForTests(-1);
+        Thread.sleep(3000);
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		testConfigService.shutdownNow();
-		ioc.stopSIOC();
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        testConfigService.shutdownNow();
+        ioc.stopSIOC();
+    }
 
     @Test
     public void singlePvYearChangeListener() {
-        //change your time of your computer to 2011-12-31 23:58:00
+        // change your time of your computer to 2011-12-31 23:58:00
         try {
 
-            ArchiveEngine.archivePV(pvPrefix + "test_0", 2,
+            ArchiveEngine.archivePV(
+                    pvPrefix + "test_0",
+                    2,
                     SamplingMethod.SCAN,
                     writer,
                     testConfigService,
                     ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                    null, false, false);
+                    null,
+                    false,
+                    false);
         } catch (Exception e) {
             //
             logger.error("Exception", e);
         }
     }
-
-
 }

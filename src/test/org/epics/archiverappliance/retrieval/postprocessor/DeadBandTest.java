@@ -136,7 +136,11 @@ public class DeadBandTest {
         final HashMap<String, String> metaFields = new HashMap<String, String>();
         // Make sure we get the EGU as part of a regular VAL call.
         try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(
-                Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
+                Arrays.asList(retrievalPVName),
+                TimeUtils.toSQLTimeStamp(start),
+                TimeUtils.toSQLTimeStamp(end),
+                false,
+                null)) {
             PayloadInfo info = null;
             Assertions.assertTrue(
                     strm != null,
@@ -183,7 +187,11 @@ public class DeadBandTest {
         final HashMap<String, String> metaFields = new HashMap<String, String>();
         // Make sure we get the EGU as part of a regular VAL call.
         try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(
-            Arrays.asList(retrievalPVName), TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(end), false, null)) {
+                Arrays.asList(retrievalPVName),
+                TimeUtils.toSQLTimeStamp(start),
+                TimeUtils.toSQLTimeStamp(end),
+                false,
+                null)) {
             PayloadInfo info = null;
             Assertions.assertTrue(
                     strm != null,
@@ -206,7 +214,7 @@ public class DeadBandTest {
                 Assertions.assertTrue(compareIt.hasNext(), "We seem to have run out of events at " + eventCount);
                 Event compareEvent = compareIt.next();
                 Assertions.assertTrue(
-                    TimeUtils.fromSQLTimeStamp(dbrEvent.getTimestamp()).equals(compareEvent.getEventTimeStamp()),
+                        TimeUtils.fromSQLTimeStamp(dbrEvent.getTimestamp()).equals(compareEvent.getEventTimeStamp()),
                         "At event " + eventCount + ", from the operator we have an event at "
                                 + TimeUtils.convertToISO8601String(TimeUtils.fromSQLTimeStamp(dbrEvent.getTimestamp()))
                                 + " and from the compare stream, we have an event at "

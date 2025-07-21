@@ -64,26 +64,30 @@ public class DeletePVTest {
     public void testSimpleDeletePV() throws Exception {
         String pvNameToArchive = "UnitTestNoNamingConvention:sine";
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+                mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         // Need this delay to make sure the typeinfo is stable in the cluster
         Thread.sleep(90 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
         logger.info("We are now archiving the PV; let's go into the details page; pause and delete");
 
-        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
+        GetUrlContent.getURLContentWithQueryParameters(
+                mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
         Thread.sleep(2 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
 
-        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
+        GetUrlContent.getURLContentWithQueryParameters(
+                mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
         Thread.sleep(2 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
-        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
+        GetUrlContent.getURLContentWithQueryParameters(
+                mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
         Thread.sleep(2 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
 
         GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pvNameToArchive), false);
-		Thread.sleep(2 * 1000);
+        Thread.sleep(2 * 1000);
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 15);
     }
 }

@@ -72,13 +72,13 @@ public class ResumePVAfterRestartTest {
     }
 
     private void assertPVDetails(List<Map<String, String>> pvDetails, String detailName, String expectedValue) {
-        for(Map<String, String> pvDetail: pvDetails) {
-            if(pvDetail.get("name").equals(detailName)) {
+        for (Map<String, String> pvDetail : pvDetails) {
+            if (pvDetail.get("name").equals(detailName)) {
                 Assertions.assertEquals(
-                    pvDetail.get("value"),
-                    expectedValue,
-                    "Expecting " + expectedValue + " for detail " + detailName + " instead we got " + pvDetail.get("value")
-                );
+                        pvDetail.get("value"),
+                        expectedValue,
+                        "Expecting " + expectedValue + " for detail " + detailName + " instead we got "
+                                + pvDetail.get("value"));
                 return;
             }
         }
@@ -89,11 +89,14 @@ public class ResumePVAfterRestartTest {
     public void testResumePVAfterRestart() throws Exception {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
-        GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
+        GetUrlContent.getURLContentWithQueryParameters(
+                mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
         Thread.sleep(2 * 1000);
         logger.debug("Resuming PV");
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> pvDetails = (List<Map<String, String>>) GetUrlContent.getURLContentWithQueryParametersAsJSONArray(mgmtURL + "getPVDetails", Map.of("pv", pvNameToArchive), false);
+        List<Map<String, String>> pvDetails =
+                (List<Map<String, String>>) GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
+                        mgmtURL + "getPVDetails", Map.of("pv", pvNameToArchive), false);
         assertPVDetails(pvDetails, "Is this PV paused:", "No");
         assertPVDetails(pvDetails, "Is this PV currently connected?", "yes");
     }

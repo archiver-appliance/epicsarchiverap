@@ -39,78 +39,96 @@ import java.time.Instant;
  */
 @Tag("slow")
 public class MultiFilePBEventStreamTest {
-	private static final Logger logger = LogManager.getLogger(MultiFilePBEventStreamTest.class);
-	String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MultiFilePBEventStream/";
-	File rootFolder = new File(rootFolderName);
+    private static final Logger logger = LogManager.getLogger(MultiFilePBEventStreamTest.class);
+    String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "MultiFilePBEventStream/";
+    File rootFolder = new File(rootFolderName);
 
-	@BeforeEach
-	public void setUp() throws Exception {
-		if(rootFolder.exists()) {
-			FileUtils.deleteDirectory(rootFolder);
-		}
-		rootFolder.mkdirs();
-	}
+    @BeforeEach
+    public void setUp() throws Exception {
+        if (rootFolder.exists()) {
+            FileUtils.deleteDirectory(rootFolder);
+        }
+        rootFolder.mkdirs();
+    }
 
-	@AfterEach
-	public void tearDown() throws Exception {
-		// FileUtils.deleteDirectory(rootFolder);
-	}
+    @AfterEach
+    public void tearDown() throws Exception {
+        // FileUtils.deleteDirectory(rootFolder);
+    }
 
-	@Test
-	public void testMultiFileEventStream() throws Exception {
-		// We generate a years worth of data into a PlainPBStoragePlugin with different granularity. 
-		// We then retrieve data and make sure that we get what we expect
-		ConfigService configService = new ConfigServiceForTests(-1);
-		
-		for(PartitionGranularity granularity : PartitionGranularity.values()) {
-			logger.debug("Generating sample data for granularity " + granularity);
+    @Test
+    public void testMultiFileEventStream() throws Exception {
+        // We generate a years worth of data into a PlainPBStoragePlugin with different granularity.
+        // We then retrieve data and make sure that we get what we expect
+        ConfigService configService = new ConfigServiceForTests(-1);
 
-			String pvName = "MultiYear" + granularity.toString();
-			String configURL = "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=" + granularity.toString();
-			PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
-			pbplugin.initialize(configURL, configService);
-			short currentYear = TimeUtils.getCurrentYear();
-			ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-			try(BasicContext context = new BasicContext()) {
-				for(int day = 0; day < 365; day++) {
-					ArrayListEventStream testData = new ArrayListEventStream(24*60*60, new RemotableEventStreamDesc(type, pvName, currentYear));
-					int startofdayinseconds = day*24*60*60;
-					for(int secondintoday = 0; secondintoday < 24*60*60; secondintoday++) {
-						testData.add(new SimulationEvent(startofdayinseconds + secondintoday, currentYear, type, new ScalarValue<Double>((double) secondintoday)));
-					}
-					pbplugin.appendData(context, pvName, testData);
-				}
-			}
-			logger.info("Done generating sample data for granularity " + granularity);
+        for (PartitionGranularity granularity : PartitionGranularity.values()) {
+            logger.debug("Generating sample data for granularity " + granularity);
+
+            String pvName = "MultiYear" + granularity.toString();
+            String configURL = "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity="
+                    + granularity.toString();
+            PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+            pbplugin.initialize(configURL, configService);
+            short currentYear = TimeUtils.getCurrentYear();
+            ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+            try (BasicContext context = new BasicContext()) {
+                for (int day = 0; day < 365; day++) {
+                    ArrayListEventStream testData = new ArrayListEventStream(
+                            24 * 60 * 60, new RemotableEventStreamDesc(type, pvName, currentYear));
+                    int startofdayinseconds = day * 24 * 60 * 60;
+                    for (int secondintoday = 0; secondintoday < 24 * 60 * 60; secondintoday++) {
+                        testData.add(new SimulationEvent(
+                                startofdayinseconds + secondintoday, currentYear, type, new ScalarValue<Double>((double)
+                                        secondintoday)));
+                    }
+                    pbplugin.appendData(context, pvName, testData);
+                }
+            }
+            logger.info("Done generating sample data for granularity " + granularity);
             Instant startTime = TimeUtils.convertFromISO8601String(currentYear + "-09-11T08:12:48.000Z");
             Instant endTime = TimeUtils.convertFromISO8601String(currentYear + "-10-04T22:53:31.000Z");
-			long startEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
-			long endEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
-			long expectedEpochSeconds = startEpochSeconds;
-			logger.info("Asking for data between {} and {}", TimeUtils.convertToISO8601String(startTime), TimeUtils.convertToISO8601String(endTime));
-			try(BasicContext context = new BasicContext(); EventStream result = new CurrentThreadWorkerEventStream(pvName, pbplugin.getDataForPV(context, pvName, startTime, endTime))) {
-				long eventCount = 0;
-				for(Event e : result) {
-					long currEpochSeconds = e.getEpochSeconds();
-					// The PlainPBStorage plugin will also yield the last event of the previous partition.
-					// We skip checking that as part of this test
-					if(currEpochSeconds < (startEpochSeconds-1)) continue;
-					Assertions.assertEquals(currEpochSeconds, expectedEpochSeconds, "Expected "
-							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(expectedEpochSeconds, 0))
-							+ " Got "
-							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
-							+ " at eventCount "
-							+ eventCount);
-					Assertions.assertTrue(currEpochSeconds <= endEpochSeconds, "Less than "
-							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(endEpochSeconds, 0))
-							+ " Got "
-							+ TimeUtils.convertToISO8601String(TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
-							+ " at eventCount "
-							+ eventCount);
-					expectedEpochSeconds++;
-					eventCount++;
-				}
-			}
-		}
-	}
+            long startEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
+            long endEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
+            long expectedEpochSeconds = startEpochSeconds;
+            logger.info(
+                    "Asking for data between {} and {}",
+                    TimeUtils.convertToISO8601String(startTime),
+                    TimeUtils.convertToISO8601String(endTime));
+            try (BasicContext context = new BasicContext();
+                    EventStream result = new CurrentThreadWorkerEventStream(
+                            pvName, pbplugin.getDataForPV(context, pvName, startTime, endTime))) {
+                long eventCount = 0;
+                for (Event e : result) {
+                    long currEpochSeconds = e.getEpochSeconds();
+                    // The PlainPBStorage plugin will also yield the last event of the previous partition.
+                    // We skip checking that as part of this test
+                    if (currEpochSeconds < (startEpochSeconds - 1)) continue;
+                    Assertions.assertEquals(
+                            currEpochSeconds,
+                            expectedEpochSeconds,
+                            "Expected "
+                                    + TimeUtils.convertToISO8601String(
+                                            TimeUtils.convertFromEpochSeconds(expectedEpochSeconds, 0))
+                                    + " Got "
+                                    + TimeUtils.convertToISO8601String(
+                                            TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
+                                    + " at eventCount "
+                                    + eventCount);
+                    Assertions.assertTrue(
+                            currEpochSeconds <= endEpochSeconds,
+                            "Less than "
+                                    + TimeUtils.convertToISO8601String(
+                                            TimeUtils.convertFromEpochSeconds(endEpochSeconds, 0))
+                                    + " Got "
+                                    + TimeUtils.convertToISO8601String(
+                                            TimeUtils.convertFromEpochSeconds(currEpochSeconds, 0))
+                                    + " at eventCount "
+                                    + eventCount);
+                    expectedEpochSeconds++;
+                    eventCount++;
+                }
+            }
+        }
+    }
 }

@@ -8,11 +8,12 @@
 package org.epics.archiverappliance.data;
 
 /**
- * Some additional info pertaining to the process of archiving. 
- * For now, we only include the count. 
+ * Some additional info pertaining to the process of archiving.
+ * For now, we only include the count.
  * @author mshankar
  */
 public interface SamplingInfo {
-	int getRepeatCount();
-	void setRepeatCount(int repeatCount);
+    int getRepeatCount();
+
+    void setRepeatCount(int repeatCount);
 }
