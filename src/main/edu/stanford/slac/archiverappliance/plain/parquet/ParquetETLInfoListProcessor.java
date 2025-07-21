@@ -35,10 +35,10 @@ public class ParquetETLInfoListProcessor extends ETLInfoListProcessor {
         List<List<ETLInfo>> pathsPerDestGranularity = new ArrayList<>();
         pathsPerDestGranularity.add(new ArrayList<>());
         Instant nextPartitionFirstSecond = TimeUtils.getNextPartitionFirstSecond(
-                etlInfoList.get(0).getFirstEvent().getEventTimeStamp(), destGranularity);
+                etlInfoList.getFirst().getFirstEvent().getEventTimeStamp(), destGranularity);
         for (ETLInfo infoItem : etlInfoList) {
             if (infoItem.getFirstEvent().getEventTimeStamp().isBefore(nextPartitionFirstSecond)) {
-                pathsPerDestGranularity.get(pathsPerDestGranularity.size() - 1).add(infoItem);
+                pathsPerDestGranularity.getLast().add(infoItem);
             } else {
                 pathsPerDestGranularity.add(new ArrayList<>(Collections.singletonList(infoItem)));
                 nextPartitionFirstSecond = TimeUtils.getNextPartitionFirstSecond(
@@ -67,14 +67,14 @@ public class ParquetETLInfoListProcessor extends ETLInfoListProcessor {
                     etlInfoList.stream().mapToLong(ETLInfo::getSize).sum();
             String key =
                     etlInfosToCombine.stream().map(ETLInfo::getKey).toList().toString();
-            if (notEnoughFreeSpace(sizeOfSrcStreams, getCurETLDest(), etlStage, key, pvName)) {
-                if (deleteSrcStreamWhenOutOfSpace(
-                        etlInfosToCombine, etlStage.getOutOfSpaceHandling(), movedList, etlStage, pvName)) {
+            if (notEnoughFreeSpace(sizeOfSrcStreams, getCurETLDest(), etlStage, key, pvName)
+                    && deleteSrcStreamWhenOutOfSpace(
+                            etlInfosToCombine, etlStage.getOutOfSpaceHandling(), movedList, etlStage, pvName)) {
 
-                    return new ETLInfoListStatistics(
-                            time4checkSizes, time4prepareForNewPartition, time4appendToETLAppendData, totalSrcBytes);
-                }
+                return new ETLInfoListStatistics(
+                        time4checkSizes, time4prepareForNewPartition, time4appendToETLAppendData, totalSrcBytes);
             }
+
             long checkSzEnd = System.currentTimeMillis();
             time4checkSizes = time4checkSizes + (checkSzEnd - checkSzStart);
             long appendDataStart = System.currentTimeMillis();
@@ -89,12 +89,12 @@ public class ParquetETLInfoListProcessor extends ETLInfoListProcessor {
                     })
                     .toList();
             EventStream stream = new ParquetBackedPBEventFileStream(
-                    pvName, paths, etlInfoList.get(0).getType(), null, null);
+                    pvName, paths, etlInfoList.getFirst().getType(), null, null);
 
             boolean status = getCurETLDest().appendToETLAppendData(pvName, stream, etlContext);
 
             long appendDataEnd = System.currentTimeMillis();
-            checkAppendStatus(pvName, status, key, etlInfosToCombine.get(0).getGranularity());
+            checkAppendStatus(pvName, status, key, etlInfosToCombine.getFirst().getGranularity());
 
             time4appendToETLAppendData = time4appendToETLAppendData + (appendDataEnd - appendDataStart);
             movedList.addAll(etlInfosToCombine);
