@@ -43,7 +43,7 @@ public final class PBThreeTierETLPVLookup {
 
     private ConfigService configService = null;
 
-    public static boolean isRunningInsideUnitTests = false;
+    private boolean isRunningInsideUnitTests = false;
 
     /**
      * One scheduled thread pool executor to schedule them all.
@@ -145,7 +145,7 @@ public final class PBThreeTierETLPVLookup {
                 return;
             }
 
-            ETLStages etlStages = new ETLStages(pvName, theWorker);
+            ETLStages etlStages = new ETLStages(pvName, theWorker, configService);
             etlStagesForPVs.put(pvName, etlStages);
 
             for (int etllifetimeid = 0; etllifetimeid < dataSources.length - 1; etllifetimeid++) {
@@ -268,6 +268,9 @@ public final class PBThreeTierETLPVLookup {
         return applianceMetrics;
     }
 
+    public boolean getIsRunningInsideUnitTests() {
+        return isRunningInsideUnitTests;
+    }
     /**
      * Some unit tests want to run the ETL jobs manually; so we shut down the threads.
      * We should probably write a pausable thread pool executor
@@ -275,8 +278,9 @@ public final class PBThreeTierETLPVLookup {
      */
     public void manualControlForUnitTests() {
         logger.error("Shutting down ETL for unit tests...");
-        this.scheduleWorker.shutdownNow();
-        isRunningInsideUnitTests = true;
+        var etlLookup = configService.getETLLookup();
+        etlLookup.scheduleWorker.shutdownNow();
+        etlLookup.isRunningInsideUnitTests = true;
     }
 
     public static OutOfSpaceHandling determineOutOfSpaceHandling(ConfigService configService) {
