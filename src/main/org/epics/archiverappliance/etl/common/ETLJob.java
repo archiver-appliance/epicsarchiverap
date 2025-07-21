@@ -3,6 +3,7 @@ package org.epics.archiverappliance.etl.common;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.ETLContext;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLInfo;
@@ -24,21 +25,17 @@ public class ETLJob implements Runnable {
     private static final Logger logger = LogManager.getLogger(ETLJob.class.getName());
     private final ETLStage etlStage;
     private final Instant runAsIfAtTime;
-
-    private record ProcessInfoListResult(
-            long time4checkSizes,
-            long time4prepareForNewPartition,
-            long time4appendToETLAppendData,
-            long totalSrcBytes) {}
+    private final ConfigService configService;
 
     /**
      *
      * @param etlStage    ETLStage
      * @param runAsIfAtTime Instant
      */
-    public ETLJob(ETLStage etlStage, Instant runAsIfAtTime) {
+    public ETLJob(ETLStage etlStage, Instant runAsIfAtTime, ConfigService configService) {
         this.etlStage = etlStage;
         this.runAsIfAtTime = runAsIfAtTime;
+        this.configService = configService;
     }
 
     @Override
@@ -67,7 +64,7 @@ public class ETLJob implements Runnable {
             return;
         }
 
-        if (PBThreeTierETLPVLookup.isRunningInsideUnitTests) {
+        if (this.configService.getETLLookup().getIsRunningInsideUnitTests()) {
             // Skip the check for times...
         } else {
             if (processingTime.isBefore(this.etlStage.getNextETLStart())) {
