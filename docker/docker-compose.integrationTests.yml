@@ -3,8 +3,7 @@ name: epicsarchiver
 services:
   epicsarchiver-test:
     build:
-      dockerfile: ../Dockerfile.dev
-      context: ..
+      dockerfile: Dockerfile.dev
     container_name: epicsarchiver-test
     image: epicsarchiver-test
     command:
@@ -16,3 +15,11 @@ services:
       - type: bind
         source: ../
         target: /home/gradle
+    networks:
+      - ip6net
+networks:
+  ip6net:
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: 2001:0DB8::/112
