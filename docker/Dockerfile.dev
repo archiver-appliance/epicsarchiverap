@@ -68,7 +68,7 @@ RUN apt-get update && \
         git \
         libreadline-dev \
         python-is-python3 \
-        python-venv \
+        python3-venv \
         wget && \
     # Install Java from Adoptium
     wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc && \
