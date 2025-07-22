@@ -124,7 +124,7 @@ dependencies {
 	permitUnusedDeclared("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
 	implementation("org.apache.logging.log4j:log4j-jul:2.20.0")
 	permitUnusedDeclared("org.apache.logging.log4j:log4j-jul:2.20.0")
-	runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
+	implementation("org.apache.logging.log4j:log4j-core:2.20.0")
 	runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
 	implementation("com.lmax:disruptor:3.4.4") // Needed for async logging, needs to be in sync with log4j2
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
@@ -136,6 +136,8 @@ dependencies {
 	testImplementation('org.awaitility:awaitility:4.2.0')
 	implementation("org.phoebus:core-pva:5.0.0")
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.1.4")
+	testImplementation 'org.apache.tomcat.embed:tomcat-embed-core:9.0.79'
+	testImplementation 'org.apache.tomcat.embed:tomcat-embed-jasper:9.0.79'
 }
 
 tasks.register("cleanApiDocs", Delete) {
