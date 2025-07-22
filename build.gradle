@@ -475,15 +475,6 @@ tasks.register("flakyTests", Test) {
 	}
 }
 
-tasks.register("shutdownAllTomcats", Exec) {
-	group = "test"
-	description "task to shut down all tomcats after running integration tests," +
-			" if they didn't shut down correctly."
-	ignoreExitValue true
-	commandLine "echo", "This is where we kill any lingering tomcats using a special tag"
-	commandLine "pkill", "-9", "-f", "Deaatag=eaatesttm"
-}
-
 tasks.register("integrationTestSetup", Copy) {
 	group = "Test"
 	description = "Setup for Integration Tests."
@@ -512,7 +503,6 @@ tasks.register("integrationTests", Test) {
 		excludeTags "slow",
 				"flaky"
 	}
-	finalizedBy "shutdownAllTomcats"
 }
 
 tasks.register("epicsTests", Test) {
@@ -567,7 +557,6 @@ tasks.register("automationTests", Test) {
 	dependsOn("integrationTestSetup")
 	useJUnitPlatform {
 	}
-	finalizedBy "shutdownAllTomcats"
 }
 
 
