@@ -59,7 +59,7 @@ RUN cp -Rv /tomcat-download/apache-tomcat-$TOMCAT_VERSION/* /tomcat/
 
 FROM base-$TARGETARCH AS gradle-base
 
-RUN apt-get update && apt-get install -yq git libreadline-dev wget apt-transport-https
+RUN apt-get update && apt-get install -yq git libreadline-dev wget apt-transport-https python-is-python3
 # install java
 RUN wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc
 RUN echo "deb https://packages.adoptium.net/artifactory/deb bullseye main" | tee /etc/apt/sources.list.d/adoptium.list
