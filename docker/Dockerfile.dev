@@ -64,11 +64,12 @@ FROM base-$TARGETARCH AS gradle-base
 # Combine all package installations into a single RUN layer to reduce image size
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
+        ca-certificates \
         git \
         libreadline-dev \
-        wget \
         python-is-python3 \
-        ca-certificates && \
+        python-venv \
+        wget && \
     # Install Java from Adoptium
     wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc && \
     echo "deb https://packages.adoptium.net/artifactory/deb bullseye main" | tee /etc/apt/sources.list.d/adoptium.list && \
