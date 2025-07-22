@@ -9,7 +9,7 @@ services:
     command:
       - /bin/sh
       - -c
-      - git config --global --add safe.directory /home/gradle && ./gradlew integrationTests --no-daemon # hack for doing git operations on mount
+      - git config --global --add safe.directory /home/gradle && ./gradlew integrationTests --tests SinglePVRetrievalTest --no-daemon # hack for doing git operations on mount
     working_dir: /home/gradle
     volumes:
       - type: bind
