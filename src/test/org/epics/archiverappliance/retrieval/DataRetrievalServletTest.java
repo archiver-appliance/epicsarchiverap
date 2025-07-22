@@ -39,6 +39,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
 
+import static org.epics.archiverappliance.retrieval.TypeInfoUtil.updateTypeInfo;
+
 /**
  * Test the simple data retrieval case.
  * @author mshankar
@@ -77,6 +79,8 @@ public class DataRetrievalServletTest {
 
         PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();
         ConfigService configService = new ConfigServiceForTests(-1);
+        updateTypeInfo(configService, pbplugin, pvName, null, null);
+
         storagePlugin.initialize(
                 "pbraw://localhost?rawURL="
                         + URLEncoder.encode(
