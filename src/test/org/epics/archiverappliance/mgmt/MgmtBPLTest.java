@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Tag("integration")
 @Tag("localEpics")
@@ -49,6 +51,36 @@ class MgmtBPLTest {
         siocSetup.stopSIOC();
     }
 
+    @Test
+    public void testArchiveFieldsPV() throws Exception {
+        String prefix = "testArchiveFieldsPV";
+        siocSetup.setPrefix(prefix);
+        siocSetup.startSIOCWithDefaultDB();
+        String[] pvs = new String[] {
+            prefix + "UnitTestNoNamingConvention:sine",
+            prefix + "UnitTestNoNamingConvention:sine.EOFF",
+            prefix + "UnitTestNoNamingConvention:sine.EGU",
+            prefix + "UnitTestNoNamingConvention:sine.ALST",
+            prefix + "UnitTestNoNamingConvention:sine.HOPR",
+            prefix + "UnitTestNoNamingConvention:sine.DESC",
+            prefix + "UnitTestNoNamingConvention:sine.YYZ"
+        };
+
+        List<JSONObject> arSpecs = Stream.of(pvs)
+            .map(x -> new JSONObject(Map.of("pv", x)))
+            .toList();
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        logger.info("Archiving multiple PVs");
+        GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
+        for (String pv : pvs) {
+            logger.info("Checking to see if PV is being archived {}", pv);
+            if (!pv.equals("UnitTestNoNamingConvention:sine.YYZ")) {
+                PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
+            } else {
+                PVAccessUtil.waitForStatusChange(pv, "Initial sampling", 10, mgmtURL, 15);
+            }
+        }
+    }
     @Test
     public void testArchiveAliasedPV() throws Exception {
         String prefix = "testArchiveAliasedPV";
