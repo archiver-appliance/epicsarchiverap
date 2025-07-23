@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Tag("integration")
@@ -59,16 +58,16 @@ class MgmtBPLTest {
         siocSetup.startSIOCWithDefaultDB();
         String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
         GetUrlContent.postDataAndGetContentAsJSONArray(
-            MGMT_URL + "/archivePV",
-            GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive, "samplingperiod", "10.0")))));
+                MGMT_URL + "/archivePV",
+                GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive, "samplingperiod", "10.0")))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, MGMT_URL, 15);
         @SuppressWarnings("unchecked")
         Map<String, String> status = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
-                MGMT_URL + "getPVStatus", Map.of("pv", pvNameToArchive))
-            .get(0);
+                        MGMT_URL + "getPVStatus", Map.of("pv", pvNameToArchive))
+                .get(0);
         Assertions.assertTrue(
-            "10.0".equals(status.get("samplingPeriod")),
-            "Expecting sampling rate to be 10.0; instead it is " + status.get("samplingPeriod"));
+                "10.0".equals(status.get("samplingPeriod")),
+                "Expecting sampling rate to be 10.0; instead it is " + status.get("samplingPeriod"));
     }
 
     @Test
@@ -86,10 +85,9 @@ class MgmtBPLTest {
             prefix + "UnitTestNoNamingConvention:sine.YYZ"
         };
 
-        List<JSONObject> arSpecs = Stream.of(pvs)
-            .map(x -> new JSONObject(Map.of("pv", x)))
-            .toList();
-        
+        List<JSONObject> arSpecs =
+                Stream.of(pvs).map(x -> new JSONObject(Map.of("pv", x))).toList();
+
         logger.info("Archiving multiple PVs");
         GetUrlContent.postDataAndGetContentAsJSONArray(MGMT_URL + "archivePV", GetUrlContent.from(arSpecs));
         for (String pv : pvs) {
@@ -101,15 +99,16 @@ class MgmtBPLTest {
             }
         }
     }
+
     @Test
     public void testArchiveAliasedPV() throws Exception {
         String prefix = "testArchiveAliasedPV";
         siocSetup.setPrefix(prefix);
         siocSetup.startSIOCWithDefaultDB();
         String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sinealias";
-        
+
         GetUrlContent.postDataAndGetContentAsJSONArray(
-            MGMT_URL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+                MGMT_URL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, MGMT_URL, 15);
 
         SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 2.0);
@@ -127,15 +126,16 @@ class MgmtBPLTest {
         testRetrievalCount(prefix + "UnitTestNoNamingConvention:sine.HIHI", true);
         testRetrievalCount(prefix + "UnitTestNoNamingConvention:sinealias.HIHI", true);
     }
+
     @Test
     public void testSimpleArchivePV() throws Exception {
         String prefix = "testSimpleArchivePV";
         siocSetup.setPrefix(prefix);
         siocSetup.startSIOCWithDefaultDB();
         String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
-        
+
         GetUrlContent.postDataAndGetContentAsJSONArray(
-            MGMT_URL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+                MGMT_URL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, MGMT_URL, 15);
         JSONArray statuses = GetUrlContent.getURLContentAsJSONArray(MGMT_URL + "/getPVStatus?pv=" + pvNameToArchive);
         Assertions.assertNotNull(statuses);
@@ -143,9 +143,9 @@ class MgmtBPLTest {
         @SuppressWarnings("unchecked")
         Map<String, String> status = (Map<String, String>) statuses.get(0);
         Assertions.assertEquals(
-            status.getOrDefault("pvName", ""),
-            pvNameToArchive,
-            "PV Name is not " + pvNameToArchive + "; instead we get " + status.getOrDefault("pvName", ""));
+                status.getOrDefault("pvName", ""),
+                pvNameToArchive,
+                "PV Name is not " + pvNameToArchive + "; instead we get " + status.getOrDefault("pvName", ""));
     }
 
     @Test
@@ -154,19 +154,19 @@ class MgmtBPLTest {
         siocSetup.setPrefix(prefix);
         siocSetup.startSIOCWithDefaultDB();
         String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
-        
+
         GetUrlContent.postDataAndGetContentAsJSONArray(
-            MGMT_URL + "archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+                MGMT_URL + "archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, MGMT_URL, 15);
         @SuppressWarnings("unchecked")
         Map<String, String> chst = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONObject(
-            MGMT_URL + "changeArchivalParameters",
-            Map.of("pv", pvNameToArchive, "samplingperiod", "11")); // A sample every 11 seconds
+                MGMT_URL + "changeArchivalParameters",
+                Map.of("pv", pvNameToArchive, "samplingperiod", "11")); // A sample every 11 seconds
         Assertions.assertEquals(chst.get("status"), "ok");
         @SuppressWarnings("unchecked")
         Map<String, String> pvst = (Map<String, String>) (GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
-                MGMT_URL + "getPVStatus", Map.of("pv", pvNameToArchive))
-            .getFirst());
+                        MGMT_URL + "getPVStatus", Map.of("pv", pvNameToArchive))
+                .getFirst());
         Assertions.assertEquals(pvst.get("samplingPeriod"), "11.0");
     }
 
@@ -176,9 +176,9 @@ class MgmtBPLTest {
         siocSetup.setPrefix(prefix);
         siocSetup.startSIOCWithDefaultDB();
         String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
-        
+
         GetUrlContent.postDataAndGetContentAsJSONArray(
-            MGMT_URL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+                MGMT_URL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, MGMT_URL, 15);
 
         SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 2.0);
@@ -197,9 +197,9 @@ class MgmtBPLTest {
         testRetrievalCount(prefix + "UnitTestNoNamingConvention:arandomalias.HIHI", false);
 
         JSONAware addAliasStatus = GetUrlContent.getURLContentWithQueryParameters(
-            MGMT_URL + "addAlias",
-            Map.of("pv", pvNameToArchive, "aliasname", prefix + "UnitTestNoNamingConvention:arandomalias"),
-            false);
+                MGMT_URL + "addAlias",
+                Map.of("pv", pvNameToArchive, "aliasname", prefix + "UnitTestNoNamingConvention:arandomalias"),
+                false);
 
         logger.debug("Add alias response " + addAliasStatus.toJSONString());
 
@@ -210,9 +210,9 @@ class MgmtBPLTest {
         testRetrievalCount(prefix + "UnitTestNoNamingConvention:arandomalias.HIHI", true);
 
         JSONAware removeAliasStatus = GetUrlContent.getURLContentWithQueryParameters(
-            MGMT_URL + "removeAlias",
-            Map.of("pv", pvNameToArchive, "aliasname", prefix + "UnitTestNoNamingConvention:arandomalias"),
-            false);
+                MGMT_URL + "removeAlias",
+                Map.of("pv", pvNameToArchive, "aliasname", prefix + "UnitTestNoNamingConvention:arandomalias"),
+                false);
         logger.debug("Remove alias response " + removeAliasStatus.toJSONString());
 
         Thread.sleep(2 * 1000);
@@ -230,7 +230,7 @@ class MgmtBPLTest {
      */
     private void testRetrievalCount(String pvName, boolean expectingData) throws IOException {
         RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-            "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
         Instant end = TimeUtils.plusDays(TimeUtils.now(), 3);
         Instant start = TimeUtils.minusDays(end, 6);
         try (EventStream stream = rawDataRetrieval.getDataForPVS(new String[] {pvName}, start, end, null)) {
@@ -250,10 +250,13 @@ class MgmtBPLTest {
             logger.info("Got " + eventCount + " event for pv " + pvName);
             if (expectingData) {
                 Assertions.assertTrue(
-                    eventCount > 0,
-                    "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
+                        eventCount > 0,
+                        "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
             } else {
-                Assertions.assertEquals(0, eventCount, "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
+                Assertions.assertEquals(
+                        0,
+                        eventCount,
+                        "When asking for data using " + pvName + ", event count is 0. We got " + eventCount);
             }
         }
     }
