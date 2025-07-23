@@ -442,7 +442,7 @@ public interface ConfigService {
     /**
      * Gets all the aliases in the system that map to this real PV name
      * @param realName &emsp;
-     * @return List<String> A list of aliases for this real name
+     * @return A list of aliases for this real name
      */
     public List<String> getAliasesForRealName(String realName);
 

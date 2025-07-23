@@ -22,10 +22,10 @@ import java.time.Instant;
 import java.util.HashSet;
 
 /**
- * @author mshankar
  *	Checks if all timestamps in the first file are present in the second file
  *  Can be used to validate if a merge/splice operation was successful.
  *  This only compares timestamps; not the values or the meta fields.
+ * @author mshankar
  */
 public class IsSubset {
     private static Logger logger = LogManager.getLogger(MergePBFile.class.getName());
