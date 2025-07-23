@@ -52,6 +52,26 @@ class MgmtBPLTest {
     }
 
     @Test
+    public void testArchiveWithSamplingPeriod() throws Exception {
+        String prefix = "testArchiveWithSamplingPeriod";
+        siocSetup.setPrefix(prefix);
+        siocSetup.startSIOCWithDefaultDB();
+        String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+            mgmtURL + "/archivePV",
+            GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive, "samplingperiod", "10.0")))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        @SuppressWarnings("unchecked")
+        Map<String, String> status = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
+                mgmtURL + "getPVStatus", Map.of("pv", pvNameToArchive))
+            .get(0);
+        Assertions.assertTrue(
+            "10.0".equals(status.get("samplingPeriod")),
+            "Expecting sampling rate to be 10.0; instead it is " + status.get("samplingPeriod"));
+    }
+
+    @Test
     public void testArchiveFieldsPV() throws Exception {
         String prefix = "testArchiveFieldsPV";
         siocSetup.setPrefix(prefix);
