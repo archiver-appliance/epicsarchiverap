@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
  * that are shared between appliances and <b>consolidateOnShutdown</b> on multiple data stores.
  * </div>
  *
- * <div> Here's one scenario where reassign applices can be used.
+ * <div> Here's one scenario where reassign applices can be used.</div>
  * <ul>
  * <li>We have a three stages of storage - STS, MTS and LTS.</li>
  * <li>The LTS is shared between the apliances in the cluster. That is, all the appliances in the cluster mount the same storage for the LTS.
