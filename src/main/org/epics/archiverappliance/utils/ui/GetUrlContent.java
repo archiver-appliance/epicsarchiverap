@@ -78,7 +78,7 @@ public class GetUrlContent {
 
 	/**
 	 * Given an URL and some query parameters, get the content of the URL
-	 * @param urlStr URL 
+	 * @param url URL
 	 * @param queryParameters Map
 	 * @return URL content as a JSON Object
 	 */

@@ -182,7 +182,6 @@ javadoc {
 	}
 	it.outputs.file("${apiDocsDir}/mgmt_scriptables.txt")
 	source = sourceSets.main.allJava
-	failOnError = false
 	options {
 		author true
 		version true

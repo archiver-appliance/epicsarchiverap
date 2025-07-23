@@ -28,7 +28,7 @@ public class ETLJob implements Runnable {
 
     /**
      *
-     * @param lookupItem    ETLPVLookupItems
+     * @param etlStage    ETLPVLookupItems
      * @param runAsIfAtTime Instant
      */
     public ETLJob(ETLStage etlStage, Instant runAsIfAtTime) {
