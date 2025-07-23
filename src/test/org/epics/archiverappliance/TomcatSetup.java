@@ -322,18 +322,17 @@ public class TomcatSetup {
             logger.info("Persistence file for member " + persistenceFileForMember);
         }
 
-		overrideEnvWithSystemProperty(environment, "ARCHAPPL_SHORT_TERM_FOLDER");
-		overrideEnvWithSystemProperty(environment, "ARCHAPPL_MEDIUM_TERM_FOLDER");
-		overrideEnvWithSystemProperty(environment, "ARCHAPPL_LONG_TERM_FOLDER");
-		overrideEnvWithSystemProperty(environment, "ARCHAPPL_POLICIES");
+        overrideEnvWithSystemProperty(environment, "ARCHAPPL_SHORT_TERM_FOLDER");
+        overrideEnvWithSystemProperty(environment, "ARCHAPPL_MEDIUM_TERM_FOLDER");
+        overrideEnvWithSystemProperty(environment, "ARCHAPPL_LONG_TERM_FOLDER");
+        overrideEnvWithSystemProperty(environment, "ARCHAPPL_POLICIES");
 
-		for(Object pkey : System.getProperties().keySet()) {
-			String key = (String) pkey;
-			if(key.startsWith("org.epics.archiverappliance")) {
-				environment.put(key, (String) System.getProperties().get(key));
-			}
-		}
-
+        for (Object pkey : System.getProperties().keySet()) {
+            String key = (String) pkey;
+            if (key.startsWith("org.epics.archiverappliance")) {
+                environment.put(key, (String) System.getProperties().get(key));
+            }
+        }
 
         if (logger.isDebugEnabled()) {
             for (String key : environment.keySet()) {

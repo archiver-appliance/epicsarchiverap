@@ -296,13 +296,13 @@ public class DefaultConfigService implements ConfigService {
                 throw new ConfigException(
                         "Exception loading installation specific properties file " + archApplPropertiesFileName, ex);
             }
-            for(Object apkeyobj : archapplproperties.keySet()){
+            for (Object apkeyobj : archapplproperties.keySet()) {
                 String apkey = (String) apkeyobj;
-                if(System.getProperties().contains(apkey)) {
+                if (System.getProperties().contains(apkey)) {
                     String nval = System.getProperty(apkey);
                     configlogger.info("Overriding {} in archappl.properties with JVM property {}", apkey, nval);
                     archapplproperties.put(apkey, nval);
-                } else if(System.getenv().containsKey(apkey)) {
+                } else if (System.getenv().containsKey(apkey)) {
                     String nval = System.getenv().get(apkey);
                     configlogger.info("Overriding {} in archappl.properties with environment var {}", apkey, nval);
                     archapplproperties.put(apkey, nval);

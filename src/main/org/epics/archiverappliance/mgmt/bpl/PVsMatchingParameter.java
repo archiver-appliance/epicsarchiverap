@@ -195,11 +195,13 @@ public class PVsMatchingParameter {
     public static LinkedList<String> getPVNamesFromPostBody(HttpServletRequest req) throws IOException {
         LinkedList<String> pvNames = new LinkedList<String>();
         String contentType = req.getContentType();
-        if(contentType == null) { contentType = MimeTypeConstants.APPLICATION_FORM_URLENCODED; }
+        if (contentType == null) {
+            contentType = MimeTypeConstants.APPLICATION_FORM_URLENCODED;
+        }
         switch (contentType) {
             case MimeTypeConstants.APPLICATION_JSON:
-                try (LineNumberReader lineReader = new LineNumberReader(
-                        new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
+                try (LineNumberReader lineReader =
+                        new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
                     JSONParser parser = new JSONParser();
                     for (Object pvName : (JSONArray) parser.parse(lineReader)) {
                         if (pvName instanceof JSONObject) {
@@ -214,8 +216,8 @@ public class PVsMatchingParameter {
                 return pvNames;
             case MimeTypeConstants.TEXT_PLAIN:
                 // For the default we assume text/plain which is a list of PV's separated by unix newlines
-                try (LineNumberReader lineReader = new LineNumberReader(
-                        new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
+                try (LineNumberReader lineReader =
+                        new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
                     String pv = lineReader.readLine();
                     logger.debug("Parsed pv " + pv);
                     while (pv != null) {
