@@ -11,6 +11,7 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterAll;
@@ -48,10 +49,30 @@ class MgmtBPLTest {
         siocSetup.stopSIOC();
     }
 
+    @Test
+    public void testSimpleArchivePV() throws Exception {
+        String prefix = "testSimpleArchivePV";
+        siocSetup.setPrefix(prefix);
+        siocSetup.startSIOCWithDefaultDB();
+        String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+            mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        JSONArray statuses = GetUrlContent.getURLContentAsJSONArray(mgmtURL + "/getPVStatus?pv=" + pvNameToArchive);
+        Assertions.assertNotNull(statuses);
+        Assertions.assertTrue(statuses.size() > 0);
+        @SuppressWarnings("unchecked")
+        Map<String, String> status = (Map<String, String>) statuses.get(0);
+        Assertions.assertEquals(
+            status.getOrDefault("pvName", ""),
+            pvNameToArchive,
+            "PV Name is not " + pvNameToArchive + "; instead we get " + status.getOrDefault("pvName", ""));
+    }
 
     @Test
     public void testChangeArchivalParams() throws Exception {
-        String prefix = "testAddRemoveAlias";
+        String prefix = "testChangeArchivalParams";
         siocSetup.setPrefix(prefix);
         siocSetup.startSIOCWithDefaultDB();
         String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sine";
