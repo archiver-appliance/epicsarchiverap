@@ -50,6 +50,32 @@ class MgmtBPLTest {
     }
 
     @Test
+    public void testArchiveAliasedPV() throws Exception {
+        String prefix = "testArchiveAliasedPV";
+        siocSetup.setPrefix(prefix);
+        siocSetup.startSIOCWithDefaultDB();
+        String pvNameToArchive = prefix + "UnitTestNoNamingConvention:sinealias";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+        GetUrlContent.postDataAndGetContentAsJSONArray(
+            mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
+
+        SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 2.0);
+        Thread.sleep(2 * 1000);
+        SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 3.0);
+        Thread.sleep(2 * 1000);
+        SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 4.0);
+        Thread.sleep(2 * 1000);
+        logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
+        Thread.sleep(2 * 60 * 1000);
+
+        // Test retrieval of data using the real name and the aliased name
+        testRetrievalCount(prefix + "UnitTestNoNamingConvention:sine", true);
+        testRetrievalCount(prefix + "UnitTestNoNamingConvention:sinealias", true);
+        testRetrievalCount(prefix + "UnitTestNoNamingConvention:sine.HIHI", true);
+        testRetrievalCount(prefix + "UnitTestNoNamingConvention:sinealias.HIHI", true);
+    }
+    @Test
     public void testSimpleArchivePV() throws Exception {
         String prefix = "testSimpleArchivePV";
         siocSetup.setPrefix(prefix);
