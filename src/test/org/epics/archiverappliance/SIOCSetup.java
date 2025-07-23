@@ -20,7 +20,7 @@ import java.io.PrintWriter;
  *
  */
 public class SIOCSetup {
-    private static Logger logger = LogManager.getLogger(SIOCSetup.class.getName());
+    private static final Logger logger = LogManager.getLogger(SIOCSetup.class.getName());
     Process watchedProcess;
     PipedOutputStream osforstdin = new PipedOutputStream();
     PrintWriter writerforstdin = new PrintWriter(new OutputStreamWriter(osforstdin));
@@ -33,6 +33,11 @@ public class SIOCSetup {
     public SIOCSetup(String prefix) {
         this.prefix = prefix;
     }
+
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
+    }
+
     /**
      * We start the SIOC with the UnitTestPVs.db.
      * This assumes that are run in the root folder of the workspace.
@@ -53,12 +58,15 @@ public class SIOCSetup {
     }
 
     public void stopSIOC() throws Exception {
+        if (!watchedProcess.isAlive()) {
+            return;
+        }
         PrintWriter writer = new PrintWriter(watchedProcess.getOutputStream());
         writer.println("exit");
         writer.flush();
         writer.close();
         try {
-            Thread.sleep(5 * 1000);
+            Thread.sleep(1 * 1000);
         } catch (Exception ex) {
         }
         if (watchedProcess.isAlive()) {
