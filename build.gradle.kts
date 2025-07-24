@@ -96,7 +96,7 @@ dependencies {
 	viewer("archiver-appliance:svg_viewer:v1.2.1@zip")
 
 	// Provided by Servlet Container (e.g., Tomcat)
-	compileOnly("org.apache.tomcat:tomcat-servlet-api:9.0.74")
+	implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")
 
 	// Core Libraries
 	implementation("org.epics:jca:2.4.7")
