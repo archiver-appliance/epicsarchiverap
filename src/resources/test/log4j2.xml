@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="ERROR">
  <Appenders>
-  <RollingFile name="RollingFile" fileName="arch.log" filePattern="logs/arch-%d{yyyy-MM-dd}-%i.log">
+  <RollingFile name="RollingFile" fileName="arch.log" filePattern="logs/arch-%d{yyyy-MM-dd}-%i.log.gz">
    <PatternLayout>
     <pattern>[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{1} - %msg%n</pattern>
    </PatternLayout>
    <Policies>
     <TimeBasedTriggeringPolicy/>
-    <SizeBasedTriggeringPolicy size="25 MB"/>
+    <SizeBasedTriggeringPolicy size="2 MB"/>
    </Policies>
    <DefaultRolloverStrategy max="10"/>
   </RollingFile>

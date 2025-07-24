@@ -152,6 +152,19 @@ public class TomcatSetup {
     }
 
     public void tearDown() throws Exception {
+        killProcesses();
+        deleteUsedDirectories();
+    }
+
+    private void deleteUsedDirectories() throws IOException {
+        for (File f : cleanupFolders) {
+            if (f.exists()) {
+                FileUtils.deleteDirectory(f);
+            }
+        }
+    }
+
+    private void killProcesses() {
         for (Process process : watchedProcesses.values()) {
             // First try to kill the process cleanly
             process.destroy();
