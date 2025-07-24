@@ -12,6 +12,10 @@ plugins {
 	id("com.diffplug.spotless") version "6.25.0"
 }
 
+// =================================================================
+// Project Configuration
+// =================================================================
+
 sourceSets {
 	main {
 		java {
@@ -28,15 +32,6 @@ sourceSets {
 		resources {
 			setSrcDirs(emptyList<String>())
 		}
-	}
-}
-
-tasks.named<ProcessResources>("processTestResources") {
-	from(layout.projectDirectory.file("src/sitespecific/tests/classpathfiles"))
-	from(layout.projectDirectory.file("src/resources/test")) {
-		include("log4j2.xml")
-		include("appliances.xml.j2")
-		include("log4j2.component.properties")
 	}
 }
 
@@ -152,6 +147,9 @@ dependencies {
 	testImplementation(project.files("lib/pbrawclient-0.2.1.jar"))
 }
 
+// =================================================================
+// Documentation & Staging Tasks
+// =================================================================
 
 tasks.register<Delete>("cleanApiDocs") {
 	group = "Clean"
@@ -306,9 +304,10 @@ tasks.register<Exec>("sphinx") {
 	}
 }
 
-/**
- * Common parts to all the war building.
- */
+// =================================================================
+// Artifact Assembly (WARs & Release)
+// =================================================================
+
 tasks.withType<War>().configureEach {
 	dependsOn("stage", "sitespecificantscript")
 	from(stageDir.asFile.resolve("org/epics/archiverappliance/staticcontent")) { into("ui/comm") }
@@ -418,6 +417,15 @@ tasks.register<Tar>("buildRelease") {
 // =================================================================
 // Test Task Definitions
 // =================================================================
+
+tasks.named<ProcessResources>("processTestResources") {
+	from(layout.projectDirectory.file("src/sitespecific/tests/classpathfiles"))
+	from(layout.projectDirectory.file("src/resources/test")) {
+		include("log4j2.xml")
+		include("appliances.xml.j2")
+		include("log4j2.component.properties")
+	}
+}
 
 tasks.register<Test>("unitTests") {
 	group = "Test"
