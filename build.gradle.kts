@@ -109,9 +109,9 @@ dependencies {
 
 	// Apache Commons
 	implementation("commons-codec:commons-codec:1.15")
-	implementation("commons-fileupload:commons-fileupload:1.5")
-	implementation("commons-io:commons-io:2.11.0")
-	implementation("org.apache.commons:commons-lang3:3.12.0")
+	implementation("commons-fileupload:commons-fileupload:1.6.0")
+	implementation("commons-io:commons-io:2.14.0")
+	implementation("org.apache.commons:commons-lang3:3.18.0")
 	implementation("org.apache.commons:commons-math3:3.6.1")
 	implementation("commons-validator:commons-validator:1.7")
 
@@ -140,7 +140,7 @@ dependencies {
 	testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
 	testImplementation("org.awaitility:awaitility:4.2.0")
-	testImplementation("org.apache.commons:commons-compress:1.23.0")
+	testImplementation("org.apache.commons:commons-compress:1.26.0")
 	testImplementation("commons-cli:commons-cli:1.5.0")
 	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
