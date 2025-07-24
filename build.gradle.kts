@@ -145,6 +145,8 @@ dependencies {
 	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(project.files("lib/pbrawclient-0.2.1.jar"))
+	testImplementation(":pbrawclient:0.2.1")
+	testImplementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")
 }
 
 // =================================================================
@@ -417,6 +419,42 @@ tasks.register<Tar>("buildRelease") {
 // =================================================================
 // Test Task Definitions
 // =================================================================
+
+tasks.withType<Test>().configureEach {
+	maxParallelForks = if (runTestsSequentially) {
+		1
+	} else {
+		(Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+	}
+
+	doFirst {
+		temporaryDir.resolve("sts").mkdirs()
+		temporaryDir.resolve("mts").mkdirs()
+		temporaryDir.resolve("lts").mkdirs()
+		logger.lifecycle("Running tests with maxParallelForks = {}", maxParallelForks)
+	}
+
+	filter {
+		includeTestsMatching("*Test")
+	}
+
+	maxHeapSize = "1G"
+	jvmArgs = (listOf(
+		"-Dlog4j1.compatibility=true"
+	))
+
+	environment("ARCHAPPL_SHORT_TERM_FOLDER", temporaryDir.resolve("sts").path)
+	environment("ARCHAPPL_MEDIUM_TERM_FOLDER", temporaryDir.resolve("mts").path)
+	environment("ARCHAPPL_LONG_TERM_FOLDER", temporaryDir.resolve("lts").path)
+
+	doLast {
+		delete(
+			temporaryDir.resolve("sts"),
+			temporaryDir.resolve("mts"),
+			temporaryDir.resolve("lts")
+		)
+	}
+}
 
 tasks.named<ProcessResources>("processTestResources") {
 	from(layout.projectDirectory.file("src/sitespecific/tests/classpathfiles"))
