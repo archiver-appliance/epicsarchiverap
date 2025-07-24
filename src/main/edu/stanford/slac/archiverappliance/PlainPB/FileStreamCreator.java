@@ -24,7 +24,7 @@ import java.time.Instant;
  */
 public class FileStreamCreator implements ETLStreamCreator {
     /* A file that has at most a few events and is faster when loaded completely in memory */
-    public static int SIZE_THAT_DETERMINES_A_SMALL_FILE = 4*1024;
+    public static int SIZE_THAT_DETERMINES_A_SMALL_FILE = 4 * 1024;
     private final String pvName;
     private final Path path;
     private final PBFileInfo info;
@@ -61,13 +61,8 @@ public class FileStreamCreator implements ETLStreamCreator {
             ArchDBRTypes archDBRTypes,
             BiDirectionalIterable.IterationDirection direction)
             throws IOException {
-        if(Files.size(path) < SIZE_THAT_DETERMINES_A_SMALL_FILE) {
-            return new ArrayListEventStreamWithPositionedIterator(
-                pvName,
-                path,
-                startAtTime,
-                archDBRTypes,
-                direction);
+        if (Files.size(path) < SIZE_THAT_DETERMINES_A_SMALL_FILE) {
+            return new ArrayListEventStreamWithPositionedIterator(pvName, path, startAtTime, archDBRTypes, direction);
         }
 
         return new FileBackedPBEventStream(pvName, path, archDBRTypes, startAtTime, direction);

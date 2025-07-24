@@ -1,17 +1,5 @@
 package org.epics.archiverappliance.retrieval.saverestore;
 
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URLEncoder;
-import java.time.Instant;
-import java.time.Period;
-import java.time.temporal.ChronoField;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,10 +27,18 @@ import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.time.Period;
+import java.time.temporal.ChronoField;
+import java.time.temporal.ChronoUnit;
 
 /*
  * Test for issue 375.
@@ -55,18 +51,17 @@ public class GetDataAtTimeSpanningStoresTest {
     String pvName = GetDataAtTimeSpanningStoresTest.class.getSimpleName();
     TomcatSetup tomcatSetup = new TomcatSetup();
     private ConfigServiceForTests configService;
-    String folderSTS =
-            ConfigServiceForTests.getDefaultShortTermFolder() + "/" + GetDataAtTimeSpanningStoresTest.class.getSimpleName() + "/sts";
-    String folderMTS =
-            ConfigServiceForTests.getDefaultPBTestFolder() + "/" + GetDataAtTimeSpanningStoresTest.class.getSimpleName() + "/mts";
-    String folderLTS =
-            ConfigServiceForTests.getDefaultPBTestFolder() + "/" + GetDataAtTimeSpanningStoresTest.class.getSimpleName() + "/lts";
-
+    String folderSTS = ConfigServiceForTests.getDefaultShortTermFolder() + "/"
+            + GetDataAtTimeSpanningStoresTest.class.getSimpleName() + "/sts";
+    String folderMTS = ConfigServiceForTests.getDefaultPBTestFolder() + "/"
+            + GetDataAtTimeSpanningStoresTest.class.getSimpleName() + "/mts";
+    String folderLTS = ConfigServiceForTests.getDefaultPBTestFolder() + "/"
+            + GetDataAtTimeSpanningStoresTest.class.getSimpleName() + "/lts";
 
     @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
-        for(String fldr : new String[] { folderSTS, folderMTS, folderLTS  }) {
+        for (String fldr : new String[] {folderSTS, folderMTS, folderLTS}) {
             if (new File(fldr).exists()) {
                 FileUtils.deleteDirectory(new File(fldr));
             }
@@ -81,7 +76,7 @@ public class GetDataAtTimeSpanningStoresTest {
     @AfterEach
     public void tearDown() throws Exception {
         tomcatSetup.tearDown();
-        for(String fldr : new String[] { folderSTS, folderMTS, folderLTS  }) {
+        for (String fldr : new String[] {folderSTS, folderMTS, folderLTS}) {
             if (new File(fldr).exists()) {
                 FileUtils.deleteDirectory(new File(fldr));
             }
@@ -95,56 +90,55 @@ public class GetDataAtTimeSpanningStoresTest {
     public void testGetDataAtTime(int gapBetweenSamplesInMins) throws Exception {
         PVTypeInfo theInfo = this.addPVToCluster(pvName);
         generateDataIntoPlugin(
-            folderLTS,
-            theInfo.getDataStores()[2],
-            Instant.now().minus(Period.parse("P100D")),
-            Instant.now().minus(Period.parse("P10D")),
-            gapBetweenSamplesInMins);
+                folderLTS,
+                theInfo.getDataStores()[2],
+                Instant.now().minus(Period.parse("P100D")),
+                Instant.now().minus(Period.parse("P10D")),
+                gapBetweenSamplesInMins);
         generateDataIntoPlugin(
-            folderMTS,
-            theInfo.getDataStores()[1],
-            Instant.now().minus(Period.parse("P10D")),
-            Instant.now().minus(Period.parse("P1D")),
-            gapBetweenSamplesInMins);
+                folderMTS,
+                theInfo.getDataStores()[1],
+                Instant.now().minus(Period.parse("P10D")),
+                Instant.now().minus(Period.parse("P1D")),
+                gapBetweenSamplesInMins);
         generateDataIntoPlugin(
-            folderSTS,
-            theInfo.getDataStores()[0],
-            Instant.now().minus(Period.parse("P1D")),
-            Instant.now(),
-            gapBetweenSamplesInMins);
+                folderSTS,
+                theInfo.getDataStores()[0],
+                Instant.now().minus(Period.parse("P1D")),
+                Instant.now(),
+                gapBetweenSamplesInMins);
 
-        ArrayListEventStream getData = this.getData(
-            Instant.now().minus(Period.parse("P101D")),
-            Instant.now());
+        ArrayListEventStream getData = this.getData(Instant.now().minus(Period.parse("P101D")), Instant.now());
         int samplesize = getData.size();
-        Assertions.assertTrue(samplesize >= (100*24*60/gapBetweenSamplesInMins)/2,
-            "We expected more than " + samplesize + " events");
+        Assertions.assertTrue(
+                samplesize >= (100 * 24 * 60 / gapBetweenSamplesInMins) / 2,
+                "We expected more than " + samplesize + " events");
 
         JSONArray pvs = new JSONArray();
         pvs.add(pvName);
-        // We loop backwards in getData and make use we get the previous sample when we ask for getDataAtTime at that instant.
-        for(int i = samplesize-1; i > 0; i--) {
+        // We loop backwards in getData and make use we get the previous sample when we ask for getDataAtTime at that
+        // instant.
+        for (int i = samplesize - 1; i > 0; i--) {
             Instant atTime = getData.get(i).getEventTimeStamp().minusMillis(500);
             logger.debug("Checking getDataAtTime at time " + TimeUtils.convertToHumanReadableString(atTime));
-            String getDataAtTimeURL = ConfigServiceForTests.GETDATAATTIME_URL + "?at=" + TimeUtils.convertToISO8601String(atTime);
+            String getDataAtTimeURL =
+                    ConfigServiceForTests.GETDATAATTIME_URL + "?at=" + TimeUtils.convertToISO8601String(atTime);
             JSONObject resp = GetUrlContent.postDataAndGetContentAsJSONObject(getDataAtTimeURL, pvs);
             Assertions.assertTrue(resp.size() >= 1, "We expected at least one sample back, we got " + resp.size());
-            Instant expectedTimeStamp = getData.get(i-1).getEventTimeStamp().with(ChronoField.MILLI_OF_SECOND, 0);
-            Instant obtainedTimeStamp = Instant.ofEpochSecond((long)((JSONObject)resp.get(pvName)).get("secs"));
+            Instant expectedTimeStamp = getData.get(i - 1).getEventTimeStamp().with(ChronoField.MILLI_OF_SECOND, 0);
+            Instant obtainedTimeStamp = Instant.ofEpochSecond((long) ((JSONObject) resp.get(pvName)).get("secs"));
             Assertions.assertEquals(
-                expectedTimeStamp,
-                obtainedTimeStamp,
-                "Expected " + 
-                TimeUtils.convertToHumanReadableString(expectedTimeStamp) + 
-                " but we got " + 
-                TimeUtils.convertToHumanReadableString(obtainedTimeStamp) + 
-                " for getDataAtTime at " + 
-                TimeUtils.convertToHumanReadableString(atTime) + 
-                " at index " + i
-                );
+                    expectedTimeStamp,
+                    obtainedTimeStamp,
+                    "Expected " + TimeUtils.convertToHumanReadableString(expectedTimeStamp)
+                            + " but we got "
+                            + TimeUtils.convertToHumanReadableString(obtainedTimeStamp)
+                            + " for getDataAtTime at "
+                            + TimeUtils.convertToHumanReadableString(atTime)
+                            + " at index "
+                            + i);
         }
     }
-
 
     private PVTypeInfo addPVToCluster(String pvName) throws Exception {
         // Load a sample PVTypeInfo from a prototype file.
@@ -168,22 +162,26 @@ public class GetDataAtTimeSpanningStoresTest {
         return newPVTypeInfo;
     }
 
-    private void generateDataIntoPlugin(String dataFolder, String pluginDesc, Instant startTime, Instant endTime, int gapBetweenSamplesInMins) throws IOException {
+    private void generateDataIntoPlugin(
+            String dataFolder, String pluginDesc, Instant startTime, Instant endTime, int gapBetweenSamplesInMins)
+            throws IOException {
         if (new File(dataFolder).exists()) {
             FileUtils.deleteDirectory(new File(dataFolder));
         }
-        assert new File(dataFolder).mkdirs();        
+        assert new File(dataFolder).mkdirs();
 
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(pluginDesc, configService);
-        Instant startOfData = Instant.ofEpochSecond(((startTime.getEpochSecond()/3600)+1)*3600);        
+        Instant startOfData = Instant.ofEpochSecond(((startTime.getEpochSecond() / 3600) + 1) * 3600);
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream strm = new ArrayListEventStream(
-                0,
-                new RemotableEventStreamDesc(
-                        ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                        pvName,
-                        TimeUtils.convertToYearSecondTimestamp(startOfData).getYear()));
-            for (Instant ts = startOfData; ts.isBefore(endTime); ts = ts.plus(gapBetweenSamplesInMins, ChronoUnit.MINUTES)) {
+                    0,
+                    new RemotableEventStreamDesc(
+                            ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                            pvName,
+                            TimeUtils.convertToYearSecondTimestamp(startOfData).getYear()));
+            for (Instant ts = startOfData;
+                    ts.isBefore(endTime);
+                    ts = ts.plus(gapBetweenSamplesInMins, ChronoUnit.MINUTES)) {
                 strm.add(new POJOEvent(
                         ArchDBRTypes.DBR_SCALAR_DOUBLE,
                         ts,
@@ -191,7 +189,7 @@ public class GetDataAtTimeSpanningStoresTest {
                         0,
                         0));
             }
-            storagePlugin.appendData(context, pvName, strm);            
+            storagePlugin.appendData(context, pvName, strm);
         }
     }
 
@@ -200,23 +198,18 @@ public class GetDataAtTimeSpanningStoresTest {
                 new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
 
         ArrayListEventStream strm = new ArrayListEventStream(
-            0,
-            new RemotableEventStreamDesc(
-                ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                pvName,
-                TimeUtils.convertToYearSecondTimestamp(start).getYear()));
-    
-        try(EventStream stream = rawDataRetrieval.getDataForPVS(
-            new String[] {pvName},
-            start,
-            end,
-            desc -> logger.info("Getting data for PV " + desc.getPvName()))) {
-                for(Event ev : stream) {
-                    strm.add(ev);
-                }
+                0,
+                new RemotableEventStreamDesc(
+                        ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                        pvName,
+                        TimeUtils.convertToYearSecondTimestamp(start).getYear()));
 
+        try (EventStream stream = rawDataRetrieval.getDataForPVS(
+                new String[] {pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()))) {
+            for (Event ev : stream) {
+                strm.add(ev);
+            }
         }
         return strm;
     }
-    
 }
