@@ -1,5 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain.parquet;
 
+import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetInfo.baseOptions;
+
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathResolver;
@@ -28,12 +30,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
 public class ParquetPlainFileHandler implements PlainFileHandler {
-
     public static final String PARQUET_PLUGIN_IDENTIFIER = "parquet";
     public static final String ZSTD_BUFFER_POOL_ENABLED = "parquet.compression.codec.zstd.bufferPool.enabled";
     public static final String ZSTD_LEVEL = "parquet.compression.codec.zstd.level";
@@ -43,7 +44,7 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
     private CompressionCodecName compressionCodecName = CompressionCodecName.UNCOMPRESSED;
 
     public ParquetPlainFileHandler() {
-        parquetReadOptions = ParquetReadOptions.builder().build();
+        parquetReadOptions = baseOptions;
     }
 
     @Override
@@ -168,7 +169,7 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
             String rootFolder,
             String desc,
             PVNameToKeyMapping pv2key) {
-        return new ParquetAppendDataStateData(
+        return new ParquetAppendDataStateData<>(
                 partitionGranularity,
                 rootFolder,
                 desc,
@@ -247,7 +248,7 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
     public Map<URLKeys, String> urlOptions() {
 
         if (compressionCodecName.equals(CompressionCodecName.ZSTD)) {
-            Map<URLKeys, String> map = new HashMap<>();
+            Map<URLKeys, String> map = new EnumMap<>(URLKeys.class);
             map.put(URLKeys.COMPRESS, compressionCodecName.name());
             updateMap(URLKeys.ZSTD_BUFFER_POOL, ZSTD_BUFFER_POOL_ENABLED, parquetReadOptions, map, "false");
             updateMap(URLKeys.ZSTD_LEVEL, ZSTD_LEVEL, parquetReadOptions, map, "3");

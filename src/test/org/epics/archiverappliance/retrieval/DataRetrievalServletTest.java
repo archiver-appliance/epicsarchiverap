@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
+import static org.epics.archiverappliance.retrieval.TypeInfoUtil.updateTypeInfo;
+
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
@@ -38,8 +40,6 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
-
-import static org.epics.archiverappliance.retrieval.TypeInfoUtil.updateTypeInfo;
 
 /**
  * Test the simple data retrieval case.

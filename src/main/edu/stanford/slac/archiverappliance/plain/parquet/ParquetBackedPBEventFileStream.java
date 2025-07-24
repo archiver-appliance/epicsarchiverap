@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.parquet.filter2.compat.FilterCompat;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
 import org.apache.parquet.hadoop.ParquetReader;
+import org.apache.parquet.io.LocalInputFile;
 import org.apache.parquet.proto.ProtoParquetReader;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.BasicContext;
@@ -106,14 +107,14 @@ public class ParquetBackedPBEventFileStream implements ETLParquetFilesStream, Re
     @Override
     public ParquetInfo getFirstFileInfo() {
         if (firstFileInfo == null) {
-            this.firstFileInfo = fetchFileInfo(paths.get(0));
+            this.firstFileInfo = fetchFileInfo(paths.getFirst());
         }
         return this.firstFileInfo;
     }
 
     private ParquetInfo getLastFileInfo() {
         if (lastFileInfo == null) {
-            this.lastFileInfo = fetchFileInfo(paths.get(paths.size() - 1));
+            this.lastFileInfo = fetchFileInfo(paths.getLast());
         }
         return this.lastFileInfo;
     }
@@ -145,8 +146,7 @@ public class ParquetBackedPBEventFileStream implements ETLParquetFilesStream, Re
 
     @Override
     public Iterator<Event> iterator() {
-        var hadoopPaths = paths.stream().map(p -> new org.apache.hadoop.fs.Path(p.toUri()));
-        var builders = hadoopPaths.map(ProtoParquetReader::builder);
+        var builders = paths.stream().map(LocalInputFile::new).map(ProtoParquetReader::builder);
         if (this.startTime != null && this.endTime != null) {
             YearSecondTimestamp startYst = TimeUtils.convertToYearSecondTimestamp(startTime);
             YearSecondTimestamp endYst = TimeUtils.convertToYearSecondTimestamp(endTime);

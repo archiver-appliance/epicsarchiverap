@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.config;
 
+import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.logging.log4j.LogManager;
@@ -95,7 +96,10 @@ public class ConfigServiceForTests extends DefaultConfigService {
         this.webInfClassesFolder = WebInfClassesFolder;
         configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
 
-        HazelcastInstance hzinstance = Hazelcast.newHazelcastInstance();
+        var hazelConfig = new XmlConfigBuilder().build();
+        hazelConfig.setProperty("hazelcast.socket.bind.any", "false");
+        HazelcastInstance hzinstance = Hazelcast.newHazelcastInstance(hazelConfig);
+
         pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
         namedFlags = hzinstance.getMap("namedflags");
         typeInfos = hzinstance.getMap(TYPEINFO);

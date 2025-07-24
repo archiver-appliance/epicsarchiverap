@@ -15,7 +15,6 @@ import java.io.IOException;
 /**
  * A Parquet writer for EPICS Archiver Appliance data.
  *
- * @param <T> The type of EPICSMessage to write.
  * @author Sky Brewer
  */
 public class EpicsParquetWriter extends ParquetWriter<Message> {
@@ -43,7 +42,6 @@ public class EpicsParquetWriter extends ParquetWriter<Message> {
      * The builder for {@link EpicsParquetWriter}.
      *
      * @param file The file to write to.
-     * @param <T>  The type of EPICSMessage to write.
      * @return The builder.
      */
     public static EpicsParquetWriter.Builder builder(OutputFile file) {

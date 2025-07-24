@@ -356,7 +356,7 @@ public class GetDataAtTime {
         // Go thru the stores in reverse order...
         try {
             // Very important we make a copy of the datastores here...
-            List<String> datastores = new ArrayList<String>(Arrays.asList(typeInfo.getDataStores()));
+            List<String> datastores = Arrays.asList(typeInfo.getDataStores());
             for (String store : datastores) {
                 StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
                 // Check to see if there is a named flag that turns off this data source.

@@ -70,17 +70,17 @@ public class ETLPostProcessorTest {
 
     private static int countAndValidateEvents(List<Callable<EventStream>> callables, String pvName) {
         int eventCount = 0;
-        long previousEventEpochSeconds = 0;
+        Instant previousEventTime = Instant.EPOCH;
         try (EventStream stream = new CurrentThreadWorkerEventStream(pvName, callables)) {
             for (Event e : stream) {
-                long currentEpochSeconds = e.getEpochSeconds();
+                Instant currentEpochSeconds = e.getEventTimeStamp();
                 Assertions.assertTrue(
-                        currentEpochSeconds > previousEventEpochSeconds,
+                        currentEpochSeconds.isAfter(previousEventTime),
                         "Timestamps are not sequential current = "
-                                + TimeUtils.convertToHumanReadableString(currentEpochSeconds)
+                                + e.getEventTimeStamp()
                                 + " previous = "
-                                + TimeUtils.convertToHumanReadableString(previousEventEpochSeconds));
-                previousEventEpochSeconds = currentEpochSeconds;
+                                + previousEventTime);
+                previousEventTime = currentEpochSeconds;
                 eventCount++;
             }
         } catch (IOException e) {

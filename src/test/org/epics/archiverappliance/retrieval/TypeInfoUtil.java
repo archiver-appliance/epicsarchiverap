@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.retrieval;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -21,8 +23,6 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 
 public class TypeInfoUtil {
     private static final String ltsFolder = System.getenv("ARCHAPPL_LONG_TERM_FOLDER");
