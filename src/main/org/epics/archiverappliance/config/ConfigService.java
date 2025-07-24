@@ -626,7 +626,7 @@ public interface ConfigService {
             "org.epics.archiverappliance.config.NamedFlags.readFromFile";
 
     /**
-     * Named flags are used to control various process in the appliance; for example, the ETL process in a PlainPBStoragePlugin
+     * Named flags are used to control various process in the appliance; for example, the ETL process in a PlainStoragePlugin
      * Named flags are not persistent; each time the server starts up, all the named flags are set to false
      * You can optionally load values for named flags from a file by specifying the ARCHAPPL_NAMEDFLAGS_PROPERTIES_FILE_PROPERTY property in archappl.properties.
      * This method gets the value of the specified named flag.

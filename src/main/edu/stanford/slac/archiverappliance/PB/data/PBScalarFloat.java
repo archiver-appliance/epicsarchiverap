@@ -110,6 +110,18 @@ public class PBScalarFloat implements DBRTimeEvent {
     }
 
     @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.ScalarFloat.class;
+    }
+
+    @Override
     public Event makeClone() {
         return new PBScalarFloat(this);
     }

@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorString.Builder;
@@ -44,6 +45,12 @@ public class PBVectorString implements DBRTimeEvent {
 
     public PBVectorString(short year, ByteArray bar) {
         this.bar = bar;
+        this.year = year;
+    }
+
+    public PBVectorString(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.VectorString) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         this.year = year;
     }
 
@@ -111,6 +118,18 @@ public class PBVectorString implements DBRTimeEvent {
     }
 
     @Override
+    public Message getMessage() {
+
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getMessageClass() {
+        return EPICSEvent.VectorString.class;
+    }
+
+    @Override
     public Event makeClone() {
         return new PBVectorString(this);
     }
@@ -146,29 +165,6 @@ public class PBVectorString implements DBRTimeEvent {
     }
 
     @Override
-    public int getSeverity() {
-        unmarshallEventIfNull();
-        return dbevent.getSeverity();
-    }
-
-    @Override
-    public int getRepeatCount() {
-        unmarshallEventIfNull();
-        return dbevent.getRepeatcount();
-    }
-
-    @Override
-    public void setRepeatCount(int repeatCount) {
-        unmarshallEventIfNull();
-        dbevent = EPICSEvent.VectorString.newBuilder()
-                .mergeFrom(dbevent)
-                .setRepeatcount(repeatCount)
-                .build();
-        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
-        return;
-    }
-
-    @Override
     public void setStatus(int status) {
         unmarshallEventIfNull();
         if (status != 0) {
@@ -184,6 +180,12 @@ public class PBVectorString implements DBRTimeEvent {
     }
 
     @Override
+    public int getSeverity() {
+        unmarshallEventIfNull();
+        return dbevent.getSeverity();
+    }
+
+    @Override
     public void setSeverity(int severity) {
         unmarshallEventIfNull();
         if (severity != 0) {
@@ -194,6 +196,23 @@ public class PBVectorString implements DBRTimeEvent {
         } else {
             dbevent = EPICSEvent.VectorString.newBuilder().mergeFrom(dbevent).build();
         }
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        return;
+    }
+
+    @Override
+    public int getRepeatCount() {
+        unmarshallEventIfNull();
+        return dbevent.getRepeatcount();
+    }
+
+    @Override
+    public void setRepeatCount(int repeatCount) {
+        unmarshallEventIfNull();
+        dbevent = EPICSEvent.VectorString.newBuilder()
+                .mergeFrom(dbevent)
+                .setRepeatcount(repeatCount)
+                .build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         return;
     }

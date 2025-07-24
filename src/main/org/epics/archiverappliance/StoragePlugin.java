@@ -25,7 +25,7 @@ public interface StoragePlugin extends Reader, Writer {
      * This is principally used in capacity planning/load balancing to identify the storage area for the PV.
      * We should make sure that storage's with similar lifetimes have the same name in all the appliances.
      * The name is also used to identify the storage in the storage report.
-     * For example, the PlainPBStoragePlugin takes a name parameter and we should use something like STS as the identity for the short term store in all the appliances.
+     * For example, the PlainStoragePlugin takes a name parameter and we should use something like STS as the identity for the short term store in all the appliances.
      * @return name
      */
     public String getName();

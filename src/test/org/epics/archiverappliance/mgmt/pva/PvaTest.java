@@ -26,7 +26,7 @@ import java.time.ZonedDateTime;
 @Suite.SuiteClasses({
     PvaSuiteTstGetAll.class,
     PvaSuiteTstMgmtServiceStartup.class,
-    PvaSuiteTstGetApplianceInfo.class,
+    PvaSuiteTstGetApplianceInfoTest.class,
     PvaSuiteTstArchivePV.class
 })
 public class PvaTest {
