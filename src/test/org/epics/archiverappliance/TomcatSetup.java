@@ -340,6 +340,13 @@ public class TomcatSetup {
         overrideEnvWithSystemProperty(environment, "ARCHAPPL_LONG_TERM_FOLDER");
         overrideEnvWithSystemProperty(environment, "ARCHAPPL_POLICIES");
 
+        for (Object pkey : System.getProperties().keySet()) {
+            String key = (String) pkey;
+            if (key.startsWith("org.epics.archiverappliance")) {
+                environment.put(key, (String) System.getProperties().get(key));
+            }
+        }
+
         if (logger.isDebugEnabled()) {
             for (String key : environment.keySet()) {
                 logger.debug("Env " + key + "=" + environment.get(key));

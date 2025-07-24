@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl.common;
 
+import com.google.common.eventbus.Subscribe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -19,12 +20,9 @@ import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
 
-import com.google.common.eventbus.Subscribe;
-
 import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -53,7 +51,9 @@ public final class PBThreeTierETLPVLookup {
      * For now, a threadpool of size 1 for the scheduleWorker should be adequate; not much is done in this thread.
      * Most of the work happens in the theWorker virtual thread
      */
-    private ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1, r -> new Thread(r, "ETL main scheduler thread "));
+    private ScheduledThreadPoolExecutor scheduleWorker =
+            new ScheduledThreadPoolExecutor(1, r -> new Thread(r, "ETL main scheduler thread "));
+
     private ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor();
 
     /*
@@ -84,19 +84,29 @@ public final class PBThreeTierETLPVLookup {
 
     @Subscribe
     public void pvTypeInfoChanged(PVTypeInfoEvent event) {
-        logger.debug("Received PVTypeInfo changed event for {}", event.getPvName());
         String pvName = event.getPvName();
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-        if(event.getChangeType() == ChangeType.TYPEINFO_DELETED || typeInfo.isPaused() || !typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
-            logger.debug("Deleting ETL jobs for {} based on PVTypeInfo change", pvName);
+        logger.debug(
+                "Received PVTypeInfo changed event for {} ChangeType: {} Paused: {} Appliance: {}",
+                pvName,
+                event.getChangeType(),
+                typeInfo.isPaused(),
+                typeInfo.getApplianceIdentity());
+        if (event.getChangeType() == ChangeType.TYPEINFO_DELETED
+                || typeInfo.isPaused()
+                || !typeInfo.getApplianceIdentity()
+                        .equals(configService.getMyApplianceInfo().getIdentity())) {
+            logger.debug("Deleting ETL jobs for {} based on PVTypeInfo change ", pvName);
             deleteETLJobs(pvName);
-        } else if(!typeInfo.isPaused() && typeInfo.getApplianceIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
+        } else if (!typeInfo.isPaused()
+                && typeInfo.getApplianceIdentity()
+                        .equals(configService.getMyApplianceInfo().getIdentity())) {
             logger.debug("Adding ETL jobs for {} based on PVTypeInfo change", pvName);
             addETLJobs(pvName, typeInfo);
         }
     }
 
-    private void startETLJobsOnStartup() { 
+    private void startETLJobsOnStartup() {
         try {
             Set<String> pVsForThisAppliance = configService.getPVsForThisAppliance();
             if (pVsForThisAppliance != null) {
@@ -117,7 +127,6 @@ public final class PBThreeTierETLPVLookup {
             configlogger.error("Excepting syncing ETL jobs with config service", t);
         }
     }
-
 
     /**
      * Add jobs for each of the ETL lifetime transitions.
@@ -170,10 +179,10 @@ public final class PBThreeTierETLPVLookup {
             // We schedule the ETLStages which then runs each ETLStage in a virtual thread.
             if (!scheduleWorker.isShutdown()) {
                 ScheduledFuture<?> cancellingFuture = scheduleWorker.scheduleWithFixedDelay(
-                    etlStages, 
-                    etlStages.getInitialDelay(), 
-                    etlStages.getMinDelaybetweenETLJobs(), 
-                    TimeUnit.SECONDS);
+                        etlStages,
+                        etlStages.getInitialDelay(),
+                        etlStages.getMinDelaybetweenETLJobs(),
+                        TimeUnit.SECONDS);
                 etlStages.setCancellingFuture(cancellingFuture);
                 logger.debug("Scheduled all ETL Stages for " + pvName
                         + " with initial delay of " + etlStages.getInitialDelay() + " and between job delay of "
@@ -217,7 +226,7 @@ public final class PBThreeTierETLPVLookup {
      * @throws IOException  &emsp;
      */
     public Event getLatestEventFromDataStores(String pvName) throws IOException {
-        if(this.etlStagesForPVs.containsKey(pvName)) {
+        if (this.etlStagesForPVs.containsKey(pvName)) {
             return this.getETLStages(pvName).getLatestEventFromDataStores();
         }
         return null;
@@ -234,12 +243,24 @@ public final class PBThreeTierETLPVLookup {
         public void run() {
             logger.debug("Shutting down ETL threads.");
             String message = "Exception shutting down ETL";
-            try { theLookup.scheduleWorker.shutdown(); } catch (Throwable t) { logger.error(message, t); }
+            try {
+                theLookup.scheduleWorker.shutdown();
+            } catch (Throwable t) {
+                logger.error(message, t);
+            }
             LinkedHashSet<String> pvNames = new LinkedHashSet<String>(theLookup.etlStagesForPVs.keySet());
-            for(String pvName: pvNames) {
-                try { theLookup.deleteETLJobs(pvName); } catch (Throwable t) { logger.error(message, t); }
-            }            
-            try { theLookup.theWorker.shutdown(); } catch (Throwable t) { logger.error(message, t); }
+            for (String pvName : pvNames) {
+                try {
+                    theLookup.deleteETLJobs(pvName);
+                } catch (Throwable t) {
+                    logger.error(message, t);
+                }
+            }
+            try {
+                theLookup.theWorker.shutdown();
+            } catch (Throwable t) {
+                logger.error(message, t);
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.etl.common;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.reports.Details;
 import org.epics.archiverappliance.config.ConfigService;
@@ -10,6 +12,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ETLStageDetails implements Details {
+    private static final Logger logger = LogManager.getLogger();
 
     private final String pvName;
 
@@ -29,23 +32,23 @@ public class ETLStageDetails implements Details {
         LinkedList<Map<String, String>> statuses = new LinkedList<Map<String, String>>();
         statuses.add(metricDetail("Name (from ETL)", pvName));
         ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
-        if(etlStages == null){
+        if (etlStages == null) {
+            logger.info("Cannot find ETLStages for pv {}", pvName);
             return statuses;
         }
 
         statuses.add(metricDetail(
-            "ETL Stages will be triggered at",
-            TimeUtils.convertToHumanReadableString(
-                TimeUtils.now().plusSeconds(etlStages.getCancellingFuture().getDelay(TimeUnit.SECONDS)))));
+                "ETL Stages will be triggered at",
+                TimeUtils.convertToHumanReadableString(TimeUtils.now()
+                        .plusSeconds(etlStages.getCancellingFuture().getDelay(TimeUnit.SECONDS)))));
 
         for (ETLStage etlStage : etlStages.getStages()) {
             statuses.add(metricDetail(
-                "<b>ETL " + etlStage.getLifetimeorder() + "</b>",
-                "<b>" + etlStage.getETLSource().getName()
-                + " &raquo; " 
-                + etlStage.getETLDest().getName()
-                + "</b>"
-                ));
+                    "<b>ETL " + etlStage.getLifetimeorder() + "</b>",
+                    "<b>" + etlStage.getETLSource().getName()
+                            + " &raquo; "
+                            + etlStage.getETLDest().getName()
+                            + "</b>"));
             statuses.add(metricDetail(
                     "ETL " + etlStage.getLifetimeorder() + " partition granularity of source",
                     etlStage.getETLSource().getPartitionGranularity().toString()));
@@ -65,8 +68,7 @@ public class ETLStageDetails implements Details {
             }
             statuses.add(metricDetail(
                     "ETL " + etlStage.getLifetimeorder() + " next job runs at",
-                    TimeUtils.convertToHumanReadableString(
-                        etlStage.getNextETLStart())));
+                    TimeUtils.convertToHumanReadableString(etlStage.getNextETLStart())));
             if (etlStage.getNumberofTimesWeETLed() != 0) {
                 statuses.add(metricDetail(
                         "ETL " + etlStage.getLifetimeorder() + " total time performing ETL(ms)",
@@ -117,8 +119,7 @@ public class ETLStageDetails implements Details {
                         "ETL Total time spent by markForDeletion() in ETL(" + etlStage.getLifetimeorder() + ") (ms)",
                         Long.toString(etlStage.getTime4markForDeletion())));
                 statuses.add(metricDetail(
-                        "ETL Total time spent by runPostProcessors() in ETL(" + etlStage.getLifetimeorder()
-                                + ") (ms)",
+                        "ETL Total time spent by runPostProcessors() in ETL(" + etlStage.getLifetimeorder() + ") (ms)",
                         Long.toString(etlStage.getTime4runPostProcessors())));
                 statuses.add(metricDetail(
                         "ETL Total time spent by executePostETLTasks() in ETL(" + etlStage.getLifetimeorder()

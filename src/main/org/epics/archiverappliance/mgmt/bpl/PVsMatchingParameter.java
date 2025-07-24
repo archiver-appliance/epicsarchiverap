@@ -195,43 +195,42 @@ public class PVsMatchingParameter {
     public static LinkedList<String> getPVNamesFromPostBody(HttpServletRequest req) throws IOException {
         LinkedList<String> pvNames = new LinkedList<String>();
         String contentType = req.getContentType();
-        if (contentType != null) {
-            switch (contentType) {
-                case MimeTypeConstants.APPLICATION_JSON:
-                    try (LineNumberReader lineReader = new LineNumberReader(
-                            new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
-                        JSONParser parser = new JSONParser();
-                        for (Object pvName : (JSONArray) parser.parse(lineReader)) {
-                            if (pvName instanceof JSONObject) {
-                                pvNames.add((String) ((JSONObject) pvName).get("pv"));
-                            } else {
-                                pvNames.add((String) pvName);
-                            }
-                        }
-                    } catch (ParseException ex) {
-                        throw new IOException(ex);
-                    }
-                    return pvNames;
-                case MimeTypeConstants.APPLICATION_FORM_URLENCODED:
-                    String[] pvs = req.getParameter("pv").split(",");
-                    pvNames.addAll(Arrays.asList(pvs));
-                    return pvNames;
-                case MimeTypeConstants.TEXT_PLAIN:
-                default:
-                    // For the default we assume text/plain which is a list of PV's separated by unix newlines
-                    try (LineNumberReader lineReader = new LineNumberReader(
-                            new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
-                        String pv = lineReader.readLine();
-                        logger.debug("Parsed pv " + pv);
-                        while (pv != null) {
-                            pvNames.add(pv);
-                            pv = lineReader.readLine();
-                        }
-                    }
-                    return pvNames;
-            }
+        if (contentType == null) {
+            contentType = MimeTypeConstants.APPLICATION_FORM_URLENCODED;
         }
-
-        return pvNames;
+        switch (contentType) {
+            case MimeTypeConstants.APPLICATION_JSON:
+                try (LineNumberReader lineReader =
+                        new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
+                    JSONParser parser = new JSONParser();
+                    for (Object pvName : (JSONArray) parser.parse(lineReader)) {
+                        if (pvName instanceof JSONObject) {
+                            pvNames.add((String) ((JSONObject) pvName).get("pv"));
+                        } else {
+                            pvNames.add((String) pvName);
+                        }
+                    }
+                } catch (ParseException ex) {
+                    throw new IOException(ex);
+                }
+                return pvNames;
+            case MimeTypeConstants.TEXT_PLAIN:
+                // For the default we assume text/plain which is a list of PV's separated by unix newlines
+                try (LineNumberReader lineReader =
+                        new LineNumberReader(new InputStreamReader(new BufferedInputStream(req.getInputStream())))) {
+                    String pv = lineReader.readLine();
+                    logger.debug("Parsed pv " + pv);
+                    while (pv != null) {
+                        pvNames.add(pv);
+                        pv = lineReader.readLine();
+                    }
+                }
+                return pvNames;
+            case MimeTypeConstants.APPLICATION_FORM_URLENCODED:
+            default:
+                String[] pvs = req.getParameter("pv").split(",");
+                pvNames.addAll(Arrays.asList(pvs));
+                return pvNames;
+        }
     }
 }

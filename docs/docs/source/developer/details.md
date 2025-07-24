@@ -9,6 +9,7 @@ Here are the main features.
 - Ability to cluster appliances and to scale by adding appliances to
   the cluster.
   - Limited support for [redundancy](../sysadmin/redundancy).
+  - Ability to dynamically [re-assign](../sysadmin/reassign) PVs to appliances.
 - Multiple stages and an inbuilt process to move data between the
   stages.
   - This supports the ability to use faster storage (which is
