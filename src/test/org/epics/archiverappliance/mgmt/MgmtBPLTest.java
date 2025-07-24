@@ -64,9 +64,10 @@ class MgmtBPLTest {
         @SuppressWarnings("unchecked")
         Map<String, String> status = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
                         MGMT_URL + "getPVStatus", Map.of("pv", pvNameToArchive))
-                .get(0);
-        Assertions.assertTrue(
-                "10.0".equals(status.get("samplingPeriod")),
+                .getFirst();
+        Assertions.assertEquals(
+                "10.0",
+                status.get("samplingPeriod"),
                 "Expecting sampling rate to be 10.0; instead it is " + status.get("samplingPeriod"));
     }
 
@@ -118,7 +119,7 @@ class MgmtBPLTest {
         SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 4.0);
         Thread.sleep(2 * 1000);
         logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-        Thread.sleep(2 * 60 * 1000);
+        Thread.sleep(2 * 10 * 1000);
 
         // Test retrieval of data using the real name and the aliased name
         testRetrievalCount(prefix + "UnitTestNoNamingConvention:sine", true);
@@ -139,9 +140,9 @@ class MgmtBPLTest {
         PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, MGMT_URL, 15);
         JSONArray statuses = GetUrlContent.getURLContentAsJSONArray(MGMT_URL + "/getPVStatus?pv=" + pvNameToArchive);
         Assertions.assertNotNull(statuses);
-        Assertions.assertTrue(statuses.size() > 0);
+        Assertions.assertFalse(statuses.isEmpty());
         @SuppressWarnings("unchecked")
-        Map<String, String> status = (Map<String, String>) statuses.get(0);
+        Map<String, String> status = (Map<String, String>) statuses.getFirst();
         Assertions.assertEquals(
                 status.getOrDefault("pvName", ""),
                 pvNameToArchive,
@@ -162,12 +163,12 @@ class MgmtBPLTest {
         Map<String, String> chst = (Map<String, String>) GetUrlContent.getURLContentWithQueryParametersAsJSONObject(
                 MGMT_URL + "changeArchivalParameters",
                 Map.of("pv", pvNameToArchive, "samplingperiod", "11")); // A sample every 11 seconds
-        Assertions.assertEquals(chst.get("status"), "ok");
+        Assertions.assertEquals("ok", chst.get("status"));
         @SuppressWarnings("unchecked")
         Map<String, String> pvst = (Map<String, String>) (GetUrlContent.getURLContentWithQueryParametersAsJSONArray(
                         MGMT_URL + "getPVStatus", Map.of("pv", pvNameToArchive))
                 .getFirst());
-        Assertions.assertEquals(pvst.get("samplingPeriod"), "11.0");
+        Assertions.assertEquals("11.0", pvst.get("samplingPeriod"));
     }
 
     @Test
@@ -188,7 +189,7 @@ class MgmtBPLTest {
         SIOCSetup.caput(prefix + "UnitTestNoNamingConvention:sine.HIHI", 4.0);
         Thread.sleep(2 * 1000);
         logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-        Thread.sleep(2 * 60 * 1000);
+        Thread.sleep(2 * 10 * 1000);
 
         // Test retrieval of data using the real name and the aliased name
         testRetrievalCount(prefix + "UnitTestNoNamingConvention:sine", true);

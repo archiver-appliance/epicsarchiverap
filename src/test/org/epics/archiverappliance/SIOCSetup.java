@@ -61,6 +61,7 @@ public class SIOCSetup {
         if (!watchedProcess.isAlive()) {
             return;
         }
+        logger.info("Stopping SIOC with prefix " + prefix);
         PrintWriter writer = new PrintWriter(watchedProcess.getOutputStream());
         writer.println("exit");
         writer.flush();
