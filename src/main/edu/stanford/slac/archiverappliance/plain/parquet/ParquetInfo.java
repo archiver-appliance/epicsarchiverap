@@ -34,6 +34,7 @@ import static org.apache.parquet.filter2.predicate.FilterApi.ltEq;
 import static org.apache.parquet.filter2.predicate.FilterApi.or;
 
 public class ParquetInfo extends FileInfo {
+    static final ParquetReadOptions baseOptions = (new ParquetReadOptions.Builder()).build();
     static final String PV_NAME = "pvName";
     static final String YEAR = "year";
     static final String TYPE = "ArchDBRType";
@@ -70,7 +71,7 @@ public class ParquetInfo extends FileInfo {
     }
 
     public ParquetInfo(Path pvPath) throws IOException {
-        this(pvPath, (new ParquetReadOptions.Builder()).build());
+        this(pvPath, baseOptions);
     }
 
     /**
