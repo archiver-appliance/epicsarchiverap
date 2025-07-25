@@ -14,6 +14,7 @@ import org.epics.archiverappliance.common.BasicDispatcher;
 import org.epics.archiverappliance.common.GetVersion;
 import org.epics.archiverappliance.common.ProcessMetricsReport;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.etl.bpl.ChangeStore;
 import org.epics.archiverappliance.etl.bpl.ConsolidatePBFilesForOnePV;
 import org.epics.archiverappliance.etl.bpl.DeletePV;
 import org.epics.archiverappliance.etl.bpl.GetLastKnownEventTimeStamp;
@@ -57,6 +58,7 @@ public class BPLServlet extends HttpServlet {
         getActions.put("/deletePV", DeletePV.class);
         getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
         getActions.put("/getVersion", GetVersion.class);
+        getActions.put("/changeStore", ChangeStore.class);
     }
 
     @Override
