@@ -32,7 +32,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -367,6 +366,10 @@ public class GetDataAtTime {
             // up the value
             // After that, we collect all the metadata
             // We stop after a days worth of iteration.
+            // logger.debug("Testing ev at {} and comparing with {}",
+            //     TimeUtils.convertToHumanReadableString(dbrEvent.getEventTimeStamp()),
+            //     TimeUtils.convertToHumanReadableString(atTime)
+            // );
             if (dbrEvent.getEventTimeStamp().isBefore(atTime)
                     || dbrEvent.getEventTimeStamp().equals(atTime)) {
                 if (!pickedUpValue) {
@@ -424,7 +427,6 @@ public class GetDataAtTime {
         try {
             // Very important we make a copy of the datastores here...
             List<String> datastores = new ArrayList<String>(Arrays.asList(typeInfo.getDataStores()));
-            Collections.reverse(datastores);
             for (String store : datastores) {
                 StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
                 // Check to see if there is a named flag that turns off this data source.
@@ -434,6 +436,7 @@ public class GetDataAtTime {
                             + namedFlagForSkippingDataSource + " is set");
                     continue;
                 }
+                logger.debug("Looking in store {}", storagePlugin.getName());
 
                 try (BasicContext context = new BasicContext()) {
                     if (storagePlugin instanceof BiDirectionalIterable) {
