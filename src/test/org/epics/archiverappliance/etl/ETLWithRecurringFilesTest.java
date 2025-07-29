@@ -8,9 +8,9 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;

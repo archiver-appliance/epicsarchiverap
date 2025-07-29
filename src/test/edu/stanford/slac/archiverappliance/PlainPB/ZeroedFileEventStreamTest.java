@@ -1,5 +1,10 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
+import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +47,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Random;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileSuffix;
+import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileSuffix;
 
 /**
  * Test the PlainPB Event stream when we have unexpected garbage in the data.

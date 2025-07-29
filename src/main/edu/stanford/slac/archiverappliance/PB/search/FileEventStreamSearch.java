@@ -8,7 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.search;
 
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent;
+import edu.stanford.slac.archiverappliance.plain.ComparePBEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
@@ -95,7 +95,7 @@ public class FileEventStreamSearch {
      * @param dbrtype ArchDBRType the enumeration type
      * @param yearSecondTimestamp Search seconds into year
      * @throws IOException  &emsp;
-     * @see edu.stanford.slac.archiverappliance.PlainPB.ComparePBEvent
+     * @see ComparePBEvent
      */
     public boolean seekToTime(ArchDBRTypes dbrtype, YearSecondTimestamp yearSecondTimestamp) throws IOException {
         ComparePBEvent comparefunction = new ComparePBEvent(dbrtype, yearSecondTimestamp);

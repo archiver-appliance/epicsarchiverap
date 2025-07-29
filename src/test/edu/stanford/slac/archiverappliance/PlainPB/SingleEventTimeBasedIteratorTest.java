@@ -1,5 +1,9 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -22,7 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Path;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.

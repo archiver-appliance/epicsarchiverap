@@ -1,7 +1,11 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility.StartEndTimeFromName;
+import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility.StartEndTimeFromName;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -19,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.time.Instant;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Tests that the PB plugin appendData stores data in clean partitions.

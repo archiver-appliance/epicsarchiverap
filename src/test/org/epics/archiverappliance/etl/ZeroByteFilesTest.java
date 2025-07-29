@@ -7,10 +7,10 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
-import edu.stanford.slac.archiverappliance.PlainPB.utils.ValidatePBFile;
+import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

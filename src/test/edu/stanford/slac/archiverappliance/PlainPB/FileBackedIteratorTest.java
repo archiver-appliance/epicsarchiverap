@@ -1,5 +1,9 @@
 package edu.stanford.slac.archiverappliance.PlainPB;
 
+import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStreamPositionBasedIterator;
+import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
+import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,8 +38,8 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileSuffix;
+import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileSuffix;
 
 /**
  * The FileBackedPBEventStream supports two iterators - one is a file-position based one and the other is a time based one.

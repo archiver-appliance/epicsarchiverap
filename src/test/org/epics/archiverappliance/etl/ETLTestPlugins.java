@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 
 import java.util.List;
 

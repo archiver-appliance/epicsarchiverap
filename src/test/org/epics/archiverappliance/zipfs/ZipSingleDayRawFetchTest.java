@@ -1,8 +1,8 @@
 package org.epics.archiverappliance.zipfs;
 
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

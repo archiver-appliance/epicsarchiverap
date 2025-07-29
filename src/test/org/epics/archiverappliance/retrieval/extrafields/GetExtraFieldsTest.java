@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.retrieval.extrafields;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;

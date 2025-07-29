@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PlainPB.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
