@@ -34,7 +34,7 @@ public class GetETLReadyFiles {
     public static void main(String[] args) throws Exception {
         if (args.length < 3) {
             System.err.println(
-                    "Usage: java edu.stanford.slac.archiverappliance.PlainPB.utils.GetETLReadyFiles <PVName> <FolderName> <Granularity>");
+                    "Usage: java edu.stanford.slac.archiverappliance.plain.utils.GetETLReadyFiles <PVName> <FolderName> <Granularity>");
             return;
         }
         ConfigService configService = new ConfigServiceForTests(-1);

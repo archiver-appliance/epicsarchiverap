@@ -9,5 +9,5 @@ then
   exit
 fi
 
-${SCRIPTS_DIR}/run.sh edu.stanford.slac.archiverappliance.PlainPB.utils.PrintTimes $@
+${SCRIPTS_DIR}/run.sh edu.stanford.slac.archiverappliance.plain.utils.PrintTimes $@
 
