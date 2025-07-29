@@ -19,7 +19,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Utility to check what files are ready for ETL for a given PV, folder and partition granularity.

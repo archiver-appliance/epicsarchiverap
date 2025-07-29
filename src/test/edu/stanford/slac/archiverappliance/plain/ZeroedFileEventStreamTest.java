@@ -44,8 +44,8 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Random;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileSuffix;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
 
 /**
  * Test the PlainPB Event stream when we have unexpected garbage in the data.
@@ -64,7 +64,7 @@ public class ZeroedFileEventStreamTest {
     String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZeroedFileEventStreamTest/";
     String pvNamePrefix = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ZeroedFileEventStreamTest";
 
-    private static int generateFreshData(PlainPBStoragePlugin pbplugin4data, String pvName) throws Exception {
+    private static int generateFreshData(PlainStoragePlugin pbplugin4data, String pvName) throws Exception {
         File rootFolder = new File(pbplugin4data.getRootFolder());
         if (rootFolder.exists()) {
             try {
@@ -105,7 +105,7 @@ public class ZeroedFileEventStreamTest {
     @Test
     public void testBadFooters() throws Exception {
         logger.info("Testing garbage in the last record");
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_YEAR",
                 configService);
@@ -176,9 +176,9 @@ public class ZeroedFileEventStreamTest {
      */
     @Test
     public void testBadFootersInSrcETL() throws Exception {
-        PlainPBStoragePlugin srcPlugin = null;
+        PlainStoragePlugin srcPlugin = null;
         try {
-            srcPlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+            srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                     pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
                             + "&partitionGranularity=PARTITION_MONTH",
                     configService);
@@ -308,9 +308,9 @@ public class ZeroedFileEventStreamTest {
     public void testBadFootersInDestETL() throws Exception {
         String pvName = pvNamePrefix + "testBadFootersInDestETL";
 
-        PlainPBStoragePlugin destPlugin = null;
+        PlainStoragePlugin destPlugin = null;
         try {
-            destPlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+            destPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                     pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName + "Dest"
                             + "&partitionGranularity=PARTITION_YEAR",
                     configService);
@@ -329,7 +329,7 @@ public class ZeroedFileEventStreamTest {
             }
         }
 
-        PlainPBStoragePlugin srcPlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin srcPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_MONTH",
                 configService);
@@ -506,7 +506,7 @@ public class ZeroedFileEventStreamTest {
     @Test
     public void testBadFootersRetrieval() throws Exception {
         String pvName = pvNamePrefix + "testBadFootersRetrieval";
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_YEAR",
                 configService);
@@ -575,7 +575,7 @@ public class ZeroedFileEventStreamTest {
      */
     @Test
     public void testZeroedDataRetrieval() throws Exception {
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=STS&rootFolder=" + rootFolderName
                         + "&partitionGranularity=PARTITION_YEAR",
                 configService);

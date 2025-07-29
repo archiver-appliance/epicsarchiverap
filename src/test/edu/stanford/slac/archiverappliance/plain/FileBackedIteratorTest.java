@@ -36,8 +36,8 @@ import java.time.Instant;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileSuffix;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
 
 /**
  * The FileBackedPBEventStream supports two iterators - one is a file-position based one and the other is a time based one.
@@ -161,7 +161,7 @@ public class FileBackedIteratorTest {
 
     private static void generateData() throws IOException {
         logger.info("generate Data " + pbFileExtension + " to " + pbFilePath);
-        PlainPBStoragePlugin storagePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pbFileSuffix + "://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
                         + "&partitionGranularity=PARTITION_YEAR",
                 FileBackedIteratorTest.configService);

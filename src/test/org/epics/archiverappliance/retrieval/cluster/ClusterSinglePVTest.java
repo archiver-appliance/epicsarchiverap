@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -82,7 +82,7 @@ public class ClusterSinglePVTest {
      */
     @Test
     public void singlePvsAcrossCluster() throws Exception {
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
 
         ConfigService configService = new ConfigServiceForTests(-1);
 

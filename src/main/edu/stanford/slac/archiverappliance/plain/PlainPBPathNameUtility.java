@@ -41,7 +41,7 @@ public class PlainPBPathNameUtility {
     private static final Logger logger = LogManager.getLogger(PlainPBPathNameUtility.class);
 
     public static Path getPathNameForTime(
-            PlainPBStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
+        PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
             throws IOException {
         return getPathNameForTime(
                 plugin.getRootFolder(),
@@ -66,7 +66,7 @@ public class PlainPBPathNameUtility {
                 rootFolder,
                 pvName,
                 ts,
-                PlainPBStoragePlugin.pbFileExtension,
+                PlainStoragePlugin.pbFileExtension,
                 partitionGranularity,
                 false,
                 paths,
@@ -75,7 +75,7 @@ public class PlainPBPathNameUtility {
     }
 
     public static Path getSparsifiedPathNameForTime(
-            PlainPBStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
+        PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
             throws IOException {
         return getSparsifiedPathNameForTime(
                 plugin.getRootFolder(),
@@ -101,7 +101,7 @@ public class PlainPBPathNameUtility {
 
     /**
      * Given a parent folder, this method returns a list of all the paths with data that falls within the specified
-     * timeframe. We assume the pathnames follow the syntax used by the PlainPBStorage plugin. The alg for matching is
+     * timeframe. We assume the pathnames follow the syntax used by the {@link PlainStoragePlugin}. The alg for matching is
      * based on this
      * <pre>
      *       --------
@@ -515,7 +515,7 @@ public class PlainPBPathNameUtility {
     }
 
     /**
-     * The PlainPBStorage plugin has a naming scheme that provides much information. This class encapsulates the
+     * The {@link PlainStoragePlugin} has a naming scheme that provides much information. This class encapsulates the
      * potential start and end times of a particular chunk.
      */
     public static class StartEndTimeFromName {

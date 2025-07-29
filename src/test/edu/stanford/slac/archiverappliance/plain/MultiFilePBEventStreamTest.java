@@ -58,7 +58,7 @@ public class MultiFilePBEventStreamTest {
 
     @Test
     public void testMultiFileEventStream() throws Exception {
-        // We generate a years worth of data into a PlainPBStoragePlugin with different granularity.
+        // We generate a years worth of data into a PlainStoragePlugin with different granularity.
         // We then retrieve data and make sure that we get what we expect
         ConfigService configService = new ConfigServiceForTests(-1);
 
@@ -68,7 +68,7 @@ public class MultiFilePBEventStreamTest {
             String pvName = "MultiYear" + granularity.toString();
             String configURL = "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity="
                     + granularity.toString();
-            PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+            PlainStoragePlugin pbplugin = new PlainStoragePlugin();
             pbplugin.initialize(configURL, configService);
             short currentYear = TimeUtils.getCurrentYear();
             ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
@@ -101,7 +101,7 @@ public class MultiFilePBEventStreamTest {
                 long eventCount = 0;
                 for (Event e : result) {
                     long currEpochSeconds = e.getEpochSeconds();
-                    // The PlainPBStorage plugin will also yield the last event of the previous partition.
+                    // The PlainStorage plugin will also yield the last event of the previous partition.
                     // We skip checking that as part of this test
                     if (currEpochSeconds < (startEpochSeconds - 1)) continue;
                     Assertions.assertEquals(

@@ -10,7 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -92,7 +92,7 @@ public class ETLWithRecurringFilesTest {
         PBCommonSetup srcSetup = new PBCommonSetup();
         PBCommonSetup destSetup = new PBCommonSetup();
         etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
-        PlainPBStoragePlugin etlNewDest = new PlainPBStoragePlugin();
+        PlainStoragePlugin etlNewDest = new PlainStoragePlugin();
 
         srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
@@ -222,8 +222,8 @@ public class ETLWithRecurringFilesTest {
 
     private void checkDataValidity(
             String pvName,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest,
+            PlainStoragePlugin etlSrc,
+            PlainStoragePlugin etlDest,
             Instant start,
             int incrementSeconds,
             int eventsGenerated,

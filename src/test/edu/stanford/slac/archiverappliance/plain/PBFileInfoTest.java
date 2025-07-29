@@ -39,7 +39,7 @@ public class PBFileInfoTest {
 
     @Test
     public void testPBInfo() throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
         pBfile = PlainPBPathNameUtility.getPathNameForTime(

@@ -90,7 +90,7 @@ public class FileBackedPBEventStreamTest {
     }
 
     private static long createTestData() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
         short currentYear = TimeUtils.getCurrentYear();
         Instant start = TimeUtils.getStartOfYear(currentYear);
         Instant end = TimeUtils.getEndOfYear(currentYear);
@@ -102,8 +102,8 @@ public class FileBackedPBEventStreamTest {
         }
     }
 
-    private static PlainPBStoragePlugin getStoragePlugin() throws IOException {
-        return (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(storagePBPluginString, configService);
+    private static PlainStoragePlugin getStoragePlugin() throws IOException {
+        return (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(storagePBPluginString, configService);
     }
 
     private static Stream<Arguments> provideTimeBasedIterator() {
@@ -134,7 +134,7 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void testCompleteStream() throws Exception {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         try (BasicContext context = new BasicContext()) {
             long startMs = System.currentTimeMillis();
@@ -160,7 +160,7 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void testLocationBasedIterator() throws Exception {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(
@@ -204,7 +204,7 @@ public class FileBackedPBEventStreamTest {
     public void testTimeBasedIterator(boolean skipSearch, Instant start, Instant end, long expectedEventCount)
             throws IOException {
 
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(
                     storagePlugin,
@@ -238,7 +238,7 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void testLocationBasedEventBeforeTime() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(
@@ -286,7 +286,7 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void testDirectionalIteration() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         for (BiDirectionalIterable.IterationDirection direction : BiDirectionalIterable.IterationDirection.values()) {
             logger.info("Testing directional iteration {}", direction);
@@ -327,7 +327,7 @@ public class FileBackedPBEventStreamTest {
 
     private Instant getFirstSampleTSUsingIteration(
             Instant startAtTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
         Instant theInstant = null;
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(
@@ -384,7 +384,7 @@ public class FileBackedPBEventStreamTest {
 
     @Test
     public void makeSureWeGetTheLastEventInTheFile() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         try (BasicContext context = new BasicContext()) {
             Path path = PlainPBPathNameUtility.getPathNameForTime(
@@ -427,8 +427,8 @@ public class FileBackedPBEventStreamTest {
      */
     @Test
     public void testHighRateEndLocation() throws IOException {
-        PlainPBStoragePlugin highRatePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PlainPBStoragePlugin.pbFileSuffix + "://localhost?name=FileBackedPBEventStreamTest&rootFolder="
+        PlainStoragePlugin highRatePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                PlainStoragePlugin.pbFileSuffix + "://localhost?name=FileBackedPBEventStreamTest&rootFolder="
                         + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR",
                 configService);
         String highRatePVName =

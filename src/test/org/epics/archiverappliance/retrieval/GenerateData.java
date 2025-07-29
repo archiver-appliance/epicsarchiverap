@@ -9,7 +9,7 @@ package org.epics.archiverappliance.retrieval;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -57,7 +57,7 @@ public class GenerateData {
      */
     public static long generateSineForPV(
             String pvName, int phasediffindegrees, ArchDBRTypes type, Instant start, Instant end) throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         PBCommonSetup setup = new PBCommonSetup();
         setup.setUpRootFolder(storagePlugin);
         long numberOfEvents = 0;

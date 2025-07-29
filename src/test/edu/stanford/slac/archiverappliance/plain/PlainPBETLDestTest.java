@@ -26,7 +26,7 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * Tests the various methods needed for ETLDest as implemented by the PlainPBStorage plugin
+ * Tests the various methods needed for ETLDest as implemented by the PlainStorage plugin
  * @author mshankar
  *
  */
@@ -50,7 +50,7 @@ public class PlainPBETLDestTest {
 
     @Test
     public void testGetLastKnownEvent() throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         setup.setUpRootFolder(storagePlugin, "PVETLDestTests");
 
         long epochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();

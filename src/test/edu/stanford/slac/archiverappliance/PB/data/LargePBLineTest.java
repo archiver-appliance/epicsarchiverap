@@ -10,7 +10,7 @@ package edu.stanford.slac.archiverappliance.PB.data;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;
@@ -55,7 +55,7 @@ public class LargePBLineTest {
 
     @Test
     public void testLargeLines() throws Exception {
-        PlainPBStoragePlugin storagePlugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         largeLineSetup.setUpRootFolder(storagePlugin, "largeLineTest", PartitionGranularity.PARTITION_HOUR);
 
         // We create vector doubles with a large number of elements; write it out and then test the read.
@@ -83,7 +83,7 @@ public class LargePBLineTest {
                 new ArchPaths(),
                 storagePlugin.getRootFolder(),
                 pvName,
-                PlainPBStoragePlugin.pbFileExtension,
+                PlainStoragePlugin.pbFileExtension,
                 storagePlugin.getPartitionGranularity(),
                 PBCompressionMode.NONE,
                 configService.getPVNameToKeyConverter());

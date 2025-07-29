@@ -9,7 +9,7 @@ package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -94,11 +94,11 @@ public class ZeroByteFilesTest {
     @Test
     public void testZeroByteFileInDest() throws Exception {
 
-        PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb" + "://localhost?name=STS&rootFolder=" + shortTermFolderName
                         + "/&partitionGranularity=PARTITION_DAY",
                 configService);
-        PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb" + "://localhost?name=MTS&rootFolder=" + mediumTermFolderName
                         + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
@@ -118,11 +118,11 @@ public class ZeroByteFilesTest {
     @Test
     public void testZeroByteFilesInSource() throws Exception {
 
-        PlainPBStoragePlugin etlSrc = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb" + "://localhost?name=STS&rootFolder=" + shortTermFolderName
                         + "/&partitionGranularity=PARTITION_DAY",
                 configService);
-        PlainPBStoragePlugin etlDest = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb" + "://localhost?name=MTS&rootFolder=" + mediumTermFolderName
                         + "/&partitionGranularity=PARTITION_YEAR",
                 configService);
@@ -155,8 +155,8 @@ public class ZeroByteFilesTest {
     public void runETLAndValidate(
             String pvName,
             VoidFunction zeroByteGenerationFunction,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest)
+            PlainStoragePlugin etlSrc,
+            PlainStoragePlugin etlDest)
             throws Exception {
 
         // Generate some data in the src

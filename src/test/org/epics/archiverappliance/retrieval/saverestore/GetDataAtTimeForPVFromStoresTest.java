@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.saverestore;
 
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -80,8 +80,8 @@ public class GetDataAtTimeForPVFromStoresTest {
         }
     }
 
-    private static PlainPBStoragePlugin getStoragePlugin() throws IOException {
-        return (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(storagePBPluginString, configService);
+    private static PlainStoragePlugin getStoragePlugin() throws IOException {
+        return (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(storagePBPluginString, configService);
     }
 
     @BeforeAll
@@ -100,7 +100,7 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     private static void createTestData() throws IOException {
-        PlainPBStoragePlugin storagePlugin = getStoragePlugin();
+        PlainStoragePlugin storagePlugin = getStoragePlugin();
 
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream events = new ArrayListEventStream(

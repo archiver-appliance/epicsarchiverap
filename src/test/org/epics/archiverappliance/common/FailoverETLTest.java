@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -134,7 +134,7 @@ public class FailoverETLTest {
 
     private int generateData(String applianceName, Instant lastMonth, long startingOffset) throws IOException {
         int genEventCount = 0;
-        PlainPBStoragePlugin plugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin plugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"
                         + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
                         + "&partitionGranularity=PARTITION_DAY",

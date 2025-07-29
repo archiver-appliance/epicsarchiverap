@@ -28,7 +28,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 
 /**
- * Companion class to PlainPBStoragePlugin that handles the appending of event streams in a partition-aware fashion.
+ * Companion class to {@link PlainStoragePlugin} that handles the appending of event streams in a partition-aware fashion.
  * This is used both by the engine and by ETL.
  *
  * @author mshankar

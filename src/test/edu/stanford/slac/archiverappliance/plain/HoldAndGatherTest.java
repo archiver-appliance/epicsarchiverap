@@ -61,7 +61,7 @@ public class HoldAndGatherTest {
     @ParameterizedTest
     @MethodSource("provideHoldAndGather")
     void testHoldAndGather(PartitionGranularity granularity, int hold, int gather) throws Exception {
-        PlainPBStoragePlugin etlSrc = new PlainPBStoragePlugin();
+        PlainStoragePlugin etlSrc = new PlainStoragePlugin();
         PBCommonSetup srcSetup = new PBCommonSetup();
         ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         srcSetup.setUpRootFolder(etlSrc, "ETLHoldGatherTest_" + granularity, granularity);

@@ -3,7 +3,7 @@ package org.epics.archiverappliance.retrieval.client;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -199,7 +199,7 @@ public class PostProcessorWithPBErrorTest {
                     context.getPaths(),
                     ltsFolderName,
                     pvName,
-                    PlainPBStoragePlugin.pbFileExtension,
+                    PlainStoragePlugin.pbFileExtension,
                     PartitionGranularity.PARTITION_DAY,
                     PBCompressionMode.NONE,
                     configService.getPVNameToKeyConverter());

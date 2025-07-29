@@ -9,7 +9,7 @@ package edu.stanford.slac.archiverappliance.PB.data;
 
 import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import gov.aps.jca.dbr.DBR;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,7 +49,7 @@ import java.util.stream.Stream;
  */
 public class DBRTypeTest {
     private static final Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
-    static PlainPBStoragePlugin pbplugin;
+    static PlainStoragePlugin pbplugin;
     static PBCommonSetup pbSetup = new PBCommonSetup();
     static ConfigService configService;
 
@@ -57,7 +57,7 @@ public class DBRTypeTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        pbplugin = new PlainPBStoragePlugin();
+        pbplugin = new PlainStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin, "DBRTypeTestsPB");
         configService = new ConfigServiceForTests(-1);
     }

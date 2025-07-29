@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.nio.file.Path;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.
@@ -47,7 +47,7 @@ public class SingleEventTimeBasedIteratorTest {
 
     @Test
     public void testSingleEvent() throws Exception {
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=PARTITION_HOUR",
                 configService);
 

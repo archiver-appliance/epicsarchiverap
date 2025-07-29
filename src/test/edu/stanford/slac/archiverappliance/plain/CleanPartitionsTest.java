@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.time.Instant;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin.pbFileExtension;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Tests that the PB plugin appendData stores data in clean partitions.
@@ -41,7 +41,7 @@ public class CleanPartitionsTest {
     @Test
     public void testCleanPartitions() throws Exception {
         for (PartitionGranularity granularity : PartitionGranularity.values()) {
-            PlainPBStoragePlugin pbPlugin = new PlainPBStoragePlugin();
+            PlainStoragePlugin pbPlugin = new PlainStoragePlugin();
             PBCommonSetup srcSetup = new PBCommonSetup();
 
             srcSetup.setUpRootFolder(pbPlugin, "TestCleanPartitions_" + granularity, granularity);

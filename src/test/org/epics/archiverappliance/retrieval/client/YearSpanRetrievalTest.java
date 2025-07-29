@@ -9,7 +9,7 @@ package org.epics.archiverappliance.retrieval.client;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -52,7 +52,7 @@ public class YearSpanRetrievalTest {
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 
-    private void generateDataForYears(PlainPBStoragePlugin pbplugin, String pvName) throws IOException {
+    private void generateDataForYears(PlainStoragePlugin pbplugin, String pvName) throws IOException {
         // We skip generation of the file only if all the files exist.
         boolean deletefilesandgeneratedata = false;
         for (short currentyear = (short) 2010; currentyear <= (short) 2013; currentyear++) {
@@ -101,7 +101,7 @@ public class YearSpanRetrievalTest {
     @Test
     public void testYearSpan() throws Exception {
         PBCommonSetup pbSetup = new PBCommonSetup();
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin);
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan";
         generateDataForYears(pbplugin, pvName);

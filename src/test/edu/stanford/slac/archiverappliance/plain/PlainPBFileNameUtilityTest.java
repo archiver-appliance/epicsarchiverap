@@ -90,7 +90,7 @@ public class PlainPBFileNameUtilityTest {
         // Lets create some files that cater to this partition.
         Instant startOfYear = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
         String pvName = granularity.name() + "Part_1";
-        String extension = PlainPBStoragePlugin.pbFileExtension;
+        String extension = PlainStoragePlugin.pbFileExtension;
         long nIntervals = 1
                 + granularity.getNextLargerGranularity().getApproxSecondsPerChunk()
                         / granularity.getApproxSecondsPerChunk();
@@ -158,7 +158,7 @@ public class PlainPBFileNameUtilityTest {
         ZonedDateTime curr = startOfYear;
         String pvName = "First:Second:Third:YearPart_1";
         PartitionGranularity partition = PartitionGranularity.PARTITION_YEAR;
-        String extension = PlainPBStoragePlugin.pbFileExtension;
+        String extension = PlainStoragePlugin.pbFileExtension;
         ZonedDateTime endYear = null;
         for (int years = 0; years < 20; years++) {
             mkPath(PlainPBPathNameUtility.getPathNameForTime(

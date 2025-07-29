@@ -146,8 +146,8 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
  * @author mshankar
  *
  */
-public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
-    private static final Logger logger = LogManager.getLogger(PlainPBStoragePlugin.class.getName());
+public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
+    private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
     private final String append_extension;
 
     public static final String pbFileSuffix = "pb";
@@ -215,7 +215,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 
     private String etlOutofStoreIf;
 
-    public PlainPBStoragePlugin() {
+    public PlainStoragePlugin() {
         this.append_extension = pbFileExtension + "append";
     }
 
@@ -228,7 +228,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
 
     @Override
     public String toString() {
-        return "PlainPBStoragePlugin{" + "append_extension='"
+        return "PlainStoragePlugin{" + "append_extension='"
                 + append_extension + '\'' + ", appendDataStates="
                 + appendDataStates + ", partitionGranularity="
                 + partitionGranularity + ", rootFolder='"
@@ -632,7 +632,7 @@ public class PlainPBStoragePlugin implements StoragePlugin, ETLSource, ETLDest, 
                 this.etlOutofStoreIf = queryNVPairs.get("etlOutofStoreIf");
             }
 
-            this.setDesc("PlainPBStorage plugin  - " + name + " with rootFolder " + rootFolder + " and granularity "
+            this.setDesc("PlainStorage plugin  - " + name + " with rootFolder " + rootFolder + " and granularity "
                     + partitionGranularity);
         } catch (URISyntaxException ex) {
             throw new IOException(ex);

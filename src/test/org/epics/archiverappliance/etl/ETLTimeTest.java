@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -97,12 +97,12 @@ public class ETLTimeTest {
     public void testTime(
         PBCompressionMode srcCompression, PBCompressionMode destCompression)
             throws Exception {
-        PlainPBStoragePlugin stsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder="
                         + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR&compress="
                         + srcCompression,
                 configService);
-        PlainPBStoragePlugin mtsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder="
                         + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR&compress="
                         + destCompression,
