@@ -7,8 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
-import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 

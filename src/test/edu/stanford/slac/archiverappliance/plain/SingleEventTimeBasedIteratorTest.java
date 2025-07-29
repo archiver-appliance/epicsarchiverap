@@ -1,9 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;

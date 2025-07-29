@@ -11,7 +11,7 @@ import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
 import edu.stanford.slac.archiverappliance.PB.search.FileEventStreamSearch;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import org.apache.logging.log4j.LogManager;

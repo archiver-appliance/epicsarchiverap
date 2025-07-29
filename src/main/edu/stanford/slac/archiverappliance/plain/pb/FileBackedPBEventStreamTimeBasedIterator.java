@@ -5,7 +5,7 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package edu.stanford.slac.archiverappliance.plain;
+package edu.stanford.slac.archiverappliance.plain.pb;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;

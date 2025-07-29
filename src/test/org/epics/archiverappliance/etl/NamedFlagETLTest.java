@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.plain.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainPBStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;

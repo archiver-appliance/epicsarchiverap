@@ -1,4 +1,4 @@
-package edu.stanford.slac.archiverappliance.plain;
+package edu.stanford.slac.archiverappliance.plain.pb;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

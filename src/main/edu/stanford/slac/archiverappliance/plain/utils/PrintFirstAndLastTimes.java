@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
-import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 
 import java.io.IOException;
 import java.nio.file.FileVisitResult;

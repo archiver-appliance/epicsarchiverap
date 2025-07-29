@@ -7,6 +7,9 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
+import edu.stanford.slac.archiverappliance.plain.pb.ArrayListEventStreamWithPositionedIterator;
+import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BiDirectionalIterable;
 import org.epics.archiverappliance.config.ArchDBRTypes;

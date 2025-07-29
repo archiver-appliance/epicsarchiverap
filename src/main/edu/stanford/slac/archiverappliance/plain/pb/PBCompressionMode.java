@@ -1,4 +1,4 @@
-package edu.stanford.slac.archiverappliance.plain;
+package edu.stanford.slac.archiverappliance.plain.pb;
 
 /**
  * Support for ZIP_PER_PV is still experimental.

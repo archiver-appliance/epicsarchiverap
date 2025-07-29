@@ -7,8 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.imprt;
 
-import edu.stanford.slac.archiverappliance.plain.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;

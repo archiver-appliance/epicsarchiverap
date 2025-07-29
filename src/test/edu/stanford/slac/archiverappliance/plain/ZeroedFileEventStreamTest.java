@@ -1,5 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
