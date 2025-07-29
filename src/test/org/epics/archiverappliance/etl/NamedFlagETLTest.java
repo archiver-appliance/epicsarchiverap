@@ -8,7 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import org.apache.logging.log4j.LogManager;
@@ -251,7 +251,7 @@ public class NamedFlagETLTest {
         Instant endOfRequest = TimeUtils.plusDays(TimeUtils.now(), 366);
 
         // Check that all the files in the destination store are valid files.
-        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlDest.getRootFolder(),
                 pvName,

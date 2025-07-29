@@ -102,7 +102,7 @@ public class RenamePVTest {
                     oldPVEventCount++;
                 }
             }
-            oldPathCount = PlainPBPathNameUtility.getAllPathsForPV(
+            oldPathCount = PathNameUtility.getAllPathsForPV(
                             context.getPaths(),
                             plugin.getRootFolder(),
                             oldPVName,
@@ -133,7 +133,7 @@ public class RenamePVTest {
                     newPVEventCount++;
                 }
             }
-            newPathCount = PlainPBPathNameUtility.getAllPathsForPV(
+            newPathCount = PathNameUtility.getAllPathsForPV(
                             context.getPaths(),
                             plugin.getRootFolder(),
                             newPVName,
@@ -142,7 +142,7 @@ public class RenamePVTest {
                             PBCompressionMode.NONE,
                             configService.getPVNameToKeyConverter())
                     .length;
-            newPathForOldPVNameCount = PlainPBPathNameUtility.getAllPathsForPV(
+            newPathForOldPVNameCount = PathNameUtility.getAllPathsForPV(
                             context.getPaths(),
                             plugin.getRootFolder(),
                             oldPVName,

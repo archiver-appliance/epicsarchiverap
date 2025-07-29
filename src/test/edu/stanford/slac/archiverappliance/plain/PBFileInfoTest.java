@@ -42,7 +42,7 @@ public class PBFileInfoTest {
         PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
         short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
-        pBfile = PlainPBPathNameUtility.getPathNameForTime(
+        pBfile = PathNameUtility.getPathNameForTime(
                 storagePlugin,
                 pvName,
                 TimeUtils.getStartOfYear(currentYear),

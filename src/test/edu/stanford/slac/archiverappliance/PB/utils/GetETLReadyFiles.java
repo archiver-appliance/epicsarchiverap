@@ -8,7 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.utils;
 
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -46,7 +46,7 @@ public class GetETLReadyFiles {
         }
 
         Instant now = TimeUtils.now();
-        Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(
+        Path[] paths = PathNameUtility.getPathsBeforeCurrentPartition(
                 new ArchPaths(),
                 folder.getAbsolutePath(),
                 pvName,

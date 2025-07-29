@@ -9,7 +9,7 @@ package edu.stanford.slac.archiverappliance.PB.data;
 
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
-import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
@@ -79,7 +79,7 @@ public class LargePBLineTest {
             Assertions.fail(ex.getMessage());
         }
 
-        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 storagePlugin.getRootFolder(),
                 pvName,

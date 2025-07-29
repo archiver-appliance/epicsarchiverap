@@ -67,7 +67,7 @@ public class SingleEventTimeBasedIteratorTest {
         }
 
         try (BasicContext context = new BasicContext()) {
-            Path[] paths = PlainPBPathNameUtility.getAllPathsForPV(
+            Path[] paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,

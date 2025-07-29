@@ -116,7 +116,7 @@ public class ZeroedFileEventStreamTest {
         generateFreshData(pbplugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,
@@ -191,7 +191,7 @@ public class ZeroedFileEventStreamTest {
         int generatedCount = generateFreshData(srcPlugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,
@@ -257,7 +257,7 @@ public class ZeroedFileEventStreamTest {
 
         paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName + "Dest",
                     pvName,
@@ -366,7 +366,7 @@ public class ZeroedFileEventStreamTest {
 
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     destPlugin.getRootFolder(),
                     pvName,
@@ -449,7 +449,7 @@ public class ZeroedFileEventStreamTest {
 
         paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     destPlugin.getRootFolder(),
                     pvName,
@@ -515,7 +515,7 @@ public class ZeroedFileEventStreamTest {
         int generatedCount = generateFreshData(pbplugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,
@@ -584,7 +584,7 @@ public class ZeroedFileEventStreamTest {
         int generatedCount = generateFreshData(pbplugin, pvName);
         Path[] paths = null;
         try (BasicContext context = new BasicContext()) {
-            paths = PlainPBPathNameUtility.getAllPathsForPV(
+            paths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
                     rootFolderName,
                     pvName,

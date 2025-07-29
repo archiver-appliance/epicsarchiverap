@@ -1,7 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility.StartEndTimeFromName;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility.StartEndTimeFromName;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
@@ -60,7 +60,7 @@ public class CleanPartitionsTest {
             logger.info("Done creating src data for PV " + pvName + " for granularity "
                     + pbPlugin.getPartitionGranularity());
 
-            Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+            Path[] allPaths = PathNameUtility.getAllPathsForPV(
                     new ArchPaths(),
                     pbPlugin.getRootFolder(),
                     pvName,
@@ -70,7 +70,7 @@ public class CleanPartitionsTest {
                     configService.getPVNameToKeyConverter());
             for (Path pbFile : allPaths) {
                 PBFileInfo fileInfo = new PBFileInfo(pbFile);
-                StartEndTimeFromName chunkTimes = PlainPBPathNameUtility.determineTimesFromFileName(
+                StartEndTimeFromName chunkTimes = PathNameUtility.determineTimesFromFileName(
                         pvName,
                         pbFile.getFileName().toString(),
                         pbPlugin.getPartitionGranularity(),

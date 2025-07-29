@@ -9,7 +9,7 @@ package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.PlainPBPathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -113,7 +113,7 @@ public class BlackHoleETLTest {
     private int getFilesWithData(String pvName, PlainStoragePlugin etlSrc, ConfigService configService)
             throws Exception {
         // Check that all the files in the destination store are valid files.
-        Path[] allPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlSrc.getRootFolder(),
                 pvName,
