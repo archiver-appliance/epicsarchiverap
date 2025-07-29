@@ -81,7 +81,7 @@ public class PBCommonSetup {
     }
 
     public void setUpRootFolder(
-        PlainStoragePlugin pbplugin, String testSpecificFolder, PartitionGranularity partitionGranularity)
+            PlainStoragePlugin pbplugin, String testSpecificFolder, PartitionGranularity partitionGranularity)
             throws Exception {
         setUpRootFolder();
         this.testSpecificFolder = testSpecificFolder;

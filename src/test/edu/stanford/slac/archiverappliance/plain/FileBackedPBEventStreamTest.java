@@ -1,5 +1,12 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import static org.epics.archiverappliance.common.TimeUtils.convertFromEpochSeconds;
+import static org.epics.archiverappliance.common.TimeUtils.convertToISO8601String;
+import static org.epics.archiverappliance.common.TimeUtils.getCurrentYear;
+import static org.epics.archiverappliance.common.TimeUtils.getEndOfYear;
+import static org.epics.archiverappliance.common.TimeUtils.getStartOfCurrentYearInSeconds;
+import static org.epics.archiverappliance.common.TimeUtils.getStartOfYearInSeconds;
+
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -36,13 +43,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.stream.Stream;
-
-import static org.epics.archiverappliance.common.TimeUtils.convertFromEpochSeconds;
-import static org.epics.archiverappliance.common.TimeUtils.convertToISO8601String;
-import static org.epics.archiverappliance.common.TimeUtils.getCurrentYear;
-import static org.epics.archiverappliance.common.TimeUtils.getEndOfYear;
-import static org.epics.archiverappliance.common.TimeUtils.getStartOfCurrentYearInSeconds;
-import static org.epics.archiverappliance.common.TimeUtils.getStartOfYearInSeconds;
 
 /**
  * Some simple tests for the FileBackedPBEventStream

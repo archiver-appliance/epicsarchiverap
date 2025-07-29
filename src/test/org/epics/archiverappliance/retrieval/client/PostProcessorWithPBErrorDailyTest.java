@@ -1,9 +1,11 @@
 package org.epics.archiverappliance.retrieval.client;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,8 +44,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Generate known amount of data for a PV; corrupt known number of the values.

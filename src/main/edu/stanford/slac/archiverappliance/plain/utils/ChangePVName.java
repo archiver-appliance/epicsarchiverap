@@ -83,7 +83,7 @@ public class ChangePVName {
             try {
                 try (FileBackedPBEventStream strm =
                                 new FileBackedPBEventStream(info.getPVName(), path, info.getType());
-                     OutputStream os = new BufferedOutputStream(Files.newOutputStream(
+                        OutputStream os = new BufferedOutputStream(Files.newOutputStream(
                                 tempPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
                     byte[] headerBytes = LineEscaper.escapeNewLines(PayloadInfo.newBuilder()
                             .setPvname(newPVName)

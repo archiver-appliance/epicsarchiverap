@@ -1,5 +1,9 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -42,10 +46,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-
-import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
-import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
 
 @Tag("integration")
 public class ClusterSinglePVTest {

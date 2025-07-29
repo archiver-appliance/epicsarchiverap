@@ -41,7 +41,7 @@ public class PathNameUtility {
     private static final Logger logger = LogManager.getLogger(PathNameUtility.class);
 
     public static Path getPathNameForTime(
-        PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
+            PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
             throws IOException {
         return getPathNameForTime(
                 plugin.getRootFolder(),
@@ -75,7 +75,7 @@ public class PathNameUtility {
     }
 
     public static Path getSparsifiedPathNameForTime(
-        PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
+            PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
             throws IOException {
         return getSparsifiedPathNameForTime(
                 plugin.getRootFolder(),

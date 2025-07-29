@@ -7,10 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
 import gov.aps.jca.dbr.DBR_TIME_Double;
 import org.apache.commons.lang3.ArrayUtils;

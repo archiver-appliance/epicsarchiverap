@@ -7,6 +7,12 @@
  *******************************************************************************/
 package org.epics.archiverappliance.config;
 
+import static edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin.PBHTTP_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.common.mergededup.MergeDedupStoragePlugin.MERGE_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin.RTREE_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin.BLACKHOLE_PLUGIN_IDENTIFIER;
+
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.lang3.text.StrLookup;
@@ -23,12 +29,6 @@ import org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import static edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin.PBHTTP_PLUGIN_IDENTIFIER;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
-import static org.epics.archiverappliance.common.mergededup.MergeDedupStoragePlugin.MERGE_PLUGIN_IDENTIFIER;
-import static org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin.RTREE_PLUGIN_IDENTIFIER;
-import static org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin.BLACKHOLE_PLUGIN_IDENTIFIER;
 
 /**
  * Parses a URL representation of a storage plugin.

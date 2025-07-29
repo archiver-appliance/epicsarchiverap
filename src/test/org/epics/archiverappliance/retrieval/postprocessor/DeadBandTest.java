@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.retrieval.postprocessor;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import org.apache.commons.io.FileUtils;
@@ -36,8 +38,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 
 /**
  * Michael DavidSaver supplied the data for this test.

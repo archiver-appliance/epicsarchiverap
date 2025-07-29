@@ -154,7 +154,7 @@ public class ValidateAndFixPBFile {
                 long eventnum = 0;
                 try (FileBackedPBEventStream strm =
                                 new FileBackedPBEventStream(info.getPVName(), path, info.getType());
-                     OutputStream os = new BufferedOutputStream(Files.newOutputStream(
+                        OutputStream os = new BufferedOutputStream(Files.newOutputStream(
                                 tempPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
                     byte[] headerBytes = LineEscaper.escapeNewLines(PayloadInfo.newBuilder()
                             .setPvname(info.getPVName())

@@ -7,8 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -18,8 +20,6 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
-
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 /**
  * Utility to check what files are ready for ETL for a given PV, folder and partition granularity.

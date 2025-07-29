@@ -143,11 +143,7 @@ public class AppendDataStateData {
      * @throws IOException &emsp;
      */
     protected void shouldISwitchPartitions(
-            BasicContext context,
-            String pvName,
-            String extension,
-            Instant ts,
-            PBCompressionMode compressionMode)
+            BasicContext context, String pvName, String extension, Instant ts, PBCompressionMode compressionMode)
             throws IOException {
 
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
