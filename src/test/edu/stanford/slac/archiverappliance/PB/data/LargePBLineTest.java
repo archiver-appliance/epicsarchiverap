@@ -40,7 +40,7 @@ import java.util.Collections;
  */
 public class LargePBLineTest {
     private ConfigService configService;
-    PBCommonSetup largeLineSetup = new PBCommonSetup();
+    PlainCommonSetup largeLineSetup = new PlainCommonSetup();
     private static final Logger logger = LogManager.getLogger(LargePBLineTest.class.getName());
 
     @BeforeEach

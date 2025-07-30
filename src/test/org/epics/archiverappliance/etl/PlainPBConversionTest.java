@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,7 +88,7 @@ public class PlainPBConversionTest {
     public void testThruNumberConversionForDBRType(
             PartitionGranularity granularity, ArchDBRTypes srcDBRType, ArchDBRTypes destDBRType) throws Exception {
         PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
-        PBCommonSetup setup = new PBCommonSetup();
+        PlainCommonSetup setup = new PlainCommonSetup();
         setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
         logger.info("Testing conversion from " + srcDBRType.toString() + " to " + destDBRType.toString());
         String pvName = "PlainPBConversionTest_" + srcDBRType + "_" + destDBRType;
@@ -110,7 +110,7 @@ public class PlainPBConversionTest {
     @MethodSource("provideFailedConversionForDBRType")
     public void testFailedConversionForDBRType(PartitionGranularity granularity) throws Exception {
         PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
-        PBCommonSetup setup = new PBCommonSetup();
+        PlainCommonSetup setup = new PlainCommonSetup();
         setup.setUpRootFolder(storagePlugin, "PlainPBConversionTest", granularity);
         logger.info("Testing failed conversion from " + ArchDBRTypes.DBR_SCALAR_DOUBLE + " to "
                 + ArchDBRTypes.DBR_WAVEFORM_STRING + ". You could see an exception here; ignore it. It is expected");

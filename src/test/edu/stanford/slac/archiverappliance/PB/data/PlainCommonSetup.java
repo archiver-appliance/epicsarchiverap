@@ -25,8 +25,8 @@ import java.util.Set;
  * @author mshankar
  *
  */
-public class PBCommonSetup {
-    private static Logger logger = LogManager.getLogger(PBCommonSetup.class.getName());
+public class PlainCommonSetup {
+    private static Logger logger = LogManager.getLogger(PlainCommonSetup.class.getName());
     private File tempFolderForTests;
     private String testSpecificFolder;
     static ConfigServiceForTests configService;

@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
@@ -100,7 +100,7 @@ public class YearSpanRetrievalTest {
 
     @Test
     public void testYearSpan() throws Exception {
-        PBCommonSetup pbSetup = new PBCommonSetup();
+        PlainCommonSetup pbSetup = new PlainCommonSetup();
         PlainStoragePlugin pbplugin = new PlainStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin);
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan";

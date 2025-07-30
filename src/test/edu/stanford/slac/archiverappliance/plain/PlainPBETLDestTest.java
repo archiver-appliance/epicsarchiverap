@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -33,7 +33,7 @@ import org.junit.jupiter.api.Test;
 @Tag("slow")
 public class PlainPBETLDestTest {
     private static final Logger logger = LogManager.getLogger(PlainPBETLDestTest.class);
-    PBCommonSetup setup = new PBCommonSetup();
+    PlainCommonSetup setup = new PlainCommonSetup();
 
     private static int getSecondsBetweenEvents(PartitionGranularity partitionGranularity) throws Exception {
         return switch (partitionGranularity) {

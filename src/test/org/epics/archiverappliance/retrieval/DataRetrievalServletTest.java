@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
@@ -67,7 +67,7 @@ public class DataRetrievalServletTest {
     public void testTimesAreSequential() throws Exception {
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "_dataretrieval";
 
-        PBCommonSetup pbSetup = new PBCommonSetup();
+        PlainCommonSetup pbSetup = new PlainCommonSetup();
 
         PlainStoragePlugin pbplugin = new PlainStoragePlugin();
         pbSetup.setUpRootFolder(pbplugin);
