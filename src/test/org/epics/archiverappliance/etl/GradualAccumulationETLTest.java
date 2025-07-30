@@ -8,7 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -149,8 +149,8 @@ public class GradualAccumulationETLTest {
 
     private void checkDataValidity(
             String pvName,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest,
+            PlainStoragePlugin etlSrc,
+            PlainStoragePlugin etlDest,
             long startOfYearInEpochSeconds,
             int incrementSeconds,
             int eventsgenerated,

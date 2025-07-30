@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.retrieval;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,7 +47,7 @@ public class EventStreamWrapTest {
     private static final String pvName =
             ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "S_" + type.getPrimitiveName();
     static ConfigService configService;
-    static PlainPBStoragePlugin storagePluginPB;
+    static PlainStoragePlugin storagePluginPB;
 
     @BeforeAll
     public static void setUp() throws Exception {
@@ -56,7 +56,7 @@ public class EventStreamWrapTest {
             FileUtils.deleteDirectory(new File(shortTermFolderName));
         }
         assert new File(shortTermFolderName).mkdirs();
-        storagePluginPB = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        storagePluginPB = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_MONTH",
                 configService);
 
@@ -73,7 +73,7 @@ public class EventStreamWrapTest {
         configService.shutdownNow();
     }
 
-    static void insertData(PlainPBStoragePlugin storagePlugin) throws IOException {
+    static void insertData(PlainStoragePlugin storagePlugin) throws IOException {
         short currentYear = TimeUtils.getCurrentYear();
         try (BasicContext context = new BasicContext()) {
             storagePlugin.appendData(
@@ -91,7 +91,7 @@ public class EventStreamWrapTest {
 
     @Test
     public void testSimpleWrapper() throws Exception {
-        PlainPBStoragePlugin storageplugin = storagePluginPB;
+        PlainStoragePlugin storageplugin = storagePluginPB;
         Instant end = TimeUtils.now();
         Instant start = TimeUtils.minusDays(end, 365);
         Mean mean_86400 = (Mean) PostProcessors.findPostProcessor("mean_86400");
@@ -141,7 +141,7 @@ public class EventStreamWrapTest {
      */
     @Test
     void testMultiThreadWrapper() throws Exception {
-        PlainPBStoragePlugin storageplugin = storagePluginPB;
+        PlainStoragePlugin storageplugin = storagePluginPB;
 
         Instant end = TimeUtils.now();
         Instant start = TimeUtils.minusDays(end, 365);

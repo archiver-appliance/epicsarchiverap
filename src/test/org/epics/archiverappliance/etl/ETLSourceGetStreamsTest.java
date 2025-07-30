@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Test the ETL source functionality of PlainPBStoragePlugin
+ * Test the ETL source functionality of PlainStoragePlugin
  * @author mshankar
  *
  */
@@ -98,7 +98,7 @@ public class ETLSourceGetStreamsTest {
     @MethodSource("provideTestArguments")
     public void getETLStreams(PartitionGranularity partitionGranularity, long sampleRange, long skipSeconds)
             throws Exception {
-        PlainPBStoragePlugin pbplugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb" + "://localhost?name=STS&rootFolder=" + testFolder + "/src&partitionGranularity=PARTITION_HOUR",
                 configService);
         ETLContext etlContext = new ETLContext();

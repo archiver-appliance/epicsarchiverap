@@ -1,6 +1,10 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
+
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,10 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
-import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
-
 @Tag("integration")
 public class ClusterSinglePVTest {
     private static final Logger logger = LogManager.getLogger(ClusterSinglePVTest.class.getName());
@@ -82,7 +82,7 @@ public class ClusterSinglePVTest {
      */
     @Test
     public void singlePvsAcrossCluster() throws Exception {
-        PlainPBStoragePlugin pbplugin = new PlainPBStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
 
         ConfigService configService = new ConfigServiceForTests(-1);
 

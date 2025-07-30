@@ -7,8 +7,10 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.utils;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
@@ -18,8 +20,6 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
-
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 /**
  * Utility to check what files are ready for ETL for a given PV, folder and partition granularity.
@@ -34,7 +34,7 @@ public class GetETLReadyFiles {
     public static void main(String[] args) throws Exception {
         if (args.length < 3) {
             System.err.println(
-                    "Usage: java edu.stanford.slac.archiverappliance.PlainPB.utils.GetETLReadyFiles <PVName> <FolderName> <Granularity>");
+                    "Usage: java edu.stanford.slac.archiverappliance.plain.utils.GetETLReadyFiles <PVName> <FolderName> <Granularity>");
             return;
         }
         ConfigService configService = new ConfigServiceForTests(-1);
@@ -46,7 +46,7 @@ public class GetETLReadyFiles {
         }
 
         Instant now = TimeUtils.now();
-        Path[] paths = PlainPBPathNameUtility.getPathsBeforeCurrentPartition(
+        Path[] paths = PathNameUtility.getPathsBeforeCurrentPartition(
                 new ArchPaths(),
                 folder.getAbsolutePath(),
                 pvName,

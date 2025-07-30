@@ -1,13 +1,13 @@
 package edu.stanford.slac.archiverappliance.PB.compression;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-
-import static edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin.pbFileExtension;
 
 public class GetFileTime {
     private static Logger logger = LogManager.getLogger(GetFileTime.class.getName());

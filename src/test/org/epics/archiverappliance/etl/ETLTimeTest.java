@@ -1,7 +1,7 @@
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,12 +61,8 @@ public class ETLTimeTest {
     private static Stream<Arguments> provideTestTime() {
         return Stream.of(
                 Arguments.of(PBCompressionMode.NONE, PBCompressionMode.NONE),
-                Arguments.of(
-                        PBCompressionMode.NONE,
-                        PBCompressionMode.valueOf("ZIP_PER_PV")),
-                Arguments.of(
-                        PBCompressionMode.valueOf("ZIP_PER_PV"),
-                        PBCompressionMode.valueOf("ZIP_PER_PV")));
+                Arguments.of(PBCompressionMode.NONE, PBCompressionMode.valueOf("ZIP_PER_PV")),
+                Arguments.of(PBCompressionMode.valueOf("ZIP_PER_PV"), PBCompressionMode.valueOf("ZIP_PER_PV")));
     }
 
     private static double getDataSizeInGBPerHour(CountFiles stsSizeVisitor) {
@@ -94,15 +90,13 @@ public class ETLTimeTest {
 
     @ParameterizedTest
     @MethodSource("provideTestTime")
-    public void testTime(
-        PBCompressionMode srcCompression, PBCompressionMode destCompression)
-            throws Exception {
-        PlainPBStoragePlugin stsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+    public void testTime(PBCompressionMode srcCompression, PBCompressionMode destCompression) throws Exception {
+        PlainStoragePlugin stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=STS&rootFolder="
                         + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR&compress="
                         + srcCompression,
                 configService);
-        PlainPBStoragePlugin mtsStoragePlugin = (PlainPBStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+        PlainStoragePlugin mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=MTS&rootFolder="
                         + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR&compress="
                         + destCompression,

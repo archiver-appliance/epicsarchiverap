@@ -30,7 +30,7 @@ public interface ETLDest extends Writer {
 
     /**
      * This informs the destination that we are switching to a new partition and this dest needs to execute its pre-processing for a new partition.
-     * For example, in a PlainPBStorage plugin, this will close the previous fileoutputstreams if any, open a new stream to the file backing the new partition writing a header if needed.
+     * For example, in a PlainStorage plugin, this will close the previous fileoutputstreams if any, open a new stream to the file backing the new partition writing a header if needed.
      * @param pvName The name of PV.
      * @param ev This is used to determine the partition for the new partition
      * @param archDBRType ArchDBRTypes

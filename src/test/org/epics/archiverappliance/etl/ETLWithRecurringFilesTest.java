@@ -8,9 +8,9 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
-import edu.stanford.slac.archiverappliance.PlainPB.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBPathNameUtility;
-import edu.stanford.slac.archiverappliance.PlainPB.PlainPBStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -92,7 +92,7 @@ public class ETLWithRecurringFilesTest {
         PBCommonSetup srcSetup = new PBCommonSetup();
         PBCommonSetup destSetup = new PBCommonSetup();
         etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
-        PlainPBStoragePlugin etlNewDest = new PlainPBStoragePlugin();
+        PlainStoragePlugin etlNewDest = new PlainStoragePlugin();
 
         srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
@@ -147,7 +147,7 @@ public class ETLWithRecurringFilesTest {
         String tempFileExtension = ".etltest" + etlTestPlugins.src().pluginIdentifier();
         // We should now have some data in the src root folder...
         // Make a copy of these files so that we can restore them back later after ETL.
-        Path[] allSrcPaths = PlainPBPathNameUtility.getAllPathsForPV(
+        Path[] allSrcPaths = PathNameUtility.getAllPathsForPV(
                 new ArchPaths(),
                 etlTestPlugins.src().getRootFolder(),
                 pvName,
@@ -222,8 +222,8 @@ public class ETLWithRecurringFilesTest {
 
     private void checkDataValidity(
             String pvName,
-            PlainPBStoragePlugin etlSrc,
-            PlainPBStoragePlugin etlDest,
+            PlainStoragePlugin etlSrc,
+            PlainStoragePlugin etlDest,
             Instant start,
             int incrementSeconds,
             int eventsGenerated,
