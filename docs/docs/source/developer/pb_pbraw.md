@@ -3,7 +3,7 @@
 ## The `.pb` file format
 
 The
-[PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
 in the EPICS archiver appliance uses Google\'s
 [ProtocolBuffers](https://developers.google.com/protocol-buffers) as the
 serialization mechanism. The PB definitions mapping EPICS DBR types to
@@ -44,7 +44,7 @@ In addition, the record processing timestamps are guaranteed to be and
 expected to be monotonically increasing. The \"monotonically increasing
 timestamps\" constraint lets us use various search algorithms on PB
 files without the need for an index. The
-[PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html)
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html)
 handles the translation back and forth between DBR types and raw PB
 messages and also enforces a strict partitioning.
 

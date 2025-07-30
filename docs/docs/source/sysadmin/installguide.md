@@ -201,15 +201,15 @@ The EPICS archiver appliance ships with a sample
 that creates a three stage storage environment. These are
 
 1. **STS** - A datastore that uses the
-   [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+   [PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
    to store data in a folder specified by the environment variable
    `ARCHAPPL_SHORT_TERM_FOLDER` at the granularity of an hour.
 2. **MTS** - A datastore that uses the
-   [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+   [PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
    to store data in a folder specified by the environment variable
    `ARCHAPPL_MEDIUM_TERM_FOLDER` at the granularity of a day.
 3. **LTS** - A datastore that uses the
-   [PlainPBStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/PlainPB/PlainPBStoragePlugin.html){.external}
+   [PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
    to store data in a folder specified by the environment variable
    `ARCHAPPL_LONG_TERM_FOLDER` at the granularity of an year.
 
