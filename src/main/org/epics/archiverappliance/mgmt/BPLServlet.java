@@ -103,10 +103,10 @@ import org.epics.archiverappliance.mgmt.policy.GetPolicyText;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * The main business logic servlet for mgmt. All BPLActions are registered here.

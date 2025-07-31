@@ -42,7 +42,7 @@ import org.epics.pva.data.nt.NotValueException;
 import org.epics.pva.data.nt.PVAURI;
 import org.json.simple.JSONObject;
 
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;

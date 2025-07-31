@@ -23,8 +23,8 @@ import java.sql.Time;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *

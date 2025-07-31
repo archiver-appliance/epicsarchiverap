@@ -30,8 +30,8 @@ import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * PV for getting the data for multiple PV's from the engine's buffers at a particular time.

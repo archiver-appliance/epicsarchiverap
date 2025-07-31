@@ -20,7 +20,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Executors;
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 public class ConfigServiceForTests extends DefaultConfigService {
     public static final String TESTAPPLIANCE0 = "appliance0";

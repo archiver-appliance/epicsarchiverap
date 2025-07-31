@@ -105,7 +105,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 
 /**
  * This is the default config service for the archiver appliance.

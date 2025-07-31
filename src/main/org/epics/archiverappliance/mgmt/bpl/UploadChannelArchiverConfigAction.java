@@ -16,13 +16,13 @@ import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.core.FileItemInputIterator;
+import org.apache.commons.fileupload2.core.FileItemInput;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.jakarta.servlet6.JakartaServletFileUpload;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,24 +50,24 @@ public class UploadChannelArchiverConfigAction implements BPLAction {
 		}
 				
 		// Check that we have a file upload request
-		boolean isMultipart = ServletFileUpload.isMultipartContent(req);
+		boolean isMultipart = JakartaServletFileUpload.isMultipartContent(req);
 		if(!isMultipart) {
 			throw new IOException("HTTP request is not sending multipart content; therefore we cannnot process");
 		}
 
 		// Create a new file upload handler
-		ServletFileUpload upload = new ServletFileUpload();
+		JakartaServletFileUpload upload = new JakartaServletFileUpload();
 		List<String> fieldsAsPartOfStream = ArchivePVAction.getFieldsAsPartOfStream(configService);
 		try (PrintWriter out = new PrintWriter(new NullOutputStream())) {
-			FileItemIterator iter = upload.getItemIterator(req);
+		    FileItemInputIterator iter = upload.getItemIterator(req);
 			while (iter.hasNext()) {
-				FileItemStream item = iter.next();
+			    FileItemInput item = iter.next();
 				String name = item.getFieldName();
 				if (item.isFormField()) {
 					logger.debug("Form field " + name + " detected.");
 				} else {
 					logger.debug("File field " + name + " with file name " + item.getName() + " detected.");
-					try(InputStream is = new BufferedInputStream(item.openStream())) {
+					try(InputStream is = new BufferedInputStream(item.getInputStream())) {
 						is.mark(1024);
 						logger.info((new LineNumberReader(new InputStreamReader(is))).readLine());
 						is.reset();

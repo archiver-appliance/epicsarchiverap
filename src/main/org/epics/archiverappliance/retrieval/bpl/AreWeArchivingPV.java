@@ -12,8 +12,8 @@ import org.json.simple.JSONValue;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Send a true/false if we are archiving the given PV or not.
