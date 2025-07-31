@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Some common setup for testing PB files
+ * Some common setup for testing setting up storage folders
  * @author mshankar
  *
  */
