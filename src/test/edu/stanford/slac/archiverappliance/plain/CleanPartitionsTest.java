@@ -2,7 +2,6 @@ package edu.stanford.slac.archiverappliance.plain;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
-import edu.stanford.slac.archiverappliance.PB.data.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility.StartEndTimeFromName;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
