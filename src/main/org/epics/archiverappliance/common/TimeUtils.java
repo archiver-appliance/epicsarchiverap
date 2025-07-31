@@ -191,16 +191,14 @@ public class TimeUtils {
     }
 
     /**
-     * Convert Java EPOCH seconds to a seconds into year given the start of the year in EPOCH seconds
+     * Convert Java EPOCH seconds to a seconds into year
      *
-     * @param epochseconds         &emsp;
-     * @param startOfYearInSeconds &emsp;
+     * @param instant &emsp;
      * @return SecondsIntoYear The difference in Seconds
      */
-    public static int getSecondsIntoYear(long epochseconds, long startOfYearInSeconds) {
-        long diffInSecs = epochseconds - startOfYearInSeconds;
-        assert (diffInSecs <= Integer.MAX_VALUE);
-        return (int) (diffInSecs);
+    public static int getSecondsIntoYear(Instant instant) {
+        long epochseconds = instant.getEpochSecond();
+        return getSecondsIntoYear(epochseconds);
     }
 
     /**

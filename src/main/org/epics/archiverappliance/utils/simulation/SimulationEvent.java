@@ -37,7 +37,7 @@ public class SimulationEvent implements DBRTimeEvent {
     private int nanos = 0;
 
     public SimulationEvent(Instant instant, ArchDBRTypes type, SimulationValueGenerator valueGenerator) {
-        this.secondsIntoYear = TimeUtils.getSecondsIntoYear(instant.getEpochSecond());
+        this.secondsIntoYear = TimeUtils.getSecondsIntoYear(instant);
         this.yearofdata = TimeUtils.getYear(instant);
         this.type = type;
         this.mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
@@ -47,6 +47,14 @@ public class SimulationEvent implements DBRTimeEvent {
     public SimulationEvent(int secondsIntoYear, short yearofdata, ArchDBRTypes type, SampleValue sampleValue) {
         this.secondsIntoYear = secondsIntoYear;
         this.yearofdata = yearofdata;
+        this.type = type;
+        this.mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
+        this.sampleValue = sampleValue;
+    }
+
+    public SimulationEvent(Instant instant, ArchDBRTypes type, SampleValue sampleValue) {
+        this.secondsIntoYear = TimeUtils.getSecondsIntoYear(instant);
+        this.yearofdata = TimeUtils.getYear(instant);
         this.type = type;
         this.mapping = DBR2PBTypeMapping.getPBClassFor(this.type);
         this.sampleValue = sampleValue;
@@ -107,8 +115,7 @@ public class SimulationEvent implements DBRTimeEvent {
     }
 
     @Override
-    public void setRepeatCount(int repeatCount) {
-    }
+    public void setRepeatCount(int repeatCount) {}
 
     @Override
     public long getEpochSeconds() {
