@@ -77,7 +77,7 @@ public class MissingDataYearSpanRetrievalTest {
         {
             // Generate some data for Sep 2011 - Oct 2011, one per day
             Instant sep2011 = TimeUtils.convertFromISO8601String("2011-09-01T00:00:00.000Z");
-            int sep201101secsIntoYear = TimeUtils.getSecondsIntoYear(TimeUtils.convertToEpochSeconds(sep2011));
+            int sep201101secsIntoYear = TimeUtils.getSecondsIntoYear(sep2011);
             short year = 2011;
             generateDate(year, sep201101secsIntoYear);
         }
@@ -85,7 +85,7 @@ public class MissingDataYearSpanRetrievalTest {
         {
             // Generate some data for Jun 2012 - Jul 2012, one per day
             Instant jun2012 = TimeUtils.convertFromISO8601String("2012-06-01T00:00:00.000Z");
-            int jun201201secsIntoYear = TimeUtils.getSecondsIntoYear(TimeUtils.convertToEpochSeconds(jun2012));
+            int jun201201secsIntoYear = TimeUtils.getSecondsIntoYear(jun2012);
             short year = 2012;
             generateDate(year, jun201201secsIntoYear);
         }

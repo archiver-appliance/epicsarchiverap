@@ -133,7 +133,7 @@ public class ETLWithRecurringFilesTest {
         ArrayListEventStream instream = new ArrayListEventStream(
                 eventsPerShot, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, year));
         for (int i = 0; i < eventsPerShot; i++) {
-            int secondsintoyear = TimeUtils.getSecondsIntoYear(curTime.getEpochSecond());
+            int secondsintoyear = TimeUtils.getSecondsIntoYear(curTime);
             instream.add(new SimulationEvent(
                     secondsintoyear, year, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<>((double)
                             secondsintoyear)));

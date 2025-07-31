@@ -115,10 +115,7 @@ public class ETLSourceGetStreamsTest {
                 new ArrayListEventStream(1000, new RemotableEventStreamDesc(type, pvName, currentYear));
         for (long i = 0; i < sampleRange; i += skipSeconds) {
             testData.add(new SimulationEvent(
-                    TimeUtils.getSecondsIntoYear(startOfToday.toEpochSecond() + i),
-                    TimeUtils.computeYearForEpochSeconds(startOfToday.toEpochSecond() + i),
-                    type,
-                    new ScalarValue<>((double) i)));
+                    Instant.from(startOfToday.plusSeconds(i)), type, new ScalarValue<>((double) i)));
         }
         try (BasicContext context = new BasicContext()) {
             pbplugin.appendData(context, pvName, testData);

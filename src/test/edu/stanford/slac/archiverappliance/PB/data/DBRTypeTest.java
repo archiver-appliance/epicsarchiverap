@@ -138,8 +138,8 @@ public class DBRTypeTest {
                 Assertions.assertEquals(evTimestamp, expectedTime);
 
                 SampleValue val = ev.getSampleValue();
-                SampleValue eexpectedval = valuegenerator.getSampleValue(
-                        dbrType, TimeUtils.getSecondsIntoYear(expectedTime.getEpochSecond()));
+                SampleValue eexpectedval =
+                        valuegenerator.getSampleValue(dbrType, TimeUtils.getSecondsIntoYear(expectedTime));
                 logger.debug("val is of type " + val.getClass().getName() + " and eexpectedval is of type "
                         + eexpectedval.getClass().getName());
 
@@ -235,8 +235,8 @@ public class DBRTypeTest {
                     Assertions.assertEquals(evTimestamp, expectedTime);
 
                     SampleValue val = ev.getSampleValue();
-                    SampleValue eexpectedval = valuegenerator.getSampleValue(
-                            dbrType, TimeUtils.getSecondsIntoYear(expectedTime.getEpochSecond()));
+                    SampleValue eexpectedval =
+                            valuegenerator.getSampleValue(dbrType, TimeUtils.getSecondsIntoYear(expectedTime));
                     Assertions.assertEquals(eexpectedval, val);
                     expectedTime = expectedTime.plusSeconds(periodInSeconds);
                 }
