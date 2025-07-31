@@ -93,7 +93,7 @@ public class ValidateAndFixPBFile {
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                boolean isValid = ValidatePBFile.validatePBFile(file, verboseMode);
+                                boolean isValid = ValidatePlainFile.validatePlainFile(file, verboseMode);
                                 if (!isValid) {
                                     logger.debug("Path " + file + " is not a valid PB file");
                                     fixPBFile(file, verboseMode, makeBackups);
@@ -112,7 +112,7 @@ public class ValidateAndFixPBFile {
                             }
                         }.init(verboseMode, makeBackups));
             } else {
-                boolean isValid = ValidatePBFile.validatePBFile(path, verboseMode);
+                boolean isValid = ValidatePlainFile.validatePlainFile(path, verboseMode);
                 if (!isValid) {
                     logger.debug("Path " + path + " is not a valid PB file");
                     fixPBFile(path, verboseMode, makeBackups);

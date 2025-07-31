@@ -10,7 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.utils.ValidatePBFile;
+import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -157,7 +157,7 @@ public class SimpleETLTest {
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePBFile.validatePBFile(destPath, true),
+                    ValidatePlainFile.validatePlainFile(destPath, true),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
