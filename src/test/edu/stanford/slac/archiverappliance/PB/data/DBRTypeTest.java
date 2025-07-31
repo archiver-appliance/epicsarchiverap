@@ -9,6 +9,7 @@ package edu.stanford.slac.archiverappliance.PB.data;
 
 import edu.stanford.slac.archiverappliance.plain.FileStreamCreator;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import gov.aps.jca.dbr.DBR;
 import org.apache.logging.log4j.LogManager;
@@ -50,7 +51,7 @@ import java.util.stream.Stream;
 public class DBRTypeTest {
     private static final Logger logger = LogManager.getLogger(DBRTypeTest.class.getName());
     static PlainStoragePlugin pbplugin;
-    static PBCommonSetup pbSetup = new PBCommonSetup();
+    static PlainCommonSetup pbSetup = new PlainCommonSetup();
     static ConfigService configService;
 
     private static final int SECONDS_INTO_YEAR = 100;

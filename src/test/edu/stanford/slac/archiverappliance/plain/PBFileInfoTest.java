@@ -7,7 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -28,7 +27,7 @@ import java.time.Instant;
  *
  */
 public class PBFileInfoTest {
-    PBCommonSetup setup = new PBCommonSetup();
+    PlainCommonSetup setup = new PlainCommonSetup();
     Path pBfile;
     String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PVInfo";
 

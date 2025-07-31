@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
@@ -40,7 +41,7 @@ import java.util.Collections;
  */
 public class LargePBLineTest {
     private ConfigService configService;
-    PBCommonSetup largeLineSetup = new PBCommonSetup();
+    PlainCommonSetup largeLineSetup = new PlainCommonSetup();
     private static final Logger logger = LogManager.getLogger(LargePBLineTest.class.getName());
 
     @BeforeEach

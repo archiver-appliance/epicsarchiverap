@@ -5,9 +5,8 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package edu.stanford.slac.archiverappliance.PB.data;
+package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,12 +20,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Some common setup for testing PB files
+ * Some common setup for testing setting up storage folders
  * @author mshankar
  *
  */
-public class PBCommonSetup {
-    private static Logger logger = LogManager.getLogger(PBCommonSetup.class.getName());
+public class PlainCommonSetup {
+    private static Logger logger = LogManager.getLogger(PlainCommonSetup.class.getName());
     private File tempFolderForTests;
     private String testSpecificFolder;
     static ConfigServiceForTests configService;

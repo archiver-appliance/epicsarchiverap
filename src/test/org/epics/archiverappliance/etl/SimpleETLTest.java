@@ -7,8 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.logging.log4j.LogManager;
@@ -49,8 +49,8 @@ import java.util.stream.Stream;
  */
 public class SimpleETLTest {
     private static final Logger logger = LogManager.getLogger(SimpleETLTest.class);
-    static PBCommonSetup srcSetup = new PBCommonSetup();
-    static PBCommonSetup destSetup = new PBCommonSetup();
+    static PlainCommonSetup srcSetup = new PlainCommonSetup();
+    static PlainCommonSetup destSetup = new PlainCommonSetup();
     static ConfigServiceForTests configService;
     static long ratio = 5;
     static List<ETLTestPlugins> etlPlugins;
