@@ -15,9 +15,11 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serial;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -40,25 +42,27 @@ import javax.servlet.http.HttpServletResponse;
  * But this ties us to Tomcat and some expressed the desire to run this in other containers.
  * In addition, we needed the ability to serve content from within zip files.
  * This lets us upgrade JavaScript libraries easily; many of which are delivered a multiple files in a versioned zip.
- *
- * This is code from http://balusc.blogspot.com/2009/02/fileservlet-supporting-resume-and.html substantially modified.
+ * <p>
+ * This is code from <a href="http://balusc.blogspot.com/2009/02/fileservlet-supporting-resume-and.html">...</a> substantially modified.
  * @author mshankar
  *
  *
  */
 public class StaticContentServlet extends HttpServlet {
+    @Serial
     private static final long serialVersionUID = 0L;
-    private static Logger logger = LogManager.getLogger(StaticContentServlet.class.getName());
+
+    private static final Logger logger = LogManager.getLogger(StaticContentServlet.class.getName());
     private static final int DEFAULT_BUFFER_SIZE = 10240;
     // We expire content in this many minutes
     private static final long DEFAULT_EXPIRE_TIME = 10 * 60 * 1000L;
+    private static final String EXPIRES = "Expires";
 
     private ConfigService configService = null;
-    private String staticContentBasePath = "ui";
     /**
      * List of paths for which we have to do template replacement
      */
-    private Set<String> templateReplacementPaths = new HashSet<String>();
+    private final Set<String> templateReplacementPaths = new HashSet<>();
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -92,7 +96,7 @@ public class StaticContentServlet extends HttpServlet {
 
         // Get requested file by path info - remove the leading '/'
         String requestedFile = request.getPathInfo();
-        if (requestedFile == null || requestedFile.equals("")) {
+        if (requestedFile == null || requestedFile.isEmpty()) {
             logger.debug("Default request - send to index.html");
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
             response.setHeader("Location", "index.html");
@@ -100,7 +104,7 @@ public class StaticContentServlet extends HttpServlet {
         }
 
         if (requestedFile.startsWith("/")) {
-            requestedFile = requestedFile.substring(1, requestedFile.length());
+            requestedFile = requestedFile.substring(1);
         }
         logger.debug("Procesing static content request for " + requestedFile);
 
@@ -120,8 +124,9 @@ public class StaticContentServlet extends HttpServlet {
         }
 
         // URL-decode the file name (might contain spaces and on) and prepare file object.
-        String decodedFilePath = URLDecoder.decode(requestedFile, "UTF-8");
+        String decodedFilePath = URLDecoder.decode(requestedFile, StandardCharsets.UTF_8);
 
+        String staticContentBasePath = "ui";
         try (PathSequence pathSeq =
                 new PathSequence(request.getServletContext(), staticContentBasePath, decodedFilePath)) {
 
@@ -132,7 +137,7 @@ public class StaticContentServlet extends HttpServlet {
                 return;
             }
 
-            logger.debug("Serving static content: " + pathSeq.toString());
+            logger.debug("Serving static content: " + pathSeq);
 
             // Prepare some variables. The ETag is an unique identifier of the file.
             String fileName = pathSeq.getContentDispositionFileName();
@@ -140,12 +145,6 @@ public class StaticContentServlet extends HttpServlet {
             long lastModified = pathSeq.lastModified();
             String eTag = fileName + "_" + length + "_" + lastModified;
             long expires = System.currentTimeMillis() + DEFAULT_EXPIRE_TIME;
-
-            //			if(logger.isDebugEnabled()) {
-            //				for(String headerName : Collections.list(request.getHeaderNames())) {
-            //					logger.debug(headerName + " : " + request.getHeaders(headerName).nextElement());
-            //				}
-            //			}
 
             // Validate request headers for caching ---------------------------------------------------
 
@@ -155,7 +154,7 @@ public class StaticContentServlet extends HttpServlet {
                 logger.debug("Matched If-None-Match " + ifNoneMatch + " eTag " + eTag);
                 response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
                 response.setHeader("ETag", eTag); // Required in 304.
-                response.setDateHeader("Expires", expires); // Postpone cache with 1 week.
+                response.setDateHeader(EXPIRES, expires); // Postpone cache with 1 week.
                 return;
             }
 
@@ -166,7 +165,7 @@ public class StaticContentServlet extends HttpServlet {
                 logger.debug("Matched If-Modified-Since");
                 response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
                 response.setHeader("ETag", eTag); // Required in 304.
-                response.setDateHeader("Expires", expires); // Postpone cache with 1 week.
+                response.setDateHeader(EXPIRES, expires); // Postpone cache with 1 week.
                 return;
             }
 
@@ -220,7 +219,7 @@ public class StaticContentServlet extends HttpServlet {
             response.setHeader("Content-Disposition", disposition + ";filename=\"" + fileName + "\"");
             response.setHeader("ETag", eTag);
             response.setDateHeader("Last-Modified", lastModified);
-            response.setDateHeader("Expires", expires);
+            response.setDateHeader(EXPIRES, expires);
             response.addHeader("ARCHAPPL_SRC", pathSeq.toString());
 
             // Prepare streams.
@@ -262,7 +261,7 @@ public class StaticContentServlet extends HttpServlet {
      * @return True if the given accept header accepts the given value.
      */
     private static boolean accepts(String acceptHeader, String toAccept) {
-        String[] acceptValues = acceptHeader.split("\\s*(,|;)\\s*");
+        String[] acceptValues = acceptHeader.split("\\s*([,;])\\s*");
         Arrays.sort(acceptValues);
         return Arrays.binarySearch(acceptValues, toAccept) > -1
                 || Arrays.binarySearch(acceptValues, toAccept.replaceAll("/.*$", "/*")) > -1
@@ -352,7 +351,7 @@ public class StaticContentServlet extends HttpServlet {
         /**
          * This is what the client is asking for.
          */
-        private String fullPathToResource;
+        private final String fullPathToResource;
 
         private BufferedInputStream content = null;
         private long length = -1;
@@ -419,7 +418,6 @@ public class StaticContentServlet extends HttpServlet {
                     try (ZipInputStream zis = new ZipInputStream(connection.getInputStream())) {
                         ZipEntry zentry = zis.getNextEntry();
                         while (zentry != null) {
-                            // logger.debug("Zip entry '" + zentry.getName() + "'");
                             if ((File.separator.equals("/") && zentry.getName().equals(potentialPathWithinZip))
                                     || (File.separator.equals("\\")
                                             && zentry.getName().equals(potentialPathWithinZip.replace("\\", "/")))) {
@@ -435,7 +433,7 @@ public class StaticContentServlet extends HttpServlet {
                                 logger.debug("Read bytes " + bos.size() + " for content length " + this.length);
                                 if (bos.size() != this.length) {
                                     throw new IOException("ZipEntry for " + potentialPathWithinZip + " in zip file "
-                                            + zipFileURL.toString() + " says the content length is " + this.length
+                                            + zipFileURL + " says the content length is " + this.length
                                             + " but we could only read " + bos.size() + " bytes");
                                 }
                                 if (templateReplacementPaths.contains(decodedPath)) {
@@ -443,7 +441,7 @@ public class StaticContentServlet extends HttpServlet {
                                 } else {
                                     this.content = new BufferedInputStream(new ByteArrayInputStream(bos.toByteArray()));
                                 }
-                                this.identifier = zipFileURL.toString() + ".zip:" + potentialPathWithinZip;
+                                this.identifier = zipFileURL + ".zip:" + potentialPathWithinZip;
                                 return;
                             }
                             zentry = zis.getNextEntry();
@@ -460,7 +458,7 @@ public class StaticContentServlet extends HttpServlet {
 
             switch (decodedPath) {
                 case "viewer/index.html": {
-                    HashMap<String, String> templateReplacementsForViewer = new HashMap<String, String>();
+                    HashMap<String, String> templateReplacementsForViewer = new HashMap<>();
                     templateReplacementsForViewer.put(
                             "client_retrieval_url_base",
                             "<script>\n"
@@ -474,7 +472,7 @@ public class StaticContentServlet extends HttpServlet {
                     return;
                 }
                 case "js/mgmt.js": {
-                    HashMap<String, String> templateReplacementsForViewer = new HashMap<String, String>();
+                    HashMap<String, String> templateReplacementsForViewer = new HashMap<>();
                     templateReplacementsForViewer.put(
                             "archivePVWorkflowBatchSize",
                             "var archivePVWorkflowBatchSize = "
@@ -506,7 +504,7 @@ public class StaticContentServlet extends HttpServlet {
             return this.content != null;
         }
 
-        String getContentDispositionFileName() throws IOException {
+        String getContentDispositionFileName() {
             Path fullPath = Paths.get(fullPathToResource);
             int pathComponentsSz = fullPath.getNameCount();
             return fullPath.subpath(pathComponentsSz - 1, pathComponentsSz).toString();
@@ -520,7 +518,7 @@ public class StaticContentServlet extends HttpServlet {
             return this.lastModified;
         }
 
-        InputStream getInputStream() throws IOException {
+        InputStream getInputStream() {
             return this.content;
         }
 
@@ -530,7 +528,7 @@ public class StaticContentServlet extends HttpServlet {
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             if (this.content != null) {
                 try {
                     this.content.close();
