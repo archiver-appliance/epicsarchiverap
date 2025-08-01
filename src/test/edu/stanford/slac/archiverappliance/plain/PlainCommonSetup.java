@@ -20,14 +20,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Some common setup for testing setting up storage folders
+ * Some common setup for testing PB files
  * @author mshankar
  *
  */
 public class PlainCommonSetup {
-    private static Logger logger = LogManager.getLogger(PlainCommonSetup.class.getName());
-    private File tempFolderForTests;
-    private String testSpecificFolder;
+    private static final Logger logger = LogManager.getLogger(PlainCommonSetup.class.getName());
     static ConfigServiceForTests configService;
 
     static {
@@ -37,6 +35,9 @@ public class PlainCommonSetup {
             throw new RuntimeException(e);
         }
     }
+
+    private File tempFolderForTests;
+    private String testSpecificFolder;
 
     public void setUpRootFolder() throws Exception {
 
@@ -49,38 +50,23 @@ public class PlainCommonSetup {
         }
     }
 
-    public void setUpRootFolder(PlainStoragePlugin pbplugin) throws Exception {
+    public void setUpRootFolder(PlainStoragePlugin storagePlugin) throws Exception {
         setUpRootFolder();
         tempFolderForTests = new File(configService.getPBRootFolder());
-        pbplugin.initialize(
-                "pb://localhost?name=UnitTest&rootFolder=" + tempFolderForTests
+        storagePlugin.initialize(
+                storagePlugin.getPluginIdentifier() + "://localhost?name=UnitTest&rootFolder=" + tempFolderForTests
                         + "&partitionGranularity=PARTITION_YEAR",
                 configService);
-        pbplugin.setRootFolder(tempFolderForTests.getAbsolutePath());
-        pbplugin.setName(tempFolderForTests.getAbsolutePath());
+        storagePlugin.setRootFolder(tempFolderForTests.getAbsolutePath());
+        storagePlugin.setName(tempFolderForTests.getAbsolutePath());
     }
 
-    public void setUpRootFolder(PlainStoragePlugin pbplugin, String testSpecificFolder) throws Exception {
-        setUpRootFolder();
-        this.testSpecificFolder = testSpecificFolder;
-
-        tempFolderForTests = new File(configService.getPBRootFolder() + File.separator + this.testSpecificFolder);
-        if (tempFolderForTests.exists()) {
-            FileUtils.deleteDirectory(tempFolderForTests);
-        }
-        tempFolderForTests.mkdirs();
-
-        pbplugin.initialize(
-                "pb://localhost?name=UnitTest&rootFolder=" + tempFolderForTests
-                        + "&partitionGranularity=PARTITION_YEAR",
-                configService);
-
-        pbplugin.setRootFolder(tempFolderForTests.getAbsolutePath());
-        pbplugin.setName(tempFolderForTests.getAbsolutePath());
+    public void setUpRootFolder(PlainStoragePlugin storagePlugin, String testSpecificFolder) throws Exception {
+        setUpRootFolder(storagePlugin, testSpecificFolder, PartitionGranularity.PARTITION_YEAR);
     }
 
     public void setUpRootFolder(
-            PlainStoragePlugin pbplugin, String testSpecificFolder, PartitionGranularity partitionGranularity)
+            PlainStoragePlugin storagePlugin, String testSpecificFolder, PartitionGranularity partitionGranularity)
             throws Exception {
         setUpRootFolder();
         this.testSpecificFolder = testSpecificFolder;
@@ -91,14 +77,14 @@ public class PlainCommonSetup {
         }
         tempFolderForTests.mkdirs();
 
-        pbplugin.initialize(
-                "pb://localhost?name=UnitTest&rootFolder=" + tempFolderForTests + "&partitionGranularity="
-                        + partitionGranularity.toString(),
+        storagePlugin.initialize(
+                storagePlugin.getPluginIdentifier() + "://localhost?name=UnitTest&rootFolder=" + tempFolderForTests
+                        + "&partitionGranularity=" + partitionGranularity.toString(),
                 configService);
 
-        pbplugin.setRootFolder(tempFolderForTests.getAbsolutePath());
-        pbplugin.setPartitionGranularity(partitionGranularity);
-        pbplugin.setName(partitionGranularity.toString());
+        storagePlugin.setRootFolder(tempFolderForTests.getAbsolutePath());
+        storagePlugin.setPartitionGranularity(partitionGranularity);
+        storagePlugin.setName(partitionGranularity.toString());
     }
 
     public void deleteTestFolder() throws IOException {

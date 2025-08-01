@@ -38,7 +38,7 @@ public class CompareEvent implements CompareEventLine {
         // The year does not matter here as we are driving solely off secondsintoyear. So we set it to 0.
         Constructor<? extends DBRTimeEvent> constructor =
                 DBR2PBTypeMapping.getPBClassFor(type).getUnmarshallingFromByteArrayConstructor();
-        YearSecondTimestamp line1Timestamp = new YearSecondTimestamp(this.yearSecondTimestamp.getYear(), 0, 0);
+        YearSecondTimestamp line1Timestamp;
         YearSecondTimestamp line2Timestamp = new YearSecondTimestamp(
                 this.yearSecondTimestamp.getYear(),
                 PartitionGranularity.PARTITION_YEAR.getApproxSecondsPerChunk() + 1,
