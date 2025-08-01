@@ -23,8 +23,8 @@ import java.util.HashMap;
  *
  */
 public class DBR2PBTypeMapping {
-    private static Logger logger = LogManager.getLogger(DBR2PBTypeMapping.class.getName());
-    private static HashMap<ArchDBRTypes, DBR2PBTypeMapping> typemap = new HashMap<ArchDBRTypes, DBR2PBTypeMapping>();
+    private static final Logger logger = LogManager.getLogger(DBR2PBTypeMapping.class.getName());
+    private static final HashMap<ArchDBRTypes, DBR2PBTypeMapping> typemap = new HashMap<>();
 
     static {
         typemap.put(ArchDBRTypes.DBR_SCALAR_STRING, new DBR2PBTypeMapping(PBScalarString.class));
@@ -55,8 +55,8 @@ public class DBR2PBTypeMapping {
     }
 
     Class<? extends DBRTimeEvent> pbclass;
-    private Constructor<? extends DBRTimeEvent> unmarshallingFromByteArrayConstructor;
-    private Constructor<? extends DBRTimeEvent> serializingConstructor;
+    private final Constructor<? extends DBRTimeEvent> unmarshallingFromByteArrayConstructor;
+    private final Constructor<? extends DBRTimeEvent> serializingConstructor;
 
     private DBR2PBTypeMapping(Class<? extends DBRTimeEvent> pblass) {
         this.pbclass = pblass;
