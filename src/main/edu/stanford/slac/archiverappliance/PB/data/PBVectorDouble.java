@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorDouble.Builder;
@@ -298,5 +299,16 @@ public class PBVectorDouble implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_WAVEFORM_DOUBLE;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.VectorDouble.class;
     }
 }

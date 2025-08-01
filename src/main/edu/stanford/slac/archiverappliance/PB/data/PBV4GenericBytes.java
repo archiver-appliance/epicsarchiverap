@@ -1,6 +1,7 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import org.apache.logging.log4j.LogManager;
@@ -285,5 +286,16 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     @Override
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.V4GenericBytes.class;
     }
 }

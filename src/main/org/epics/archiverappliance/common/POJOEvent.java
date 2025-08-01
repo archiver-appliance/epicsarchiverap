@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.common;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -160,5 +161,19 @@ public class POJOEvent implements DBRTimeEvent {
     @Override
     public void setSeverity(int severity) {
         this.severity = severity;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getProtobufMessage();
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getProtobufMessageClass();
     }
 }

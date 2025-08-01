@@ -303,4 +303,15 @@ public class PBScalarFloat implements DBRTimeEvent {
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_SCALAR_FLOAT;
     }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.ScalarFloat.class;
+    }
 }

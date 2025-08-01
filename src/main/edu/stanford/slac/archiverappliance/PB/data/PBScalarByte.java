@@ -305,4 +305,15 @@ public class PBScalarByte implements DBRTimeEvent {
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_SCALAR_BYTE;
     }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.ScalarByte.class;
+    }
 }

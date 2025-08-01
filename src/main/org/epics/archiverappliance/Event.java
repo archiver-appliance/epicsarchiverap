@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance;
 
+import com.google.protobuf.Message;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.SampleValue;
 
@@ -59,4 +60,14 @@ public interface Event {
     public Event makeClone();
 
     public ArchDBRTypes getDBRType();
+
+    /**
+     * Return the protobuf message.
+     */
+    public Message getProtobufMessage();
+
+    /**
+     * Return the protobuf message class.
+     */
+    public Class<? extends Message> getProtobufMessageClass();
 }

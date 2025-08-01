@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarShort.Builder;
@@ -289,5 +290,16 @@ public class PBScalarShort implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_SCALAR_SHORT;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.ScalarShort.class;
     }
 }

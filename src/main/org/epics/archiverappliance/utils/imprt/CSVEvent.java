@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.imprt;
 
+import com.google.protobuf.Message;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -331,5 +332,15 @@ public class CSVEvent implements DBRTimeEvent {
     @Override
     public YearSecondTimestamp getYearSecondTimestamp() {
         return TimeUtils.convertToYearSecondTimestamp(this.getEventTimeStamp());
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        return null;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return null;
     }
 }

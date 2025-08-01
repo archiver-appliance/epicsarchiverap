@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorInt.Builder;
@@ -298,5 +299,16 @@ public class PBVectorInt implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_WAVEFORM_INT;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.VectorInt.class;
     }
 }

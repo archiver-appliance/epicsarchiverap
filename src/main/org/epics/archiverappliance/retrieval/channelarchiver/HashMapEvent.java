@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.channelarchiver;
 
+import com.google.protobuf.Message;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -222,5 +223,15 @@ public class HashMapEvent implements DBRTimeEvent {
     @Override
     public void setSeverity(int severity) {
         values.put(SEVR_FIELD_NAME, Integer.valueOf(severity).toString());
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        return null;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return null;
     }
 }
