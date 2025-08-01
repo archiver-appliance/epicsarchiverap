@@ -46,6 +46,12 @@ public class PBScalarString implements DBRTimeEvent {
         this.year = year;
     }
 
+    public PBScalarString(short year, Message.Builder eventBuilder) {
+        this.year = year;
+        this.dbevent = (EPICSEvent.ScalarString) eventBuilder.build();
+        bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+    }
+
     public PBScalarString(DBRTimeEvent ev) {
         YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
         year = yst.getYear();

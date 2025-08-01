@@ -42,6 +42,12 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         this.year = year;
     }
 
+    public PBV4GenericBytes(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.V4GenericBytes) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
+    }
+
     public PBV4GenericBytes(DBRTimeEvent ev) {
         YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
         year = yst.getYear();

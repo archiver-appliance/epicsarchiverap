@@ -48,6 +48,12 @@ public class PBVectorEnum implements DBRTimeEvent {
         this.year = year;
     }
 
+    public PBVectorEnum(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.VectorEnum) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
+    }
+
     @SuppressWarnings("unchecked")
     public PBVectorEnum(DBRTimeEvent ev) {
         List<Short> srcvals = (List<Short>) ev.getSampleValue().getValues();

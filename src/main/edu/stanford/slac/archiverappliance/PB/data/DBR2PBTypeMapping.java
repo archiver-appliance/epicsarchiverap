@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -50,13 +51,10 @@ public class DBR2PBTypeMapping {
         }
     }
 
-    public static DBR2PBTypeMapping getPBClassFor(ArchDBRTypes type) {
-        return typemap.get(type);
-    }
-
-    Class<? extends DBRTimeEvent> pbclass;
     private final Constructor<? extends DBRTimeEvent> unmarshallingFromByteArrayConstructor;
+    private final Constructor<? extends DBRTimeEvent> unmarshallingFromEpicsEventConstructor;
     private final Constructor<? extends DBRTimeEvent> serializingConstructor;
+    Class<? extends DBRTimeEvent> pbclass;
 
     private DBR2PBTypeMapping(Class<? extends DBRTimeEvent> pblass) {
         this.pbclass = pblass;
@@ -69,6 +67,17 @@ public class DBR2PBTypeMapping {
             throw new RuntimeException(
                     "Cannot get unmarshalling constructor from ByteArray for PB event for class " + pbclass.getName());
         }
+        try {
+            unmarshallingFromEpicsEventConstructor = this.pbclass.getConstructor(Short.TYPE, Message.Builder.class);
+        } catch (Exception ex) {
+            logger.error(
+                    "Cannot get unmarshalling constructor from Message.Builder for PB event for class "
+                            + pbclass.getName(),
+                    ex);
+            throw new RuntimeException(
+                    "Cannot get unmarshalling constructor from Message.Builder for PB event for class "
+                            + pbclass.getName());
+        }
 
         try {
             serializingConstructor = this.pbclass.getConstructor(DBRTimeEvent.class);
@@ -77,9 +86,10 @@ public class DBR2PBTypeMapping {
             throw new RuntimeException(
                     "Cannot get serializing constructor for PB event for class " + pbclass.getName());
         }
+    }
 
-        assert (unmarshallingFromByteArrayConstructor != null);
-        assert (serializingConstructor != null);
+    public static DBR2PBTypeMapping getPBClassFor(ArchDBRTypes type) {
+        return typemap.get(type);
     }
 
     public Constructor<? extends DBRTimeEvent> getSerializingConstructor() {
@@ -88,5 +98,9 @@ public class DBR2PBTypeMapping {
 
     public Constructor<? extends DBRTimeEvent> getUnmarshallingFromByteArrayConstructor() {
         return unmarshallingFromByteArrayConstructor;
+    }
+
+    public Constructor<? extends DBRTimeEvent> getUnmarshallingFromEpicsEventConstructor() {
+        return unmarshallingFromEpicsEventConstructor;
     }
 }

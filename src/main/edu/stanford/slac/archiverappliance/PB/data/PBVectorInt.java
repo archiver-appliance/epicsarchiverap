@@ -47,6 +47,12 @@ public class PBVectorInt implements DBRTimeEvent {
         this.year = year;
     }
 
+    public PBVectorInt(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.VectorInt) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
+    }
+
     @SuppressWarnings("unchecked")
     public PBVectorInt(DBRTimeEvent ev) {
         YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());

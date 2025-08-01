@@ -46,6 +46,12 @@ public class PBScalarEnum implements DBRTimeEvent {
         this.year = year;
     }
 
+    public PBScalarEnum(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.ScalarEnum) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
+    }
+
     public PBScalarEnum(DBRTimeEvent ev) {
         YearSecondTimestamp yst = TimeUtils.convertToYearSecondTimestamp(ev.getEventTimeStamp());
         year = yst.getYear();

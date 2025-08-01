@@ -47,6 +47,12 @@ public class PBVectorShort implements DBRTimeEvent {
         this.year = year;
     }
 
+    public PBVectorShort(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.VectorShort) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
+    }
+
     @SuppressWarnings("unchecked")
     public PBVectorShort(DBRTimeEvent ev) {
         List<Short> srcvals = (List<Short>) ev.getSampleValue().getValues();
