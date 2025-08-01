@@ -323,4 +323,15 @@ public class PBVectorByte implements DBRTimeEvent {
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_WAVEFORM_BYTE;
     }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.VectorChar.class;
+    }
 }

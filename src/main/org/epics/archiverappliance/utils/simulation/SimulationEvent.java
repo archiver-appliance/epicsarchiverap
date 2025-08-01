@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.simulation;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -191,5 +192,17 @@ public class SimulationEvent implements DBRTimeEvent {
 
     public void setNanos(int nanos) {
         this.nanos = nanos;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getProtobufMessage();
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        DBRTimeEvent ev = getDbrTimeEvent();
+        return ev.getProtobufMessageClass();
     }
 }

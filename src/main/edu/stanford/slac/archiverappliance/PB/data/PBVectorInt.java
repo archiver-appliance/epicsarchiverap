@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.VectorInt.Builder;
@@ -43,6 +44,12 @@ public class PBVectorInt implements DBRTimeEvent {
 
     public PBVectorInt(short year, ByteArray bar) {
         this.bar = bar;
+        this.year = year;
+    }
+
+    public PBVectorInt(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.VectorInt) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         this.year = year;
     }
 
@@ -298,5 +305,16 @@ public class PBVectorInt implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_WAVEFORM_INT;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.VectorInt.class;
     }
 }

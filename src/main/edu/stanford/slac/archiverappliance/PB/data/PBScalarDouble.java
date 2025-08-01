@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.PB.data;
 
+import com.google.protobuf.Message;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.ScalarDouble.Builder;
@@ -43,6 +44,12 @@ public class PBScalarDouble implements DBRTimeEvent {
     public PBScalarDouble(short year, ByteArray bar) {
         this.year = year;
         this.bar = bar;
+    }
+
+    public PBScalarDouble(short year, Message.Builder message) {
+        this.dbevent = (EPICSEvent.ScalarDouble) message.build();
+        this.bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
+        this.year = year;
     }
 
     public PBScalarDouble(DBRTimeEvent ev) {
@@ -289,5 +296,16 @@ public class PBScalarDouble implements DBRTimeEvent {
     @Override
     public ArchDBRTypes getDBRType() {
         return ArchDBRTypes.DBR_SCALAR_DOUBLE;
+    }
+
+    @Override
+    public Message getProtobufMessage() {
+        unmarshallEventIfNull();
+        return dbevent;
+    }
+
+    @Override
+    public Class<? extends Message> getProtobufMessageClass() {
+        return EPICSEvent.ScalarDouble.class;
     }
 }
