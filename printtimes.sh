@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Runs ValidatePBFile on all the args.
+# Runs ValidatePlainFile on all the args.
 
 export SCRIPTS_DIR=`dirname $0`
 if [[ ! -f ${SCRIPTS_DIR}/run.sh ]]
