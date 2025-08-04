@@ -8,6 +8,7 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -18,7 +19,6 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
-import org.epics.archiverappliance.retrieval.client.InfoChangeHandler;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -79,10 +79,12 @@ public class RenamePVBPLTest {
                 short year = (short) (currentYear - y);
                 for (int day = 0; day < 366; day++) {
                     ArrayListEventStream testData = new ArrayListEventStream(
-                            24 * 60 * 60,
+                            PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                             new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
-                    int startofdayinseconds = day * 24 * 60 * 60;
-                    for (int secondintoday = 0; secondintoday < 24 * 60 * 60; secondintoday++) {
+                    int startofdayinseconds = day * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                    for (int secondintoday = 0;
+                            secondintoday < PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
+                            secondintoday++) {
                         // The value should be the secondsIntoYear integer divided by 600.
                         testData.add(new SimulationEvent(
                                 startofdayinseconds + secondintoday,
@@ -200,12 +202,7 @@ public class RenamePVBPLTest {
             info = strm.getPayLoadInfo();
             Assertions.assertTrue(info != null, "Stream has no payload info");
             mergeHeaders(info, metaFields);
-            strm.onInfoChange(new InfoChangeHandler() {
-                @Override
-                public void handleInfoChange(PayloadInfo info) {
-                    mergeHeaders(info, metaFields);
-                }
-            });
+            strm.onInfoChange(info1 -> mergeHeaders(info1, metaFields));
 
             long endTimeMillis = System.currentTimeMillis();
 

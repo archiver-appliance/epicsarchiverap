@@ -15,14 +15,13 @@ public class MetaFields {
      */
     @SuppressWarnings("unchecked")
     public static void addMetaFieldValue(HashMap<String, Object> jsonval, String fieldName, String fieldValue) {
-        if(!jsonval.keySet().contains("meta")) {
+        if (!jsonval.containsKey("meta")) {
             HashMap<String, String> metaFields = new HashMap<String, String>();
-            jsonval.put("meta", metaFields);    
+            jsonval.put("meta", metaFields);
         }
-        HashMap<String, String> meta = ((HashMap<String, String>)jsonval.get("meta"));
-        if(!meta.containsKey(fieldName)) {
+        HashMap<String, String> meta = ((HashMap<String, String>) jsonval.get("meta"));
+        if (!meta.containsKey(fieldName)) {
             meta.put(fieldName, fieldValue);
         }
     }
-
 }

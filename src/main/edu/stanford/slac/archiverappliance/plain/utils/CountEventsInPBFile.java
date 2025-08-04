@@ -24,9 +24,10 @@ import java.nio.file.Paths;
  */
 public class CountEventsInPBFile {
     private static final Logger logger = LogManager.getLogger(CountEventsInPBFile.class);
+
     /**
      * @param args &emsp;
-     * @throws Exception  &emsp;
+     * @throws Exception &emsp;
      */
     public static void main(String[] args) throws Exception {
         int totalInvalid = 0;

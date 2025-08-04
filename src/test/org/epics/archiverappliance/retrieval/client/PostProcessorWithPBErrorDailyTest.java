@@ -1,11 +1,10 @@
 package org.epics.archiverappliance.retrieval.client;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,7 +12,6 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -40,6 +38,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -153,8 +152,12 @@ public class PostProcessorWithPBErrorDailyTest {
 
         final HashMap<String, String> metaFields = new HashMap<String, String>();
         // Make sure we get the EGU as part of a regular VAL call.
-        try (GenMsgIterator strm = rawDataRetrieval.getDataForPV(
-                retrievalPVName, TimeUtils.toSQLTimeStamp(start), TimeUtils.toSQLTimeStamp(now), false, null)) {
+        try (GenMsgIterator strm = rawDataRetrieval.getDataForPVs(
+                Arrays.asList(retrievalPVName),
+                TimeUtils.toSQLTimeStamp(start),
+                TimeUtils.toSQLTimeStamp(now),
+                false,
+                null)) {
             PayloadInfo info = null;
             Assertions.assertNotNull(strm, "We should get some data, we are getting a null stream back");
             info = strm.getPayLoadInfo();
@@ -207,9 +210,8 @@ public class PostProcessorWithPBErrorDailyTest {
                     context.getPaths(),
                     mtsFolderName,
                     pvName,
-                    pbFileExtension,
-                    PartitionGranularity.PARTITION_DAY,
-                    PBCompressionMode.NONE,
+                    PBPlainFileHandler.pbFileExtension,
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter());
             Assertions.assertNotNull(paths);
             Assertions.assertTrue(paths.length > 0);
