@@ -4,13 +4,19 @@ import java.io.IOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+
+import javax.annotation.Nonnull;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
+
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 /**
  * ETL metrics for the appliance as a whole into one destination
@@ -38,14 +44,28 @@ public class ETLMetricsIntoStore implements StorageMetricsContext {
 	private long lastTimeGlobalETLTimeWasUpdatedInEpochSeconds = 0;
 	private long[] weeklyETLUsageInMillis = new long[7];
 
-	private HashMap<String, FileStore> storageMetricsFileStores = new HashMap<String, FileStore>();
-		
+	private record FileStoreSpace(long usableSpace, long totalSpace){};
+	private final LoadingCache<String, FileStoreSpace> fileStoreCache;
+
 	public ETLMetricsIntoStore(String destName) { 
 		this.destName = destName;
 		this.startOfMetricsMeasurementInEpochSeconds = TimeUtils.getCurrentEpochSeconds();
 		for(int i = 0; i < 7; i++) { 
 			weeklyETLUsageInMillis[i] = -1;
 		}
+		fileStoreCache = CacheBuilder.newBuilder()
+		.expireAfterWrite(10, TimeUnit.MINUTES)
+		.build(
+           new CacheLoader<String, FileStoreSpace>() {
+				public FileStoreSpace load(@Nonnull String rootFolder) throws IOException {
+					try(ArchPaths paths = new ArchPaths()) {
+						Path rootF = paths.get(rootFolder);
+						logger.info("Loading available space from file store for root folder {}", rootFolder);
+						FileStore fileStore = Files.getFileStore(rootF);
+						return new FileStoreSpace(fileStore.getUsableSpace(), fileStore.getTotalSpace());
+					}
+				}
+           });
 	}
 
 	public long getTotalETLRuns() {
@@ -165,27 +185,28 @@ public class ETLMetricsIntoStore implements StorageMetricsContext {
 		return (totalWeeklyETLSeconds*100.0)/totalSecondsInMetric;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.epics.archiverappliance.etl.StorageMetricsContext#getFileStore(java.lang.String)
-	 */
-	@Override
-	public FileStore getFileStore(String rootFolder) throws IOException {
-		FileStore fileStore = this.storageMetricsFileStores.get(rootFolder);
-		if(fileStore == null) { 
-			try(ArchPaths paths = new ArchPaths()) {
-				Path rootF = paths.get(rootFolder);
-				fileStore = Files.getFileStore(rootF);
-				this.storageMetricsFileStores.put(rootFolder, fileStore);
-				logger.debug("Adding filestore to ETLMetricsForLifetime cache for rootFolder " + rootFolder);
-			}
-		} else { 
-			logger.debug("Filestore for rootFolder " + rootFolder + " is already in ETLMetricsForLifetime cache");
-		}
-		return fileStore;
-	}
-
 	@Override
 	public String toString() {
 		return this.destName;
+	}
+
+	@Override
+	public long getUsableSpaceFromCache(String rootFolder) throws IOException {
+		try {
+			FileStoreSpace space = this.fileStoreCache.get(rootFolder);
+			return space.usableSpace;	
+		} catch(Exception ex) {
+			throw new IOException(ex);
+		}
+	}
+
+	@Override
+	public long getTotalSpaceFromCache(String rootFolder) throws IOException {
+		try {
+			FileStoreSpace space = this.fileStoreCache.get(rootFolder);
+			return space.totalSpace;	
+		} catch(Exception ex) {
+			throw new IOException(ex);
+		}
 	}
 }

@@ -76,10 +76,10 @@ public final class PBThreeTierETLPVLookup {
      */
     public void postStartup() {
         configlogger.info(
-                "Beginning ETL post startup; scheduling the configServiceSyncThread to keep the local ETL lifetimeId2PVName2LookupItem in sync");
+                "Beginning ETL post startup");
         configService.getEventBus().register(this);
         this.startETLJobsOnStartup();
-        configlogger.debug("Done initializing ETL post startup.");
+        configlogger.debug("Done initializing ETL jobs on post startup.");
     }
 
     @Subscribe

@@ -1,7 +1,6 @@
 package org.epics.archiverappliance.etl;
 
 import java.io.IOException;
-import java.nio.file.FileStore;
 
 /**
  * Performance optimization for storage metrics methods.
@@ -10,5 +9,6 @@ import java.nio.file.FileStore;
  *
  */
 public interface StorageMetricsContext {
-	public FileStore getFileStore(String rootFolder) throws IOException;
+	public long getUsableSpaceFromCache(String rootFolder) throws IOException;
+	public long getTotalSpaceFromCache(String rootFolder) throws IOException;
 }
