@@ -1136,12 +1136,12 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     @Override
     public long getTotalSpace(StorageMetricsContext storageMetricsContext) throws IOException {
-        return storageMetricsContext.getFileStore(this.getRootFolder()).getTotalSpace();
+        return storageMetricsContext.getTotalSpaceFromCache(this.getRootFolder());
     }
 
     @Override
     public long getUsableSpace(StorageMetricsContext storageMetricsContext) throws IOException {
-        return storageMetricsContext.getFileStore(this.getRootFolder()).getUsableSpace();
+        return storageMetricsContext.getUsableSpaceFromCache(this.getRootFolder());
     }
 
     @Override
