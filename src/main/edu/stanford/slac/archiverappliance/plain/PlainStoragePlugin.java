@@ -571,65 +571,65 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             URI srcURI = new URI(configURL);
             HashMap<String, String> queryNVPairs = URIUtils.parseQueryString(srcURI);
 
-            if (queryNVPairs.containsKey("name")) {
-                name = queryNVPairs.get("name");
+            if (queryNVPairs.containsKey(URLKey.NAME.key())) {
+                name = queryNVPairs.get(URLKey.NAME.key());
             } else {
                 throw new IOException(
                         "Cannot initialize the plugin; this plugin implements the storage metrics API which needs an identity");
             }
 
             String rootFolderStr;
-            if (queryNVPairs.containsKey("rootFolder")) {
-                rootFolderStr = queryNVPairs.get("rootFolder");
+            if (queryNVPairs.containsKey(URLKey.ROOT_FOLDER.key())) {
+                rootFolderStr = queryNVPairs.get(URLKey.ROOT_FOLDER.key());
             } else {
                 throw new IOException(
                         "Cannot initialize the plugin; this needs both the rootFolder and the partitionGranularity to be specified");
             }
 
-            if (queryNVPairs.containsKey("partitionGranularity")) {
-                this.setPartitionGranularity(PartitionGranularity.valueOf(queryNVPairs.get("partitionGranularity")));
+            if (queryNVPairs.containsKey(URLKey.PARTITION_GRANULARITY.key())) {
+                this.setPartitionGranularity(
+                        PartitionGranularity.valueOf(queryNVPairs.get(URLKey.PARTITION_GRANULARITY.key())));
             } else {
                 throw new IOException(
                         "Cannot initialize the plugin; this needs both the rootFolder and the partitionGranularity to be specified");
             }
 
-            if (queryNVPairs.containsKey("hold")) {
-                this.setHoldETLForPartions(Integer.parseInt(queryNVPairs.get("hold")));
+            if (queryNVPairs.containsKey(URLKey.HOLD.key())) {
+                this.setHoldETLForPartions(Integer.parseInt(queryNVPairs.get(URLKey.HOLD.key())));
             }
-            if (queryNVPairs.containsKey("gather")) {
-                this.setGatherETLinPartitions(Integer.parseInt(queryNVPairs.get("gather")));
+            if (queryNVPairs.containsKey(URLKey.GATHER.key())) {
+                this.setGatherETLinPartitions(Integer.parseInt(queryNVPairs.get(URLKey.GATHER.key())));
             }
 
-            if (queryNVPairs.containsKey("compress")) {
-                compressionMode = PBCompressionMode.valueOf(queryNVPairs.get("compress"));
-                if (compressionMode != PBCompressionMode.NONE) {
-                    if (!rootFolderStr.startsWith(ArchPaths.ZIP_PREFIX)) {
-                        String rootFolderWithPath = ArchPaths.ZIP_PREFIX + rootFolderStr;
-                        logger.debug(
-                                "Automatically adding url scheme for compression to rootfolder " + rootFolderWithPath);
-                        rootFolderStr = rootFolderWithPath;
-                    }
+            if (queryNVPairs.containsKey(URLKey.COMPRESS.key())) {
+                compressionMode = PBCompressionMode.valueOf(queryNVPairs.get(URLKey.COMPRESS.key()));
+                if (compressionMode != PBCompressionMode.NONE && !rootFolderStr.startsWith(ArchPaths.ZIP_PREFIX)) {
+                    String rootFolderWithPath = ArchPaths.ZIP_PREFIX + rootFolderStr;
+                    logger.debug("Automatically adding url scheme for compression to rootfolder " + rootFolderWithPath);
+                    rootFolderStr = rootFolderWithPath;
                 }
             }
 
             setRootFolder(rootFolderStr);
 
-            this.postProcessorUserArgs = URIUtils.getMultiValuedParamFromQueryString(srcURI, "pp");
+            this.postProcessorUserArgs =
+                    URIUtils.getMultiValuedParamFromQueryString(srcURI, URLKey.POST_PROCESSORS.key());
 
-            if (queryNVPairs.containsKey("reducedata")) {
-                reducedataPostProcessor = queryNVPairs.get("reducedata");
+            if (queryNVPairs.containsKey(URLKey.REDUCE.key())) {
+                reducedataPostProcessor = queryNVPairs.get(URLKey.REDUCE.key());
             }
 
-            if (queryNVPairs.containsKey("consolidateOnShutdown")) {
-                this.consolidateOnShutdown = Boolean.parseBoolean(queryNVPairs.get("consolidateOnShutdown"));
+            if (queryNVPairs.containsKey(URLKey.CONSOLIDATE_ON_SHUTDOWN.key())) {
+                this.consolidateOnShutdown =
+                        Boolean.parseBoolean(queryNVPairs.get(URLKey.CONSOLIDATE_ON_SHUTDOWN.key()));
             }
 
-            if (queryNVPairs.containsKey("etlIntoStoreIf")) {
-                this.etlIntoStoreIf = queryNVPairs.get("etlIntoStoreIf");
+            if (queryNVPairs.containsKey(URLKey.ETL_INTO_STORE_IF.key())) {
+                this.etlIntoStoreIf = queryNVPairs.get(URLKey.ETL_INTO_STORE_IF.key());
             }
 
-            if (queryNVPairs.containsKey("etlOutofStoreIf")) {
-                this.etlOutofStoreIf = queryNVPairs.get("etlOutofStoreIf");
+            if (queryNVPairs.containsKey(URLKey.ETL_OUT_OF_STORE_IF.key())) {
+                this.etlOutofStoreIf = queryNVPairs.get(URLKey.ETL_OUT_OF_STORE_IF.key());
             }
 
             this.setDesc("PlainStorage plugin  - " + name + " with rootFolder " + rootFolder + " and granularity "

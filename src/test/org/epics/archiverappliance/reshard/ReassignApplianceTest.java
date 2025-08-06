@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.reshard;
 
+import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,8 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
-
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 
 /**
  * Simple test to test reassigning a PV from one appliance to another.
