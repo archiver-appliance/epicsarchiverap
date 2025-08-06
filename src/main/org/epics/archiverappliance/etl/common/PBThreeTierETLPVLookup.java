@@ -75,8 +75,7 @@ public final class PBThreeTierETLPVLookup {
      * Initialize the ETL background scheduled executors and create the runtime state for various ETL components.
      */
     public void postStartup() {
-        configlogger.info(
-                "Beginning ETL post startup");
+        configlogger.info("Beginning ETL post startup");
         configService.getEventBus().register(this);
         this.startETLJobsOnStartup();
         configlogger.debug("Done initializing ETL jobs on post startup.");

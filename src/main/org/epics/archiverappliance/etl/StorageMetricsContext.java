@@ -9,6 +9,7 @@ import java.io.IOException;
  *
  */
 public interface StorageMetricsContext {
-	public long getUsableSpaceFromCache(String rootFolder) throws IOException;
-	public long getTotalSpaceFromCache(String rootFolder) throws IOException;
+    public long getUsableSpaceFromCache(String rootFolder) throws IOException;
+
+    public long getTotalSpaceFromCache(String rootFolder) throws IOException;
 }
