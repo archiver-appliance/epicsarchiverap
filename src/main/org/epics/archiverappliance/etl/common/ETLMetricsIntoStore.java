@@ -24,7 +24,7 @@ import com.google.common.cache.LoadingCache;
  *
  */
 public class ETLMetricsIntoStore implements StorageMetricsContext {
-	private static Logger logger = LogManager.getLogger(ETLMetricsIntoStore.class.getName());
+	private static Logger logger = LogManager.getLogger();
 	private final String destName;
 	long totalETLRuns;
 	long timeForOverallETLInMilliSeconds;
