@@ -75,11 +75,8 @@ public final class PBThreeTierETLPVLookup {
      * Initialize the ETL background scheduled executors and create the runtime state for various ETL components.
      */
     public void postStartup() {
-        scheduleWorker.submit(new Runnable() {
-            @Override
-            public void run() {
-                PBThreeTierETLPVLookup.this.startETLJobsOnStartup();
-            }
+        scheduleWorker.submit(() -> {
+            PBThreeTierETLPVLookup.this.startETLJobsOnStartup();
         });
     }
 
