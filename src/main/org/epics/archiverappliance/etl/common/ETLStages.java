@@ -7,6 +7,7 @@ import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.StorageMetrics;
 
 import java.io.IOException;
@@ -27,10 +28,12 @@ public class ETLStages implements Runnable {
     private final ExecutorService theWorker;
     private final LinkedList<ETLStage> etlStages = new LinkedList<ETLStage>();
     private ScheduledFuture<?> cancellingFuture;
+    private final ConfigService configService;
 
-    public ETLStages(String pvName, ExecutorService theWorker) {
+    public ETLStages(String pvName, ExecutorService theWorker, ConfigService configService) {
         this.pvName = pvName;
         this.theWorker = theWorker;
+        this.configService = configService;
     }
 
     public void addStage(ETLStage stage) {
@@ -104,9 +107,9 @@ public class ETLStages implements Runnable {
             CompletableFuture<Void> f = null;
             for (ETLStage etlStage : this.etlStages) {
                 f = (f == null)
-                        ? CompletableFuture.runAsync(new ETLJob(etlStage, runAsIfAtTime), this.theWorker)
-                        : f.thenCompose(
-                                (b) -> CompletableFuture.runAsync(new ETLJob(etlStage, runAsIfAtTime), this.theWorker));
+                        ? CompletableFuture.runAsync(new ETLJob(etlStage, runAsIfAtTime, configService), this.theWorker)
+                        : f.thenCompose((b) -> CompletableFuture.runAsync(
+                                new ETLJob(etlStage, runAsIfAtTime, configService), this.theWorker));
             }
             if (f == null) {
                 throw new IOException("Completable future is null");
@@ -133,8 +136,8 @@ public class ETLStages implements Runnable {
                                 + 365L * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                         0);
                 try {
-                    CompletableFuture<Void> f =
-                            CompletableFuture.runAsync(new ETLJob(etlStage, oneYearLaterTimeStamp), this.theWorker);
+                    CompletableFuture<Void> f = CompletableFuture.runAsync(
+                            new ETLJob(etlStage, oneYearLaterTimeStamp, configService), this.theWorker);
                     f.get();
                 } catch (Exception ex) {
                     logger.error("Exception running ETL Job for PV " + this.pvName, ex);
