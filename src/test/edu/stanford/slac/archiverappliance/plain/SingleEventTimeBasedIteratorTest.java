@@ -19,12 +19,14 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.epics.archiverappliance.utils.ui.URIUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.
@@ -48,7 +50,16 @@ public class SingleEventTimeBasedIteratorTest {
     @Test
     public void testSingleEvent() throws Exception {
         PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=PARTITION_HOUR",
+                URIUtils.pluginString(
+                        "pb",
+                        "localhost",
+                        Map.of(
+                                URLKey.NAME,
+                                "STS",
+                                URLKey.ROOT_FOLDER,
+                                rootFolderName,
+                                URLKey.PARTITION_GRANULARITY,
+                                "PARTITION_HOUR")),
                 configService);
 
         File rootFolder = new File(pbplugin.getRootFolder());

@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.URLKey;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +27,7 @@ import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.epics.archiverappliance.utils.ui.URIUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -36,6 +38,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -72,15 +75,46 @@ class ConsolidateETLJobsForOnePVTest {
         }
 
         stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
+                URIUtils.pluginString(
+                        "pb",
+                        "localhost",
+                        Map.of(
+                                URLKey.NAME,
+                                "STS",
+                                URLKey.ROOT_FOLDER,
+                                shortTermFolderName,
+                                URLKey.PARTITION_GRANULARITY,
+                                "PARTITION_HOUR")),
                 configService);
         mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName
-                        + "/&partitionGranularity=PARTITION_DAY&hold=" + mtsHold + "&gather=" + mtsGather,
+                URIUtils.pluginString(
+                        "pb",
+                        "localhost",
+                        Map.of(
+                                URLKey.NAME,
+                                "MTS",
+                                URLKey.ROOT_FOLDER,
+                                mediumTermFolderName,
+                                URLKey.PARTITION_GRANULARITY,
+                                "PARTITION_DAY",
+                                URLKey.HOLD,
+                                String.valueOf(mtsHold),
+                                URLKey.GATHER,
+                                String.valueOf(mtsGather))),
                 configService);
         ltsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + longTermFolderName
-                        + "/&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
+                URIUtils.pluginString(
+                        "pb",
+                        "localhost",
+                        Map.of(
+                                URLKey.NAME,
+                                "LTS",
+                                URLKey.ROOT_FOLDER,
+                                longTermFolderName,
+                                URLKey.PARTITION_GRANULARITY,
+                                "PARTITION_DAY",
+                                URLKey.COMPRESS,
+                                "ZIP_PER_PV")),
                 configService);
     }
 
