@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.mgmt.pauseresume;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -116,9 +118,12 @@ public class ResumePVAfterRestartTest {
         typeInfo.setSamplingMethod(SamplingMethod.MONITOR);
         typeInfo.setPaused(true);
         typeInfo.setDataStores(new String[] {
-            "pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR",
-            "pb://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY",
-            "pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR"
+            PB_PLUGIN_IDENTIFIER
+                    + "://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR",
+            PB_PLUGIN_IDENTIFIER
+                    + "://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY",
+            PB_PLUGIN_IDENTIFIER
+                    + "://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR"
         });
         return typeInfo;
     }

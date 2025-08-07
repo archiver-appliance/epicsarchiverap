@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.saverestore;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -69,8 +71,8 @@ public class GetDataAtTimeForPVFromStoresTest {
             + File.separator
             + GetDataAtTimeForPVFromStoresTest.class.getSimpleName());
     static String storagePBPluginString =
-            "pb://localhost?name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName() + "&rootFolder="
-                    + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR";
+            PB_PLUGIN_IDENTIFIER + "://localhost?name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName()
+                    + "&rootFolder=" + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR";
 
     static {
         try {

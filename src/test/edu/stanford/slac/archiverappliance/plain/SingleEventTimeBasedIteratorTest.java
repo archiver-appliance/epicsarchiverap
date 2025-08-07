@@ -1,5 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
@@ -51,7 +52,7 @@ public class SingleEventTimeBasedIteratorTest {
     public void testSingleEvent() throws Exception {
         PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 URIUtils.pluginString(
-                        "pb",
+                        PB_PLUGIN_IDENTIFIER,
                         "localhost",
                         Map.of(
                                 URLKey.NAME,

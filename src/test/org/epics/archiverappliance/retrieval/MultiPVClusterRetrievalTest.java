@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.retrieval;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 
@@ -85,7 +86,8 @@ public class MultiPVClusterRetrievalTest {
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize(
-                "pb" + "://localhost?name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR",
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=LTS&rootFolder=" + ltsFolder
+                        + "&partitionGranularity=PARTITION_YEAR",
                 configService);
 
         // Generate an event stream to populate the PB files

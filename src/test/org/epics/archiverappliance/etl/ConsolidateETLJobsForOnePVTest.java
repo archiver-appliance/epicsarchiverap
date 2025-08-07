@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.URLKey;
 import org.apache.commons.io.FileUtils;
@@ -76,7 +78,7 @@ class ConsolidateETLJobsForOnePVTest {
 
         stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 URIUtils.pluginString(
-                        "pb",
+                        PB_PLUGIN_IDENTIFIER,
                         "localhost",
                         Map.of(
                                 URLKey.NAME,
@@ -88,7 +90,7 @@ class ConsolidateETLJobsForOnePVTest {
                 configService);
         mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 URIUtils.pluginString(
-                        "pb",
+                        PB_PLUGIN_IDENTIFIER,
                         "localhost",
                         Map.of(
                                 URLKey.NAME,
@@ -104,7 +106,7 @@ class ConsolidateETLJobsForOnePVTest {
                 configService);
         ltsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 URIUtils.pluginString(
-                        "pb",
+                        PB_PLUGIN_IDENTIFIER,
                         "localhost",
                         Map.of(
                                 URLKey.NAME,

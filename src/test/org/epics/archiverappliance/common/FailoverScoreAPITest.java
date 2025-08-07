@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -86,7 +88,8 @@ public class FailoverScoreAPITest {
         logger.info("Generating data into folder "
                 + Paths.get(folderName).toAbsolutePath().toString());
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + folderName + "&partitionGranularity=PARTITION_DAY",
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=LTS&rootFolder=" + folderName
+                        + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream strm = new ArrayListEventStream(

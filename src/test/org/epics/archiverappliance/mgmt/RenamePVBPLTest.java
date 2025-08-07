@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.mgmt;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -68,7 +70,8 @@ public class RenamePVBPLTest {
 
         configService = new ConfigServiceForTests(-1);
         storageplugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR",
+                PB_PLUGIN_IDENTIFIER
+                        + "://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR",
                 configService);
         siocSetup.startSIOCWithDefaultDB();
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());

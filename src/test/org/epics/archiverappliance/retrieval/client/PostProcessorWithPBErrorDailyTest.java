@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.retrieval.client;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
@@ -81,7 +82,8 @@ public class PostProcessorWithPBErrorDailyTest {
         System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts");
         System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", "../lts");
         storageplugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + mtsFolderName + "&partitionGranularity=PARTITION_DAY",
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=MTS&rootFolder=" + mtsFolderName
+                        + "&partitionGranularity=PARTITION_DAY",
                 configService);
         siocSetup.startSIOCWithDefaultDB();
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());

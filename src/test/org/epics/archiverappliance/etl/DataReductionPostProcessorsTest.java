@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -129,10 +131,12 @@ public class DataReductionPostProcessorsTest {
         cleanDataFolders(shortTermFolderName, mediumTermFolderName, longTermFolderName);
         // Set up the raw and reduced PV's
         PlainStoragePlugin etlSTS = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_HOUR",
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + shortTermFolderName
+                        + "/&partitionGranularity=PARTITION_HOUR",
                 configService);
         PlainStoragePlugin etlMTS = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_DAY",
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=MTS&rootFolder=" + mediumTermFolderName
+                        + "/&partitionGranularity=PARTITION_DAY",
                 configService);
         PlainStoragePlugin etlLTSRaw = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 PlainStoragePlugin.pbFileSuffix + "://localhost?name=LTS&rootFolder=" + longTermFolderName

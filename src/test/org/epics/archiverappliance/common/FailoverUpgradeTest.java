@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -89,7 +91,7 @@ public class FailoverUpgradeTest {
     private long generateData(String applURL, String applianceName, long sampleStart) throws Exception {
         int genEventCount = 0;
         StoragePlugin mts = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"
                         + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
@@ -117,7 +119,7 @@ public class FailoverUpgradeTest {
         }
 
         StoragePlugin sts = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + "build/tomcats/tomcat_"
+                PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + "build/tomcats/tomcat_"
                         + this.getClass().getSimpleName() + "/" + applianceName + "/sts"
                         + "&partitionGranularity=PARTITION_HOUR",
                 configService);
