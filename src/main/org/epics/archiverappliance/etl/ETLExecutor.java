@@ -85,7 +85,7 @@ public class ETLExecutor {
 
         try (ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) {
             try (ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
-                final ETLStages etlStages = new ETLStages(pvName, theWorker);
+                final ETLStages etlStages = new ETLStages(pvName, theWorker, configService);
                 for (int i = 1; i < dataStores.length; i++) {
                     String destStr = dataStores[i];
                     ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
