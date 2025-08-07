@@ -34,26 +34,29 @@ public class ETLExecutor {
     public static void runETLs(ConfigService configService, Instant timeETLruns) throws IOException {
         for (String pvName : configService.getPVsForThisAppliance()) {
             ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);
-            if(etlStages == null) {
+            if (etlStages == null) {
                 logger.debug("Skipping ETL for {} as it has no ETL stages", pvName);
                 continue;
             }
-            logger.debug("Running ETL for {} with stages {}", pvName, etlStages.getStages().size());
-            try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
-                try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
+            logger.debug(
+                    "Running ETL for {} with stages {}",
+                    pvName,
+                    etlStages.getStages().size());
+            try (ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) {
+                try (ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
                     Future<?> f = scheduleWorker.submit(new Runnable() {
                         @Override
                         public void run() {
                             etlStages.runAsIfAtTime(timeETLruns);
-                        } 
-                        
+                        }
                     });
                     f.get();
                 }
-            } catch(Exception ex) {
+            } catch (Exception ex) {
                 throw new IOException(ex);
-            }                
-            if (etlStages.getAnyExceptionFromLastRun() != null) throw new IOException(etlStages.getAnyExceptionFromLastRun());
+            }
+            if (etlStages.getAnyExceptionFromLastRun() != null)
+                throw new IOException(etlStages.getAnyExceptionFromLastRun());
         }
     }
 
@@ -80,9 +83,9 @@ public class ETLExecutor {
             throw new IOException("The pv " + pvName + " has not enough stores.");
         }
 
-        try(ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) { 
-            try(ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
-                final ETLStages etlStages = new ETLStages(pvName, theWorker);
+        try (ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) {
+            try (ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
+                final ETLStages etlStages = new ETLStages(pvName, theWorker, configService);
                 for (int i = 1; i < dataStores.length; i++) {
                     String destStr = dataStores[i];
                     ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
@@ -107,12 +110,11 @@ public class ETLExecutor {
                     @Override
                     public void run() {
                         etlStages.runAsIfAtTime(timeETLRuns);
-                    } 
-                    
+                    }
                 });
                 f.get();
             }
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             logger.error("Exception consolidating data for PV " + pvName, ex);
         }
     }
