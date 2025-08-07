@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.retrieval.extrafields;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
@@ -59,8 +60,10 @@ public class GetExtraFieldsTest {
     public void testGetExtraFields() throws Exception {
         short currentYear = TimeUtils.getCurrentYear();
         PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + testFolder
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder=" + testFolder + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
         File pbFile = new File(testFolder
                 + File.separator

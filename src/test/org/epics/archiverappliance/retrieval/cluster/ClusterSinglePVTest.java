@@ -4,6 +4,7 @@ import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PL
 import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
@@ -89,8 +90,10 @@ public class ClusterSinglePVTest {
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=LTS&rootFolder=" + ltsFolder
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
 
         short currentYear = TimeUtils.getCurrentYear();

@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
@@ -74,8 +75,10 @@ public class RenamePVTest {
     @Test
     public void testRenamePV() throws Exception {
         PlainStoragePlugin plugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=RenameTest&rootFolder=" + rootFolder
-                        + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=RenameTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         short currentYear = TimeUtils.getCurrentYear();
         ArrayListEventStream strm = new ArrayListEventStream(

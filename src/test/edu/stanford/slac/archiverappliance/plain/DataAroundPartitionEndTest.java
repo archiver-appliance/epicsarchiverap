@@ -1,7 +1,8 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -70,8 +71,11 @@ public class DataAroundPartitionEndTest {
         logger.info("Generating data info to " + pbFilePath);
 
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
-                        + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
+                                + "&partitionGranularity=PARTITION_DAY"),
                 DataAroundPartitionEndTest.configService);
         ArrayListEventStream strm = new ArrayListEventStream(
                 PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 3,
@@ -126,8 +130,11 @@ public class DataAroundPartitionEndTest {
     @Test
     public void checkRetrieval() throws Exception {
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
-                        + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=DataAroundPartitionEndTest&rootFolder=" + testFolder.getAbsolutePath()
+                                + "&partitionGranularity=PARTITION_DAY"),
                 DataAroundPartitionEndTest.configService);
         try (BasicContext context = new BasicContext()) {
             Instant rstart = generatedStartDate;

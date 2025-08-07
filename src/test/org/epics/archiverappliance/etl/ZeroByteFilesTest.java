@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.etl;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
@@ -97,12 +98,16 @@ public class ZeroByteFilesTest {
     public void testZeroByteFileInDest() throws Exception {
 
         PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + shortTermFolderName
-                        + "/&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY"),
                 configService);
         PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=MTS&rootFolder=" + mediumTermFolderName
-                        + "/&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR"),
                 configService);
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETL_testZeroDest";
         // Create an zero byte file in the ETL dest
@@ -121,12 +126,16 @@ public class ZeroByteFilesTest {
     public void testZeroByteFilesInSource() throws Exception {
 
         PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + shortTermFolderName
-                        + "/&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder=" + shortTermFolderName + "/&partitionGranularity=PARTITION_DAY"),
                 configService);
         PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=MTS&rootFolder=" + mediumTermFolderName
-                        + "/&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder=" + mediumTermFolderName + "/&partitionGranularity=PARTITION_YEAR"),
                 configService);
         // Create zero byte files in the ETL source; since this is a daily partition, we need something like so
         // sine:2016_03_31.pb

@@ -8,6 +8,7 @@
 package org.epics.archiverappliance.retrieval;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,8 +51,10 @@ public class GenerateLargeVectorData {
         String folder = args[1];
 
         ConfigService configService = new ConfigServiceForTests(1);
-        String pluginURL = PB_PLUGIN_IDENTIFIER + "://localhost?name=LTS&rootFolder=" + folder
-                + "&partitionGranularity=PARTITION_DAY";
+        String pluginURL = pluginString(
+                PB_PLUGIN_IDENTIFIER,
+                "localhost",
+                "name=LTS&rootFolder=" + folder + "&partitionGranularity=PARTITION_DAY");
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(pluginURL, configService);
 
         Instant end = TimeUtils.minusDays(TimeUtils.now(), 1);

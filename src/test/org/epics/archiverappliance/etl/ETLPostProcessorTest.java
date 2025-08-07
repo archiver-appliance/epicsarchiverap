@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.etl;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
@@ -88,13 +89,18 @@ public class ETLPostProcessorTest {
 
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETLPostProcessorTest";
         PlainStoragePlugin srcPlainPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "/src&partitionGranularity=PARTITION_HOUR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder=" + rootFolderName + "/src&partitionGranularity=PARTITION_HOUR"),
                 configService);
         PlainStoragePlugin destPlainPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=MTS&rootFolder="
-                        + rootFolderName + "/dest&partitionGranularity=PARTITION_DAY&pp="
-                        + testPostProcessor.getExtension(),
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder="
+                                + rootFolderName + "/dest&partitionGranularity=PARTITION_DAY&pp="
+                                + testPostProcessor.getExtension()),
                 configService);
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores =

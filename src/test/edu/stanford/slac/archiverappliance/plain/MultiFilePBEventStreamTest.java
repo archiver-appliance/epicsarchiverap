@@ -8,6 +8,7 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -68,8 +69,10 @@ public class MultiFilePBEventStreamTest {
             logger.debug("Generating sample data for granularity " + granularity);
 
             String pvName = "MultiYear" + granularity.toString();
-            String configURL = PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + rootFolderName
-                    + "&partitionGranularity=" + granularity.toString();
+            String configURL = pluginString(
+                    PB_PLUGIN_IDENTIFIER,
+                    "localhost",
+                    "name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=" + granularity);
             PlainStoragePlugin pbplugin = new PlainStoragePlugin();
             pbplugin.initialize(configURL, configService);
             short currentYear = TimeUtils.getCurrentYear();

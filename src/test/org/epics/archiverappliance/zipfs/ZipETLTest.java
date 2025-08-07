@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.zipfs;
 
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
@@ -57,8 +58,10 @@ public class ZipETLTest {
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLZipTest";
         String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
         PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=ZipETL&rootFolder=" + srcRootFolder
-                        + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=ZipETL&rootFolder=" + srcRootFolder + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         logger.info(etlSrc.getURLRepresentation());
         ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
@@ -76,8 +79,11 @@ public class ZipETLTest {
 
         String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
         PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PB_PLUGIN_IDENTIFIER + "://localhost?name=ZipETL&rootFolder=" + destRootFolder
-                        + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=ZipETL&rootFolder=" + destRootFolder
+                                + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
                 configService);
         logger.info(etlDest.getURLRepresentation());
 

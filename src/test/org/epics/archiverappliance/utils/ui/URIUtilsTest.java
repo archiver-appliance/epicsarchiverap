@@ -17,7 +17,7 @@ class URIUtilsTest {
                 PB_PLUGIN_IDENTIFIER,
                 "localhost",
                 Map.of(URLKey.NAME, "STS", URLKey.ROOT_FOLDER, "root", URLKey.PARTITION_GRANULARITY, "PARTITION_HOUR"));
-        assertTrue(resultURL.contains(PB_PLUGIN_IDENTIFIER + "://localhost?"));
+        assertTrue(resultURL.contains(pluginString(PB_PLUGIN_IDENTIFIER, "localhost", "")));
         assertTrue(resultURL.contains("name=STS"));
         assertTrue(resultURL.contains("rootFolder=root"));
         assertTrue(resultURL.contains("partitionGranularity=PARTITION_HOUR"));
