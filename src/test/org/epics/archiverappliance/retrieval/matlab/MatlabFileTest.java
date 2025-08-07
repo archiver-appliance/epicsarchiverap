@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.retrieval.matlab;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import com.jmatio.io.MatFileReader;
 import com.jmatio.io.MatFileWriter;
 import com.jmatio.types.MLArray;
@@ -50,7 +53,10 @@ public class MatlabFileTest {
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
         storageplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + rootFolderName + "/&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder=" + rootFolderName + "/&partitionGranularity=PARTITION_YEAR"),
                 configService);
         if (new File(rootFolderName).exists()) {
             FileUtils.deleteDirectory(new File(rootFolderName));

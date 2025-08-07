@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.zipfs;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
@@ -99,8 +102,11 @@ public class ZipRetrievalTest {
     public void testSimpleArchivePVZipPerPV() throws Exception {
         String rootFolder = testFolder.getAbsolutePath();
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=ZipTest&rootFolder=" + rootFolder
-                        + "&partitionGranularity=PARTITION_HOUR&compress=ZIP_PER_PV",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=ZipTest&rootFolder=" + rootFolder
+                                + "&partitionGranularity=PARTITION_HOUR&compress=ZIP_PER_PV"),
                 configService);
         logger.info(storagePlugin.getURLRepresentation());
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":SimpleZipTest";
@@ -147,7 +153,10 @@ public class ZipRetrievalTest {
         {
             String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstUncompressed";
             PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                    "pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY",
+                    pluginString(
+                            PB_PLUGIN_IDENTIFIER,
+                            "localhost",
+                            "name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY"),
                     configService);
             logger.info(storagePlugin.getURLRepresentation());
             int phasediffindegrees = 10;
@@ -165,8 +174,11 @@ public class ZipRetrievalTest {
         {
             String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstCompressed";
             PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                    "pb://localhost?name=ZipTest&rootFolder=" + rootFolder
-                            + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
+                    pluginString(
+                            PB_PLUGIN_IDENTIFIER,
+                            "localhost",
+                            "name=ZipTest&rootFolder=" + rootFolder
+                                    + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
                     configService);
             logger.info(storagePlugin.getURLRepresentation());
             int phasediffindegrees = 10;
@@ -187,7 +199,10 @@ public class ZipRetrievalTest {
         {
             String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstUncompressed";
             PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                    "pb://localhost?name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY",
+                    pluginString(
+                            PB_PLUGIN_IDENTIFIER,
+                            "localhost",
+                            "name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY"),
                     configService);
             DecimalFormat format = new DecimalFormat("00");
             long totalTimeConsumed = 0;
@@ -220,8 +235,11 @@ public class ZipRetrievalTest {
         {
             String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":CmpCrstCompressed";
             PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                    "pb://localhost?name=ZipTest&rootFolder=" + rootFolder
-                            + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
+                    pluginString(
+                            PB_PLUGIN_IDENTIFIER,
+                            "localhost",
+                            "name=ZipTest&rootFolder=" + rootFolder
+                                    + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
                     configService);
             DecimalFormat format = new DecimalFormat("00");
             long totalTimeConsumed = 0;

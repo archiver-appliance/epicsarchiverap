@@ -7,6 +7,9 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,8 +56,10 @@ public class PlainCommonSetup {
         setUpRootFolder();
         tempFolderForTests = new File(configService.getPBRootFolder());
         pbplugin.initialize(
-                "pb://localhost?name=UnitTest&rootFolder=" + tempFolderForTests
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=UnitTest&rootFolder=" + tempFolderForTests + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
         pbplugin.setRootFolder(tempFolderForTests.getAbsolutePath());
         pbplugin.setName(tempFolderForTests.getAbsolutePath());
@@ -71,8 +76,10 @@ public class PlainCommonSetup {
         tempFolderForTests.mkdirs();
 
         pbplugin.initialize(
-                "pb://localhost?name=UnitTest&rootFolder=" + tempFolderForTests
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=UnitTest&rootFolder=" + tempFolderForTests + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
 
         pbplugin.setRootFolder(tempFolderForTests.getAbsolutePath());
@@ -92,8 +99,11 @@ public class PlainCommonSetup {
         tempFolderForTests.mkdirs();
 
         pbplugin.initialize(
-                "pb://localhost?name=UnitTest&rootFolder=" + tempFolderForTests + "&partitionGranularity="
-                        + partitionGranularity.toString(),
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=UnitTest&rootFolder=" + tempFolderForTests + "&partitionGranularity="
+                                + partitionGranularity.toString()),
                 configService);
 
         pbplugin.setRootFolder(tempFolderForTests.getAbsolutePath());

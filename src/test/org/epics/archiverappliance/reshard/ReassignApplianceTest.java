@@ -1,6 +1,8 @@
 package org.epics.archiverappliance.reshard;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -113,10 +115,15 @@ public class ReassignApplianceTest {
         typeInfo.setModificationTime(TimeUtils.now());
         typeInfo.setApplianceIdentity("appliance0");
         String[] dataStores = {
-            "pb://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR&consolidateOnShutdown=true",
-            "pb://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY&consolidateOnShutdown=true",
-            "pb://localhost?name=LTS&rootFolder=" + new File(folderLTS).getAbsolutePath()
-                    + "/common&partitionGranularity=PARTITION_YEAR"
+            PB_PLUGIN_IDENTIFIER
+                    + "://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_HOUR&consolidateOnShutdown=true",
+            PB_PLUGIN_IDENTIFIER
+                    + "://localhost?name=MTS&rootFolder=${ARCHAPPL_MEDIUM_TERM_FOLDER}&partitionGranularity=PARTITION_DAY&consolidateOnShutdown=true",
+            pluginString(
+                    PB_PLUGIN_IDENTIFIER,
+                    "localhost",
+                    "name=LTS&rootFolder=" + new File(folderLTS).getAbsolutePath()
+                            + "/common&partitionGranularity=PARTITION_YEAR")
         };
         typeInfo.setDataStores(dataStores);
 

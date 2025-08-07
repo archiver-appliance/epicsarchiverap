@@ -7,6 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -137,9 +140,12 @@ public class FailoverMultiStepETLTest {
     private int generateData(String applianceName, Instant ts, int startingOffset) throws IOException {
         int genEventCount = 0;
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + "build/tomcats/tomcat_"
-                        + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
-                        + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder=" + "build/tomcats/tomcat_"
+                                + this.getClass().getSimpleName() + "/" + applianceName + "/mts"
+                                + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream strm = new ArrayListEventStream(
@@ -191,9 +197,12 @@ public class FailoverMultiStepETLTest {
         long rtvlEventCount = 0;
         long lastEvEpoch = 0;
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=" + "build/tomcats/tomcat_"
-                        + this.getClass().getSimpleName() + "/" + applianceName + "/lts"
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=LTS&rootFolder=" + "build/tomcats/tomcat_"
+                                + this.getClass().getSimpleName() + "/" + applianceName + "/lts"
+                                + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
         try (BasicContext context = new BasicContext()) {
             logger.info("Looking for data " + plugin.getDescription() + " from "

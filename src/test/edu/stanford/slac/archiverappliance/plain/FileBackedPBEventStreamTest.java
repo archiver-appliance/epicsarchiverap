@@ -1,11 +1,13 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.common.TimeUtils.convertFromEpochSeconds;
 import static org.epics.archiverappliance.common.TimeUtils.convertToISO8601String;
 import static org.epics.archiverappliance.common.TimeUtils.getCurrentYear;
 import static org.epics.archiverappliance.common.TimeUtils.getEndOfYear;
 import static org.epics.archiverappliance.common.TimeUtils.getStartOfCurrentYearInSeconds;
 import static org.epics.archiverappliance.common.TimeUtils.getStartOfYearInSeconds;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import org.apache.commons.io.FileUtils;
@@ -59,8 +61,11 @@ public class FileBackedPBEventStreamTest {
     static String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":"
             + FileBackedPBEventStreamTest.class.getSimpleName();
     static ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-    static String storagePBPluginString = "pb://localhost?name=" + FileBackedPBEventStreamTest.class.getSimpleName()
-            + "&rootFolder=" + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR";
+    static String storagePBPluginString = pluginString(
+            PB_PLUGIN_IDENTIFIER,
+            "localhost",
+            "name=" + FileBackedPBEventStreamTest.class.getSimpleName() + "&rootFolder=" + testFolder.getAbsolutePath()
+                    + "&partitionGranularity=PARTITION_YEAR");
     private static long events;
 
     private static final Instant oneWeekIntoYear = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear())
@@ -428,8 +433,11 @@ public class FileBackedPBEventStreamTest {
     @Test
     public void testHighRateEndLocation() throws IOException {
         PlainStoragePlugin highRatePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                PlainStoragePlugin.pbFileSuffix + "://localhost?name=FileBackedPBEventStreamTest&rootFolder="
-                        + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=FileBackedPBEventStreamTest&rootFolder=" + testFolder.getAbsolutePath()
+                                + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
         String highRatePVName =
                 ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":FileBackedPBEventStreamTestHighRate";

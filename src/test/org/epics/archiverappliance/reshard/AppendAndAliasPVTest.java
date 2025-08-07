@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.reshard;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -114,7 +116,8 @@ public class AppendAndAliasPVTest {
 
     private void generateData(String pvName, Instant startTime, Instant endTime) throws IOException {
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR",
+                PB_PLUGIN_IDENTIFIER
+                        + "://localhost?name=LTS&rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&partitionGranularity=PARTITION_YEAR",
                 configService);
         try (BasicContext context = new BasicContext()) {
             for (long epoch = startTime.toEpochMilli() / 1000; epoch < endTime.toEpochMilli() / 1000; epoch += 60) {

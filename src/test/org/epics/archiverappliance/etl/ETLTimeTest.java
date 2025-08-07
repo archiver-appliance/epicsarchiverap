@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.etl;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
@@ -92,14 +95,20 @@ public class ETLTimeTest {
     @MethodSource("provideTestTime")
     public void testTime(PBCompressionMode srcCompression, PBCompressionMode destCompression) throws Exception {
         PlainStoragePlugin stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder="
-                        + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR&compress="
-                        + srcCompression,
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder="
+                                + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR&compress="
+                                + srcCompression),
                 configService);
         PlainStoragePlugin mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder="
-                        + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR&compress="
-                        + destCompression,
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder="
+                                + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR&compress="
+                                + destCompression),
                 configService);
         short currentYear = TimeUtils.getCurrentYear();
 

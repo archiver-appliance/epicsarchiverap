@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.zipfs;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
@@ -85,8 +88,11 @@ public class ZipCachedFetchTest {
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
         pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + rootFolderName
-                        + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder=" + rootFolderName
+                                + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
                 configService);
         if (new File(rootFolderName).exists()) {
             FileUtils.deleteDirectory(new File(rootFolderName));

@@ -1,7 +1,8 @@
 package edu.stanford.slac.archiverappliance.plain;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileSuffix;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStreamPositionBasedIterator;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
@@ -162,8 +163,11 @@ public class FileBackedIteratorTest {
     private static void generateData() throws IOException {
         logger.info("generate Data " + pbFileExtension + " to " + pbFilePath);
         PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pbFileSuffix + "://localhost?name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=FileBackedIteratorTest&rootFolder=" + testFolder.getAbsolutePath()
+                                + "&partitionGranularity=PARTITION_YEAR"),
                 FileBackedIteratorTest.configService);
 
         // Add data with gaps every month

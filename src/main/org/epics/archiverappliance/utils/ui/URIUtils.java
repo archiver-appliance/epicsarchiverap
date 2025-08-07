@@ -64,13 +64,19 @@ public class URIUtils {
         return ret;
     }
 
+    public static String pluginString(String proto, String hostname, String params) {
+        return proto + "://" + hostname + "?" + params;
+    }
+
     public static String pluginString(String proto, String hostname, Map<URLKey, String> params) {
-        String baseString = proto + "://" + hostname + "?";
-        return baseString
-                + URLEncodedUtils.format(
+
+        return pluginString(
+                proto,
+                hostname,
+                URLEncodedUtils.format(
                         params.entrySet().stream()
                                 .map(e -> new BasicNameValuePair(e.getKey().key(), e.getValue()))
                                 .toList(),
-                        StandardCharsets.UTF_8);
+                        StandardCharsets.UTF_8));
     }
 }

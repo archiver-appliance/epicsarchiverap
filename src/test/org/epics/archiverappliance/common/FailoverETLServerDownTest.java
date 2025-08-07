@@ -7,7 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,7 +74,10 @@ class FailoverETLServerDownTest {
     private int generateData(Instant lastMonth) throws IOException {
         int genEventCount = 0;
         StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + testMTSFolder + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder=" + testMTSFolder + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         try (BasicContext context = new BasicContext()) {
             Instant start = TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
@@ -167,12 +172,18 @@ class FailoverETLServerDownTest {
 
         logger.info("Checking merged data after running ETL");
         long lCount = testMergedRetrieval(
-                "pb://localhost?name=LTS&rootFolder=" + testLTSFolder + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=LTS&rootFolder=" + testLTSFolder + "&partitionGranularity=PARTITION_YEAR"),
                 TimeUtils.minusDays(TimeUtils.now(), 365 * 2),
                 TimeUtils.plusDays(TimeUtils.now(), 365 * 2));
         Assertions.assertEquals(0, lCount, "We expected LTS to have failed " + lCount);
         long mCount = testMergedRetrieval(
-                "pb://localhost?name=MTS&rootFolder=" + testMTSFolder + "&partitionGranularity=PARTITION_DAY",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder=" + testMTSFolder + "&partitionGranularity=PARTITION_DAY"),
                 TimeUtils.minusDays(TimeUtils.now(), 365 * 2),
                 TimeUtils.plusDays(TimeUtils.now(), 365 * 2));
         Assertions.assertEquals(

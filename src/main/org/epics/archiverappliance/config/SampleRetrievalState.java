@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.config;
 
+import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,14 +72,20 @@ public class SampleRetrievalState extends RetrievalState {
         }
 
         PlainStoragePlugin mediumTermStore = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=MTS&rootFolder=" + configService.rootFolder
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=MTS&rootFolder=" + configService.rootFolder + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
         datasources.add(new DataSourceforPV(pvName, mediumTermStore, 1, null, null));
 
         PlainStoragePlugin shortTermStore = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=STS&rootFolder=" + ConfigServiceForTests.DEFAULT_PB_SHORT_TERM_TEST_DATA_FOLDER
-                        + "&partitionGranularity=PARTITION_YEAR",
+                pluginString(
+                        PB_PLUGIN_IDENTIFIER,
+                        "localhost",
+                        "name=STS&rootFolder="
+                                + ConfigServiceForTests.DEFAULT_PB_SHORT_TERM_TEST_DATA_FOLDER
+                                + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
         datasources.add(new DataSourceforPV(pvName, shortTermStore, 0, null, null));
 
