@@ -75,10 +75,12 @@ public final class PBThreeTierETLPVLookup {
      * Initialize the ETL background scheduled executors and create the runtime state for various ETL components.
      */
     public void postStartup() {
-        configlogger.info("Beginning ETL post startup");
-        configService.getEventBus().register(this);
-        this.startETLJobsOnStartup();
-        configlogger.debug("Done initializing ETL jobs on post startup.");
+        scheduleWorker.submit(new Runnable() {
+            @Override
+            public void run() {
+                PBThreeTierETLPVLookup.this.startETLJobsOnStartup();
+            }
+        });
     }
 
     @Subscribe
@@ -106,7 +108,9 @@ public final class PBThreeTierETLPVLookup {
     }
 
     private void startETLJobsOnStartup() {
+        configlogger.info("Beginning ETL post startup");
         try {
+            configService.getEventBus().register(this);
             Set<String> pVsForThisAppliance = configService.getPVsForThisAppliance();
             if (pVsForThisAppliance != null) {
                 for (String pvName : pVsForThisAppliance) {
@@ -125,6 +129,7 @@ public final class PBThreeTierETLPVLookup {
         } catch (Throwable t) {
             configlogger.error("Excepting syncing ETL jobs with config service", t);
         }
+        configlogger.info("Done initializing ETL jobs on post startup.");
     }
 
     /**
