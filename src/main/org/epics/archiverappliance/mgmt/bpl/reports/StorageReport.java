@@ -27,8 +27,9 @@ public class StorageReport implements BPLAction {
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         try (PrintWriter out = resp.getWriter()) {
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
+            Map<String, Long> pvCounts = ApplianceMetrics.getAppliancePVCounts(configService);
             for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-                var applianceInfo = ApplianceMetrics.getBasicMetrics(configService, result, info);
+                var applianceInfo = ApplianceMetrics.getBasicMetrics(configService, result, info, pvCounts);
 
                 // The getApplianceMetrics here is not a typo. We redisplay some of the appliance metrics in this page.
                 JSONObject engineMetrics =

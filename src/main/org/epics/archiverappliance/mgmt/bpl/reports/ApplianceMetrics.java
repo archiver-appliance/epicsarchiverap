@@ -12,17 +12,25 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
+import com.hazelcast.projection.Projections;
+import com.hazelcast.query.Predicates;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,8 +49,9 @@ public class ApplianceMetrics implements BPLAction {
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         try (PrintWriter out = resp.getWriter()) {
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
+            Map<String, Long> pvCounts = ApplianceMetrics.getAppliancePVCounts(configService);
             for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-                HashMap<String, String> applianceInfo = getBasicMetrics(configService, result, info);
+                HashMap<String, String> applianceInfo = getBasicMetrics(configService, result, info, pvCounts);
 
                 logger.debug("Asking for appliance metrics from engine using " + info.getEngineURL()
                         + "/getApplianceMetrics");
@@ -60,17 +69,35 @@ public class ApplianceMetrics implements BPLAction {
         }
     }
 
+    /*
+     * Return a map of appliance identity -> PV counts.
+     */
+    static Map<String, Long> getAppliancePVCounts(ConfigService configService) { 
+        Map<String, Long> pvCounts = configService.queryPVTypeInfos(
+            Predicates.alwaysTrue(), 
+            Projections.<Map.Entry<String, PVTypeInfo>, String>singleAttribute("applianceIdentity"))
+            .stream()
+            .collect(
+                Collectors.groupingBy(
+                    Function.identity(),
+                    Collectors.counting()
+                )
+        );
+        for(String applianceIdentity : pvCounts.keySet()) {
+            logger.info("PVCount {} Count {}", applianceIdentity, pvCounts.get(applianceIdentity));
+        }
+        return pvCounts;
+    }
+
     static HashMap<String, String> getBasicMetrics(
-            ConfigService configService, LinkedList<Map<String, String>> result, ApplianceInfo info) {
+            ConfigService configService,
+            LinkedList<Map<String, String>> result, 
+            ApplianceInfo info,
+            Map<String, Long> pvCounts) {
         HashMap<String, String> applianceInfo = new HashMap<String, String>();
         result.add(applianceInfo);
         applianceInfo.put("instance", info.getIdentity());
-
-        int pvCount = 0;
-        for (@SuppressWarnings("unused") String pvName : configService.getPVsForThisAppliance()) {
-            pvCount++;
-        }
-        applianceInfo.put("pvCount", Integer.toString(pvCount));
+        applianceInfo.put("pvCount", Long.toString(pvCounts.getOrDefault(info.getIdentity(), 0L)));
         return applianceInfo;
     }
 
@@ -106,7 +133,10 @@ public class ApplianceMetrics implements BPLAction {
             applianceInfo.put("status", buf.toString());
         }
         GetUrlContent.combineJSONObjects(applianceInfo, engineMetrics);
+        logger.debug("Done combining metrics from the engine");
         GetUrlContent.combineJSONObjects(applianceInfo, etlMetrics);
+        logger.debug("Done combining metrics from etl");
         GetUrlContent.combineJSONObjects(applianceInfo, retrievalMetrics);
+        logger.debug("Done combining metrics from retrieval");
     }
 }

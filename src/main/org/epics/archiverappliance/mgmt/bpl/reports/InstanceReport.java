@@ -29,10 +29,11 @@ public class InstanceReport implements BPLAction {
             throws IOException {
         logger.info("Generating Instance report");
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-        try (PrintWriter out = resp.getWriter()) {
+        try (PrintWriter out = resp.getWriter()) {                
             LinkedList<Map<String, String>> result = new LinkedList<Map<String, String>>();
+            Map<String, Long> pvCounts = ApplianceMetrics.getAppliancePVCounts(configService);
             for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-                var applianceInfo = ApplianceMetrics.getBasicMetrics(configService, result, info);
+                var applianceInfo = ApplianceMetrics.getBasicMetrics(configService, result, info, pvCounts);
                 JSONObject mgmtMetrics =
                         GetUrlContent.getURLContentAsJSONObject(info.getMgmtURL() + "/getMgmtMetricsForAppliance");
                 applianceInfo.put(
