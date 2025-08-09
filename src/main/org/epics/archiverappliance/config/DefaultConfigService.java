@@ -755,16 +755,6 @@ public class DefaultConfigService implements ConfigService {
 
             registerForNewExternalServers(hzinstance.getMap("channelArchiverDataServers"));
 
-            // Cache the aggregate of all the PVs that are registered to this appliance.
-            logger.debug(() -> "Building a local aggregate of PV infos that are registered to this appliance");
-            try {
-                for (String pvName : getPVsForThisAppliance()) {
-                    applianceAggregateInfo.addInfoForPV(pvName, this.getTypeInfoForPV(pvName), this);
-                }
-            } catch (Exception ex) {
-                logger.error("Exception building data for capacity planning", ex);
-            }
-
         } else if (this.warFile == WAR_FILE.RETRIEVAL) {
             initializeFailoverServerCache();
         }
