@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
+import com.hazelcast.projection.Projections;
+import com.hazelcast.query.Predicates;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -18,19 +20,14 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 
-import com.hazelcast.projection.Projections;
-import com.hazelcast.query.Predicates;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -72,18 +69,14 @@ public class ApplianceMetrics implements BPLAction {
     /*
      * Return a map of appliance identity -> PV counts.
      */
-    static Map<String, Long> getAppliancePVCounts(ConfigService configService) { 
-        Map<String, Long> pvCounts = configService.queryPVTypeInfos(
-            Predicates.alwaysTrue(), 
-            Projections.<Map.Entry<String, PVTypeInfo>, String>singleAttribute("applianceIdentity"))
-            .stream()
-            .collect(
-                Collectors.groupingBy(
-                    Function.identity(),
-                    Collectors.counting()
-                )
-        );
-        for(String applianceIdentity : pvCounts.keySet()) {
+    static Map<String, Long> getAppliancePVCounts(ConfigService configService) {
+        Map<String, Long> pvCounts = configService
+                .queryPVTypeInfos(
+                        Predicates.alwaysTrue(),
+                        Projections.<Map.Entry<String, PVTypeInfo>, String>singleAttribute("applianceIdentity"))
+                .stream()
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        for (String applianceIdentity : pvCounts.keySet()) {
             logger.info("PVCount {} Count {}", applianceIdentity, pvCounts.get(applianceIdentity));
         }
         return pvCounts;
@@ -91,7 +84,7 @@ public class ApplianceMetrics implements BPLAction {
 
     static HashMap<String, String> getBasicMetrics(
             ConfigService configService,
-            LinkedList<Map<String, String>> result, 
+            LinkedList<Map<String, String>> result,
             ApplianceInfo info,
             Map<String, Long> pvCounts) {
         HashMap<String, String> applianceInfo = new HashMap<String, String>();
