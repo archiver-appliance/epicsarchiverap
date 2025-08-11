@@ -308,4 +308,9 @@ public class PBScalarShort implements DBRTimeEvent {
     public Class<? extends Message> getProtobufMessageClass() {
         return EPICSEvent.ScalarShort.class;
     }
+
+    @Override
+    public String toString() {
+        return DBRTimeEvent.toString(this);
+    }
 }

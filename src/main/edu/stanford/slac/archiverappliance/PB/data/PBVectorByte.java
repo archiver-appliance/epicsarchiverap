@@ -334,4 +334,9 @@ public class PBVectorByte implements DBRTimeEvent {
     public Class<? extends Message> getProtobufMessageClass() {
         return EPICSEvent.VectorChar.class;
     }
+
+    @Override
+    public String toString() {
+        return DBRTimeEvent.toString(this);
+    }
 }

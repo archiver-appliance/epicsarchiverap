@@ -322,4 +322,9 @@ public class PBVectorShort implements DBRTimeEvent {
     public Class<? extends Message> getProtobufMessageClass() {
         return EPICSEvent.VectorShort.class;
     }
+
+    @Override
+    public String toString() {
+        return DBRTimeEvent.toString(this);
+    }
 }

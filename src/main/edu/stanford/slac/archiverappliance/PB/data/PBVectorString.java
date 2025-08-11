@@ -316,4 +316,9 @@ public class PBVectorString implements DBRTimeEvent {
     public Class<? extends Message> getProtobufMessageClass() {
         return EPICSEvent.VectorString.class;
     }
+
+    @Override
+    public String toString() {
+        return DBRTimeEvent.toString(this);
+    }
 }

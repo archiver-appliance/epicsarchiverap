@@ -308,4 +308,9 @@ public class PBScalarEnum implements DBRTimeEvent {
     public Class<? extends Message> getProtobufMessageClass() {
         return EPICSEvent.ScalarEnum.class;
     }
+
+    @Override
+    public String toString() {
+        return DBRTimeEvent.toString(this);
+    }
 }
