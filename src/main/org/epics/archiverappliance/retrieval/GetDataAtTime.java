@@ -379,7 +379,7 @@ public class GetDataAtTime {
                                 pvName,
                                 atTime,
                                 startAtTime,
-                                searchPeriod,
+                                searchPeriod.plusDays(31),
                                 BiDirectionalIterable.IterationDirection.BACKWARDS);
                         if (e != null) {
                             return new PVWithData(pvName, e);

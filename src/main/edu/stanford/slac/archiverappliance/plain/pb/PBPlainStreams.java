@@ -13,6 +13,7 @@ import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -21,6 +22,8 @@ import java.util.Map;
 
 public class PBPlainStreams implements PlainStreams {
     private static final Logger logger = LogManager.getLogger(PBPlainStreams.class);
+    /* A file that has at most a few events and is faster when loaded completely in memory */
+    public static int SIZE_THAT_DETERMINES_A_SMALL_FILE = 4 * 1024;
 
     public PBFileInfo fileInfo(Path path) throws IOException {
         return new PBFileInfo(path);
@@ -45,6 +48,20 @@ public class PBPlainStreams implements PlainStreams {
         return new FileBackedPBEventStream(pvName, path, dbrType);
     }
 
+    public static EventStream getStreamForIteration(
+            String pvName,
+            Path path,
+            Instant startAtTime,
+            ArchDBRTypes archDBRTypes,
+            BiDirectionalIterable.IterationDirection direction)
+            throws IOException {
+        if (Files.size(path) < SIZE_THAT_DETERMINES_A_SMALL_FILE) {
+            return new ArrayListEventStreamWithPositionedIterator(pvName, path, startAtTime, archDBRTypes, direction);
+        }
+
+        return new FileBackedPBEventStream(pvName, path, archDBRTypes, startAtTime, direction);
+    }
+
     public Event findByTime(
             List<Path> pathList,
             String pvName,
@@ -56,8 +73,7 @@ public class PBPlainStreams implements PlainStreams {
         for (Path path : pathList) {
             logger.info("Iterating thru {}", path);
             PBFileInfo fileInfo = fileInfo(path);
-            try (EventStream strm =
-                    new FileBackedPBEventStream(pvName, path, fileInfo.getType(), startAtTime, direction)) {
+            try (EventStream strm = getStreamForIteration(pvName, path, startAtTime, fileInfo.getType(), direction)) {
                 Event e = findByTimeInStream(strm, atTime, direction);
                 if (e != null) {
                     return e;
