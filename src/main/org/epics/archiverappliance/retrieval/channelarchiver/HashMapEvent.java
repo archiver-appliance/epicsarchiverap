@@ -242,6 +242,6 @@ public class HashMapEvent implements DBRTimeEvent {
 
     @Override
     public String toString() {
-        return "HashMapEvent{" + "values=" + values + ", type=" + type + '}';
+        return HashMapEvent.class.getSimpleName() + DBRTimeEvent.toString(this);
     }
 }
