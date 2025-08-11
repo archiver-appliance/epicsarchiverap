@@ -11,6 +11,7 @@ import com.google.protobuf.Message;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.ByteBufSampleValue;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarStringSampleValue;
@@ -18,9 +19,11 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorStringSampleValue;
 import org.epics.archiverappliance.data.VectorValue;
 
+import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * We get a HashMap of NVPairs from the Channel Archiver - this class exposes these as an archiver Event
@@ -37,10 +40,10 @@ public class HashMapEvent implements DBRTimeEvent {
     public static final String FIELD_VALUES_FIELD_NAME = "fields";
     public static final String FIELD_VALUES_ACTUAL_CHANGE = "fieldsAreActualChange";
 
-    private final HashMap<String, Object> values;
+    private final Map<String, Object> values;
     private final ArchDBRTypes type;
 
-    public HashMapEvent(ArchDBRTypes type, HashMap<String, Object> values) {
+    public HashMapEvent(ArchDBRTypes type, Map<String, Object> values) {
         this.values = values;
         this.type = type;
     }
@@ -163,7 +166,7 @@ public class HashMapEvent implements DBRTimeEvent {
                 return new VectorStringSampleValue(vals);
             }
             case DBR_V4_GENERIC_BYTES: {
-                throw new UnsupportedOperationException("Channel Archiver does not support V4 yet.");
+                return new ByteBufSampleValue((ByteBuffer) values.get(VALUE_FIELD_NAME));
             }
             default:
                 throw new UnsupportedOperationException("Unknown DBR type " + type);
@@ -219,12 +222,12 @@ public class HashMapEvent implements DBRTimeEvent {
 
     @Override
     public void setStatus(int status) {
-        values.put(STAT_FIELD_NAME, Integer.valueOf(status).toString());
+        values.put(STAT_FIELD_NAME, Integer.toString(status));
     }
 
     @Override
     public void setSeverity(int severity) {
-        values.put(SEVR_FIELD_NAME, Integer.valueOf(severity).toString());
+        values.put(SEVR_FIELD_NAME, Integer.toString(severity));
     }
 
     @Override
@@ -235,5 +238,10 @@ public class HashMapEvent implements DBRTimeEvent {
     @Override
     public Class<? extends Message> getProtobufMessageClass() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        return "HashMapEvent{" + "values=" + values + ", type=" + type + '}';
     }
 }

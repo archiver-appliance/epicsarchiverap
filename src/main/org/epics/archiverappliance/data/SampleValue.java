@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.data;
 
+import org.json.simple.JSONAware;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -16,7 +18,7 @@ import java.util.List;
  * The toString for vectors generates a JSON form of the vector...
  * @author mshankar
  */
-public interface SampleValue {
+public interface SampleValue extends JSONAware {
     public String toString();
 
     public int getElementCount();
