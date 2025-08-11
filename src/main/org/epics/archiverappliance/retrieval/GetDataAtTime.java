@@ -54,7 +54,7 @@ public class GetDataAtTime {
         Appliance2PVs(ApplianceInfo applianceInfo) {
             this.applianceInfo = applianceInfo;
             this.pvsFromAppliance = new LinkedList<String>();
-            this.pvValues = new HashMap<String, HashMap<String, Object>>();
+            this.pvValues = new HashMap<>();
         }
     }
 
@@ -70,7 +70,7 @@ public class GetDataAtTime {
                     "Done calling engine for appliance {} with PVs {} and got data for {} PVs ",
                     gatherer.applianceInfo.getIdentity(),
                     String.join(",", gatherer.pvsFromAppliance),
-                    ((resp != null) ? String.join(",", resp.keySet()) : "no PVs"));
+                    String.join(",", resp.keySet()));
             for (String pvName : resp.keySet()) {
                 if (!gatherer.pvValues.containsKey(pvName)) {
                     gatherer.pvValues.put(pvName, resp.get(pvName));
@@ -97,7 +97,7 @@ public class GetDataAtTime {
                     "Done calling retrieval for appliance {} with PVs {} and got data for {}",
                     gatherer.applianceInfo.getIdentity(),
                     String.join(",", gatherer.pvsFromAppliance),
-                    ((resp != null) ? String.join(",", resp.keySet()) : "no PVs"));
+                    String.join(",", resp.keySet()));
             for (String pvName : resp.keySet()) {
                 if (!gatherer.pvValues.containsKey(pvName)) {
                     gatherer.pvValues.put(pvName, resp.get(pvName));
@@ -112,8 +112,8 @@ public class GetDataAtTime {
     private static HashMap<String, HashMap<String, Object>> getDataFromRemoteArchApplicance(
             String applianceRetrievalURL, LinkedList<String> remainingPVs, Instant atTime) {
         try {
-            if (remainingPVs.size() <= 0) {
-                return null;
+            if (remainingPVs.isEmpty()) {
+                return new HashMap<>();
             }
             HashMap<String, HashMap<String, Object>> resp = GetUrlContent.postStringListAndGetJSON(
                     applianceRetrievalURL + "?at=" + TimeUtils.convertToISO8601String(atTime) + "&includeProxies=false",
@@ -135,12 +135,10 @@ public class GetDataAtTime {
         return futures;
     }
 
-    private static record PVNameMapping(String nameFromRequest, String nameFromTypeInfo) {}
-    ;
+    private record PVNameMapping(String nameFromRequest, String nameFromTypeInfo) {}
 
-    private static record ProjRecord(String pvName, String appliance, ArchDBRTypes DBRType, String[] archiveFields)
+    private record ProjRecord(String pvName, String appliance, ArchDBRTypes DBRType, String[] archiveFields)
             implements Serializable {}
-    ;
 
     private static class GDATProjection implements Projection<Map.Entry<String, PVTypeInfo>, ProjRecord> {
         @Override
@@ -206,21 +204,21 @@ public class GetDataAtTime {
             }
         }
         Map<String, List<PVNameMapping>> reverseMapping =
-                nameMappings.stream().collect(Collectors.groupingBy(p -> p.nameFromTypeInfo()));
-        HashMap<String, String> pvName2TypeInfoName = new HashMap<String, String>();
+                nameMappings.stream().collect(Collectors.groupingBy(PVNameMapping::nameFromTypeInfo));
+        HashMap<String, String> pvName2TypeInfoName = new HashMap<>();
 
         HashMap<String, Appliance2PVs> valuesGatherer = new HashMap<String, Appliance2PVs>();
-        HashSet<String> namesForPredicate = new HashSet<String>(paddedPVNames);
+        HashSet<String> namesForPredicate = new HashSet<>(paddedPVNames);
 
         Collection<ProjRecord> projRecords = configService.queryPVTypeInfos(
                 Predicates.in("__key", namesForPredicate.toArray(new String[0])), new GDATProjection());
         Map<String, ProjRecord> pvName2proj =
-                projRecords.stream().collect(Collectors.toMap(pr -> pr.pvName(), pr -> pr));
+                projRecords.stream().collect(Collectors.toMap(ProjRecord::pvName, pr -> pr));
 
         pmansProfiler.mark("After running projection");
 
         Map<String, List<ProjRecord>> appliance2Records =
-                projRecords.stream().collect(Collectors.groupingBy(p -> p.appliance()));
+                projRecords.stream().collect(Collectors.groupingBy(ProjRecord::appliance));
         for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
             Appliance2PVs gatherer = new Appliance2PVs(applianceInfo);
             valuesGatherer.put(applianceInfo.getIdentity(), gatherer);
@@ -243,12 +241,11 @@ public class GetDataAtTime {
         CompletableFuture.allOf(toArray(pvBreakdownCalls)).join();
         pmansProfiler.mark("After filtering calls.");
 
-        List<CompletableFuture<Appliance2PVs>> engineCalls = new LinkedList<CompletableFuture<Appliance2PVs>>();
+        List<CompletableFuture<Appliance2PVs>> engineCalls = new LinkedList<>();
         for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
             try {
-                engineCalls.add(CompletableFuture.supplyAsync(() -> {
-                    return getDataFromEngine(valuesGatherer.get(applianceInfo.getIdentity()), atTime);
-                }));
+                engineCalls.add(CompletableFuture.supplyAsync(
+                        () -> getDataFromEngine(valuesGatherer.get(applianceInfo.getIdentity()), atTime)));
             } catch (Throwable t) {
                 logger.error("Exception adding completable future", t);
             }
@@ -256,12 +253,11 @@ public class GetDataAtTime {
         CompletableFuture.allOf(toArray(engineCalls)).join();
         pmansProfiler.mark("After engine calls.");
 
-        List<CompletableFuture<Appliance2PVs>> retrievalCalls = new LinkedList<CompletableFuture<Appliance2PVs>>();
+        List<CompletableFuture<Appliance2PVs>> retrievalCalls = new LinkedList<>();
         for (ApplianceInfo applianceInfo : configService.getAppliancesInCluster()) {
             try {
-                retrievalCalls.add(CompletableFuture.supplyAsync(() -> {
-                    return getDataFromRetrieval(valuesGatherer.get(applianceInfo.getIdentity()), atTime, searchPeriod);
-                }));
+                retrievalCalls.add(CompletableFuture.supplyAsync(() ->
+                        getDataFromRetrieval(valuesGatherer.get(applianceInfo.getIdentity()), atTime, searchPeriod)));
             } catch (Throwable t) {
                 logger.error("Exception adding completable future", t);
             }
@@ -269,7 +265,7 @@ public class GetDataAtTime {
         CompletableFuture.allOf(toArray(retrievalCalls)).join();
         pmansProfiler.mark("After retrieval calls.");
 
-        HashMap<String, HashMap<String, Object>> ret = new HashMap<String, HashMap<String, Object>>();
+        HashMap<String, HashMap<String, Object>> ret = new HashMap<>();
         for (CompletableFuture<Appliance2PVs> retcl : retrievalCalls) {
             Appliance2PVs a2pv = retcl.get();
             ret.putAll(a2pv.pvValues);
@@ -290,26 +286,21 @@ public class GetDataAtTime {
                 HashSet<String> remainingPVs = new HashSet<String>(pvNames);
                 // We only has for PVs that we do not already have the answer for.
                 remainingPVs.removeAll(ret.keySet());
-                if (remainingPVs.size() > 0) {
-                    List<CompletableFuture<HashMap<String, HashMap<String, Object>>>> proxyCalls =
-                            new LinkedList<CompletableFuture<HashMap<String, HashMap<String, Object>>>>();
+                if (!remainingPVs.isEmpty()) {
+                    List<CompletableFuture<HashMap<String, HashMap<String, Object>>>> proxyCalls = new LinkedList<>();
                     for (String serverUrl : externalServers.keySet()) {
                         String index = externalServers.get(serverUrl);
                         if (index.equals("pbraw")) {
                             logger.debug("Adding external EPICS Archiver Appliance " + serverUrl);
-                            proxyCalls.add(CompletableFuture.supplyAsync(() -> {
-                                return getDataFromRemoteArchApplicance(
-                                        serverUrl + "/data/getDataAtTime",
-                                        new LinkedList<String>(remainingPVs),
-                                        atTime);
-                            }));
+                            proxyCalls.add(CompletableFuture.supplyAsync(() -> getDataFromRemoteArchApplicance(
+                                    serverUrl + "/data/getDataAtTime", new LinkedList<String>(remainingPVs), atTime)));
                         }
                     }
                     CompletableFuture.allOf(toArray(proxyCalls)).join();
                     pmansProfiler.mark("After calls to remote appliances.");
                     for (CompletableFuture<HashMap<String, HashMap<String, Object>>> proxyCall : proxyCalls) {
                         HashMap<String, HashMap<String, Object>> res = proxyCall.get();
-                        if (res != null && res.size() > 0) {
+                        if (res != null && !res.isEmpty()) {
                             for (String proxyPv : res.keySet()) {
                                 if (!ret.containsKey(proxyPv)) {
                                     logger.debug("Adding data for PV from external server " + proxyPv);
@@ -343,7 +334,6 @@ public class GetDataAtTime {
      */
     public static PVWithData getDataAtTimeForPVFromStores(
             String pvName, Instant atTime, Period searchPeriod, ConfigService configService) {
-        String nameFromUser = pvName;
 
         PVTypeInfo typeInfo = PVNames.determineAppropriatePVTypeInfo(pvName, configService);
         if (typeInfo == null) return null;
@@ -356,7 +346,7 @@ public class GetDataAtTime {
         // Go thru the stores in reverse order...
         try {
             // Very important we make a copy of the datastores here...
-            List<String> datastores = new ArrayList<String>(Arrays.asList(typeInfo.getDataStores()));
+            List<String> datastores = new ArrayList<>(Arrays.asList(typeInfo.getDataStores()));
             for (String store : datastores) {
                 StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(store, configService);
                 // Check to see if there is a named flag that turns off this data source.
@@ -420,7 +410,7 @@ public class GetDataAtTime {
         logger.debug("Getting data from instance for " + pvNames.size() + " PVs at "
                 + TimeUtils.convertToHumanReadableString(atTime));
 
-        List<CompletableFuture<PVWithData>> retrievalCalls = new LinkedList<CompletableFuture<PVWithData>>();
+        List<CompletableFuture<PVWithData>> retrievalCalls = new LinkedList<>();
         for (String pvName : pvNames) {
             retrievalCalls.add(CompletableFuture.supplyAsync(
                     () -> getDataAtTimeForPVFromStores(pvName, atTime, searchPeriod, configService)));

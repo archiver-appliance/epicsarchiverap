@@ -19,52 +19,51 @@ import org.epics.archiverappliance.retrieval.RemotableOverRaw;
  */
 public class EventStreamDesc {
 
-	protected ArchDBRTypes archDBRType;
-	protected String pvName;
-	protected String source;
+    protected ArchDBRTypes archDBRType;
+    protected String pvName;
+    protected String source;
 
-	public EventStreamDesc(ArchDBRTypes archDBRType, String pvName) {
-		super();
-		this.archDBRType = archDBRType;
-		this.pvName = pvName;
-	}
-	
-	public EventStreamDesc(EventStreamDesc other) { 
-		this.archDBRType = other.archDBRType;
-		this.pvName = other.pvName;
-		this.source = other.source;
-	}
+    public EventStreamDesc(ArchDBRTypes archDBRType, String pvName) {
+        super();
+        this.archDBRType = archDBRType;
+        this.pvName = pvName;
+    }
 
-	public ArchDBRTypes getArchDBRType() {
-		return archDBRType;
-	}
+    public EventStreamDesc(EventStreamDesc other) {
+        this.archDBRType = other.archDBRType;
+        this.pvName = other.pvName;
+        this.source = other.source;
+    }
 
-	public void setArchDBRType(ArchDBRTypes archDBRType) {
-		this.archDBRType = archDBRType;
-	}
+    public ArchDBRTypes getArchDBRType() {
+        return archDBRType;
+    }
 
-	public String getPvName() {
-		return pvName;
-	}
+    public void setArchDBRType(ArchDBRTypes archDBRType) {
+        this.archDBRType = archDBRType;
+    }
 
-	public void setPvName(String pvName) {
-		this.pvName = pvName;
-	}
+    public String getPvName() {
+        return pvName;
+    }
 
-	public String getSource() {
-		return source;
-	}
+    public void setPvName(String pvName) {
+        this.pvName = pvName;
+    }
 
-	public void setSource(String source) {
-		this.source = source;
-	}
+    public String getSource() {
+        return source;
+    }
 
-	@Override
-	public String toString() {
-		return "EventStreamDesc{" +
-			"archDBRType=" + archDBRType +
-			", pvName='" + pvName + '\'' +
-			", source='" + source + '\'' +
-			'}';
-	}
+    public void setSource(String source) {
+        this.source = source;
+    }
+
+    @Override
+    public String toString() {
+        return "EventStreamDesc{" + "archDBRType="
+                + archDBRType + ", pvName='"
+                + pvName + '\'' + ", source='"
+                + source + '\'' + '}';
+    }
 }
