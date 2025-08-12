@@ -2,6 +2,7 @@ package edu.stanford.slac.archiverappliance.plain;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.plain.pb.ETLPBByteStream;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
@@ -369,6 +370,27 @@ public class AppendDataStateData {
         this.previousFileName = pvPath.getFileName().toString();
     }
 
+    protected Event checkStream(
+            String pvName, ETLContext context, ETLBulkStream bulkStream, Class<? extends ETLBulkStream> streamType)
+            throws IOException {
+        if (!(streamType.isInstance(bulkStream))) {
+            logger.debug("Can't use bulk stream between different file formats "
+                    + pvName + " for stream "
+                    + bulkStream.getDescription().getSource());
+            return null;
+        }
+
+        Event firstEvent = bulkStream.getFirstEvent(context);
+        if (this.shouldISkipEventBasedOnTimeStamps(firstEvent)) {
+            logger.error(
+                    "The bulk append functionality works only if we the first event fits cleanly in the current stream for pv "
+                            + pvName + " for stream "
+                            + bulkStream.getDescription().getSource());
+            return null;
+        }
+        return firstEvent;
+    }
+
     /**
      * Append data in bulk skipping some of the per event checks.
      *
@@ -383,14 +405,10 @@ public class AppendDataStateData {
     public boolean bulkAppend(
             String pvName, ETLContext context, ETLBulkStream bulkStream, String extension, String extensionToCopyFrom)
             throws IOException {
-        Event firstEvent = bulkStream.getFirstEvent(context);
-        if (this.shouldISkipEventBasedOnTimeStamps(firstEvent)) {
-            logger.error(
-                    "The bulk append functionality works only if we the first event fits cleanly in the current stream for pv "
-                            + pvName + " for stream "
-                            + bulkStream.getDescription().getSource());
-            return false;
-        }
+        Event firstEvent = checkStream(pvName, context, bulkStream, ETLPBByteStream.class);
+        if (firstEvent == null) return false;
+
+        ETLPBByteStream byteStream = (ETLPBByteStream) bulkStream;
 
         Path pvPath = null;
         if (this.os == null) {
@@ -408,7 +426,7 @@ public class AppendDataStateData {
 
         // The preparePartition should have created the needed file; so we only append
         try (ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND);
-                ReadableByteChannel srcChannel = bulkStream.getByteChannel(context)) {
+                ReadableByteChannel srcChannel = byteStream.getByteChannel(context)) {
             logger.debug("ETL bulk appends for pv " + pvName);
             ByteBuffer buf = ByteBuffer.allocate(1024 * 1024);
             int bytesRead = srcChannel.read(buf);

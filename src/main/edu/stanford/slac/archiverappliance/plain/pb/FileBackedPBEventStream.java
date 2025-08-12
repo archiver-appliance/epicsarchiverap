@@ -23,7 +23,6 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.etl.ETLBulkStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
@@ -44,7 +43,7 @@ import java.util.Iterator;
  * @author mshankar
  *
  */
-public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, ETLBulkStream {
+public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, ETLPBByteStream {
     private static final Logger logger = LogManager.getLogger(FileBackedPBEventStream.class.getName());
     private final String pvName;
     private final ArchDBRTypes type;

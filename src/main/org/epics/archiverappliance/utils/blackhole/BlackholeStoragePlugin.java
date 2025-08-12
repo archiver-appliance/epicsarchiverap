@@ -70,12 +70,6 @@ public class BlackholeStoragePlugin implements StoragePlugin, ETLDest {
     }
 
     @Override
-    public boolean prepareForNewPartition(String pvName, Event ev, ArchDBRTypes archDBRType, ETLContext context)
-            throws IOException {
-        return true;
-    }
-
-    @Override
     public boolean appendToETLAppendData(String pvName, EventStream stream, ETLContext context) {
         return true;
     }

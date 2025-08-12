@@ -1005,13 +1005,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     }
 
     @Override
-    public boolean prepareForNewPartition(String pvName, Event ev, ArchDBRTypes archDBRType, ETLContext context)
-            throws IOException {
-        // The functionality in AppendDataState should take care of automatically preparing partitions and the like.
-        return true;
-    }
-
-    @Override
     public boolean commitETLAppendData(String pvName, ETLContext context) throws IOException {
         if (compressionMode == PBCompressionMode.NONE && backupFilesBeforeETL) {
             // Get all append data files for the specified PV name and partition granularity.
