@@ -13,6 +13,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainStreams;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -21,6 +22,7 @@ import org.epics.archiverappliance.NoDataException;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.BiDirectionalIterable;
+import org.epics.archiverappliance.common.DataAtTime;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.mergededup.TimeSpanLimitEventStream;
@@ -65,7 +67,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -146,7 +147,7 @@ import java.util.stream.Stream;
  * @author mshankar
  *
  */
-public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, BiDirectionalIterable {
+public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime {
     private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
     private final String append_extension;
 
@@ -160,6 +161,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private ConfigService configService;
     private PVNameToKeyMapping pv2key;
     private String desc = "Plain PB plugin";
+    private PlainStreams plainStreams;
     public static final String pbFileExtension = "." + pbFileSuffix;
 
     private static void addStreamCallable(
@@ -217,6 +219,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     public PlainStoragePlugin() {
         this.append_extension = pbFileExtension + "append";
+        this.plainStreams = new PBPlainStreams();
     }
 
     public static final String PB_PLUGIN_IDENTIFIER = "pb";
@@ -431,43 +434,37 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     }
 
     @Override
-    public void iterate(
+    public Event dataAtTime(
             BasicContext context,
             String pvName,
+            Instant atTime,
             Instant startAtTime,
-            Predicate<Event> thePredicate,
-            IterationDirection direction,
-            Period searchPeriod)
+            Period searchPeriod,
+            BiDirectionalIterable.IterationDirection direction)
             throws IOException {
-        Instant sTime = (direction == IterationDirection.FORWARDS) ? startAtTime : startAtTime.minus(searchPeriod);
-        Instant eTime = (direction == IterationDirection.FORWARDS) ? startAtTime.plus(searchPeriod) : startAtTime;
+        Instant sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
+                ? startAtTime
+                : startAtTime.minus(searchPeriod);
+        Instant eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
+                ? startAtTime.plus(searchPeriod)
+                : startAtTime;
         Path[] paths = PathNameUtility.getPathsWithData(
                 context.getPaths(),
                 rootFolder,
                 pvName,
                 sTime,
                 eTime,
-                pbFileExtension,
+                getExtensionString(),
                 partitionGranularity,
-                this.compressionMode,
-                this.pv2key);
-        if (paths == null) return;
+                compressionMode,
+                pv2key);
+        if (paths == null) return null;
         List<Path> pathList = Arrays.asList(paths);
-        if (direction == IterationDirection.BACKWARDS) {
+        if (direction == BiDirectionalIterable.IterationDirection.BACKWARDS) {
             Collections.reverse(pathList);
         }
-        for (Path path : pathList) {
-            logger.info("Iterating thru {}", path.toString());
-            PBFileInfo fileInfo = new PBFileInfo(path);
-            try (EventStream strm =
-                    FileStreamCreator.getStreamForIteration(pvName, path, startAtTime, fileInfo.getType(), direction)) {
-                for (Event ev : strm) {
-                    if (!thePredicate.test(ev)) {
-                        return;
-                    }
-                }
-            }
-        }
+
+        return this.plainStreams.dataAtTime(pathList, pvName, atTime, startAtTime, direction);
     }
 
     private AppendDataStateData getAppendDataState(BasicContext context, String pvName) throws IOException {

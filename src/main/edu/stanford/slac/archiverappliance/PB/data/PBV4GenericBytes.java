@@ -304,4 +304,9 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     public Class<? extends Message> getProtobufMessageClass() {
         return EPICSEvent.V4GenericBytes.class;
     }
+
+    @Override
+    public String toString() {
+        return DBRTimeEvent.toString(this);
+    }
 }

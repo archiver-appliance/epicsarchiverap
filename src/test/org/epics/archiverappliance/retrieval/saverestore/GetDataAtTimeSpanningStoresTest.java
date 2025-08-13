@@ -36,6 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoField;
@@ -126,7 +127,7 @@ public class GetDataAtTimeSpanningStoresTest {
             String getDataAtTimeURL =
                     ConfigServiceForTests.GETDATAATTIME_URL + "?at=" + TimeUtils.convertToISO8601String(atTime);
             JSONObject resp = GetUrlContent.postDataAndGetContentAsJSONObject(getDataAtTimeURL, pvs);
-            Assertions.assertTrue(resp.size() >= 1, "We expected at least one sample back, we got " + resp.size());
+            Assertions.assertFalse(resp.isEmpty(), "We expected at least one sample back, we got " + resp.size());
             Instant expectedTimeStamp = getData.get(i - 1).getEventTimeStamp().with(ChronoField.MILLI_OF_SECOND, 0);
             Instant obtainedTimeStamp = Instant.ofEpochSecond((long) ((JSONObject) resp.get(pvName)).get("secs"));
             Assertions.assertEquals(
@@ -153,12 +154,13 @@ public class GetDataAtTimeSpanningStoresTest {
         newPVTypeInfo.setPaused(true);
         newPVTypeInfo.setApplianceIdentity("appliance0");
         newPVTypeInfo.setChunkKey(pvName + ":");
-        Assertions.assertTrue(
-                newPVTypeInfo.getPvName().equals(pvName),
+        Assertions.assertEquals(
+                newPVTypeInfo.getPvName(),
+                pvName,
                 "Expecting PV typeInfo for " + pvName + "; instead it is " + srcPVTypeInfo.getPvName());
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
         GetUrlContent.postDataAndGetContentAsJSONObject(
-                "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, "UTF-8")
+                "http://localhost:17665/mgmt/bpl/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                         + "&createnew=true",
                 encoder.encode(newPVTypeInfo));
         return newPVTypeInfo;

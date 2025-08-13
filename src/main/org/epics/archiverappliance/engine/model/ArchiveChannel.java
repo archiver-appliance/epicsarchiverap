@@ -55,6 +55,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @SuppressWarnings("nls")
 public abstract class ArchiveChannel {
+    public static final int SAVE_META_DATA_PERIOD_SECS = 86400;
+
     private static final Logger logger = LogManager.getLogger(ArchiveChannel.class);
 
     /**
@@ -145,9 +147,9 @@ public abstract class ArchiveChannel {
     private boolean need_first_sample = true;
 
     /**
-     * Is this channel currently paused? The source of truth for this is the PVTypeInfo in the database. 
+     * Is this channel currently paused? The source of truth for this is the PVTypeInfo in the database.
      * But we cache this value here as a performance optimization for CapacityPlanning/EngineMetrics.
-     * By default, this is false because in DefaultConfigService.archivePVSonStartup, we skip starting PV's that are paused. 
+     * By default, this is false because in DefaultConfigService.archivePVSonStartup, we skip starting PV's that are paused.
      */
     private boolean paused = false;
 
@@ -189,7 +191,9 @@ public abstract class ArchiveChannel {
             final boolean usePVAccess)
             throws Exception {
         this.name = name;
-        this.SERVER_IOC_DRIFT_SECONDS = Integer.parseInt(configservice.getInstallationProperties().getProperty("org.epics.archiverappliance.engine.epics.server_ioc_drift_seconds", "1800"));
+        this.SERVER_IOC_DRIFT_SECONDS = Integer.parseInt(configservice
+                .getInstallationProperties()
+                .getProperty("org.epics.archiverappliance.engine.epics.server_ioc_drift_seconds", "1800"));
         this.controlPVname = controlPVname;
         this.writer = writer;
         this.last_archived_timestamp = last_archived_timestamp;
@@ -475,10 +479,10 @@ public abstract class ArchiveChannel {
             need_first_sample = true;
         }
 
-        if(need_first_sample) {
+        if (need_first_sample) {
             addValueToBuffer(timeevent);
             need_first_sample = false;
-            return true;    
+            return true;
         }
 
         return false; // I did not handle this; subclasses should handle the second sample and onwards.
@@ -576,7 +580,6 @@ public abstract class ArchiveChannel {
         if (SampleBuffer.isInErrorState()) need_write_error_sample = true;
     }
 
-
     @Override
     public String toString() {
         return "Channel " + getName() + ", " + getMechanism();
@@ -597,20 +600,20 @@ public abstract class ArchiveChannel {
             return true;
         }
 
-        if(!this.need_first_sample) {
+        if (!this.need_first_sample) {
             // Second sample onwards
             Instant pastCutOffTimeStamp =
-                TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() - SERVER_IOC_DRIFT_SECONDS, 0);
+                    TimeUtils.convertFromEpochSeconds(TimeUtils.getCurrentEpochSeconds() - SERVER_IOC_DRIFT_SECONDS, 0);
             if (currentEventTimeStamp.isBefore(pastCutOffTimeStamp)) {
-                if(logger.isDebugEnabled()) {
-                    logger.debug("For {}: timestamp {} ( second sample onwards ) is too far in the past {} ",
-                    getName(),
-                    TimeUtils.convertToHumanReadableString(currentEventTimeStamp),
-                    TimeUtils.convertToHumanReadableString(pastCutOffTimeStamp)
-                    );
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                            "For {}: timestamp {} ( second sample onwards ) is too far in the past {} ",
+                            getName(),
+                            TimeUtils.convertToHumanReadableString(currentEventTimeStamp),
+                            TimeUtils.convertToHumanReadableString(pastCutOffTimeStamp));
                 }
                 return true;
-            }    
+            }
         }
 
         Instant futureCutOffTimeStamp =
@@ -797,7 +800,7 @@ public abstract class ArchiveChannel {
         this.paused = pausedVal;
     }
 
-    public boolean isPaused() { 
+    public boolean isPaused() {
         return this.paused;
     }
 }
