@@ -35,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author mshankar
  */
 public class ConvertPVNameToKey implements PVNameToKeyMapping {
-    private static Logger configlogger = LogManager.getLogger("config." + ConvertPVNameToKey.class.getName());
+    private static final Logger configlogger = LogManager.getLogger("config." + ConvertPVNameToKey.class.getName());
     private static final String SITE_NAME_SPACE_SEPARATORS =
             "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceSeparators";
     private static final String SITE_NAME_SPACE_TERMINATOR =
@@ -45,7 +45,7 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
     private String fileSeparator;
 
     private ConfigService configService;
-    private ConcurrentHashMap<String, String> chunkKeys = new ConcurrentHashMap<String, String>();
+    private final ConcurrentHashMap<String, String> chunkKeys = new ConcurrentHashMap<>();
 
     /* (non-Javadoc)
      * @see org.epics.archiverappliance.config.PVNameToKeyMapping#convertPVNameToKey(java.lang.String)
@@ -81,13 +81,12 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
         this.siteNameSpaceSeparators =
                 configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_SEPARATORS);
         if (this.siteNameSpaceSeparators == null
-                || this.siteNameSpaceSeparators.equals("")
-                || this.siteNameSpaceSeparators.length() < 1) {
+                || this.siteNameSpaceSeparators.isEmpty()) {
             throw new ConfigException(
                     "The appliance archiver cannot function without knowning the characters that separate the components of a PV name ");
         }
         String terminatorStr = configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_TERMINATOR);
-        if (terminatorStr == null || terminatorStr.equals("") || terminatorStr.length() < 1) {
+        if (terminatorStr == null || terminatorStr.isEmpty()) {
             throw new ConfigException(
                     "The appliance archiver cannot function without knowning the character that terminates the translated path name ");
         }
