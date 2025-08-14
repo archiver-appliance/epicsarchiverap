@@ -14,18 +14,14 @@ import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
-import org.epics.archiverappliance.utils.ui.JSONEncoder;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 
 /**
  * Somewhat static information about a PV like it's type info, graphic limits, event rates etc.
@@ -33,8 +29,9 @@ import java.util.LinkedList;
  * @author mshankar
  */
 public class PVTypeInfo implements Serializable {
+    @Serial
     private static final long serialVersionUID = 6298175991390616559L;
-    private static Logger logger = LogManager.getLogger(PVTypeInfo.class.getName());
+    private static final Logger logger = LogManager.getLogger(PVTypeInfo.class.getName());
     public static final int DEFAULT_BUFFER_INTERVAL = 10;
 
     /**
@@ -204,24 +201,8 @@ public class PVTypeInfo implements Serializable {
         return elementCount;
     }
 
-    public Double getUpperDisplayLimit() {
-        return upperDisplayLimit;
-    }
-
-    public Double getLowerDisplayLimit() {
-        return lowerDisplayLimit;
-    }
-
-    public boolean isHasReducedDataSet() {
-        return hasReducedDataSet;
-    }
-
     public float getComputedEventRate() {
         return computedEventRate;
-    }
-
-    public float getUserSpecifiedEventRate() {
-        return userSpecifiedEventRate;
     }
 
     public Instant getCreationTime() {
@@ -317,82 +298,6 @@ public class PVTypeInfo implements Serializable {
         this.applianceIdentity = applianceIdentity;
     }
 
-    /**
-     * Parse a string (JSON) representation of the PVTypeInfo object into this object
-     * @param typeInfoStr  &emsp;
-     */
-    public void parsePolicyRepresentation(String typeInfoStr) {
-        JSONObject parsedObj = (JSONObject) JSONValue.parse(typeInfoStr);
-        this.samplingMethod = SamplingMethod.valueOf((String) parsedObj.get("samplingMethod"));
-        this.samplingPeriod = Float.parseFloat((String) parsedObj.get("samplingPeriod"));
-        this.policyName = (String) parsedObj.get("policyName");
-
-        JSONArray parsedStores = (JSONArray) parsedObj.get("dataStores");
-        LinkedList<String> parsedStoresList = new LinkedList<String>();
-        for (Object parsedStore : parsedStores) {
-            parsedStoresList.add((String) parsedStore);
-        }
-        dataStores = parsedStoresList.toArray(new String[0]);
-
-        if (logger.isDebugEnabled()) {
-            try {
-                JSONEncoder<PVTypeInfo> jsonEncoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-                JSONObject rep = jsonEncoder.encode(this);
-                logger.debug("Policy object initialized from string " + rep.toJSONString());
-            } catch (Exception ex) {
-                logger.error("Exception marshalling type info for pv " + pvName);
-            }
-        }
-    }
-
-    public Double getLowerAlarmLimit() {
-        return lowerAlarmLimit;
-    }
-
-    public void setLowerAlarmLimit(Double lowerAlarmLimit) {
-        this.lowerAlarmLimit = lowerAlarmLimit;
-    }
-
-    public Double getLowerCtrlLimit() {
-        return lowerCtrlLimit;
-    }
-
-    public void setLowerCtrlLimit(Double lowerCtrlLimit) {
-        this.lowerCtrlLimit = lowerCtrlLimit;
-    }
-
-    public Double getLowerWarningLimit() {
-        return lowerWarningLimit;
-    }
-
-    public void setLowerWarningLimit(Double lowerWarningLimit) {
-        this.lowerWarningLimit = lowerWarningLimit;
-    }
-
-    public Double getUpperAlarmLimit() {
-        return upperAlarmLimit;
-    }
-
-    public void setUpperAlarmLimit(Double upperAlarmLimit) {
-        this.upperAlarmLimit = upperAlarmLimit;
-    }
-
-    public Double getUpperCtrlLimit() {
-        return upperCtrlLimit;
-    }
-
-    public void setUpperCtrlLimit(Double upperCtrlLimit) {
-        this.upperCtrlLimit = upperCtrlLimit;
-    }
-
-    public Double getUpperWarningLimit() {
-        return upperWarningLimit;
-    }
-
-    public void setUpperWarningLimit(Double upperWarningLimit) {
-        this.upperWarningLimit = upperWarningLimit;
-    }
-
     public Double getPrecision() {
         return precision;
     }
@@ -427,9 +332,7 @@ public class PVTypeInfo implements Serializable {
             this.computedBytesPerEvent = (int) (metaInfo.getStorageSize() / metaInfo.getEventCount());
         }
         HashMap<String, String> otherMetaInfo = metaInfo.getOtherMetaInfo();
-        for (String extraName : otherMetaInfo.keySet()) {
-            extraFields.put(extraName, otherMetaInfo.get(extraName).toString());
-        }
+        extraFields.putAll(otherMetaInfo);
     }
 
     public HashMap<String, String> getExtraFields() {
@@ -506,9 +409,9 @@ public class PVTypeInfo implements Serializable {
             return;
         }
 
-        HashSet<String> newFields = new HashSet<String>();
+        HashSet<String> newFields = new HashSet<>();
         for (String fieldName : archiveFields) {
-            if (fieldName == null || fieldName.equals("")) continue;
+            if (fieldName == null || fieldName.isEmpty()) continue;
             if (fieldName.equals("VAL")) continue;
             newFields.add(fieldName);
         }
@@ -517,21 +420,19 @@ public class PVTypeInfo implements Serializable {
     }
 
     public void addArchiveField(String fieldName) {
-        if (fieldName == null || fieldName.equals("")) return;
+        if (fieldName == null || fieldName.isEmpty()) return;
         if (fieldName.equals("VAL")) return;
 
-        HashSet<String> newFields = new HashSet<String>();
+        HashSet<String> newFields = new HashSet<>();
         if (this.archiveFields != null) {
-            for (String fieldBeingArchived : this.archiveFields) {
-                newFields.add(fieldBeingArchived);
-            }
+            newFields.addAll(Arrays.asList(this.archiveFields));
         }
         newFields.add(fieldName);
         this.archiveFields = newFields.toArray(new String[0]);
     }
 
     public boolean checkIfFieldAlreadySepcified(String fieldName) {
-        if (fieldName == null || fieldName.equals("")) return false;
+        if (fieldName == null || fieldName.isEmpty()) return false;
         if (fieldName.equals("VAL")) return true;
 
         if (this.archiveFields != null) {
