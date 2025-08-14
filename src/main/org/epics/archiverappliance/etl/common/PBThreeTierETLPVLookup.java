@@ -82,15 +82,15 @@ public final class PBThreeTierETLPVLookup {
 
     @Subscribe
     public void pvTypeInfoChanged(PVTypeInfoEvent event) {
-        String pvName = event.getPvName();
+        String pvName = event.pvName();
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
         logger.debug(
                 "Received PVTypeInfo changed event for {} ChangeType: {} Paused: {} Appliance: {}",
                 pvName,
-                event.getChangeType(),
+                event.changeType(),
                 typeInfo.isPaused(),
                 typeInfo.getApplianceIdentity());
-        if (event.getChangeType() == ChangeType.TYPEINFO_DELETED
+        if (event.changeType() == ChangeType.TYPEINFO_DELETED
                 || typeInfo.isPaused()
                 || !typeInfo.getApplianceIdentity()
                         .equals(configService.getMyApplianceInfo().getIdentity())) {

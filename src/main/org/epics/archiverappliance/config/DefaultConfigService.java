@@ -852,11 +852,11 @@ public class DefaultConfigService implements ConfigService {
 
     @Subscribe
     public void updatePVSForThisAppliance(PVTypeInfoEvent event) {
-        if (logger.isDebugEnabled()) logger.debug(() -> "Received pvTypeInfo change event for pv " + event.getPvName());
-        PVTypeInfo typeInfo = event.getTypeInfo();
+        if (logger.isDebugEnabled()) logger.debug(() -> "Received pvTypeInfo change event for pv " + event.pvName());
+        PVTypeInfo typeInfo = event.typeInfo();
         String pvName = typeInfo.getPvName();
         if (typeInfo.getApplianceIdentity().equals(myApplianceInfo.getIdentity())) {
-            if (event.getChangeType() == ChangeType.TYPEINFO_DELETED) {
+            if (event.changeType() == ChangeType.TYPEINFO_DELETED) {
                 String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
                 for (String part : parts) {
                     parts2PVNamesForThisAppliance.get(part).remove(pvName);
