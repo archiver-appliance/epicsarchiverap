@@ -29,597 +29,601 @@ import java.util.LinkedList;
 
 /**
  * Somewhat static information about a PV like it's type info, graphic limits, event rates etc.
- * 
+ *
  * @author mshankar
  */
 public class PVTypeInfo implements Serializable {
-	private static final long serialVersionUID = 6298175991390616559L;
-	private static Logger logger = LogManager.getLogger(PVTypeInfo.class.getName());
-	public static final int DEFAULT_BUFFER_INTERVAL = 10;
+    private static final long serialVersionUID = 6298175991390616559L;
+    private static Logger logger = LogManager.getLogger(PVTypeInfo.class.getName());
+    public static final int DEFAULT_BUFFER_INTERVAL = 10;
 
-	/**
-	 * The name of the PV
-	 */
-	private String pvName;
-	/**
-	 * The DBRType of the PV
-	 */
-	private ArchDBRTypes DBRType;
-	/**
-	 * Is this a scalar?
-	 */
-	private boolean isScalar;
-	/**
-	 * If waveform, how many elements
-	 */
-	private int elementCount;
-	/**
-	 * Which appliance owns this PV
-	 */
-	private String applianceIdentity;
-	/**
-	 * What's the chunk key that this PV was mapped to?
-	 */
-	private String chunkKey;
-	
-	/**
-	 * IOC where this PV came from last time.
-	 */
-	private String hostName;
-	
+    /**
+     * The name of the PV
+     */
+    private String pvName;
+    /**
+     * The DBRType of the PV
+     */
+    private ArchDBRTypes DBRType;
+    /**
+     * Is this a scalar?
+     */
+    private boolean isScalar;
+    /**
+     * If waveform, how many elements
+     */
+    private int elementCount;
+    /**
+     * Which appliance owns this PV
+     */
+    private String applianceIdentity;
+    /**
+     * What's the chunk key that this PV was mapped to?
+     */
+    private String chunkKey;
 
-	// Info from the dbr_ctrl structures
-	/**
-	 * &lt;PV Name&gt;.LOLO; though we get it using the dbr_ctrl structures
-	 */
-	private double lowerAlarmLimit;
-	/**
-	 * &lt;PV Name&gt;.DRVL; though we get it using the dbr_ctrl structures
-	 */
-	private double lowerCtrlLimit;
-	/**
-	 * &lt;PV Name&gt;.LOPR; though we get it using the dbr_ctrl structures
-	 */
-	private double lowerDisplayLimit;
-	/**
-	 * &lt;PV Name&gt;.LOW; though we get it using the dbr_ctrl structures
-	 */
-	private double lowerWarningLimit;
-	/**
-	 * &lt;PV Name&gt;.HIHI; though we get it using the dbr_ctrl structures
-	 */
-	private double upperAlarmLimit;
-	/**
-	 * &lt;PV Name&gt;.DRVH though we get it using the dbr_ctrl structures
-	 */
-	private double upperCtrlLimit;
-	/**
-	 * &lt;PV Name&gt;.HOPR; though we get it using the dbr_ctrl structures
-	 */
-	private double upperDisplayLimit;
-	/**
-	 * &lt;PV Name&gt;.HIGH; though we get it using the dbr_ctrl structures
-	 */
-	private double upperWarningLimit;
-	/**
-	 * &lt;PV Name&gt;.PREC; though we get it using the dbr_ctrl structures
-	 */
-	private double precision;
-	/**
-	 * &lt;PV Name&gt;.EGU; though we get it using the dbr_ctrl structures
-	 */
-	private String units;
-	
-	
-	// Info pertaining to the archiver...
-	private boolean hasReducedDataSet;
-	/**
-	 * the average event rate in one minute (event count / sec)
-	 */	
-	private float computedEventRate;
- 	/**
-	 * the average storage rate in in one minute ( bytes / sec)
-	 */
-	private float computedStorageRate;
-	/**
-	 * the storage size / the total event count if the event count &ne; 0
-	 */
-	private int computedBytesPerEvent;
-	private float userSpecifiedEventRate;
+    /**
+     * IOC where this PV came from last time.
+     */
+    private String hostName;
+
+    // Info from the dbr_ctrl structures
+    /**
+     * &lt;PV Name&gt;.LOLO; though we get it using the dbr_ctrl structures
+     */
+    private double lowerAlarmLimit;
+    /**
+     * &lt;PV Name&gt;.DRVL; though we get it using the dbr_ctrl structures
+     */
+    private double lowerCtrlLimit;
+    /**
+     * &lt;PV Name&gt;.LOPR; though we get it using the dbr_ctrl structures
+     */
+    private double lowerDisplayLimit;
+    /**
+     * &lt;PV Name&gt;.LOW; though we get it using the dbr_ctrl structures
+     */
+    private double lowerWarningLimit;
+    /**
+     * &lt;PV Name&gt;.HIHI; though we get it using the dbr_ctrl structures
+     */
+    private double upperAlarmLimit;
+    /**
+     * &lt;PV Name&gt;.DRVH though we get it using the dbr_ctrl structures
+     */
+    private double upperCtrlLimit;
+    /**
+     * &lt;PV Name&gt;.HOPR; though we get it using the dbr_ctrl structures
+     */
+    private double upperDisplayLimit;
+    /**
+     * &lt;PV Name&gt;.HIGH; though we get it using the dbr_ctrl structures
+     */
+    private double upperWarningLimit;
+    /**
+     * &lt;PV Name&gt;.PREC; though we get it using the dbr_ctrl structures
+     */
+    private double precision;
+    /**
+     * &lt;PV Name&gt;.EGU; though we get it using the dbr_ctrl structures
+     */
+    private String units;
+
+    // Info pertaining to the archiver...
+    private boolean hasReducedDataSet;
+    /**
+     * the average event rate in one minute (event count / sec)
+     */
+    private float computedEventRate;
+    /**
+     * the average storage rate in in one minute ( bytes / sec)
+     */
+    private float computedStorageRate;
+    /**
+     * the storage size / the total event count if the event count &ne; 0
+     */
+    private int computedBytesPerEvent;
+
+    private float userSpecifiedEventRate;
     private Instant creationTime;
     private Instant modificationTime;
-	private boolean paused = false;
-	private SamplingMethod samplingMethod;
-	private float samplingPeriod;
-	private String policyName;
-	private String[] dataStores = new String[0];
-	private HashMap<String, String> extraFields = new HashMap<String, String>();
-	private String controllingPV;
-	private String[] archiveFields = new String[0];
-	private boolean usePVAccess = false;
-	private boolean useDBEProperties = false;
-	
-	public PVTypeInfo() {
-		
-	}
+    private boolean paused = false;
+    private SamplingMethod samplingMethod;
+    private float samplingPeriod;
+    private String policyName;
+    private String[] dataStores = new String[0];
+    private HashMap<String, String> extraFields = new HashMap<String, String>();
+    private String controllingPV;
+    private String[] archiveFields = new String[0];
+    private boolean usePVAccess = false;
+    private boolean useDBEProperties = false;
 
-	public PVTypeInfo(String pvName, ArchDBRTypes dBRType, boolean isScalar, int elementCount) {
-		super();
-		this.pvName = pvName;
-		DBRType = dBRType;
-		this.isScalar = isScalar;
-		this.elementCount = elementCount;
-	}
-	
-	public PVTypeInfo(String pvName, PVTypeInfo srcTypeInfo) {
-		this.pvName = pvName;
-		this.DBRType = srcTypeInfo.DBRType;
-		this.isScalar = srcTypeInfo.isScalar;
-		this.elementCount = srcTypeInfo.elementCount;
+    public PVTypeInfo() {}
 
-		this.applianceIdentity = srcTypeInfo.applianceIdentity;
-		this.lowerAlarmLimit = srcTypeInfo.lowerAlarmLimit;
-		this.lowerCtrlLimit = srcTypeInfo.lowerCtrlLimit;
-		this.lowerDisplayLimit = srcTypeInfo.lowerDisplayLimit;
-		this.lowerWarningLimit = srcTypeInfo.lowerWarningLimit;
-		this.upperAlarmLimit = srcTypeInfo.upperAlarmLimit;
-		this.upperCtrlLimit = srcTypeInfo.upperCtrlLimit;
-		this.upperDisplayLimit = srcTypeInfo.upperDisplayLimit;
-		this.upperWarningLimit = srcTypeInfo.upperWarningLimit;
-		this.precision = srcTypeInfo.precision;
-		this.units = srcTypeInfo.units;
-		this.hasReducedDataSet = srcTypeInfo.hasReducedDataSet;
-		this.computedEventRate = srcTypeInfo.computedEventRate;
-		this.computedStorageRate = srcTypeInfo.computedStorageRate;
-		this.computedBytesPerEvent = srcTypeInfo.computedBytesPerEvent;
-		this.userSpecifiedEventRate = srcTypeInfo.userSpecifiedEventRate;
-		this.paused = srcTypeInfo.paused;
-		this.samplingMethod = srcTypeInfo.samplingMethod;
-		this.samplingPeriod = srcTypeInfo.samplingPeriod;
-		this.policyName = srcTypeInfo.policyName;
-		this.controllingPV = srcTypeInfo.controllingPV;
+    public PVTypeInfo(String pvName, ArchDBRTypes dBRType, boolean isScalar, int elementCount) {
+        super();
+        this.pvName = pvName;
+        DBRType = dBRType;
+        this.isScalar = isScalar;
+        this.elementCount = elementCount;
+    }
 
-		this.dataStores = Arrays.copyOf(srcTypeInfo.dataStores, srcTypeInfo.dataStores.length);
-		this.extraFields = new HashMap<String, String>(srcTypeInfo.extraFields);
-		this.archiveFields = Arrays.copyOf(srcTypeInfo.archiveFields, srcTypeInfo.archiveFields.length);
+    public PVTypeInfo(String pvName, PVTypeInfo srcTypeInfo) {
+        this.pvName = pvName;
+        this.DBRType = srcTypeInfo.DBRType;
+        this.isScalar = srcTypeInfo.isScalar;
+        this.elementCount = srcTypeInfo.elementCount;
 
-		this.usePVAccess = srcTypeInfo.usePVAccess;
-		this.useDBEProperties = srcTypeInfo.useDBEProperties;
+        this.applianceIdentity = srcTypeInfo.applianceIdentity;
+        this.lowerAlarmLimit = srcTypeInfo.lowerAlarmLimit;
+        this.lowerCtrlLimit = srcTypeInfo.lowerCtrlLimit;
+        this.lowerDisplayLimit = srcTypeInfo.lowerDisplayLimit;
+        this.lowerWarningLimit = srcTypeInfo.lowerWarningLimit;
+        this.upperAlarmLimit = srcTypeInfo.upperAlarmLimit;
+        this.upperCtrlLimit = srcTypeInfo.upperCtrlLimit;
+        this.upperDisplayLimit = srcTypeInfo.upperDisplayLimit;
+        this.upperWarningLimit = srcTypeInfo.upperWarningLimit;
+        this.precision = srcTypeInfo.precision;
+        this.units = srcTypeInfo.units;
+        this.hasReducedDataSet = srcTypeInfo.hasReducedDataSet;
+        this.computedEventRate = srcTypeInfo.computedEventRate;
+        this.computedStorageRate = srcTypeInfo.computedStorageRate;
+        this.computedBytesPerEvent = srcTypeInfo.computedBytesPerEvent;
+        this.userSpecifiedEventRate = srcTypeInfo.userSpecifiedEventRate;
+        this.paused = srcTypeInfo.paused;
+        this.samplingMethod = srcTypeInfo.samplingMethod;
+        this.samplingPeriod = srcTypeInfo.samplingPeriod;
+        this.policyName = srcTypeInfo.policyName;
+        this.controllingPV = srcTypeInfo.controllingPV;
 
-		// Inherit the creation type from the source. This seems to serve us better
-		this.creationTime = srcTypeInfo.getCreationTime();
-		this.modificationTime = TimeUtils.now();
-	}
+        this.dataStores = Arrays.copyOf(srcTypeInfo.dataStores, srcTypeInfo.dataStores.length);
+        this.extraFields = new HashMap<String, String>(srcTypeInfo.extraFields);
+        this.archiveFields = Arrays.copyOf(srcTypeInfo.archiveFields, srcTypeInfo.archiveFields.length);
 
-	public String getPvName() {
-		return pvName;
-	}
-	public ArchDBRTypes getDBRType() {
-		return DBRType;
-	}
-	public boolean isScalar() {
-		return isScalar;
-	}
-	public int getElementCount() {
-		return elementCount;
-	}
-	public Double getUpperDisplayLimit() {
-		return upperDisplayLimit;
-	}
-	public Double getLowerDisplayLimit() {
-		return lowerDisplayLimit;
-	}
-	public boolean isHasReducedDataSet() {
-		return hasReducedDataSet;
-	}
-	public float getComputedEventRate() {
-		return computedEventRate;
-	}
-	public float getUserSpecifiedEventRate() {
-		return userSpecifiedEventRate;
-	}
+        this.usePVAccess = srcTypeInfo.usePVAccess;
+        this.useDBEProperties = srcTypeInfo.useDBEProperties;
+
+        // Inherit the creation type from the source. This seems to serve us better
+        this.creationTime = srcTypeInfo.getCreationTime();
+        this.modificationTime = TimeUtils.now();
+    }
+
+    public String getPvName() {
+        return pvName;
+    }
+
+    public ArchDBRTypes getDBRType() {
+        return DBRType;
+    }
+
+    public boolean isScalar() {
+        return isScalar;
+    }
+
+    public int getElementCount() {
+        return elementCount;
+    }
+
+    public Double getUpperDisplayLimit() {
+        return upperDisplayLimit;
+    }
+
+    public Double getLowerDisplayLimit() {
+        return lowerDisplayLimit;
+    }
+
+    public boolean isHasReducedDataSet() {
+        return hasReducedDataSet;
+    }
+
+    public float getComputedEventRate() {
+        return computedEventRate;
+    }
+
+    public float getUserSpecifiedEventRate() {
+        return userSpecifiedEventRate;
+    }
 
     public Instant getCreationTime() {
-		return creationTime;
-	}
+        return creationTime;
+    }
 
     public void setCreationTime(Instant creationTime) {
-		this.creationTime = creationTime;
-		this.modificationTime = creationTime;
-	}
+        this.creationTime = creationTime;
+        this.modificationTime = creationTime;
+    }
 
     public Instant getModificationTime() {
-		return modificationTime;
-	}
+        return modificationTime;
+    }
 
     public void setModificationTime(Instant modificationTime) {
-		this.modificationTime = modificationTime;
-	}
+        this.modificationTime = modificationTime;
+    }
 
-	public boolean isPaused() {
-		return paused;
-	}
+    public boolean isPaused() {
+        return paused;
+    }
 
-	public void setPaused(boolean paused) {
-		this.paused = paused;
-	}
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
 
-	public void setPvName(String pvName) {
-		this.pvName = pvName;
-	}
+    public void setPvName(String pvName) {
+        this.pvName = pvName;
+    }
 
-	public void setDBRType(ArchDBRTypes dBRType) {
-		DBRType = dBRType;
-	}
+    public void setDBRType(ArchDBRTypes dBRType) {
+        DBRType = dBRType;
+    }
 
-	public void setScalar(boolean isScalar) {
-		this.isScalar = isScalar;
-	}
+    public void setScalar(boolean isScalar) {
+        this.isScalar = isScalar;
+    }
 
-	public void setElementCount(int elementCount) {
-		this.elementCount = elementCount;
-	}
+    public void setElementCount(int elementCount) {
+        this.elementCount = elementCount;
+    }
 
-	public void setUpperDisplayLimit(Double upperDisplayLimit) {
-		this.upperDisplayLimit = upperDisplayLimit;
-	}
+    public void setUpperDisplayLimit(Double upperDisplayLimit) {
+        this.upperDisplayLimit = upperDisplayLimit;
+    }
 
-	public void setLowerDisplayLimit(Double lowerDisplayLimit) {
-		this.lowerDisplayLimit = lowerDisplayLimit;
-	}
+    public void setLowerDisplayLimit(Double lowerDisplayLimit) {
+        this.lowerDisplayLimit = lowerDisplayLimit;
+    }
 
-	public void setHasReducedDataSet(boolean hasReducedDataSet) {
-		this.hasReducedDataSet = hasReducedDataSet;
-	}
+    public void setHasReducedDataSet(boolean hasReducedDataSet) {
+        this.hasReducedDataSet = hasReducedDataSet;
+    }
 
-	public void setComputedEventRate(float computedEventRate) {
-		this.computedEventRate = computedEventRate;
-	}
+    public void setComputedEventRate(float computedEventRate) {
+        this.computedEventRate = computedEventRate;
+    }
 
-	public void setUserSpecifiedEventRate(float userSpecifiedEventRate) {
-		this.userSpecifiedEventRate = userSpecifiedEventRate;
-	}
+    public void setUserSpecifiedEventRate(float userSpecifiedEventRate) {
+        this.userSpecifiedEventRate = userSpecifiedEventRate;
+    }
 
-	public SamplingMethod getSamplingMethod() {
-		return samplingMethod;
-	}
+    public SamplingMethod getSamplingMethod() {
+        return samplingMethod;
+    }
 
-	public void setSamplingMethod(SamplingMethod samplingMethod) {
-		this.samplingMethod = samplingMethod;
-	}
+    public void setSamplingMethod(SamplingMethod samplingMethod) {
+        this.samplingMethod = samplingMethod;
+    }
 
-	public float getSamplingPeriod() {
-		return samplingPeriod;
-	}
+    public float getSamplingPeriod() {
+        return samplingPeriod;
+    }
 
-	public void setSamplingPeriod(float samplingPeriod) {
-		this.samplingPeriod = samplingPeriod;
-	}
+    public void setSamplingPeriod(float samplingPeriod) {
+        this.samplingPeriod = samplingPeriod;
+    }
 
-	public String[] getDataStores() {
-		return dataStores;
-	}
+    public String[] getDataStores() {
+        return dataStores;
+    }
 
-	public void setDataStores(String[] dataStores) {
-		this.dataStores = dataStores;
-	}
+    public void setDataStores(String[] dataStores) {
+        this.dataStores = dataStores;
+    }
 
-	public String getApplianceIdentity() {
-		return applianceIdentity;
-	}
+    public String getApplianceIdentity() {
+        return applianceIdentity;
+    }
 
-	public void setApplianceIdentity(String applianceIdentity) {
-		this.applianceIdentity = applianceIdentity;
-	}
-	
-	/**
-	 * Parse a string (JSON) representation of the PVTypeInfo object into this object
-	 * @param typeInfoStr  &emsp;
-	 */
-	public void parsePolicyRepresentation(String typeInfoStr) {
-		JSONObject parsedObj = (JSONObject) JSONValue.parse(typeInfoStr);
-		this.samplingMethod = SamplingMethod.valueOf((String)parsedObj.get("samplingMethod"));
-		this.samplingPeriod = Float.parseFloat((String)parsedObj.get("samplingPeriod"));
-		this.policyName = (String) parsedObj.get("policyName");
-		
-		JSONArray parsedStores = (JSONArray) parsedObj.get("dataStores");
-		LinkedList<String> parsedStoresList = new LinkedList<String>();
-		for(Object parsedStore : parsedStores) { 
-			parsedStoresList.add((String)parsedStore);
-		}
-		dataStores = parsedStoresList.toArray(new String[0]);
-		
-		if(logger.isDebugEnabled()) { 
-			try {
-				JSONEncoder<PVTypeInfo> jsonEncoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-				JSONObject rep = jsonEncoder.encode(this);
-				logger.debug("Policy object initialized from string " + rep.toJSONString());
-			} catch(Exception ex) {
-				logger.error("Exception marshalling type info for pv " + pvName);
-			}
-		}
-	}
-	
-	public Double getLowerAlarmLimit() {
-		return lowerAlarmLimit;
-	}
+    public void setApplianceIdentity(String applianceIdentity) {
+        this.applianceIdentity = applianceIdentity;
+    }
 
-	public void setLowerAlarmLimit(Double lowerAlarmLimit) {
-		this.lowerAlarmLimit = lowerAlarmLimit;
-	}
+    /**
+     * Parse a string (JSON) representation of the PVTypeInfo object into this object
+     * @param typeInfoStr  &emsp;
+     */
+    public void parsePolicyRepresentation(String typeInfoStr) {
+        JSONObject parsedObj = (JSONObject) JSONValue.parse(typeInfoStr);
+        this.samplingMethod = SamplingMethod.valueOf((String) parsedObj.get("samplingMethod"));
+        this.samplingPeriod = Float.parseFloat((String) parsedObj.get("samplingPeriod"));
+        this.policyName = (String) parsedObj.get("policyName");
 
-	public Double getLowerCtrlLimit() {
-		return lowerCtrlLimit;
-	}
+        JSONArray parsedStores = (JSONArray) parsedObj.get("dataStores");
+        LinkedList<String> parsedStoresList = new LinkedList<String>();
+        for (Object parsedStore : parsedStores) {
+            parsedStoresList.add((String) parsedStore);
+        }
+        dataStores = parsedStoresList.toArray(new String[0]);
 
-	public void setLowerCtrlLimit(Double lowerCtrlLimit) {
-		this.lowerCtrlLimit = lowerCtrlLimit;
-	}
+        if (logger.isDebugEnabled()) {
+            try {
+                JSONEncoder<PVTypeInfo> jsonEncoder = JSONEncoder.getEncoder(PVTypeInfo.class);
+                JSONObject rep = jsonEncoder.encode(this);
+                logger.debug("Policy object initialized from string " + rep.toJSONString());
+            } catch (Exception ex) {
+                logger.error("Exception marshalling type info for pv " + pvName);
+            }
+        }
+    }
 
-	public Double getLowerWarningLimit() {
-		return lowerWarningLimit;
-	}
+    public Double getLowerAlarmLimit() {
+        return lowerAlarmLimit;
+    }
 
-	public void setLowerWarningLimit(Double lowerWarningLimit) {
-		this.lowerWarningLimit = lowerWarningLimit;
-	}
+    public void setLowerAlarmLimit(Double lowerAlarmLimit) {
+        this.lowerAlarmLimit = lowerAlarmLimit;
+    }
 
-	public Double getUpperAlarmLimit() {
-		return upperAlarmLimit;
-	}
+    public Double getLowerCtrlLimit() {
+        return lowerCtrlLimit;
+    }
 
-	public void setUpperAlarmLimit(Double upperAlarmLimit) {
-		this.upperAlarmLimit = upperAlarmLimit;
-	}
+    public void setLowerCtrlLimit(Double lowerCtrlLimit) {
+        this.lowerCtrlLimit = lowerCtrlLimit;
+    }
 
-	public Double getUpperCtrlLimit() {
-		return upperCtrlLimit;
-	}
+    public Double getLowerWarningLimit() {
+        return lowerWarningLimit;
+    }
 
-	public void setUpperCtrlLimit(Double upperCtrlLimit) {
-		this.upperCtrlLimit = upperCtrlLimit;
-	}
+    public void setLowerWarningLimit(Double lowerWarningLimit) {
+        this.lowerWarningLimit = lowerWarningLimit;
+    }
 
-	public Double getUpperWarningLimit() {
-		return upperWarningLimit;
-	}
+    public Double getUpperAlarmLimit() {
+        return upperAlarmLimit;
+    }
 
-	public void setUpperWarningLimit(Double upperWarningLimit) {
-		this.upperWarningLimit = upperWarningLimit;
-	}
+    public void setUpperAlarmLimit(Double upperAlarmLimit) {
+        this.upperAlarmLimit = upperAlarmLimit;
+    }
 
-	public Double getPrecision() {
-		return precision;
-	}
+    public Double getUpperCtrlLimit() {
+        return upperCtrlLimit;
+    }
 
-	public void setPrecision(Double precision) {
-		this.precision = precision;
-	}
+    public void setUpperCtrlLimit(Double upperCtrlLimit) {
+        this.upperCtrlLimit = upperCtrlLimit;
+    }
 
-	public String getUnits() {
-		return units;
-	}
+    public Double getUpperWarningLimit() {
+        return upperWarningLimit;
+    }
 
-	public void setUnits(String units) {
-		this.units = units;
-	}
-	
-	
-	public void absorbMetaInfo(MetaInfo metaInfo) {
-		this.lowerAlarmLimit = metaInfo.getLowerAlarmLimit();
-		this.lowerCtrlLimit = metaInfo.getLoweCtrlLimit();
-		this.lowerDisplayLimit = metaInfo.getLowerDisplayLimit();
-		this.lowerWarningLimit = metaInfo.getLowerWarningLimit();
-		this.upperAlarmLimit = metaInfo.getUpperAlarmLimit();
-		this.upperCtrlLimit = metaInfo.getUpperCtrlLimit();
-		this.upperDisplayLimit = metaInfo.getUpperDisplayLimit();
-		this.upperWarningLimit = metaInfo.getUpperWarningLimit();
-		this.precision = metaInfo.getPrecision();
-		this.units = metaInfo.getUnit();
-		this.elementCount = metaInfo.getCount();
-		this.computedEventRate = (float) metaInfo.getEventRate();
-		this.computedStorageRate = (float) metaInfo.getStorageRate();
-		if(metaInfo.getEventCount() != 0) { 
-			this.computedBytesPerEvent = (int) (metaInfo.getStorageSize()/metaInfo.getEventCount());
-		}
-		HashMap<String, String> otherMetaInfo = metaInfo.getOtherMetaInfo();
-		for(String extraName : otherMetaInfo.keySet()) {
-			extraFields.put(extraName, otherMetaInfo.get(extraName).toString());
-		}
-	}
+    public void setUpperWarningLimit(Double upperWarningLimit) {
+        this.upperWarningLimit = upperWarningLimit;
+    }
 
-	public HashMap<String, String> getExtraFields() {
-		return extraFields;
-	}
+    public Double getPrecision() {
+        return precision;
+    }
 
-	public void setExtraFields(HashMap<String, String> extraFields) {
-		this.extraFields = extraFields;
-	}
-	
-	public boolean hasExtraField(String key) {
-		if(this.extraFields == null) return false;
-		return this.extraFields.containsKey(key);
-	}
-	
-	public String lookupExtraField(String key) {
-		if(this.extraFields == null) return null;
-		return this.extraFields.get(key);
-	}
+    public void setPrecision(Double precision) {
+        this.precision = precision;
+    }
 
-	public String getPolicyName() {
-		return policyName;
-	}
+    public String getUnits() {
+        return units;
+    }
 
-	public void setPolicyName(String policyName) {
-		this.policyName = policyName;
-	}
+    public void setUnits(String units) {
+        this.units = units;
+    }
 
-	public float getComputedStorageRate() {
-		return computedStorageRate;
-	}
+    public void absorbMetaInfo(MetaInfo metaInfo) {
+        this.lowerAlarmLimit = metaInfo.getLowerAlarmLimit();
+        this.lowerCtrlLimit = metaInfo.getLoweCtrlLimit();
+        this.lowerDisplayLimit = metaInfo.getLowerDisplayLimit();
+        this.lowerWarningLimit = metaInfo.getLowerWarningLimit();
+        this.upperAlarmLimit = metaInfo.getUpperAlarmLimit();
+        this.upperCtrlLimit = metaInfo.getUpperCtrlLimit();
+        this.upperDisplayLimit = metaInfo.getUpperDisplayLimit();
+        this.upperWarningLimit = metaInfo.getUpperWarningLimit();
+        this.precision = metaInfo.getPrecision();
+        this.units = metaInfo.getUnit();
+        this.elementCount = metaInfo.getCount();
+        this.computedEventRate = (float) metaInfo.getEventRate();
+        this.computedStorageRate = (float) metaInfo.getStorageRate();
+        if (metaInfo.getEventCount() != 0) {
+            this.computedBytesPerEvent = (int) (metaInfo.getStorageSize() / metaInfo.getEventCount());
+        }
+        HashMap<String, String> otherMetaInfo = metaInfo.getOtherMetaInfo();
+        for (String extraName : otherMetaInfo.keySet()) {
+            extraFields.put(extraName, otherMetaInfo.get(extraName).toString());
+        }
+    }
 
-	public void setComputedStorageRate(float computedStorageRate) {
-		this.computedStorageRate = computedStorageRate;
-	}
+    public HashMap<String, String> getExtraFields() {
+        return extraFields;
+    }
 
-	public int getComputedBytesPerEvent() {
-		return computedBytesPerEvent;
-	}
+    public void setExtraFields(HashMap<String, String> extraFields) {
+        this.extraFields = extraFields;
+    }
 
-	public void setComputedBytesPerEvent(int computedBytesPerEvent) {
-		this.computedBytesPerEvent = computedBytesPerEvent;
-	}
+    public boolean hasExtraField(String key) {
+        if (this.extraFields == null) return false;
+        return this.extraFields.containsKey(key);
+    }
 
-	public String getControllingPV() {
-		return controllingPV;
-	}
+    public String lookupExtraField(String key) {
+        if (this.extraFields == null) return null;
+        return this.extraFields.get(key);
+    }
 
-	public void setControllingPV(String controllingPV) {
-		this.controllingPV = controllingPV;
-	}
+    public String getPolicyName() {
+        return policyName;
+    }
 
-	public String[] getArchiveFields() {
-		return archiveFields;
-	}
-	
-	public String obtainArchiveFieldsAsString() {
-		StringBuilder buf = new StringBuilder();
-		boolean first = true;
-		for(String archiveField : archiveFields) {
-			if(first) { first = false; } else { buf.append(','); }
-			buf.append(archiveField);
-		}
-		return buf.toString();
-	}
+    public void setPolicyName(String policyName) {
+        this.policyName = policyName;
+    }
 
+    public float getComputedStorageRate() {
+        return computedStorageRate;
+    }
 
-	public void setArchiveFields(String[] archiveFields) {
-		if(archiveFields == null || archiveFields.length == 0) { 
-			this.archiveFields = new String[0];
-			return;
-		}
-		
-		HashSet<String> newFields = new HashSet<String>();
-		for(String fieldName : archiveFields) {
-			if(fieldName == null || fieldName.equals("")) continue; 
-			if(fieldName.equals("VAL")) continue;
-			newFields.add(fieldName);
-		}
-		
-		this.archiveFields = newFields.toArray(new String[0]);
-	}
-	
-	
-	public void addArchiveField(String fieldName) {
-		if(fieldName == null || fieldName.equals("")) return; 
-		if(fieldName.equals("VAL")) return;
+    public void setComputedStorageRate(float computedStorageRate) {
+        this.computedStorageRate = computedStorageRate;
+    }
 
-		HashSet<String> newFields = new HashSet<String>();
-		if(this.archiveFields != null) { 
-			for(String fieldBeingArchived : this.archiveFields) {
-				newFields.add(fieldBeingArchived);
-			}
-		}
-		newFields.add(fieldName);
-		this.archiveFields = newFields.toArray(new String[0]);
-		
-	}
-	
-	public boolean checkIfFieldAlreadySepcified(String fieldName) {
-		if(fieldName == null || fieldName.equals("")) return false; 
-		if(fieldName.equals("VAL")) return true;
+    public int getComputedBytesPerEvent() {
+        return computedBytesPerEvent;
+    }
 
-		if(this.archiveFields != null) { 
-			for(String fieldBeingArchived : this.archiveFields) {
-				if(fieldBeingArchived.equals(fieldName)) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-	
-	
-	/**
-	 * Loop thru the stores outlined in this typeinfo and determine the most recent event for this pv
-	 * @param configService ConfigService
-	 * @throws IOException  &emsp;
+    public void setComputedBytesPerEvent(int computedBytesPerEvent) {
+        this.computedBytesPerEvent = computedBytesPerEvent;
+    }
+
+    public String getControllingPV() {
+        return controllingPV;
+    }
+
+    public void setControllingPV(String controllingPV) {
+        this.controllingPV = controllingPV;
+    }
+
+    public String[] getArchiveFields() {
+        return archiveFields;
+    }
+
+    public String obtainArchiveFieldsAsString() {
+        StringBuilder buf = new StringBuilder();
+        boolean first = true;
+        for (String archiveField : archiveFields) {
+            if (first) {
+                first = false;
+            } else {
+                buf.append(',');
+            }
+            buf.append(archiveField);
+        }
+        return buf.toString();
+    }
+
+    public void setArchiveFields(String[] archiveFields) {
+        if (archiveFields == null || archiveFields.length == 0) {
+            this.archiveFields = new String[0];
+            return;
+        }
+
+        HashSet<String> newFields = new HashSet<String>();
+        for (String fieldName : archiveFields) {
+            if (fieldName == null || fieldName.equals("")) continue;
+            if (fieldName.equals("VAL")) continue;
+            newFields.add(fieldName);
+        }
+
+        this.archiveFields = newFields.toArray(new String[0]);
+    }
+
+    public void addArchiveField(String fieldName) {
+        if (fieldName == null || fieldName.equals("")) return;
+        if (fieldName.equals("VAL")) return;
+
+        HashSet<String> newFields = new HashSet<String>();
+        if (this.archiveFields != null) {
+            for (String fieldBeingArchived : this.archiveFields) {
+                newFields.add(fieldBeingArchived);
+            }
+        }
+        newFields.add(fieldName);
+        this.archiveFields = newFields.toArray(new String[0]);
+    }
+
+    public boolean checkIfFieldAlreadySepcified(String fieldName) {
+        if (fieldName == null || fieldName.equals("")) return false;
+        if (fieldName.equals("VAL")) return true;
+
+        if (this.archiveFields != null) {
+            for (String fieldBeingArchived : this.archiveFields) {
+                if (fieldBeingArchived.equals(fieldName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Loop thru the stores outlined in this typeinfo and determine the most recent event for this pv
+     * @param configService ConfigService
+     * @throws IOException  &emsp;
      * @return Instant  &emsp;
-	 */
+     */
     public Instant determineLastKnownEventFromStores(ConfigService configService) throws IOException {
-		try(BasicContext context = new BasicContext()) {
-			for(String storeUrl : this.dataStores) {
-				try {
-					StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(storeUrl, configService);
-					Event e = storagePlugin.getLastKnownEvent(context, pvName);
-					if(e != null) return e.getEventTimeStamp();
-				} catch(IOException ex) {
-					logger.error("Exception determining last known timestamp", ex);
-				}
-			}
-		}
+        try (BasicContext context = new BasicContext()) {
+            for (String storeUrl : this.dataStores) {
+                try {
+                    StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(storeUrl, configService);
+                    Event e = storagePlugin.getLastKnownEvent(context, pvName);
+                    if (e != null) return e.getEventTimeStamp();
+                } catch (IOException ex) {
+                    logger.error("Exception determining last known timestamp", ex);
+                }
+            }
+        }
         return null;
-	}
-	
-	
-	
-	/**
-	 * The secondsToBuffer is a system wide property. 
-	 * Use this method to get the proper defaults.
-	 * @param configService ConfigService
-	 * @return secondsToBuffer  &emsp;
-	 */
-	public static int getSecondsToBuffer(ConfigService configService) {
-		String secondsToBufferStr = configService.getInstallationProperties().getProperty("org.epics.archiverappliance.config.PVTypeInfo.secondsToBuffer", "10");
-		int secondsToBuffer = Integer.parseInt(secondsToBufferStr);
-		if(logger.isDebugEnabled()) logger.debug("Seconds to buffer is " + secondsToBuffer);
-		return secondsToBuffer;
-	}
+    }
 
-	/**
-	 * The archiver appliance stores data in chunks that have a well defined key. 
-	 * We record this key in the typeinfo (to accommodate slowly changing key mapping strategies)
-	 * @return chunkKey  &emsp; 
-	 */
-	public String getChunkKey() {
-		return chunkKey;
-	}
+    /**
+     * The secondsToBuffer is a system wide property.
+     * Use this method to get the proper defaults.
+     * @param configService ConfigService
+     * @return secondsToBuffer  &emsp;
+     */
+    public static int getSecondsToBuffer(ConfigService configService) {
+        String secondsToBufferStr = configService
+                .getInstallationProperties()
+                .getProperty("org.epics.archiverappliance.config.PVTypeInfo.secondsToBuffer", "10");
+        int secondsToBuffer = Integer.parseInt(secondsToBufferStr);
+        if (logger.isDebugEnabled()) logger.debug("Seconds to buffer is " + secondsToBuffer);
+        return secondsToBuffer;
+    }
 
-	public void setChunkKey(String chunkKey) {
-		this.chunkKey = chunkKey;
-	}
-	
-	public boolean keyAlreadyGenerated() { 
-		return this.chunkKey != null;
-	}
+    /**
+     * The archiver appliance stores data in chunks that have a well defined key.
+     * We record this key in the typeinfo (to accommodate slowly changing key mapping strategies)
+     * @return chunkKey  &emsp;
+     */
+    public String getChunkKey() {
+        return chunkKey;
+    }
 
-	/**
-	 * @return hostName  &emsp;
-	 */
-	public String getHostName() {
-		return hostName;
-	}
+    public void setChunkKey(String chunkKey) {
+        this.chunkKey = chunkKey;
+    }
 
-	/**
-	 * @param hostName  &emsp;
-	 */
-	public void setHostName(String hostName) {
-		this.hostName = hostName;
-	}
+    public boolean keyAlreadyGenerated() {
+        return this.chunkKey != null;
+    }
 
-	public boolean isUsePVAccess() {
-		return usePVAccess;
-	}
+    /**
+     * @return hostName  &emsp;
+     */
+    public String getHostName() {
+        return hostName;
+    }
 
-	public void setUsePVAccess(boolean usePVAccess) {
-		this.usePVAccess = usePVAccess;
-	}
+    /**
+     * @param hostName  &emsp;
+     */
+    public void setHostName(String hostName) {
+        this.hostName = hostName;
+    }
 
-	public boolean isUseDBEProperties() {
-		return useDBEProperties;
-	}
+    public boolean isUsePVAccess() {
+        return usePVAccess;
+    }
 
-	public void setUseDBEProperties(boolean useDBEProperties) {
-		this.useDBEProperties = useDBEProperties;
-	}
+    public void setUsePVAccess(boolean usePVAccess) {
+        this.usePVAccess = usePVAccess;
+    }
+
+    public boolean isUseDBEProperties() {
+        return useDBEProperties;
+    }
+
+    public void setUseDBEProperties(boolean useDBEProperties) {
+        this.useDBEProperties = useDBEProperties;
+    }
 }
