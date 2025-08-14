@@ -10,6 +10,7 @@ package org.epics.archiverappliance.retrieval;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.FieldValue;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -53,6 +54,14 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
         }
     }
 
+    public RemotableEventStreamDesc(String pvName, FileInfo info) {
+        super(info.getType(), pvName);
+        if (!pvName.equals(info.getPVName())) {
+            logger.warn("Returning data from PV " + info.getPVName() + " as the data for PV " + pvName);
+        }
+        this.year = info.getDataYear();
+    }
+
     public RemotableEventStreamDesc(RemotableEventStreamDesc other) {
         super(other);
         this.year = other.year;
@@ -60,7 +69,7 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
         this.headers = new HashMap<String, String>(other.headers);
     }
 
-    public void mergeFrom(PVTypeInfo info, HashMap<String, String> engineMetadata) throws IOException {
+    public void mergeFrom(PVTypeInfo info, Map<String, String> engineMetadata) throws IOException {
         if (!PVNames.channelNamePVName(this.pvName).equals(PVNames.channelNamePVName(info.getPvName())))
             throw new IOException("Mismatch in pv info's. Src is for " + this.pvName + ". Info from config db is for "
                     + info.getPvName());
@@ -69,9 +78,7 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
             this.headers.put("EGU", info.getUnits());
         }
         if (!this.headers.containsKey("PREC")) {
-            this.headers.put(
-                    "PREC",
-                    Integer.valueOf((int) info.getPrecision().intValue()).toString());
+            this.headers.put("PREC", Integer.toString(info.getPrecision().intValue()));
         }
 
         // There are cases when we use operators where the DBR type of the PVTypeInfo is not the same as the DBR type of
