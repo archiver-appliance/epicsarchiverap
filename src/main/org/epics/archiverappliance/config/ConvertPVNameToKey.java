@@ -1,11 +1,11 @@
 package org.epics.archiverappliance.config;
 
-import java.io.File;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.ConfigException;
+
+import java.io.File;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Most labs use a standard character (typically the ":" or the "-" character) in their naming conventions to separate out the components of a name.
@@ -23,7 +23,7 @@ import org.epics.archiverappliance.config.exception.ConfigException;
  * We can either replace the underscores with /'s as well.
  * Or the character that separates the final name component of the PV name from the rest of the file name (time partition info, extension etc) should also be something that would not show up in a PV name at the end.
  * For now, we choose the latter and use another property to identify the separator string (for example ":") as the terminator.
- * For example, <code>X:CTRD_V_BOOK</code> is mapped to <code>X/CTRD_V_BOOK:</code>.   
+ * For example, <code>X:CTRD_V_BOOK</code> is mapped to <code>X/CTRD_V_BOOK:</code>.
  * </p>
  * <p>
  * This class uses two properties obtained from the <code>archappl.properties</code> file to map PV names to keys.
@@ -35,77 +35,81 @@ import org.epics.archiverappliance.config.exception.ConfigException;
  * @author mshankar
  */
 public class ConvertPVNameToKey implements PVNameToKeyMapping {
-	private static Logger configlogger = LogManager.getLogger("config." + ConvertPVNameToKey.class.getName());
-	private static final String SITE_NAME_SPACE_SEPARATORS = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceSeparators";
-	private static final String SITE_NAME_SPACE_TERMINATOR = "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator";
-	private String siteNameSpaceSeparators;
-	private char terminatorChar = ':';
-	private String fileSeparator;
-	
-	private ConfigService configService;
-	private ConcurrentHashMap<String, String> chunkKeys = new ConcurrentHashMap<String, String>();
-	
-	
-	/* (non-Javadoc)
-	 * @see org.epics.archiverappliance.config.PVNameToKeyMapping#convertPVNameToKey(java.lang.String)
-	 * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html">java.util.concurrent.ConcurrentHashMap</a>
-	 */
-	@Override
-	public String convertPVNameToKey(String pvName) {
-		// First check the local cache for the mapping.
-		String chunkKey = chunkKeys.get(pvName);
-		if(chunkKey != null) return chunkKey;
-		PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-		if(typeInfo == null) { 
-			return generateChunkKey(pvName);
-		}
+    private static Logger configlogger = LogManager.getLogger("config." + ConvertPVNameToKey.class.getName());
+    private static final String SITE_NAME_SPACE_SEPARATORS =
+            "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceSeparators";
+    private static final String SITE_NAME_SPACE_TERMINATOR =
+            "org.epics.archiverappliance.config.ConvertPVNameToKey.siteNameSpaceTerminator";
+    private String siteNameSpaceSeparators;
+    private char terminatorChar = ':';
+    private String fileSeparator;
 
-		// Then check the typeinfo.
-		chunkKey = typeInfo.getChunkKey();
-		if(chunkKey != null) { 
-			chunkKeys.put(pvName, chunkKey);
-			return chunkKey;
-		}
+    private ConfigService configService;
+    private ConcurrentHashMap<String, String> chunkKeys = new ConcurrentHashMap<String, String>();
 
-		// If it ain't set there either, generate it and set in all places.
-		chunkKey =  generateChunkKey(pvName);
-		typeInfo.setChunkKey(chunkKey);
-		chunkKeys.put(pvName, chunkKey);
-		return chunkKey;
-	}
+    /* (non-Javadoc)
+     * @see org.epics.archiverappliance.config.PVNameToKeyMapping#convertPVNameToKey(java.lang.String)
+     * @see <a href="https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html">java.util.concurrent.ConcurrentHashMap</a>
+     */
+    @Override
+    public String convertPVNameToKey(String pvName) {
+        // First check the local cache for the mapping.
+        String chunkKey = chunkKeys.get(pvName);
+        if (chunkKey != null) return chunkKey;
+        PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        if (typeInfo == null) {
+            return generateChunkKey(pvName);
+        }
 
+        // Then check the typeinfo.
+        chunkKey = typeInfo.getChunkKey();
+        if (chunkKey != null) {
+            chunkKeys.put(pvName, chunkKey);
+            return chunkKey;
+        }
 
-	@Override
-	public void initialize(ConfigService configService) throws ConfigException {
-		this.configService = configService;
-		this.siteNameSpaceSeparators = configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_SEPARATORS);
-		if(this.siteNameSpaceSeparators == null || this.siteNameSpaceSeparators.equals("") || this.siteNameSpaceSeparators.length() < 1) {
-			throw new ConfigException("The appliance archiver cannot function without knowning the characters that separate the components of a PV name ");
-		}
-		String terminatorStr = configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_TERMINATOR);
-		if(terminatorStr == null || terminatorStr.equals("") || terminatorStr.length() < 1) {
-			throw new ConfigException("The appliance archiver cannot function without knowning the character that terminates the translated path name ");
-		}
-		this.terminatorChar = terminatorStr.charAt(0);
-		this.fileSeparator = File.separator.equals("/") ? "/" : "\\\\";
-		
-		configlogger.info("The pv name components in this installation are separated by these characters " + this.siteNameSpaceSeparators + 
-				" and the key names are terminated by " + this.terminatorChar);
-	}
-	
-	
-	/**
-	 * One option is to simply override the final element of chunk key generation. 
-	 * To do that, subclass and override this method. (Of course, you still have to register the subclass in archappl.properties).
-	 * @param pvName The name of PV.
-	 * @return pvName  &emsp;
-	 */
-	protected String generateChunkKey(String pvName) { 
-		return pvName.replaceAll(siteNameSpaceSeparators, fileSeparator) + terminatorChar;
-	}
+        // If it ain't set there either, generate it and set in all places.
+        chunkKey = generateChunkKey(pvName);
+        typeInfo.setChunkKey(chunkKey);
+        chunkKeys.put(pvName, chunkKey);
+        return chunkKey;
+    }
 
-	@Override
-	public String[] breakIntoParts(String pvName) {
-		return pvName.split(siteNameSpaceSeparators);
-	}
+    @Override
+    public void initialize(ConfigService configService) throws ConfigException {
+        this.configService = configService;
+        this.siteNameSpaceSeparators =
+                configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_SEPARATORS);
+        if (this.siteNameSpaceSeparators == null
+                || this.siteNameSpaceSeparators.equals("")
+                || this.siteNameSpaceSeparators.length() < 1) {
+            throw new ConfigException(
+                    "The appliance archiver cannot function without knowning the characters that separate the components of a PV name ");
+        }
+        String terminatorStr = configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_TERMINATOR);
+        if (terminatorStr == null || terminatorStr.equals("") || terminatorStr.length() < 1) {
+            throw new ConfigException(
+                    "The appliance archiver cannot function without knowning the character that terminates the translated path name ");
+        }
+        this.terminatorChar = terminatorStr.charAt(0);
+        this.fileSeparator = File.separator.equals("/") ? "/" : "\\\\";
+
+        configlogger.info("The pv name components in this installation are separated by these characters "
+                + this.siteNameSpaceSeparators + " and the key names are terminated by " + this.terminatorChar);
+    }
+
+    /**
+     * One option is to simply override the final element of chunk key generation.
+     * To do that, subclass and override this method. (Of course, you still have to register the subclass in archappl.properties).
+     * @param pvName The name of PV.
+     * @return pvName  &emsp;
+     */
+    protected String generateChunkKey(String pvName) {
+        return pvName.replaceAll(siteNameSpaceSeparators, fileSeparator) + terminatorChar;
+    }
+
+    @Override
+    public String[] breakIntoParts(String pvName) {
+        return pvName.split(siteNameSpaceSeparators);
+    }
 }
