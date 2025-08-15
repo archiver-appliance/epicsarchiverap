@@ -11,7 +11,9 @@ public enum URLKey {
     ETL_OUT_OF_STORE_IF("etlOutofStoreIf"),
     REDUCE("reducedata"),
     CONSOLIDATE_ON_SHUTDOWN("consolidateOnShutdown"),
-    POST_PROCESSORS("pp");
+    POST_PROCESSORS("pp"),
+    TERMINATOR("terminator"),
+    ;
 
     private final String key;
 

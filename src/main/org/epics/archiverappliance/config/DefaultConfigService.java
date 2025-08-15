@@ -132,12 +132,6 @@ public class DefaultConfigService implements ConfigService {
     public static final String SITE_FOR_UNIT_TESTS_NAME = "org.epics.archiverappliance.config.site";
     public static final String SITE_FOR_UNIT_TESTS_VALUE = "tests";
 
-    /**
-     * Add a property in archappl.properties under this key to identify the class that implements the PVNameToKeyMapping for this installation.
-     */
-    public static final String ARCHAPPL_PVNAME_TO_KEY_MAPPING_CLASSNAME =
-            "org.epics.archiverappliance.config.DefaultConfigService.PVName2KeyMappingClassName";
-
     // Configuration state begins here.
     protected String myIdentity;
     protected ApplianceInfo myApplianceInfo = null;
@@ -314,24 +308,8 @@ public class DefaultConfigService implements ConfigService {
             configlogger.fatal("Exception loading the appliance properties file", ex);
         }
 
-        String pvName2KeyMappingClass =
-                this.getInstallationProperties().getProperty(ARCHAPPL_PVNAME_TO_KEY_MAPPING_CLASSNAME);
-        if (pvName2KeyMappingClass == null || pvName2KeyMappingClass.isEmpty()) {
-            logger.info("Using the default key mapping class");
-            pvName2KeyConverter = new ConvertPVNameToKey();
-            pvName2KeyConverter.initialize(this);
-        } else {
-            try {
-                logger.info("Using " + pvName2KeyMappingClass + " as the name to key mapping class");
-                pvName2KeyConverter = (PVNameToKeyMapping)
-                        Class.forName(pvName2KeyMappingClass).getConstructor().newInstance();
-                pvName2KeyConverter.initialize(this);
-            } catch (Exception ex) {
-                logger.fatal("Cannot initialize pv name to key mapping class " + pvName2KeyMappingClass, ex);
-                throw new ConfigException(
-                        "Cannot initialize pv name to key mapping class " + pvName2KeyMappingClass, ex);
-            }
-        }
+        pvName2KeyConverter = new ConvertPVNameToKey();
+        pvName2KeyConverter.initialize(this);
 
         String runtimeFieldsListStr =
                 this.getInstallationProperties().getProperty("org.epics.archiverappliance.config.RuntimeKeys");
@@ -852,11 +830,11 @@ public class DefaultConfigService implements ConfigService {
 
     @Subscribe
     public void updatePVSForThisAppliance(PVTypeInfoEvent event) {
-        if (logger.isDebugEnabled()) logger.debug(() -> "Received pvTypeInfo change event for pv " + event.getPvName());
-        PVTypeInfo typeInfo = event.getTypeInfo();
+        if (logger.isDebugEnabled()) logger.debug(() -> "Received pvTypeInfo change event for pv " + event.pvName());
+        PVTypeInfo typeInfo = event.typeInfo();
         String pvName = typeInfo.getPvName();
         if (typeInfo.getApplianceIdentity().equals(myApplianceInfo.getIdentity())) {
-            if (event.getChangeType() == ChangeType.TYPEINFO_DELETED) {
+            if (event.changeType() == ChangeType.TYPEINFO_DELETED) {
                 String[] parts = this.pvName2KeyConverter.breakIntoParts(pvName);
                 for (String part : parts) {
                     parts2PVNamesForThisAppliance.get(part).remove(pvName);
