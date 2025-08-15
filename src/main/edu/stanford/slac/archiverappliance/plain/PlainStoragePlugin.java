@@ -629,6 +629,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 this.etlOutofStoreIf = queryNVPairs.get(URLKey.ETL_OUT_OF_STORE_IF.key());
             }
 
+            if (queryNVPairs.containsKey(URLKey.TERMINATOR.key())) {
+                this.pv2key = pv2key.overrideTerminator(
+                        queryNVPairs.get(URLKey.TERMINATOR.key()).charAt(0));
+            }
             this.setDesc("PlainStorage plugin  - " + name + " with rootFolder " + rootFolder + " and granularity "
                     + partitionGranularity);
         } catch (URISyntaxException ex) {

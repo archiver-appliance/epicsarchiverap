@@ -311,7 +311,6 @@ public class DefaultConfigService implements ConfigService {
         pvName2KeyConverter = new ConvertPVNameToKey();
         pvName2KeyConverter.initialize(this);
 
-
         String runtimeFieldsListStr =
                 this.getInstallationProperties().getProperty("org.epics.archiverappliance.config.RuntimeKeys");
         if (runtimeFieldsListStr != null && !runtimeFieldsListStr.isEmpty()) {
