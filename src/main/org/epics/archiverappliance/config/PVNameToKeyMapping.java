@@ -19,4 +19,6 @@ public interface PVNameToKeyMapping {
      * @return String Parts separated by separators
      */
     public String[] breakIntoParts(String pvName);
+
+    PVNameToKeyMapping overrideTerminator(char terminator);
 }

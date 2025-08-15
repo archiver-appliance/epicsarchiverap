@@ -44,7 +44,6 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
     private char terminatorChar = ':';
     private String fileSeparator;
 
-    private ConfigService configService;
     private final ConcurrentHashMap<String, String> chunkKeys = new ConcurrentHashMap<>();
 
     /* (non-Javadoc)
@@ -56,32 +55,18 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
         // First check the local cache for the mapping.
         String chunkKey = chunkKeys.get(pvName);
         if (chunkKey != null) return chunkKey;
-        PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
-        if (typeInfo == null) {
-            return generateChunkKey(pvName);
-        }
-
-        // Then check the typeinfo.
-        chunkKey = typeInfo.getChunkKey();
-        if (chunkKey != null) {
-            chunkKeys.put(pvName, chunkKey);
-            return chunkKey;
-        }
 
         // If it ain't set there either, generate it and set in all places.
         chunkKey = generateChunkKey(pvName);
-        typeInfo.setChunkKey(chunkKey);
         chunkKeys.put(pvName, chunkKey);
         return chunkKey;
     }
 
     @Override
     public void initialize(ConfigService configService) throws ConfigException {
-        this.configService = configService;
         this.siteNameSpaceSeparators =
                 configService.getInstallationProperties().getProperty(SITE_NAME_SPACE_SEPARATORS);
-        if (this.siteNameSpaceSeparators == null
-                || this.siteNameSpaceSeparators.isEmpty()) {
+        if (this.siteNameSpaceSeparators == null || this.siteNameSpaceSeparators.isEmpty()) {
             throw new ConfigException(
                     "The appliance archiver cannot function without knowning the characters that separate the components of a PV name ");
         }
@@ -110,5 +95,14 @@ public class ConvertPVNameToKey implements PVNameToKeyMapping {
     @Override
     public String[] breakIntoParts(String pvName) {
         return pvName.split(siteNameSpaceSeparators);
+    }
+
+    @Override
+    public PVNameToKeyMapping overrideTerminator(char terminator) {
+        ConvertPVNameToKey convertPVNameToKey = new ConvertPVNameToKey();
+        convertPVNameToKey.siteNameSpaceSeparators = this.siteNameSpaceSeparators;
+        convertPVNameToKey.terminatorChar = terminator;
+        convertPVNameToKey.fileSeparator = this.fileSeparator;
+        return convertPVNameToKey;
     }
 }
