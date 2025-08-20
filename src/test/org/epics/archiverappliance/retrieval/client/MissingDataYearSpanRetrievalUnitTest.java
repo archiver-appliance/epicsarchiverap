@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
-import edu.stanford.slac.archiverappliance.PB.data.PBCommonSetup;
+import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +59,7 @@ class MissingDataYearSpanRetrievalUnitTest {
     private static final LinkedList<Instant> generatedTimeStamps = new LinkedList<Instant>();
     static File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchUnitTest"
             + File.separator + testSpecificFolder);
-    static PBCommonSetup PBSetup = new PBCommonSetup();
+    static PlainCommonSetup PBSetup = new PlainCommonSetup();
     static PlainStoragePlugin pbPlugin = new PlainStoragePlugin();
 
     static Stream<Arguments> provideMissingDataYearSpan() {
