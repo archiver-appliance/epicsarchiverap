@@ -82,15 +82,15 @@ public final class PBThreeTierETLPVLookup {
 
     @Subscribe
     public void pvTypeInfoChanged(PVTypeInfoEvent event) {
-        String pvName = event.getPvName();
+        String pvName = event.pvName();
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
         logger.debug(
                 "Received PVTypeInfo changed event for {} ChangeType: {} Paused: {} Appliance: {}",
                 pvName,
-                event.getChangeType(),
+                event.changeType(),
                 typeInfo.isPaused(),
                 typeInfo.getApplianceIdentity());
-        if (event.getChangeType() == ChangeType.TYPEINFO_DELETED
+        if (event.changeType() == ChangeType.TYPEINFO_DELETED
                 || typeInfo.isPaused()
                 || !typeInfo.getApplianceIdentity()
                         .equals(configService.getMyApplianceInfo().getIdentity())) {
@@ -138,8 +138,7 @@ public final class PBThreeTierETLPVLookup {
         if (!etlStagesForPVs.containsKey(pvName)) {
             // Precompute the chunkKey when we have access to the typeInfo. The keyConverter should store it in its
             // cache.
-            String chunkKey = configService.getPVNameToKeyConverter().convertPVNameToKey(pvName);
-            logger.debug("Adding etl jobs for pv " + pvName + " for chunkkey " + chunkKey);
+            logger.debug("Adding etl jobs for pv " + pvName);
             String[] dataSources = typeInfo.getDataStores();
             if (dataSources == null || dataSources.length < 2) {
                 logger.warn("Skipping adding PV to ETL as it has less than 2 datasources" + pvName);
