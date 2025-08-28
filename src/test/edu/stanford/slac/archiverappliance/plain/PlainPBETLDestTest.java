@@ -49,7 +49,7 @@ public class PlainPBETLDestTest {
 
     @Test
     public void testGetLastKnownEvent() throws Exception {
-        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin(PlainStorageType.PB);
         setup.setUpRootFolder(storagePlugin, "PVETLDestTests");
 
         long epochSeconds = TimeUtils.getStartOfCurrentYearInSeconds();

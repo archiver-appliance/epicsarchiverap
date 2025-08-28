@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.mgmt.pauseresume;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;

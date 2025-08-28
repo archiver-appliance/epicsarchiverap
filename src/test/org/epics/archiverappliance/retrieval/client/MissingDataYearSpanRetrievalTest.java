@@ -9,6 +9,7 @@ package org.epics.archiverappliance.retrieval.client;
 
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -61,7 +62,7 @@ public class MissingDataYearSpanRetrievalTest {
     static File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchUnitTest"
             + File.separator + testSpecificFolder);
     static PlainCommonSetup PBSetup = new PlainCommonSetup();
-    static PlainStoragePlugin pbPlugin = new PlainStoragePlugin();
+    static PlainStoragePlugin pbPlugin = new PlainStoragePlugin(PlainStorageType.PB);
     static TomcatSetup tomcatSetup = new TomcatSetup();
 
     @BeforeAll
