@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.retrieval.extrafields;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.PB.data.PBScalarDouble;

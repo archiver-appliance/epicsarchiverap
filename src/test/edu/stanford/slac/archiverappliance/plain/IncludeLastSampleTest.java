@@ -42,7 +42,7 @@ class IncludeLastSampleTest {
     static File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchUnitTest"
             + File.separator + testSpecificFolder);
     static PlainCommonSetup PBSetup = new PlainCommonSetup();
-    static PlainStoragePlugin pbPlugin = new PlainStoragePlugin();
+    static PlainStoragePlugin pbPlugin = new PlainStoragePlugin(PlainStorageType.PB);
     private static final short currentYear = TimeUtils.getCurrentYear();
 
     @BeforeAll

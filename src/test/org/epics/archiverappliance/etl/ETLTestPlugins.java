@@ -1,13 +1,15 @@
 package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 
 import java.util.List;
 
 public record ETLTestPlugins(PlainStoragePlugin src, PlainStoragePlugin dest) {
     public static List<ETLTestPlugins> generatePlugins() {
 
-        return List.of(new ETLTestPlugins(new PlainStoragePlugin(), new PlainStoragePlugin()));
+        return List.of(new ETLTestPlugins(
+                new PlainStoragePlugin(PlainStorageType.PB), new PlainStoragePlugin(PlainStorageType.PB)));
     }
 
     public String pvNamePrefix() {
