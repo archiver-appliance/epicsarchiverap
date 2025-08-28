@@ -10,6 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -56,7 +57,7 @@ public class BlackHoleETLTest {
     @MethodSource("provideBlackHoleETL")
     void testBlackHoleETL(PartitionGranularity granularity) throws Exception {
 
-        PlainStoragePlugin etlSrc = new PlainStoragePlugin();
+        PlainStoragePlugin etlSrc = new PlainStoragePlugin(PlainStorageType.PB);
         PlainCommonSetup srcSetup = new PlainCommonSetup();
         BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
         ConfigServiceForTests configService = new ConfigServiceForTests(-1);

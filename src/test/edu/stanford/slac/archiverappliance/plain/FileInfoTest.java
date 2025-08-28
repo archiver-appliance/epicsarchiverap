@@ -38,7 +38,7 @@ class FileInfoTest {
 
     @Test
     void testPBInfo() throws Exception {
-        PlainStoragePlugin storagePlugin = new PlainStoragePlugin();
+        PlainStoragePlugin storagePlugin = new PlainStoragePlugin(PlainStorageType.PB);
         short currentYear = TimeUtils.getCurrentYear();
         setup.setUpRootFolder(storagePlugin);
         plainFile = PathNameUtility.getPathNameForTime(
