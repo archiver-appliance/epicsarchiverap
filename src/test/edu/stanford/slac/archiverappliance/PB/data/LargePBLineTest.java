@@ -94,7 +94,7 @@ public class LargePBLineTest {
             try {
                 new PBFileInfo(destPath);
                 Assertions.assertTrue(
-                        ValidatePlainFile.validatePlainFile(destPath, false),
+                        ValidatePlainFile.validatePlainFile(destPath, false, storagePlugin.getPlainFileHandler()),
                         "File validation failed for " + destPath.toAbsolutePath());
             } catch (Exception ex) {
                 logger.error("Exception parsing file" + destPath.toAbsolutePath(), ex);
