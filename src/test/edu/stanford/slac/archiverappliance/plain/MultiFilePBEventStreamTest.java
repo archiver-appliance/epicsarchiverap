@@ -7,7 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import org.apache.commons.io.FileUtils;
@@ -73,7 +73,7 @@ public class MultiFilePBEventStreamTest {
                     PB_PLUGIN_IDENTIFIER,
                     "localhost",
                     "name=STS&rootFolder=" + rootFolderName + "&partitionGranularity=" + granularity);
-            PlainStoragePlugin pbplugin = new PlainStoragePlugin();
+            PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
             pbplugin.initialize(configURL, configService);
             short currentYear = TimeUtils.getCurrentYear();
             ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;

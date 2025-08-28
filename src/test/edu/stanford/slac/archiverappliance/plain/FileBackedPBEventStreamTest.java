@@ -1,6 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.common.TimeUtils.convertFromEpochSeconds;
 import static org.epics.archiverappliance.common.TimeUtils.convertToISO8601String;
 import static org.epics.archiverappliance.common.TimeUtils.getCurrentYear;

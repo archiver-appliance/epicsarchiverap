@@ -11,6 +11,7 @@ import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -69,7 +70,7 @@ public class DataRetrievalServletTest {
 
         PlainCommonSetup pbSetup = new PlainCommonSetup();
 
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
         pbSetup.setUpRootFolder(pbplugin);
 
         PBOverHTTPStoragePlugin storagePlugin = new PBOverHTTPStoragePlugin();

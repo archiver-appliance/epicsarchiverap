@@ -11,7 +11,6 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -148,8 +147,6 @@ import java.util.stream.Stream;
  */
 public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime {
     private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
-    public static final String PB_PLUGIN_IDENTIFIER = PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
-    public static final String pbFileExtension = PBPlainFileHandler.pbFileExtension;
     private final String appendExtension;
     private final PlainFileHandler plainFileHandler;
     private final ConcurrentHashMap<String, AppendDataStateData> appendDataStates = new ConcurrentHashMap<>();
@@ -185,8 +182,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         this.appendExtension = plainFileHandler.getExtensionString() + "append";
     }
 
-    public PlainStoragePlugin() {
-        this(new PBPlainFileHandler());
+    public PlainStoragePlugin(PlainStorageType plainStorageType) {
+        this(plainStorageType.plainFileHandler());
     }
 
     private static void addStreamCallable(
