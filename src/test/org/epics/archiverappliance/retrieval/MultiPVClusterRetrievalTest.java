@@ -1,11 +1,12 @@
 package org.epics.archiverappliance.retrieval;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +82,7 @@ public class MultiPVClusterRetrievalTest {
      */
     @Test
     public void multiplePvsAcrossCluster() throws Exception {
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
 
         ConfigService configService = new ConfigServiceForTests(-1);
 

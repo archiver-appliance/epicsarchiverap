@@ -10,6 +10,7 @@ package org.epics.archiverappliance.etl;
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -91,7 +92,7 @@ public class ETLWithRecurringFilesTest {
         PlainCommonSetup srcSetup = new PlainCommonSetup();
         PlainCommonSetup destSetup = new PlainCommonSetup();
         etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
-        PlainStoragePlugin etlNewDest = new PlainStoragePlugin();
+        PlainStoragePlugin etlNewDest = new PlainStoragePlugin(PlainStorageType.PB);
 
         srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(
