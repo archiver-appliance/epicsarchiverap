@@ -270,7 +270,7 @@ public class NamedFlagETLTest {
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePlainFile.validatePlainFile(destPath, true),
+                    ValidatePlainFile.validatePlainFile(destPath, true, etlDest.getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 

@@ -240,7 +240,7 @@ public class ZeroByteFilesTest {
         logger.info("allPaths {}", (Object) allPaths);
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePlainFile.validatePlainFile(destPath, false),
+                    ValidatePlainFile.validatePlainFile(destPath, false, etlDest.getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
