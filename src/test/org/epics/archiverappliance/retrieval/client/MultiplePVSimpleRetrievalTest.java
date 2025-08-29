@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -43,7 +44,7 @@ public class MultiplePVSimpleRetrievalTest {
         int phasediff = 360 / TOTAL_NUMBER_OF_PVS;
         for (int i = 0; i < TOTAL_NUMBER_OF_PVS; i++) {
             pvs[i] = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine" + i;
-            GenerateData.generateSineForPV(pvs[i], i * phasediff, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+            GenerateData.generateSineForPV(pvs[i], i * phasediff, ArchDBRTypes.DBR_SCALAR_DOUBLE, PlainStorageType.PB);
         }
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
