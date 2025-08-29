@@ -7,9 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
-import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,12 +60,14 @@ public class MultiFilePBEventStreamTest {
     }
 
     static Stream<Arguments> provideInput() {
-        return Arrays.stream(PartitionGranularity.values()).map(Arguments::of);
+        return Arrays.stream(PlainStorageType.values()).flatMap(f -> Arrays.stream(PartitionGranularity.values())
+                .map(granularity -> Arguments.of(f, granularity)));
     }
 
     @ParameterizedTest
     @MethodSource("provideInput")
-    public void testMultiFileEventStream(PartitionGranularity granularity) throws Exception {
+    public void testMultiFileEventStream(PlainStorageType plainStorageType, PartitionGranularity granularity)
+            throws Exception {
         // We generate a ratio * seconds in granularity worth of data into a PlainStoragePlugin with different
         // granularity.
         // We then retrieve data and make sure that we get what we expect
@@ -76,9 +75,9 @@ public class MultiFilePBEventStreamTest {
         logger.debug("Generating sample data for granularity " + granularity);
 
         String pvName = "MultiYear" + granularity.toString();
-        String configURL = PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + rootFolderName
-                + "&partitionGranularity=" + granularity;
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
+        String configURL = plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                + rootFolderName + "&partitionGranularity=" + granularity;
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(plainStorageType);
         pbplugin.initialize(configURL, configService);
         ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
         Instant startTime = ZonedDateTime.now()
@@ -89,7 +88,6 @@ public class MultiFilePBEventStreamTest {
                 .withSecond(0)
                 .withNano(0)
                 .toInstant();
-
         Instant endTime = startTime.plusSeconds(granularity.getApproxSecondsPerChunk() * ratio);
         int periodSize = granularity.getApproxSecondsPerChunk() / 10;
         try (BasicContext context = new BasicContext()) {
