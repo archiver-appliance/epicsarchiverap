@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.ui;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import edu.stanford.slac.archiverappliance.plain.URLKey;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
@@ -66,6 +67,10 @@ public class URIUtils {
 
     public static String pluginString(String proto, String hostname, String params) {
         return proto + "://" + hostname + "?" + params;
+    }
+
+    public static String pluginString(PlainStorageType proto, String hostname, String params) {
+        return proto.plainFileHandler().pluginIdentifier() + "://" + hostname + "?" + params;
     }
 
     public static String pluginString(String proto, String hostname, Map<URLKey, String> params) {
