@@ -7,6 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -52,7 +53,7 @@ public class DBRRetrievalTest {
         }
 
         for (DataDBR dataDBR : dataDBRs) {
-            GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type, start, end);
+            GenerateData.generateSineForPV(dataDBR.pvName, 0, dataDBR.type, PlainStorageType.PB, start, end);
         }
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
