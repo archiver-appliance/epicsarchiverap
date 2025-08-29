@@ -1,13 +1,10 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
-import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.pbFileExtension;
-
-import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
+import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -18,14 +15,13 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.epics.archiverappliance.utils.ui.URIUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
 import java.nio.file.Path;
-import java.util.Map;
 
 /**
  * Bug where we could not get data for 015-PSD1:VoltRef.
@@ -46,34 +42,28 @@ public class SingleEventTimeBasedIteratorTest {
         configService = new ConfigServiceForTests(-1);
     }
 
-    @Test
-    public void testSingleEvent() throws Exception {
-        PlainStoragePlugin pbplugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                URIUtils.pluginString(
-                        PB_PLUGIN_IDENTIFIER,
-                        "localhost",
-                        Map.of(
-                                URLKey.NAME,
-                                "STS",
-                                URLKey.ROOT_FOLDER,
-                                rootFolderName,
-                                URLKey.PARTITION_GRANULARITY,
-                                "PARTITION_HOUR")),
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testSingleEvent(PlainStorageType plainStorageType) throws Exception {
+        PlainStoragePlugin storagePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
+                plainStorageType.plainFileHandler().pluginIdentifier() + "://localhost?name=STS&rootFolder="
+                        + rootFolderName + "&partitionGranularity=PARTITION_HOUR",
                 configService);
 
-        File rootFolder = new File(pbplugin.getRootFolder());
+        File rootFolder = new File(storagePlugin.getRootFolder());
         if (rootFolder.exists()) {
             FileUtils.deleteDirectory(rootFolder);
         }
 
         // Generate one event on Feb 21 in the current year.
         try (BasicContext context = new BasicContext()) {
-            ArrayListEventStream testData =
-                    new ArrayListEventStream(24 * 60 * 60, new RemotableEventStreamDesc(type, pvName, (short) 2013));
+            ArrayListEventStream testData = new ArrayListEventStream(
+                    PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
+                    new RemotableEventStreamDesc(type, pvName, (short) 2013));
             YearSecondTimestamp eventTs = TimeUtils.convertToYearSecondTimestamp(
                     TimeUtils.convertFromISO8601String("2013-02-21T18:45:08.570Z"));
             testData.add(new SimulationEvent(eventTs, type, new ScalarValue<Double>(6.855870246887207)));
-            pbplugin.appendData(context, pvName, testData);
+            storagePlugin.appendData(context, pvName, testData);
         }
 
         try (BasicContext context = new BasicContext()) {
@@ -81,18 +71,20 @@ public class SingleEventTimeBasedIteratorTest {
                     context.getPaths(),
                     rootFolderName,
                     pvName,
-                    pbFileExtension,
-                    pbplugin.getPathResolver(),
+                    storagePlugin.getExtensionString(),
+                    storagePlugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
             Assertions.assertEquals(1, paths.length, "We should get only one file, instead we got " + paths.length);
             long eventCount = 0;
-            try (EventStream strm = new FileBackedPBEventStream(
-                    pvName,
-                    paths[0],
-                    type,
-                    TimeUtils.convertFromISO8601String("2013-02-19T10:45:08.570Z"),
-                    TimeUtils.convertFromISO8601String("2013-02-22T10:45:08.570Z"),
-                    false)) {
+            try (EventStream strm = storagePlugin
+                    .getPlainFileHandler()
+                    .getTimeStream(
+                            pvName,
+                            paths[0],
+                            type,
+                            TimeUtils.convertFromISO8601String("2013-02-19T10:45:08.570Z"),
+                            TimeUtils.convertFromISO8601String("2013-02-22T10:45:08.570Z"),
+                            false)) {
                 for (@SuppressWarnings("unused") Event event : strm) {
                     eventCount++;
                 }
