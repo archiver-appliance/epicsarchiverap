@@ -49,7 +49,7 @@ class FileInfoTest {
                 (new ConfigServiceForTests(-1).getPVNameToKeyConverter()));
         Instant start = TimeUtils.getStartOfYear(currentYear);
         Instant end = start.plusSeconds(10000);
-        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, end);
+        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, PlainStorageType.PB, start, end);
         FileInfo info = new PBFileInfo(plainFile);
         Assertions.assertEquals(info.getPVName(), pvName, "PVInfo PV name " + info.getPVName());
         Assertions.assertEquals(info.getDataYear(), currentYear, "PVInfo year " + info.getDataYear());

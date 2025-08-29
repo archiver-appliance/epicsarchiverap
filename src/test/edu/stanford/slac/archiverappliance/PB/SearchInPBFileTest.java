@@ -55,7 +55,7 @@ public class SearchInPBFileTest {
         short year = TimeUtils.getCurrentYear();
         Instant start = TimeUtils.getStartOfYear(year);
         long numberOfSamples = GenerateData.generateSineForPV(
-                "Sine1", 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, start, start.plusSeconds(10000));
+                "Sine1", 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, PlainStorageType.PB, start, start.plusSeconds(10000));
         try {
             Path testPath = PathNameUtility.getPathNameForTime(
                     pbplugin,
