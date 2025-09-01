@@ -242,6 +242,16 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         return getDataForPV(context, pvName, startTime, endTime, postProcessor);
     }
 
+    public Path[] getAllPathsForPV(BasicContext context, String pvName) throws IOException {
+        return PathNameUtility.getAllPathsForPV(
+                context.getPaths(),
+                this.rootFolder,
+                pvName,
+                this.getExtensionString(),
+                this.plainFileHandler.getPathResolver(),
+                pv2key);
+    }
+
     /*
      *  (non-Javadoc)
      * @see org.epics.archiverappliance.Reader#getDataForPV(java.lang.String, Instant, Instant, boolean)
