@@ -1,8 +1,7 @@
 package org.epics.archiverappliance.retrieval;
 
-import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+import static org.epics.archiverappliance.retrieval.TypeInfoUtil.updateTypeInfo;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
@@ -18,13 +17,9 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.epics.archiverappliance.utils.ui.GetUrlContent;
-import org.epics.archiverappliance.utils.ui.JSONDecoder;
-import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
@@ -32,11 +27,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -80,16 +75,17 @@ public class MultiPVClusterRetrievalTest {
     /**
      * Test to make sure that data is retrieved from across clusters.
      */
-    @Test
-    public void multiplePvsAcrossCluster() throws Exception {
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void multiplePvsAcrossCluster(PlainStorageType plainStorageType) throws Exception {
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(plainStorageType);
 
         ConfigService configService = new ConfigServiceForTests(-1);
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize(
                 pluginString(
-                        PB_PLUGIN_IDENTIFIER,
+                        plainStorageType,
                         "localhost",
                         "name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
@@ -107,54 +103,8 @@ public class MultiPVClusterRetrievalTest {
         }
         logger.info("Done generating data for PV in " + ltsPVFolder.getAbsolutePath());
 
-        // Load a sample PVTypeInfo from a prototype file.
-        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(
-                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
-
-        // Create target for decoded type info from JSON
-        PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
-
-        // Decoder for PVTypeInfo
-        JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
-
-        // Create type info from the data
-        decoder.decode(srcPVTypeInfoJSON, srcPVTypeInfo);
-
-        PVTypeInfo pvTypeInfo1 = new PVTypeInfo(pvName, srcPVTypeInfo);
-        Assertions.assertEquals(
-                pvName,
-                pvTypeInfo1.getPvName(),
-                "Expecting PV typeInfo for " + pvName + "; instead it is " + pvTypeInfo1.getPvName());
-        PVTypeInfo pvTypeInfo2 = new PVTypeInfo(pvName2, srcPVTypeInfo);
-        Assertions.assertEquals(
-                pvName2,
-                pvTypeInfo2.getPvName(),
-                "Expecting PV typeInfo for " + pvName2 + "; instead it is " + pvTypeInfo2.getPvName());
-
-        JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-
-        pvTypeInfo1.setPaused(true);
-        pvTypeInfo1.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
-        pvTypeInfo1.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
-        pvTypeInfo1.setModificationTime(TimeUtils.now());
-        pvTypeInfo1.setApplianceIdentity("appliance0");
-        GetUrlContent.postDataAndGetContentAsJSONObject(
-                MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
-                        + "&override=false&createnew=true",
-                encoder.encode(pvTypeInfo1));
-
-        logger.info("Added " + pvName + " to appliance0");
-
-        pvTypeInfo2.setPaused(true);
-        pvTypeInfo2.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName2));
-        pvTypeInfo2.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
-        pvTypeInfo2.setModificationTime(TimeUtils.now());
-        pvTypeInfo2.setApplianceIdentity("appliance1");
-        GetUrlContent.postDataAndGetContentAsJSONObject(
-                MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName2, StandardCharsets.UTF_8)
-                        + "&override=false&createnew=true",
-                encoder.encode(pvTypeInfo2));
-        logger.info("Added " + pvName + " to appliance1");
+        updateTypeInfo(configService, pbplugin, pvName, "2013-11-11T14:49:58.523Z", "appliance0");
+        updateTypeInfo(configService, pbplugin, pvName2, "2013-11-11T14:49:58.523Z", "appliance1");
 
         logger.info("Finished loading " + pvName + " and " + pvName2 + " into their appliances.");
         try {
