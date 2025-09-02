@@ -29,7 +29,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -99,12 +100,13 @@ public class YearSpanRetrievalTest {
         tomcatSetup.tearDown();
     }
 
-    @Test
-    public void testYearSpan() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testYearSpan(PlainStorageType plainStorageType) throws Exception {
         PlainCommonSetup pbSetup = new PlainCommonSetup();
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(plainStorageType);
         pbSetup.setUpRootFolder(pbplugin);
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "yspan";
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + plainStorageType + "yspan";
         generateDataForYears(pbplugin, pvName);
         RawDataRetrievalAsEventStream rawDataRetrieval =
                 new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
