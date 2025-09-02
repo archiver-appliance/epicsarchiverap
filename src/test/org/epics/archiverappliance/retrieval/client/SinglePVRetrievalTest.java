@@ -7,6 +7,8 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.client;
 
+import static org.epics.archiverappliance.retrieval.TypeInfoUtil.updatePVStorageType;
+
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,13 +19,17 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.retrieval.GenerateData;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
  * Test retrieval for single PVs
@@ -31,33 +37,39 @@ import java.time.Instant;
  *
  */
 @Tag("integration")
-public class SinglePVRetrievalTest {
+class SinglePVRetrievalTest {
     private static final Logger logger = LogManager.getLogger(SinglePVRetrievalTest.class.getName());
-    TomcatSetup tomcatSetup = new TomcatSetup();
+    static TomcatSetup tomcatSetup = new TomcatSetup();
 
-    @BeforeEach
-    public void setUp() throws Exception {
-        GenerateData.generateSineForPV(
-                ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1",
-                0,
-                ArchDBRTypes.DBR_SCALAR_DOUBLE,
-                PlainStorageType.PB);
-        tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
+    static final int currentYear = TimeUtils.getCurrentYear();
+    static final String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1";
+
+    @BeforeAll
+    static void setUp() throws Exception {
+        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, PlainStorageType.PB);
+        GenerateData.generateSineForPV(pvName, 0, ArchDBRTypes.DBR_SCALAR_DOUBLE, PlainStorageType.PARQUET);
+        tomcatSetup.setUpWebApps(SinglePVRetrievalTest.class.getSimpleName());
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
+    @AfterAll
+    static void tearDown() throws Exception {
         tomcatSetup.tearDown();
     }
 
-    @Test
-    public void testGetDataForSinglePV() throws Exception {
-        testGetOneDaysDataForYear(TimeUtils.getCurrentYear(), 86401);
-        testGetOneDaysDataForYear(TimeUtils.getCurrentYear() - 1, 0);
-        testGetOneDaysDataForYear(TimeUtils.getCurrentYear() + 1, 1);
+    static Stream<Arguments> provideInputs() {
+        return Arrays.stream(PlainStorageType.values())
+                .flatMap(p -> Stream.of(
+                        Arguments.of(currentYear, 86401, p),
+                        Arguments.of(currentYear - 1, 0, p),
+                        Arguments.of(currentYear + 1, 1, p)));
     }
 
-    private void testGetOneDaysDataForYear(int year, int expectedCount) throws Exception {
+    @ParameterizedTest
+    @MethodSource("provideInputs")
+    void testGetOneDaysDataForYear(int year, int expectedCount, PlainStorageType plainStorageType) throws Exception {
+        if (plainStorageType != PlainStorageType.PB) {
+            updatePVStorageType(pvName, plainStorageType);
+        }
         RawDataRetrievalAsEventStream rawDataRetrieval =
                 new RawDataRetrievalAsEventStream(ConfigServiceForTests.RAW_RETRIEVAL_URL);
         Instant start = TimeUtils.convertFromISO8601String(year + "-02-01T08:00:00.000Z");
@@ -66,10 +78,7 @@ public class SinglePVRetrievalTest {
         EventStream stream = null;
         try {
             stream = rawDataRetrieval.getDataForPVS(
-                    new String[] {ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "Sine1"},
-                    start,
-                    end,
-                    desc -> logger.info("Getting data for PV " + desc.getPvName()));
+                    new String[] {pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
 
             long previousEpochSeconds = 0;
             int eventCount = 0;
@@ -93,8 +102,7 @@ public class SinglePVRetrievalTest {
             if (stream != null)
                 try {
                     stream.close();
-                    stream = null;
-                } catch (Throwable t) {
+                } catch (Throwable ignored) {
                 }
         }
     }
