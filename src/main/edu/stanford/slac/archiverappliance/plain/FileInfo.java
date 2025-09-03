@@ -32,6 +32,6 @@ public abstract class FileInfo {
     }
 
     public Instant getFirstEventInstant() {
-        return (getFirstEvent() != null) ? getFirstEvent().getEventTimeStamp() : Instant.EPOCH;
+        return (getFirstEvent() != null) ? getFirstEvent().getEventTimeStamp() : Instant.MAX;
     }
 }
