@@ -194,7 +194,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 if (this.direction == BiDirectionalIterable.IterationDirection.BACKWARDS) {
                     // If I am going backwards and the first event in this file is after the startAtTime, we don't have
                     // any data in this file for the iteration
-                    if (fileInfo.firstEvent.getEventTimeStamp().isAfter(this.endTime)) {
+                    if (fileInfo.getFirstEvent().getEventTimeStamp().isAfter(this.endTime)) {
                         logger.info("Returning an empty iterator as the time in file is after endtime");
                         return new EmptyEventIterator();
                     }
@@ -203,7 +203,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 } else {
                     // If I am going forwards and the last event in the file is before the startAtTime, we don't have
                     // any data in this file for the iteration
-                    if (fileInfo.lastEvent.getEventTimeStamp().isBefore(this.startTime)) {
+                    if (fileInfo.getLastEvent().getEventTimeStamp().isBefore(this.startTime)) {
                         logger.info("Returning an empty iterator as the time in file is before starttime");
                         return new EmptyEventIterator();
                     }
@@ -435,7 +435,7 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
     @Override
     public Event getFirstEvent(BasicContext context) throws IOException {
         PBFileInfo fileInfo = new PBFileInfo(path, false);
-        return fileInfo.firstEvent;
+        return fileInfo.getFirstEvent();
     }
 
     @Override

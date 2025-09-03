@@ -2,6 +2,7 @@ package org.epics.archiverappliance.config;
 
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
@@ -56,6 +57,13 @@ public class ConfigServiceForTests extends DefaultConfigService {
      * A folder which is used to store the data for the unit tests...
      */
     protected static final String DEFAULT_PB_TEST_DATA_FOLDER = getDefaultPBTestFolder();
+
+    public static char defaultTerminator(PlainStorageType plainStorageType) {
+        return switch (plainStorageType) {
+            case PB -> ':';
+            case PARQUET -> '+';
+        };
+    }
 
     static HashMap<String, ArchDBRTypes> samplePV2DBRtypemap = new HashMap<String, ArchDBRTypes>();
     private static final Logger logger = LogManager.getLogger(ConfigServiceForTests.class.getName());

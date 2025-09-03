@@ -7,11 +7,11 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.saverestore;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.retrieval.GetDataAtTime.getDataAtTimeForPVFromStores;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -74,11 +75,19 @@ public class GetDataAtTimeForPVFromStoresTest {
     static File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder()
             + File.separator
             + GetDataAtTimeForPVFromStoresTest.class.getSimpleName());
-    static String storageString = pluginString(
-            PB_PLUGIN_IDENTIFIER,
-            "localhost",
-            "name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName() + "&rootFolder="
-                    + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR");
+    static Map<PlainStorageType, String> storageStrings = Map.of(
+            PlainStorageType.PB,
+            pluginString(
+                    PlainStorageType.PB,
+                    "localhost",
+                    "name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName() + "&rootFolder="
+                            + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR"),
+            PlainStorageType.PARQUET,
+            pluginString(
+                    PlainStorageType.PARQUET,
+                    "localhost",
+                    "name=" + GetDataAtTimeForPVFromStoresTest.class.getSimpleName() + "&rootFolder="
+                            + testFolder.getAbsolutePath() + "&partitionGranularity=PARTITION_YEAR"));
 
     static {
         try {
@@ -88,8 +97,9 @@ public class GetDataAtTimeForPVFromStoresTest {
         }
     }
 
-    private static PlainStoragePlugin getStoragePlugin() throws IOException {
-        return (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(storageString, configService);
+    private static PlainStoragePlugin getStoragePlugin(PlainStorageType plainStorageType) throws IOException {
+        return (PlainStoragePlugin)
+                StoragePluginURLParser.parseStoragePlugin(storageStrings.get(plainStorageType), configService);
     }
 
     @BeforeAll
@@ -104,17 +114,19 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     private static void deleteData() throws IOException {
-        FileUtils.deleteDirectory(new File(getStoragePlugin().getRootFolder()));
-        FileUtils.deleteDirectory(new File(getStoragePlugin().getRootFolder()));
+        FileUtils.deleteDirectory(new File(getStoragePlugin(PlainStorageType.PB).getRootFolder()));
+        FileUtils.deleteDirectory(
+                new File(getStoragePlugin(PlainStorageType.PARQUET).getRootFolder()));
     }
 
     private static void createTestData() throws IOException {
-        createTestDataType();
+        createTestDataType(PlainStorageType.PB);
+        createTestDataType(PlainStorageType.PARQUET);
     }
 
-    private static void createTestDataType() throws IOException {
-        PlainStoragePlugin storagePlugin = getStoragePlugin();
-        String pvName = pvNameBase;
+    private static void createTestDataType(PlainStorageType plainStorageType) throws IOException {
+        PlainStoragePlugin storagePlugin = getStoragePlugin(plainStorageType);
+        String pvName = pvNameBase + "_" + plainStorageType.name();
         try (BasicContext context = new BasicContext()) {
             ArrayListEventStream events = new ArrayListEventStream(
                     currentYear, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
@@ -150,7 +162,7 @@ public class GetDataAtTimeForPVFromStoresTest {
 
         try {
             PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-            String[] dataStores = new String[] {storageString};
+            String[] dataStores = new String[] {storageStrings.get(plainStorageType)};
             typeInfo.setDataStores(dataStores);
             typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
             configService.updateTypeInfoForPV(pvName, typeInfo);
@@ -161,43 +173,50 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     public static Stream<Arguments> provideTimesAndFields() {
-        return Stream.of(
-                Arguments.of(
-                        now,
-                        Map.of(
-                                "HIHI", "HIHI_@_3",
-                                "LOLO", "LOLO_@_6",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(
-                        now.minus(4, ChronoUnit.HOURS),
-                        Map.of(
-                                "HIHI", "HIHI_@_6",
-                                "LOLO", "LOLO_@_6",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(
-                        now.minus(7, ChronoUnit.HOURS),
-                        Map.of(
-                                "HIHI", "HIHI_@_9",
-                                "LOLO", "LOLO_@_12",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(
-                        now.minus(10, ChronoUnit.HOURS),
-                        Map.of(
-                                "HIHI", "HIHI_@_12",
-                                "LOLO", "LOLO_@_12",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(now.minus(16, ChronoUnit.HOURS), null));
+        return Arrays.stream(PlainStorageType.values())
+                .flatMap(storageType -> Stream.of(
+                        Arguments.of(
+                                now,
+                                Map.of(
+                                        "HIHI", "HIHI_@_3",
+                                        "LOLO", "LOLO_@_6",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12"),
+                                storageType),
+                        Arguments.of(
+                                now.minus(4, ChronoUnit.HOURS),
+                                Map.of(
+                                        "HIHI", "HIHI_@_6",
+                                        "LOLO", "LOLO_@_6",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12"),
+                                storageType),
+                        Arguments.of(
+                                now.minus(7, ChronoUnit.HOURS),
+                                Map.of(
+                                        "HIHI", "HIHI_@_9",
+                                        "LOLO", "LOLO_@_12",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12"),
+                                storageType),
+                        Arguments.of(
+                                now.minus(10, ChronoUnit.HOURS),
+                                Map.of(
+                                        "HIHI", "HIHI_@_12",
+                                        "LOLO", "LOLO_@_12",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12"),
+                                storageType),
+                        Arguments.of(now.minus(16, ChronoUnit.HOURS), null, storageType)));
     }
 
     @ParameterizedTest
     @MethodSource("provideTimesAndFields")
-    void testGetData(Instant when, Map<String, String> expectedFieldVals) {
+    void testGetData(Instant when, Map<String, String> expectedFieldVals, PlainStorageType plainStorageType)
+            throws Exception {
+        String pvName = pvNameBase + "_" + plainStorageType.name();
         Period searchPeriod = Period.parse("P1D");
-        PVWithData pvWithData = getDataAtTimeForPVFromStores(pvNameBase, when, searchPeriod, configService);
+        PVWithData pvWithData = getDataAtTimeForPVFromStores(pvName, when, searchPeriod, configService);
         Event pvData = pvWithData.event();
         Assertions.assertNotNull(pvData, "Getting at time " + when + " returns null?");
         logger.info(JSONValue.toJSONString(pvWithData));

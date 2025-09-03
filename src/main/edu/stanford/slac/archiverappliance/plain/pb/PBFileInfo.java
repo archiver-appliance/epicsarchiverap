@@ -12,6 +12,7 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import edu.stanford.slac.archiverappliance.PB.data.PBParseException;
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -30,11 +31,9 @@ import java.nio.file.Path;
  * @author mshankar
  *
  */
-public class PBFileInfo {
+public class PBFileInfo extends FileInfo {
     private static final Logger logger = LogManager.getLogger(PBFileInfo.class);
     PayloadInfo info;
-    DBRTimeEvent firstEvent = null;
-    DBRTimeEvent lastEvent = null;
     long positionOfFirstSample = 0L;
     long positionOfLastSample = 0;
 
@@ -49,10 +48,13 @@ public class PBFileInfo {
     }
 
     public PBFileInfo(Path path) throws IOException {
+
         this(path, true);
     }
 
     public PBFileInfo(Path path, boolean lookupLastEvent) throws IOException {
+        super();
+
         try (LineByteStream lis = new LineByteStream(path)) {
             byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
             info = PayloadInfo.parseFrom(payloadLine);
@@ -69,8 +71,7 @@ public class PBFileInfo {
             lis.seekToFirstNewLine();
             byte[] firstLine = lis.readLine();
             if (firstLine != null) {
-                firstEvent =
-                        (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(firstLine));
+                firstEvent = unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(firstLine));
                 if (lookupLastEvent) {
                     // If we do not have a first line, we probably do not have a last line
                     this.lookupLastEvent(path, lis, unmarshallingConstructor);
@@ -79,11 +80,31 @@ public class PBFileInfo {
                 logger.debug("File " + path.toAbsolutePath().toString() + " does not seem to have any first line?");
             }
         } catch (Exception e) {
-            logger.warn(
-                    "Exception determing header information from file "
-                            + path.toAbsolutePath().toString(),
-                    e);
+            logger.warn("Exception determing header information from file " + path.toAbsolutePath(), e);
             throw new IOException(e);
+        }
+    }
+
+    /**
+     * Checks the payload info and makes sure we are using appropriate files.
+     * This assumes that the lis is positioned at the start and subsequently positions the lis just past the first line.
+     * So if we need to position the lis elsewhere, the caller needs to do that manually after this call.
+     *
+     * @param lis    The line bytes stream
+     * @param pvName The PV name
+     * @param type   Enum ArchDBRTypes
+     * @throws IOException &emsp;
+     */
+    public static void checkPayloadInfo(LineByteStream lis, String pvName, ArchDBRTypes type) throws IOException {
+        byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
+        PayloadInfo info = PayloadInfo.parseFrom(payloadLine);
+        if (!pvName.equals(info.getPvname())) {
+            logger.error("File " + lis.getAbsolutePath() + " is being used to read data for pv " + pvName
+                    + " but it actually contains data for pv " + info.getPvname());
+        }
+        if (!type.equals(ArchDBRTypes.valueOf(info.getType()))) {
+            throw new IOException("File " + lis.getAbsolutePath() + " contains "
+                    + ArchDBRTypes.valueOf(info.getType()).toString() + " we are expecting " + type.toString());
         }
     }
 
@@ -117,28 +138,6 @@ public class PBFileInfo {
 
     public long getPositionOfLastSample() {
         return positionOfLastSample;
-    }
-
-    /**
-     * Checks the payload info and makes sure we are using appropriate files.
-     * This assumes that the lis is positioned at the start and subsequently positions the lis just past the first line.
-     * So if we need to position the lis elsewhere, the caller needs to do that manually after this call.
-     * @param lis The line bytes stream
-     * @param pvName  The PV name
-     * @param type  Enum ArchDBRTypes
-     * @throws IOException  &emsp;
-     */
-    public static void checkPayloadInfo(LineByteStream lis, String pvName, ArchDBRTypes type) throws IOException {
-        byte[] payloadLine = LineEscaper.unescapeNewLines(lis.readLine());
-        PayloadInfo info = PayloadInfo.parseFrom(payloadLine);
-        if (!pvName.equals(info.getPvname())) {
-            logger.error("File " + lis.getAbsolutePath() + " is being used to read data for pv " + pvName
-                    + " but it actually contains data for pv " + info.getPvname());
-        }
-        if (!type.equals(ArchDBRTypes.valueOf(info.getType()))) {
-            throw new IOException("File " + lis.getAbsolutePath() + " contains "
-                    + ArchDBRTypes.valueOf(info.getType()).toString() + " we are expecting " + type.toString());
-        }
     }
 
     private void lookupLastEvent(

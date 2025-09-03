@@ -1,6 +1,7 @@
 package org.epics.archiverappliance.zipfs;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.pbFileExtension;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
@@ -145,9 +146,9 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PlainStoragePlugin.pbFileExtension,
+                    pbFileExtension,
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
             long previousEpochSeconds = 0L;
             long eventCount = 0;
@@ -178,9 +179,9 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PlainStoragePlugin.pbFileExtension,
+                    pbFileExtension,
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
 
             List<Future<EventStream>> futures = new LinkedList<Future<EventStream>>();

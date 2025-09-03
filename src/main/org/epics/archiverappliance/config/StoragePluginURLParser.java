@@ -8,13 +8,15 @@
 package org.epics.archiverappliance.config;
 
 import static edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin.PBHTTP_PLUGIN_IDENTIFIER;
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetPlainFileHandler.PARQUET_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.common.mergededup.MergeDedupStoragePlugin.MERGE_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.retrieval.channelarchiver.ChannelArchiverReadOnlyPlugin.RTREE_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.blackhole.BlackholeStoragePlugin.BLACKHOLE_PLUGIN_IDENTIFIER;
 
 import edu.stanford.slac.archiverappliance.PBOverHTTP.PBOverHTTPStoragePlugin;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.lang3.text.StrLookup;
 import org.apache.commons.lang3.text.StrSubstitutor;
 import org.apache.logging.log4j.LogManager;
@@ -37,6 +39,7 @@ import java.net.URISyntaxException;
  * For example, <code>pb://localhost?name=LTS&amp;rootFolder=${ARCHAPPL_LONG_TERM_FOLDER}&amp;partitionGranularity=PARTITION_YEAR</code> will initialize a PlainStoragePlugin.
  * <ol>
  * <li>The <code>pb</code> prefix initializes {@link PlainStoragePlugin PlainStoragePlugin}.</li>
+ * <li>The <code>parquet</code> prefix initializes {@link PlainStoragePlugin PlainStoragePlugin} with Parquet file backend.</li>
  * <li>The <code>pbraw</code> prefix initializes {@link PBOverHTTPStoragePlugin PBOverHTTPStoragePlugin}.</li>
  * <li>The <code>blackhole</code> prefix initializes {@link BlackholeStoragePlugin BlackholeStoragePlugin}.</li>
  * <li>The <code>rtree</code> prefix initializes {@link ChannelArchiverReadOnlyPlugin ChannelArchiverReadOnlyPlugin}.</li>
@@ -54,7 +57,10 @@ public class StoragePluginURLParser {
             String pluginIdentifier = srcURI.getScheme();
             switch (pluginIdentifier) {
                 case PB_PLUGIN_IDENTIFIER -> {
-                    return parsePlainStoragePlugin(srcURIStr, configService);
+                    return parsePlainStoragePlugin(srcURIStr, configService, PlainStorageType.PB);
+                }
+                case PARQUET_PLUGIN_IDENTIFIER -> {
+                    return parsePlainStoragePlugin(srcURIStr, configService, PlainStorageType.PARQUET);
                 }
                 case PBHTTP_PLUGIN_IDENTIFIER -> {
                     return parseHTTPStoragePlugin(srcURIStr, configService);
@@ -86,7 +92,10 @@ public class StoragePluginURLParser {
             String pluginIdentifier = srcURI.getScheme();
             switch (pluginIdentifier) {
                 case PB_PLUGIN_IDENTIFIER -> {
-                    return parsePlainStoragePlugin(srcURIStr, configService);
+                    return parsePlainStoragePlugin(srcURIStr, configService, PlainStorageType.PB);
+                }
+                case PARQUET_PLUGIN_IDENTIFIER -> {
+                    return parsePlainStoragePlugin(srcURIStr, configService, PlainStorageType.PARQUET);
                 }
                 case MERGE_PLUGIN_IDENTIFIER -> {
                     return parseMergeDedupPlugin(srcURIStr, configService);
@@ -113,7 +122,10 @@ public class StoragePluginURLParser {
             String pluginIdentifier = srcURI.getScheme();
             switch (pluginIdentifier) {
                 case PB_PLUGIN_IDENTIFIER -> {
-                    return parsePlainStoragePlugin(srcURIStr, configService);
+                    return parsePlainStoragePlugin(srcURIStr, configService, PlainStorageType.PB);
+                }
+                case PARQUET_PLUGIN_IDENTIFIER -> {
+                    return parsePlainStoragePlugin(srcURIStr, configService, PlainStorageType.PARQUET);
                 }
                 case MERGE_PLUGIN_IDENTIFIER -> {
                     return parseMergeDedupPlugin(srcURIStr, configService);
@@ -132,9 +144,9 @@ public class StoragePluginURLParser {
         return null;
     }
 
-    private static PlainStoragePlugin parsePlainStoragePlugin(String srcURIStr, ConfigService configService)
-            throws IOException {
-        PlainStoragePlugin ret = new PlainStoragePlugin();
+    private static PlainStoragePlugin parsePlainStoragePlugin(
+            String srcURIStr, ConfigService configService, PlainStorageType plainStorageType) throws IOException {
+        PlainStoragePlugin ret = new PlainStoragePlugin(plainStorageType);
         ret.initialize(expandMacros(srcURIStr), configService);
         return ret;
     }
@@ -172,8 +184,10 @@ public class StoragePluginURLParser {
      * Checks java.system.properties first (passed in with a -D to the JVM)
      * Then checks the environment (for example, using export in Linux).
      * If we are not able to match in either place, we return as is.
+     * <p>
      * For example, if we did <code>export ARCHAPPL_SHORT_TERM_FOLDER=/dev/test</code>, and then used <code>pbraw://${ARCHAPPL_SHORT_TERM_FOLDER}<code> in the policy datastore definition,
      * these would be expanded into <code>pbraw:///dev/test<code></code>
+     *
      * @param srcURIStr
      * @return
      */

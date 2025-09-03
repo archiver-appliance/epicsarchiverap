@@ -9,7 +9,6 @@ package org.epics.archiverappliance.etl;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
 import edu.stanford.slac.archiverappliance.plain.PlainCommonSetup;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.utils.ValidatePlainFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -146,8 +145,7 @@ public class SimpleETLTest {
                 testPlugins.dest().getRootFolder(),
                 pvName,
                 testPlugins.dest().getExtensionString(),
-                testPlugins.dest().getPartitionGranularity(),
-                PBCompressionMode.NONE,
+                testPlugins.dest().getPlainFileHandler().getPathResolver(),
                 configService.getPVNameToKeyConverter());
         Assertions.assertNotNull(allPaths, "PlainPBFileNameUtility returns null for getAllFilesForPV for " + pvName);
         Assertions.assertTrue(
@@ -157,7 +155,8 @@ public class SimpleETLTest {
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePlainFile.validatePlainFile(destPath, true),
+                    ValidatePlainFile.validatePlainFile(
+                            destPath, true, testPlugins.dest().getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
