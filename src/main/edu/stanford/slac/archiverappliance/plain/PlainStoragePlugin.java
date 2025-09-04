@@ -11,6 +11,7 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
+import edu.stanford.slac.archiverappliance.plain.pb.PBAppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.PBPlainStreams;
@@ -472,7 +473,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             return appendDataStates.get(pvName);
         } else {
             logger.debug("Creating new append data state for pv " + pvName);
-            AppendDataStateData state = new AppendDataStateData(
+            AppendDataStateData state = new PBAppendDataStateData(
                     this.partitionGranularity,
                     this.rootFolder,
                     this.desc,
@@ -1060,7 +1061,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             // event.
                             // Ideally this should be the first event of the source stream minus some buffer.
                             Instant timezero = TimeUtils.convertFromEpochSeconds(0, 0);
-                            AppendDataStateData state = new AppendDataStateData(
+                            AppendDataStateData state = new PBAppendDataStateData(
                                     this.partitionGranularity,
                                     this.rootFolder,
                                     this.desc,
@@ -1366,7 +1367,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                     setimes.pathDataEndTime.toInstant()),
                             setimes.pathDataStartTime.toInstant(),
                             setimes.pathDataEndTime.toInstant())) {
-                        AppendDataStateData state = new AppendDataStateData(
+                        AppendDataStateData state = new PBAppendDataStateData(
                                 this.partitionGranularity,
                                 this.rootFolder,
                                 this.desc,

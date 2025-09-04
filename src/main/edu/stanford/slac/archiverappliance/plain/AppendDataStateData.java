@@ -1,13 +1,9 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import edu.stanford.slac.archiverappliance.plain.pb.ETLPBByteStream;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
@@ -17,7 +13,6 @@ import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.etl.ETLBulkStream;
 import org.epics.archiverappliance.etl.ETLContext;
 
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -35,25 +30,25 @@ import java.time.Instant;
  * @author mshankar
  *
  */
-public class AppendDataStateData {
+public abstract class AppendDataStateData {
     private static final Logger logger = LogManager.getLogger(AppendDataStateData.class.getName());
 
     private final PartitionGranularity partitionGranularity;
     private final String rootFolder;
 
-    private OutputStream os = null;
-    private final PBCompressionMode compressionMode;
+    protected OutputStream os = null;
+    protected final PBCompressionMode compressionMode;
     protected short previousYear = -1;
     protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
     private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
     // These two pieces of information (previousYear and previousEpochSeconds) are from the store using the last known
     // sample when we appending to an existing stream.
     // See the creation and use of the PBFileInfo object below.
-    private short currentEventsYear = -1;
+    protected short currentEventsYear = -1;
 
-    private final String desc;
+    protected final String desc;
     private final PVNameToKeyMapping pv2key;
-    private String previousFileName = null;
+    protected String previousFileName = null;
     /**
      * @param partitionGranularity partitionGranularity of the PB plugin.
      * @param rootFolder           RootFolder of the PB plugin
@@ -93,46 +88,9 @@ public class AppendDataStateData {
      * @param extensionToCopyFrom &emsp;
      * @return eventsAppended  &emsp;
      */
-    public int partitionBoundaryAwareAppendData(
+    public abstract int partitionBoundaryAwareAppendData(
             BasicContext context, String pvName, EventStream stream, String extension, String extensionToCopyFrom)
-            throws IOException {
-        try (stream) {
-            int eventsAppended = 0;
-            for (Event event : stream) {
-                Instant ts = event.getEventTimeStamp();
-                if (shouldISkipEventBasedOnTimeStamps(event)) continue;
-
-                Path pvPath = null;
-                shouldISwitchPartitions(context, pvName, extension, ts, this.compressionMode);
-
-                if (this.os == null) {
-                    pvPath = preparePartition(
-                            pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, this.compressionMode);
-                }
-
-                // We check for monotonicity in timestamps again as we had some fresh data from an existing file.
-                if (shouldISkipEventBasedOnTimeStamps(event)) continue;
-
-                // The raw form is already escaped for new lines
-                // We can simply write it as is.
-                ByteArray val = event.getRawForm();
-                this.os.write(val.data, val.off, val.len);
-                this.os.write(LineEscaper.NEWLINE_CHAR);
-
-                this.previousYear = this.currentEventsYear;
-                this.lastKnownTimeStamp = event.getEventTimeStamp();
-                eventsAppended++;
-                // logger.debug("Done appending event " + TimeUtils.convertToISO8601String(event.getEventTimeStamp()) +
-                // " into " + previousFileName + " of len " + val.len);
-            }
-            return eventsAppended;
-        } catch (Throwable t) {
-            logger.error("Exception appending data for PV " + pvName, t);
-            throw new IOException(t);
-        } finally {
-            this.closeStreams();
-        }
-    }
+            throws IOException;
 
     /**
      * Should we switch to a new partition? If so, return the new partition, else return the current partition.
@@ -176,16 +134,7 @@ public class AppendDataStateData {
         }
     }
 
-    public void closeStreams() {
-        // Simply closing the current stream should be good enough for the roll over to work.
-        if (this.os != null)
-            try {
-                this.os.close();
-            } catch (Throwable ignored) {
-            }
-        // Set this to null outside the try/catch so that we are using a new file even if the close fails.
-        this.os = null;
-    }
+    public abstract void closeStreams();
 
     /**
      * Tell appendData if we should skip this event based on the last known event, current year of the destination file
@@ -319,22 +268,7 @@ public class AppendDataStateData {
      * @param pvPath The PV path
      * @throws IOException &emsp;
      */
-    private void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException {
-        PBFileInfo info = new PBFileInfo(pvPath);
-        if (!info.getPVName().equals(pvName))
-            throw new IOException("Trying to append data for " + pvName + " to a file " + pvPath + " that has data for "
-                    + info.getPVName());
-        this.previousYear = info.getDataYear();
-        if (info.getLastEvent() != null) {
-            this.lastKnownTimeStamp = info.getLastEvent().getEventTimeStamp();
-        } else {
-            logger.error("Cannot determine last known timestamp when updating state for PV " + pvName + " and path "
-                    + pvPath.toString());
-        }
-        this.os = new BufferedOutputStream(
-                Files.newOutputStream(pvPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND));
-        this.previousFileName = pvPath.getFileName().toString();
-    }
+    protected abstract void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException;
 
     /**
      * In cases where we create a new file, this method is used to create an empty file and write out an header.
@@ -344,31 +278,8 @@ public class AppendDataStateData {
      * @param stream The Event stream
      * @throws IOException &emsp;
      */
-    private void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream) throws IOException {
-        if (Files.exists(pvPath) && Files.size(pvPath) > 0) {
-            throw new IOException("Trying to write a header into a file that exists "
-                    + pvPath.toAbsolutePath().toString());
-        }
-        if (logger.isDebugEnabled())
-            logger.debug(
-                    desc + ": Writing new PB file" + pvPath.toAbsolutePath().toString()
-                            + " for PV " + pvName
-                            + " for year " + this.currentEventsYear
-                            + " of type " + stream.getDescription().getArchDBRType()
-                            + " of PBPayload "
-                            + stream.getDescription().getArchDBRType().getPBPayloadType());
-        this.os = new BufferedOutputStream(
-                Files.newOutputStream(pvPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING));
-        byte[] headerBytes = LineEscaper.escapeNewLines(EPICSEvent.PayloadInfo.newBuilder()
-                .setPvname(pvName)
-                .setType(stream.getDescription().getArchDBRType().getPBPayloadType())
-                .setYear(this.currentEventsYear)
-                .build()
-                .toByteArray());
-        this.os.write(headerBytes);
-        this.os.write(LineEscaper.NEWLINE_CHAR);
-        this.previousFileName = pvPath.getFileName().toString();
-    }
+    protected abstract void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream)
+            throws IOException;
 
     protected Event checkStream(
             String pvName, ETLContext context, ETLBulkStream bulkStream, Class<? extends ETLBulkStream> streamType)
