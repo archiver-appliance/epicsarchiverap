@@ -9,6 +9,7 @@ package edu.stanford.slac.archiverappliance.plain.utils;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
@@ -149,7 +150,7 @@ public class ValidateAndFixPBFile {
                 logger.info("Temporary file is " + tempPath.toString() + " with final component of temp file "
                         + tempFileName);
             try {
-                PBFileInfo info = new PBFileInfo(path);
+                FileInfo info = new PBFileInfo(path);
                 long previousEpochSeconds = Long.MIN_VALUE;
                 long eventnum = 0;
                 try (FileBackedPBEventStream strm =

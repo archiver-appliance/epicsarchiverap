@@ -7,6 +7,7 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
@@ -36,7 +37,7 @@ public class ValidatePlainFile {
     private static final Logger logger = LogManager.getLogger(ValidatePlainFile.class.getName());
 
     public static boolean validatePlainFile(Path path, boolean verboseMode) throws IOException {
-        PBFileInfo info = new PBFileInfo(path);
+        FileInfo info = new PBFileInfo(path);
         logger.info("File " + path.getFileName().toString() + " is for PV " + info.getPVName() + " of type "
                 + info.getType() + " for year " + info.getDataYear());
         Instant previousTimestamp = Instant.EPOCH;
