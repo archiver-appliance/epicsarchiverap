@@ -643,48 +643,48 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             buf.append(this.pluginIdentifier());
             buf.append("://localhost?name=");
             buf.append(URLEncoder.encode(name, StandardCharsets.UTF_8));
-            buf.append("&rootFolder=");
+            buf.append("&").append(URLKey.ROOT_FOLDER.key()).append("=");
             buf.append(URLEncoder.encode(rootFolder, StandardCharsets.UTF_8));
-            buf.append("&partitionGranularity=");
+            buf.append("&").append(URLKey.PARTITION_GRANULARITY.key()).append("=");
             buf.append(partitionGranularity.toString());
             if (this.holdETLForPartitions != 0) {
-                buf.append("&hold=");
+                buf.append("&").append(URLKey.HOLD.key()).append("=");
                 buf.append(holdETLForPartitions);
             }
             if (this.gatherETLInPartitions != 0) {
-                buf.append("&gather=");
+                buf.append("&").append(URLKey.GATHER.key()).append("=");
                 buf.append(gatherETLInPartitions);
             }
 
             if (this.consolidateOnShutdown) {
-                buf.append("&consolidateOnShutdown=");
+                buf.append("&").append(URLKey.CONSOLIDATE_ON_SHUTDOWN.key()).append("=");
                 buf.append(true);
             }
 
             this.plainFileHandler.urlOptions().forEach((key, value) -> buf.append("&")
-                    .append(URLKey.COMPRESS.key())
-                    .append("=")
-                    .append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
+                .append(URLKey.COMPRESS.key())
+                .append("=")
+                .append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
 
             if (this.postProcessorUserArgs != null && !this.postProcessorUserArgs.isEmpty()) {
                 for (String postProcessorUserArg : postProcessorUserArgs) {
-                    buf.append("&pp=");
+                    buf.append("&").append(URLKey.POST_PROCESSORS.key()).append("=");
                     buf.append(postProcessorUserArg);
                 }
             }
 
             if (this.reduceDataPostProcessor != null) {
-                buf.append("&reducedata=");
+                buf.append("&").append(URLKey.REDUCE.key()).append("=");
                 buf.append(reduceDataPostProcessor);
             }
 
             if (this.etlIntoStoreIf != null) {
-                buf.append("&etlIntoStoreIf=");
+                buf.append("&").append(URLKey.ETL_INTO_STORE_IF.key()).append("=");
                 buf.append(this.etlIntoStoreIf);
             }
 
             if (this.etlOutOfStoreIf != null) {
-                buf.append("&etlOutofStoreIf=");
+                buf.append("&").append(URLKey.ETL_OUT_OF_STORE_IF.key()).append("=");
                 buf.append(this.etlOutOfStoreIf);
             }
 
