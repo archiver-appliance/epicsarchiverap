@@ -11,10 +11,9 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.plain.pb.PBAppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainStreams;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -55,7 +54,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.Period;
@@ -162,7 +160,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private ConfigService configService;
     private PVNameToKeyMapping pv2key;
     private String desc = "Plain PB plugin";
-    private PlainStreams plainStreams;
+    private PlainFileHandler plainFileHandler;
     public static final String pbFileExtension = "." + pbFileSuffix;
 
     private static void addStreamCallable(
@@ -203,7 +201,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
      */
     private boolean backupFilesBeforeETL = false;
 
-    private PBCompressionMode compressionMode = PBCompressionMode.NONE;
     private List<String> postProcessorUserArgs = null;
     private String reducedataPostProcessor = null;
     private int holdETLForPartions = 0;
@@ -220,7 +217,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     public PlainStoragePlugin() {
         this.append_extension = pbFileExtension + "append";
-        this.plainStreams = new PBPlainStreams();
+        this.plainFileHandler = new PBPlainFileHandler();
     }
 
     public static final String PB_PLUGIN_IDENTIFIER = "pb";
@@ -241,8 +238,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 + configService + ", pv2key="
                 + pv2key + ", desc='"
                 + desc + '\'' + ", backupFilesBeforeETL="
-                + backupFilesBeforeETL + ", compressionMode="
-                + compressionMode + ", postProcessorUserArgs="
+                + backupFilesBeforeETL + ", postProcessorUserArgs="
                 + postProcessorUserArgs + ", reducedataPostProcessor='"
                 + reducedataPostProcessor + '\'' + ", holdETLForPartions="
                 + holdETLForPartions + ", gatherETLinPartitions="
@@ -301,7 +297,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         endTime,
                         pbFileExtension,
                         partitionGranularity,
-                        this.compressionMode,
+                        this.plainFileHandler.getPBCompressionMode(),
                         this.pv2key);
             } else {
                 paths = PathNameUtility.getPathsWithData(
@@ -312,7 +308,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         endTime,
                         extension,
                         partitionGranularity,
-                        this.compressionMode,
+                        this.plainFileHandler.getPBCompressionMode(),
                         this.pv2key);
                 if (paths.length == 0) {
                     logger.info("Did not find any cached entries for " + pvName + " for post processor " + extension
@@ -326,7 +322,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             endTime,
                             pbFileExtension,
                             partitionGranularity,
-                            this.compressionMode,
+                            this.plainFileHandler.getPBCompressionMode(),
                             this.pv2key);
                 } else {
                     logger.info("Found " + paths.length + " cached entries for " + pvName + " for post processor "
@@ -335,7 +331,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
             logger.info(desc + " Found " + paths.length + " matching files for pv " + pvName + " in store "
                     + this.getName());
-            boolean useSearchForPositions = (this.compressionMode == PBCompressionMode.NONE);
+            boolean useSearchForPositions = (this.plainFileHandler.getPBCompressionMode() == PBCompressionMode.NONE);
             boolean doNotuseSearchForPositions = !useSearchForPositions;
 
             ArrayList<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
@@ -413,7 +409,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 startTime,
                 pbFileExtension,
                 partitionGranularity,
-                this.compressionMode,
+                this.plainFileHandler.getPBCompressionMode(),
                 this.pv2key);
         if (mostRecentPath != null) {
             // Should we use these two here?
@@ -457,7 +453,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 eTime,
                 getExtensionString(),
                 partitionGranularity,
-                compressionMode,
+                this.plainFileHandler.getPBCompressionMode(),
                 pv2key);
         if (paths == null) return null;
         List<Path> pathList = Arrays.asList(paths);
@@ -465,7 +461,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             Collections.reverse(pathList);
         }
 
-        return this.plainStreams.dataAtTime(pathList, pvName, atTime, startAtTime, direction);
+        return this.plainFileHandler.dataAtTime(pathList, pvName, atTime, startAtTime, direction);
     }
 
     private AppendDataStateData getAppendDataState(BasicContext context, String pvName) throws IOException {
@@ -473,13 +469,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             return appendDataStates.get(pvName);
         } else {
             logger.debug("Creating new append data state for pv " + pvName);
-            AppendDataStateData state = new PBAppendDataStateData(
+            AppendDataStateData state = this.plainFileHandler.appendDataStateData(
+                    getLastKnownTimestampForAppend(context, pvName),
                     this.partitionGranularity,
                     this.rootFolder,
                     this.desc,
-                    getLastKnownTimestampForAppend(context, pvName),
-                    this.pv2key,
-                    this.compressionMode);
+                    this.plainFileHandler.getPBCompressionMode(),
+                    this.pv2key);
 
             appendDataStates.put(pvName, state);
             return state;
@@ -600,12 +596,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
 
             if (queryNVPairs.containsKey(URLKey.COMPRESS.key())) {
-                compressionMode = PBCompressionMode.valueOf(queryNVPairs.get(URLKey.COMPRESS.key()));
-                if (compressionMode != PBCompressionMode.NONE && !rootFolderStr.startsWith(ArchPaths.ZIP_PREFIX)) {
-                    String rootFolderWithPath = ArchPaths.ZIP_PREFIX + rootFolderStr;
-                    logger.debug("Automatically adding url scheme for compression to rootfolder " + rootFolderWithPath);
-                    rootFolderStr = rootFolderWithPath;
-                }
+                this.plainFileHandler.initCompression(queryNVPairs);
+                rootFolderStr = this.plainFileHandler.updateRootFolderStr(rootFolderStr);
             }
 
             setRootFolder(rootFolderStr);
@@ -669,10 +661,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 buf.append(true);
             }
 
-            if (this.compressionMode != PBCompressionMode.NONE) {
-                buf.append("&compress=");
-                buf.append(compressionMode.toString());
-            }
+            this.plainFileHandler.urlOptions().forEach((key, value) -> buf.append("&")
+                    .append(URLKey.COMPRESS.key())
+                    .append("=")
+                    .append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
 
             if (this.postProcessorUserArgs != null && !this.postProcessorUserArgs.isEmpty()) {
                 for (String postProcessorUserArg : postProcessorUserArgs) {
@@ -713,23 +705,14 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         this.rootFolder = rootFolder;
         logger.debug("Setting root folder to " + rootFolder);
         try (ArchPaths paths = new ArchPaths()) {
-            Path path;
-            if (this.compressionMode == PBCompressionMode.NONE) {
-                path = paths.get(this.rootFolder);
-                if (!Files.exists(path)) {
-                    logger.warn(desc + ": The root folder specified does not exist - " + rootFolder + ". Creating it");
-                    Files.createDirectories(path);
-                    return;
-                }
-
-            } else {
-                path = paths.get(this.rootFolder.replace(ArchPaths.ZIP_PREFIX, "/"));
-                if (!Files.exists(path)) {
-                    logger.warn(desc + ": The root folder specified does not exist - " + rootFolder + " Creating it");
-                    Files.createDirectories(path);
-                    return;
-                }
+            String rootFolderPath = plainFileHandler.rootFolderPath(this.rootFolder);
+            Path path = paths.get(rootFolderPath);
+            if (!Files.exists(path)) {
+                logger.warn(desc + ": The root folder specified does not exist - " + rootFolder + ". Creating it");
+                Files.createDirectories(path);
+                return;
             }
+
             if (!Files.isDirectory(path)) {
                 logger.error(desc + ": The root folder specified is not a directory - " + rootFolder);
                 return;
@@ -775,7 +758,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 currentTime,
                 pbFileExtension,
                 partitionGranularity,
-                this.compressionMode,
+                this.plainFileHandler.getPBCompressionMode(),
                 this.pv2key);
         if (paths.length == 0) {
             if (logger.isInfoEnabled()) {
@@ -832,10 +815,12 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 }
 
                 PBFileInfo fileinfo = new PBFileInfo(path);
+                // To make sure deletion later knows the files are in the zip file system
+                String pathKey = this.plainFileHandler.getPathKey(path);
                 ETLInfo etlInfo = new ETLInfo(
                         pvName,
                         fileinfo.getType(),
-                        path.toAbsolutePath().toString(),
+                        pathKey,
                         partitionGranularity,
                         new FileStreamCreator(pvName, path, fileinfo),
                         fileinfo.getFirstEvent(),
@@ -901,6 +886,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     public void markForDeletion(ETLInfo info, ETLContext context) {
         try {
             Path path = context.getPaths().get(info.getKey());
+            this.plainFileHandler.markForDeletion(path);
             long size = Files.size(path);
             long sizeFromInfo = info.getSize();
             if (sizeFromInfo == -1) {
@@ -915,7 +901,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             + size + ". Size from info " + sizeFromInfo);
                 }
             }
-        } catch (NoSuchFileException ignore) {
+        } catch (NoSuchFileException ex) {
+            logger.info("No such file to be deleted", ex);
         } catch (Exception ex) {
             logger.error("Exception deleting " + info.getKey() + ". Please manually remove this file", ex);
         }
@@ -930,7 +917,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     pvName,
                     pbFileExtension,
                     partitionGranularity,
-                    this.compressionMode,
+                    this.plainFileHandler.getPBCompressionMode(),
                     this.pv2key);
             logger.debug(desc + " Found " + paths.length + " matching files for pv " + pvName);
             if (paths.length > 0) {
@@ -969,7 +956,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     pvName,
                     pbFileExtension,
                     partitionGranularity,
-                    this.compressionMode,
+                    this.plainFileHandler.getPBCompressionMode(),
                     this.pv2key);
             logger.debug(desc + " Found " + paths.length + " matching files for pv " + pvName);
             for (Path path : paths) {
@@ -1008,7 +995,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     @Override
     public boolean commitETLAppendData(String pvName, ETLContext context) throws IOException {
-        if (compressionMode == PBCompressionMode.NONE && backupFilesBeforeETL) {
+        if (this.plainFileHandler.backUpFiles(backupFilesBeforeETL)) {
             // Get all append data files for the specified PV name and partition granularity.
             Path[] appendDataPaths = PathNameUtility.getAllPathsForPV(
                     context.getPaths(),
@@ -1016,7 +1003,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     pvName,
                     append_extension,
                     partitionGranularity,
-                    this.compressionMode,
+                    this.plainFileHandler.getPBCompressionMode(),
                     this.pv2key);
 
             if (logger.isDebugEnabled())
@@ -1061,13 +1048,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             // event.
                             // Ideally this should be the first event of the source stream minus some buffer.
                             Instant timezero = TimeUtils.convertFromEpochSeconds(0, 0);
-                            AppendDataStateData state = new PBAppendDataStateData(
+                            AppendDataStateData state = plainFileHandler.appendDataStateData(
+                                    timezero,
                                     this.partitionGranularity,
                                     this.rootFolder,
                                     this.desc,
-                                    timezero,
-                                    this.pv2key,
-                                    this.compressionMode);
+                                    this.plainFileHandler.getPBCompressionMode(),
+                                    this.pv2key);
                             int eventsAppended =
                                     state.partitionBoundaryAwareAppendData(context, pvName, stream, ppExt, null);
                             if (logger.isDebugEnabled())
@@ -1143,7 +1130,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     public long spaceConsumedByPV(String pvName) throws IOException {
         // Using a blank extension should fetch everything?
         Path[] rawPaths = PathNameUtility.getAllPathsForPV(
-                new ArchPaths(), rootFolder, pvName, "", partitionGranularity, this.compressionMode, this.pv2key);
+                new ArchPaths(), rootFolder, pvName, "", partitionGranularity, this.getCompressionMode(), this.pv2key);
         long spaceConsumed = 0;
         for (Path f : rawPaths) {
             spaceConsumed = spaceConsumed + f.toFile().length();
@@ -1153,7 +1140,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     }
 
     public PBCompressionMode getCompressionMode() {
-        return compressionMode;
+        return plainFileHandler.getPBCompressionMode();
     }
 
     private List<PPMissingPaths> getListOfPathsWithMissingOrOlderPostProcessorData(
@@ -1166,7 +1153,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 pvName,
                 pbFileExtension,
                 this.partitionGranularity,
-                this.compressionMode,
+                this.getCompressionMode(),
                 this.pv2key);
         Path[] ppPaths = PathNameUtility.getAllPathsForPV(
                 context.getPaths(),
@@ -1174,7 +1161,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 pvName,
                 ppExt,
                 this.partitionGranularity,
-                this.compressionMode,
+                this.getCompressionMode(),
                 this.pv2key);
 
         HashMap<String, Path> ppPathsMap = new HashMap<String, Path>();
@@ -1240,7 +1227,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     oldName,
                     pbFileExtension,
                     partitionGranularity,
-                    this.compressionMode,
+                    this.getCompressionMode(),
                     this.pv2key);
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName);
@@ -1257,7 +1244,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     oldName,
                     ppExt,
                     partitionGranularity,
-                    this.compressionMode,
+                    this.getCompressionMode(),
                     this.pv2key);
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName + " for extension "
@@ -1292,45 +1279,15 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             switchFilesWithSuffix(context, pvName, randSuffix, allPostProcessorExtensions);
         } finally {
             // Clean up any tmp files
-            deleteTempFiles(context, pvName, randSuffix);
-        }
-    }
-
-    private void deleteTempFiles(BasicContext context, String pvName, String randSuffix) throws IOException {
-        Path[] paths = PathNameUtility.getAllPathsForPV(
-                context.getPaths(),
-                rootFolder,
-                pvName,
-                randSuffix,
-                partitionGranularity,
-                this.compressionMode,
-                this.pv2key);
-        for (Path path : paths) {
-            logger.error("Deleting leftover file " + path);
-            Files.delete(path);
+            plainFileHandler.dataDeleteTempFiles(context, pvName, randSuffix, rootFolder, partitionGranularity, pv2key);
         }
     }
 
     private void switchFilesWithSuffix(
             BasicContext context, String pvName, String randSuffix, List<String> postProcessors) throws IOException {
         for (String ppExt : postProcessors) {
-            movePaths(context, pvName, randSuffix, ppExt + randSuffix);
-        }
-    }
-
-    private void movePaths(BasicContext context, String pvName, String randSuffix, String suffix) throws IOException {
-        Path[] paths = PathNameUtility.getAllPathsForPV(
-                context.getPaths(),
-                rootFolder,
-                pvName,
-                suffix,
-                partitionGranularity,
-                this.compressionMode,
-                this.pv2key);
-        for (Path path : paths) {
-            Path destPath = context.getPaths().get(path.toString().replace(randSuffix, ""));
-            logger.info("Moving path " + path + " to " + destPath);
-            Files.move(path, destPath, StandardCopyOption.ATOMIC_MOVE);
+            plainFileHandler.dataMovePaths(
+                    context, pvName, randSuffix, ppExt + randSuffix, rootFolder, partitionGranularity, pv2key);
         }
     }
 
@@ -1349,7 +1306,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     pvName,
                     ppExt,
                     partitionGranularity,
-                    this.compressionMode,
+                    this.getCompressionMode(),
                     this.pv2key);
             for (Path path : paths) {
                 logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
@@ -1367,13 +1324,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                     setimes.pathDataEndTime.toInstant()),
                             setimes.pathDataStartTime.toInstant(),
                             setimes.pathDataEndTime.toInstant())) {
-                        AppendDataStateData state = new PBAppendDataStateData(
+                        AppendDataStateData state = plainFileHandler.appendDataStateData(
+                                Instant.ofEpochMilli(0),
                                 this.partitionGranularity,
                                 this.rootFolder,
                                 this.desc,
-                                Instant.ofEpochMilli(0),
-                                this.pv2key,
-                                this.compressionMode);
+                                this.getCompressionMode(),
+                                this.pv2key);
                         state.partitionBoundaryAwareAppendData(
                                 context, pvName, convertedStream, ppExt + randSuffix, null);
                     }

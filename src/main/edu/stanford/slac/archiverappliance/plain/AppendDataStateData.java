@@ -1,6 +1,5 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.ETLPBByteStream;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,13 +13,8 @@ import org.epics.archiverappliance.etl.ETLBulkStream;
 import org.epics.archiverappliance.etl.ETLContext;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.Instant;
 
 /**
@@ -32,29 +26,28 @@ import java.time.Instant;
  */
 public abstract class AppendDataStateData {
     private static final Logger logger = LogManager.getLogger(AppendDataStateData.class.getName());
-
-    private final PartitionGranularity partitionGranularity;
-    private final String rootFolder;
-
-    protected OutputStream os = null;
-    protected final PBCompressionMode compressionMode;
-    protected short previousYear = -1;
-    protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
-    private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
+    protected final String rootFolder;
+    protected final String desc;
+    protected final PartitionGranularity partitionGranularity;
+    protected final PVNameToKeyMapping pv2key;
+    protected Path previousFilePath = null;
+    protected short currentEventsYear = -1;
     // These two pieces of information (previousYear and previousEpochSeconds) are from the store using the last known
     // sample when we appending to an existing stream.
     // See the creation and use of the PBFileInfo object below.
-    protected short currentEventsYear = -1;
+    protected short previousYear = -1;
+    protected Instant lastKnownTimeStamp = Instant.ofEpochSecond(0);
+    private Instant nextPartitionFirstSecond = Instant.ofEpochSecond(0);
+    private final PBCompressionMode compressionMode;
 
-    protected final String desc;
-    private final PVNameToKeyMapping pv2key;
-    protected String previousFileName = null;
+    protected PBCompressionMode getCompressionMode() {
+        return this.compressionMode;
+    }
     /**
      * @param partitionGranularity partitionGranularity of the PB plugin.
      * @param rootFolder           RootFolder of the PB plugin
      * @param desc                 Desc for logging purposes
-     * @param lastKnownTimestamp   This is probably the most important argument here. This is the last known timestamp
-     *                             in this storage. If null, we assume time(0) for the last known timestamp.
+     * @param lastKnownTimestamp   This is probably the most important argument here. This is the last known timestamp in this storage. If null, we assume time(0) for the last known timestamp.
      * @param pv2key               PVNameToKeyMapping
      */
     public AppendDataStateData(
@@ -81,204 +74,17 @@ public abstract class AppendDataStateData {
      * <li>We make sure timestamp monotonicity is maintained.</li>
      * <li>We generate clean partitions.</li>
      * </ol>
-     * @param context  &emsp;
-     * @param pvName The PV name
-     * @param stream  &emsp;
-     * @param extension   &emsp;
+     *
+     * @param context             &emsp;
+     * @param pvName              The PV name
+     * @param stream              &emsp;
+     * @param extension           &emsp;
      * @param extensionToCopyFrom &emsp;
      * @return eventsAppended  &emsp;
+     * @throws IOException &emsp;
      */
     public abstract int partitionBoundaryAwareAppendData(
             BasicContext context, String pvName, EventStream stream, String extension, String extensionToCopyFrom)
-            throws IOException;
-
-    /**
-     * Should we switch to a new partition? If so, return the new partition, else return the current partition.
-     *
-     * @param context   &emsp;
-     * @param pvName    The PV name
-     * @param extension &emsp;
-     * @param ts        The epoch seconds
-     * @throws IOException &emsp;
-     */
-    protected void shouldISwitchPartitions(
-            BasicContext context, String pvName, String extension, Instant ts, PBCompressionMode compressionMode)
-            throws IOException {
-
-        if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
-            Path nextPath = PathNameUtility.getFileName(
-                    this.rootFolder,
-                    pvName,
-                    ts,
-                    extension,
-                    this.partitionGranularity,
-                    true,
-                    context.getPaths(),
-                    compressionMode,
-                    this.pv2key);
-            this.nextPartitionFirstSecond = TimeUtils.getNextPartitionFirstSecond(ts, this.partitionGranularity);
-            if (logger.isDebugEnabled()) {
-                if (this.previousFileName != null) {
-                    logger.debug(desc + ": Encountering a change in partitions in the event stream. "
-                            + "Closing out " + this.previousFileName
-                            + " to make way for " + nextPath
-                            + " Next partition is to be switched at "
-                            + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
-                } else {
-                    logger.debug(
-                            desc + ": New partition into file " + nextPath + " Next partition is to be switched at "
-                                    + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
-                }
-            }
-            this.closeStreams();
-        }
-    }
-
-    public abstract void closeStreams();
-
-    /**
-     * Tell appendData if we should skip this event based on the last known event, current year of the destination file
-     * etc...
-     *
-     * @param event &emsp;
-     * @return Boolean   &emsp;
-     */
-    protected boolean shouldISkipEventBasedOnTimeStamps(Event event) {
-        Instant timeStamp = event.getEventTimeStamp();
-        this.currentEventsYear = TimeUtils.getYear(timeStamp);
-        int compare = timeStamp.compareTo(this.lastKnownTimeStamp);
-        if (compare <= 0) {
-            // Attempt at insisting that the source of this event stream sticks to the contract and gives us ascending
-            // times.
-            // This takes nanos into account as well.
-            logger.debug(desc + ": Skipping data with a timestamp "
-                    + TimeUtils.convertToISO8601String(timeStamp)
-                    + "older than the previous timestamp "
-                    + TimeUtils.convertToISO8601String(this.lastKnownTimeStamp));
-            return true;
-        }
-
-        if (timeStamp.isBefore(this.lastKnownTimeStamp)) {
-            // Attempt at insisting that the source of this event stream sticks to the contract and gives us ascending
-            // times.
-            logger.debug(desc + ": Skipping data with a timestamp "
-                    + TimeUtils.convertToISO8601String(timeStamp)
-                    + "older than the previous timestamp "
-                    + TimeUtils.convertToISO8601String(this.lastKnownTimeStamp));
-
-            return true;
-        }
-        if (this.currentEventsYear < this.previousYear) {
-            // Same test as above.
-            logger.debug("Skipping data from a year " + this.currentEventsYear + "older than the previous year "
-                    + this.previousYear);
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Prepare a new partition.
-     *
-     * @param pvName              The PV name
-     * @param stream              &emsp;
-     * @param context             &emsp;
-     * @param extension           &emsp;
-     * @param extensionToCopyFrom &emsp;
-     * @param ts                  The epoch seconds
-     * @param pvPath              &emsp;
-     * @return pvPath  &emsp;
-     * @throws IOException &emsp;
-     */
-    protected Path preparePartition(
-            String pvName,
-            EventStream stream,
-            BasicContext context,
-            String extension,
-            String extensionToCopyFrom,
-            Instant ts,
-            Path pvPath,
-            PBCompressionMode compressionMode)
-            throws IOException {
-        if (pvPath == null) {
-            pvPath = PathNameUtility.getFileName(
-                    this.rootFolder,
-                    pvName,
-                    ts,
-                    extension,
-                    this.partitionGranularity,
-                    true,
-                    context.getPaths(),
-                    compressionMode,
-                    this.pv2key);
-        }
-
-        if (!Files.exists(pvPath)) {
-            if (extensionToCopyFrom != null && !extensionToCopyFrom.contentEquals("")) {
-                // If the file has not been created yet and if we have an extension to copy from
-                // We check for the file with the extensionToCopyFrom
-                // If that exists, we make a copy of that
-                // This is an attempt to not lose data during ETL appends.
-                // We make a copy of the original file if it exists, append to the copy and then do an atomic move.
-                // Should we should use path's resolve here?
-                Path pathToCopyFrom = context.getPaths()
-                        .get(pvPath.toAbsolutePath().toString().replace(extension, extensionToCopyFrom));
-                if (Files.exists(pathToCopyFrom)) {
-                    logger.debug("Making a backup from "
-                            + pathToCopyFrom.toAbsolutePath() + " to file "
-                            + pvPath.toAbsolutePath() + " when appending data for pv " + pvName);
-                    Files.copy(pathToCopyFrom, pvPath);
-                    // We still have to create an os so that the logic can continue.
-                    updateStateBasedOnExistingFile(pvName, pvPath);
-
-                } else {
-                    logger.debug("File to copy from "
-                            + pathToCopyFrom.toAbsolutePath() + " does not exist when appending data for pv "
-                            + pvName);
-                    createNewFileAndWriteAHeader(pvName, pvPath, stream);
-                }
-            } else {
-                logger.debug("File to copy from is not specified and the file " + pvPath.toAbsolutePath()
-                        + " does not exist when appending data for pv " + pvName);
-                createNewFileAndWriteAHeader(pvName, pvPath, stream);
-            }
-        } else {
-            if (Files.size(pvPath) <= 0) {
-                logger.debug("The dest file " + pvPath.toAbsolutePath()
-                        + " exists but is 0 bytes long. Writing the header for pv " + pvName);
-                createNewFileAndWriteAHeader(pvName, pvPath, stream);
-            } else {
-                if (logger.isDebugEnabled()) {
-                    logger.debug(this.desc + ": Appending to existing PB file "
-                            + pvPath.toAbsolutePath() + " for PV " + pvName + " for year "
-                            + this.currentEventsYear);
-                }
-                updateStateBasedOnExistingFile(pvName, pvPath);
-            }
-        }
-        return pvPath;
-    }
-
-    /**
-     * If we have an existing file, then this loads a PBInfo, validates the PV name and then updates the
-     * appendDataState
-     *
-     * @param pvName The PV name
-     * @param pvPath The PV path
-     * @throws IOException &emsp;
-     */
-    protected abstract void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException;
-
-    /**
-     * In cases where we create a new file, this method is used to create an empty file and write out an header.
-     *
-     * @param pvName The PV name
-     * @param pvPath The PV path
-     * @param stream The Event stream
-     * @throws IOException &emsp;
-     */
-    protected abstract void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream)
             throws IOException;
 
     protected Event checkStream(
@@ -313,48 +119,183 @@ public abstract class AppendDataStateData {
      * @return boolean &emsp;
      * @throws IOException &emsp;
      */
-    public boolean bulkAppend(
+    public abstract boolean bulkAppend(
             String pvName, ETLContext context, ETLBulkStream bulkStream, String extension, String extensionToCopyFrom)
+            throws IOException;
+
+    /**
+     * Should we switch to a new partition? If so, return the new partition, else return the current partition.
+     *
+     * @param context   &emsp;
+     * @param pvName    The PV name
+     * @param extension &emsp;
+     * @param ts        The epoch seconds
+     * @throws IOException &emsp;
+     */
+    protected void shouldISwitchPartitions(BasicContext context, String pvName, String extension, Instant ts)
             throws IOException {
-        Event firstEvent = checkStream(pvName, context, bulkStream, ETLPBByteStream.class);
-        if (firstEvent == null) return false;
 
-        ETLPBByteStream byteStream = (ETLPBByteStream) bulkStream;
-
-        Path pvPath = null;
-        if (this.os == null) {
-            pvPath = preparePartition(
+        if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
+            Path nextPath = PathNameUtility.getFileName(
+                    this.rootFolder,
                     pvName,
-                    bulkStream,
-                    context,
+                    ts,
                     extension,
-                    extensionToCopyFrom,
-                    firstEvent.getEventTimeStamp(),
-                    pvPath,
-                    this.compressionMode);
-        }
-        this.closeStreams();
-
-        // The preparePartition should have created the needed file; so we only append
-        try (ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND);
-                ReadableByteChannel srcChannel = byteStream.getByteChannel(context)) {
-            logger.debug("ETL bulk appends for pv " + pvName);
-            ByteBuffer buf = ByteBuffer.allocate(1024 * 1024);
-            int bytesRead = srcChannel.read(buf);
-            while (bytesRead > 0) {
-                buf.flip();
-                destChannel.write(buf);
-                buf.clear();
-                bytesRead = srcChannel.read(buf);
+                    this.partitionGranularity,
+                    true,
+                    context.getPaths(),
+                    compressionMode,
+                    this.pv2key);
+            this.nextPartitionFirstSecond = TimeUtils.getNextPartitionFirstSecond(ts, this.partitionGranularity);
+            if (logger.isDebugEnabled()) {
+                if (this.previousFilePath != null) {
+                    logger.debug(desc + ": Encountering a change in partitions in the event stream. "
+                            + "Closing out " + this.previousFilePath
+                            + " to make way for " + nextPath
+                            + " Next partition is to be switched at "
+                            + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
+                } else {
+                    logger.debug(
+                            desc + ": New partition into file " + nextPath + " Next partition is to be switched at "
+                                    + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
+                }
             }
-        }
-
-        try {
-            // Update the last known timestamp and the like...
-            updateStateBasedOnExistingFile(pvName, pvPath);
-        } finally {
             this.closeStreams();
         }
-        return true;
     }
+
+    /**
+     * Tell appendData if we should skip this event based on the last known event,
+     * current year of the destination file etc...
+     *
+     * @param event &emsp;
+     * @return Boolean   &emsp;
+     */
+    protected boolean shouldISkipEventBasedOnTimeStamps(Event event) {
+        Instant timeStamp = event.getEventTimeStamp();
+        this.currentEventsYear = TimeUtils.getYear(timeStamp);
+        Instant currentTimeStamp = event.getEventTimeStamp();
+        int compare = currentTimeStamp.compareTo(this.lastKnownTimeStamp);
+        if (compare <= 0) {
+            // Attempt at insisting that the source of this event stream sticks to the contract and gives us ascending
+            // times.
+            // This takes nanos into account as well.
+            logger.debug(desc + ": Skipping data with a timestamp "
+                    + TimeUtils.convertToISO8601String(timeStamp)
+                    + "older than the previous timstamp "
+                    + TimeUtils.convertToISO8601String(this.lastKnownTimeStamp));
+            return true;
+        }
+
+        if (timeStamp.isBefore(this.lastKnownTimeStamp)) {
+            // Attempt at insisting that the source of this event stream sticks to the contract and gives us ascending
+            // times.
+            logger.info(desc + ": Skipping data with a timestamp "
+                    + TimeUtils.convertToISO8601String(timeStamp)
+                    + "older than the previous timstamp "
+                    + TimeUtils.convertToISO8601String(this.lastKnownTimeStamp));
+
+            return true;
+        }
+        if (this.currentEventsYear < this.previousYear) {
+            // Same test as above.
+            logger.info("Skipping data from a year " + this.currentEventsYear + "older than the previous year "
+                    + this.previousYear);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Prepare a new partition.
+     *
+     * @param pvName              The PV name
+     * @param stream              &emsp;
+     * @param context             &emsp;
+     * @param extension           &emsp;
+     * @param extensionToCopyFrom &emsp;
+     * @param ts                  The epoch seconds
+     * @param pvPath              &emsp;
+     * @return pvPath  &emsp;
+     * @throws IOException &emsp;
+     */
+    protected Path preparePartition(
+            String pvName,
+            EventStream stream,
+            BasicContext context,
+            String extension,
+            String extensionToCopyFrom,
+            Instant ts,
+            Path pvPath,
+            PBCompressionMode compressionMode)
+            throws IOException {
+        Path preparePath;
+        if (pvPath == null) {
+            preparePath = PathNameUtility.getFileName(
+                    this.rootFolder,
+                    pvName,
+                    ts,
+                    extension,
+                    this.partitionGranularity,
+                    true,
+                    context.getPaths(),
+                    compressionMode,
+                    this.pv2key);
+        } else {
+            preparePath = pvPath;
+        }
+
+        if (!Files.exists(preparePath)) {
+            if (extensionToCopyFrom != null && !extensionToCopyFrom.contentEquals("")) {
+                // If the file has not been created yet and if we have an extension to copy from
+                // We check for the file with the extensionToCopyFrom
+                // If that exists, we make a copy of that
+                // This is an attempt to not lose data during ETL appends.
+                // We make a copy of the original file if it exists, append to the copy and then do an atomic move.
+                // Should we should use path's resolve here?
+                Path pathToCopyFrom = context.getPaths()
+                        .get(preparePath.toAbsolutePath().toString().replace(extension, extensionToCopyFrom));
+                if (Files.exists(pathToCopyFrom)) {
+                    logger.debug("Making a backup from "
+                            + pathToCopyFrom.toAbsolutePath() + " to file "
+                            + preparePath.toAbsolutePath() + " when appending data for pv " + pvName);
+                    Files.copy(pathToCopyFrom, preparePath);
+                    // We still have to create an os so that the logic can continue.
+                    updateStateBasedOnExistingFile(pvName, preparePath);
+
+                } else {
+                    logger.debug("File to copy from "
+                            + pathToCopyFrom.toAbsolutePath() + " does not exist when appending data for pv "
+                            + pvName);
+                    createNewFileAndWriteAHeader(pvName, preparePath, stream);
+                }
+            } else {
+                logger.debug("File to copy from is not specified and the file " + preparePath.toAbsolutePath()
+                        + " does not exist when appending data for pv " + pvName);
+                createNewFileAndWriteAHeader(pvName, preparePath, stream);
+            }
+        } else {
+            if (Files.size(preparePath) <= 0) {
+                logger.debug("The dest file " + preparePath.toAbsolutePath()
+                        + " exists but is 0 bytes long. Writing the header for pv " + pvName);
+                createNewFileAndWriteAHeader(pvName, preparePath, stream);
+            } else {
+                if (logger.isDebugEnabled()) {
+                    logger.debug(this.desc + ": Appending to existing PB file "
+                            + preparePath.toAbsolutePath() + " for PV " + pvName + " for year "
+                            + this.currentEventsYear);
+                }
+                updateStateBasedOnExistingFile(pvName, preparePath);
+            }
+        }
+        return preparePath;
+    }
+
+    protected abstract void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream)
+            throws IOException;
+
+    protected abstract void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException;
+
+    public abstract void closeStreams() throws IOException;
 }
