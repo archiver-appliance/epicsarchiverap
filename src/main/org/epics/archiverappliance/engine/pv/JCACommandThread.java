@@ -19,8 +19,10 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.engine.model.ContextErrorHandler;
 
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -223,5 +225,35 @@ public class JCACommandThread extends Thread {
                 logger.error("exception when destorying context  in JCACommandThread", ex);
             }
         });
+    }
+
+    public List<Map<String, String>> getCommandThreadDetails(int threadId) {
+        List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
+        {
+            Map<String, String> obj = new LinkedHashMap<String, String>();
+            obj.put("name", "Command thread id");
+            obj.put("value", Integer.toString(threadId));
+            obj.put("source", "engine");
+            ret.add(obj);    
+        }
+
+        {
+            Map<String, String> obj = new LinkedHashMap<String, String>();
+            obj.put("name", "Current command queue size");
+            obj.put("value", Integer.toString(this.command_queue.size()));
+            obj.put("source", "engine");
+            ret.add(obj);    
+        }
+
+
+        {
+            Map<String, String> obj = new LinkedHashMap<String, String>();
+            obj.put("name", "Max command queue size");
+            obj.put("value", Integer.toString(this.max_size_reached));
+            obj.put("source", "engine");
+            ret.add(obj);    
+        }
+
+        return ret;
     }
 }

@@ -50,6 +50,7 @@ import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.SlowChangingPVsWithDroppedEvents;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.engine.bpl.reports.WaveformPVsAction;
+import org.epics.archiverappliance.engine.bpl.reports.CommandThreadReport;
 
 /**
  * The main business logic servlet for the engine. All BPLActions are registered here.
@@ -89,6 +90,7 @@ public class BPLServlet extends HttpServlet {
 		getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
 		getActions.put("/getArchiveChannelObjectDetails", ArchiveChannelObjectDetailsAction.class);
 		getActions.put("/getLastKnownTimeStampReport", LastKnownTimeStampReport.class);
+		getActions.put("/getCommandThreadDetails", CommandThreadReport.class);
 		
 	}
 
