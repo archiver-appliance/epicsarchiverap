@@ -5,10 +5,9 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package edu.stanford.slac.archiverappliance.plain;
+package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.PB.utils.LineByteStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 
 import java.io.IOException;
