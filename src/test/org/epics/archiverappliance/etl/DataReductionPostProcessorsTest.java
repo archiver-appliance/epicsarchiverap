@@ -120,7 +120,7 @@ public class DataReductionPostProcessorsTest {
         final String rawPVName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX
                 + DataReductionPostProcessorsTest.class.getSimpleName()
                 + reduceDataUsing
-                + PlainStoragePlugin.pbFileSuffix;
+                + PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
         final String reducedPVName = rawPVName + "reduced";
 
         String shortTermFolderName =

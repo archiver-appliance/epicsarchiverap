@@ -1,6 +1,5 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -21,7 +20,7 @@ public interface PlainFileHandler extends PlainStreams {
 
     String pluginIdentifier();
 
-    PBCompressionMode getPBCompressionMode();
+    PathResolver getPathResolver();
 
     default String getExtensionString() {
         return "." + pluginIdentifier();
@@ -40,7 +39,6 @@ public interface PlainFileHandler extends PlainStreams {
             PartitionGranularity partitionGranularity,
             String rootFolder,
             String desc,
-            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key);
 
     void markForDeletion(Path path) throws IOException;
@@ -51,12 +49,11 @@ public interface PlainFileHandler extends PlainStreams {
             String randSuffix,
             String suffix,
             String rootFolder,
-            PartitionGranularity partitionGranularity,
-            PBCompressionMode pbCompressionMode,
+            PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
-        Path[] paths = PathNameUtility.getAllPathsForPV(
-                context.getPaths(), rootFolder, pvName, suffix, partitionGranularity, pbCompressionMode, pv2key);
+        Path[] paths =
+                PathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, suffix, pathResolver, pv2key);
         for (Path path : paths) {
             Path destPath = context.getPaths().get(path.toString().replace(randSuffix, ""));
             logger.debug("Moving path " + path + " to " + destPath);
@@ -69,12 +66,11 @@ public interface PlainFileHandler extends PlainStreams {
             String pvName,
             String randSuffix,
             String rootFolder,
-            PartitionGranularity partitionGranularity,
-            PBCompressionMode pbCompressionMode,
+            PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         Path[] paths = PathNameUtility.getAllPathsForPV(
-                context.getPaths(), rootFolder, pvName, randSuffix, partitionGranularity, pbCompressionMode, pv2key);
+                context.getPaths(), rootFolder, pvName, randSuffix, pathResolver, pv2key);
         for (Path path : paths) {
             logger.error("Deleting leftover file " + path);
             Files.delete(path);
@@ -87,17 +83,11 @@ public interface PlainFileHandler extends PlainStreams {
             String randSuffix,
             String suffix,
             String rootFolder,
-            PartitionGranularity partitionGranularity,
             PVNameToKeyMapping pv2key)
             throws IOException;
 
     void dataDeleteTempFiles(
-            BasicContext context,
-            String pvName,
-            String randSuffix,
-            String rootFolder,
-            PartitionGranularity partitionGranularity,
-            PVNameToKeyMapping pv2key)
+            BasicContext context, String pvName, String randSuffix, String rootFolder, PVNameToKeyMapping pv2key)
             throws IOException;
 
     ETLInfoListProcessor optimisedETLInfoListProcessor(ETLDest etlDest);

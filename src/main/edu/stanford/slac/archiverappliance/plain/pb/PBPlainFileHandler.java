@@ -2,6 +2,7 @@ package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.URLKey;
 import org.epics.archiverappliance.Event;
@@ -43,8 +44,12 @@ public class PBPlainFileHandler implements PlainFileHandler {
     }
 
     @Override
-    public PBCompressionMode getPBCompressionMode() {
-        return compressionMode;
+    public PathResolver getPathResolver() {
+        return switch (compressionMode) {
+            case NONE -> PathResolver.BASE_PATH_RESOLVER;
+            case ZIP_PER_PV -> (paths, createParentFolder, rootFolder, pvComponent, pvKey) ->
+                    paths.get(createParentFolder, rootFolder, pvKey + "_pb.zip!", pvComponent);
+        };
     }
 
     @Override
@@ -99,9 +104,9 @@ public class PBPlainFileHandler implements PlainFileHandler {
             PartitionGranularity partitionGranularity,
             String rootFolder,
             String desc,
-            PBCompressionMode compressionMode,
             PVNameToKeyMapping pv2key) {
-        return new PBAppendDataStateData(partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key);
+        return new PBAppendDataStateData(
+                partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key, getPathResolver());
     }
 
     @Override
@@ -116,24 +121,16 @@ public class PBPlainFileHandler implements PlainFileHandler {
             String randSuffix,
             String suffix,
             String rootFolder,
-            PartitionGranularity partitionGranularity,
             PVNameToKeyMapping pv2key)
             throws IOException {
-        PlainFileHandler.movePaths(
-                context, pvName, randSuffix, suffix, rootFolder, partitionGranularity, getPBCompressionMode(), pv2key);
+        PlainFileHandler.movePaths(context, pvName, randSuffix, suffix, rootFolder, getPathResolver(), pv2key);
     }
 
     @Override
     public void dataDeleteTempFiles(
-            BasicContext context,
-            String pvName,
-            String randSuffix,
-            String rootFolder,
-            PartitionGranularity partitionGranularity,
-            PVNameToKeyMapping pv2key)
+            BasicContext context, String pvName, String randSuffix, String rootFolder, PVNameToKeyMapping pv2key)
             throws IOException {
-        PlainFileHandler.deleteTempFiles(
-                context, pvName, randSuffix, rootFolder, partitionGranularity, getPBCompressionMode(), pv2key);
+        PlainFileHandler.deleteTempFiles(context, pvName, randSuffix, rootFolder, getPathResolver(), pv2key);
     }
 
     @Override

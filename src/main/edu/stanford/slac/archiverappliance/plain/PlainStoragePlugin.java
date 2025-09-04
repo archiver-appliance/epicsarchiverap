@@ -11,7 +11,6 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
@@ -149,8 +148,7 @@ import java.util.stream.Stream;
 public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime {
     private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
     private final String append_extension;
-
-    public static final String pbFileSuffix = "pb";
+    public static final String pbFileExtension = PBPlainFileHandler.pbFileExtension;
 
     private final ConcurrentHashMap<String, AppendDataStateData> appendDataStates = new ConcurrentHashMap<>();
     // By default, we partition based on a year's boundary.
@@ -161,7 +159,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private PVNameToKeyMapping pv2key;
     private String desc = "Plain PB plugin";
     private PlainFileHandler plainFileHandler;
-    public static final String pbFileExtension = "." + pbFileSuffix;
 
     private static void addStreamCallable(
             String pvName,
@@ -216,15 +213,15 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private String etlOutofStoreIf;
 
     public PlainStoragePlugin() {
-        this.append_extension = pbFileExtension + "append";
+        this.append_extension = plainFileHandler.getExtensionString() + "append";
         this.plainFileHandler = new PBPlainFileHandler();
     }
 
-    public static final String PB_PLUGIN_IDENTIFIER = "pb";
+    public static final String PB_PLUGIN_IDENTIFIER = PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 
     @Override
     public String pluginIdentifier() {
-        return PB_PLUGIN_IDENTIFIER;
+        return this.plainFileHandler.pluginIdentifier();
     }
 
     @Override
@@ -295,9 +292,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         pvName,
                         startTime,
                         endTime,
-                        pbFileExtension,
+                        this.plainFileHandler.getExtensionString(),
                         partitionGranularity,
-                        this.plainFileHandler.getPBCompressionMode(),
+                        this.getPathResolver(),
                         this.pv2key);
             } else {
                 paths = PathNameUtility.getPathsWithData(
@@ -308,7 +305,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         endTime,
                         extension,
                         partitionGranularity,
-                        this.plainFileHandler.getPBCompressionMode(),
+                        this.getPathResolver(),
                         this.pv2key);
                 if (paths.length == 0) {
                     logger.info("Did not find any cached entries for " + pvName + " for post processor " + extension
@@ -320,9 +317,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             pvName,
                             startTime,
                             endTime,
-                            pbFileExtension,
+                            plainFileHandler.getExtensionString(),
                             partitionGranularity,
-                            this.plainFileHandler.getPBCompressionMode(),
+                            this.getPathResolver(),
                             this.pv2key);
                 } else {
                     logger.info("Found " + paths.length + " cached entries for " + pvName + " for post processor "
@@ -331,7 +328,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
             logger.info(desc + " Found " + paths.length + " matching files for pv " + pvName + " in store "
                     + this.getName());
-            boolean useSearchForPositions = (this.plainFileHandler.getPBCompressionMode() == PBCompressionMode.NONE);
+            boolean useSearchForPositions = plainFileHandler.useSearchForPositions();
             boolean doNotuseSearchForPositions = !useSearchForPositions;
 
             ArrayList<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
@@ -407,9 +404,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 rootFolder,
                 pvName,
                 startTime,
-                pbFileExtension,
+                plainFileHandler.getExtensionString(),
                 partitionGranularity,
-                this.plainFileHandler.getPBCompressionMode(),
+                this.getPathResolver(),
                 this.pv2key);
         if (mostRecentPath != null) {
             // Should we use these two here?
@@ -453,7 +450,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 eTime,
                 getExtensionString(),
                 partitionGranularity,
-                this.plainFileHandler.getPBCompressionMode(),
+                this.getPathResolver(),
                 pv2key);
         if (paths == null) return null;
         List<Path> pathList = Arrays.asList(paths);
@@ -474,7 +471,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     this.partitionGranularity,
                     this.rootFolder,
                     this.desc,
-                    this.plainFileHandler.getPBCompressionMode(),
                     this.pv2key);
 
             appendDataStates.put(pvName, state);
@@ -490,7 +486,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     @Override
     public int appendData(BasicContext context, String pvName, EventStream stream) throws IOException {
         AppendDataStateData state = getAppendDataState(context, pvName);
-        return state.partitionBoundaryAwareAppendData(context, pvName, stream, pbFileExtension, null);
+        return state.partitionBoundaryAwareAppendData(
+                context, pvName, stream, plainFileHandler.getExtensionString(), null);
     }
 
     /* (non-Javadoc)
@@ -534,17 +531,21 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         boolean bulkInserted = false;
         if (stream instanceof ETLBulkStream bulkStream) {
             if (backupFilesBeforeETL) {
-                bulkInserted = state.bulkAppend(pvName, context, bulkStream, append_extension, pbFileExtension);
+                bulkInserted = state.bulkAppend(
+                        pvName, context, bulkStream, append_extension, plainFileHandler.getExtensionString());
             } else {
-                bulkInserted = state.bulkAppend(pvName, context, bulkStream, pbFileExtension, null);
+                bulkInserted =
+                        state.bulkAppend(pvName, context, bulkStream, plainFileHandler.getExtensionString(), null);
             }
         }
 
         if (!bulkInserted) {
             if (backupFilesBeforeETL) {
-                state.partitionBoundaryAwareAppendData(context, pvName, stream, append_extension, pbFileExtension);
+                state.partitionBoundaryAwareAppendData(
+                        context, pvName, stream, append_extension, plainFileHandler.getExtensionString());
             } else {
-                state.partitionBoundaryAwareAppendData(context, pvName, stream, pbFileExtension, null);
+                state.partitionBoundaryAwareAppendData(
+                        context, pvName, stream, plainFileHandler.getExtensionString(), null);
             }
         }
         return true;
@@ -640,7 +641,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     public String getURLRepresentation() {
         try {
             StringBuilder buf = new StringBuilder();
-            buf.append(pbFileSuffix);
+            buf.append(this.pluginIdentifier());
             buf.append("://localhost?name=");
             buf.append(URLEncoder.encode(name, StandardCharsets.UTF_8));
             buf.append("&rootFolder=");
@@ -756,9 +757,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 rootFolder,
                 pvName,
                 currentTime,
-                pbFileExtension,
+                plainFileHandler.getExtensionString(),
                 partitionGranularity,
-                this.plainFileHandler.getPBCompressionMode(),
+                this.getPathResolver(),
                 this.pv2key);
         if (paths.length == 0) {
             if (logger.isInfoEnabled()) {
@@ -915,9 +916,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     context.getPaths(),
                     rootFolder,
                     pvName,
-                    pbFileExtension,
-                    partitionGranularity,
-                    this.plainFileHandler.getPBCompressionMode(),
+                    plainFileHandler.getExtensionString(),
+                    this.getPathResolver(),
                     this.pv2key);
             logger.debug(desc + " Found " + paths.length + " matching files for pv " + pvName);
             if (paths.length > 0) {
@@ -954,9 +954,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     context.getPaths(),
                     rootFolder,
                     pvName,
-                    pbFileExtension,
-                    partitionGranularity,
-                    this.plainFileHandler.getPBCompressionMode(),
+                    plainFileHandler.getExtensionString(),
+                    this.getPathResolver(),
                     this.pv2key);
             logger.debug(desc + " Found " + paths.length + " matching files for pv " + pvName);
             for (Path path : paths) {
@@ -998,20 +997,16 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         if (this.plainFileHandler.backUpFiles(backupFilesBeforeETL)) {
             // Get all append data files for the specified PV name and partition granularity.
             Path[] appendDataPaths = PathNameUtility.getAllPathsForPV(
-                    context.getPaths(),
-                    rootFolder,
-                    pvName,
-                    append_extension,
-                    partitionGranularity,
-                    this.plainFileHandler.getPBCompressionMode(),
-                    this.pv2key);
+                    context.getPaths(), rootFolder, pvName, append_extension, this.getPathResolver(), this.pv2key);
 
             if (logger.isDebugEnabled())
                 logger.debug(desc + " Found " + appendDataPaths.length + " matching files for pv " + pvName);
 
             for (Path srcPath : appendDataPaths) {
-                Path destPath =
-                        context.getPaths().get(srcPath.toUri().toString().replace(append_extension, pbFileExtension));
+                Path destPath = context.getPaths()
+                        .get(srcPath.toUri()
+                                .toString()
+                                .replace(append_extension, plainFileHandler.getExtensionString()));
                 Files.move(srcPath, destPath, REPLACE_EXISTING, ATOMIC_MOVE);
             }
         }
@@ -1049,12 +1044,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             // Ideally this should be the first event of the source stream minus some buffer.
                             Instant timezero = TimeUtils.convertFromEpochSeconds(0, 0);
                             AppendDataStateData state = plainFileHandler.appendDataStateData(
-                                    timezero,
-                                    this.partitionGranularity,
-                                    this.rootFolder,
-                                    this.desc,
-                                    this.plainFileHandler.getPBCompressionMode(),
-                                    this.pv2key);
+                                    timezero, this.partitionGranularity, this.rootFolder, this.desc, this.pv2key);
                             int eventsAppended =
                                     state.partitionBoundaryAwareAppendData(context, pvName, stream, ppExt, null);
                             if (logger.isDebugEnabled())
@@ -1130,7 +1120,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     public long spaceConsumedByPV(String pvName) throws IOException {
         // Using a blank extension should fetch everything?
         Path[] rawPaths = PathNameUtility.getAllPathsForPV(
-                new ArchPaths(), rootFolder, pvName, "", partitionGranularity, this.getCompressionMode(), this.pv2key);
+                new ArchPaths(), rootFolder, pvName, "", this.getPathResolver(), this.pv2key);
         long spaceConsumed = 0;
         for (Path f : rawPaths) {
             spaceConsumed = spaceConsumed + f.toFile().length();
@@ -1139,30 +1129,20 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         return spaceConsumed;
     }
 
-    public PBCompressionMode getCompressionMode() {
-        return plainFileHandler.getPBCompressionMode();
-    }
-
     private List<PPMissingPaths> getListOfPathsWithMissingOrOlderPostProcessorData(
             BasicContext context, String pvName, PostProcessor postProcessor) throws IOException {
         String ppExt = "." + postProcessor.getExtension();
-        logger.debug("Looking for missing " + ppExt + " paths based on the list of " + pbFileExtension + " paths");
+        logger.debug("Looking for missing " + ppExt + " paths based on the list of "
+                + plainFileHandler.getExtensionString() + " paths");
         Path[] rawPaths = PathNameUtility.getAllPathsForPV(
                 context.getPaths(),
                 this.rootFolder,
                 pvName,
-                pbFileExtension,
-                this.partitionGranularity,
-                this.getCompressionMode(),
+                plainFileHandler.getExtensionString(),
+                this.getPathResolver(),
                 this.pv2key);
         Path[] ppPaths = PathNameUtility.getAllPathsForPV(
-                context.getPaths(),
-                this.rootFolder,
-                pvName,
-                ppExt,
-                this.partitionGranularity,
-                this.getCompressionMode(),
-                this.pv2key);
+                context.getPaths(), this.rootFolder, pvName, ppExt, this.getPathResolver(), this.pv2key);
 
         HashMap<String, Path> ppPathsMap = new HashMap<String, Path>();
         for (Path ppPath : ppPaths) {
@@ -1171,7 +1151,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
         LinkedList<PPMissingPaths> ret = new LinkedList<PPMissingPaths>();
         for (Path rawPath : rawPaths) {
-            String expectedPPPath = rawPath.toUri().toString().replace(pbFileExtension, ppExt);
+            String expectedPPPath = rawPath.toUri().toString().replace(plainFileHandler.getExtensionString(), ppExt);
             if (!ppPathsMap.containsKey(expectedPPPath)) {
                 if (logger.isDebugEnabled()) logger.debug("Missing pp path " + expectedPPPath);
                 ret.add(new PPMissingPaths(rawPath, context.getPaths().get(expectedPPPath)));
@@ -1225,9 +1205,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     context.getPaths(),
                     rootFolder,
                     oldName,
-                    pbFileExtension,
-                    partitionGranularity,
-                    this.getCompressionMode(),
+                    plainFileHandler.getExtensionString(),
+                    this.getPathResolver(),
                     this.pv2key);
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName);
@@ -1239,13 +1218,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         // Copy data for the post processors...
         for (String ppExt : getPPExtensions()) {
             Path[] paths = PathNameUtility.getAllPathsForPV(
-                    context.getPaths(),
-                    rootFolder,
-                    oldName,
-                    ppExt,
-                    partitionGranularity,
-                    this.getCompressionMode(),
-                    this.pv2key);
+                    context.getPaths(), rootFolder, oldName, ppExt, this.getPathResolver(), this.pv2key);
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName + " for extension "
                         + ppExt);
@@ -1271,7 +1244,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         String randSuffix = "_tmp_" + randomInt;
         try {
             List<String> allPostProcessorExtensions = Stream.concat(
-                            getPPExtensions().stream(), Arrays.stream(new String[] {pbFileExtension}))
+                            getPPExtensions().stream(),
+                            Arrays.stream(new String[] {plainFileHandler.getExtensionString()}))
                     .toList();
             convertDataToNewFile(context, pvName, conversionFunction, randSuffix, allPostProcessorExtensions);
 
@@ -1279,15 +1253,14 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             switchFilesWithSuffix(context, pvName, randSuffix, allPostProcessorExtensions);
         } finally {
             // Clean up any tmp files
-            plainFileHandler.dataDeleteTempFiles(context, pvName, randSuffix, rootFolder, partitionGranularity, pv2key);
+            plainFileHandler.dataDeleteTempFiles(context, pvName, randSuffix, rootFolder, pv2key);
         }
     }
 
     private void switchFilesWithSuffix(
             BasicContext context, String pvName, String randSuffix, List<String> postProcessors) throws IOException {
         for (String ppExt : postProcessors) {
-            plainFileHandler.dataMovePaths(
-                    context, pvName, randSuffix, ppExt + randSuffix, rootFolder, partitionGranularity, pv2key);
+            plainFileHandler.dataMovePaths(context, pvName, randSuffix, ppExt + randSuffix, rootFolder, pv2key);
         }
     }
 
@@ -1305,8 +1278,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     rootFolder,
                     pvName,
                     ppExt,
-                    partitionGranularity,
-                    this.getCompressionMode(),
+                    this.getPlainFileHandler().getPathResolver(),
                     this.pv2key);
             for (Path path : paths) {
                 logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
@@ -1329,7 +1301,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                 this.partitionGranularity,
                                 this.rootFolder,
                                 this.desc,
-                                this.getCompressionMode(),
                                 this.pv2key);
                         state.partitionBoundaryAwareAppendData(
                                 context, pvName, convertedStream, ppExt + randSuffix, null);
@@ -1340,7 +1311,15 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     }
 
     public String getExtensionString() {
-        return ".pb";
+        return this.plainFileHandler.getExtensionString();
+    }
+
+    public PlainFileHandler getPlainFileHandler() {
+        return this.plainFileHandler;
+    }
+
+    public PathResolver getPathResolver() {
+        return this.plainFileHandler.getPathResolver();
     }
 
     private static class PPMissingPaths {

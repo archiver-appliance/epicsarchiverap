@@ -10,7 +10,6 @@ package edu.stanford.slac.archiverappliance.plain;
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +17,6 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.POJOEvent;
-import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -113,8 +111,7 @@ public class RenamePVTest {
                             plugin.getRootFolder(),
                             oldPVName,
                             PlainStoragePlugin.pbFileExtension,
-                            PartitionGranularity.PARTITION_DAY,
-                            PBCompressionMode.NONE,
+                            plugin.getPathResolver(),
                             configService.getPVNameToKeyConverter())
                     .length;
         }
@@ -144,8 +141,7 @@ public class RenamePVTest {
                             plugin.getRootFolder(),
                             newPVName,
                             PlainStoragePlugin.pbFileExtension,
-                            PartitionGranularity.PARTITION_DAY,
-                            PBCompressionMode.NONE,
+                            plugin.getPathResolver(),
                             configService.getPVNameToKeyConverter())
                     .length;
             newPathForOldPVNameCount = PathNameUtility.getAllPathsForPV(
@@ -153,8 +149,7 @@ public class RenamePVTest {
                             plugin.getRootFolder(),
                             oldPVName,
                             PlainStoragePlugin.pbFileExtension,
-                            PartitionGranularity.PARTITION_DAY,
-                            PBCompressionMode.NONE,
+                            plugin.getPathResolver(),
                             configService.getPVNameToKeyConverter())
                     .length;
         }

@@ -4,7 +4,6 @@ import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PL
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -124,8 +123,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -201,8 +199,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    srcPlugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -269,8 +266,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName + "Dest",
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    srcPlugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -382,8 +378,7 @@ public class ZeroedFileEventStreamTest {
                     destPlugin.getRootFolder(),
                     pvName,
                     pbFileExtension,
-                    destPlugin.getPartitionGranularity(),
-                    PBCompressionMode.NONE,
+                    destPlugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -465,8 +460,7 @@ public class ZeroedFileEventStreamTest {
                     destPlugin.getRootFolder(),
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    destPlugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -533,8 +527,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -604,8 +597,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.warn(e);

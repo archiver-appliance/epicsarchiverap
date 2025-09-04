@@ -4,6 +4,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
+import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -51,8 +52,9 @@ public class PBAppendDataStateData extends AppendDataStateData {
             String desc,
             Instant lastKnownTimestamp,
             PBCompressionMode compressionMode,
-            PVNameToKeyMapping pv2key) {
-        super(partitionGranularity, rootFolder, desc, lastKnownTimestamp, pv2key, compressionMode);
+            PVNameToKeyMapping pv2key,
+            PathResolver pathResolver) {
+        super(partitionGranularity, rootFolder, desc, lastKnownTimestamp, pv2key, pathResolver);
         this.compressionMode = compressionMode;
     }
 
@@ -86,7 +88,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
 
                 if (this.os == null) {
                     preparePartition(
-                            pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, getCompressionMode());
+                            pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, getPathResolver());
                 }
 
                 // We check for monotonicity in timestamps again as we had some fresh data from an existing file.
@@ -224,7 +226,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
                     extensionToCopyFrom,
                     firstEvent.getEventTimeStamp(),
                     pvPath,
-                    getCompressionMode());
+                    getPathResolver());
         }
 
         this.closeStreams();

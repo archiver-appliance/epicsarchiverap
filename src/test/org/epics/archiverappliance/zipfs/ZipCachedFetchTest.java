@@ -147,7 +147,7 @@ public class ZipCachedFetchTest {
                     endTime,
                     PlainStoragePlugin.pbFileExtension,
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
             long previousEpochSeconds = 0L;
             long eventCount = 0;
@@ -180,7 +180,7 @@ public class ZipCachedFetchTest {
                     endTime,
                     PlainStoragePlugin.pbFileExtension,
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getCompressionMode(),
+                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
 
             List<Future<EventStream>> futures = new LinkedList<Future<EventStream>>();
