@@ -146,7 +146,7 @@ import java.util.stream.Stream;
  */
 public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime {
     private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
-    private final String append_extension;
+    private final String appendExtension;
     public static final String pbFileExtension = PBPlainFileHandler.pbFileExtension;
 
     private final ConcurrentHashMap<String, AppendDataStateData> appendDataStates = new ConcurrentHashMap<>();
@@ -166,7 +166,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             PostProcessor postProcessor,
             Path[] paths,
             boolean askingForProcessedDataButAbsentInCache,
-            boolean doNotuseSearchForPositions,
+            boolean doNotUseSearchForPositions,
             ArrayList<Callable<EventStream>> ret,
             int pathsCount,
             int pathid,
@@ -175,13 +175,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         if (pathid == 0) {
             ret.add(CallableEventStream.makeOneStreamCallable(
                     FileStreamCreator.getTimeStream(
-                            pvName, paths[pathid], archDBRTypes, startTime, endTime, doNotuseSearchForPositions),
+                            pvName, paths[pathid], archDBRTypes, startTime, endTime, doNotUseSearchForPositions),
                     postProcessor,
                     askingForProcessedDataButAbsentInCache));
         } else if (pathid == pathsCount - 1) {
             ret.add(CallableEventStream.makeOneStreamCallable(
                     FileStreamCreator.getTimeStream(
-                            pvName, paths[pathid], archDBRTypes, startTime, endTime, doNotuseSearchForPositions),
+                            pvName, paths[pathid], archDBRTypes, startTime, endTime, doNotUseSearchForPositions),
                     postProcessor,
                     askingForProcessedDataButAbsentInCache));
         } else {
@@ -198,9 +198,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private boolean backupFilesBeforeETL = false;
 
     private List<String> postProcessorUserArgs = null;
-    private String reducedataPostProcessor = null;
-    private int holdETLForPartions = 0;
-    private int gatherETLinPartitions = 0;
+    private String reduceDataPostProcessor = null;
+    private int holdETLForPartitions = 0;
+    private int gatherETLInPartitions = 0;
     private boolean consolidateOnShutdown = false;
     /**
      * Most of the time; this will be null.
@@ -209,10 +209,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
      */
     private String etlIntoStoreIf;
 
-    private String etlOutofStoreIf;
+    private String etlOutOfStoreIf;
 
     public PlainStoragePlugin() {
-        this.append_extension = plainFileHandler.getExtensionString() + "append";
+        this.appendExtension = plainFileHandler.getExtensionString() + "append";
         this.plainFileHandler = new PBPlainFileHandler();
     }
 
@@ -226,7 +226,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     @Override
     public String toString() {
         return "PlainStoragePlugin{" + "append_extension='"
-                + append_extension + '\'' + ", appendDataStates="
+                + appendExtension + '\'' + ", appendDataStates="
                 + appendDataStates + ", partitionGranularity="
                 + partitionGranularity + ", rootFolder='"
                 + rootFolder + '\'' + ", name='"
@@ -236,15 +236,15 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 + desc + '\'' + ", backupFilesBeforeETL="
                 + backupFilesBeforeETL + ", postProcessorUserArgs="
                 + postProcessorUserArgs + ", reducedataPostProcessor='"
-                + reducedataPostProcessor + '\'' + ", holdETLForPartions="
-                + holdETLForPartions + ", gatherETLinPartitions="
-                + gatherETLinPartitions + ", consolidateOnShutdown="
+                + reduceDataPostProcessor + '\'' + ", holdETLForPartions="
+                + holdETLForPartitions + ", gatherETLinPartitions="
+                + gatherETLInPartitions + ", consolidateOnShutdown="
                 + consolidateOnShutdown + ", etlIntoStoreIf='"
                 + etlIntoStoreIf + '\'' + ", etlOutofStoreIf='"
-                + etlOutofStoreIf + '\'' + '}';
+                + etlOutOfStoreIf + '\'' + '}';
     }
 
-    private static void loadPBclasses() {
+    private static void loadPBClasses() {
         try {
             EPICSEvent.ScalarDouble.newBuilder()
                     .setSecondsintoyear(0)
@@ -328,7 +328,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             logger.info(desc + " Found " + paths.length + " matching files for pv " + pvName + " in store "
                     + this.getName());
             boolean useSearchForPositions = plainFileHandler.useSearchForPositions();
-            boolean doNotuseSearchForPositions = !useSearchForPositions;
+            boolean doNotUseSearchForPositions = !useSearchForPositions;
 
             ArrayList<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
             // Regardless of what we find, we add the last event from the partition before the start time
@@ -357,7 +357,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                     paths[0],
                                     startTime,
                                     endTime,
-                                    doNotuseSearchForPositions,
+                                    doNotUseSearchForPositions,
                                     fileInfo.getType()),
                             postProcessor,
                             askingForProcessedDataButAbsentInCache));
@@ -373,7 +373,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             postProcessor,
                             paths,
                             askingForProcessedDataButAbsentInCache,
-                            doNotuseSearchForPositions,
+                            doNotUseSearchForPositions,
                             ret,
                             pathsCount,
                             pathid,
@@ -506,14 +506,14 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
         AppendDataStateData state = getAppendDataState(context, pvName);
 
-        if (this.reducedataPostProcessor != null) {
+        if (this.reduceDataPostProcessor != null) {
             try {
-                PostProcessor postProcessor = PostProcessors.findPostProcessor(this.reducedataPostProcessor);
-                postProcessor.initialize(reducedataPostProcessor, pvName);
+                PostProcessor postProcessor = PostProcessors.findPostProcessor(this.reduceDataPostProcessor);
+                postProcessor.initialize(reduceDataPostProcessor, pvName);
                 stream = CallableEventStream.makeOneStreamCallable(stream, postProcessor, true)
                         .call();
                 logger.debug(
-                        "Wrapped stream with post processor " + this.reducedataPostProcessor + " for pv " + pvName);
+                        "Wrapped stream with post processor " + this.reduceDataPostProcessor + " for pv " + pvName);
                 if (postProcessor instanceof PostProcessorWithConsolidatedEventStream) {
                     stream = ((PostProcessorWithConsolidatedEventStream) postProcessor).getConsolidatedEventStream();
                     logger.debug("Using consolidated event stream for pv " + pvName);
@@ -521,7 +521,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             } catch (Exception ex) {
                 logger.error(
                         "Exception moving reduced data for pv " + pvName + " to store " + this.getName()
-                                + " using operator " + this.reducedataPostProcessor,
+                                + " using operator " + this.reduceDataPostProcessor,
                         ex);
                 return false;
             }
@@ -531,7 +531,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         if (stream instanceof ETLBulkStream bulkStream) {
             if (backupFilesBeforeETL) {
                 bulkInserted = state.bulkAppend(
-                        pvName, context, bulkStream, append_extension, plainFileHandler.getExtensionString());
+                        pvName, context, bulkStream, appendExtension, plainFileHandler.getExtensionString());
             } else {
                 bulkInserted =
                         state.bulkAppend(pvName, context, bulkStream, plainFileHandler.getExtensionString(), null);
@@ -541,7 +541,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         if (!bulkInserted) {
             if (backupFilesBeforeETL) {
                 state.partitionBoundaryAwareAppendData(
-                        context, pvName, stream, append_extension, plainFileHandler.getExtensionString());
+                        context, pvName, stream, appendExtension, plainFileHandler.getExtensionString());
             } else {
                 state.partitionBoundaryAwareAppendData(
                         context, pvName, stream, plainFileHandler.getExtensionString(), null);
@@ -589,10 +589,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
 
             if (queryNVPairs.containsKey(URLKey.HOLD.key())) {
-                this.setHoldETLForPartions(Integer.parseInt(queryNVPairs.get(URLKey.HOLD.key())));
+                this.setHoldETLForPartitions(Integer.parseInt(queryNVPairs.get(URLKey.HOLD.key())));
             }
             if (queryNVPairs.containsKey(URLKey.GATHER.key())) {
-                this.setGatherETLinPartitions(Integer.parseInt(queryNVPairs.get(URLKey.GATHER.key())));
+                this.setGatherETLInPartitions(Integer.parseInt(queryNVPairs.get(URLKey.GATHER.key())));
             }
 
             if (queryNVPairs.containsKey(URLKey.COMPRESS.key())) {
@@ -606,7 +606,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     URIUtils.getMultiValuedParamFromQueryString(srcURI, URLKey.POST_PROCESSORS.key());
 
             if (queryNVPairs.containsKey(URLKey.REDUCE.key())) {
-                reducedataPostProcessor = queryNVPairs.get(URLKey.REDUCE.key());
+                reduceDataPostProcessor = queryNVPairs.get(URLKey.REDUCE.key());
             }
 
             if (queryNVPairs.containsKey(URLKey.CONSOLIDATE_ON_SHUTDOWN.key())) {
@@ -619,7 +619,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
 
             if (queryNVPairs.containsKey(URLKey.ETL_OUT_OF_STORE_IF.key())) {
-                this.etlOutofStoreIf = queryNVPairs.get(URLKey.ETL_OUT_OF_STORE_IF.key());
+                this.etlOutOfStoreIf = queryNVPairs.get(URLKey.ETL_OUT_OF_STORE_IF.key());
             }
 
             if (queryNVPairs.containsKey(URLKey.TERMINATOR.key())) {
@@ -647,13 +647,13 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             buf.append(URLEncoder.encode(rootFolder, StandardCharsets.UTF_8));
             buf.append("&partitionGranularity=");
             buf.append(partitionGranularity.toString());
-            if (this.holdETLForPartions != 0) {
+            if (this.holdETLForPartitions != 0) {
                 buf.append("&hold=");
-                buf.append(holdETLForPartions);
+                buf.append(holdETLForPartitions);
             }
-            if (this.gatherETLinPartitions != 0) {
+            if (this.gatherETLInPartitions != 0) {
                 buf.append("&gather=");
-                buf.append(gatherETLinPartitions);
+                buf.append(gatherETLInPartitions);
             }
 
             if (this.consolidateOnShutdown) {
@@ -673,9 +673,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 }
             }
 
-            if (this.reducedataPostProcessor != null) {
+            if (this.reduceDataPostProcessor != null) {
                 buf.append("&reducedata=");
-                buf.append(reducedataPostProcessor);
+                buf.append(reduceDataPostProcessor);
             }
 
             if (this.etlIntoStoreIf != null) {
@@ -683,9 +683,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 buf.append(this.etlIntoStoreIf);
             }
 
-            if (this.etlOutofStoreIf != null) {
+            if (this.etlOutOfStoreIf != null) {
                 buf.append("&etlOutofStoreIf=");
-                buf.append(this.etlOutofStoreIf);
+                buf.append(this.etlOutOfStoreIf);
             }
 
             String ret = buf.toString();
@@ -719,7 +719,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
         }
 
-        loadPBclasses();
+        loadPBClasses();
     }
 
     public String getDesc() {
@@ -742,10 +742,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     @Override
     public List<ETLInfo> getETLStreams(String pvName, Instant currentTime, ETLContext context) throws IOException {
 
-        if (etlOutofStoreIf != null) {
-            boolean namedFlagValue = this.configService.getNamedFlag(etlOutofStoreIf);
+        if (etlOutOfStoreIf != null) {
+            boolean namedFlagValue = this.configService.getNamedFlag(etlOutOfStoreIf);
             if (!namedFlagValue) {
-                logger.info("Skipping getting ETL Streams for " + pvName + " as named flag " + this.etlOutofStoreIf
+                logger.info("Skipping getting ETL Streams for " + pvName + " as named flag " + this.etlOutOfStoreIf
                         + " is false.");
                 return new LinkedList<ETLInfo>();
             }
@@ -768,19 +768,19 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             return new ArrayList<>();
         }
 
-        if ((holdETLForPartions - gatherETLinPartitions) < 0) {
-            logger.error("holdETLForPartions - gatherETLinPartitions is invalid for hold=" + holdETLForPartions
-                    + " and gather=" + gatherETLinPartitions);
+        if ((holdETLForPartitions - gatherETLInPartitions) < 0) {
+            logger.error("holdETLForPartions - gatherETLinPartitions is invalid for hold=" + holdETLForPartitions
+                    + " and gather=" + gatherETLInPartitions);
         }
 
         Instant holdTime = TimeUtils.getPreviousPartitionLastSecond(
-                currentTime.minusSeconds((long) partitionGranularity.getApproxSecondsPerChunk() * holdETLForPartions),
+                currentTime.minusSeconds((long) partitionGranularity.getApproxSecondsPerChunk() * holdETLForPartitions),
                 partitionGranularity);
         Instant gatherTime = TimeUtils.getPreviousPartitionLastSecond(
                 currentTime.minusSeconds((long) partitionGranularity.getApproxSecondsPerChunk()
-                        * (holdETLForPartions - (gatherETLinPartitions - 1))),
+                        * (holdETLForPartitions - (gatherETLInPartitions - 1))),
                 partitionGranularity);
-        boolean skipHoldAndGather = (holdETLForPartions == 0) && (gatherETLinPartitions == 0);
+        boolean skipHoldAndGather = (holdETLForPartitions == 0) && (gatherETLInPartitions == 0);
 
         ArrayList<ETLInfo> etlreadystreams = new ArrayList<ETLInfo>();
         boolean holdOk = false;
@@ -799,7 +799,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     long lastModifiedInMillis = Files.getLastModifiedTime(path).toMillis();
                     long currentTimeInMillis = currentTime.toEpochMilli();
                     if ((currentTimeInMillis - lastModifiedInMillis)
-                            > ((long) (this.holdETLForPartions + 1)
+                            > ((long) (this.holdETLForPartitions + 1)
                                     * this.getPartitionGranularity().getApproxSecondsPerChunk()
                                     * 60)) {
                         logger.warn("Zero byte file is older than current ETL time by holdETLForPartions; deleting it "
@@ -836,7 +836,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                 Files.getLastModifiedTime(path).toMillis();
                         long currentTimeInMillis = currentTime.toEpochMilli();
                         if ((currentTimeInMillis - lastModifiedInMillis)
-                                > ((long) (this.holdETLForPartions + 1)
+                                > ((long) (this.holdETLForPartitions + 1)
                                         * this.getPartitionGranularity().getApproxSecondsPerChunk()
                                         * 60)) {
                             logger.warn("Empty file is older than current ETL time by holdETLForPartions; deleting it "
@@ -996,7 +996,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         if (this.plainFileHandler.backUpFiles(backupFilesBeforeETL)) {
             // Get all append data files for the specified PV name and partition granularity.
             Path[] appendDataPaths = PathNameUtility.getAllPathsForPV(
-                    context.getPaths(), rootFolder, pvName, append_extension, this.getPathResolver(), this.pv2key);
+                    context.getPaths(), rootFolder, pvName, appendExtension, this.getPathResolver(), this.pv2key);
 
             if (logger.isDebugEnabled())
                 logger.debug(desc + " Found " + appendDataPaths.length + " matching files for pv " + pvName);
@@ -1005,7 +1005,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 Path destPath = context.getPaths()
                         .get(srcPath.toUri()
                                 .toString()
-                                .replace(append_extension, plainFileHandler.getExtensionString()));
+                                .replace(appendExtension, plainFileHandler.getExtensionString()));
                 Files.move(srcPath, destPath, REPLACE_EXISTING, ATOMIC_MOVE);
             }
         }
@@ -1082,18 +1082,18 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
      * Hold and gather default to a scenario where we aggressively push data to the destination
      * as soon as it is available.
      */
-    public void setHoldETLForPartions(int holdETLForPartions) throws IOException {
-        if ((holdETLForPartions - gatherETLinPartitions) < 0)
-            throw new IOException("holdETLForPartions - gatherETLinPartitions is invalid for hold=" + holdETLForPartions
-                    + " and gather=" + gatherETLinPartitions);
-        this.holdETLForPartions = holdETLForPartions;
+    public void setHoldETLForPartitions(int holdETLForPartitions) throws IOException {
+        if ((holdETLForPartitions - gatherETLInPartitions) < 0)
+            throw new IOException("holdETLForPartions - gatherETLinPartitions is invalid for hold="
+                    + holdETLForPartitions + " and gather=" + gatherETLInPartitions);
+        this.holdETLForPartitions = holdETLForPartitions;
     }
 
-    public void setGatherETLinPartitions(int gatherETLinPartitions) throws IOException {
-        if ((holdETLForPartions - gatherETLinPartitions) < 0)
-            throw new IOException("holdETLForPartions - gatherETLinPartitions is invalid for hold=" + holdETLForPartions
-                    + " and gather=" + gatherETLinPartitions);
-        this.gatherETLinPartitions = gatherETLinPartitions;
+    public void setGatherETLInPartitions(int gatherETLInPartitions) throws IOException {
+        if ((holdETLForPartitions - gatherETLInPartitions) < 0)
+            throw new IOException("holdETLForPartions - gatherETLinPartitions is invalid for hold="
+                    + holdETLForPartitions + " and gather=" + gatherETLInPartitions);
+        this.gatherETLInPartitions = gatherETLInPartitions;
     }
 
     @Override
