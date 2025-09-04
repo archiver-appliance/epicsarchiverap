@@ -11,7 +11,6 @@ import static java.nio.file.StandardCopyOption.ATOMIC_MOVE;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -340,7 +339,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             if (lastEventOfPreviousStream != null) ret.add(lastEventOfPreviousStream);
 
             if (paths.length == 1) {
-                PBFileInfo fileInfo = new PBFileInfo(paths[0]);
+                FileInfo fileInfo = fileInfo(paths[0]);
                 ArchDBRTypes dbrtype = fileInfo.getType();
                 if (fileInfo.getLastEvent().getEventTimeStamp().isBefore(startTime)
                         || fileInfo.getLastEvent().getEventTimeStamp().equals(startTime)) {
@@ -364,7 +363,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             askingForProcessedDataButAbsentInCache));
                 }
             } else if (paths.length > 1) {
-                ArchDBRTypes archDBRTypes = (new PBFileInfo(paths[0])).getType();
+                ArchDBRTypes archDBRTypes = (fileInfo(paths[0])).getType();
                 int pathsCount = paths.length;
                 for (int pathid = 0; pathid < pathsCount; pathid++) {
                     addStreamCallable(
@@ -413,7 +412,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             // boolean useSearchForPositions = (this.compressionMode == CompressionMode.NONE);
             // boolean doNotuseSearchForPositions = !useSearchForPositions;
             logger.debug("Last known event for PV comes from " + mostRecentPath);
-            PBFileInfo fileInfo = new PBFileInfo(mostRecentPath);
+            FileInfo fileInfo = fileInfo(mostRecentPath);
             ArchDBRTypes dbrtype = fileInfo.getType();
             RemotableEventStreamDesc lastKnownEventDesc =
                     new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear());
@@ -815,7 +814,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     continue;
                 }
 
-                PBFileInfo fileinfo = new PBFileInfo(path);
+                FileInfo fileinfo = fileInfo(path);
                 // To make sure deletion later knows the files are in the zip file system
                 String pathKey = this.plainFileHandler.getPathKey(path);
                 ETLInfo etlInfo = new ETLInfo(
@@ -823,7 +822,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         fileinfo.getType(),
                         pathKey,
                         partitionGranularity,
-                        new FileStreamCreator(pvName, path, fileinfo),
+                        new PlainETLStreamCreator(pvName, path, fileinfo, plainFileHandler),
                         fileinfo.getFirstEvent(),
                         Files.size(path));
                 if (skipHoldAndGather) {
@@ -929,7 +928,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             logger.debug("Ignoring zero byte file " + paths[i].toAbsolutePath());
                             continue;
                         }
-                        PBFileInfo fileInfo = new PBFileInfo(paths[i]);
+                        FileInfo fileInfo = fileInfo(paths[i]);
                         if (fileInfo.getLastEvent() != null) return fileInfo.getLastEvent();
                     } catch (Exception ex) {
                         logger.warn(
@@ -962,7 +961,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 if (logger.isDebugEnabled())
                     logger.debug("Looking for first known event in file " + path.toAbsolutePath());
                 try {
-                    PBFileInfo fileInfo = new PBFileInfo(path);
+                    FileInfo fileInfo = fileInfo(path);
                     if (fileInfo.getFirstEvent() != null) return fileInfo.getFirstEvent();
                 } catch (Exception ex) {
                     logger.warn("Exception determing header information from file " + path.toAbsolutePath(), ex);
@@ -1210,7 +1209,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     this.pv2key);
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName);
-                PBFileInfo info = new PBFileInfo(path);
+                FileInfo info = fileInfo(path);
                 this.appendData(context, newName, FileStreamCreator.getStream(oldName, path, info.getType()));
             }
         }
@@ -1222,7 +1221,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName + " for extension "
                         + ppExt);
-                PBFileInfo info = new PBFileInfo(path);
+                FileInfo info = fileInfo(path);
                 AppendDataStateData state = getAppendDataState(context, newName);
                 state.partitionBoundaryAwareAppendData(
                         context, newName, FileStreamCreator.getStream(oldName, path, info.getType()), ppExt, null);
@@ -1284,7 +1283,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 logger.info("Converting data in " + path.toString() + " for pv " + pvName + " for extension " + ppExt);
                 PathNameUtility.StartEndTimeFromName setimes = PathNameUtility.determineTimesFromFileName(
                         pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
-                PBFileInfo info = new PBFileInfo(path);
+                FileInfo info = fileInfo(path);
                 if (conversionFuntion.shouldConvert(
                         FileStreamCreator.getStream(pvName, path, info.getType()),
                         setimes.pathDataStartTime.toInstant(),
@@ -1316,6 +1315,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
     public PlainFileHandler getPlainFileHandler() {
         return this.plainFileHandler;
+    }
+
+    public FileInfo fileInfo(Path path) throws IOException {
+        return this.plainFileHandler.fileInfo(path);
     }
 
     public PathResolver getPathResolver() {
