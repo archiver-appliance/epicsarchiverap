@@ -77,7 +77,7 @@ public class PVDetails implements org.epics.archiverappliance.common.reports.PVD
                                 immortalChanel.getChannel().getName());
                         statuses.addAll(immortalChanel.getCommandThread().getCommandThreadDetails());
                     }
-                }                
+                }
 
                 if (dbrType.isV3Type()) {
                     ArchiveChannel channel =
