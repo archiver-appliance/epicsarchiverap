@@ -40,6 +40,8 @@ public class JCACommandThread extends Thread {
 
     private static final Logger logger = LogManager.getLogger(JCACommandThread.class.getName());
 
+    private final int commandThreadId;
+
     /** The JCA Context */
     private final CAJContext jca_context;
 
@@ -61,8 +63,9 @@ public class JCACommandThread extends Thread {
      *
      * @see #start()
      */
-    public JCACommandThread() throws ConfigException {
-        super("JCA Command Thread");
+    public JCACommandThread(int commandThreadId) throws ConfigException {
+        super("JCA Command Thread " + commandThreadId);
+        this.commandThreadId = commandThreadId;
         try {
             jca_context = new CAJContext();
             jca_context.setDoNotShareChannels(true);
@@ -227,12 +230,12 @@ public class JCACommandThread extends Thread {
         });
     }
 
-    public List<Map<String, String>> getCommandThreadDetails(int threadId) {
+    public List<Map<String, String>> getCommandThreadDetails() {
         List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
         {
             Map<String, String> obj = new LinkedHashMap<String, String>();
             obj.put("name", "Command thread id");
-            obj.put("value", Integer.toString(threadId));
+            obj.put("value", Integer.toString(commandThreadId));
             obj.put("source", "engine");
             ret.add(obj);
         }
