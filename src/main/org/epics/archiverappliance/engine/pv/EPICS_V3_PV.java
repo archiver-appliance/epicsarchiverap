@@ -668,17 +668,17 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         // This runs in a CA thread.
 
         if (!running) {
-            logger.error("Ignoring monitor events that arrive after stop for " + this.name);
+            logger.debug("Ignoring monitor events that arrive after stop for " + this.name);
             this.transientErrorCount++;
             return;
         }
         if (subscription == null) {
-            logger.error("Ignoring monitor events that arrive after we clean up the subscription for " + this.name);
+            logger.debug("Ignoring monitor events that arrive after we clean up the subscription for " + this.name);
             this.transientErrorCount++;
             return;
         }
         if (ev.getStatus() == null || !ev.getStatus().isSuccessful()) {
-            logger.error("Ignoring monitor events that have an invalid CA status for " + this.name);
+            logger.debug("Ignoring monitor events that have an invalid CA status for " + this.name);
             this.transientErrorCount++;
             return;
         }
