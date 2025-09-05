@@ -341,10 +341,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             if (paths.length == 1) {
                 FileInfo fileInfo = fileInfo(paths[0]);
                 ArchDBRTypes dbrtype = fileInfo.getType();
-                if (fileInfo.getLastEvent().getEventTimeStamp().isBefore(startTime)
-                        || fileInfo.getLastEvent().getEventTimeStamp().equals(startTime)) {
+                if (fileInfo.getLastEventInstant().isBefore(startTime)
+                        || fileInfo.getLastEventInstant().equals(startTime)) {
                     logger.debug("All we can get from this store is the last known event at "
-                            + fileInfo.getLastEvent().getEventTimeStamp());
+                            + fileInfo.getLastEventInstant());
                     ret.add(CallableEventStream.makeOneEventCallable(
                             fileInfo.getLastEvent(),
                             new RemotableEventStreamDesc(dbrtype, pvName, fileInfo.getDataYear()),
@@ -662,9 +662,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             }
 
             this.plainFileHandler.urlOptions().forEach((key, value) -> buf.append("&")
-                .append(URLKey.COMPRESS.key())
-                .append("=")
-                .append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
+                    .append(URLKey.COMPRESS.key())
+                    .append("=")
+                    .append(URLEncoder.encode(value, StandardCharsets.UTF_8)));
 
             if (this.postProcessorUserArgs != null && !this.postProcessorUserArgs.isEmpty()) {
                 for (String postProcessorUserArg : postProcessorUserArgs) {
@@ -851,23 +851,23 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         continue;
                     }
                     if (!holdOk) {
-                        if (fileinfo.getFirstEvent().getEventTimeStamp().equals(holdTime)
-                                || fileinfo.getFirstEvent().getEventTimeStamp().isBefore(holdTime)) {
+                        if (fileinfo.getFirstEventInstant().equals(holdTime)
+                                || fileinfo.getFirstEventInstant().isBefore(holdTime)) {
                             holdOk = true;
                         } else {
                             logger.debug("Hold not satisfied for first event "
-                                    + fileinfo.getFirstEvent().getEventTimeStamp()
+                                    + fileinfo.getFirstEventInstant()
                                     + " and hold = " + TimeUtils.convertToISO8601String(holdTime));
                             return etlreadystreams;
                         }
                     }
 
-                    if (fileinfo.getFirstEvent().getEventTimeStamp().equals(gatherTime)
-                            || fileinfo.getFirstEvent().getEventTimeStamp().isBefore(gatherTime)) {
+                    if (fileinfo.getFirstEventInstant().equals(gatherTime)
+                            || fileinfo.getFirstEventInstant().isBefore(gatherTime)) {
                         etlreadystreams.add(etlInfo);
                     } else {
                         logger.debug("Gather not satisfied for first event "
-                                + fileinfo.getFirstEvent().getEventTimeStamp()
+                                + fileinfo.getFirstEventInstant()
                                 + " and gather = " + TimeUtils.convertToISO8601String(gatherTime));
                     }
                 }
