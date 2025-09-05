@@ -467,8 +467,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                                     }
                                 });
                     }
-                    subscription =
-                        theChannel.addMonitor(type, theChannel.getElementCount(), MonitorMask.ARCHIVE.getMask(), this);
+                    subscription = theChannel.addMonitor(
+                            type, theChannel.getElementCount(), MonitorMask.ARCHIVE.getMask(), this);
                 }
             } catch (final Exception ex) {
                 logger.error("exception when subscribing pv " + name, ex);
@@ -588,10 +588,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                                 } catch (final Exception ex) {
                                     logger.error("exception when unsubscribing pv " + name, ex);
                                 }
-                            }                                                
+                            }
                             fireDisconnected();
                         }
-                    });            
+                    });
         }
     }
 
@@ -668,17 +668,17 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         // This runs in a CA thread.
 
         if (!running) {
-            logger.error("Ignoring monitor events that arrive after stop for " + this.name);
+            logger.debug("Ignoring monitor events that arrive after stop for " + this.name);
             this.transientErrorCount++;
             return;
         }
         if (subscription == null) {
-            logger.error("Ignoring monitor events that arrive after we clean up the subscription for " + this.name);
+            logger.debug("Ignoring monitor events that arrive after we clean up the subscription for " + this.name);
             this.transientErrorCount++;
             return;
         }
         if (ev.getStatus() == null || !ev.getStatus().isSuccessful()) {
-            logger.error("Ignoring monitor events that have an invalid CA status for " + this.name);
+            logger.debug("Ignoring monitor events that have an invalid CA status for " + this.name);
             this.transientErrorCount++;
             return;
         }
@@ -896,12 +896,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         }
         ad.addKV("Various transient errors", Long.toString(transientErrorCount));
 
-        ad.addKV(
-                "Do we have a CA channel?",
-                Boolean.toString(this.theChannel != null && theChannel != null));
+        ad.addKV("Do we have a CA channel?", Boolean.toString(this.theChannel != null && theChannel != null));
         ad.addKV("Do we have a subscription?", Boolean.toString(this.subscription != null));
-        if (this.theChannel != null
-                && (theChannel instanceof CAJChannel cajChannel)) {
+        if (this.theChannel != null && (theChannel instanceof CAJChannel cajChannel)) {
             ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));
             ad.addKV("CAJ channel ID (CID)", Integer.toString(cajChannel.getChannelID()));
             ad.addKV("CAJ server channel ID (SID)", Integer.toString(cajChannel.getServerChannelID()));
