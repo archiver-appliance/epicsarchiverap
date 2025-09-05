@@ -467,8 +467,8 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                                     }
                                 });
                     }
-                    subscription =
-                        theChannel.addMonitor(type, theChannel.getElementCount(), MonitorMask.ARCHIVE.getMask(), this);
+                    subscription = theChannel.addMonitor(
+                            type, theChannel.getElementCount(), MonitorMask.ARCHIVE.getMask(), this);
                 }
             } catch (final Exception ex) {
                 logger.error("exception when subscribing pv " + name, ex);
@@ -588,10 +588,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                                 } catch (final Exception ex) {
                                     logger.error("exception when unsubscribing pv " + name, ex);
                                 }
-                            }                                                
+                            }
                             fireDisconnected();
                         }
-                    });            
+                    });
         }
     }
 
@@ -896,12 +896,9 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         }
         ad.addKV("Various transient errors", Long.toString(transientErrorCount));
 
-        ad.addKV(
-                "Do we have a CA channel?",
-                Boolean.toString(this.theChannel != null && theChannel != null));
+        ad.addKV("Do we have a CA channel?", Boolean.toString(this.theChannel != null && theChannel != null));
         ad.addKV("Do we have a subscription?", Boolean.toString(this.subscription != null));
-        if (this.theChannel != null
-                && (theChannel instanceof CAJChannel cajChannel)) {
+        if (this.theChannel != null && (theChannel instanceof CAJChannel cajChannel)) {
             ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));
             ad.addKV("CAJ channel ID (CID)", Integer.toString(cajChannel.getChannelID()));
             ad.addKV("CAJ server channel ID (SID)", Integer.toString(cajChannel.getServerChannelID()));
