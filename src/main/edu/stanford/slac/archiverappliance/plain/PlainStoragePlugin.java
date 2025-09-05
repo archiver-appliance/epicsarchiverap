@@ -35,6 +35,8 @@ import org.epics.archiverappliance.etl.ETLInfo;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
+import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
+import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
 import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
@@ -553,6 +555,19 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     @Override
     public String getDescription() {
         return desc;
+    }
+
+    @Override
+    public ETLInfoListProcessor etlInfoListProcessor(ETLSource curETLSource) {
+        if (curETLSource instanceof PlainStoragePlugin plainStoragePlugin) {
+            if (plainStoragePlugin
+                    .getPlainFileHandler()
+                    .getClass()
+                    .equals(this.getPlainFileHandler().getClass())) {
+                return this.getPlainFileHandler().optimisedETLInfoListProcessor(this);
+            }
+        }
+        return new DefaultETLInfoListProcessor(this);
     }
 
     @Override
