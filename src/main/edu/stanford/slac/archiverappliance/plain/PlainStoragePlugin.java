@@ -148,9 +148,10 @@ import java.util.stream.Stream;
  */
 public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime {
     private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
-    private final String appendExtension;
+    public static final String PB_PLUGIN_IDENTIFIER = PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
     public static final String pbFileExtension = PBPlainFileHandler.pbFileExtension;
-
+    private final String appendExtension;
+    private final PlainFileHandler plainFileHandler;
     private final ConcurrentHashMap<String, AppendDataStateData> appendDataStates = new ConcurrentHashMap<>();
     // By default, we partition based on a year's boundary.
     PartitionGranularity partitionGranularity = PartitionGranularity.PARTITION_YEAR;
@@ -158,8 +159,35 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private String name;
     private ConfigService configService;
     private PVNameToKeyMapping pv2key;
-    private String desc = "Plain PB plugin";
-    private PlainFileHandler plainFileHandler;
+    private String desc = "Plain plugin";
+    /**
+     * Should we backup the affected partitions before letting ETL touch that partition.
+     * This has some performance implications as we will be copying the file on each run
+     */
+    private boolean backupFilesBeforeETL = false;
+
+    private List<String> postProcessorUserArgs = null;
+    private String reduceDataPostProcessor = null;
+    private int holdETLForPartitions = 0;
+    private int gatherETLInPartitions = 0;
+    private boolean consolidateOnShutdown = false;
+    /**
+     * Most of the time; this will be null.
+     * However; if specified; we should use the value of the named flag identified by this
+     * variable to control if this plugin behaves like a black hole plugin or not.
+     */
+    private String etlIntoStoreIf;
+
+    private String etlOutOfStoreIf;
+
+    public PlainStoragePlugin(PlainFileHandler plainFileHandler) {
+        this.plainFileHandler = plainFileHandler;
+        this.appendExtension = plainFileHandler.getExtensionString() + "append";
+    }
+
+    public PlainStoragePlugin() {
+        this(new PBPlainFileHandler());
+    }
 
     private static void addStreamCallable(
             String pvName,
@@ -192,58 +220,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     postProcessor,
                     askingForProcessedDataButAbsentInCache));
         }
-    }
-    /**
-     * Should we backup the affected partitions before letting ETL touch that partition.
-     * This has some performance implications as we will be copying the file on each run
-     */
-    private boolean backupFilesBeforeETL = false;
-
-    private List<String> postProcessorUserArgs = null;
-    private String reduceDataPostProcessor = null;
-    private int holdETLForPartitions = 0;
-    private int gatherETLInPartitions = 0;
-    private boolean consolidateOnShutdown = false;
-    /**
-     * Most of the time; this will be null.
-     * However; if specified; we should use the value of the named flag identified by this
-     * variable to control if this plugin behaves like a black hole plugin or not.
-     */
-    private String etlIntoStoreIf;
-
-    private String etlOutOfStoreIf;
-
-    public PlainStoragePlugin() {
-        this.appendExtension = plainFileHandler.getExtensionString() + "append";
-        this.plainFileHandler = new PBPlainFileHandler();
-    }
-
-    public static final String PB_PLUGIN_IDENTIFIER = PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
-
-    @Override
-    public String pluginIdentifier() {
-        return this.plainFileHandler.pluginIdentifier();
-    }
-
-    @Override
-    public String toString() {
-        return "PlainStoragePlugin{" + "append_extension='"
-                + appendExtension + '\'' + ", appendDataStates="
-                + appendDataStates + ", partitionGranularity="
-                + partitionGranularity + ", rootFolder='"
-                + rootFolder + '\'' + ", name='"
-                + name + '\'' + ", configService="
-                + configService + ", pv2key="
-                + pv2key + ", desc='"
-                + desc + '\'' + ", backupFilesBeforeETL="
-                + backupFilesBeforeETL + ", postProcessorUserArgs="
-                + postProcessorUserArgs + ", reducedataPostProcessor='"
-                + reduceDataPostProcessor + '\'' + ", holdETLForPartions="
-                + holdETLForPartitions + ", gatherETLinPartitions="
-                + gatherETLInPartitions + ", consolidateOnShutdown="
-                + consolidateOnShutdown + ", etlIntoStoreIf='"
-                + etlIntoStoreIf + '\'' + ", etlOutofStoreIf='"
-                + etlOutOfStoreIf + '\'' + '}';
     }
 
     private static void loadPBClasses() {
@@ -1112,6 +1088,11 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     }
 
     @Override
+    public String pluginIdentifier() {
+        return this.plainFileHandler.pluginIdentifier();
+    }
+
+    @Override
     public String getName() {
         return this.name;
     }
@@ -1324,8 +1305,34 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         }
     }
 
+    @Override
+    public String toString() {
+        return "PlainStoragePlugin{" + "append_extension='"
+                + appendExtension + '\'' + ", dataEncoder="
+                + plainFileHandler + ", appendDataStates="
+                + appendDataStates + ", partitionGranularity="
+                + partitionGranularity + ", rootFolder='"
+                + rootFolder + '\'' + ", name='"
+                + name + '\'' + ", configService="
+                + configService + ", pv2key="
+                + pv2key + ", desc='"
+                + desc + '\'' + ", backupFilesBeforeETL="
+                + backupFilesBeforeETL + ", postProcessorUserArgs="
+                + postProcessorUserArgs + ", reduceDataPostProcessor='"
+                + reduceDataPostProcessor + '\'' + ", holdETLForPartitions="
+                + holdETLForPartitions + ", gatherETLinPartitions="
+                + gatherETLInPartitions + ", consolidateOnShutdown="
+                + consolidateOnShutdown + ", etlIntoStoreIf='"
+                + etlIntoStoreIf + '\'' + ", etlOutofStoreIf='"
+                + etlOutOfStoreIf + '\'' + '}';
+    }
+
     public String getExtensionString() {
         return this.plainFileHandler.getExtensionString();
+    }
+
+    public String getPluginIdentifier() {
+        return this.plainFileHandler.pluginIdentifier();
     }
 
     public PlainFileHandler getPlainFileHandler() {
