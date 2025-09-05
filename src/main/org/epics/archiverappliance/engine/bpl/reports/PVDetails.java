@@ -65,6 +65,20 @@ public class PVDetails implements org.epics.archiverappliance.common.reports.PVD
                 LinkedList<Map<String, String>> statuses = metrics.getDetailedStatus();
                 ArchiveEngine.getLowLevelStateInfo(pvName, configService, statuses);
 
+                List<CommandThreadChannel> immortalChannelsForPV =
+                        configService.getEngineContext().getAllChannelsForPV(pvName);
+                if (immortalChannelsForPV.isEmpty()) {
+                    addDetailedStatus(statuses, "Open channels", "0");
+                } else {
+                    for (CommandThreadChannel immortalChanel : immortalChannelsForPV) {
+                        addDetailedStatus(
+                                statuses,
+                                "Open channels",
+                                immortalChanel.getChannel().getName());
+                        statuses.addAll(immortalChanel.getCommandThread().getCommandThreadDetails());
+                    }
+                }                
+
                 if (dbrType.isV3Type()) {
                     ArchiveChannel channel =
                             configService.getEngineContext().getChannelList().get(pvName);
