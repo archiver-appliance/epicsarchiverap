@@ -4,7 +4,6 @@ import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PL
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -124,8 +123,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -164,7 +162,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = pbplugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 long eventCount = 0;
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
@@ -201,8 +199,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    srcPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -269,8 +266,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName + "Dest",
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    srcPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -293,7 +289,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = srcPlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
                 }
@@ -382,8 +378,7 @@ public class ZeroedFileEventStreamTest {
                     destPlugin.getRootFolder(),
                     pvName,
                     pbFileExtension,
-                    destPlugin.getPartitionGranularity(),
-                    PBCompressionMode.NONE,
+                    destPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -465,8 +460,7 @@ public class ZeroedFileEventStreamTest {
                     destPlugin.getRootFolder(),
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    destPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -495,7 +489,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = destPlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
                 }
@@ -533,8 +527,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -604,8 +597,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_YEAR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.warn(e);

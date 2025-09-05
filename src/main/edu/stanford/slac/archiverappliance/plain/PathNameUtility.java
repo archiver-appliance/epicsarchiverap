@@ -7,7 +7,6 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
@@ -16,12 +15,7 @@ import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.NotDirectoryException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -49,8 +43,9 @@ public class PathNameUtility {
                 ts,
                 plugin.getPartitionGranularity(),
                 paths,
-                plugin.getCompressionMode(),
-                pv2key);
+                plugin.getPlainFileHandler().getPathResolver(),
+                pv2key,
+                plugin.getExtensionString());
     }
 
     public static Path getPathNameForTime(
@@ -59,44 +54,12 @@ public class PathNameUtility {
             Instant ts,
             PartitionGranularity partitionGranularity,
             ArchPaths paths,
-            PBCompressionMode compressionMode,
-            PVNameToKeyMapping pv2key)
+            PathResolver pathResolver,
+            PVNameToKeyMapping pv2key,
+            String fileExtension)
             throws IOException {
         return getFileName(
-                rootFolder,
-                pvName,
-                ts,
-                PlainStoragePlugin.pbFileExtension,
-                partitionGranularity,
-                false,
-                paths,
-                compressionMode,
-                pv2key);
-    }
-
-    public static Path getSparsifiedPathNameForTime(
-            PlainStoragePlugin plugin, String pvName, Instant ts, ArchPaths paths, PVNameToKeyMapping pv2key)
-            throws IOException {
-        return getSparsifiedPathNameForTime(
-                plugin.getRootFolder(),
-                pvName,
-                ts,
-                plugin.getPartitionGranularity(),
-                paths,
-                plugin.getCompressionMode(),
-                pv2key);
-    }
-
-    public static Path getSparsifiedPathNameForTime(
-            String rootFolder,
-            String pvName,
-            Instant ts,
-            PartitionGranularity partitionGranularity,
-            ArchPaths paths,
-            PBCompressionMode compressionMode,
-            PVNameToKeyMapping pv2key)
-            throws IOException {
-        return getFileName(rootFolder, pvName, ts, ".pbs", partitionGranularity, false, paths, compressionMode, pv2key);
+                rootFolder, pvName, ts, fileExtension, partitionGranularity, false, paths, pathResolver, pv2key);
     }
 
     /**
@@ -117,7 +80,6 @@ public class PathNameUtility {
      * @param endts           Instant end
      * @param extension       The file extension.
      * @param granularity     Partition granularity of the file.
-     * @param compressionMode Compression Mode
      * @param pv2key          PVNameToKeyMapping
      * @return Path A list of all the paths
      * @throws IOException &emsp;
@@ -130,14 +92,14 @@ public class PathNameUtility {
             final Instant endts,
             final String extension,
             final PartitionGranularity granularity,
-            final PBCompressionMode compressionMode,
+            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
 
         ArrayList<Path> retVal = new ArrayList<>();
-        try (DirectoryStream<Path> paths = getDirectoryStreamsForPV(
-                archPaths, rootFolder, pvName, extension, granularity, compressionMode, pv2key)) {
+        try (DirectoryStream<Path> paths =
+                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key)) {
             for (Path path : paths) {
                 String name = path.getFileName().toString();
                 try {
@@ -177,7 +139,7 @@ public class PathNameUtility {
      * @param currentTime The time that we are running ETL for. To prevent border conditions, caller can add a buffer if needed.
      * @param extension The file extension.
      * @param granularity The granularity of this store.
-     * @param compressionMode Compression Mode
+     * @param pathResolver PathResolver
      * @param pv2key PVNameToKeyMapping
      * @return Path A list of all the paths
      * @throws IOException &emsp;
@@ -189,7 +151,7 @@ public class PathNameUtility {
             final Instant currentTime,
             final String extension,
             final PartitionGranularity granularity,
-            final PBCompressionMode compressionMode,
+            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         final long reqStartEpochSeconds = 1;
@@ -205,7 +167,7 @@ public class PathNameUtility {
                 reqEndTime,
                 extension,
                 granularity,
-                compressionMode,
+                pathResolver,
                 pv2key);
     }
 
@@ -217,8 +179,6 @@ public class PathNameUtility {
      * @param rootFolder      The root folder for the plugin
      * @param pvName          The name of the PV
      * @param extension       The file extension.
-     * @param granularity     The granularity of this store.
-     * @param compressionMode Compression Mode
      * @param pv2key          PVNameToKeyMapping
      * @return Path A list of all the paths
      * @throws IOException &emsp;
@@ -228,13 +188,12 @@ public class PathNameUtility {
             String rootFolder,
             final String pvName,
             final String extension,
-            final PartitionGranularity granularity,
-            final PBCompressionMode compressionMode,
+            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         ArrayList<Path> retval = new ArrayList<>();
-        try (DirectoryStream<Path> paths = getDirectoryStreamsForPV(
-                archPaths, rootFolder, pvName, extension, granularity, compressionMode, pv2key)) {
+        try (DirectoryStream<Path> paths =
+                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key)) {
             for (Path path : paths) {
                 retval.add(path);
             }
@@ -259,7 +218,7 @@ public class PathNameUtility {
      * @param startts         Instant start
      * @param extension       The file extension.
      * @param granularity     Partition granularity of the file.
-     * @param compressionMode Compression Mode
+     * @param pathResolver    Path Resolver
      * @param pv2key          PVNameToKeyMapping
      * @return Path A list of all the paths
      * @throws Exception &emsp;
@@ -271,12 +230,12 @@ public class PathNameUtility {
             final Instant startts,
             final String extension,
             final PartitionGranularity granularity,
-            final PBCompressionMode compressionMode,
+            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws Exception {
         if (logger.isDebugEnabled())
             logger.debug(pvName + ": Looking for most recent file before " + TimeUtils.convertToISO8601String(startts));
-        Path[] paths = getAllPathsForPV(archPaths, rootFolder, pvName, extension, granularity, compressionMode, pv2key);
+        Path[] paths = getAllPathsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key);
         if (paths.length == 0) return null;
 
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
@@ -315,7 +274,7 @@ public class PathNameUtility {
      * @param startts         Instant start
      * @param extension       The file extension.
      * @param granularity     Partition granularity of the file.
-     * @param compressionMode Compression Mode
+     * @param pathResolver    PathResolver
      * @param pv2key          PVNameToKeyMapping
      * @return Path A list of all the paths
      * @throws Exception &emsp;
@@ -327,13 +286,13 @@ public class PathNameUtility {
             final Instant startts,
             final String extension,
             final PartitionGranularity granularity,
-            final PBCompressionMode compressionMode,
+            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws Exception {
         if (logger.isDebugEnabled())
             logger.debug(
                     pvName + ": Looking for previous partition before " + TimeUtils.convertToISO8601String(startts));
-        Path[] paths = getAllPathsForPV(archPaths, rootFolder, pvName, extension, granularity, compressionMode, pv2key);
+        Path[] paths = getAllPathsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key);
         if (paths.length == 0) return null;
 
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
@@ -379,22 +338,13 @@ public class PathNameUtility {
             PartitionGranularity partitionGranularity,
             boolean createParentFolder,
             ArchPaths paths,
-            PBCompressionMode compressionMode,
+            PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String partitionNameComponent = TimeUtils.getPartitionName(ts, partitionGranularity);
         String pvKey = pv2key.convertPVNameToKey(pvName);
         String pvPathComponent = pvKey + partitionNameComponent + extension;
-        switch (compressionMode) {
-            case NONE -> {
-                return paths.get(createParentFolder, rootFolder, pvPathComponent);
-            }
-            case ZIP_PER_PV -> {
-                String zipPathComponent = pvKey + "_pb.zip!";
-                return paths.get(createParentFolder, rootFolder, zipPathComponent, pvPathComponent);
-            }
-            default -> throw new IOException("Unsupported compression mode " + compressionMode);
-        }
+        return pathResolver.get(paths, createParentFolder, rootFolder, pvPathComponent, pvKey);
     }
 
     /**
@@ -416,8 +366,7 @@ public class PathNameUtility {
      * @param paths           ArchPaths - The replacement for NIO Paths
      * @param rootFolder      The root folder for the plugin
      * @param pvName          Name of the PV.
-     * @param granularity     Partition granularity of the file.
-     * @param compressionMode Compression Mode
+     * @param pathResolver    PathResolver
      * @param pv2key          PVNameToKeyMapping
      * @return Path A list of all the paths
      * @throws IOException &emsp;
@@ -426,24 +375,14 @@ public class PathNameUtility {
             ArchPaths paths,
             String rootFolder,
             final String pvName,
-            final PartitionGranularity granularity,
-            PBCompressionMode compressionMode,
+            PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String pvKey = pv2key.convertPVNameToKey(pvName);
         boolean createParentFolder = false; // should we create parent folder if it does not exist
-        switch (compressionMode) {
-            case NONE -> {
-                Path path = paths.get(createParentFolder, rootFolder, pvKey);
-                return path.getParent();
-            }
-            case ZIP_PER_PV -> {
-                String zipPathComponent = pvKey + "_pb.zip!";
-                Path path = paths.get(createParentFolder, rootFolder, zipPathComponent, pvKey);
-                return path.getParent();
-            }
-            default -> throw new IOException("Unsupported compression mode " + compressionMode);
-        }
+        return pathResolver
+                .get(paths, createParentFolder, rootFolder, pvKey, pvKey)
+                .getParent();
     }
 
     /**
@@ -477,8 +416,7 @@ public class PathNameUtility {
      * @param rootFolder      The root folder for the plugin
      * @param pvName          Name of the PV.
      * @param extension       The file extension.
-     * @param granularity     Partition granularity of the file.
-     * @param compressionMode Compression Mode
+     * @param pathResolver    Path Resolver
      * @param pv2key          PVNameToKeyMapping
      * @return DirectoryStream  NIO2 directory stream;
      * @throws IOException &emsp;
@@ -488,12 +426,11 @@ public class PathNameUtility {
             String rootFolder,
             final String pvName,
             final String extension,
-            final PartitionGranularity granularity,
-            PBCompressionMode compressionMode,
+            PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         try {
-            Path parentFolder = getParentPath(paths, rootFolder, pvName, granularity, compressionMode, pv2key);
+            Path parentFolder = getParentPath(paths, rootFolder, pvName, pathResolver, pv2key);
             String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
             String matchGlob = pvFinalNameComponent + "*" + extension;
             logger.debug(pvName + ": Looking for " + matchGlob + " in parentFolder " + parentFolder.toString());
@@ -515,7 +452,7 @@ public class PathNameUtility {
     }
 
     /**
-     * The {@link PlainStoragePlugin} has a naming scheme that provides much information. This class encapsulates the
+     * The PlainPBStorage plugin has a naming scheme that provides much information. This class encapsulates the
      * potential start and end times of a particular chunk.
      */
     public static class StartEndTimeFromName {

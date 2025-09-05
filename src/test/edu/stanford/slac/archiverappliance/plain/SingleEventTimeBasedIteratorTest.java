@@ -4,12 +4,10 @@ import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PL
 import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
 
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
 import org.apache.commons.io.FileUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BasicContext;
-import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -84,8 +82,7 @@ public class SingleEventTimeBasedIteratorTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    PartitionGranularity.PARTITION_HOUR,
-                    PBCompressionMode.NONE,
+                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
             Assertions.assertEquals(1, paths.length, "We should get only one file, instead we got " + paths.length);
             long eventCount = 0;

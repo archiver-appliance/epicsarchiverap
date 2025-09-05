@@ -256,13 +256,15 @@ public class FileBackedPBEventStreamTest {
             long epochSeconds = getStartOfCurrentYearInSeconds()
                     + 7L * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk();
             Instant time = convertFromEpochSeconds(epochSeconds, 0);
-            try (EventStream stream = FileStreamCreator.getTimeStream(
-                    pvName,
-                    path,
-                    dbrType,
-                    time,
-                    time.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 2L),
-                    false)) {
+            try (EventStream stream = storagePlugin
+                    .getPlainFileHandler()
+                    .getTimeStream(
+                            pvName,
+                            path,
+                            dbrType,
+                            time,
+                            time.plusSeconds(PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 2L),
+                            false)) {
                 boolean firstEvent = true;
                 for (Event e : stream) {
                     if (firstEvent) {
