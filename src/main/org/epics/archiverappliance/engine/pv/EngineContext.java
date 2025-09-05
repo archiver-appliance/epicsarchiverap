@@ -896,7 +896,7 @@ public class EngineContext {
     public List<Map<String, String>> getCommandThreadDetails() {
         List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
         int i = 0;
-        for(JCACommandThread th : this.command_threads) {
+        for (JCACommandThread th : this.command_threads) {
             ret.addAll(th.getCommandThreadDetails(i));
             i++;
         }

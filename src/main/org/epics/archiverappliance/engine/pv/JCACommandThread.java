@@ -234,7 +234,7 @@ public class JCACommandThread extends Thread {
             obj.put("name", "Command thread id");
             obj.put("value", Integer.toString(threadId));
             obj.put("source", "engine");
-            ret.add(obj);    
+            ret.add(obj);
         }
 
         {
@@ -242,16 +242,15 @@ public class JCACommandThread extends Thread {
             obj.put("name", "Current command queue size");
             obj.put("value", Integer.toString(this.command_queue.size()));
             obj.put("source", "engine");
-            ret.add(obj);    
+            ret.add(obj);
         }
-
 
         {
             Map<String, String> obj = new LinkedHashMap<String, String>();
             obj.put("name", "Max command queue size");
             obj.put("value", Integer.toString(this.max_size_reached));
             obj.put("source", "engine");
-            ret.add(obj);    
+            ret.add(obj);
         }
 
         return ret;

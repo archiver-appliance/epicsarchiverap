@@ -7,12 +7,12 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.bpl.reports;
 
-import java.util.LinkedList;
-import java.util.Map;
-
 import org.epics.archiverappliance.common.reports.MetricsDetails;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.epics.CommandThreadDetails;
+
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Return connected/disconnected/paused PV counts as a JSON object.
@@ -22,9 +22,9 @@ import org.epics.archiverappliance.engine.epics.CommandThreadDetails;
  */
 public class CommandThreadReport implements MetricsDetails {
 
-	@Override
-	public LinkedList<Map<String, String>> metricsDetails(ConfigService configService) {
-		CommandThreadDetails ctd = new CommandThreadDetails();
+    @Override
+    public LinkedList<Map<String, String>> metricsDetails(ConfigService configService) {
+        CommandThreadDetails ctd = new CommandThreadDetails();
         return ctd.details(configService);
-	}
+    }
 }

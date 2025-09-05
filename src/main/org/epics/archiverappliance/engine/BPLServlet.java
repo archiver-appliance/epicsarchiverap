@@ -7,15 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine;
 
-import java.io.IOException;
-import java.util.HashMap;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -34,6 +25,7 @@ import org.epics.archiverappliance.engine.bpl.PVStatusAction;
 import org.epics.archiverappliance.engine.bpl.PausePVsOnShutdown;
 import org.epics.archiverappliance.engine.bpl.reports.ApplianceMetrics;
 import org.epics.archiverappliance.engine.bpl.reports.ApplianceMetricsDetails;
+import org.epics.archiverappliance.engine.bpl.reports.CommandThreadReport;
 import org.epics.archiverappliance.engine.bpl.reports.ConnectedPVCountForAppliance;
 import org.epics.archiverappliance.engine.bpl.reports.CurrentlyDisconnectedPVsAction;
 import org.epics.archiverappliance.engine.bpl.reports.DroppedEventsBufferOverflowReport;
@@ -50,7 +42,14 @@ import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.SlowChangingPVsWithDroppedEvents;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
 import org.epics.archiverappliance.engine.bpl.reports.WaveformPVsAction;
-import org.epics.archiverappliance.engine.bpl.reports.CommandThreadReport;
+
+import java.io.IOException;
+import java.util.HashMap;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * The main business logic servlet for the engine. All BPLActions are registered here.
@@ -59,64 +58,69 @@ import org.epics.archiverappliance.engine.bpl.reports.CommandThreadReport;
  */
 @SuppressWarnings("serial")
 public class BPLServlet extends HttpServlet {
-	private static final Logger logger = LogManager.getLogger(BPLServlet.class);
-	private static HashMap<String, Class<? extends BPLAction>> getActions = new HashMap<String, Class<? extends BPLAction>>();
-	static {
-		getActions.put("/getData.raw", GetEngineDataAction.class);
-		getActions.put("/getMetadata", GetLatestMetaDataAction.class);
-		getActions.put("/status", PVStatusAction.class);
-		getActions.put("/getMetaGetsForThisAppliance", MetaGetsForThisApplianceAction.class);
-		getActions.put("/getCurrentlyDisconnectedPVsForThisAppliance", CurrentlyDisconnectedPVsAction.class);
-		getActions.put("/getEventRateReport", EventRateReport.class);
-		getActions.put("/getStorageRateReport", StorageRateReport.class);
-		getActions.put("/getPVDetails", PVDetails.class);
-		getActions.put("/getApplianceMetrics", ApplianceMetrics.class);
-		getActions.put("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
-		getActions.put("/getConnectedPVCountForAppliance", ConnectedPVCountForAppliance.class);
-		getActions.put("/changeArchivalParameters", ChangeArchivalParamsAction.class);
-		getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
-		getActions.put("/getLostConnectionsReport", LostConnectionsReport.class);
-		getActions.put("/getSilentPVsReport", SilentPVReport.class);
-		getActions.put("/getPVsByDroppedEventsTimestamp",DroppedEventsTimestampReport.class);
-		getActions.put("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
-		getActions.put("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
-		getActions.put("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
-		getActions.put("/deletePV", DeletePV.class);
-		getActions.put("/listAllChannels", ListAllChannels.class);
-		getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
-		getActions.put("/pausePVsonShutdown", PausePVsOnShutdown.class);
-		getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
-		getActions.put("/getVersion", GetVersion.class);
-		getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
-		getActions.put("/getArchiveChannelObjectDetails", ArchiveChannelObjectDetailsAction.class);
-		getActions.put("/getLastKnownTimeStampReport", LastKnownTimeStampReport.class);
-		getActions.put("/getCommandThreadDetails", CommandThreadReport.class);
-		
-	}
+    private static final Logger logger = LogManager.getLogger(BPLServlet.class);
+    private static HashMap<String, Class<? extends BPLAction>> getActions =
+            new HashMap<String, Class<? extends BPLAction>>();
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String path = req.getPathInfo();
-		logger.info("Beginning request into Engine servlet " + path);
-		BasicDispatcher.dispatch(req, resp, configService, getActions);
-	}
-	
-	private static HashMap<String, Class<? extends BPLAction>> postActions = new HashMap<String, Class<? extends BPLAction>>();
-	static {
-		postActions.put("/status", PVStatusAction.class);
-		postActions.put("/getDataAtTime", GetDataAtTimeEngine.class);
-	}
-	
-	@Override
-	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		logger.info("Beginning POST request into Engine servlet " + req.getPathInfo());
-		BasicDispatcher.dispatch(req, resp, configService, postActions);
-	}
+    static {
+        getActions.put("/getData.raw", GetEngineDataAction.class);
+        getActions.put("/getMetadata", GetLatestMetaDataAction.class);
+        getActions.put("/status", PVStatusAction.class);
+        getActions.put("/getMetaGetsForThisAppliance", MetaGetsForThisApplianceAction.class);
+        getActions.put("/getCurrentlyDisconnectedPVsForThisAppliance", CurrentlyDisconnectedPVsAction.class);
+        getActions.put("/getEventRateReport", EventRateReport.class);
+        getActions.put("/getStorageRateReport", StorageRateReport.class);
+        getActions.put("/getPVDetails", PVDetails.class);
+        getActions.put("/getApplianceMetrics", ApplianceMetrics.class);
+        getActions.put("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
+        getActions.put("/getConnectedPVCountForAppliance", ConnectedPVCountForAppliance.class);
+        getActions.put("/changeArchivalParameters", ChangeArchivalParamsAction.class);
+        getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
+        getActions.put("/getLostConnectionsReport", LostConnectionsReport.class);
+        getActions.put("/getSilentPVsReport", SilentPVReport.class);
+        getActions.put("/getPVsByDroppedEventsTimestamp", DroppedEventsTimestampReport.class);
+        getActions.put("/getPVsByDroppedEventsBuffer", DroppedEventsBufferOverflowReport.class);
+        getActions.put("/getPVsByDroppedEventsTypeChange", DroppedEventsTypeChangeReport.class);
+        getActions.put("/getSlowChangingPVsWithDroppedEvents", SlowChangingPVsWithDroppedEvents.class);
+        getActions.put("/deletePV", DeletePV.class);
+        getActions.put("/listAllChannels", ListAllChannels.class);
+        getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
+        getActions.put("/pausePVsonShutdown", PausePVsOnShutdown.class);
+        getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
+        getActions.put("/getVersion", GetVersion.class);
+        getActions.put("/getArchivedWaveforms", WaveformPVsAction.class);
+        getActions.put("/getArchiveChannelObjectDetails", ArchiveChannelObjectDetailsAction.class);
+        getActions.put("/getLastKnownTimeStampReport", LastKnownTimeStampReport.class);
+        getActions.put("/getCommandThreadDetails", CommandThreadReport.class);
+    }
 
-	private ConfigService configService;
-	@Override
-	public void init(ServletConfig config) throws ServletException {
-		super.init(config);
-		configService = (ConfigService) getServletConfig().getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
-	}
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        String path = req.getPathInfo();
+        logger.info("Beginning request into Engine servlet " + path);
+        BasicDispatcher.dispatch(req, resp, configService, getActions);
+    }
+
+    private static HashMap<String, Class<? extends BPLAction>> postActions =
+            new HashMap<String, Class<? extends BPLAction>>();
+
+    static {
+        postActions.put("/status", PVStatusAction.class);
+        postActions.put("/getDataAtTime", GetDataAtTimeEngine.class);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        logger.info("Beginning POST request into Engine servlet " + req.getPathInfo());
+        BasicDispatcher.dispatch(req, resp, configService, postActions);
+    }
+
+    private ConfigService configService;
+
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        configService =
+                (ConfigService) getServletConfig().getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
+    }
 }
