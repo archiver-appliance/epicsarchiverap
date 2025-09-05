@@ -200,23 +200,24 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             ArrayList<Callable<EventStream>> ret,
             int pathsCount,
             int pathid,
+            PlainFileHandler plainFileHandler,
             ArchDBRTypes archDBRTypes)
             throws IOException {
         if (pathid == 0) {
             ret.add(CallableEventStream.makeOneStreamCallable(
-                    FileStreamCreator.getTimeStream(
+                    plainFileHandler.getTimeStream(
                             pvName, paths[pathid], archDBRTypes, startTime, endTime, doNotUseSearchForPositions),
                     postProcessor,
                     askingForProcessedDataButAbsentInCache));
         } else if (pathid == pathsCount - 1) {
             ret.add(CallableEventStream.makeOneStreamCallable(
-                    FileStreamCreator.getTimeStream(
+                    plainFileHandler.getTimeStream(
                             pvName, paths[pathid], archDBRTypes, startTime, endTime, doNotUseSearchForPositions),
                     postProcessor,
                     askingForProcessedDataButAbsentInCache));
         } else {
             ret.add(CallableEventStream.makeOneStreamCallable(
-                    FileStreamCreator.getStream(pvName, paths[pathid], archDBRTypes),
+                    plainFileHandler.getStream(pvName, paths[pathid], archDBRTypes),
                     postProcessor,
                     askingForProcessedDataButAbsentInCache));
         }
@@ -330,13 +331,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             askingForProcessedDataButAbsentInCache));
                 } else {
                     ret.add(CallableEventStream.makeOneStreamCallable(
-                            FileStreamCreator.getTimeStream(
-                                    pvName,
-                                    paths[0],
-                                    startTime,
-                                    endTime,
-                                    doNotUseSearchForPositions,
-                                    fileInfo.getType()),
+                            plainFileHandler.getTimeStream(
+                                    pvName, paths[0], startTime, endTime, doNotUseSearchForPositions, fileInfo),
                             postProcessor,
                             askingForProcessedDataButAbsentInCache));
                 }
@@ -355,6 +351,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             ret,
                             pathsCount,
                             pathid,
+                            plainFileHandler,
                             archDBRTypes);
                 }
             } else {
@@ -1024,7 +1021,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                                     + missingOrOlderPath.srcPath.toString() + " and pp with extension" + ppExt
                                     + ". Size of src before " + Files.size(missingOrOlderPath.srcPath));
                         Callable<EventStream> callable = CallableEventStream.makeOneStreamCallable(
-                                FileStreamCreator.getStream(pvName, missingOrOlderPath.srcPath, dbrtype),
+                                plainFileHandler.getStream(pvName, missingOrOlderPath.srcPath, dbrtype),
                                 postProcessor,
                                 true);
                         try (EventStream stream = callable.call()) {
@@ -1206,7 +1203,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             for (Path path : paths) {
                 logger.debug("Copying over data from " + path.toString() + " to new pv " + newName);
                 FileInfo info = fileInfo(path);
-                this.appendData(context, newName, FileStreamCreator.getStream(oldName, path, info.getType()));
+                this.appendData(context, newName, plainFileHandler.getStream(oldName, path, info.getType()));
             }
         }
 
@@ -1220,7 +1217,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 FileInfo info = fileInfo(path);
                 AppendDataStateData state = getAppendDataState(context, newName);
                 state.partitionBoundaryAwareAppendData(
-                        context, newName, FileStreamCreator.getStream(oldName, path, info.getType()), ppExt, null);
+                        context, newName, plainFileHandler.getStream(oldName, path, info.getType()), ppExt, null);
             }
         }
     }
@@ -1281,12 +1278,12 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
                 FileInfo info = fileInfo(path);
                 if (conversionFunction.shouldConvert(
-                        FileStreamCreator.getStream(pvName, path, info.getType()),
+                        plainFileHandler.getStream(pvName, path, info.getType()),
                         setimes.pathDataStartTime.toInstant(),
                         setimes.pathDataEndTime.toInstant())) {
                     try (EventStream convertedStream = new TimeSpanLimitEventStream(
                             conversionFunction.convertStream(
-                                    FileStreamCreator.getStream(pvName, path, info.getType()),
+                                    plainFileHandler.getStream(pvName, path, info.getType()),
                                     setimes.pathDataStartTime.toInstant(),
                                     setimes.pathDataEndTime.toInstant()),
                             setimes.pathDataStartTime.toInstant(),

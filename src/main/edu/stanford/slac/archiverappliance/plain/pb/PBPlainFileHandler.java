@@ -88,7 +88,7 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     @Override
     public EventStream getTimeStream(
-            String pvName, Path path, Instant start, Instant end, boolean skipSearch, PBFileInfo fileInfo)
+            String pvName, Path path, Instant start, Instant end, boolean skipSearch, FileInfo fileInfo)
             throws IOException {
         return new FileBackedPBEventStream(pvName, path, fileInfo.getType(), start, end, skipSearch);
     }

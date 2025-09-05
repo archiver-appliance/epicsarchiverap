@@ -1,6 +1,5 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.BiDirectionalIterable;
@@ -18,7 +17,7 @@ public interface PlainStreams {
             throws IOException;
 
     EventStream getTimeStream(
-            String pvName, Path path, Instant start, Instant end, boolean skipSearch, PBFileInfo fileInfo)
+            String pvName, Path path, Instant start, Instant end, boolean skipSearch, FileInfo fileInfo)
             throws IOException;
 
     EventStream getStream(String pvName, Path path, ArchDBRTypes dbrType) throws IOException;

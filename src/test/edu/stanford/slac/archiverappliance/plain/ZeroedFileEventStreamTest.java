@@ -123,7 +123,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    pbplugin.getPathResolver(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -162,7 +162,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = pbplugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 long eventCount = 0;
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
@@ -199,7 +199,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    srcPlugin.getPathResolver(),
+                    srcPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -266,7 +266,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName + "Dest",
                     pvName,
                     pbFileExtension,
-                    srcPlugin.getPathResolver(),
+                    srcPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -289,7 +289,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = srcPlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
                 }
@@ -378,7 +378,7 @@ public class ZeroedFileEventStreamTest {
                     destPlugin.getRootFolder(),
                     pvName,
                     pbFileExtension,
-                    destPlugin.getPathResolver(),
+                    destPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -460,7 +460,7 @@ public class ZeroedFileEventStreamTest {
                     destPlugin.getRootFolder(),
                     pvName,
                     pbFileExtension,
-                    destPlugin.getPathResolver(),
+                    destPlugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -489,7 +489,7 @@ public class ZeroedFileEventStreamTest {
                             && lastEventTs.isBefore(
                                     TimeUtils.convertFromISO8601String(currentYear + 1 + "-01-01T00:00:00.000Z")),
                     "Last event is incorrect " + TimeUtils.convertToHumanReadableString(lastEventTs));
-            try (EventStream strm = FileStreamCreator.getStream(pvName, path, type)) {
+            try (EventStream strm = destPlugin.getPlainFileHandler().getStream(pvName, path, type)) {
                 for (@SuppressWarnings("unused") Event e : strm) {
                     eventCount++;
                 }
@@ -527,7 +527,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    pbplugin.getPathResolver(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.error(e);
@@ -597,7 +597,7 @@ public class ZeroedFileEventStreamTest {
                     rootFolderName,
                     pvName,
                     pbFileExtension,
-                    pbplugin.getPathResolver(),
+                    pbplugin.getPlainFileHandler().getPathResolver(),
                     configService.getPVNameToKeyConverter());
         } catch (IOException e) {
             logger.warn(e);
