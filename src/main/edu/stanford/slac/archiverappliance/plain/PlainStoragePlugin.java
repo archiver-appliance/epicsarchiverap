@@ -1266,7 +1266,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     private void convertDataToNewFile(
             BasicContext context,
             String pvName,
-            ConversionFunction conversionFuntion,
+            ConversionFunction conversionFunction,
             String randSuffix,
             List<String> postProcessors)
             throws IOException {
@@ -1284,12 +1284,12 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 PathNameUtility.StartEndTimeFromName setimes = PathNameUtility.determineTimesFromFileName(
                         pvName, path.getFileName().toString(), partitionGranularity, this.pv2key);
                 FileInfo info = fileInfo(path);
-                if (conversionFuntion.shouldConvert(
+                if (conversionFunction.shouldConvert(
                         FileStreamCreator.getStream(pvName, path, info.getType()),
                         setimes.pathDataStartTime.toInstant(),
                         setimes.pathDataEndTime.toInstant())) {
                     try (EventStream convertedStream = new TimeSpanLimitEventStream(
-                            conversionFuntion.convertStream(
+                            conversionFunction.convertStream(
                                     FileStreamCreator.getStream(pvName, path, info.getType()),
                                     setimes.pathDataStartTime.toInstant(),
                                     setimes.pathDataEndTime.toInstant()),
