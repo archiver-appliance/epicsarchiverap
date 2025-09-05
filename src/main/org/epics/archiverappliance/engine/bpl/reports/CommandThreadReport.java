@@ -15,8 +15,8 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * Return connected/disconnected/paused PV counts as a JSON object.
- * Used for internal purposes
+ * Return the current and max depth of the JCA command queues. 
+ * Used for debugging; can be useful if you see a lot of transient errors for  PV.
  * @author mshankar
  *
  */
