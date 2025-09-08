@@ -42,6 +42,7 @@ public class HashMapEvent implements DBRTimeEvent {
     public static final String SECS_FIELD_NAME = "secs";
     public static final String NANO_FIELD_NAME = "nano";
     public static final String VALUE_FIELD_NAME = "value";
+    public static final String RAW_VALUE_FIELD_NAME = "raw_value";
     public static final String STAT_FIELD_NAME = "stat";
     public static final String SEVR_FIELD_NAME = "sevr";
     public static final String FIELD_VALUES_FIELD_NAME = "fields";
@@ -73,7 +74,8 @@ public class HashMapEvent implements DBRTimeEvent {
         if (event.isActualChange()) {
             values.put(FIELD_VALUES_ACTUAL_CHANGE, Boolean.TRUE.toString());
         }
-        values.put(VALUE_FIELD_NAME, event.getSampleValue());
+        values.put(VALUE_FIELD_NAME, event.getSampleValue().toString());
+        values.put(RAW_VALUE_FIELD_NAME, event.getSampleValue());
     }
 
     public void setValue(String name, String newValue) {
@@ -150,10 +152,10 @@ public class HashMapEvent implements DBRTimeEvent {
 
     @Override
     public SampleValue getSampleValue() {
-        Object value = values.get(VALUE_FIELD_NAME);
-        if (value instanceof SampleValue sampleValue) {
-            return sampleValue;
+        if (values.containsKey(RAW_VALUE_FIELD_NAME)) {
+            return (SampleValue) values.get(RAW_VALUE_FIELD_NAME);
         }
+        Object value = values.get(VALUE_FIELD_NAME);
         List<String> vals = null;
         if (type.isWaveForm()) {
             vals = valueToStringList(value);
