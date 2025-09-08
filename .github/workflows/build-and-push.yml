@@ -93,6 +93,7 @@ jobs:
             latest=false
             prefix=${{matrix.imagetag}}-
           tags: |
+            type=ref,event=tag,prefix=${{ matrix.imagetag }}-
             type=ref,event=pr,prefix=${{ matrix.imagetag }}-pr-
             type=sha,prefix=${{ matrix.imagetag }}-
       - name: Set up Docker Buildx
