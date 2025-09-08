@@ -154,7 +154,7 @@ public class EngineContext {
         command_threads = new JCACommandThread[commandThreadCount];
         System.getProperties().setProperty("jca.use_env", "true");
         for (int threadNum = 0; threadNum < command_threads.length; threadNum++) {
-            command_threads[threadNum] = new JCACommandThread();
+            command_threads[threadNum] = new JCACommandThread(threadNum);
             command_threads[threadNum].start();
         }
 
@@ -891,5 +891,13 @@ public class EngineContext {
                         Predicates.equal("paused", true)),
                 Projections.singleAttribute("pvName"));
         return pausedPVs.size();
+    }
+
+    public List<Map<String, String>> getCommandThreadDetails() {
+        List<Map<String, String>> ret = new LinkedList<Map<String, String>>();
+        for (JCACommandThread th : this.command_threads) {
+            ret.addAll(th.getCommandThreadDetails());
+        }
+        return ret;
     }
 }
