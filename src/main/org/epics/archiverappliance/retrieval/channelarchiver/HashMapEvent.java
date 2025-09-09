@@ -129,7 +129,7 @@ public class HashMapEvent implements DBRTimeEvent {
                 }
                 logger.error("Value parsed from string is not JSON Array {}", stringValue);
 
-                return List.of(parsed.toString());
+                return List.of();
             } catch (ParseException e) {
                 logger.error("Failed to parse value as JSON array", e);
                 return List.of();
