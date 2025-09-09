@@ -27,7 +27,9 @@ import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.FieldValues;
+import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.data.VectorValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.PVWithData;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
@@ -44,8 +46,11 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.Period;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -60,8 +65,12 @@ import java.util.stream.Stream;
  */
 public class GetDataAtTimeForPVFromStoresTest {
     private static final Logger logger = LogManager.getLogger(GetDataAtTimeForPVFromStoresTest.class.getName());
-    private static final String pvNameBase = "GetDataAtTimeForPVFromStoresTest";
-    private static final ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
+    private static final String[] pvs = new String[] {
+        GetDataAtTimeForPVFromStoresTest.class.getName() + "Double",
+        GetDataAtTimeForPVFromStoresTest.class.getName() + "Waveform"
+    };
+    private static final ArchDBRTypes[] dbrTypes =
+            new ArchDBRTypes[] {ArchDBRTypes.DBR_SCALAR_DOUBLE, ArchDBRTypes.DBR_WAVEFORM_DOUBLE};
     private static final ConfigServiceForTests configService;
     private static final short currentYear = TimeUtils.getCurrentYear();
     private static final Instant now = TimeUtils.now();
@@ -108,20 +117,28 @@ public class GetDataAtTimeForPVFromStoresTest {
         FileUtils.deleteDirectory(new File(getStoragePlugin().getRootFolder()));
     }
 
-    private static void createTestData() throws IOException {
-        createTestDataType();
+    private static void createTestData() {
+        IntStream.range(0, pvs.length).forEach(i -> {
+            try {
+                createTestDataType(pvs[i], dbrTypes[i]);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
-    private static void createTestDataType() throws IOException {
+    private static void createTestDataType(String pvName, ArchDBRTypes dbrType) throws IOException {
         PlainStoragePlugin storagePlugin = getStoragePlugin();
-        String pvName = pvNameBase;
         try (BasicContext context = new BasicContext()) {
-            ArrayListEventStream events = new ArrayListEventStream(
-                    currentYear, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
+            ArrayListEventStream events =
+                    new ArrayListEventStream(currentYear, new RemotableEventStreamDesc(dbrType, pvName, currentYear));
             Instant dataTs = yesterday;
             while (dataTs.isBefore(now)) {
-                DBRTimeEvent ev = (DBRTimeEvent)
-                        new POJOEvent(dbrType, dataTs, new ScalarValue<>(dataTs.getEpochSecond()), 0, 0).makeClone();
+                SampleValue value;
+                if (dbrType == ArchDBRTypes.DBR_SCALAR_DOUBLE)
+                    value = new ScalarValue<>((double) dataTs.getEpochSecond());
+                else value = new VectorValue<>(List.of((double) dataTs.getEpochSecond()));
+                DBRTimeEvent ev = (DBRTimeEvent) new POJOEvent(dbrType, dataTs, value, 0, 0).makeClone();
                 if (dataTs.equals(ago_12hrs)) {
                     logger.info("Daily refresh of meta at -12hrs");
                     ev.addFieldValue("HIHI", "HIHI_@_12");
@@ -149,7 +166,7 @@ public class GetDataAtTimeForPVFromStoresTest {
         }
 
         try {
-            PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+            PVTypeInfo typeInfo = new PVTypeInfo(pvName, dbrType, !dbrType.isWaveForm(), 1);
             String[] dataStores = new String[] {storageString};
             typeInfo.setDataStores(dataStores);
             typeInfo.setApplianceIdentity(configService.getMyApplianceInfo().getIdentity());
@@ -161,43 +178,48 @@ public class GetDataAtTimeForPVFromStoresTest {
     }
 
     public static Stream<Arguments> provideTimesAndFields() {
-        return Stream.of(
-                Arguments.of(
-                        now,
-                        Map.of(
-                                "HIHI", "HIHI_@_3",
-                                "LOLO", "LOLO_@_6",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(
-                        now.minus(4, ChronoUnit.HOURS),
-                        Map.of(
-                                "HIHI", "HIHI_@_6",
-                                "LOLO", "LOLO_@_6",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(
-                        now.minus(7, ChronoUnit.HOURS),
-                        Map.of(
-                                "HIHI", "HIHI_@_9",
-                                "LOLO", "LOLO_@_12",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(
-                        now.minus(10, ChronoUnit.HOURS),
-                        Map.of(
-                                "HIHI", "HIHI_@_12",
-                                "LOLO", "LOLO_@_12",
-                                "HIGH", "HIGH_@_12",
-                                "LOW", "LOW_@_12")),
-                Arguments.of(now.minus(16, ChronoUnit.HOURS), null));
+        return Arrays.stream(pvs)
+                .flatMap(pv -> Stream.of(
+                        Arguments.of(
+                                pv,
+                                now,
+                                Map.of(
+                                        "HIHI", "HIHI_@_3",
+                                        "LOLO", "LOLO_@_6",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12")),
+                        Arguments.of(
+                                pv,
+                                now.minus(4, ChronoUnit.HOURS),
+                                Map.of(
+                                        "HIHI", "HIHI_@_6",
+                                        "LOLO", "LOLO_@_6",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12")),
+                        Arguments.of(
+                                pv,
+                                now.minus(7, ChronoUnit.HOURS),
+                                Map.of(
+                                        "HIHI", "HIHI_@_9",
+                                        "LOLO", "LOLO_@_12",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12")),
+                        Arguments.of(
+                                pv,
+                                now.minus(10, ChronoUnit.HOURS),
+                                Map.of(
+                                        "HIHI", "HIHI_@_12",
+                                        "LOLO", "LOLO_@_12",
+                                        "HIGH", "HIGH_@_12",
+                                        "LOW", "LOW_@_12")),
+                        Arguments.of(pv, now.minus(16, ChronoUnit.HOURS), null)));
     }
 
     @ParameterizedTest
     @MethodSource("provideTimesAndFields")
-    void testGetData(Instant when, Map<String, String> expectedFieldVals) {
+    void testGetData(String pv, Instant when, Map<String, String> expectedFieldVals) {
         Period searchPeriod = Period.parse("P1D");
-        PVWithData pvWithData = getDataAtTimeForPVFromStores(pvNameBase, when, searchPeriod, configService);
+        PVWithData pvWithData = getDataAtTimeForPVFromStores(pv, when, searchPeriod, configService);
         Event pvData = pvWithData.event();
         Assertions.assertNotNull(pvData, "Getting at time " + when + " returns null?");
         logger.info(JSONValue.toJSONString(pvWithData));
