@@ -134,10 +134,10 @@ public class GetDataAtTimeForPVFromStoresTest {
                     new ArrayListEventStream(currentYear, new RemotableEventStreamDesc(dbrType, pvName, currentYear));
             Instant dataTs = yesterday;
             while (dataTs.isBefore(now)) {
-                SampleValue value;
-                if (dbrType == ArchDBRTypes.DBR_SCALAR_DOUBLE)
-                    value = new ScalarValue<>((double) dataTs.getEpochSecond());
-                else value = new VectorValue<>(List.of((double) dataTs.getEpochSecond()));
+                SampleValue value = dbrType == ArchDBRTypes.DBR_SCALAR_DOUBLE
+                        ? new ScalarValue<>((double) dataTs.getEpochSecond())
+                        : new VectorValue<>(List.of((double) dataTs.getEpochSecond()));
+
                 DBRTimeEvent ev = (DBRTimeEvent) new POJOEvent(dbrType, dataTs, value, 0, 0).makeClone();
                 if (dataTs.equals(ago_12hrs)) {
                     logger.info("Daily refresh of meta at -12hrs");
