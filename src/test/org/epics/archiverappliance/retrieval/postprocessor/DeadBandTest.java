@@ -88,7 +88,7 @@ public class DeadBandTest {
 
     @Test
     public void testRetrievalPV1() throws Exception {
-        File destFile = new File(ltsFolder + "/TST-CT{}Sig/1-I:2014.pb");
+        File destFile = new File(ltsFolder + "/TST/CT{}Sig/1/I:2014.pb");
         String srcFile = "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/deadband/sig1-wo-adel.pb";
         destFile.getParentFile().mkdirs();
         FileUtils.copyFile(new File(srcFile), destFile);
