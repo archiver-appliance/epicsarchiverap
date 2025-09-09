@@ -66,7 +66,7 @@ public class DataDrivenPostProcessorTest {
 
     @Test
     public void testRetrievalPV1() throws Exception {
-        File destFile = new File(ltsFolder + "/LN/AM/RadMon/2/DoseRate/I:2014.pb");
+        File destFile = new File(ltsFolder + "/LN/AM{RadMon/2}DoseRate/I:2014.pb");
         String srcFile = "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/test1/lrm01_raw.pb";
         destFile.getParentFile().mkdirs();
         FileUtils.copyFile(new File(srcFile), destFile);
