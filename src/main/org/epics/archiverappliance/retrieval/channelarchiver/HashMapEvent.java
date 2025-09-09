@@ -185,7 +185,6 @@ public class HashMapEvent implements DBRTimeEvent {
             }
             case DBR_WAVEFORM_FLOAT:
             case DBR_WAVEFORM_DOUBLE: {
-                // No choice but to add this SuppressWarnings here.
                 LinkedList<Double> dvals = new LinkedList<Double>();
                 for (String val : vals) dvals.add(Double.parseDouble(val));
                 return new VectorValue<Double>(dvals);
@@ -194,7 +193,6 @@ public class HashMapEvent implements DBRTimeEvent {
             case DBR_WAVEFORM_SHORT:
             case DBR_WAVEFORM_BYTE:
             case DBR_WAVEFORM_INT: {
-                // No choice but to add this SuppressWarnings here.
                 LinkedList<Integer> ivals = new LinkedList<Integer>();
                 for (String val : vals) ivals.add(Integer.parseInt(val));
                 return new VectorValue<Integer>(ivals);
