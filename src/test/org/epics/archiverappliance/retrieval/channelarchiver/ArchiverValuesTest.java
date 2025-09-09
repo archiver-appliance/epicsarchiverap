@@ -11,9 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -25,14 +23,8 @@ import java.util.HashMap;
  * @author mshankar
  *
  */
-public class ArchiverValuesTest {
-    private static Logger logger = LogManager.getLogger(ArchiverValuesTest.class.getName());
-
-    @BeforeEach
-    public void setUp() throws Exception {}
-
-    @AfterEach
-    public void tearDown() throws Exception {}
+class ArchiverValuesTest {
+    private static final Logger logger = LogManager.getLogger(ArchiverValuesTest.class.getName());
 
     @Test
     public void testDBR_SCALAR_DOUBLE() throws Exception {
@@ -54,24 +46,23 @@ public class ArchiverValuesTest {
             Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
             Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-            Assertions.assertTrue(
-                    handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_DOUBLE,
+            Assertions.assertSame(
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    handler.getValueType().getDBRType(handler.getElementCount()),
                     "Type is " + handler.getValueType().getDBRType(handler.getElementCount())
                             + " expecting DBR_DOUBLE");
-            Assertions.assertTrue(handler.getElementCount() == 1, "Element Count is " + handler.getElementCount());
+            Assertions.assertEquals(1, handler.getElementCount(), "Element Count is " + handler.getElementCount());
 
             int expectedEventCount = 100;
             int eventCount = 0;
             for (Event event : handler) {
-                StringBuilder eventStr = new StringBuilder();
-                eventStr.append(
+                logger.debug(
                         event.getEpochSeconds() + "," + event.getSampleValue().toString());
-                logger.debug(eventStr.toString());
                 eventCount++;
             }
 
-            Assertions.assertTrue(
-                    eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
+            Assertions.assertEquals(
+                    eventCount, expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
         }
     }
 
@@ -95,8 +86,9 @@ public class ArchiverValuesTest {
             Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
             Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-            Assertions.assertTrue(
-                    handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_WAVEFORM_DOUBLE,
+            Assertions.assertSame(
+                    ArchDBRTypes.DBR_WAVEFORM_DOUBLE,
+                    handler.getValueType().getDBRType(handler.getElementCount()),
                     "Type is " + handler.getValueType().getDBRType(handler.getElementCount())
                             + " expecting DBR_WAVEFORM_DOUBLE");
             Assertions.assertTrue(handler.getElementCount() > 1, "Element Count is " + handler.getElementCount());
@@ -104,10 +96,8 @@ public class ArchiverValuesTest {
             int expectedEventCount = 5;
             int eventCount = 0;
             for (Event event : handler) {
-                StringBuilder eventStr = new StringBuilder();
-                eventStr.append(
+                logger.debug(
                         event.getEpochSeconds() + "," + event.getSampleValue().toString());
-                logger.debug(eventStr.toString());
                 Assertions.assertTrue(
                         (event.getSampleValue().getElementCount() == 7200),
                         "Invalid event count, we got " + event.getSampleValue().getElementCount());
@@ -115,8 +105,8 @@ public class ArchiverValuesTest {
                 eventCount++;
             }
 
-            Assertions.assertTrue(
-                    eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
+            Assertions.assertEquals(
+                    eventCount, expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
         }
     }
 
@@ -139,29 +129,28 @@ public class ArchiverValuesTest {
             Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
             Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-            Assertions.assertTrue(
-                    handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_ENUM,
+            Assertions.assertSame(
+                    ArchDBRTypes.DBR_SCALAR_ENUM,
+                    handler.getValueType().getDBRType(handler.getElementCount()),
                     "Type is " + handler.getValueType().getDBRType(handler.getElementCount())
                             + " expecting DBR_SCALAR_ENUM");
-            Assertions.assertTrue(handler.getElementCount() == 1, "Element Count is " + handler.getElementCount());
+            Assertions.assertEquals(1, handler.getElementCount(), "Element Count is " + handler.getElementCount());
 
             int expectedEventCount = 0;
             int eventCount = 0;
             for (Event event : handler) {
-                StringBuilder eventStr = new StringBuilder();
-                eventStr.append(
+                logger.debug(
                         event.getEpochSeconds() + "," + event.getSampleValue().toString());
-                logger.debug(eventStr.toString());
                 eventCount++;
             }
 
-            Assertions.assertTrue(
-                    eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
+            Assertions.assertEquals(
+                    eventCount, expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
         }
     }
 
     @Test
-    public void testTwoElementsTest() throws Exception {
+    void testTwoElementsTest() throws Exception {
         File f = new File("src/test/org/epics/archiverappliance/retrieval/channelarchiver/TwoElementsTest.xml");
         logger.info("Testing using " + f.getAbsolutePath());
         FileInputStream is = new FileInputStream(f);
@@ -179,24 +168,23 @@ public class ArchiverValuesTest {
             Assertions.assertTrue((metaInfo.get("units") != null), "Could not determine " + "units");
             Assertions.assertTrue((metaInfo.get("prec") != null), "Could not determine " + "prec");
 
-            Assertions.assertTrue(
-                    handler.getValueType().getDBRType(handler.getElementCount()) == ArchDBRTypes.DBR_SCALAR_DOUBLE,
+            Assertions.assertSame(
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    handler.getValueType().getDBRType(handler.getElementCount()),
                     "Type is " + handler.getValueType().getDBRType(handler.getElementCount())
                             + " expecting DBR_DOUBLE");
-            Assertions.assertTrue(handler.getElementCount() == 1, "Element Count is " + handler.getElementCount());
+            Assertions.assertEquals(1, handler.getElementCount(), "Element Count is " + handler.getElementCount());
 
             int expectedEventCount = 2;
             int eventCount = 0;
             for (Event event : handler) {
-                StringBuilder eventStr = new StringBuilder();
-                eventStr.append(
+                logger.debug(
                         event.getEpochSeconds() + "," + event.getSampleValue().toString());
-                logger.debug(eventStr.toString());
                 eventCount++;
             }
 
-            Assertions.assertTrue(
-                    eventCount == expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
+            Assertions.assertEquals(
+                    eventCount, expectedEventCount, "Expected " + expectedEventCount + " and got " + eventCount);
         }
     }
 }
