@@ -712,7 +712,7 @@ public class MetaInfo {
 		retVal.put("DRVH", Double.toString(upperCtrlLimit));
 		retVal.put("PREC", Double.toString(precision));
 		if(unit != null) { retVal.put("EGU", unit); } 
-		retVal.put("NELM", Integer.toString(count));
+		retVal.put("EAA_COUNT", Integer.toString(count));
 		for(String fieldName : otherMetaInfo.keySet()) {
 			retVal.put(fieldName, otherMetaInfo.get(fieldName));
 		}
