@@ -427,6 +427,8 @@ public class GetDataAtTime {
 
         try (PrintWriter out = resp.getWriter()) {
             JSONValue.writeJSONString(ret, out);
+        } catch (Exception ex) {
+            logger.error("Exception converting samples to JSON", ex);
         }
     }
 }

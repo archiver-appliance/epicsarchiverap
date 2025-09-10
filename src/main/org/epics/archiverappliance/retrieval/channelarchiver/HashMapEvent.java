@@ -8,6 +8,8 @@
 package org.epics.archiverappliance.retrieval.channelarchiver;
 
 import com.google.protobuf.Message;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -18,11 +20,15 @@ import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorStringSampleValue;
 import org.epics.archiverappliance.data.VectorValue;
+import org.json.JSONArray;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,13 +38,16 @@ import java.util.Map;
  *
  */
 public class HashMapEvent implements DBRTimeEvent {
+    private static final Logger logger = LogManager.getLogger(HashMapEvent.class);
     public static final String SECS_FIELD_NAME = "secs";
     public static final String NANO_FIELD_NAME = "nano";
     public static final String VALUE_FIELD_NAME = "value";
+    public static final String RAW_VALUE_FIELD_NAME = "raw_value";
     public static final String STAT_FIELD_NAME = "stat";
     public static final String SEVR_FIELD_NAME = "sevr";
     public static final String FIELD_VALUES_FIELD_NAME = "fields";
     public static final String FIELD_VALUES_ACTUAL_CHANGE = "fieldsAreActualChange";
+    private static final JSONParser parser = new JSONParser();
 
     private final Map<String, Object> values;
     private final ArchDBRTypes type;
@@ -66,6 +75,7 @@ public class HashMapEvent implements DBRTimeEvent {
             values.put(FIELD_VALUES_ACTUAL_CHANGE, Boolean.TRUE.toString());
         }
         values.put(VALUE_FIELD_NAME, event.getSampleValue().toString());
+        values.put(RAW_VALUE_FIELD_NAME, event.getSampleValue());
     }
 
     public void setValue(String name, String newValue) {
@@ -111,17 +121,53 @@ public class HashMapEvent implements DBRTimeEvent {
         throw new UnsupportedOperationException("There should be no need to support a raw form here.");
     }
 
+    static List<String> valueToStringList(Object value) {
+        if (value instanceof String stringValue) {
+
+            try {
+                Object parsed = parser.parse(stringValue);
+                if (parsed instanceof JSONArray jsonArray) {
+                    return jsonArray.toList().stream().map(Object::toString).toList();
+                }
+                logger.error("Value parsed from string is not JSON Array {}", stringValue);
+
+                return List.of();
+            } catch (ParseException e) {
+                logger.error("Failed to parse value as JSON array", e);
+                return List.of();
+            }
+        }
+        if (value instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> stringList = (List<String>) value;
+            return stringList;
+        }
+        if (value != null) {
+            logger.warn(
+                    "Cannot convert waveform value of type {} to a List<String>",
+                    value.getClass().getName());
+        }
+        return List.of();
+    }
+
     @Override
     public SampleValue getSampleValue() {
+        if (values.containsKey(RAW_VALUE_FIELD_NAME)) {
+            return (SampleValue) values.get(RAW_VALUE_FIELD_NAME);
+        }
+        Object value = values.get(VALUE_FIELD_NAME);
+        List<String> vals = null;
+        if (type.isWaveForm()) {
+            vals = valueToStringList(value);
+        }
         switch (type) {
             case DBR_SCALAR_FLOAT:
             case DBR_SCALAR_DOUBLE: {
-                String strValue = (String) values.get(VALUE_FIELD_NAME);
+                String strValue = (String) value;
                 try {
                     return new ScalarValue<Double>(Double.parseDouble(strValue));
                 } catch (NumberFormatException nex) {
                     if (strValue.equals("nan")) {
-                        // logger.debug("Got a nan from the ChannelArchiver; returning Double.Nan instead");
                         return new ScalarValue<Double>(Double.NaN);
                     } else {
                         throw nex;
@@ -132,18 +178,15 @@ public class HashMapEvent implements DBRTimeEvent {
             case DBR_SCALAR_SHORT:
             case DBR_SCALAR_ENUM:
             case DBR_SCALAR_INT: {
-                String strValue = (String) values.get(VALUE_FIELD_NAME);
+                String strValue = (String) value;
                 return new ScalarValue<Integer>(Integer.parseInt(strValue));
             }
             case DBR_SCALAR_STRING: {
-                String strValue = (String) values.get(VALUE_FIELD_NAME);
+                String strValue = (String) value;
                 return new ScalarStringSampleValue(strValue);
             }
             case DBR_WAVEFORM_FLOAT:
             case DBR_WAVEFORM_DOUBLE: {
-                // No choice but to add this SuppressWarnings here.
-                @SuppressWarnings("unchecked")
-                LinkedList<String> vals = (LinkedList<String>) values.get(VALUE_FIELD_NAME);
                 LinkedList<Double> dvals = new LinkedList<Double>();
                 for (String val : vals) dvals.add(Double.parseDouble(val));
                 return new VectorValue<Double>(dvals);
@@ -152,21 +195,16 @@ public class HashMapEvent implements DBRTimeEvent {
             case DBR_WAVEFORM_SHORT:
             case DBR_WAVEFORM_BYTE:
             case DBR_WAVEFORM_INT: {
-                // No choice but to add this SuppressWarnings here.
-                @SuppressWarnings("unchecked")
-                LinkedList<String> vals = (LinkedList<String>) values.get(VALUE_FIELD_NAME);
                 LinkedList<Integer> ivals = new LinkedList<Integer>();
                 for (String val : vals) ivals.add(Integer.parseInt(val));
                 return new VectorValue<Integer>(ivals);
             }
             case DBR_WAVEFORM_STRING: {
                 // No choice but to add this SuppressWarnings here.
-                @SuppressWarnings("unchecked")
-                LinkedList<String> vals = (LinkedList<String>) values.get(VALUE_FIELD_NAME);
                 return new VectorStringSampleValue(vals);
             }
             case DBR_V4_GENERIC_BYTES: {
-                return new ByteBufSampleValue((ByteBuffer) values.get(VALUE_FIELD_NAME));
+                return new ByteBufSampleValue(ByteBuffer.wrap(value.toString().getBytes()));
             }
             default:
                 throw new UnsupportedOperationException("Unknown DBR type " + type);
