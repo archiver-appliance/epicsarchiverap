@@ -65,8 +65,8 @@ public class HoldAndGatherTest {
         ConfigServiceForTests configService = new ConfigServiceForTests(-1);
         srcSetup.setUpRootFolder(etlSrc, "ETLHoldGatherTest_" + granularity, granularity);
 
-        etlSrc.setHoldETLForPartions(hold);
-        etlSrc.setGatherETLinPartitions(gather);
+        etlSrc.setHoldETLForPartitions(hold);
+        etlSrc.setGatherETLInPartitions(gather);
 
         BlackholeStoragePlugin etlDest = new BlackholeStoragePlugin();
 
