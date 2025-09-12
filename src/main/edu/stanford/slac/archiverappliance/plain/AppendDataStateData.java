@@ -181,7 +181,7 @@ public abstract class AppendDataStateData {
             // This takes nanos into account as well.
             logger.debug(desc + ": Skipping data with a timestamp "
                     + TimeUtils.convertToISO8601String(timeStamp)
-                    + "older than the previous timstamp "
+                    + "older than the previous timestamp "
                     + TimeUtils.convertToISO8601String(this.lastKnownTimeStamp));
             return true;
         }
@@ -191,7 +191,7 @@ public abstract class AppendDataStateData {
             // times.
             logger.info(desc + ": Skipping data with a timestamp "
                     + TimeUtils.convertToISO8601String(timeStamp)
-                    + "older than the previous timstamp "
+                    + "older than the previous timestamp "
                     + TimeUtils.convertToISO8601String(this.lastKnownTimeStamp));
 
             return true;
