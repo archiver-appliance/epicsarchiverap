@@ -12,6 +12,7 @@ import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
 import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
@@ -40,14 +41,13 @@ import java.util.LinkedList;
  * If the -b option is specified; then the original file is moved to a new file with a <code>.bak.</code> extension.
  *
  * @author mshankar
- *
  */
 public class ValidateAndFixPBFile {
-    private static Logger logger = LogManager.getLogger(ValidateAndFixPBFile.class.getName());
+    private static final Logger logger = LogManager.getLogger(ValidateAndFixPBFile.class.getName());
 
     /**
-     * @param args  &emsp;
-     * @throws Exception  &emsp;
+     * @param args &emsp;
+     * @throws Exception &emsp;
      */
     public static void main(String[] args) throws Exception {
         if (args == null || args.length <= 0) {
@@ -94,7 +94,8 @@ public class ValidateAndFixPBFile {
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                boolean isValid = ValidatePlainFile.validatePlainFile(file, verboseMode);
+                                boolean isValid = ValidatePlainFile.validatePlainFile(
+                                        file, verboseMode, new PBPlainFileHandler());
                                 if (!isValid) {
                                     logger.debug("Path " + file + " is not a valid PB file");
                                     fixPBFile(file, verboseMode, makeBackups);
@@ -113,7 +114,7 @@ public class ValidateAndFixPBFile {
                             }
                         }.init(verboseMode, makeBackups));
             } else {
-                boolean isValid = ValidatePlainFile.validatePlainFile(path, verboseMode);
+                boolean isValid = ValidatePlainFile.validatePlainFile(path, verboseMode, new PBPlainFileHandler());
                 if (!isValid) {
                     logger.debug("Path " + path + " is not a valid PB file");
                     fixPBFile(path, verboseMode, makeBackups);
@@ -147,8 +148,7 @@ public class ValidateAndFixPBFile {
                         + " and the temp file name " + tempPath + " are the same ");
             }
             if (verboseMode)
-                logger.info("Temporary file is " + tempPath.toString() + " with final component of temp file "
-                        + tempFileName);
+                logger.info("Temporary file is " + tempPath + " with final component of temp file " + tempFileName);
             try {
                 FileInfo info = new PBFileInfo(path);
                 long previousEpochSeconds = Long.MIN_VALUE;
@@ -175,12 +175,11 @@ public class ValidateAndFixPBFile {
                                 os.write(LineEscaper.NEWLINE_CHAR);
                             } else {
                                 if (verboseMode)
-                                    logger.debug("Skipping non sequential event " + eventnum + " in file "
-                                            + path.toString());
+                                    logger.debug("Skipping non sequential event " + eventnum + " in file " + path);
                                 skippedEvents++;
                             }
                         } catch (Throwable t) {
-                            if (verboseMode) logger.debug("Skipping event " + eventnum + " in file " + path.toString());
+                            if (verboseMode) logger.debug("Skipping event " + eventnum + " in file " + path);
                             skippedEvents++;
                         }
                         eventnum++;
