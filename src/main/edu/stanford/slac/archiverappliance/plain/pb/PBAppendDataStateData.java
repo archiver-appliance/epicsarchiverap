@@ -35,6 +35,7 @@ import java.time.Instant;
  */
 public class PBAppendDataStateData extends AppendDataStateData {
     private static final Logger logger = LogManager.getLogger(PBAppendDataStateData.class.getName());
+    public static final int BULK_BUFFER_INITIAL_CAPACITY = 1024 * 1024;
     private final PBCompressionMode compressionMode;
     private OutputStream os = null;
 
@@ -236,7 +237,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
         try (ByteChannel destChannel = Files.newByteChannel(pvPath, StandardOpenOption.APPEND);
                 ReadableByteChannel srcChannel = byteStream.getByteChannel(context)) {
             logger.debug("ETL bulk appends for pv " + pvName);
-            ByteBuffer buf = ByteBuffer.allocate(1024 * 1024);
+            ByteBuffer buf = ByteBuffer.allocate(BULK_BUFFER_INITIAL_CAPACITY);
             int bytesRead = srcChannel.read(buf);
             while (bytesRead > 0) {
                 buf.flip();
