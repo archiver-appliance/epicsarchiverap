@@ -1059,9 +1059,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 HashMap<String, String> tempHashMap = new HashMap<>(changedarchiveFieldsData);
                 // dbrtimeevent.s
                 lastEvent.setFieldValues(tempHashMap, true);
-                synchronized (this) {
-                    changedarchiveFieldsData.clear();
-                }
+                changedarchiveFieldsData.clear();
             }
             if (!allarchiveFieldsData.isEmpty()) {
                 long nowES = TimeUtils.getCurrentEpochSeconds();
