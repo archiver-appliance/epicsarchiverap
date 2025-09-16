@@ -565,13 +565,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                         }
                     });
         } else {
-            Monitor sub_copy;
-            synchronized (this) {
-                sub_copy = subscription;
-                state = PVConnectionState.Disconnected;
-                connected = false;
-                subscription = null;
-            }
             PVContext.scheduleCommand(
                     this.name,
                     this.jcaCommandThreadId,
@@ -580,6 +573,13 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                     new Runnable() {
                         @Override
                         public void run() {
+                            Monitor sub_copy;
+                            synchronized (this) {
+                                sub_copy = subscription;
+                                state = PVConnectionState.Disconnected;
+                                connected = false;
+                                subscription = null;
+                            }
                             if (sub_copy != null) {
                                 try {
                                     sub_copy.clear();
@@ -1059,9 +1059,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 HashMap<String, String> tempHashMap = new HashMap<>(changedarchiveFieldsData);
                 // dbrtimeevent.s
                 lastEvent.setFieldValues(tempHashMap, true);
-                synchronized (this) {
-                    changedarchiveFieldsData.clear();
-                }
+                changedarchiveFieldsData.clear();
             }
             if (!allarchiveFieldsData.isEmpty()) {
                 long nowES = TimeUtils.getCurrentEpochSeconds();
