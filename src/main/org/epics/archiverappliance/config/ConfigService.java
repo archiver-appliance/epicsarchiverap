@@ -313,7 +313,8 @@ public interface ConfigService {
      * @param amReassigning If reassigning; then an AlreadyRegisteredException is not raised
      * @throws AlreadyRegisteredException  &emsp;
      */
-    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, boolean amReassigning) throws AlreadyRegisteredException;
+    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, boolean amReassigning)
+            throws AlreadyRegisteredException;
 
     /*
      * Make changes in the config service to register this PV to an appliance
@@ -321,7 +322,8 @@ public interface ConfigService {
      * @param applianceInfo ApplianceInfo
      * @throws AlreadyRegisteredException  &emsp;
      */
-    public default void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
+    public default void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo)
+            throws AlreadyRegisteredException {
         this.registerPVToAppliance(pvName, applianceInfo, false);
     }
 

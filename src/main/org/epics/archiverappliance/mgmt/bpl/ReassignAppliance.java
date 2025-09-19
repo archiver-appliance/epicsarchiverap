@@ -115,8 +115,8 @@ public class ReassignAppliance implements BPLAction {
                 logger.error(msg, ex);
                 statuses.put(pvNameFromRequest, msg);
             }
-            
-            try(PrintWriter out = resp.getWriter()) {
+
+            try (PrintWriter out = resp.getWriter()) {
                 out.println(JSONValue.toJSONString(statuses));
             }
         }
