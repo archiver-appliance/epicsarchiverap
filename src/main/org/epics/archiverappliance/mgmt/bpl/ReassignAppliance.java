@@ -108,11 +108,11 @@ public class ReassignAppliance implements BPLAction {
             try {
                 typeInfo.setApplianceIdentity(destApplianceInfo.getIdentity());
                 configService.updateTypeInfoForPV(pvName, typeInfo);
-                configService.registerPVToAppliance(pvName, destApplianceInfo);
+                configService.registerPVToAppliance(pvName, destApplianceInfo, true);
                 statuses.put(pvNameFromRequest, "Success");
             } catch (Exception ex) {
                 String msg = "Exception reassiging PV " + pvName + " to appliance " + destApplianceIdentity;
-                logger.error(msg);
+                logger.error(msg, ex);
                 statuses.put(pvNameFromRequest, msg);
             }
             
