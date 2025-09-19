@@ -310,9 +310,20 @@ public interface ConfigService {
      * Make changes in the config service to register this PV to an appliance
      * @param pvName The name of PV.
      * @param applianceInfo ApplianceInfo
+     * @param amReassigning If reassigning; then an AlreadyRegisteredException is not raised
      * @throws AlreadyRegisteredException  &emsp;
      */
-    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException;
+    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, boolean amReassigning) throws AlreadyRegisteredException;
+
+    /*
+     * Make changes in the config service to register this PV to an appliance
+     * @param pvName The name of PV.
+     * @param applianceInfo ApplianceInfo
+     * @throws AlreadyRegisteredException  &emsp;
+     */
+    public default void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo) throws AlreadyRegisteredException {
+        this.registerPVToAppliance(pvName, applianceInfo, false);
+    }
 
     /**
      * Gets information about a PV's type, i.e its DBR type, graphic limits etc.

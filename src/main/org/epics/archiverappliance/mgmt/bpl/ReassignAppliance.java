@@ -6,8 +6,10 @@ import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.json.simple.JSONValue;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import javax.servlet.http.HttpServletRequest;
@@ -112,6 +114,10 @@ public class ReassignAppliance implements BPLAction {
                 String msg = "Exception reassiging PV " + pvName + " to appliance " + destApplianceIdentity;
                 logger.error(msg);
                 statuses.put(pvNameFromRequest, msg);
+            }
+            
+            try(PrintWriter out = resp.getWriter()) {
+                out.println(JSONValue.toJSONString(statuses));
             }
         }
     }
