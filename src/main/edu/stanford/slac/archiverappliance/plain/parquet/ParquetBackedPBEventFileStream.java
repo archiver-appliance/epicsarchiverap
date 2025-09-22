@@ -266,15 +266,15 @@ public class ParquetBackedPBEventFileStream implements ETLParquetFilesStream, Re
                     // gtEq start
                     or(
                             and(
-                                    eq(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), startYst.getSecondsintoyear()),
-                                    gtEq(intColumn(ParquetInfo.NANOSECONDS_COLUMN_NAME), startYst.getNano())),
-                            gtEq(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), startYst.getSecondsintoyear() + 1)),
+                                    eq(intColumn(ParquetInfo.ColumnName.SECONDS.key), startYst.getSecondsintoyear()),
+                                    gtEq(intColumn(ParquetInfo.ColumnName.NANOSECONDS.key), startYst.getNano())),
+                            gtEq(intColumn(ParquetInfo.ColumnName.SECONDS.key), startYst.getSecondsintoyear() + 1)),
                     // ltEq end
                     or(
-                            lt(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), endYst.getSecondsintoyear()),
+                            lt(intColumn(ParquetInfo.ColumnName.SECONDS.key), endYst.getSecondsintoyear()),
                             and(
-                                    eq(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), endYst.getSecondsintoyear()),
-                                    ltEq(intColumn(ParquetInfo.NANOSECONDS_COLUMN_NAME), endYst.getNano()))));
+                                    eq(intColumn(ParquetInfo.ColumnName.SECONDS.key), endYst.getSecondsintoyear()),
+                                    ltEq(intColumn(ParquetInfo.ColumnName.NANOSECONDS.key), endYst.getNano()))));
 
             return FilterCompat.get(predicate);
         }
