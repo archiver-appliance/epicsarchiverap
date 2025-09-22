@@ -52,11 +52,28 @@ public class ParquetInfo extends FileInfo {
      */
     static final ParquetReadOptions baseOptions = (new ParquetReadOptions.Builder()).build();
 
-    static final String PV_NAME = "pvName";
-    static final String YEAR = "year";
-    static final String TYPE = "ArchDBRType";
-    static final String SECONDS_COLUMN_NAME = "secondsintoyear";
-    static final String NANOSECONDS_COLUMN_NAME = "nano";
+    public enum MetaDataKey {
+        PV_NAME("pvName"),
+        YEAR("year"),
+        TYPE("ArchDBRType");
+
+        final String key;
+
+        MetaDataKey(String key) {
+            this.key = key;
+        }
+    }
+
+    public enum ColumnName {
+        SECONDS("secondsintoyear"),
+        NANOSECONDS("nano");
+        final String key;
+
+        ColumnName(String key) {
+            this.key = key;
+        }
+    }
+
     private static final Logger logger = LogManager.getLogger(ParquetInfo.class);
     final InputFile inputFile;
     String pvName;
@@ -73,10 +90,10 @@ public class ParquetInfo extends FileInfo {
         fileReader = ParquetFileReader.open(inputFile, readOptions);
         footer = fileReader.getFooter();
         var metadata = footer.getFileMetaData();
-        this.dataYear = Short.parseShort(metadata.getKeyValueMetaData().get(YEAR));
-        this.pvName = metadata.getKeyValueMetaData().get(PV_NAME);
+        this.dataYear = Short.parseShort(metadata.getKeyValueMetaData().get(MetaDataKey.YEAR.key));
+        this.pvName = metadata.getKeyValueMetaData().get(MetaDataKey.PV_NAME.key);
 
-        this.archDBRTypes = ArchDBRTypes.valueOf(metadata.getKeyValueMetaData().get(TYPE));
+        this.archDBRTypes = ArchDBRTypes.valueOf(metadata.getKeyValueMetaData().get(MetaDataKey.TYPE.key));
 
         logger.debug(() -> String.format(
                 "read file meta name %s year %s type %s first event %s last event %s",
@@ -100,9 +117,9 @@ public class ParquetInfo extends FileInfo {
      * @return filter
      */
     static FilterCompat.Filter getSecondsFilter(Integer seconds, Integer nanos) {
-        FilterPredicate predicate = eq(intColumn(SECONDS_COLUMN_NAME), seconds);
+        FilterPredicate predicate = eq(intColumn(ColumnName.SECONDS.key), seconds);
         if (nanos != null) {
-            predicate = and(predicate, lt(intColumn(NANOSECONDS_COLUMN_NAME), nanos));
+            predicate = and(predicate, lt(intColumn(ColumnName.NANOSECONDS.key), nanos));
         }
         return FilterCompat.get(predicate);
     }
@@ -120,15 +137,15 @@ public class ParquetInfo extends FileInfo {
                 // gtEq start
                 or(
                         and(
-                                eq(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), start),
-                                gtEq(intColumn(ParquetInfo.NANOSECONDS_COLUMN_NAME), 0)),
-                        gtEq(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), start + 1)),
+                                eq(intColumn(ColumnName.SECONDS.key), start),
+                                gtEq(intColumn(ColumnName.NANOSECONDS.key), 0)),
+                        gtEq(intColumn(ColumnName.SECONDS.key), start + 1)),
                 // lt end
                 or(
-                        lt(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), end.getSecondsintoyear()),
+                        lt(intColumn(ColumnName.SECONDS.key), end.getSecondsintoyear()),
                         and(
-                                eq(intColumn(ParquetInfo.SECONDS_COLUMN_NAME), end.getSecondsintoyear()),
-                                ltEq(intColumn(ParquetInfo.NANOSECONDS_COLUMN_NAME), end.getNano()))));
+                                eq(intColumn(ColumnName.SECONDS.key), end.getSecondsintoyear()),
+                                ltEq(intColumn(ColumnName.NANOSECONDS.key), end.getNano()))));
         return FilterCompat.get(predicate);
     }
 
@@ -269,7 +286,7 @@ public class ParquetInfo extends FileInfo {
         Integer maxIntoYearSeconds = 0;
         for (BlockMetaData blockMetaData : footer.getBlocks()) {
             var secondsColumn = blockMetaData.getColumns().stream()
-                    .filter(c -> c.getPath().toDotString().equals(SECONDS_COLUMN_NAME))
+                    .filter(c -> c.getPath().toDotString().equals(ColumnName.SECONDS.key))
                     .findFirst();
             if (secondsColumn.isPresent()
                     && secondsColumn.get().getStatistics().compareMaxToValue(maxIntoYearSeconds) > 0) {
@@ -297,7 +314,7 @@ public class ParquetInfo extends FileInfo {
         Integer maxBeforeSeconds = 0;
         for (BlockMetaData blockMetaData : footer.getBlocks()) {
             var secondsColumn = blockMetaData.getColumns().stream()
-                    .filter(c -> c.getPath().toDotString().equals(SECONDS_COLUMN_NAME))
+                    .filter(c -> c.getPath().toDotString().equals(ColumnName.SECONDS.key))
                     .findFirst();
             if (secondsColumn.isPresent()) {
                 Statistics<Integer> statistics = secondsColumn.get().getStatistics();
