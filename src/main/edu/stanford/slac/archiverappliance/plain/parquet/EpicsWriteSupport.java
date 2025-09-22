@@ -1,8 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain.parquet;
 
-import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetInfo.PV_NAME;
-import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetInfo.TYPE;
-import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetInfo.YEAR;
+import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetInfo.MetaDataKey;
 
 import com.google.protobuf.Message;
 import org.apache.hadoop.conf.Configuration;
@@ -52,9 +50,9 @@ public class EpicsWriteSupport<T extends Message> extends WriteSupport<T> {
         WriteContext writeContext = this.protoWriteSupport.init(configuration);
 
         Map<String, String> extraMetaData = new HashMap<>(writeContext.getExtraMetaData());
-        extraMetaData.put(PV_NAME, this.pvName);
-        extraMetaData.put(YEAR, String.valueOf(this.year));
-        extraMetaData.put(TYPE, String.valueOf(this.archDBRTypes));
+        extraMetaData.put(MetaDataKey.PV_NAME.key, this.pvName);
+        extraMetaData.put(MetaDataKey.YEAR.key, String.valueOf(this.year));
+        extraMetaData.put(MetaDataKey.TYPE.key, String.valueOf(this.archDBRTypes));
         return new WriteContext(writeContext.getSchema(), extraMetaData);
     }
 
