@@ -1204,11 +1204,11 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
-    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, boolean amReassigning)
+    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, PVRegistrationType registrationType)
             throws AlreadyRegisteredException {
         ApplianceInfo info = pv2appliancemapping.get(pvName);
         if (info != null && !info.getIdentity().equals(applianceInfo.getIdentity())) {
-            if (!amReassigning) {
+            if (registrationType == PVRegistrationType.ARCHIVNG) {
                 throw new AlreadyRegisteredException(info);
             }
         }

@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVRegistrationType;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.json.simple.JSONValue;
 
@@ -108,7 +109,7 @@ public class ReassignAppliance implements BPLAction {
             try {
                 typeInfo.setApplianceIdentity(destApplianceInfo.getIdentity());
                 configService.updateTypeInfoForPV(pvName, typeInfo);
-                configService.registerPVToAppliance(pvName, destApplianceInfo, true);
+                configService.registerPVToAppliance(pvName, destApplianceInfo, PVRegistrationType.REASSIGNING);
                 statuses.put(pvNameFromRequest, "Success");
             } catch (Exception ex) {
                 String msg = "Exception reassiging PV " + pvName + " to appliance " + destApplianceIdentity;

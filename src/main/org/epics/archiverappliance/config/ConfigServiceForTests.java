@@ -217,7 +217,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
      * @throws AlreadyRegisteredException pv already registered.
      */
     @Override
-    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, boolean amReassigning)
+    public void registerPVToAppliance(String pvName, ApplianceInfo applianceInfo, PVRegistrationType registrationType)
             throws AlreadyRegisteredException {
         // When we register a PV to an appliance in the unit tests, we often forget to set the appliance identity
         PVTypeInfo typeInfo = this.getTypeInfoForPV(pvName);
@@ -228,7 +228,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
                 typeInfos.put(pvName, typeInfo);
             }
         }
-        super.registerPVToAppliance(pvName, applianceInfo, amReassigning);
+        super.registerPVToAppliance(pvName, applianceInfo, registrationType);
         Set<String> queryResult = this.getPVsForAppliance(applianceInfo);
         if (!queryResult.contains(pvName)) {
             throw new RuntimeException(
