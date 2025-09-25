@@ -5,9 +5,12 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.config.PVRegistrationType;
 import org.epics.archiverappliance.config.PVTypeInfo;
+import org.json.simple.JSONValue;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import javax.servlet.http.HttpServletRequest;
@@ -106,12 +109,16 @@ public class ReassignAppliance implements BPLAction {
             try {
                 typeInfo.setApplianceIdentity(destApplianceInfo.getIdentity());
                 configService.updateTypeInfoForPV(pvName, typeInfo);
-                configService.registerPVToAppliance(pvName, destApplianceInfo);
+                configService.registerPVToAppliance(pvName, destApplianceInfo, PVRegistrationType.REASSIGNING);
                 statuses.put(pvNameFromRequest, "Success");
             } catch (Exception ex) {
                 String msg = "Exception reassiging PV " + pvName + " to appliance " + destApplianceIdentity;
-                logger.error(msg);
+                logger.error(msg, ex);
                 statuses.put(pvNameFromRequest, msg);
+            }
+
+            try (PrintWriter out = resp.getWriter()) {
+                out.println(JSONValue.toJSONString(statuses));
             }
         }
     }
