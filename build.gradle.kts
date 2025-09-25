@@ -135,6 +135,14 @@ dependencies {
 	runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
 	implementation("com.lmax:disruptor:3.4.4") // Needed for async logging
 
+	// Parquet support
+	implementation("org.apache.parquet:parquet-protobuf:1.16.0")
+	implementation("org.apache.parquet:parquet-column:1.16.0")
+	implementation("org.apache.parquet:parquet-common:1.16.0")
+	implementation("org.apache.parquet:parquet-hadoop:1.16.0")
+	implementation("org.apache.hadoop:hadoop-common:3.3.0")
+	runtimeOnly("org.apache.hadoop:hadoop-client-api:3.3.0")
+
 	// Testing
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
 	testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")

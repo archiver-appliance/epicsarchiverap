@@ -1,9 +1,6 @@
 package edu.stanford.slac.archiverappliance.plain;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.pbFileExtension;
-
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility.StartEndTimeFromName;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
@@ -16,7 +13,8 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.nio.file.Path;
 import java.time.Instant;
@@ -36,16 +34,17 @@ public class CleanPartitionsTest {
         configService = new ConfigServiceForTests(-1);
     }
 
-    @Test
-    public void testCleanPartitions() throws Exception {
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void testCleanPartitions(PlainStorageType plainStorageType) throws Exception {
         for (PartitionGranularity granularity : PartitionGranularity.values()) {
-            PlainStoragePlugin pbPlugin = new PlainStoragePlugin();
+            PlainStoragePlugin storagePlugin = new PlainStoragePlugin(plainStorageType);
             PlainCommonSetup srcSetup = new PlainCommonSetup();
 
-            srcSetup.setUpRootFolder(pbPlugin, "TestCleanPartitions_" + granularity, granularity);
+            srcSetup.setUpRootFolder(storagePlugin, "TestCleanPartitions_" + granularity, granularity);
 
             String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "CleanPartition"
-                    + pbPlugin.getPartitionGranularity();
+                    + storagePlugin.getPartitionGranularity();
             SimulationEventStream simstream = new SimulationEventStream(
                     ArchDBRTypes.DBR_SCALAR_DOUBLE,
                     new SineGenerator(0),
@@ -53,33 +52,34 @@ public class CleanPartitionsTest {
                     Instant.now().plusSeconds(granularity.getApproxSecondsPerChunk() * 3L),
                     granularity.getApproxSecondsPerChunk() / 3);
             try (BasicContext context = new BasicContext()) {
-                pbPlugin.appendData(context, pvName, simstream);
+                storagePlugin.appendData(context, pvName, simstream);
             }
             logger.info("Done creating src data for PV " + pvName + " for granularity "
-                    + pbPlugin.getPartitionGranularity());
+                    + storagePlugin.getPartitionGranularity());
 
             Path[] allPaths = PathNameUtility.getAllPathsForPV(
                     new ArchPaths(),
-                    pbPlugin.getRootFolder(),
+                    storagePlugin.getRootFolder(),
                     pvName,
-                    pbFileExtension,
-                    pbPlugin.getPlainFileHandler().getPathResolver(),
+                    storagePlugin.getExtensionString(),
+                    PathResolver.BASE_PATH_RESOLVER,
                     configService.getPVNameToKeyConverter());
+            Assertions.assertTrue(allPaths.length > 1);
             for (Path pbFile : allPaths) {
-                PBFileInfo fileInfo = new PBFileInfo(pbFile);
+                FileInfo fileInfo = storagePlugin.fileInfo(pbFile);
                 StartEndTimeFromName chunkTimes = PathNameUtility.determineTimesFromFileName(
                         pvName,
                         pbFile.getFileName().toString(),
-                        pbPlugin.getPartitionGranularity(),
+                        storagePlugin.getPartitionGranularity(),
                         configService.getPVNameToKeyConverter());
-                // Make sure that the first and last event in the file as obtained from PBFileInfo fit into the times as
+                // Make sure that the first and last event in the file as obtained from FileInfo fit into the times as
                 // determined from the name
                 Assertions.assertTrue(
                         fileInfo.getFirstEvent().getEventTimeStamp().isAfter(chunkTimes.pathDataStartTime.toInstant())
                                 || fileInfo.getFirstEvent()
                                         .getEventTimeStamp()
                                         .equals(chunkTimes.pathDataStartTime.toInstant()),
-                        "Start time as determined by PBFileinfo "
+                        "Start time as determined by FileInfo "
                                 + fileInfo.getFirstEvent().getEventTimeStamp()
                                 + " is earlier than earliest time as determined by partition name"
                                 + chunkTimes.pathDataStartTime);
@@ -88,9 +88,9 @@ public class CleanPartitionsTest {
                                 || fileInfo.getLastEvent()
                                         .getEventTimeStamp()
                                         .equals(chunkTimes.pathDataEndTime.toInstant()),
-                        "End time as determined by PBFileinfo "
+                        "End time as determined by FileInfo "
                                 + fileInfo.getLastEvent().getEventTimeStamp()
-                                + " is later than latest time as determined by partition name "
+                                + " is later than latest time as determined by partition name"
                                 + chunkTimes.pathDataEndTime);
             }
             srcSetup.deleteTestFolder();
