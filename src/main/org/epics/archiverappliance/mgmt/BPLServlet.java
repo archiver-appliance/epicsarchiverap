@@ -23,6 +23,7 @@ import org.epics.archiverappliance.mgmt.bpl.ArchivePVAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsAction;
 import org.epics.archiverappliance.mgmt.bpl.ArchivedPVsNotInListAction;
 import org.epics.archiverappliance.mgmt.bpl.ChangeArchivalParamsAction;
+import org.epics.archiverappliance.mgmt.bpl.ChangeStore;
 import org.epics.archiverappliance.mgmt.bpl.ChangeTypeForPV;
 import org.epics.archiverappliance.mgmt.bpl.ChannelArchiverListView;
 import org.epics.archiverappliance.mgmt.bpl.ConsolidatePBFilesForOnePV;
@@ -131,6 +132,7 @@ public class BPLServlet extends HttpServlet {
         addAction("/getStoresForPV", GetStoresForPV.class);
         addAction("/modifyStoreURLForPV", ModifyStoreURLForPV.class);
         addAction("/consolidateDataForPV", ConsolidatePBFilesForOnePV.class);
+        addAction("/changeStore", ChangeStore.class);
         addAction("/deletePV", DeletePV.class);
         addAction("/abortArchivingPV", AbortArchiveRequest.class);
         addAction("/abortArchivingPVForThisAppliance", AbortArchiveRequestForAppliance.class);

@@ -108,8 +108,26 @@ public class ETLStages implements Runnable {
             for (ETLStage etlStage : this.etlStages) {
                 f = (f == null)
                         ? CompletableFuture.runAsync(new ETLJob(etlStage, runAsIfAtTime, configService), this.theWorker)
-                        : f.thenCompose((b) -> CompletableFuture.runAsync(
+                        : f.thenCompose(b -> CompletableFuture.runAsync(
                                 new ETLJob(etlStage, runAsIfAtTime, configService), this.theWorker));
+            }
+            if (f == null) {
+                throw new IOException("Completable future is null");
+            }
+            f.get(); // Wait for the future to complete
+        } catch (Exception ex) {
+            logger.error("Exception running ETL Job for PV " + this.pvName, ex);
+        }
+    }
+
+    public void runAll() {
+        try {
+            CompletableFuture<Void> f = null;
+            for (ETLStage etlStage : this.etlStages) {
+                f = (f == null)
+                        ? CompletableFuture.runAsync(new ETLJob(etlStage, null, configService, true), this.theWorker)
+                        : f.thenCompose(b -> CompletableFuture.runAsync(
+                                new ETLJob(etlStage, null, configService, true), this.theWorker));
             }
             if (f == null) {
                 throw new IOException("Completable future is null");
