@@ -96,9 +96,15 @@ public class BulkPauseResumeUtils {
         List<HashMap<String, String>> retVal = new LinkedList<HashMap<String, String>>();
         HashMap<String, HashMap<String, String>> retValMap = new HashMap<String, HashMap<String, String>>();
         LinkedList<String> realPVNames = new LinkedList<String>();
+        HashMap<String, String> incoming2real = new HashMap<String, String>();
         for (String pvName : pvNames) {
             String realName = configService.getRealNameForAlias(pvName);
-            if (realName != null) pvName = realName;
+            if (realName != null) {
+                incoming2real.put(pvName, realName);
+                pvName = realName;
+            } else {
+                incoming2real.put(pvName, pvName);
+            }
             realPVNames.add(pvName);
 
             HashMap<String, String> pvPauseResumeStatus = new HashMap<String, String>();
@@ -117,8 +123,9 @@ public class BulkPauseResumeUtils {
             }
         }
         for (String pvName : pvNames) {
-            if (retValMap.get(pvName).containsKey("validation")
-                    || retValMap.get(pvName).containsKey("status")) {
+            String realName = incoming2real.get(pvName);
+            if (retValMap.get(realName).containsKey("validation")
+                    || retValMap.get(realName).containsKey("status")) {
                 // We got some status
             } else {
                 retValMap
