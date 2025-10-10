@@ -148,7 +148,7 @@ fi
 mkdir quickstart_tomcat
 tar -C quickstart_tomcat -zxf  "${TOMCAT_DISTRIBUTION}"
 cd quickstart_tomcat
-# eg. "apache-tomcat-9.0.20"
+# eg. "apache-tomcat-11.0.12"
 TOMCAT_VERSION_FOLDER=`ls -d apache-tomca* | head -1`
 
 # Make sure we have a valid server.xml

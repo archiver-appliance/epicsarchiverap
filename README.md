@@ -73,7 +73,7 @@ gradle unitTests
 
 #### Integration Tests
 
-Integration tests require an installation of Tomcat (the Archiver Appliance only support up to version 9).
+Integration tests require an installation of Tomcat (the Archiver Appliance only support up to version 11).
 The environment variable `TOMCAT_HOME` where a "conf" folder exists must then be set.
 
 To run tests requiring a local installation of [EPICS](https://epics-controls.org/).
@@ -120,12 +120,12 @@ For a quick deploy of a single appliance:
 
 1. Download the latest [release](https://github.com/archiver-appliance/epicsarchiverap/releases)
 	and unpack the war files to a folder "archiver".
-2. In the same folder, download a release of [tomcat 9](https://tomcat.apache.org/download-90.cgi) without unpacking.
+2. In the same folder, download a release of [tomcat 11](https://tomcat.apache.org/download-11.cgi) without unpacking.
 3. Copy the quickstart.sh file from the extracted release to the folder.
 4. Run the quickstart script:
 
 ```bash
-./quickstart.sh  apache-tomcat-9.*.tar.gz
+./quickstart.sh  apache-tomcat-11.*.tar.gz
 ```
 
 For more information see the [quickstart documentation](https://epicsarchiver.readthedocs.io/en/latest/sysadmin/quickstart.html). For more complicated

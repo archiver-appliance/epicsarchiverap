@@ -96,7 +96,7 @@ dependencies {
 	viewer("archiver-appliance:svg_viewer:v1.2.1@zip")
 
 	// Provided by Servlet Container (e.g., Tomcat)
-	implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")
+	implementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
 
 	// Core Libraries
 	implementation("org.epics:jca:2.4.7")
@@ -148,7 +148,7 @@ dependencies {
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(project.files("lib/pbrawclient-0.2.1.jar"))
 	testImplementation(":pbrawclient:0.2.1")
-	testImplementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")
+	testImplementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
 }
 
 // =================================================================

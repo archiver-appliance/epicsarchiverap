@@ -50,7 +50,7 @@ These are the prerequisites for the EPICS archiver appliance.
   systems. If using RedHat, we should aim for RedHat 6.1.
 - JDK 1.16+ - definitely the 64 bit version for production systems. We
   need the JDK, **not** the JRE.
-- A recent version of Tomcat 9.x; preferably `apache-tomcat-9.0.20` or
+- A recent version of Tomcat 11.x; preferably `apache-tomcat-11.0.12` or
   later.
 - The management UI works best with a recent version of Firefox or
   Chrome.

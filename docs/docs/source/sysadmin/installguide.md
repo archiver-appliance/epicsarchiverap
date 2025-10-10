@@ -443,12 +443,12 @@ argument that identifies the parent folder of the individual Tomcat
 containers.
 
 ```bash
-$ export TOMCAT_HOME=/arch/single_machine_install/tomcats/apache-tomcat-9.0.20
+$ export TOMCAT_HOME=/arch/single_machine_install/tomcats/apache-tomcat-11.0.12
 $ export ARCHAPPL_APPLIANCES=/arch/single_machine_install/sample_appliances.xml
 $ export ARCHAPPL_MYIDENTITY=appliance0
 $ ./install_scripts/deployMultipleTomcats.py /arch/single_machine_install/tomcats
 Using
-    tomcat installation at /arch/single_machine_install/tomcats/apache-tomcat-9.0.20
+    tomcat installation at /arch/single_machine_install/tomcats/apache-tomcat-11.0.12
     to generate deployments for appliance appliance0
     using configuration info from /arch/single_machine_install/sample_appliances.xml
     into folder /arch/single_machine_install/tomcats
