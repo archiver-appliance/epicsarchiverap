@@ -404,13 +404,14 @@ function getPVNames() {
 
   let pvName;
   if (pvQuery.length > 0) {
-    pvName = pvQuery[0].get("pv");
+    pvName = JSON.parse(pvQuery)[0]["pv"];
   } else {
     return;
   }
-  const url = "../bpl/getMatchingPVsForThisAppliance?" + pvName + "&limit=-1";
+
+  const url = "../bpl/getMatchingPVsForThisAppliance?regex=" + pvName + "&limit=-1";
   const tabledivname = "archstatsdiv";
-  createReportTable([], url, tabledivname, [
+  createReportTable(url, tabledivname, [
     {
       srcAttr: "pvName",
       label: "PV Name",
@@ -444,7 +445,7 @@ function getPVNames() {
         );
       },
     },
-  ]);
+  ], null);
   $("#archstatsdiv").show();
   $("#pvStopArchivingOk").click(deletePausedPV);
 }
