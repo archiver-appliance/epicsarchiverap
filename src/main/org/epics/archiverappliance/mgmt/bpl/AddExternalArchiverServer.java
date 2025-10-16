@@ -7,16 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt.bpl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.net.URL;
-import java.util.HashMap;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -26,6 +16,15 @@ import org.epics.archiverappliance.mgmt.bpl.cahdlers.InfoHandler;
 import org.epics.archiverappliance.retrieval.channelarchiver.XMLRPCClient;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
+import java.net.URL;
+import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Add a external Archiver Data Server into the system.
@@ -38,104 +37,113 @@ import org.json.simple.JSONValue;
  *
  */
 public class AddExternalArchiverServer implements BPLAction {
-	private static Logger logger = LogManager.getLogger(AddExternalArchiverServer.class.getName());
-	
-	enum ExternalServerType { 
-		CA_XMLRPC,
-		ARCHAPPL_PBRAW
-	}
+    private static Logger logger = LogManager.getLogger(AddExternalArchiverServer.class.getName());
 
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp,ConfigService configService) throws IOException {
-		String serverUrl = req.getParameter("externalarchiverserverurl");
-		if(serverUrl == null || serverUrl.equals("")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
+    enum ExternalServerType {
+        CA_XMLRPC,
+        ARCHAPPL_PBRAW
+    }
 
-		String externalServerTypeStr = req.getParameter("externalServerType");
-		if(externalServerTypeStr == null || externalServerTypeStr.equals("")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
-		
-		ExternalServerType externalServerType = ExternalServerType.valueOf(externalServerTypeStr);
-		
-		logger.info("Adding External Archiver Server " + serverUrl);
-		HashMap<String, Object> infoValues = new HashMap<String, Object>();
-		
-		// Check to see if we already have this server...
-		for(String existingServerURL : configService.getExternalArchiverDataServers().keySet()) {
-			if(existingServerURL.equals(serverUrl)) {
-				logger.info("We already have the External Archiver server " + serverUrl);
-				resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-				infoValues.put("validation", "We already have the server " + serverUrl + " in the system.");
-				try(PrintWriter out = resp.getWriter()) {
-					out.println(JSONValue.toJSONString(infoValues));
-				}
-				return;
-			}
-		}
-		
-		if(externalServerType == ExternalServerType.CA_XMLRPC) {
-			logger.debug("Getting the available indexes from " + serverUrl);
-			InfoHandler handler = new InfoHandler();
-			try {
-				XMLRPCClient.archiverInfo(serverUrl, handler);
-				ArchivesHandler archivesHandler = new ArchivesHandler();
-				XMLRPCClient.archiverArchives(serverUrl, archivesHandler);
-				infoValues.put("archives", archivesHandler.getArchives());
-			} catch(Exception ex) {
-				logger.error("Exception adding Channel Archiver server " + serverUrl, ex);
-				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				return;
-			}
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        String serverUrl = req.getParameter("externalarchiverserverurl");
+        if (serverUrl == null || serverUrl.equals("")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
 
-			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			infoValues.put("Connected", "ok");
-			infoValues.put("desc", handler.getDesc());
-			try(PrintWriter out = resp.getWriter()) {
-				out.println(JSONValue.toJSONString(infoValues));
-			}			
-		} else { 
-			logger.debug("Testing connectivity for external EPICS Archiver Appliance at " + serverUrl);
-			try { 
-				URL url = new URL(serverUrl.split("\\?")[0] + "/ping");
-				try(InputStream is = url.openStream()) { 
-					ByteArrayOutputStream bos = new ByteArrayOutputStream();
-					byte[] buf = new byte[1024];
-					int bytesRead = is.read(buf);
-					while(bytesRead > 0) {
-						bos.write(buf, 0, bytesRead);
-						bytesRead = is.read(buf);
-					}
-					String pingresponse = bos.toString();
-					logger.info("Response from external EPICS Archiver Appliance at " + serverUrl + " => " + pingresponse);
-					if(pingresponse.contains("Pong")) { 
-						resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-						infoValues.put("Connected", "ok");
-						infoValues.put("desc", "EPICS Archiver Appliance at " + serverUrl);
-						infoValues.put("archives", "pbraw");
-						try(PrintWriter out = resp.getWriter()) {
-							out.println(JSONValue.toJSONString(infoValues));
-						}			
-					} else { 
-						resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-						infoValues.put("validation", "Unexpected response " + pingresponse + " from the EPICS Archiver Appliance at " + serverUrl);
-						try(PrintWriter out = resp.getWriter()) {
-							out.println(JSONValue.toJSONString(infoValues));
-						}			
-					}
-				}
-			} catch(IOException ex) { 
-				logger.error("Exception pinging the external EPICS Archiver Appliance", ex);
-				resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-				infoValues.put("validation", "Exception pinging the external EPICS Archiver Appliance at " + serverUrl + " " + ex.getMessage());
-				try(PrintWriter out = resp.getWriter()) {
-					out.println(JSONValue.toJSONString(infoValues));
-				}
-				return;
-			}
-		}
-	}
+        String externalServerTypeStr = req.getParameter("externalServerType");
+        if (externalServerTypeStr == null || externalServerTypeStr.equals("")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        ExternalServerType externalServerType = ExternalServerType.valueOf(externalServerTypeStr);
+
+        logger.info("Adding External Archiver Server " + serverUrl);
+        HashMap<String, Object> infoValues = new HashMap<String, Object>();
+
+        // Check to see if we already have this server...
+        for (String existingServerURL :
+                configService.getExternalArchiverDataServers().keySet()) {
+            if (existingServerURL.equals(serverUrl)) {
+                logger.info("We already have the External Archiver server " + serverUrl);
+                resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+                infoValues.put("validation", "We already have the server " + serverUrl + " in the system.");
+                try (PrintWriter out = resp.getWriter()) {
+                    out.println(JSONValue.toJSONString(infoValues));
+                }
+                return;
+            }
+        }
+
+        if (externalServerType == ExternalServerType.CA_XMLRPC) {
+            logger.debug("Getting the available indexes from " + serverUrl);
+            InfoHandler handler = new InfoHandler();
+            try {
+                XMLRPCClient.archiverInfo(serverUrl, handler);
+                ArchivesHandler archivesHandler = new ArchivesHandler();
+                XMLRPCClient.archiverArchives(serverUrl, archivesHandler);
+                infoValues.put("archives", archivesHandler.getArchives());
+            } catch (Exception ex) {
+                logger.error("Exception adding Channel Archiver server " + serverUrl, ex);
+                resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
+
+            resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+            infoValues.put("Connected", "ok");
+            infoValues.put("desc", handler.getDesc());
+            try (PrintWriter out = resp.getWriter()) {
+                out.println(JSONValue.toJSONString(infoValues));
+            }
+        } else {
+            logger.debug("Testing connectivity for external EPICS Archiver Appliance at " + serverUrl);
+            try {
+                URL url = new URL(serverUrl.split("\\?")[0] + "/ping");
+                try (InputStream is = url.openStream()) {
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    byte[] buf = new byte[1024];
+                    int bytesRead = is.read(buf);
+                    while (bytesRead > 0) {
+                        bos.write(buf, 0, bytesRead);
+                        bytesRead = is.read(buf);
+                    }
+                    String pingresponse = bos.toString();
+                    logger.info(
+                            "Response from external EPICS Archiver Appliance at " + serverUrl + " => " + pingresponse);
+                    if (pingresponse.contains("Pong")) {
+                        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+                        infoValues.put("Connected", "ok");
+                        infoValues.put("desc", "EPICS Archiver Appliance at " + serverUrl);
+                        infoValues.put("archives", "pbraw");
+                        try (PrintWriter out = resp.getWriter()) {
+                            out.println(JSONValue.toJSONString(infoValues));
+                        }
+                    } else {
+                        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+                        infoValues.put(
+                                "validation",
+                                "Unexpected response " + pingresponse + " from the EPICS Archiver Appliance at "
+                                        + serverUrl);
+                        try (PrintWriter out = resp.getWriter()) {
+                            out.println(JSONValue.toJSONString(infoValues));
+                        }
+                    }
+                }
+            } catch (IOException ex) {
+                logger.error("Exception pinging the external EPICS Archiver Appliance", ex);
+                resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+                infoValues.put(
+                        "validation",
+                        "Exception pinging the external EPICS Archiver Appliance at " + serverUrl + " "
+                                + ex.getMessage());
+                try (PrintWriter out = resp.getWriter()) {
+                    out.println(JSONValue.toJSONString(infoValues));
+                }
+                return;
+            }
+        }
+    }
 }

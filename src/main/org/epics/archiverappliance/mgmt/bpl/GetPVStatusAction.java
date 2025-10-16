@@ -78,7 +78,7 @@ public class GetPVStatusAction implements BPLAction {
                 realName2NameFromRequest);
 
         JSONArray json = new JSONArray();
-        for(String pvName: pvNames) {
+        for (String pvName : pvNames) {
             json.add(pvStatuses.get(pvName));
         }
 

@@ -507,8 +507,7 @@ public class ArchivePVAction implements BPLAction {
     private void breakDownPVRequestsByAssignedAppliance(
             JSONArray pvArchiveParams, String myIdentity, ConfigService configService, HttpServletResponse resp)
             throws IOException {
-        HashMap<String, List<JSONObject>> archiveRequestsByAppliance =
-                new HashMap<String, List<JSONObject>>();
+        HashMap<String, List<JSONObject>> archiveRequestsByAppliance = new HashMap<String, List<JSONObject>>();
         archiveRequestsByAppliance.put(myIdentity, new LinkedList<JSONObject>());
         for (Object pvArchiveParamObj : pvArchiveParams) {
             JSONObject pvArchiveParam = (JSONObject) pvArchiveParamObj;
@@ -536,8 +535,8 @@ public class ArchivePVAction implements BPLAction {
             List<JSONObject> requestsForAppliance = archiveRequestsByAppliance.get(appliance);
             if (!requestsForAppliance.isEmpty()) {
                 String archiveURL = configService.getAppliance(appliance).getMgmtURL() + "/archivePV";
-                JSONArray archiveResponse =
-                        GetUrlContent.postDataAndGetContentAsJSONArray(archiveURL, GetUrlContent.from(requestsForAppliance));
+                JSONArray archiveResponse = GetUrlContent.postDataAndGetContentAsJSONArray(
+                        archiveURL, GetUrlContent.from(requestsForAppliance));
                 finalResult.addAll(archiveResponse);
             }
         }

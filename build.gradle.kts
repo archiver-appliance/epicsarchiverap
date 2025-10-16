@@ -115,7 +115,7 @@ dependencies {
 	implementation("org.apache.commons:commons-lang3:3.18.0")
 	implementation("org.apache.commons:commons-math3:3.6.1")
 	implementation("commons-validator:commons-validator:1.7")
-	
+
 
 	// HTTP Clients
 	implementation("org.apache.httpcomponents:httpclient:4.5.14")

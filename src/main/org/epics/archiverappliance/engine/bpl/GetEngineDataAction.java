@@ -19,12 +19,12 @@ import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.ui.StreamPBIntoOutput;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
 import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * PV for getting the data for a PV from the engine's buffers
@@ -32,83 +32,93 @@ import java.util.HashMap;
  *
  */
 public class GetEngineDataAction implements BPLAction {
-	private static final Logger logger = LogManager.getLogger(GetEngineDataAction.class);
-	
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp,
-			ConfigService configService) throws IOException {
-		String pvName = req.getParameter("pv");
-		if(pvName == null || pvName.equals("")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
+    private static final Logger logger = LogManager.getLogger(GetEngineDataAction.class);
 
-		String startTimeStr = req.getParameter("from"); 
-		String endTimeStr = req.getParameter("to");
-		// ISO datetimes are of the form "2011-02-02T08:00:00.000Z" 
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        String pvName = req.getParameter("pv");
+        if (pvName == null || pvName.equals("")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        String startTimeStr = req.getParameter("from");
+        String endTimeStr = req.getParameter("to");
+        // ISO datetimes are of the form "2011-02-02T08:00:00.000Z"
         Instant start = null;
-		if(startTimeStr != null) { 
-			start = TimeUtils.convertFromISO8601String(startTimeStr);
-		}
+        if (startTimeStr != null) {
+            start = TimeUtils.convertFromISO8601String(startTimeStr);
+        }
         Instant end = null;
-		if(endTimeStr != null) { 
-			end = TimeUtils.convertFromISO8601String(endTimeStr);
-		}
+        if (endTimeStr != null) {
+            end = TimeUtils.convertFromISO8601String(endTimeStr);
+        }
 
-		EngineContext engineContext = configService.getEngineContext();
-		if(engineContext.getChannelList().containsKey(pvName)){
-			ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
-			ArrayListEventStream st = archiveChannel.getPVData();
-			HashMap<String, String> metaFields = archiveChannel.getCurrentCopyOfMetaFields();
-			if(st != null && metaFields != null) { 
-				mergeMetaFieldsIntoStream(st, metaFields);
-			}
-			if(st != null && !st.isEmpty()) {
-				OutputStream os = resp.getOutputStream();
-				try {
-					long s = System.currentTimeMillis();
-					int totalEvents = StreamPBIntoOutput.streamPBIntoOutputStream(st, os, start, end);
-					long e = System.currentTimeMillis();
-					logger.info("Found a total of " + totalEvents + " in " + (e-s) + "(ms)");
-				} finally {
-					try { os.flush(); os.close(); } catch(Throwable t) {}
-				}
-				return;
-			} else { 
-				if(metaFields != null && archiveChannel.getPVMetrics() != null) { 
-					logger.debug("Inserting empty header with latest meta fields from engine");
-					OutputStream os = resp.getOutputStream();
-					try {
-						RemotableEventStreamDesc desc = new RemotableEventStreamDesc(archiveChannel.getPVMetrics().getArchDBRTypes(), pvName, TimeUtils.getCurrentYear());
-						if(!archiveChannel.isConnected() && archiveChannel.getPVMetrics() != null) { 
-							long connectionLastLostEpochSeconds = archiveChannel.getPVMetrics().getConnectionLastLostEpochSeconds();
-							if(connectionLastLostEpochSeconds != 0) {
-								logger.debug("Adding a cnxlostepsecs header");
-								metaFields.put("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
-							}
-						}
-						desc.addHeaders(metaFields);
-						StreamPBIntoOutput.writeHeaderOnly(os, desc);
-					} finally {
-						try { os.flush(); os.close(); } catch(Throwable t) {}
-					}
-					return;
-				}
-			}
-		}
+        EngineContext engineContext = configService.getEngineContext();
+        if (engineContext.getChannelList().containsKey(pvName)) {
+            ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
+            ArrayListEventStream st = archiveChannel.getPVData();
+            HashMap<String, String> metaFields = archiveChannel.getCurrentCopyOfMetaFields();
+            if (st != null && metaFields != null) {
+                mergeMetaFieldsIntoStream(st, metaFields);
+            }
+            if (st != null && !st.isEmpty()) {
+                OutputStream os = resp.getOutputStream();
+                try {
+                    long s = System.currentTimeMillis();
+                    int totalEvents = StreamPBIntoOutput.streamPBIntoOutputStream(st, os, start, end);
+                    long e = System.currentTimeMillis();
+                    logger.info("Found a total of " + totalEvents + " in " + (e - s) + "(ms)");
+                } finally {
+                    try {
+                        os.flush();
+                        os.close();
+                    } catch (Throwable t) {
+                    }
+                }
+                return;
+            } else {
+                if (metaFields != null && archiveChannel.getPVMetrics() != null) {
+                    logger.debug("Inserting empty header with latest meta fields from engine");
+                    OutputStream os = resp.getOutputStream();
+                    try {
+                        RemotableEventStreamDesc desc = new RemotableEventStreamDesc(
+                                archiveChannel.getPVMetrics().getArchDBRTypes(), pvName, TimeUtils.getCurrentYear());
+                        if (!archiveChannel.isConnected() && archiveChannel.getPVMetrics() != null) {
+                            long connectionLastLostEpochSeconds =
+                                    archiveChannel.getPVMetrics().getConnectionLastLostEpochSeconds();
+                            if (connectionLastLostEpochSeconds != 0) {
+                                logger.debug("Adding a cnxlostepsecs header");
+                                metaFields.put("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
+                            }
+                        }
+                        desc.addHeaders(metaFields);
+                        StreamPBIntoOutput.writeHeaderOnly(os, desc);
+                    } finally {
+                        try {
+                            os.flush();
+                            os.close();
+                        } catch (Throwable t) {
+                        }
+                    }
+                    return;
+                }
+            }
+        }
 
-		logger.debug("No data for PV " + pvName + " in this engine.");
-		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-		return;
-	}
-	
-	private void mergeMetaFieldsIntoStream(EventStream st, HashMap<String, String> metaFields) { 
-		logger.debug("Merging meta fields from channel into engine's stream");
-		RemotableEventStreamDesc desc = (RemotableEventStreamDesc) st.getDescription();
-		try { 
-			desc.addHeaders(metaFields);
-		} catch(Exception ex) { 
-			logger.error("Exception merging meta fields into stream", ex);
-		}
-	}
+        logger.debug("No data for PV " + pvName + " in this engine.");
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
+
+    private void mergeMetaFieldsIntoStream(EventStream st, HashMap<String, String> metaFields) {
+        logger.debug("Merging meta fields from channel into engine's stream");
+        RemotableEventStreamDesc desc = (RemotableEventStreamDesc) st.getDescription();
+        try {
+            desc.addHeaders(metaFields);
+        } catch (Exception ex) {
+            logger.error("Exception merging meta fields into stream", ex);
+        }
+    }
 }

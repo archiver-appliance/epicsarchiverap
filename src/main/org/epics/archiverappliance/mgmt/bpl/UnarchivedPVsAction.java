@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -46,11 +45,11 @@ public class UnarchivedPVsAction implements BPLAction {
         logger.info("Determining PVs that are unarchived ");
 
         LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
-		List<String> archivedPVs = ArchivedPVsInList.getArchivedPVs(pvNames, configService);
+        List<String> archivedPVs = ArchivedPVsInList.getArchivedPVs(pvNames, configService);
         Set<String> unarchivedPVs = (new HashSet<String>(pvNames));
         unarchivedPVs.removeAll(archivedPVs);
 
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         try (PrintWriter out = resp.getWriter()) {
             JSONValue.writeJSONString(unarchivedPVs, out);
         }

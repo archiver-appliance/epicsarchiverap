@@ -7,13 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.LinkedList;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -24,30 +17,36 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.LinkedList;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Report for PVs never connected.
- * 
- * @epics.BPLAction - Get a list of PVs that have never connected. 
+ *
+ * @epics.BPLAction - Get a list of PVs that have never connected.
  * @epics.BPLActionEnd
- * 
+ *
  * @author mshankar
  *
  */
 public class NeverConnectedPVsAction implements BPLAction {
-	private static final Logger logger = LogManager.getLogger(NeverConnectedPVsAction.class);
+    private static final Logger logger = LogManager.getLogger(NeverConnectedPVsAction.class);
 
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp,
-			ConfigService configService) throws IOException {
-		logger.info("Getting the status of pvs from mgmt only that never connected since the start of the archiver");
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		LinkedList<String> neverConnUrls = new LinkedList<String>();
-		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
-			neverConnUrls.add(info.getMgmtURL() + "/getNeverConnectedPVsForThisAppliance");
-		}		
-		try (PrintWriter out = resp.getWriter()) {
-			JSONArray neverConnPVs = GetUrlContent.combineJSONArrays(neverConnUrls);
-			out.println(JSONValue.toJSONString(neverConnPVs));
-		}
-	}
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        logger.info("Getting the status of pvs from mgmt only that never connected since the start of the archiver");
+        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+        LinkedList<String> neverConnUrls = new LinkedList<String>();
+        for (ApplianceInfo info : configService.getAppliancesInCluster()) {
+            neverConnUrls.add(info.getMgmtURL() + "/getNeverConnectedPVsForThisAppliance");
+        }
+        try (PrintWriter out = resp.getWriter()) {
+            JSONArray neverConnPVs = GetUrlContent.combineJSONArrays(neverConnUrls);
+            out.println(JSONValue.toJSONString(neverConnPVs));
+        }
+    }
 }

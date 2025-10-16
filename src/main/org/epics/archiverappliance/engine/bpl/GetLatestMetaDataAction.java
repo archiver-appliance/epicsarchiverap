@@ -7,13 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.bpl;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashMap;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -23,35 +16,42 @@ import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Get the latest metadata from the various sources within the engine..
  * @author mshankar
  *
  */
 public class GetLatestMetaDataAction implements BPLAction {
-	private static final Logger logger = LogManager.getLogger(GetLatestMetaDataAction.class);
-	
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		String pvName = req.getParameter("pv");
-		if(pvName == null || pvName.equals("")) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
+    private static final Logger logger = LogManager.getLogger(GetLatestMetaDataAction.class);
 
-		EngineContext engineContext = configService.getEngineContext();
-		if(engineContext.getChannelList().containsKey(pvName)){
-			ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
-			HashMap<String, String> retVal = archiveChannel.getLatestMetadata();
-			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			try(PrintWriter out = resp.getWriter()) {
-				out.println(JSONValue.toJSONString(retVal));
-			}
-			return;
-		}
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        String pvName = req.getParameter("pv");
+        if (pvName == null || pvName.equals("")) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
 
-		logger.debug("No data for PV " + pvName + " in this engine.");
-		resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-		return;
-	}	
+        EngineContext engineContext = configService.getEngineContext();
+        if (engineContext.getChannelList().containsKey(pvName)) {
+            ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
+            HashMap<String, String> retVal = archiveChannel.getLatestMetadata();
+            resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+            try (PrintWriter out = resp.getWriter()) {
+                out.println(JSONValue.toJSONString(retVal));
+            }
+            return;
+        }
+
+        logger.debug("No data for PV " + pvName + " in this engine.");
+        resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
 }

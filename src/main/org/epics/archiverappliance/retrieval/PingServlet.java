@@ -9,7 +9,6 @@ package org.epics.archiverappliance.retrieval;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,15 +22,13 @@ import jakarta.servlet.http.HttpServletResponse;
 @SuppressWarnings("serial")
 public class PingServlet extends HttpServlet {
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		resp.setContentType("text");
-		PrintWriter out = resp.getWriter();
-		// Currently we return just a string. This should return some notion of whether the service is really available etc.
-		out.println("Pong");
-		out.close();
-	}
-	
-
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        resp.setContentType("text");
+        PrintWriter out = resp.getWriter();
+        // Currently we return just a string. This should return some notion of whether the service is really available
+        // etc.
+        out.println("Pong");
+        out.close();
+    }
 }

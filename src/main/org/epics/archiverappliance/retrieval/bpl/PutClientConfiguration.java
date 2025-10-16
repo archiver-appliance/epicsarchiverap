@@ -7,6 +7,13 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval.bpl;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.config.ConfigService;
+import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
+import org.json.simple.JSONValue;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
@@ -18,17 +25,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.common.BPLAction;
-import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.retrieval.mimeresponses.MimeResponse;
-import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
-import org.json.simple.JSONValue;
 
 /**
  * Puts a client configuration JSON file given the file name.
@@ -37,81 +35,85 @@ import org.json.simple.JSONValue;
  *
  */
 public class PutClientConfiguration implements BPLAction {
-	private static final Logger logger = LogManager.getLogger(PutClientConfiguration.class.getName());
+    private static final Logger logger = LogManager.getLogger(PutClientConfiguration.class.getName());
 
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		if(!configService.getInstallationProperties().containsKey("org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration.DocumentRoot"))  {
-			logger.error("This installation has not been configured to serve archiver config files.");
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        if (!configService
+                .getInstallationProperties()
+                .containsKey("org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration.DocumentRoot")) {
+            logger.error("This installation has not been configured to serve archiver config files.");
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
 
-		byte[] newConfigBytes = null;
-		try(ByteArrayOutputStream bos = new ByteArrayOutputStream()) { 
-			try(InputStream is = new BufferedInputStream(req.getInputStream())) { 
-				byte[] buf = new byte[10*1024];
-				int bytesRead = is.read(buf);
-				while(bytesRead > 0) { 
-					bos.write(buf, 0, bytesRead);
-					bytesRead = is.read(buf);
-				}
-			}
-			newConfigBytes = bos.toByteArray();
-		}
-		logger.debug("New configuraiton is of size " + newConfigBytes.length);
-		
-		String configFileName = req.getParameter("configFile");
-		if(configFileName == null
-				|| configFileName.contains("..")
-				|| configFileName.startsWith("/")
-				|| !configFileName.endsWith(".json")) { 
-			logger.error("The config file has not been specified (correctly) " + configFileName);
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-		
-		Path documentRoot = Paths.get((String) configService.getInstallationProperties().get("org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration.DocumentRoot"));
-		if(!Files.exists(documentRoot)) { 
-			logger.error("The document root does not exist " + documentRoot.toString());
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
+        byte[] newConfigBytes = null;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            try (InputStream is = new BufferedInputStream(req.getInputStream())) {
+                byte[] buf = new byte[10 * 1024];
+                int bytesRead = is.read(buf);
+                while (bytesRead > 0) {
+                    bos.write(buf, 0, bytesRead);
+                    bytesRead = is.read(buf);
+                }
+            }
+            newConfigBytes = bos.toByteArray();
+        }
+        logger.debug("New configuraiton is of size " + newConfigBytes.length);
 
-		Path configFilePath = documentRoot.resolve(configFileName);
-		if(!configFilePath.startsWith(documentRoot)) { 
-			logger.error("The final path to the config file " + configFilePath + " does not seem to be part of the document root. Denying access to the file as a security precaution.");
-			resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-			return;
-		}
-		
+        String configFileName = req.getParameter("configFile");
+        if (configFileName == null
+                || configFileName.contains("..")
+                || configFileName.startsWith("/")
+                || !configFileName.endsWith(".json")) {
+            logger.error("The config file has not been specified (correctly) " + configFileName);
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
 
-		if(req.getParameter("download") != null) {
-			logger.info("Sending back the incoming data as a content dispositon");
-			
-			resp.setContentType("application/force-download");
-			resp.setContentLength(newConfigBytes.length);
-			resp.setHeader("Content-Transfer-Encoding", "binary");
-			resp.setHeader("Content-Disposition","attachment; filename=\"" + "xxx\"");//fileName);
-			
-			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			resp.setHeader("Content-Disposition", "attachment; filename=" + configFileName);
+        Path documentRoot = Paths.get((String) configService
+                .getInstallationProperties()
+                .get("org.epics.archiverappliance.retrieval.bpl.GetClientConfiguration.DocumentRoot"));
+        if (!Files.exists(documentRoot)) {
+            logger.error("The document root does not exist " + documentRoot.toString());
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
 
-			try (OutputStream out = resp.getOutputStream()) {
-				out.write(newConfigBytes);
-			}
-		} else {
-			resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-			try(FileOutputStream fos = new FileOutputStream(configFilePath.toFile(), false)) { 
-				fos.write(newConfigBytes);
-			}
-			HashMap<String, Object> infoValues = new HashMap<String, Object>();
-			try(PrintWriter out = resp.getWriter()) {
-				infoValues.put("status", "ok");
-				out.println(JSONValue.toJSONString(infoValues));
-			}
-		}
-		
-	}
+        Path configFilePath = documentRoot.resolve(configFileName);
+        if (!configFilePath.startsWith(documentRoot)) {
+            logger.error(
+                    "The final path to the config file " + configFilePath
+                            + " does not seem to be part of the document root. Denying access to the file as a security precaution.");
+            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
 
+        if (req.getParameter("download") != null) {
+            logger.info("Sending back the incoming data as a content dispositon");
+
+            resp.setContentType("application/force-download");
+            resp.setContentLength(newConfigBytes.length);
+            resp.setHeader("Content-Transfer-Encoding", "binary");
+            resp.setHeader("Content-Disposition", "attachment; filename=\"" + "xxx\""); // fileName);
+
+            resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+            resp.setHeader("Content-Disposition", "attachment; filename=" + configFileName);
+
+            try (OutputStream out = resp.getOutputStream()) {
+                out.write(newConfigBytes);
+            }
+        } else {
+            resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+            try (FileOutputStream fos = new FileOutputStream(configFilePath.toFile(), false)) {
+                fos.write(newConfigBytes);
+            }
+            HashMap<String, Object> infoValues = new HashMap<String, Object>();
+            try (PrintWriter out = resp.getWriter()) {
+                infoValues.put("status", "ok");
+                out.println(JSONValue.toJSONString(infoValues));
+            }
+        }
+    }
 }

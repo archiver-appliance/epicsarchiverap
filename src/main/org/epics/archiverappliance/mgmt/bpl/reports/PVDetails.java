@@ -87,7 +87,7 @@ public class PVDetails implements BPLAction {
                 addDetailedStatus(result, "Alias for ", pvName);
             }
             List<String> myaliases = configService.getAliasesForRealName(pvName);
-            if(myaliases != null && !myaliases.isEmpty()) {
+            if (myaliases != null && !myaliases.isEmpty()) {
                 addDetailedStatus(result, "Aliases mapped to this PV ", String.join(",", myaliases));
             }
 

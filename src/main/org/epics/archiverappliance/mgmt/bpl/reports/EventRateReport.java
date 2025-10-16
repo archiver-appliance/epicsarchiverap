@@ -7,13 +7,6 @@
  *******************************************************************************/
 package org.epics.archiverappliance.mgmt.bpl.reports;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.LinkedList;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
@@ -24,32 +17,38 @@ import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONValue;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.LinkedList;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
  * Event rate report.
- * 
- * @epics.BPLAction - Return a list of PVs sorted by descending event rate. 
+ *
+ * @epics.BPLAction - Return a list of PVs sorted by descending event rate.
  * @epics.BPLActionParam limit - Limit this report to this many PVs per appliance in the cluster. Optional, if unspecified, there are no limits enforced.
  * @epics.BPLActionEnd
- * 
+ *
  * @author mshankar
  *
  */
 public class EventRateReport implements BPLAction {
-	private static final Logger logger = LogManager.getLogger(EventRateReport.class);
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp,
-			ConfigService configService) throws IOException {
-		String limit = req.getParameter("limit");
-		logger.info("Event rate report for " + (limit == null ? "default limit " : ("limit " + limit)));
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		LinkedList<String> eventRateURLs = new LinkedList<String>();
-		for(ApplianceInfo info : configService.getAppliancesInCluster()) {
-			eventRateURLs.add(info.getEngineURL() + "/getEventRateReport" + (limit == null ? "" : ("?limit=" + limit)));
-		}		
-		try (PrintWriter out = resp.getWriter()) {
-			JSONArray neverConnPVs = GetUrlContent.combineJSONArrays(eventRateURLs);
-			out.println(JSONValue.toJSONString(neverConnPVs));
-		}
-	}
+    private static final Logger logger = LogManager.getLogger(EventRateReport.class);
 
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        String limit = req.getParameter("limit");
+        logger.info("Event rate report for " + (limit == null ? "default limit " : ("limit " + limit)));
+        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+        LinkedList<String> eventRateURLs = new LinkedList<String>();
+        for (ApplianceInfo info : configService.getAppliancesInCluster()) {
+            eventRateURLs.add(info.getEngineURL() + "/getEventRateReport" + (limit == null ? "" : ("?limit=" + limit)));
+        }
+        try (PrintWriter out = resp.getWriter()) {
+            JSONArray neverConnPVs = GetUrlContent.combineJSONArrays(eventRateURLs);
+            out.println(JSONValue.toJSONString(neverConnPVs));
+        }
+    }
 }

@@ -171,7 +171,7 @@ public abstract class SummaryStatsPostProcessor
                                 continue;
                             }
                             Instant eventInstant = dbrTimeEvent.getEventTimeStamp();
-                            
+
                             if (eventInstant.isBefore(start)) {
                                 // Michael Davidsaver's special case; keep track of the last value before the start time
                                 // and then add that in as a single sample.
@@ -179,19 +179,22 @@ public abstract class SummaryStatsPostProcessor
                                         || e.getEventTimeStamp().isAfter(lastSampleBeforeStart.getEventTimeStamp())) {
                                     lastSampleBeforeStart = e.makeClone();
                                 }
-                            }
-                            else if (eventInstant.isAfter(start) || eventInstant.equals(start)) {
-                                
+                            } else if (eventInstant.isAfter(start) || eventInstant.equals(start)) {
+
                                 if (eventInstant.equals(start)) {
                                     shouldAddLastSampleBeforeStart = false;
                                 }
 
                                 // We only add bins for the specified time frame.
-                                // The ArchiveViewer depends on the number of values being the same and because of different rates
+                                // The ArchiveViewer depends on the number of values being the same and because of
+                                // different rates
                                 // for PVs, the bin number for the starting bin could be different...
-                                // We could add a firstbin-1 and put all values before the starting timestamp in that bin but that
+                                // We could add a firstbin-1 and put all values before the starting timestamp in that
+                                // bin but that
                                 // would give incorrect summaries.
-                                if (lastSampleBeforeStart != null && shouldAddLastSampleBeforeStart && !lastSampleBeforeStartAdded) {
+                                if (lastSampleBeforeStart != null
+                                        && shouldAddLastSampleBeforeStart
+                                        && !lastSampleBeforeStartAdded) {
                                     switchToNewBin(firstBin - 1);
                                     currentBinCollector.addEvent(lastSampleBeforeStart);
                                     lastSampleBeforeStartAdded = true;
@@ -223,7 +226,9 @@ public abstract class SummaryStatsPostProcessor
                     // If there were zero events in the timespan defined by the query,
                     // the last sample before start has not been added to a bin yet.
                     // If that is the case, add it here:
-                    if (lastSampleBeforeStart != null && shouldAddLastSampleBeforeStart && !lastSampleBeforeStartAdded) {
+                    if (lastSampleBeforeStart != null
+                            && shouldAddLastSampleBeforeStart
+                            && !lastSampleBeforeStartAdded) {
                         switchToNewBin(firstBin - 1);
                         currentBinCollector.addEvent(lastSampleBeforeStart);
                         commitSummaryToBin(vectorType);
@@ -250,21 +255,15 @@ public abstract class SummaryStatsPostProcessor
             SummaryValue summaryValue;
             if (vectorType) {
                 summaryValue = new SummaryValue(
-                        ((SummaryStatsVectorCollector) currentBinCollector)
-                                .getVectorValues(),
+                        ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(),
                         currentMaxSeverity,
                         currentConnectionChangedEvents);
             } else {
                 summaryValue = new SummaryValue(
-                        currentBinCollector.getStat(),
-                        currentMaxSeverity,
-                        currentConnectionChangedEvents);
-                if (currentBinCollector
-                        instanceof SummaryStatsCollectorAdditionalColumns) {
+                        currentBinCollector.getStat(), currentMaxSeverity, currentConnectionChangedEvents);
+                if (currentBinCollector instanceof SummaryStatsCollectorAdditionalColumns) {
                     summaryValue.addAdditionalColumn(
-                            ((SummaryStatsCollectorAdditionalColumns)
-                                            currentBinCollector)
-                                    .getAdditionalStats());
+                            ((SummaryStatsCollectorAdditionalColumns) currentBinCollector).getAdditionalStats());
                 }
             }
             consolidatedData.put(currentBin, summaryValue);
