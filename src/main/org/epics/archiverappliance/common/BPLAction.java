@@ -7,23 +7,23 @@
  *******************************************************************************/
 package org.epics.archiverappliance.common;
 
-import java.io.IOException;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.epics.archiverappliance.config.ConfigService;
 
+import java.io.IOException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 /**
- * A very simple struts like action for business processes. 
+ * A very simple struts like action for business processes.
  * Responses are typically JSON though this is not enforced.
  * We are not too far away from the servlet container here.
  * A handle to the configservice is passed in as part of the execute method.
- * The BPLAction is extected to handle all servlet container traffic like HTTP error codes etc. 
+ * The BPLAction is extected to handle all servlet container traffic like HTTP error codes etc.
  * If an exception is thrown, the servlet that calls BPLActions will send a Internal Server Error to the caller.
  * @author mshankar
  *
  */
 public interface BPLAction {
-	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException;
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException;
 }

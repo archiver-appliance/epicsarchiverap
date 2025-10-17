@@ -29,8 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Detailed statistics for a PV.
@@ -87,7 +87,7 @@ public class PVDetails implements BPLAction {
                 addDetailedStatus(result, "Alias for ", pvName);
             }
             List<String> myaliases = configService.getAliasesForRealName(pvName);
-            if(myaliases != null && !myaliases.isEmpty()) {
+            if (myaliases != null && !myaliases.isEmpty()) {
                 addDetailedStatus(result, "Aliases mapped to this PV ", String.join(",", myaliases));
             }
 

@@ -30,8 +30,8 @@ import java.io.PrintWriter;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * PV for getting the data for multiple PV's from the engine's buffers at a particular time.
@@ -52,11 +52,10 @@ public class GetDataAtTimeEngine implements BPLAction {
      * @return
      */
     private static DBRTimeEvent evaluatePotentialEvent(
-            Instant atTime,
-            DBRTimeEvent newEventToConsider,
-            DBRTimeEvent alreadyExistingEvent) {
-        if (newEventToConsider != null && (newEventToConsider.getEventTimeStamp().isBefore(atTime)
-                || newEventToConsider.getEventTimeStamp().equals(atTime))) {
+            Instant atTime, DBRTimeEvent newEventToConsider, DBRTimeEvent alreadyExistingEvent) {
+        if (newEventToConsider != null
+                && (newEventToConsider.getEventTimeStamp().isBefore(atTime)
+                        || newEventToConsider.getEventTimeStamp().equals(atTime))) {
             if (alreadyExistingEvent != null) {
                 if (newEventToConsider.getEventTimeStamp().isAfter(alreadyExistingEvent.getEventTimeStamp())) {
                     return newEventToConsider;
@@ -89,20 +88,16 @@ public class GetDataAtTimeEngine implements BPLAction {
             if (rootTypeInfo == null) continue;
             pvName = rootTypeInfo.getPvName();
 
-
             if (engineContext.getChannelList().containsKey(pvName)) {
                 ArchiveChannel archiveChannel = engineContext.getChannelList().get(pvName);
                 ArrayListEventStream st = archiveChannel.getPVData();
                 DBRTimeEvent potentialEvent = null;
                 for (Event ev : st) {
-                    potentialEvent = evaluatePotentialEvent(
-                            atTime, (DBRTimeEvent) ev, potentialEvent);
+                    potentialEvent = evaluatePotentialEvent(atTime, (DBRTimeEvent) ev, potentialEvent);
                 }
                 if (archiveChannel.getLastArchivedValue() != null) {
-                    potentialEvent = evaluatePotentialEvent(
-                            atTime,
-                            archiveChannel.getLastArchivedValue(),
-                            potentialEvent);
+                    potentialEvent =
+                            evaluatePotentialEvent(atTime, archiveChannel.getLastArchivedValue(), potentialEvent);
                 }
 
                 if (potentialEvent != null) {
@@ -110,16 +105,14 @@ public class GetDataAtTimeEngine implements BPLAction {
                     evnt.put("secs", potentialEvent.getEpochSeconds());
                     evnt.put(
                             "val",
-                            JSONValue.parse(potentialEvent
-                                    .getSampleValue()
-                                    .toJSONString()));
+                            JSONValue.parse(potentialEvent.getSampleValue().toJSONString()));
                     evnt.put("nanos", potentialEvent.getEventTimeStamp().getNano());
                     evnt.put("severity", potentialEvent.getSeverity());
                     evnt.put("status", potentialEvent.getStatus());
                     HashMap<String, String> metafields = archiveChannel.getLatestMetadata();
-                    if(metafields != null) {
+                    if (metafields != null) {
                         MetaFields.addMetaFieldValue(evnt, "source", "engine");
-                        for(String key: metafields.keySet()) {
+                        for (String key : metafields.keySet()) {
                             MetaFields.addMetaFieldValue(evnt, key, metafields.get(key));
                         }
                     }

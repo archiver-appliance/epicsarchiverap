@@ -29,8 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.util.LinkedList;
 import java.util.Map;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Detailed metrics for an appliance
@@ -90,13 +90,12 @@ public class ApplianceMetricsDetails implements BPLAction {
                     "PVs in archive workflow",
                     Integer.toString(configService.getMgmtRuntimeState().getPVsPendingInWorkflow()));
 
-             CPStaticData cpStaticData = CapacityPlanningData.getCachedMetricsForAppliances(configService);
-             ApplianceAggregateInfo applianceAggregateDifferenceFromLastFetch = null;
-             if(cpStaticData != null) {
-                CapacityPlanningData capacityPlanningMetrics = cpStaticData
-                .cpApplianceMetrics
-                .get(configService.getMyApplianceInfo());
-                
+            CPStaticData cpStaticData = CapacityPlanningData.getCachedMetricsForAppliances(configService);
+            ApplianceAggregateInfo applianceAggregateDifferenceFromLastFetch = null;
+            if (cpStaticData != null) {
+                CapacityPlanningData capacityPlanningMetrics =
+                        cpStaticData.cpApplianceMetrics.get(configService.getMyApplianceInfo());
+
                 applianceAggregateDifferenceFromLastFetch =
                         capacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
 
@@ -125,14 +124,14 @@ public class ApplianceMetricsDetails implements BPLAction {
                     "Aggregated appliance PV count",
                     noSignificantDigits.format(
                             configService.getAggregatedApplianceInfo(info).getTotalPVCount()));
-            if(applianceAggregateDifferenceFromLastFetch != null) {
+            if (applianceAggregateDifferenceFromLastFetch != null) {
                 addDetailedStatus(
                         result,
                         "Incremental appliance storage rate (in GB/year)",
                         twoSignificantDigits.format(
                                 (applianceAggregateDifferenceFromLastFetch.getTotalStorageRate() * 60 * 60 * 24 * 365)
                                         / (1024 * 1024 * 1024)));
-    
+
                 addDetailedStatus(
                         result,
                         "Incremental appliance event rate (in events/sec)",

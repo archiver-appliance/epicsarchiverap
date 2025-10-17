@@ -96,7 +96,7 @@ dependencies {
 	viewer("archiver-appliance:svg_viewer:v1.2.1@zip")
 
 	// Provided by Servlet Container (e.g., Tomcat)
-	implementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")
+	implementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
 
 	// Core Libraries
 	implementation("org.epics:jca:2.4.7")
@@ -106,14 +106,16 @@ dependencies {
 	implementation("org.python:jython-standalone:2.7.3")
 	implementation("com.google.protobuf:protobuf-java:3.23.0")
 	implementation("org.phoebus:core-pva:5.0.2")
+	implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
 
 	// Apache Commons
 	implementation("commons-codec:commons-codec:1.15")
-	implementation("commons-fileupload:commons-fileupload:1.6.0")
+	implementation("org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M3")
 	implementation("commons-io:commons-io:2.14.0")
 	implementation("org.apache.commons:commons-lang3:3.18.0")
 	implementation("org.apache.commons:commons-math3:3.6.1")
 	implementation("commons-validator:commons-validator:1.7")
+
 
 	// HTTP Clients
 	implementation("org.apache.httpcomponents:httpclient:4.5.14")
@@ -146,7 +148,7 @@ dependencies {
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(project.files("lib/pbrawclient-0.2.1.jar"))
 	testImplementation(":pbrawclient:0.2.1")
-	testImplementation("org.apache.tomcat:tomcat-servlet-api:9.0.74")
+	testImplementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
 }
 
 // =================================================================
@@ -635,7 +637,7 @@ configure<SpotlessExtension> {
 		removeUnusedImports()
 		// apply a specific flavor of google-java-format
 		palantirJavaFormat()
-		importOrder("", "java|javax", "#")
+		importOrder("", "java|javax|jakarta", "#")
 		// fix formatting of type annotations
 		formatAnnotations()
 	}

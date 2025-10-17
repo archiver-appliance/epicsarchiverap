@@ -19,10 +19,10 @@ import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStr
 import java.io.IOException;
 import java.io.OutputStream;
 import java.time.Instant;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * This is currently the code that remotes an event stream, for example from the engine etc.

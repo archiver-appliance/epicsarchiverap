@@ -65,7 +65,7 @@ Here are the steps to get started quickly.
 5. Run the script like so
 
    ```bash
-   $ ./quickstart.sh apache-tomcat-9.0.20.tar.gz
+   $ ./quickstart.sh apache-tomcat-11.0.12.tar.gz
    ```
 
 6. This should start the Tomcat process in the foreground. Once all the

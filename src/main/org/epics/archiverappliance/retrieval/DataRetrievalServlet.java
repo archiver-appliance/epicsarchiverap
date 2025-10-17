@@ -7,6 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance.retrieval;
 
+import static org.epics.archiverappliance.retrieval.RetrievalError.check;
+import static org.epics.archiverappliance.retrieval.RetrievalError.logAndRespond;
+
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo.Builder;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
@@ -92,13 +95,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import static org.epics.archiverappliance.retrieval.RetrievalError.check;
-import static org.epics.archiverappliance.retrieval.RetrievalError.logAndRespond;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Main servlet for retrieval of data.
@@ -1402,7 +1402,11 @@ public class DataRetrievalServlet extends HttpServlet {
         try {
             // It may be beneficial to support both and choose based on where the client in calling from or perhaps from
             // a header?
-            boolean redirect = Boolean.parseBoolean(configService.getInstallationProperties().getProperty("org.epics.archiverappliance.retrieval.DataRetrievalServlet.proxyRetrievalRequest", "false"));
+            boolean redirect = Boolean.parseBoolean(configService
+                    .getInstallationProperties()
+                    .getProperty(
+                            "org.epics.archiverappliance.retrieval.DataRetrievalServlet.proxyRetrievalRequest",
+                            "false"));
             if (redirect) {
                 logger.info(
                         "Data for pv " + pvName + "is elsewhere. Redirecting to appliance " + dataRetrievalURLForPV);

@@ -17,7 +17,7 @@ import java.net.URLEncoder;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 public class SampleRetrievalState extends RetrievalState {
     private static Logger logger = LogManager.getLogger(SampleRetrievalState.class.getName());

@@ -12,19 +12,15 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.ArchivedPVsInList;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
-import org.epics.archiverappliance.config.PVNames;
-import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Given a list of PVs, determine those that are being archived.
@@ -45,12 +41,12 @@ public class ArchivedPVsAction implements BPLAction {
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
         logger.info("Determining PVs that are archived ");
-		LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
-		List<String> archivedPVs = ArchivedPVsInList.getArchivedPVs(pvNames, configService);
+        LinkedList<String> pvNames = PVsMatchingParameter.getPVNamesFromPostBody(req);
+        List<String> archivedPVs = ArchivedPVsInList.getArchivedPVs(pvNames, configService);
 
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         try (PrintWriter out = resp.getWriter()) {
             JSONValue.writeJSONString(archivedPVs, out);
-        }	
+        }
     }
 }

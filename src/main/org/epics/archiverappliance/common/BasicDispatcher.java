@@ -16,12 +16,12 @@ import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONObject;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Glue code that is in all the BPL servlets.
@@ -31,10 +31,14 @@ import java.util.Map;
 public class BasicDispatcher {
     private static final Logger logger = LogManager.getLogger(BasicDispatcher.class);
 
-    private BasicDispatcher() {
-    }
+    private BasicDispatcher() {}
 
-    public static void dispatch(HttpServletRequest req, HttpServletResponse resp, ConfigService configService, Map<String, Class<? extends BPLAction>> actions) throws IOException {
+    public static void dispatch(
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            ConfigService configService,
+            Map<String, Class<? extends BPLAction>> actions)
+            throws IOException {
         String requestPath = req.getPathInfo();
         if (requestPath == null || requestPath.equals("")) {
             logger.warn("Request path is empty.");
@@ -46,21 +50,25 @@ public class BasicDispatcher {
             case "/ping" -> ping(resp, "pong");
             case "/postStartup" -> postStartup(resp, configService);
             case "/startupState" -> startupState(resp, configService);
-            default ->
-                    handleBPLAction(req, resp, configService, actions, requestPath);
+            default -> handleBPLAction(req, resp, configService, actions, requestPath);
         }
-
     }
 
-    private static void handleBPLAction(HttpServletRequest req, HttpServletResponse resp, ConfigService configService, Map<String, Class<? extends BPLAction>> actions, String requestPath) throws IOException {
+    private static void handleBPLAction(
+            HttpServletRequest req,
+            HttpServletResponse resp,
+            ConfigService configService,
+            Map<String, Class<? extends BPLAction>> actions,
+            String requestPath)
+            throws IOException {
         if (!configService.isStartupComplete()) {
             logger.warn("We do not let the other actions complete until the config service startup is complete...");
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
 
-
-        if (configService.getWarFile() == WAR_FILE.MGMT && !configService.getMgmtRuntimeState().haveChildComponentsStartedUp()) {
+        if (configService.getWarFile() == WAR_FILE.MGMT
+                && !configService.getMgmtRuntimeState().haveChildComponentsStartedUp()) {
             String header = req.getHeader(GetUrlContent.ARCHAPPL_COMPONENT);
             if (header == null || !header.equals("true")) {
                 logger.error("We do not let the actions complete until all the components have started up");
@@ -71,7 +79,8 @@ public class BasicDispatcher {
 
         Class<? extends BPLAction> actionClass = actions.get(requestPath);
         if (actionClass == null) {
-            logger.error("Do not have a appropriate BPL action for " + requestPath + ". Please register the appropriate business method in getActions.");
+            logger.error("Do not have a appropriate BPL action for " + requestPath
+                    + ". Please register the appropriate business method in getActions.");
             resp.sendError(HttpServletResponse.SC_NOT_FOUND);
             return;
         }
@@ -113,6 +122,6 @@ public class BasicDispatcher {
         resp.setContentType("text/plain");
         try (PrintWriter out = resp.getWriter()) {
             out.println(pong);
-		}
+        }
     }
 }

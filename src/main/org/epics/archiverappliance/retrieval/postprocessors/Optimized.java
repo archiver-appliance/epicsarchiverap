@@ -11,20 +11,20 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * 
+ *
  * <code>Optimized</code> expects one parameter at initialization, which is the number of requested points.
- * If there are less samples in the time interval than requested (with a certain deadband), all samples 
+ * If there are less samples in the time interval than requested (with a certain deadband), all samples
  * will be returned. If there are more samples than requested, the samples will be collected into bins.
- * Mean, std, min, max and count of each bin is calculated and returned as a single sample. 
+ * Mean, std, min, max and count of each bin is calculated and returned as a single sample.
  *
  * @author <a href="mailto:jaka.bobnar@cosylab.com">Jaka Bobnar</a>
  *
@@ -34,26 +34,26 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
     private static final Logger Logger = LogManager.getLogger(Optimized.class);
     private static final int DEFAULT_NUMBER_OF_POINTS = 1000;
     private static final String IDENTITY = "optimized";
-    
+
     private int numEvents;
     private ArrayListEventStream allEvents;
     private ArrayListEventStream transformedRawEvents;
     private int numberOfPoints = DEFAULT_NUMBER_OF_POINTS;
-    
-    private final Statistics statisticsPostProcessor = new Statistics(){
+
+    private final Statistics statisticsPostProcessor = new Statistics() {
         @Override
         public SummaryStatsVectorCollector getCollector() {
             return new SummaryStatsVectorCollector() {
                 private SummaryStatistics stats = new SummaryStatistics();
+
                 @Override
-                public void setBinParams(int intervalSecs, long binNum) {
-                }
-                
+                public void setBinParams(int intervalSecs, long binNum) {}
+
                 @Override
                 public boolean haveEventsBeenAdded() {
                     return stats.getN() > 0;
                 }
-                
+
                 @Override
                 public List<Double> getVectorValues() {
                     List<Double> list = new ArrayList<>(5);
@@ -61,15 +61,15 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
                     list.add(stats.getStandardDeviation());
                     list.add(stats.getMin());
                     list.add(stats.getMax());
-                    list.add((double)stats.getN());
+                    list.add((double) stats.getN());
                     return list;
                 }
-                
+
                 @Override
                 public double getStat() {
                     return Double.NaN;
                 }
-                            
+
                 @Override
                 public void addEvent(Event e) {
                     if (numEvents < numberOfPoints) {
@@ -77,38 +77,40 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
                     }
                     numEvents++;
                     double val = e.getSampleValue().getValue().doubleValue();
-                    if(!Double.isNaN(val)) { 
+                    if (!Double.isNaN(val)) {
                         stats.addValue(val);
-                    } else { 
+                    } else {
                         Logger.warn("Skipping NAN");
                     }
                 }
             };
-        }   
-    };    
-        
+        }
+    };
+
     @Override
     public void initialize(String userarg, String pvName) throws IOException {
-        if(userarg != null && userarg.contains("_")) {
+        if (userarg != null && userarg.contains("_")) {
             String[] userparams = userarg.split("_");
             String numberStr = userparams[1];
             numberOfPoints = Integer.parseInt(numberStr);
-        } 
+        }
         numEvents = 0;
     }
-    
+
     @Override
-    public long estimateMemoryConsumption(String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
+    public long estimateMemoryConsumption(
+            String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
         long intervalSecsLong = ((end.getEpochSecond() - start.getEpochSecond()) / ((long) numberOfPoints));
-        int intervalSecs = intervalSecsLong > Integer.MAX_VALUE ? Integer.MAX_VALUE : Math.max(1, (int) intervalSecsLong);
+        int intervalSecs =
+                intervalSecsLong > Integer.MAX_VALUE ? Integer.MAX_VALUE : Math.max(1, (int) intervalSecsLong);
         try {
-            statisticsPostProcessor.initialize(getIdentity() + "_" + Integer.toString(intervalSecs),pvName);
+            statisticsPostProcessor.initialize(getIdentity() + "_" + Integer.toString(intervalSecs), pvName);
         } catch (IOException e) {
-            Logger.error("Error initializing the optimized post processor.",e);
+            Logger.error("Error initializing the optimized post processor.", e);
         }
-        return statisticsPostProcessor.estimateMemoryConsumption(pvName,typeInfo,start,end,req);
+        return statisticsPostProcessor.estimateMemoryConsumption(pvName, typeInfo, start, end, req);
     }
-    
+
     @Override
     public void doNotInheritValuesFromPrevioisBins() {
         statisticsPostProcessor.doNotInheritValuesFromPrevioisBins();
@@ -150,7 +152,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
 
     @Override
     public String getExtension() {
-        if(numberOfPoints == DEFAULT_NUMBER_OF_POINTS) {
+        if (numberOfPoints == DEFAULT_NUMBER_OF_POINTS) {
             return getIdentity();
         } else {
             return getIdentity() + "_" + Integer.toString(numberOfPoints);
@@ -163,7 +165,7 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
             public EventStream call() throws Exception {
                 if (allEvents == null) {
                     EventStream strm = callable.call();
-                    RemotableEventStreamDesc org = (RemotableEventStreamDesc)strm.getDescription();
+                    RemotableEventStreamDesc org = (RemotableEventStreamDesc) strm.getDescription();
                     RemotableEventStreamDesc desc = new RemotableEventStreamDesc(org);
                     allEvents = new ArrayListEventStream(numberOfPoints, desc);
                 }
@@ -172,13 +174,15 @@ public class Optimized implements PostProcessor, PostProcessorWithConsolidatedEv
                 if (numEvents > allEvents.size()) {
                     return stream;
                 } else {
-                    transformedRawEvents = new ArrayListEventStream(allEvents.size(),allEvents.getDescription());
+                    transformedRawEvents = new ArrayListEventStream(allEvents.size(), allEvents.getDescription());
                     for (Event e : allEvents) {
-                        transformedRawEvents.add(DBR2PBTypeMapping.getPBClassFor(e.getDBRType()).getSerializingConstructor().newInstance(e));
+                        transformedRawEvents.add(DBR2PBTypeMapping.getPBClassFor(e.getDBRType())
+                                .getSerializingConstructor()
+                                .newInstance(e));
                     }
                     return transformedRawEvents;
                 }
             }
         };
-    }  
+    }
 }

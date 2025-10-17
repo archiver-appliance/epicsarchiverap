@@ -47,11 +47,11 @@ RUN cd base && make -j$(nproc)
 # Stage: Download and extract Tomcat
 # This stage is responsible only for getting the Tomcat binaries.
 FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS tomcat-download-extract
-ARG TOMCAT_VERSION=9.0.79
+ARG TOMCAT_VERSION=11.0.12
 SHELL ["/bin/bash", "-c"]
 RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates \
     && mkdir /tomcat \
-    && wget -q --show-progress "https://archive.apache.org/dist/tomcat/tomcat-9/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" -O /tmp/tomcat.tar.gz \
+    && wget -q --show-progress "https://archive.apache.org/dist/tomcat/tomcat-11/v${TOMCAT_VERSION}/bin/apache-tomcat-${TOMCAT_VERSION}.tar.gz" -O /tmp/tomcat.tar.gz \
     # Use --strip-components=1 to avoid the nested apache-tomcat-* directory
     && tar -xf /tmp/tomcat.tar.gz -C /tomcat --strip-components=1 \
     && rm /tmp/tomcat.tar.gz \

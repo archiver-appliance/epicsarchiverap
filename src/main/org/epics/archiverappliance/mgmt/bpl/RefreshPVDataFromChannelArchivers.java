@@ -1,18 +1,17 @@
 package org.epics.archiverappliance.mgmt.bpl;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashMap;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BPLAction;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.utils.ui.MimeTypeConstants;
 import org.json.simple.JSONValue;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *
@@ -22,18 +21,18 @@ import org.json.simple.JSONValue;
  *
  */
 public class RefreshPVDataFromChannelArchivers implements BPLAction {
-	private static Logger logger = LogManager.getLogger(RefreshPVDataFromChannelArchivers.class.getName());
+    private static Logger logger = LogManager.getLogger(RefreshPVDataFromChannelArchivers.class.getName());
 
-	@Override
-	public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService) throws IOException {
-		logger.info("Updating the PV data from all the ChannelArchivers");
-		configService.refreshPVDataFromChannelArchiverDataServers();
-		resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
-		HashMap<String, Object> infoValues = new HashMap<String, Object>();
-		try(PrintWriter out = resp.getWriter()) {
-			infoValues.put("status", "ok");
-			out.println(JSONValue.toJSONString(infoValues));
-		}
-		
-	}
+    @Override
+    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+            throws IOException {
+        logger.info("Updating the PV data from all the ChannelArchivers");
+        configService.refreshPVDataFromChannelArchiverDataServers();
+        resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
+        HashMap<String, Object> infoValues = new HashMap<String, Object>();
+        try (PrintWriter out = resp.getWriter()) {
+            infoValues.put("status", "ok");
+            out.println(JSONValue.toJSONString(infoValues));
+        }
+    }
 }
