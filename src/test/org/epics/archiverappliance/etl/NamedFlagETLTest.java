@@ -7,7 +7,7 @@
  *******************************************************************************/
 package org.epics.archiverappliance.etl;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
@@ -270,7 +270,7 @@ public class NamedFlagETLTest {
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePlainFile.validatePlainFile(destPath, true),
+                    ValidatePlainFile.validatePlainFile(destPath, true, etlDest.getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
