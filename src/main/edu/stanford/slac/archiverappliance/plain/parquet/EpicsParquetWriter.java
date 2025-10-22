@@ -3,6 +3,7 @@ package edu.stanford.slac.archiverappliance.plain.parquet;
 import com.google.protobuf.Message;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.parquet.column.ParquetProperties;
 import org.apache.parquet.conf.ParquetConfiguration;
 import org.apache.parquet.hadoop.ParquetWriter;
 import org.apache.parquet.hadoop.api.WriteSupport;
@@ -45,7 +46,7 @@ public class EpicsParquetWriter extends ParquetWriter<Message> {
      * @return The builder.
      */
     public static EpicsParquetWriter.Builder builder(OutputFile file) {
-        return new EpicsParquetWriter.Builder(file);
+        return (new EpicsParquetWriter.Builder(file)).withWriterVersion(ParquetProperties.WriterVersion.PARQUET_2_0);
     }
 
     private static EpicsWriteSupport<Message> writeSupport(
