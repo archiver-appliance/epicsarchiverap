@@ -192,7 +192,7 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
             String rootFolder,
             String desc,
             PVNameToKeyMapping pv2key) {
-        return new ParquetAppendDataStateData<>(
+        return new ParquetAppendDataStateData(
                 partitionGranularity,
                 rootFolder,
                 desc,

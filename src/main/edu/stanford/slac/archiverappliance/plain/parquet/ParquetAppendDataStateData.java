@@ -50,9 +50,8 @@ import java.util.List;
  *     file without full deserialization.</li>
  * </ul>
  *
- * @param <T> The Protobuf {@link Message} type corresponding to the EPICS data being written.
  */
-public class ParquetAppendDataStateData<T extends Message> extends AppendDataStateData {
+public class ParquetAppendDataStateData extends AppendDataStateData {
     private static final Logger logger = LogManager.getLogger(ParquetAppendDataStateData.class.getName());
     private static final String TEMP_FILE_PREFIX = "~";
     private final ParquetReadOptions readOptions;
