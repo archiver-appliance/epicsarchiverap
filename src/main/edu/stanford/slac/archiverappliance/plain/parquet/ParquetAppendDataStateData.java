@@ -37,8 +37,7 @@ import java.util.List;
  * A stateful class that manages the process of writing and appending EPICS event data to Parquet files.
  * <p>
  * This class extends {@link AppendDataStateData} to provide Parquet-specific logic. It handles
- * file partitioning, writing new events, and merging data. A single instance of this class
- * ates to a single PV's data stream.
+ * file partitioning, writing new events, and merging data.
  * <p>
  * Key behaviors:
  * <ul>
@@ -53,7 +52,7 @@ import java.util.List;
  */
 public class ParquetAppendDataStateData extends AppendDataStateData {
     private static final Logger logger = LogManager.getLogger(ParquetAppendDataStateData.class.getName());
-    private static final String TEMP_FILE_PREFIX = "~";
+    private static final String TEMP_FILE_PREFIX = "~TempFile~";
     private final ParquetReadOptions readOptions;
     private final CompressionCodecName compressionCodecName;
     EpicsParquetWriter.Builder writerBuilder;
