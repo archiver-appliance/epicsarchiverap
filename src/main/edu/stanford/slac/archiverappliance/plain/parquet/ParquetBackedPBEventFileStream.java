@@ -239,9 +239,6 @@ public class ParquetBackedPBEventFileStream implements ETLParquetFilesStream, Re
         return this.paths;
     }
 
-    /**
-     * @param context BasicContext
-     */
     @Override
     public Event getFirstEvent(BasicContext context) throws IOException {
         return this.getFirstEvent();
