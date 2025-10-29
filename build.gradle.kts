@@ -148,7 +148,7 @@ dependencies {
 	testImplementation("org.awaitility:awaitility:4.2.0")
 	testImplementation("org.apache.commons:commons-compress:1.26.0")
 	testImplementation("commons-cli:commons-cli:1.5.0")
-	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
+	testImplementation("com.hubspot.jinjava:jinjava:2.8.1")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(":pbrawclient:0.2.1")
 	testImplementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
