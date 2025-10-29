@@ -106,7 +106,7 @@ dependencies {
 	implementation("org.epics:jca:2.4.7")
 	implementation("com.google.guava:guava:33.5.0-jre")
 	implementation("com.hazelcast:hazelcast:5.5.0")
-	implementation("redis.clients:jedis:4.4.0")
+	implementation("redis.clients:jedis:7.0.0")
 	implementation("org.python:jython-standalone:2.7.3")
 	implementation("com.google.protobuf:protobuf-java:${findProperty("protobufJavaVersion")}")
 	implementation("org.phoebus:core-pva:5.0.2")
