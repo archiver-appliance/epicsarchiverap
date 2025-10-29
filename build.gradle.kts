@@ -110,12 +110,12 @@ dependencies {
 	implementation("org.python:jython-standalone:2.7.3")
 	implementation("com.google.protobuf:protobuf-java:${findProperty("protobufJavaVersion")}")
 	implementation("org.phoebus:core-pva:5.0.2")
-	implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
 	implementation("jakarta.validation:jakarta.validation-api:3.1.1")
 
 	// Apache Commons
 	implementation("commons-codec:commons-codec:1.15")
 	implementation("org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M3")
+	implementation("org.apache.commons:commons-fileupload2-core:2.0.0-M3")
 	implementation("commons-io:commons-io:2.14.0")
 	implementation("org.apache.commons:commons-lang3:3.18.0")
 	implementation("org.apache.commons:commons-math3:3.6.1")
@@ -129,6 +129,7 @@ dependencies {
 	// Data Formats & DB
 	implementation("jdbm:jdbm:2.4") // clojar dependency
 	implementation("com.googlecode.json-simple:json-simple:1.1.1")
+	implementation("org.json:json:20250517")
 	implementation("com.opencsv:opencsv:5.7.1")
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 
@@ -140,7 +141,7 @@ dependencies {
 	implementation("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
 	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
 	runtimeOnly("org.apache.logging.log4j:log4j-core:${findProperty("log4jVersion")}")
-	implementation("com.lmax:disruptor:3.4.4") // Needed for async logging
+	runtimeOnly("com.lmax:disruptor:3.4.4") // Needed for async logging
 
 	// Testing
 	testImplementation("org.junit.jupiter:junit-jupiter-api:${findProperty("junitJupiterVersion")}")
