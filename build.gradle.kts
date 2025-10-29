@@ -10,6 +10,7 @@ plugins {
 	id("ca.cutterslade.analyze") version "1.9.2" // Analyzes dependencies for usage
 	id("com.palantir.git-version") version "3.0.0"
 	id("com.diffplug.spotless") version "6.25.0"
+	id("com.google.protobuf") version "0.9.5"
 }
 
 // =================================================================
@@ -20,6 +21,9 @@ sourceSets {
 	main {
 		java {
 			srcDir("src/main/")
+		}
+		proto {
+			srcDir("src/proto")
 		}
 		resources {
 			setSrcDirs(emptyList<String>())
@@ -104,7 +108,7 @@ dependencies {
 	implementation("com.hazelcast:hazelcast:5.5.0")
 	implementation("redis.clients:jedis:4.4.0")
 	implementation("org.python:jython-standalone:2.7.3")
-	implementation("com.google.protobuf:protobuf-java:3.23.0")
+	implementation("com.google.protobuf:protobuf-java:4.33.0")
 	implementation("org.phoebus:core-pva:5.0.2")
 	implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
 
@@ -146,7 +150,6 @@ dependencies {
 	testImplementation("commons-cli:commons-cli:1.5.0")
 	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
-	testImplementation(project.files("lib/pbrawclient-0.2.1.jar"))
 	testImplementation(":pbrawclient:0.2.1")
 	testImplementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
 }
@@ -305,6 +308,18 @@ tasks.register<Exec>("sphinx") {
 		commandLine("cmd", "/c", "build_docs.bat")
 	} else {
 		commandLine("./build_docs.sh")
+	}
+}
+
+// =================================================================
+// Precompile steps
+// =================================================================
+
+protobuf {
+	// Configure the protoc executable
+	protoc {
+		// Download from repositories
+		artifact = "com.google.protobuf:protoc:4.33.0"
 	}
 }
 
