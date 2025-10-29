@@ -100,7 +100,7 @@ dependencies {
 	viewer("archiver-appliance:svg_viewer:v1.2.1@zip")
 
 	// Provided by Servlet Container (e.g., Tomcat)
-	implementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
+	implementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
 
 	// Core Libraries
 	implementation("org.epics:jca:2.4.7")
@@ -108,7 +108,7 @@ dependencies {
 	implementation("com.hazelcast:hazelcast:5.5.0")
 	implementation("redis.clients:jedis:4.4.0")
 	implementation("org.python:jython-standalone:2.7.3")
-	implementation("com.google.protobuf:protobuf-java:4.33.0")
+	implementation("com.google.protobuf:protobuf-java:${findProperty("protobufJavaVersion")}")
 	implementation("org.phoebus:core-pva:5.0.2")
 	implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
 
@@ -132,26 +132,26 @@ dependencies {
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 
 	// Logging
-	runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies
-	implementation("org.apache.logging.log4j:log4j-api:2.20.0")
-	implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
-	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
-	implementation("org.apache.logging.log4j:log4j-jul:2.20.0")
-	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-jul:2.20.0")
-	runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
+	runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:${findProperty("log4jVersion")}") // TODO remove log4j 1 from dependencies
+	implementation("org.apache.logging.log4j:log4j-api:${findProperty("log4jVersion")}")
+	implementation("org.apache.logging.log4j:log4j-slf4j2-impl:${findProperty("log4jVersion")}")
+	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-slf4j2-impl:${findProperty("log4jVersion")}")
+	implementation("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
+	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
+	runtimeOnly("org.apache.logging.log4j:log4j-core:${findProperty("log4jVersion")}")
 	implementation("com.lmax:disruptor:3.4.4") // Needed for async logging
 
 	// Testing
-	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
-	testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
-	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:${findProperty("junitJupiterVersion")}")
+	testImplementation("org.junit.jupiter:junit-jupiter-params:${findProperty("junitJupiterVersion")}")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${findProperty("junitJupiterVersion")}")
 	testImplementation("org.awaitility:awaitility:4.2.0")
 	testImplementation("org.apache.commons:commons-compress:1.26.0")
 	testImplementation("commons-cli:commons-cli:1.5.0")
 	testImplementation("com.hubspot.jinjava:jinjava:2.8.1")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(":pbrawclient:0.2.1")
-	testImplementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
+	testImplementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
 }
 
 // =================================================================
@@ -319,7 +319,7 @@ protobuf {
 	// Configure the protoc executable
 	protoc {
 		// Download from repositories
-		artifact = "com.google.protobuf:protoc:4.33.0"
+		artifact = "com.google.protobuf:protoc:${findProperty("protobufJavaVersion")}"
 	}
 }
 
