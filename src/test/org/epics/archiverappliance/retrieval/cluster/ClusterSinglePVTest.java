@@ -1,12 +1,12 @@
 package org.epics.archiverappliance.retrieval.cluster;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.config.ConfigServiceForTests.DATA_RETRIEVAL_URL;
-import static org.epics.archiverappliance.config.ConfigServiceForTests.MGMT_URL;
+import static org.epics.archiverappliance.retrieval.TypeInfoUtil.updateTypeInfo;
 import static org.epics.archiverappliance.utils.ui.GetUrlContent.getURLContentAsJSONArray;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,26 +18,20 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
-import org.epics.archiverappliance.utils.ui.GetUrlContent;
-import org.epics.archiverappliance.utils.ui.JSONDecoder;
-import org.epics.archiverappliance.utils.ui.JSONEncoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -82,16 +76,17 @@ public class ClusterSinglePVTest {
      * @throws Exception
      * @throws UnsupportedEncodingException
      */
-    @Test
-    public void singlePvsAcrossCluster() throws Exception {
-        PlainStoragePlugin pbplugin = new PlainStoragePlugin();
+    @ParameterizedTest
+    @EnumSource(PlainStorageType.class)
+    public void singlePvsAcrossCluster(PlainStorageType plainStorageType) throws Exception {
+        PlainStoragePlugin pbplugin = new PlainStoragePlugin(plainStorageType);
 
         ConfigService configService = new ConfigServiceForTests(-1);
 
         // Set up pbplugin so that data can be retrieved using the instance
         pbplugin.initialize(
                 pluginString(
-                        PB_PLUGIN_IDENTIFIER,
+                        plainStorageType,
                         "localhost",
                         "name=LTS&rootFolder=" + ltsFolder + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
@@ -111,33 +106,7 @@ public class ClusterSinglePVTest {
         }
         logger.info("Done generating data for PV in " + ltsPVFolder.getAbsolutePath());
 
-        // Load a sample PVTypeInfo from a prototype file.
-        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(
-                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
-
-        // Create target for decoded type info from JSON
-        PVTypeInfo srcPVTypeInfo = new PVTypeInfo();
-
-        // Decoder for PVTypeInfo
-        JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
-
-        // Create type info from the data
-        decoder.decode(srcPVTypeInfoJSON, srcPVTypeInfo);
-
-        PVTypeInfo pvTypeInfo1 = new PVTypeInfo(pvName, srcPVTypeInfo);
-        Assertions.assertEquals(pvTypeInfo1.getPvName(), pvName);
-
-        JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
-
-        pvTypeInfo1.setPaused(true);
-        pvTypeInfo1.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
-        pvTypeInfo1.setCreationTime(TimeUtils.convertFromISO8601String("2013-11-11T14:49:58.523Z"));
-        pvTypeInfo1.setModificationTime(TimeUtils.now());
-        pvTypeInfo1.setApplianceIdentity("appliance1");
-        GetUrlContent.postDataAndGetContentAsJSONObject(
-                MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
-                        + "&override=false&createnew=true",
-                encoder.encode(pvTypeInfo1));
+        updateTypeInfo(configService, pbplugin, pvName, "2013-11-11T14:49:58.523Z", "appliance1");
 
         logger.info("Added " + pvName + " to appliance0");
 
