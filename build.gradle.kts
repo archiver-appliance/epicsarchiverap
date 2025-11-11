@@ -152,7 +152,7 @@ dependencies {
 	testImplementation("commons-cli:commons-cli:1.5.0")
 	testImplementation("com.hubspot.jinjava:jinjava:2.8.1")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
-	testImplementation(":pbrawclient:0.2.1")
+	testImplementation(":pbrawclient:0.2.2")
 	testImplementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
 }
 
