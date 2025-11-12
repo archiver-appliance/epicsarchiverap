@@ -637,42 +637,43 @@ tasks.register<JavaExec>("testRun") {
 // Code Quality and Formatting
 // =================================================================
 
-configure<SpotlessExtension> {
-	// Optional: limit format enforcement to just the files changed by this feature branch
-	ratchetFrom("origin/master")
+if (gitWorks) {
+	configure<SpotlessExtension> {
+		// Optional: limit format enforcement to just the files changed by this feature branch
+		ratchetFrom("origin/master")
 
-	format("misc") {
-		// Define the files to apply `misc` to
-		target("*.gradle.kts", "*.md", ".gitignore")
+		format("misc") {
+			// Define the files to apply `misc` to
+			target("*.gradle.kts", "*.md", ".gitignore")
 
-		// Define the steps to apply to those files
-		trimTrailingWhitespace()
-		indentWithTabs()
-		endWithNewline()
-	}
-	format("styling") {
-		target(
-			"docs/docs/source/**/*.html",
-			"docs/docs/source/**/*.css",
-			"docs/docs/source/**/*.md",
-			"docs/**/docs.js",
-			"src/main/**/*.html",
-			"src/main/**/*.js",
-			"src/main/**/*.css"
-		)
-		prettier()
-	}
-	java {
-		// Exclude the generated java from the protobuf
-		targetExclude(fileTree(srcDir) { include("**/EPICSEvent.java") })
-		removeUnusedImports()
-		// apply a specific flavor of google-java-format
-		palantirJavaFormat()
-		importOrder("", "java|javax|jakarta", "#")
-		// fix formatting of type annotations
-		formatAnnotations()
+			// Define the steps to apply to those files
+			trimTrailingWhitespace()
+			indentWithTabs()
+			endWithNewline()
+		}
+		format("styling") {
+			target(
+				"docs/docs/source/**/*.html",
+				"docs/docs/source/**/*.css",
+				"docs/docs/source/**/*.md",
+				"docs/**/docs.js",
+				"src/main/**/*.html",
+				"src/main/**/*.js",
+				"src/main/**/*.css"
+			)
+			prettier()
+		}
+		java {
+			// Exclude the generated java from the protobuf
+			targetExclude(fileTree(srcDir) { include("**/EPICSEvent.java") })
+			removeUnusedImports()
+			// apply a specific flavor of google-java-format
+			palantirJavaFormat()
+			importOrder("", "java|javax|jakarta", "#")
+			// fix formatting of type annotations
+			formatAnnotations()
+		}
 	}
 }
-
 // Set the default task to run when you execute 'gradle' with no arguments
 defaultTasks("buildRelease")
