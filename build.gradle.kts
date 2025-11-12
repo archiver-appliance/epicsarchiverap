@@ -51,7 +51,20 @@ val runTestsSequentially: Boolean by extra {
 
 val gitVersion: groovy.lang.Closure<String> by extra
 val versionDetails: groovy.lang.Closure<VersionDetails> by extra
-version = project.findProperty("projVersion") ?: gitVersion()
+var gitWorks = true
+
+try {
+	version = gitVersion()
+
+} catch (e: Throwable) {
+	gitWorks = false
+	if (project.hasProperty("projVersion")) {
+		version = project.property("projVersion") as String
+	} else {
+		version = "unknown"
+		logger.error("Failed to get git version: $e")
+	}
+}
 
 val stageDir = layout.buildDirectory.file("stage").get()
 val srcDir = layout.projectDirectory.file("src/main")
