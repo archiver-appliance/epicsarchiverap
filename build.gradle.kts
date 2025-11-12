@@ -297,7 +297,8 @@ tasks.register<Exec>("generateReleaseNotes") {
 	description = "Generate the Release Notes."
 	outputs.file("$stageDir/RELEASE_NOTES")
 	doFirst { standardOutput = FileOutputStream("$stageDir/RELEASE_NOTES") }
-	commandLine("git", "log", "--oneline", "remotes/origin/master")
+	commandLine("git", "log", "--oneline", "HEAD")
+	isIgnoreExitValue = true
 }
 
 tasks.register<Exec>("sphinx") {
