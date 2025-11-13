@@ -51,7 +51,20 @@ val runTestsSequentially: Boolean by extra {
 
 val gitVersion: groovy.lang.Closure<String> by extra
 val versionDetails: groovy.lang.Closure<VersionDetails> by extra
-version = project.findProperty("projVersion") ?: gitVersion()
+var gitWorks = true
+
+try {
+	version = gitVersion()
+
+} catch (e: Throwable) {
+	gitWorks = false
+	if (project.hasProperty("projVersion")) {
+		version = project.property("projVersion") as String
+	} else {
+		version = "unknown"
+		logger.error("Failed to get git version: $e")
+	}
+}
 
 val stageDir = layout.buildDirectory.file("stage").get()
 val srcDir = layout.projectDirectory.file("src/main")
@@ -297,7 +310,8 @@ tasks.register<Exec>("generateReleaseNotes") {
 	description = "Generate the Release Notes."
 	outputs.file("$stageDir/RELEASE_NOTES")
 	doFirst { standardOutput = FileOutputStream("$stageDir/RELEASE_NOTES") }
-	commandLine("git", "log", "--oneline", "remotes/origin/master")
+	commandLine("git", "log", "--oneline", "HEAD")
+	isIgnoreExitValue = true
 }
 
 tasks.register<Exec>("sphinx") {
@@ -623,42 +637,43 @@ tasks.register<JavaExec>("testRun") {
 // Code Quality and Formatting
 // =================================================================
 
-configure<SpotlessExtension> {
-	// Optional: limit format enforcement to just the files changed by this feature branch
-	ratchetFrom("origin/master")
+if (gitWorks) {
+	configure<SpotlessExtension> {
+		// Optional: limit format enforcement to just the files changed by this feature branch
+		ratchetFrom("origin/master")
 
-	format("misc") {
-		// Define the files to apply `misc` to
-		target("*.gradle.kts", "*.md", ".gitignore")
+		format("misc") {
+			// Define the files to apply `misc` to
+			target("*.gradle.kts", "*.md", ".gitignore")
 
-		// Define the steps to apply to those files
-		trimTrailingWhitespace()
-		indentWithTabs()
-		endWithNewline()
-	}
-	format("styling") {
-		target(
-			"docs/docs/source/**/*.html",
-			"docs/docs/source/**/*.css",
-			"docs/docs/source/**/*.md",
-			"docs/**/docs.js",
-			"src/main/**/*.html",
-			"src/main/**/*.js",
-			"src/main/**/*.css"
-		)
-		prettier()
-	}
-	java {
-		// Exclude the generated java from the protobuf
-		targetExclude(fileTree(srcDir) { include("**/EPICSEvent.java") })
-		removeUnusedImports()
-		// apply a specific flavor of google-java-format
-		palantirJavaFormat()
-		importOrder("", "java|javax|jakarta", "#")
-		// fix formatting of type annotations
-		formatAnnotations()
+			// Define the steps to apply to those files
+			trimTrailingWhitespace()
+			indentWithTabs()
+			endWithNewline()
+		}
+		format("styling") {
+			target(
+				"docs/docs/source/**/*.html",
+				"docs/docs/source/**/*.css",
+				"docs/docs/source/**/*.md",
+				"docs/**/docs.js",
+				"src/main/**/*.html",
+				"src/main/**/*.js",
+				"src/main/**/*.css"
+			)
+			prettier()
+		}
+		java {
+			// Exclude the generated java from the protobuf
+			targetExclude(fileTree(srcDir) { include("**/EPICSEvent.java") })
+			removeUnusedImports()
+			// apply a specific flavor of google-java-format
+			palantirJavaFormat()
+			importOrder("", "java|javax|jakarta", "#")
+			// fix formatting of type annotations
+			formatAnnotations()
+		}
 	}
 }
-
 // Set the default task to run when you execute 'gradle' with no arguments
 defaultTasks("buildRelease")
