@@ -435,7 +435,10 @@ public class FieldValuesCache {
         }
         Map<String, String> changed = new HashMap<>();
         for (String key : this.lastChangedFields) {
-            changed.put(key, this.cachedFieldValues.get(key));
+            String values = this.cachedFieldValues.get(key);
+            if (values != null) {
+                changed.put(key, this.cachedFieldValues.get(key));
+            }
         }
         if (this.excludeV4Changes) {
             changed = changed.entrySet().stream()
