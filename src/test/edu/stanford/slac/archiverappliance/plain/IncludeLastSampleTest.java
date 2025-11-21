@@ -34,10 +34,10 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.LinkedList;
 
-class MissingDataDaySpanStoragePluginUnitTest {
-    static final String testSpecificFolder = "MissingDataDaySpanStoragePluginUnitTest";
+class IncludeLastSampleTest {
+    static final String testSpecificFolder = "IncludeLastSampleTest";
     static final String pvNamePB = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":" + testSpecificFolder;
-    private static final Logger logger = LogManager.getLogger(MissingDataDaySpanStoragePluginUnitTest.class.getName());
+    private static final Logger logger = LogManager.getLogger(IncludeLastSampleTest.class.getName());
     private static final LinkedList<Instant> generatedTimeStamps = new LinkedList<Instant>();
     static File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchUnitTest"
             + File.separator + testSpecificFolder);
@@ -85,8 +85,6 @@ class MissingDataDaySpanStoragePluginUnitTest {
         FileUtils.deleteDirectory(dataFolder);
     }
 
-    /**  * @param firstTSIndex              - If present, the index into generatedTimeStamps for the first event. Set to -1 if you want to skip this check.
-     */
     @Test
     void testRetrieval() {
         Instant start = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(

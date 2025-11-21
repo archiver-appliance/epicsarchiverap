@@ -313,7 +313,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             // Regardless of what we find, we add the last event from the partition before the start time
             // This takes care of several multi-year bugs and hopefully does not introduce more.
             // The mergededup consumer will digest this using its buffers and serve data appropriately.
-            Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(
+            Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousBeforeTimeAsStream(
                     context, pvName, startTime, postProcessor, askingForProcessedDataButAbsentInCache);
             if (lastEventOfPreviousStream != null) ret.add(lastEventOfPreviousStream);
 
@@ -366,13 +366,25 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         }
     }
 
-    private Callable<EventStream> getLastEventOfPreviousPartitionBeforeTimeAsStream(
+    private Callable<EventStream> getLastEventOfPreviousBeforeTimeAsStream(
             BasicContext context,
             String pvName,
             Instant startTime,
             PostProcessor postProcessor,
             boolean askingForProcessedDataButAbsentInCache)
             throws Exception {
+        Path currentPath = PathNameUtility.getPathNameForTime(this, pvName, startTime, context.getPaths(), this.pv2key);
+        if (currentPath != null) {
+            FileInfo fileInfo = fileInfo(currentPath);
+            Instant firstEventTime = fileInfo.getFirstEventInstant();
+            if (firstEventTime.isBefore(startTime)) {
+                return CallableEventStream.makeOneStreamCallable(
+                        getPlainFileHandler()
+                                .getTimeStream(pvName, currentPath, firstEventTime, startTime, false, fileInfo),
+                        postProcessor,
+                        askingForProcessedDataButAbsentInCache);
+            }
+        }
         Path mostRecentPath = PathNameUtility.getPreviousPartitionBeforeTime(
                 context.getPaths(),
                 rootFolder,
