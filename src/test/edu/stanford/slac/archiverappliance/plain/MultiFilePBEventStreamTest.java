@@ -7,6 +7,8 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain;
 
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,8 +34,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.stream.Stream;
-
-import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 
 /**
  * Test EventStreams that span multiple PB files.
@@ -62,14 +62,12 @@ public class MultiFilePBEventStreamTest {
     }
 
     static Stream<Arguments> provideInput() {
-        return Arrays.stream(PartitionGranularity.values())
-            .map(Arguments::of);
+        return Arrays.stream(PartitionGranularity.values()).map(Arguments::of);
     }
 
     @ParameterizedTest
     @MethodSource("provideInput")
-    public void testMultiFileEventStream(PartitionGranularity granularity)
-        throws Exception {
+    public void testMultiFileEventStream(PartitionGranularity granularity) throws Exception {
         // We generate a ratio * seconds in granularity worth of data into a PlainStoragePlugin with different
         // granularity.
         // We then retrieve data and make sure that we get what we expect
@@ -77,38 +75,38 @@ public class MultiFilePBEventStreamTest {
         logger.debug("Generating sample data for granularity " + granularity);
 
         String pvName = "MultiYear" + granularity.toString();
-        String configURL = PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder="
-            + rootFolderName + "&partitionGranularity=" + granularity;
+        String configURL = PB_PLUGIN_IDENTIFIER + "://localhost?name=STS&rootFolder=" + rootFolderName
+                + "&partitionGranularity=" + granularity;
         PlainStoragePlugin pbplugin = new PlainStoragePlugin();
         pbplugin.initialize(configURL, configService);
         ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
         Instant startTime = ZonedDateTime.now()
-            .withMonth(9)
-            .withDayOfMonth(11)
-            .withHour(8)
-            .withMinute(12)
-            .withSecond(0)
-            .withNano(0)
-            .toInstant();
+                .withMonth(9)
+                .withDayOfMonth(11)
+                .withHour(8)
+                .withMinute(12)
+                .withSecond(0)
+                .withNano(0)
+                .toInstant();
 
         Instant endTime = startTime.plusSeconds(granularity.getApproxSecondsPerChunk() * ratio);
         int periodSize = granularity.getApproxSecondsPerChunk() / 10;
         try (BasicContext context = new BasicContext()) {
             pbplugin.appendData(
-                context,
-                pvName,
-                new SimulationEventStream(
-                    type,
-                    (t, secondsIntoYear) -> new ScalarValue<Double>(1.0),
-                    startTime,
-                    endTime.plusSeconds(10),
-                    periodSize));
+                    context,
+                    pvName,
+                    new SimulationEventStream(
+                            type,
+                            (t, secondsIntoYear) -> new ScalarValue<Double>(1.0),
+                            startTime,
+                            endTime.plusSeconds(10),
+                            periodSize));
         }
         logger.info("Done generating sample data for granularity " + granularity);
         Instant expectedTime = startTime;
         try (BasicContext context = new BasicContext();
-             EventStream result = new CurrentThreadWorkerEventStream(
-                 pvName, pbplugin.getDataForPV(context, pvName, startTime, endTime))) {
+                EventStream result = new CurrentThreadWorkerEventStream(
+                        pvName, pbplugin.getDataForPV(context, pvName, startTime, endTime))) {
             long eventCount = 0;
             for (Event e : result) {
                 Instant currTime = e.getEventTimeStamp();
@@ -117,8 +115,8 @@ public class MultiFilePBEventStreamTest {
                 if (currTime.isBefore(startTime.minusSeconds(1))) continue;
                 Assertions.assertEquals(expectedTime, currTime);
                 Assertions.assertTrue(
-                    currTime.isBefore(endTime) || currTime.equals(endTime),
-                    "Less than " + endTime + " Got " + currTime + " at eventCount " + eventCount);
+                        currTime.isBefore(endTime) || currTime.equals(endTime),
+                        "Less than " + endTime + " Got " + currTime + " at eventCount " + eventCount);
                 expectedTime = expectedTime.plusSeconds(periodSize);
                 eventCount++;
             }
