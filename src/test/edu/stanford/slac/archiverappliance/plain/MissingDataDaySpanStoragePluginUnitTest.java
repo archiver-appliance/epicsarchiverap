@@ -66,12 +66,12 @@ class MissingDataDaySpanStoragePluginUnitTest {
         generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 
         yts = new YearSecondTimestamp(
-                currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 30);
+                currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 2, 30);
         strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
         generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 
         yts = new YearSecondTimestamp(
-                currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 40);
+                currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 3, 40);
         strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
         generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 
