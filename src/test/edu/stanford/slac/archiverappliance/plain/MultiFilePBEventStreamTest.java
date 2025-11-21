@@ -110,9 +110,6 @@ public class MultiFilePBEventStreamTest {
             long eventCount = 0;
             for (Event e : result) {
                 Instant currTime = e.getEventTimeStamp();
-                // The PlainPBStorage plugin will also yield the last event of the previous partition.
-                // We skip checking that as part of this test
-                if (currTime.isBefore(startTime.minusSeconds(1))) continue;
                 Assertions.assertEquals(expectedTime, currTime);
                 Assertions.assertTrue(
                         currTime.isBefore(endTime) || currTime.equals(endTime),
