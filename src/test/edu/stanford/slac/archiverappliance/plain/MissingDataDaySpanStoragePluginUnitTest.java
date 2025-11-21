@@ -94,27 +94,19 @@ class MissingDataDaySpanStoragePluginUnitTest {
         Instant end = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(
                 currentYear, PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 10, 1));
         int eventCount = 0;
-
+        LinkedList<Instant> actualTimestamps = new LinkedList<>();
         try (EventStream stream = new CurrentThreadWorkerEventStream(
                 pvNamePB,
                 pbPlugin.getDataForPV(new BasicContext(), pvNamePB, start, end, new DefaultRawPostProcessor()))) {
 
             for (Event e : stream) {
-                logger.info("Expecting sample with timestamp "
-                        + generatedTimeStamps.get(eventCount) + " got "
-                        + e.getEventTimeStamp() + " for " + pvNamePB);
-                Assertions.assertEquals(
-                        generatedTimeStamps.get(eventCount),
-                        e.getEventTimeStamp(),
-                        "Expecting sample with timestamp "
-                                + generatedTimeStamps.get(eventCount)
-                                + " got "
-                                + e.getEventTimeStamp()
-                                + " for " + pvNamePB);
+                actualTimestamps.add(e.getEventTimeStamp());
                 eventCount++;
             }
         } catch (Exception e) {
             Assertions.fail(e);
         }
+        Assertions.assertEquals(generatedTimeStamps, actualTimestamps);
+        Assertions.assertEquals(3, eventCount);
     }
 }
