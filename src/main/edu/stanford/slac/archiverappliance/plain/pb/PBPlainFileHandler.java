@@ -14,7 +14,6 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.FieldValues;
-import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
 import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
@@ -27,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -182,18 +180,26 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     private static Event findByTimeInStream(
             EventStream strm, Instant atTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
-        Instant maxMetaDataTimeBefore = atTime.minus(ArchiveChannel.SAVE_META_DATA_PERIOD_SECS, ChronoUnit.SECONDS);
         HashMapEvent resultEvent = null;
+        boolean foundFieldValues = false;
+        boolean passedFoundEvent = false;
+        boolean foundAnyEvent = false;
         for (Event event : strm) {
-            if (resultEvent == null && foundEvent(event.getEventTimeStamp(), atTime, direction)) {
-                if (event instanceof DBRTimeEvent dbrTimeEvent) {
-                    resultEvent = new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
-                }
+            boolean foundEvent = foundEvent(event.getEventTimeStamp(), atTime, direction);
+            if (resultEvent == null && foundEvent && event instanceof DBRTimeEvent dbrTimeEvent) {
+                resultEvent = new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
             }
             if (resultEvent != null && event instanceof FieldValues fv) {
                 copyNotSetFieldValues(fv, resultEvent);
+                foundFieldValues = true;
             }
-            if (event.getEventTimeStamp().isBefore(maxMetaDataTimeBefore)) {
+            if (foundEvent) {
+                foundAnyEvent = true;
+            }
+            if (!foundEvent && foundAnyEvent) {
+                passedFoundEvent = true;
+            }
+            if (passedFoundEvent && foundFieldValues) {
                 break;
             }
         }
