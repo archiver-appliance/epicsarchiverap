@@ -298,9 +298,6 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
             throws IOException {
         readPayLoadInfo();
 
-        YearSecondTimestamp queryStartEpoch = TimeUtils.convertToYearSecondTimestamp(queryStartTime);
-        YearSecondTimestamp queryEndEpoch = TimeUtils.convertToYearSecondTimestamp(queryEndTime);
-
         if (fileInfo.getLastEvent() == null) {
             logger.warn("Cannot determine last event; defaulting to a time based iterator " + path.toAbsolutePath());
             this.positionBoundaries = false;
@@ -308,19 +305,19 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
             this.endTime = queryEndTime;
         }
 
-        YearSecondTimestamp firstSampleEpoch = (fileInfo.getFirstEvent()).getYearSecondTimestamp();
-        YearSecondTimestamp lastSampleEpoch = (fileInfo.getLastEvent()).getYearSecondTimestamp();
+        Instant firstSampleEpoch = fileInfo.getFirstEventInstant();
+        Instant lastSampleEpoch = fileInfo.getLastEventInstant();
 
-        if (queryEndEpoch.compareTo(firstSampleEpoch) < 0) {
+        if (queryEndTime.compareTo(firstSampleEpoch) < 0) {
             logger.debug(
                     "Case 1 - this file should not be included in request {} {}",
-                    (queryEndEpoch.compareTo(firstSampleEpoch) < 0),
-                    (queryStartEpoch.compareTo(lastSampleEpoch) > 0));
+                    (queryEndTime.compareTo(firstSampleEpoch) < 0),
+                    (queryStartTime.compareTo(lastSampleEpoch) > 0));
             this.positionBoundaries = false;
             this.startTime = queryStartTime;
             this.endTime = queryEndTime;
             this.nodata = true;
-        } else if (queryStartEpoch.compareTo(firstSampleEpoch) < 0 && queryEndEpoch.compareTo(lastSampleEpoch) <= 0) {
+        } else if (queryStartTime.compareTo(firstSampleEpoch) < 0 && queryEndTime.compareTo(lastSampleEpoch) <= 0) {
             logger.debug("Case 2 - start at the beginning and lookup the end");
             long endPosition = seekToEndTime(path, dbrtype, queryEndTime);
             if (endPosition != -1) {
@@ -334,12 +331,12 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 this.startTime = queryStartTime;
                 this.endTime = queryEndTime;
             }
-        } else if (queryStartEpoch.compareTo(firstSampleEpoch) <= 0 && queryEndEpoch.compareTo(lastSampleEpoch) >= 0) {
+        } else if (queryStartTime.compareTo(firstSampleEpoch) <= 0 && queryEndTime.compareTo(lastSampleEpoch) >= 0) {
             logger.debug("Case 3 - we need all of the data in this file");
             this.positionBoundaries = true;
             this.startFilePos = fileInfo.getPositionOfFirstSample() - 1;
             this.endFilePos = Files.size(path);
-        } else if (queryEndEpoch.compareTo(lastSampleEpoch) < 0) {
+        } else if (queryEndTime.compareTo(lastSampleEpoch) < 0) {
             logger.debug("Case 4 - Lookup start and end");
             long endPosition = seekToEndTime(path, dbrtype, queryEndTime);
             long startPosition = seekToStartTime(path, dbrtype, queryStartTime);
