@@ -15,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 
@@ -32,8 +31,8 @@ import java.util.NoSuchElementException;
  */
 public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEventStreamIterator {
     private static final Logger logger = LogManager.getLogger(FileBackedPBEventStreamTimeBasedIterator.class.getName());
-    private final long startTimeEpochSeconds;
-    private final long endTimeEpochSeconds;
+    private final Instant startTime;
+    private final Instant endTime;
     private final short year;
     private final LineByteStream lbs;
     private final Constructor<? extends DBRTimeEvent> unmarshallingConstructor;
@@ -45,13 +44,13 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
 
     public FileBackedPBEventStreamTimeBasedIterator(
             Path path, Instant startTime, Instant endTime, short year, ArchDBRTypes type) throws IOException {
-        this.startTimeEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
-        this.endTimeEpochSeconds = TimeUtils.convertToEpochSeconds(endTime);
+        this.startTime = startTime;
+        this.endTime = endTime;
         DBR2PBTypeMapping mapping = DBR2PBTypeMapping.getPBClassFor(type);
         unmarshallingConstructor = mapping.getUnmarshallingFromByteArrayConstructor();
-        assert (startTimeEpochSeconds >= 0);
-        assert (endTimeEpochSeconds >= 0);
-        assert (endTimeEpochSeconds >= startTimeEpochSeconds);
+        assert (startTime.isAfter(Instant.EPOCH));
+        assert (endTime.isAfter(Instant.EPOCH));
+        assert (endTime.isAfter(startTime) || endTime.equals(startTime));
         this.year = year;
         lbs = new LineByteStream(path);
         try {
@@ -114,9 +113,9 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
                         lbs.readLine(line1);
                         if (!line1.isEmpty()) {
                             event1 = unmarshallingConstructor.newInstance(year, line1);
-                            long event1EpochSeconds = event1.getEpochSeconds();
+                            Instant event1Instant = event1.getEventTimeStamp();
                             done = true;
-                            if (event1EpochSeconds > endTimeEpochSeconds) {
+                            if (event1Instant.isAfter(endTime)) {
                                 event1 = null;
                                 line1.reset();
                                 finished = true;
@@ -134,8 +133,8 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
 
         boolean startFound() {
             if (event1 != null) {
-                long event1EpochSeconds = event1.getEpochSeconds();
-                if (event1EpochSeconds >= startTimeEpochSeconds) {
+                Instant event1Instant = event1.getEventTimeStamp();
+                if (event1Instant.isAfter(startTime) || event1Instant.equals(startTime)) {
                     logger.debug(
                             "We have reached an event whose start time is greater than the requested start already. Terminating the search.");
                     return true;
