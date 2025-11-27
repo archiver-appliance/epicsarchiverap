@@ -352,6 +352,20 @@ public class FileBackedPBEventStream implements EventStream, RemotableOverRaw, E
                 this.startTime = queryStartTime;
                 this.endTime = queryEndTime;
             }
+        } else if (firstSampleEpoch.equals(lastSampleEpoch)) {
+            logger.debug("Case 6 - start and end are the same");
+            long endPosition = seekToEndTime(path, dbrtype, lastSampleEpoch);
+            if (endPosition != -1) {
+                this.positionBoundaries = true;
+                this.startFilePos = fileInfo.getPositionOfFirstSample() - 1;
+                this.endFilePos = endPosition;
+            } else {
+                logger.warn("Case 6 - did not find the end for pv " + pvName + " in file " + path.toAbsolutePath()
+                        + ". Switching to using a time based iterator");
+                this.positionBoundaries = false;
+                this.startTime = firstSampleEpoch;
+                this.endTime = lastSampleEpoch;
+            }
         } else {
             logger.debug("Case 5 - lookup the start and go all the way to the end");
             long startPosition = seekToStartTime(path, dbrtype, queryStartTime);
