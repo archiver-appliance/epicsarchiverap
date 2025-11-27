@@ -53,16 +53,18 @@ val gitVersion: groovy.lang.Closure<String> by extra
 val versionDetails: groovy.lang.Closure<VersionDetails> by extra
 var gitWorks = true
 
-try {
-	version = gitVersion()
+if (version == "unspecified") {
+	try {
+		version = gitVersion()
 
-} catch (e: Throwable) {
-	gitWorks = false
-	if (project.hasProperty("projVersion")) {
-		version = project.property("projVersion") as String
-	} else {
-		version = "unknown"
-		logger.error("Failed to get git version: $e")
+	} catch (e: Throwable) {
+		gitWorks = false
+		if (project.hasProperty("projVersion")) {
+			version = project.property("projVersion") as String
+		} else {
+			version = "unknown"
+			logger.error("Failed to get git version: $e")
+		}
 	}
 }
 
