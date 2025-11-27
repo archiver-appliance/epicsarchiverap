@@ -102,24 +102,18 @@ public class ZipSingleDayRawFetchTest {
         logger.info("Testing fetch betweeen " + TimeUtils.convertToHumanReadableString(startTime) + " and "
                 + TimeUtils.convertToHumanReadableString(endTime));
         int eventCount = 0;
-        long startEpochSeconds = TimeUtils.convertToEpochSeconds(startTime);
-        long expectedEpochSeconds = startEpochSeconds - 1;
+        Instant expectedInstant = startTime;
         long start = System.currentTimeMillis();
         try (BasicContext context = new BasicContext()) {
             List<Callable<EventStream>> callables = pbplugin.getDataForPV(context, pvName, startTime, endTime);
             try (EventStream strm = new CurrentThreadWorkerEventStream(pvName, callables)) {
                 for (Event e : strm) {
-                    long actualEpochSeconds = e.getEpochSeconds();
+                    Instant actualInstat = e.getEventTimeStamp();
                     // The PlainStorage plugin will also yield the last event of the previous partition.
                     // We skip checking that as part of this test
-                    if (actualEpochSeconds < startEpochSeconds - 1) continue;
-                    if (expectedEpochSeconds != actualEpochSeconds) {
-                        Assertions.fail(
-                                "Expected timestamp " + TimeUtils.convertToHumanReadableString(expectedEpochSeconds)
-                                        + " got " + TimeUtils.convertToHumanReadableString(actualEpochSeconds));
-                    }
+                    Assertions.assertEquals(expectedInstant, actualInstat);
                     eventCount++;
-                    expectedEpochSeconds++;
+                    expectedInstant = expectedInstant.plusSeconds(1);
                 }
             }
         }
