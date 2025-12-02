@@ -310,13 +310,14 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             boolean doNotUseSearchForPositions = !useSearchForPositions;
 
             ArrayList<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
-            // Regardless of what we find, we add the last event from the partition before the start time
-            // This takes care of several multi-year bugs and hopefully does not introduce more.
-            // The mergededup consumer will digest this using its buffers and serve data appropriately.
-            Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(
-                    context, pvName, startTime, postProcessor, askingForProcessedDataButAbsentInCache);
-            if (lastEventOfPreviousStream != null) ret.add(lastEventOfPreviousStream);
-
+            if (paths.length == 0 || fileInfo(paths[0]).getFirstEventInstant().isAfter(startTime)) {
+                // Regardless of what we find, we add the last event from the partition before the start time
+                // This takes care of several multi-year bugs and hopefully does not introduce more.
+                // The mergededup consumer will digest this using its buffers and serve data appropriately.
+                Callable<EventStream> lastEventOfPreviousStream = getLastEventOfPreviousPartitionBeforeTimeAsStream(
+                        context, pvName, startTime, postProcessor, askingForProcessedDataButAbsentInCache);
+                if (lastEventOfPreviousStream != null) ret.add(lastEventOfPreviousStream);
+            }
             if (paths.length == 1) {
                 FileInfo fileInfo = fileInfo(paths[0]);
                 ArchDBRTypes dbrtype = fileInfo.getType();
