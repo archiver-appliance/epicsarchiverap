@@ -232,7 +232,6 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         }
     }
 
-
     private void setupDBRType(PVAStructure data) {
         logger.debug("Construct the fieldValuesCache for PV " + this.getName());
         boolean excludeV4Changes = true;
@@ -328,7 +327,8 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
             fireValueUpdate(dbrtimeevent);
 
         } catch (Exception e) {
-            logger.error("exception in monitor changed function when converting DBR to dbrtimeevent", e);
+            logger.error(
+                    "exception in monitor changed function when converting DBR to dbrtimeevent for pv " + this.name, e);
         }
     }
 
