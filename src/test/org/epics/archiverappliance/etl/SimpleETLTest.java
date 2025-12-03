@@ -155,7 +155,8 @@ public class SimpleETLTest {
 
         for (Path destPath : allPaths) {
             Assertions.assertTrue(
-                    ValidatePlainFile.validatePlainFile(destPath, true),
+                    ValidatePlainFile.validatePlainFile(
+                            destPath, true, testPlugins.dest().getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
 
