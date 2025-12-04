@@ -10,6 +10,7 @@ plugins {
 	id("ca.cutterslade.analyze") version "1.9.2" // Analyzes dependencies for usage
 	id("com.palantir.git-version") version "3.0.0"
 	id("com.diffplug.spotless") version "6.25.0"
+	id("com.google.protobuf") version "0.9.5"
 }
 
 // =================================================================
@@ -20,6 +21,9 @@ sourceSets {
 	main {
 		java {
 			srcDir("src/main/")
+		}
+		proto {
+			srcDir("src/proto")
 		}
 		resources {
 			setSrcDirs(emptyList<String>())
@@ -47,7 +51,20 @@ val runTestsSequentially: Boolean by extra {
 
 val gitVersion: groovy.lang.Closure<String> by extra
 val versionDetails: groovy.lang.Closure<VersionDetails> by extra
-version = project.findProperty("projVersion") ?: gitVersion()
+var gitWorks = true
+
+try {
+	version = gitVersion()
+
+} catch (e: Throwable) {
+	gitWorks = false
+	if (project.hasProperty("projVersion")) {
+		version = project.property("projVersion") as String
+	} else {
+		version = "unknown"
+		logger.error("Failed to get git version: $e")
+	}
+}
 
 val stageDir = layout.buildDirectory.file("stage").get()
 val srcDir = layout.projectDirectory.file("src/main")
@@ -96,21 +113,22 @@ dependencies {
 	viewer("archiver-appliance:svg_viewer:v1.2.1@zip")
 
 	// Provided by Servlet Container (e.g., Tomcat)
-	implementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
+	implementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
 
 	// Core Libraries
 	implementation("org.epics:jca:2.4.7")
-	implementation("com.google.guava:guava:31.1-jre")
+	implementation("com.google.guava:guava:33.5.0-jre")
 	implementation("com.hazelcast:hazelcast:5.5.0")
-	implementation("redis.clients:jedis:4.4.0")
+	implementation("redis.clients:jedis:7.0.0")
 	implementation("org.python:jython-standalone:2.7.3")
-	implementation("com.google.protobuf:protobuf-java:3.23.0")
+	implementation("com.google.protobuf:protobuf-java:${findProperty("protobufJavaVersion")}")
 	implementation("org.phoebus:core-pva:5.0.2")
-	implementation("jakarta.servlet:jakarta.servlet-api:6.0.0")
+	implementation("jakarta.validation:jakarta.validation-api:3.1.1")
 
 	// Apache Commons
 	implementation("commons-codec:commons-codec:1.15")
 	implementation("org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M3")
+	implementation("org.apache.commons:commons-fileupload2-core:2.0.0-M3")
 	implementation("commons-io:commons-io:2.14.0")
 	implementation("org.apache.commons:commons-lang3:3.18.0")
 	implementation("org.apache.commons:commons-math3:3.6.1")
@@ -124,18 +142,19 @@ dependencies {
 	// Data Formats & DB
 	implementation("jdbm:jdbm:2.4") // clojar dependency
 	implementation("com.googlecode.json-simple:json-simple:1.1.1")
+	implementation("org.json:json:20250517")
 	implementation("com.opencsv:opencsv:5.7.1")
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
 
 	// Logging
-	runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:2.20.0") // TODO remove log4j 1 from dependencies
-	implementation("org.apache.logging.log4j:log4j-api:2.20.0")
-	implementation("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
-	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0")
-	implementation("org.apache.logging.log4j:log4j-jul:2.20.0")
-	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-jul:2.20.0")
-	runtimeOnly("org.apache.logging.log4j:log4j-core:2.20.0")
-	implementation("com.lmax:disruptor:3.4.4") // Needed for async logging
+	runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:${findProperty("log4jVersion")}") // TODO remove log4j 1 from dependencies
+	implementation("org.apache.logging.log4j:log4j-api:${findProperty("log4jVersion")}")
+	implementation("org.apache.logging.log4j:log4j-slf4j2-impl:${findProperty("log4jVersion")}")
+	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-slf4j2-impl:${findProperty("log4jVersion")}")
+	implementation("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
+	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
+	runtimeOnly("org.apache.logging.log4j:log4j-core:${findProperty("log4jVersion")}")
+	runtimeOnly("com.lmax:disruptor:3.4.4") // Needed for async logging
 
 	// Parquet support
 	implementation("org.apache.parquet:parquet-protobuf:1.16.0")
@@ -146,17 +165,16 @@ dependencies {
 	runtimeOnly("org.apache.hadoop:hadoop-client-api:3.3.0")
 
 	// Testing
-	testImplementation("org.junit.jupiter:junit-jupiter-api:5.2.0")
-	testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.3")
-	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.2.0")
+	testImplementation("org.junit.jupiter:junit-jupiter-api:${findProperty("junitJupiterVersion")}")
+	testImplementation("org.junit.jupiter:junit-jupiter-params:${findProperty("junitJupiterVersion")}")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${findProperty("junitJupiterVersion")}")
 	testImplementation("org.awaitility:awaitility:4.2.0")
 	testImplementation("org.apache.commons:commons-compress:1.26.0")
 	testImplementation("commons-cli:commons-cli:1.5.0")
-	testImplementation("com.hubspot.jinjava:jinjava:2.7.0")
+	testImplementation("com.hubspot.jinjava:jinjava:2.8.1")
 	testImplementation(files("lib/test/BPLTaglets.jar"))
-	testImplementation(project.files("lib/pbrawclient-0.2.1.jar"))
-	testImplementation(":pbrawclient:0.2.1")
-	testImplementation("org.apache.tomcat:tomcat-servlet-api:11.0.12")
+	testImplementation(":pbrawclient:0.2.2")
+	testImplementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
 }
 
 // =================================================================
@@ -300,7 +318,8 @@ tasks.register<Exec>("generateReleaseNotes") {
 	description = "Generate the Release Notes."
 	outputs.file("$stageDir/RELEASE_NOTES")
 	doFirst { standardOutput = FileOutputStream("$stageDir/RELEASE_NOTES") }
-	commandLine("git", "log", "--oneline", "remotes/origin/master")
+	commandLine("git", "log", "--oneline", "HEAD")
+	isIgnoreExitValue = true
 }
 
 tasks.register<Exec>("sphinx") {
@@ -313,6 +332,18 @@ tasks.register<Exec>("sphinx") {
 		commandLine("cmd", "/c", "build_docs.bat")
 	} else {
 		commandLine("./build_docs.sh")
+	}
+}
+
+// =================================================================
+// Precompile steps
+// =================================================================
+
+protobuf {
+	// Configure the protoc executable
+	protoc {
+		// Download from repositories
+		artifact = "com.google.protobuf:protoc:${findProperty("protobufJavaVersion")}"
 	}
 }
 
@@ -614,42 +645,43 @@ tasks.register<JavaExec>("testRun") {
 // Code Quality and Formatting
 // =================================================================
 
-configure<SpotlessExtension> {
-	// Optional: limit format enforcement to just the files changed by this feature branch
-	ratchetFrom("origin/master")
+if (gitWorks) {
+	configure<SpotlessExtension> {
+		// Optional: limit format enforcement to just the files changed by this feature branch
+		ratchetFrom("origin/master")
 
-	format("misc") {
-		// Define the files to apply `misc` to
-		target("*.gradle.kts", "*.md", ".gitignore")
+		format("misc") {
+			// Define the files to apply `misc` to
+			target("*.gradle.kts", "*.md", ".gitignore")
 
-		// Define the steps to apply to those files
-		trimTrailingWhitespace()
-		indentWithTabs()
-		endWithNewline()
-	}
-	format("styling") {
-		target(
-			"docs/docs/source/**/*.html",
-			"docs/docs/source/**/*.css",
-			"docs/docs/source/**/*.md",
-			"docs/**/docs.js",
-			"src/main/**/*.html",
-			"src/main/**/*.js",
-			"src/main/**/*.css"
-		)
-		prettier()
-	}
-	java {
-		// Exclude the generated java from the protobuf
-		targetExclude(fileTree(srcDir) { include("**/EPICSEvent.java") })
-		removeUnusedImports()
-		// apply a specific flavor of google-java-format
-		palantirJavaFormat()
-		importOrder("", "java|javax|jakarta", "#")
-		// fix formatting of type annotations
-		formatAnnotations()
+			// Define the steps to apply to those files
+			trimTrailingWhitespace()
+			indentWithTabs()
+			endWithNewline()
+		}
+		format("styling") {
+			target(
+				"docs/docs/source/**/*.html",
+				"docs/docs/source/**/*.css",
+				"docs/docs/source/**/*.md",
+				"docs/**/docs.js",
+				"src/main/**/*.html",
+				"src/main/**/*.js",
+				"src/main/**/*.css"
+			)
+			prettier()
+		}
+		java {
+			// Exclude the generated java from the protobuf
+			targetExclude(fileTree(srcDir) { include("**/EPICSEvent.java") })
+			removeUnusedImports()
+			// apply a specific flavor of google-java-format
+			palantirJavaFormat()
+			importOrder("", "java|javax|jakarta", "#")
+			// fix formatting of type annotations
+			formatAnnotations()
+		}
 	}
 }
-
 // Set the default task to run when you execute 'gradle' with no arguments
 defaultTasks("buildRelease")

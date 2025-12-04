@@ -878,6 +878,58 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     }
 
     @Override
+    public List<ETLInfo> getAllStreams(String pvName, ETLContext context) throws IOException {
+        Path[] paths = PathNameUtility.getAllPathsForPV(
+                context.getPaths(),
+                rootFolder,
+                pvName,
+                this.plainFileHandler.getExtensionString(),
+                this.plainFileHandler.getPathResolver(),
+                this.pv2key);
+        if (paths.length == 0) {
+            if (logger.isInfoEnabled()) {
+                logger.debug("No files for ETL for pv " + pvName);
+            }
+            return new ArrayList<>();
+        }
+
+        ArrayList<ETLInfo> etlreadystreams = new ArrayList<ETLInfo>();
+        for (Path path : paths) {
+            try {
+                if (!Files.exists(path)) {
+                    logger.warn("Path " + path + " does not seem to exist for ETL");
+                    continue;
+                }
+
+                if (Files.size(path) <= 0) {
+                    logger.warn("Path " + path + " is of size zero bytes");
+                    continue;
+                }
+
+                FileInfo fileinfo = plainFileHandler.fileInfo(path);
+                // To make sure deletion later knows the files are in the zip file system
+                String pathKey = this.plainFileHandler.getPathKey(path);
+                ETLInfo etlInfo = new ETLInfo(
+                        pvName,
+                        fileinfo.getType(),
+                        pathKey,
+                        partitionGranularity,
+                        new PlainETLStreamCreator(pvName, path, fileinfo, plainFileHandler),
+                        fileinfo.getFirstEvent(),
+                        Files.size(path));
+                etlreadystreams.add(etlInfo);
+            } catch (IOException ex) {
+                logger.error(
+                        "Skipping ading " + path.toAbsolutePath()
+                                + " to ETL list due to exception. Should we go ahead and mark this file for deletion in this case? ",
+                        ex);
+            }
+        }
+
+        return etlreadystreams;
+    }
+
+    @Override
     public void markForDeletion(ETLInfo info, ETLContext context) {
         try {
             Path path = context.getPaths().get(info.getKey());

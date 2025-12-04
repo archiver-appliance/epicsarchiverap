@@ -14,7 +14,7 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nonnull;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * ETL metrics for the appliance as a whole into one destination
@@ -56,7 +56,7 @@ public class ETLMetricsIntoStore implements StorageMetricsContext {
         fileStoreCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(10, TimeUnit.MINUTES)
                 .build(new CacheLoader<String, FileStoreSpace>() {
-                    public FileStoreSpace load(@Nonnull String rootFolder) throws IOException {
+                    public FileStoreSpace load(@NotNull String rootFolder) throws IOException {
                         try (ArchPaths paths = new ArchPaths()) {
                             Path rootF = paths.get(rootFolder);
                             logger.info("Loading available space from file store for root folder {}", rootFolder);

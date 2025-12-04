@@ -39,6 +39,15 @@ public interface ETLSource {
     public List<ETLInfo> getETLStreams(String pv, Instant currentTime, ETLContext context) throws IOException;
 
     /**
+     * Given a pv and a time, this method returns all the streams.
+     * @param pv The name of PV.
+     * @param context ETLContext
+     * @return List ETLinfo
+     * @throws IOException &emsp;
+     */
+    public List<ETLInfo> getAllStreams(String pv, ETLContext context) throws IOException;
+
+    /**
      * Delete the ETLStream identifier by info when you can as it has already been consumed by the ETL destination.
      * You can delete it later or immediately.
      * @param info ETLInfo

@@ -118,4 +118,52 @@ public class ETLExecutor {
             logger.error("Exception consolidating data for PV " + pvName, ex);
         }
     }
+    /**
+     * Run ETL for one PV until one storage; used in consolidate...
+     * Make sure that the regular ETL has been paused..
+     * @param configService ConfigService
+     * @param pvName The name of PV.
+     * @param storageName   &emsp;
+     * @throws IOException  &emsp;
+     */
+    public static void moveDataFromOneStorageToAnother(
+            final ConfigService configService, final String pvName, final String storageName, final String destStr)
+            throws IOException {
+        PVTypeInfo pvTypeInfo = configService.getTypeInfoForPV(pvName);
+        String[] dataStores = pvTypeInfo.getDataStores();
+        if (dataStores == null) {
+            throw new IOException("The pv " + pvName + " has not enough stores.");
+        }
+
+        ETLSource oldDataSource = null;
+        for (int i = 0; i < dataStores.length; i++) {
+            ETLSource etlSource = StoragePluginURLParser.parseETLSource(dataStores[i], configService);
+
+            if (storageName.equals(etlSource.getName())) {
+                oldDataSource = etlSource;
+            }
+        }
+        try (ScheduledThreadPoolExecutor scheduleWorker = new ScheduledThreadPoolExecutor(1)) {
+            try (ExecutorService theWorker = Executors.newVirtualThreadPerTaskExecutor()) {
+                final ETLStages etlStages = new ETLStages(pvName, theWorker, configService);
+                ETLDest etlDest = StoragePluginURLParser.parseETLDest(destStr, configService);
+                StorageMetrics storageMetricsAPIDest = (StorageMetrics) etlDest;
+                String identifyDest = storageMetricsAPIDest.getName();
+                logger.info("storage name:" + identifyDest);
+                etlStages.addStage(new ETLStage(
+                        pvName,
+                        pvTypeInfo.getDBRType(),
+                        oldDataSource,
+                        etlDest,
+                        -1,
+                        new ETLMetricsIntoStore(etlDest.getName()),
+                        PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService)));
+
+                Future<?> f = scheduleWorker.submit(etlStages::runAll);
+                f.get();
+            }
+        } catch (Exception ex) {
+            logger.error("Exception consolidating data for PV " + pvName, ex);
+        }
+    }
 }

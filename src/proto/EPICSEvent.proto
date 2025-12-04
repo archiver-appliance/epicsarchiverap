@@ -1,3 +1,4 @@
+syntax="proto2";
 package EPICS;
 
 option java_package = "edu.stanford.slac.archiverappliance.PB";
