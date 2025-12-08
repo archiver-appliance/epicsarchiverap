@@ -1,34 +1,22 @@
 /*
-* Copyright (C) 2023 European Spallation Source ERIC.
-*
-*  This program is free software; you can redistribute it and/or
-*  modify it under the terms of the GNU General Public License
-*  as published by the Free Software Foundation; either version 2
-*  of the License, or (at your option) any later version.
-*
-*  This program is distributed in the hope that it will be useful,
-*  but WITHOUT ANY WARRANTY; without even the implied warranty of
-*  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-*  GNU General Public License for more details.
-*
-*  You should have received a copy of the GNU General Public License
-*  along with this program; if not, write to the Free Software
-*  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*
-*/
+ * Copyright (C) 2023 European Spallation Source ERIC.
+ *
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU General Public License
+ *  as published by the Free Software Foundation; either version 2
+ *  of the License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ *
+ */
 package org.epics.archiverappliance.engine.pv;
-
-import java.io.StringWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -53,6 +41,18 @@ import org.epics.pva.data.PVAStringArray;
 import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.PVAStructureArray;
 import org.epics.pva.data.PVAny;
+
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Main purpose is to hold a cache of a pvaStructure as a flat map from string
@@ -82,6 +82,7 @@ public class FieldValuesCache {
      * Map the V4 names to the V3 names.
      */
     private static final HashMap<String, String> v4FieldNames2v3FieldNames = new HashMap<>();
+
     static {
         v4FieldNames2v3FieldNames.put("display.limitLow", "LOPR");
         v4FieldNames2v3FieldNames.put("display.limitHigh", "HOPR");
@@ -101,6 +102,7 @@ public class FieldValuesCache {
      * Cache the list of pvaScalar Classes
      */
     private static final Set<Class<? extends PVAData>> pvaScalarClasses = new HashSet<>();
+
     static {
         pvaScalarClasses.add(PVABool.class);
         pvaScalarClasses.add(PVAByte.class);
@@ -117,6 +119,7 @@ public class FieldValuesCache {
      * Cache the list of pvaScalarArray Classes
      */
     private static final Set<Class<? extends PVAData>> pvaScalarArrayClasses = new HashSet<>();
+
     static {
         pvaScalarArrayClasses.add(PVABoolArray.class);
         pvaScalarArrayClasses.add(PVAByteArray.class);
@@ -134,7 +137,7 @@ public class FieldValuesCache {
      * Converts a list of parts to a dot separated string:
      * <p>
      * makeFullFieldName("abc", "def") = "abc.def"
-     * 
+     *
      * @param parts fieldNames
      * @return dot separated string of parts
      */
@@ -205,7 +208,7 @@ public class FieldValuesCache {
 
     /**
      * Converts Scalar and ScalarArray {@link PVAData} to String
-     * 
+     *
      * @param pvaData scalar or scalar array
      * @return string of value or emptyString
      */
@@ -294,7 +297,7 @@ public class FieldValuesCache {
      * <p>
      * returns: {("timeStamp.seconds", "11"), ("timeStamp.nanos", "12"),
      * ("otherValue", "5")}
-     * 
+     *
      * @param pvStructure input structure for conversion
      * @return flatmap of input
      */
@@ -304,12 +307,11 @@ public class FieldValuesCache {
         return fieldValues;
     }
 
-    private static void currentFieldValues(final String rootName, final PVAStructure pvStructure,
-            final Map<String, String> fieldValues) {
+    private static void currentFieldValues(
+            final String rootName, final PVAStructure pvStructure, final Map<String, String> fieldValues) {
         for (final PVAData pvaData : pvStructure.get()) {
             final String fieldName = pvaData.getName();
-            if (fieldName.equals("value"))
-                continue;
+            if (fieldName.equals("value")) continue;
             final Class<? extends PVAData> type = pvaData.getClass();
 
             if (type == PVAStructure.class) {
@@ -323,15 +325,16 @@ public class FieldValuesCache {
     /**
      * Get the changed field values of the input pvaStructure given a bitset of
      * changes
-     * 
+     *
      * @param pvaStructure         input structure
      * @param changes              bitset of changes
      * @param bit2FieldNameMapping mapping of indexes in changes to fullFieldNames
      * @return flat map of string to string changes
      * @throws Exception Throws when structure is invalid.
      */
-    private static Map<String, String> changedFieldValues(final PVAStructure pvaStructure, final BitSet changes,
-            final List<String> bit2FieldNameMapping) throws Exception {
+    private static Map<String, String> changedFieldValues(
+            final PVAStructure pvaStructure, final BitSet changes, final List<String> bit2FieldNameMapping)
+            throws Exception {
 
         final HashMap<String, String> fieldValues = new HashMap<>();
 
@@ -340,16 +343,17 @@ public class FieldValuesCache {
             if (bit2FieldNameMapping.size() > i) {
                 fName = bit2FieldNameMapping.get(i);
             } else {
-                logger.error("Structure changed " + pvaStructure + " changes " + changes + " bit2FieldNameMapping " + bit2FieldNameMapping);
+                logger.error("Structure changed " + pvaStructure + " changes " + changes + " bit2FieldNameMapping "
+                        + bit2FieldNameMapping);
                 continue;
             }
-            if (!(fName.isEmpty() ||
-                    fName.startsWith("value.") ||
-                    fName.startsWith("timeStamp.") ||
-                    fName.startsWith("alarm.") ||
-                    fName.equals("value") ||
-                    fName.equals("timeStamp") ||
-                    fName.equals("alarm"))) {
+            if (!(fName.isEmpty()
+                    || fName.startsWith("value.")
+                    || fName.startsWith("timeStamp.")
+                    || fName.startsWith("alarm.")
+                    || fName.equals("value")
+                    || fName.equals("timeStamp")
+                    || fName.equals("alarm"))) {
                 logger.debug("Field " + fName + " has changed");
                 final var value = pvaStructure.locate(fName);
                 if (value.getClass() == PVAStructure.class) {
@@ -406,7 +410,7 @@ public class FieldValuesCache {
 
     /**
      * Constructor of the FieldValuesCache of a PVAStructure
-     * 
+     *
      * @param pvaStructure     Structure to make cache from
      * @param excludeV4Changes If to include pvaAccess extra values
      */
@@ -424,17 +428,22 @@ public class FieldValuesCache {
      * @param metaFieldNames Any fields that should always be archived if they change
      * @return A flat map of String values
      */
-    public HashMap<String, String> getUpdatedFieldValues(final boolean getEverything, final List<String> metaFieldNames) {
+    public HashMap<String, String> getUpdatedFieldValues(
+            final boolean getEverything, final List<String> metaFieldNames) {
         if (getEverything) {
             return (HashMap<String, String>) this.cachedFieldValues;
         }
         Map<String, String> changed = new HashMap<>();
-        for (String key: this.lastChangedFields) {
-            changed.put(key, this.cachedFieldValues.get(key));
+        for (String key : this.lastChangedFields) {
+            String values = this.cachedFieldValues.get(key);
+            if (values != null) {
+                changed.put(key, this.cachedFieldValues.get(key));
+            }
         }
         if (this.excludeV4Changes) {
             changed = changed.entrySet().stream()
-                    .filter(e -> FieldValuesCache.v4FieldNames2v3FieldNames.containsKey(e.getKey()) || metaFieldNames.contains(e.getKey()))
+                    .filter(e -> FieldValuesCache.v4FieldNames2v3FieldNames.containsKey(e.getKey())
+                            || metaFieldNames.contains(e.getKey()))
                     .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
         }
         return v3NamedValues(changed);
@@ -450,7 +459,8 @@ public class FieldValuesCache {
      * @throws Exception Throws when structure is invalid.
      */
     public void updateFieldValues(PVAStructure pvaStructure, BitSet changes) throws Exception {
-        var changed = changes == null ? this.cachedFieldValues
+        var changed = changes == null
+                ? this.cachedFieldValues
                 : changedFieldValues(pvaStructure, changes, this.bit2FieldNameMapping);
         this.lastChangedFields = changed.keySet();
         this.cachedFieldValues.putAll(changed);
@@ -458,7 +468,7 @@ public class FieldValuesCache {
 
     /**
      * Return the currently cached flat map of string values
-     * 
+     *
      * @return flat map of string values
      */
     public HashMap<String, String> getCurrentFieldValues() {
@@ -467,7 +477,7 @@ public class FieldValuesCache {
 
     /**
      * Get the bitset of the timeStamp bits of the input pvaStructure
-     * 
+     *
      * @return a bitset of timeStamp bits
      */
     public BitSet getTimeStampBits() {
@@ -483,11 +493,9 @@ public class FieldValuesCache {
 
     @Override
     public String toString() {
-        return "FieldValuesCache{" +
-                "bit2FieldNameMapping=" + bit2FieldNameMapping +
-                ", cachedFieldValues=" + cachedFieldValues +
-                ", excludeV4Changes=" + excludeV4Changes +
-                '}';
+        return "FieldValuesCache{" + "bit2FieldNameMapping="
+                + bit2FieldNameMapping + ", cachedFieldValues="
+                + cachedFieldValues + ", excludeV4Changes="
+                + excludeV4Changes + '}';
     }
-
 }
