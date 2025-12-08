@@ -178,6 +178,16 @@ public class PBPlainFileHandler implements PlainFileHandler {
                 || eventTime.equals(atTime);
     }
 
+    /**
+     * Find the first event close to atTime in the stream, for the direction given.
+     * Also add the field values from the first event that includes any field values.
+     *
+     * @param strm Stream of events
+     * @param atTime Time to look for
+     * @param direction Direction to look in
+     * @return Event close to atTime
+     * @throws IOException From reading the stream
+     */
     private static Event findByTimeInStream(
             EventStream strm, Instant atTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
         HashMapEvent resultEvent = null;
@@ -189,7 +199,7 @@ public class PBPlainFileHandler implements PlainFileHandler {
             if (resultEvent == null && foundEvent && event instanceof DBRTimeEvent dbrTimeEvent) {
                 resultEvent = new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
             }
-            if (resultEvent != null && event instanceof FieldValues fv) {
+            if (resultEvent != null && event instanceof FieldValues fv && fv.hasFieldValues()) {
                 copyNotSetFieldValues(fv, resultEvent);
                 foundFieldValues = true;
             }
