@@ -1,5 +1,10 @@
 package org.epics.archiverappliance.engine.V4;
 
+import static java.util.Map.entry;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -23,8 +28,12 @@ import org.epics.pva.data.PVAStructure;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.PVAServer;
 import org.epics.pva.server.ServerPV;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.python.google.common.collect.Lists;
 
 import java.time.Instant;
@@ -34,11 +43,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static java.util.Map.entry;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.formatInput;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedValues;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
+import java.util.stream.Stream;
 
 /**
  * Test for each pvAccess type that it can be archived successfully.
@@ -48,6 +53,8 @@ public class PVAccessTypesTest {
     private static final Logger logger = LogManager.getLogger(PVAccessTypesTest.class.getName());
     private static final String VALUE_STRING = "value";
 
+    private static ConfigService configService;
+    private static PVAServer server;
     /**
      * Generates a sequence of arrays of numbers up to maxInputNumber
      * <p>
@@ -188,6 +195,9 @@ public class PVAccessTypesTest {
                                 .toList()));
     }
 
+    static Stream<Arguments> getPVTest() {
+        return data().entrySet().stream().map(entry -> Arguments.of(entry.getKey(), entry.getValue()));
+    }
     /**
      * Test for a single pv of particular type.
      * <p>
@@ -200,14 +210,13 @@ public class PVAccessTypesTest {
      *  6. Convert Received Data into a hashmap
      *  7. Test received and sent data are the same
      *
-     * @param configService Archiver to send pv to
-     * @param server a pvAccess server
      * @param type Type of pv
      * @param inputData Input data to archive
      * @throws InterruptedException throw if interrupted
      */
-    public void singlePVTest(ConfigService configService, PVAServer server, ArchDBRTypes type, List<PVAData> inputData)
-            throws Exception {
+    @ParameterizedTest
+    @MethodSource("getPVTest")
+    public void singlePVTest(ArchDBRTypes type, List<PVAData> inputData) throws Exception {
         String pvName = "PV:" + inputData.get(0).getClass().getSimpleName() + ":" + UUID.randomUUID();
 
         logger.info("Starting pvAccess test for type " + type + " with pv " + pvName);
@@ -251,28 +260,16 @@ public class PVAccessTypesTest {
         Assertions.assertEquals(expectedData, actualValues);
     }
 
-    /**
-     * Test checks each type of pv from data() method
-     * <p>
-     * Sets up an archiver with ConfigServiceForTests
-     * Sets up PVAServer for sending data
-     * <p>
-     * Run tests
-     * <p>
-     * Shuts down server and archiver
-     *
-     * @throws Exception Generic exception
-     */
-    @Test
-    public void testSinglePVs() throws Exception {
+    @BeforeAll
+    static void setUp() throws Exception {
 
         // Setup
-        ConfigService configService = new ConfigServiceForTests(-1);
-        PVAServer server = new PVAServer();
-        var dataSet = data();
-        for (var data : dataSet.entrySet()) {
-            singlePVTest(configService, server, data.getKey(), data.getValue());
-        }
+        configService = new ConfigServiceForTests(-1);
+        server = new PVAServer();
+    }
+
+    @AfterAll
+    static void tearDown() {
         // Teardown
         configService.shutdownNow();
         server.close();
