@@ -27,35 +27,46 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.LinkedList;
+import java.util.stream.Stream;
 
 class IncludeLastSampleTest {
     static final String testSpecificFolder = "IncludeLastSampleTest";
-    static final String pvNamePB = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":" + testSpecificFolder;
+    static final String pvNamePB =
+            ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":" + PlainStorageType.PB + testSpecificFolder;
+    static final String pvNameParquet =
+            ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":" + PlainStorageType.PARQUET + testSpecificFolder;
     private static final Logger logger = LogManager.getLogger(IncludeLastSampleTest.class.getName());
-    private static final LinkedList<Instant> generatedTimeStamps = new LinkedList<Instant>();
+    private static LinkedList<Instant> generatedTimeStamps = new LinkedList<Instant>();
     static File dataFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchUnitTest"
             + File.separator + testSpecificFolder);
-    static PlainCommonSetup PBSetup = new PlainCommonSetup();
+    static PlainCommonSetup pbSetup = new PlainCommonSetup();
+    static PlainCommonSetup parquetSetup = new PlainCommonSetup();
     static PlainStoragePlugin pbPlugin = new PlainStoragePlugin(PlainStorageType.PB);
+    static PlainStoragePlugin parquetPlugin = new PlainStoragePlugin(PlainStorageType.PARQUET);
     private static final short currentYear = TimeUtils.getCurrentYear();
 
     @BeforeAll
     public static void setUp() throws Exception {
-        PBSetup.setUpRootFolder(pbPlugin, testSpecificFolder, PartitionGranularity.PARTITION_DAY);
+        pbSetup.setUpRootFolder(pbPlugin, testSpecificFolder, PartitionGranularity.PARTITION_DAY);
+        parquetSetup.setUpRootFolder(parquetPlugin, testSpecificFolder, PartitionGranularity.PARTITION_DAY);
         logger.info("Data folder is " + dataFolder.getAbsolutePath());
         FileUtils.deleteDirectory(dataFolder);
-        generateData();
+        generatedTimeStamps = generateData(pvNameParquet, parquetPlugin);
+        generateData(pvNamePB, pbPlugin);
     }
 
-    private static void generateData() throws IOException {
+    private static LinkedList<Instant> generateData(String pvName, PlainStoragePlugin plugin) throws IOException {
+        LinkedList<Instant> timestamps = new LinkedList<>();
         ArrayListEventStream strmPB = new ArrayListEventStream(
-                0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvNamePB, currentYear));
+                0, new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, pvName, currentYear));
 
         YearSecondTimestamp yts = new YearSecondTimestamp(currentYear, 1, 10);
         strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
@@ -63,21 +74,22 @@ class IncludeLastSampleTest {
         yts = new YearSecondTimestamp(
                 currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 20);
         strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
-        generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
+        timestamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 
         yts = new YearSecondTimestamp(
                 currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 2, 30);
         strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
-        generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
+        timestamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 
         yts = new YearSecondTimestamp(
                 currentYear, 1 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk() * 3, 40);
         strmPB.add(new SimulationEvent(yts, ArchDBRTypes.DBR_SCALAR_DOUBLE, new ScalarValue<Double>(0.0)));
-        generatedTimeStamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
+        timestamps.add(TimeUtils.convertFromYearSecondTimestamp(yts));
 
         try (BasicContext context = new BasicContext()) {
-            pbPlugin.appendData(context, pvNamePB, strmPB);
+            plugin.appendData(context, pvName, strmPB);
         }
+        return timestamps;
     }
 
     @AfterAll
@@ -85,8 +97,13 @@ class IncludeLastSampleTest {
         FileUtils.deleteDirectory(dataFolder);
     }
 
-    @Test
-    void testRetrieval() {
+    static Stream<Arguments> provideIncludeLastSample() {
+        return Stream.of(Arguments.of(pbPlugin, pvNamePB), Arguments.of(parquetPlugin, pvNameParquet));
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideIncludeLastSample")
+    void testRetrieval(PlainStoragePlugin plugin, String pvName) {
         Instant start = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(
                 currentYear, 20 + PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(), 1));
         Instant end = TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(
@@ -94,8 +111,7 @@ class IncludeLastSampleTest {
         int eventCount = 0;
         LinkedList<Instant> actualTimestamps = new LinkedList<>();
         try (EventStream stream = new CurrentThreadWorkerEventStream(
-                pvNamePB,
-                pbPlugin.getDataForPV(new BasicContext(), pvNamePB, start, end, new DefaultRawPostProcessor()))) {
+                pvName, plugin.getDataForPV(new BasicContext(), pvName, start, end, new DefaultRawPostProcessor()))) {
 
             for (Event e : stream) {
                 actualTimestamps.add(e.getEventTimeStamp());
