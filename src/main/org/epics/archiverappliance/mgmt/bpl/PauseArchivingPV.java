@@ -48,7 +48,7 @@ public class PauseArchivingPV implements BPLAction {
             // We only have one PV in the request
             List<String> pvNames = new LinkedList<String>();
             pvNames.add(pvName);
-            pauseMultiplePVs(req, resp, configService);
+            pauseMultiplePVs(pvNames, resp, configService);
         }
     }
 
