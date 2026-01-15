@@ -6,6 +6,7 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.EAABulkOperation;
 import org.epics.archiverappliance.config.ConfigService.WAR_FILE;
+import org.epics.archiverappliance.config.PVNames;
 import org.epics.archiverappliance.config.PVTypeInfo;
 
 import java.io.IOException;
@@ -98,14 +99,20 @@ public class BulkPauseResumeUtils {
         LinkedList<String> realPVNames = new LinkedList<String>();
         HashMap<String, String> incoming2real = new HashMap<String, String>();
         for (String pvName : pvNames) {
-            String realName = configService.getRealNameForAlias(pvName);
+            // logger.info("Processing pause/resume request for PV {}", pvName);
+            String normalizedPVName = PVNames.normalizeChannelName(pvName);
+            String realName = configService.getRealNameForAlias(normalizedPVName);
             if (realName != null) {
+                // logger.info("PVName {} is an alias for {}", pvName, realName);
                 incoming2real.put(pvName, realName);
                 pvName = realName;
             } else {
-                incoming2real.put(pvName, pvName);
+                // logger.info("PVName {} is not an alias normalized {}", pvName, normalizedPVName);
+                incoming2real.put(pvName, normalizedPVName);
+                pvName = normalizedPVName;
             }
-            realPVNames.add(pvName);
+            realPVNames.add(
+                    pvName); // When we are adding pvName here, it is either the real name or the normalized name.
 
             HashMap<String, String> pvPauseResumeStatus = new HashMap<String, String>();
             pvPauseResumeStatus.put("pvName", pvName);
