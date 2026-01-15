@@ -106,7 +106,7 @@ public class DeadBandTest {
         String newPVName = "TST-CT{}Sig:1-I";
         PVTypeInfo newPVTypeInfo = new PVTypeInfo(newPVName, srcPVTypeInfo);
         newPVTypeInfo.setPaused(true);
-        newPVTypeInfo.setChunkKey("TST-CT{}Sig/1-I:");
+        newPVTypeInfo.setChunkKey("TST/CT{}Sig/1/I:");
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
         GetUrlContent.postDataAndGetContentAsJSONObject(
                 MGMT_URL + "/putPVTypeInfo?pv=" + URLEncoder.encode(newPVName, "UTF-8") + "&createnew=true",

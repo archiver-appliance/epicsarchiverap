@@ -25,6 +25,7 @@ import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.mergededup.TimeSpanLimitEventStream;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.ChunkKeyKeyMapping;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.etl.ConversionFunction;
@@ -547,7 +548,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     @Override
     public void initialize(String configURL, ConfigService configService) throws IOException {
         this.configService = configService;
-        this.pv2key = this.configService.getPVNameToKeyConverter();
+        this.pv2key = new ChunkKeyKeyMapping(configService);
         assert (pv2key != null);
 
         try {
