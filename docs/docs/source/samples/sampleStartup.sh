@@ -11,7 +11,7 @@ source /opt/local/setEPICSEnv.sh
 export JAVA_HOME=/opt/local/java/latest
 export PATH=${JAVA_HOME}/bin:${PATH}
 # We use a lot of memory; so be generous with the heap. 
-export JAVA_OPTS="-XX:MaxPermSize=128M -XX:+UseG1GC -Xmx4G -Xms4G -ea"
+export JAVA_OPTS="-XX:+UseG1GC -Xmx4G -Xms4G -ea"
 
 # Set up Tomcat home
 export TOMCAT_HOME=/opt/local/tomcat
