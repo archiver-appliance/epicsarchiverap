@@ -74,7 +74,7 @@ val archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
 val defaultsitespecificpath = "src/sitespecific/$archapplsite"
 // Allow the site to be outside the repository
 val sitespecificpath =
-if (file(defaultsitespecificpath).exists()) defaultsitespecificpath else archapplsite
+	if (file(defaultsitespecificpath).exists()) defaultsitespecificpath else archapplsite
 
 ant.properties["stage"] = stageDir
 ant.properties["archapplsite"] = archapplsite
@@ -211,8 +211,8 @@ tasks.withType<Javadoc>().configureEach {
 	doFirst {
 		copy {
 			from(
-					layout.projectDirectory.file("LICENSE"),
-					srcDir.asFile.resolve("edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
+				layout.projectDirectory.file("LICENSE"),
+				srcDir.asFile.resolve("edu/stanford/slac/archiverappliance/PB/EPICSEvent.proto")
 			)
 			into(layout.projectDirectory.dir("docs"))
 		}
@@ -227,9 +227,9 @@ tasks.withType<Javadoc>().configureEach {
 		isUse = true
 		links("https://docs.oracle.com/en/java/javase/12/docs/api/")
 		taglets(
-				"org.epics.archiverappliance.taglets.BPLActionTaglet",
-				"org.epics.archiverappliance.taglets.BPLActionParamTaglet",
-				"org.epics.archiverappliance.taglets.BPLActionEndTaglet"
+			"org.epics.archiverappliance.taglets.BPLActionTaglet",
+			"org.epics.archiverappliance.taglets.BPLActionParamTaglet",
+			"org.epics.archiverappliance.taglets.BPLActionEndTaglet"
 		)
 		tagletPath(file("lib/test/BPLTaglets.jar"))
 	}
@@ -241,8 +241,8 @@ tasks.register<JavaExec>("syncStaticContentHeaderFooters") {
 	dependsOn("compileJava")
 	mainClass.set("org.epics.archiverappliance.mgmt.bpl.SyncStaticContentHeadersFooters")
 	args(
-			"${srcDir}/org/epics/archiverappliance/mgmt/staticcontent/index.html",
-			"${srcDir}/org/epics/archiverappliance/mgmt/staticcontent/"
+		"${srcDir}/org/epics/archiverappliance/mgmt/staticcontent/index.html",
+		"${srcDir}/org/epics/archiverappliance/mgmt/staticcontent/"
 	)
 	classpath = sourceSets.main.get().runtimeClasspath
 }
@@ -300,8 +300,8 @@ tasks.register("stage") {
 	}
 	doLast {
 		stageDir
-				.asFile.resolve("org/epics/archiverappliance/staticcontent/version.txt")
-				.writeText("Archiver Appliance Version $version")
+			.asFile.resolve("org/epics/archiverappliance/staticcontent/version.txt")
+			.writeText("Archiver Appliance Version $version")
 	}
 }
 
@@ -368,7 +368,21 @@ tasks.register<War>("mgmtWar") {
 		into("install")
 	}
 	from(srcDir.asFile.resolve("org/epics/archiverappliance/common/scripts")) {
-		fileMode = 0b111_101_101 // 755
+		filePermissions {
+			user {
+				read = true
+				write = true
+				execute = true
+			}
+			group {
+				read = true
+				execute = true
+			}
+			other {
+				read = true
+				execute = true
+			}
+		}
 		into("install/pbutils")
 	}
 
@@ -387,17 +401,59 @@ tasks.register<War>("engineWar") {
 	group = "Wars"
 	description = "Build the engine war"
 	from(libDir.asFile.resolve("native/linux-x86")) {
-		fileMode = 0b111_101_101 // 755
+		filePermissions {
+			user {
+				read = true
+				write = true
+				execute = true
+			}
+			group {
+				read = true
+				execute = true
+			}
+			other {
+				read = true
+				execute = true
+			}
+		}
 		include("caRepeater")
 		into("WEB-INF/lib/native/linux-x86")
 	}
 	from(libDir.asFile.resolve("native/linux-x86_64")) {
-		fileMode = 0b111_101_101 // 755
+		filePermissions {
+			user {
+				read = true
+				write = true
+				execute = true
+			}
+			group {
+				read = true
+				execute = true
+			}
+			other {
+				read = true
+				execute = true
+			}
+		}
 		include("caRepeater")
 		into("WEB-INF/lib/native/linux-x86_64")
 	}
 	from(libDir.asFile.resolve("native")) {
-		fileMode = 0b111_101_101 // 755
+		filePermissions {
+			user {
+				read = true
+				write = true
+				execute = true
+			}
+			group {
+				read = true
+				execute = true
+			}
+			other {
+				read = true
+				execute = true
+			}
+		}
 		include("**/*.so")
 		into("WEB-INF/lib/native/linux-x86")
 	}
@@ -432,15 +488,29 @@ tasks.register<Tar>("buildRelease") {
 	}
 	val samplesFolder = "docs/docs/source/samples"
 	from(samplesFolder) {
-		fileMode = 0b111_101_101 // 755
+		filePermissions {
+			user {
+				read = true
+				write = true
+				execute = true
+			}
+			group {
+				read = true
+				execute = true
+			}
+			other {
+				read = true
+				execute = true
+			}
+		}
 		include("quickstart.sh")
 	}
 	from(samplesFolder) {
 		include(
-				"sampleStartup.sh",
-				"deployMultipleTomcats.py",
-				"addMysqlConnPool.py",
-				"single_machine_install.sh"
+			"sampleStartup.sh",
+			"deployMultipleTomcats.py",
+			"addMysqlConnPool.py",
+			"single_machine_install.sh"
 		)
 		into("install_scripts")
 	}
