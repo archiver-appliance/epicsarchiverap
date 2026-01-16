@@ -11,10 +11,23 @@ For more details, please see the [documentation](http://epicsarchiver.readthedoc
 
 ## Development
 
-The archiver appliance uses the [gradle build tool](https://gradle.org/).
-You can use the gradle wrapper command `./gradlew`, which downloads gradle for you. Or you can install
-a gradle version that has a version > the version of the wrapper in
-[gradle wrapper properties](gradle-wrapper.properties) and use the `gradle` command.
+### Prerequisites
+
+  - Java JDK 21 (or later) - [OpenJDK](https://openjdk.java.net/) or othersupplier
+  - [Tomcat 11](https://tomcat.apache.org/download-11.cgi) (For integration tests)
+  - [Gradle](https://gradle.org/)
+
+    The archiver appliance uses the [gradle build tool](https://gradle.org/).
+    You can use the gradle wrapper command `./gradlew`, which downloads gradle for you. Or you can install
+    a gradle version that has a version = to the major the version of the wrapper in
+    [gradle wrapper properties](gradle-wrapper.properties) and use the `gradle` command.
+  - [EPICS base](https://github.com/epics-base/epics-base) for EPICS integration tests
+
+Other useful tools:
+  - [Docker](https://www.docker.com/)
+  - [Docker Compose](https://docs.docker.com/compose/)
+  - An IDE of your choice (e.g. IntelliJ, Eclipse, VS Code)
+  - sphinx for building the documentation
 
 ### Build
 
@@ -134,15 +147,4 @@ deployments see the [samples folder](docs/samples).
 ## Build Documentation
 
 Documentation for the website is built using [Read the Docs](http://readthedocs.org).
-To build it and run it locally:
-
-```bash
-cd docs
-python -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade --no-cache-dir pip setuptools
-python -m pip install --upgrade --no-cache-dir sphinx readthedocs-sphinx-ext
-python -m pip install --exists-action=w --no-cache-dir -r docs/requirements.txt
-cd docs
-sphinx-autobuild source build
-```
+To build it and run it locally, see the [build_docs.sh](docs/build_docs.sh).
