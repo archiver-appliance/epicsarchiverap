@@ -228,9 +228,6 @@ public class DBRTypeTest {
                 }
                 logger.info("Done appending data. Now checking the read.");
                 // Now test the data.
-                // EventStream retrievedStrm = storagePlugin.getDataForPV(dbrType.name(),
-                // TimeStamp.time(startOfCurrentYearInSeconds, 0),
-                // TimeStamp.time(startOfCurrentYearInSeconds+SimulationEventStreamIterator.SECONDS_IN_YEAR, 0));
                 Path path = PathNameUtility.getPathNameForTime(
                         storagePlugin, pvName, startTime, new ArchPaths(), configService.getPVNameToKeyConverter());
                 retrievedStrm = storagePlugin.getPlainFileHandler().getStream(pvName, path, dbrType);
