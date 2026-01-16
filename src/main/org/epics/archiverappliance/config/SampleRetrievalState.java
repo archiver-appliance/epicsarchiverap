@@ -1,9 +1,10 @@
 package org.epics.archiverappliance.config;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
+import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.StoragePlugin;
@@ -71,9 +72,13 @@ public class SampleRetrievalState extends RetrievalState {
             }
         }
 
+        PlainFileHandler plainFileHandler = PlainStorageType.PB.plainFileHandler();
+        if (pvName.startsWith(ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "PARQUET")) {
+            plainFileHandler = PlainStorageType.PARQUET.plainFileHandler();
+        }
         PlainStoragePlugin mediumTermStore = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
-                        PB_PLUGIN_IDENTIFIER,
+                        plainFileHandler.pluginIdentifier(),
                         "localhost",
                         "name=MTS&rootFolder=" + configService.rootFolder + "&partitionGranularity=PARTITION_YEAR"),
                 configService);
@@ -81,7 +86,7 @@ public class SampleRetrievalState extends RetrievalState {
 
         PlainStoragePlugin shortTermStore = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
-                        PB_PLUGIN_IDENTIFIER,
+                        plainFileHandler.pluginIdentifier(),
                         "localhost",
                         "name=STS&rootFolder="
                                 + ConfigServiceForTests.DEFAULT_PB_SHORT_TERM_TEST_DATA_FOLDER

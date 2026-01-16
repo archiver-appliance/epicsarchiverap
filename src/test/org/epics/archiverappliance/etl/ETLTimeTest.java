@@ -1,13 +1,14 @@
 package org.epics.archiverappliance.etl;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
+import edu.stanford.slac.archiverappliance.plain.URLKey;
 import edu.stanford.slac.archiverappliance.plain.pb.PBCompressionMode;
-import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -20,24 +21,22 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
 import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -53,69 +52,86 @@ import java.util.stream.Stream;
  */
 public class ETLTimeTest {
     private static final Logger logger = LogManager.getLogger(ETLTimeTest.class.getName());
-    private static final int testSize = 1;
+    private static final int testSize = 2;
     String shortTermFolderName =
             ConfigServiceForTests.getDefaultShortTermFolder() + "/" + ETLTimeTest.class.getSimpleName() + "/shortTerm";
     String mediumTermFolderName =
             ConfigServiceForTests.getDefaultPBTestFolder() + "/" + ETLTimeTest.class.getSimpleName() + "/mediumTerm";
     ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
-    private ConfigServiceForTests configService;
+    private static ConfigServiceForTests configService;
 
     private static Stream<Arguments> provideTestTime() {
-        return Stream.of(
-                Arguments.of(PBCompressionMode.NONE, PBCompressionMode.NONE),
-                Arguments.of(PBCompressionMode.NONE, PBCompressionMode.valueOf("ZIP_PER_PV")),
-                Arguments.of(PBCompressionMode.valueOf("ZIP_PER_PV"), PBCompressionMode.valueOf("ZIP_PER_PV")));
+        return ETLTestPlugins.generatePlainStorageType().stream()
+                .flatMap(fileExtensions -> storageTypeCompressionOptions(fileExtensions[0]).stream()
+                        .flatMap(srcOptions -> storageTypeCompressionOptions(fileExtensions[1]).stream()
+                                .map(destOptions ->
+                                        Arguments.of(fileExtensions[0], fileExtensions[1], srcOptions, destOptions))));
+    }
+
+    private static List<Map<String, String>> storageTypeCompressionOptions(PlainStorageType plainStorageType) {
+        Map<String, String> zstdOptions = Map.of(
+                URLKey.COMPRESS.key(),
+                CompressionCodecName.ZSTD.toString(),
+                URLKey.ZSTD_BUFFER_POOL.key(),
+                "false",
+                URLKey.ZSTD_LEVEL.key(),
+                String.valueOf(10),
+                URLKey.ZSTD_WORKERS.key(),
+                String.valueOf(4));
+        return plainStorageType == PlainStorageType.PARQUET
+                ? List.of(Map.of(), Map.of(URLKey.COMPRESS.key(), CompressionCodecName.ZSTD.toString()), zstdOptions)
+                : List.of(Map.of(), Map.of(URLKey.COMPRESS.key(), PBCompressionMode.ZIP_PER_PV.toString()));
     }
 
     private static double getDataSizeInGBPerHour(CountFiles stsSizeVisitor) {
         return stsSizeVisitor.totalSize / (1024.0 * 1024.0 * 1024.0);
     }
 
-    @BeforeEach
-    public void setUp() throws Exception {
+    @BeforeAll
+    public static void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
-        if (new File(shortTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-        }
-        if (new File(mediumTermFolderName).exists()) {
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
-
-        assert new File(shortTermFolderName).mkdirs();
-        assert new File(mediumTermFolderName).mkdirs();
+        configService.getETLLookup().manualControlForUnitTests();
     }
 
-    @AfterEach
-    public void tearDown() throws Exception {
+    @AfterAll
+    public static void tearDown() throws Exception {
         configService.shutdownNow();
     }
 
     @ParameterizedTest
     @MethodSource("provideTestTime")
-    public void testTime(PBCompressionMode srcCompression, PBCompressionMode destCompression) throws Exception {
-        PlainStoragePlugin stsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pluginString(
-                        PB_PLUGIN_IDENTIFIER,
-                        "localhost",
-                        "name=STS&rootFolder="
-                                + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR&compress="
-                                + srcCompression),
-                configService);
-        PlainStoragePlugin mtsStoragePlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
-                pluginString(
-                        PB_PLUGIN_IDENTIFIER,
-                        "localhost",
-                        "name=MTS&rootFolder="
-                                + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR&compress="
-                                + destCompression),
-                configService);
+    public void testTime(
+            PlainStorageType stsPlainStorageType,
+            PlainStorageType mtsPlainStorageType,
+            Map<String, String> srcCompressionOptions,
+            Map<String, String> destCompressionOptions)
+            throws Exception {
+        StringBuilder stsStorageUrl = new StringBuilder(pluginString(
+                stsPlainStorageType,
+                "localhost",
+                "name=STS&rootFolder=" + shortTermFolderName + "&partitionGranularity=PARTITION_HOUR"));
+        srcCompressionOptions.forEach((key, value) ->
+                stsStorageUrl.append("&").append(key).append("=").append(value));
+
+        PlainStoragePlugin stsStoragePlugin =
+                (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(stsStorageUrl.toString(), configService);
+        StringBuilder mtsStorageUrl = new StringBuilder(pluginString(
+                mtsPlainStorageType,
+                "localhost",
+                "name=MTS&rootFolder=" + mediumTermFolderName + "&partitionGranularity=PARTITION_YEAR"));
+        destCompressionOptions.forEach((key, value) ->
+                mtsStorageUrl.append("&").append(key).append("=").append(value));
+
+        PlainStoragePlugin mtsStoragePlugin =
+                (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(mtsStorageUrl.toString(), configService);
         short currentYear = TimeUtils.getCurrentYear();
 
         ArrayList<String> pvs = new ArrayList<String>();
         for (int i = 0; i < testSize; i++) {
             int tableName = 0;
-            String pvName = "ArchUnitTest" + tableName + srcCompression + destCompression + ":ETLTimeTest" + i;
+            String pvName = "ArchUnitTest" + tableName + stsPlainStorageType + mtsPlainStorageType
+                    + srcCompressionOptions.toString().replace(" ", "-")
+                    + destCompressionOptions.toString().replace(" ", "-") + ":ETLTimeTest" + i;
             PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
             String[] dataStores =
                     new String[] {stsStoragePlugin.getURLRepresentation(), mtsStoragePlugin.getURLRepresentation()};
@@ -149,8 +165,8 @@ public class ETLTimeTest {
             }
         }
         logger.info("Done generating data for " + pvs.size() + " pvs");
-        CountFiles stsSizeVisitor = new CountFiles();
-        Files.walkFileTree(Paths.get(shortTermFolderName), stsSizeVisitor);
+
+        CountFiles stsSizeVisitor = getCountFiles(pvs, stsStoragePlugin);
 
         long time1 = System.currentTimeMillis();
         YearSecondTimestamp yts = new YearSecondTimestamp((short) (currentYear + 1), 6 * 60 * 24 * 10 + 100, 0);
@@ -172,15 +188,15 @@ public class ETLTimeTest {
         logEstimates(time2, time1, pvs, stsSizeVisitor, twoSignificantDigits);
 
         // No pb files should exist in short term folder...
-        CountFiles postETLSrcVisitor = new CountFiles();
-        Files.walkFileTree(Paths.get(shortTermFolderName), postETLSrcVisitor);
+
+        CountFiles postETLSrcVisitor = getCountFiles(pvs, stsStoragePlugin);
+
         logger.info("File size left in src folder " + getDataSizeInGBPerHour(postETLSrcVisitor));
-        CountFiles postETLDestVisitor = new CountFiles();
-        Files.walkFileTree(Paths.get(mediumTermFolderName), postETLDestVisitor);
+        CountFiles postETLDestVisitor = getCountFiles(pvs, mtsStoragePlugin);
         logger.info("File size left in dest folder " + getDataSizeInGBPerHour(postETLDestVisitor));
 
         Assertions.assertEquals(
-                srcCompression != PBCompressionMode.ZIP_PER_PV ? 0 : pvs.size(),
+                0,
                 postETLSrcVisitor.filesPresent,
                 "We have some files that have not moved " + postETLSrcVisitor.filesPresent);
         int expectedFiles = pvs.size();
@@ -189,12 +205,25 @@ public class ETLTimeTest {
                 expectedFiles,
                 "Dest file count " + postETLDestVisitor.filesPresent + " is not the same as PV count " + pvs.size());
 
-        if (postETLSrcVisitor.filesPresent == 0) {
-            FileUtils.deleteDirectory(new File(shortTermFolderName));
-            FileUtils.deleteDirectory(new File(mediumTermFolderName));
-        }
-
         logger.info(configService.getETLLookup().getApplianceMetrics().details(configService));
+    }
+
+    private static CountFiles getCountFiles(ArrayList<String> pvs, PlainStoragePlugin storagePlugin)
+            throws IOException {
+        CountFiles countFiles;
+        try (BasicContext context = new BasicContext()) {
+            List<Path> pathStream = pvs.stream()
+                    .flatMap(pv -> {
+                        try {
+                            return Stream.of(storagePlugin.getAllPathsForPV(context, pv));
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+            countFiles = CountFiles.fromPathStream(pathStream);
+        }
+        return countFiles;
     }
 
     private void logEstimates(
@@ -219,30 +248,20 @@ public class ETLTimeTest {
                 + twoSignificantDigits.format(testSizePVEstimateTimeSecs * 100 * fudgeFactor / 3600.0));
     }
 
-    static class CountFiles implements FileVisitor<Path> {
-        public long filesPresent = 0;
-        public long totalSize = 0;
+    record CountFiles(long filesPresent, long totalSize) {
 
-        @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            filesPresent++;
-            totalSize += Files.size(file);
-            return FileVisitResult.CONTINUE;
-        }
-
-        @Override
-        public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-            return FileVisitResult.CONTINUE;
+        static CountFiles fromPathStream(List<Path> pathStream) {
+            return new CountFiles(
+                    pathStream.size(),
+                    pathStream.stream()
+                            .map(path -> {
+                                try {
+                                    return Files.size(path);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
+                            .reduce(0L, Long::sum));
         }
     }
 }
