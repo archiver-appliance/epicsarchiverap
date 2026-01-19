@@ -160,6 +160,7 @@ dependencies {
 	testImplementation("org.junit.jupiter:junit-jupiter-api:${findProperty("junitJupiterVersion")}")
 	testImplementation("org.junit.jupiter:junit-jupiter-params:${findProperty("junitJupiterVersion")}")
 	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${findProperty("junitJupiterVersion")}")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher:${findProperty("junitPlatformVersion")}")
 	testImplementation("org.awaitility:awaitility:4.2.0")
 	testImplementation("org.apache.commons:commons-compress:1.26.0")
 	testImplementation("commons-cli:commons-cli:1.5.0")
