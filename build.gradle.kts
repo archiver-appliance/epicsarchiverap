@@ -9,7 +9,7 @@ plugins {
 	eclipse
 	id("ca.cutterslade.analyze") version "1.9.2" // Analyzes dependencies for usage
 	id("com.palantir.git-version") version "3.0.0"
-	id("com.diffplug.spotless") version "6.25.0"
+	id("com.diffplug.spotless") version "8.1.0"
 	id("com.google.protobuf") version "0.9.5"
 }
 
