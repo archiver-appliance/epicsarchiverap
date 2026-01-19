@@ -18,10 +18,10 @@ For more details, please see the [documentation](http://epicsarchiver.readthedoc
 - [Tomcat 11](https://tomcat.apache.org/download-11.cgi) (For integration tests)
 - [Gradle](https://gradle.org/)
 
-  The archiver appliance uses the [gradle build tool](https://gradle.org/).
-  You can use the gradle wrapper command `./gradlew`, which downloads gradle for you. Or you can install
-  a gradle version that has a version = to the major the version of the wrapper in
-  [gradle wrapper properties](gradle-wrapper.properties) and use the `gradle` command.
+The archiver appliance uses the [gradle build tool](https://gradle.org/).
+You can use the gradle wrapper command `./gradlew`, which downloads gradle for you. Or you can install
+a gradle version that has a version = to the major the version of the wrapper in
+[gradle wrapper properties](gradle-wrapper.properties) and use the `gradle` command.
 
 - [EPICS base](https://github.com/epics-base/epics-base) for EPICS integration tests
 
@@ -136,7 +136,7 @@ command if you interrupt an integration test as well.
 For a quick deploy of a single appliance:
 
 1. Download the latest [release](https://github.com/archiver-appliance/epicsarchiverap/releases)
-   and unpack the war files to a folder "archiver".
+and unpack the war files to a folder "archiver".
 2. In the same folder, download a release of [tomcat 11](https://tomcat.apache.org/download-11.cgi) without unpacking.
 3. Copy the quickstart.sh file from the extracted release to the folder.
 4. Run the quickstart script:
