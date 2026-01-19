@@ -126,7 +126,7 @@ echo "We are building for site ${ARCHAPPL_SITEID}"
 # Enable core dumps in case the JVM fails
 ulimit -c unlimited
 export LD_LIBRARY_PATH=/scratch/Work/tomcat/latest/bin/tomcat-native-1.1.20-src/jni/native/.libs:${LD_LIBRARY_PATH}
-export JAVA_OPTS="-XX:MaxPermSize=128M -Xmx1G -Dorg.apache.catalina.level=FINEST -ea"
+export JAVA_OPTS="-Xmx1G -Dorg.apache.catalina.level=FINEST -ea"
 
 stopTomcatAtLocation ${DEPLOY_DIR}/engine
 stopTomcatAtLocation ${DEPLOY_DIR}/retrieval
