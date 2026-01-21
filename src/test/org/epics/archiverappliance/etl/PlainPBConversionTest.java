@@ -243,20 +243,21 @@ public class PlainPBConversionTest {
                 case DBR_SCALAR_ENUM, DBR_SCALAR_SHORT -> new ScalarValue<Short>((short) secondsIntoYear);
                 case DBR_SCALAR_FLOAT -> new ScalarValue<Float>((float) secondsIntoYear);
                 case DBR_SCALAR_INT -> new ScalarValue<Integer>(secondsIntoYear);
-                case DBR_SCALAR_STRING, DBR_V4_GENERIC_BYTES -> new ScalarStringSampleValue(
-                        Integer.toString(secondsIntoYear));
-                case DBR_WAVEFORM_BYTE -> new VectorValue<Byte>(
-                        Collections.nCopies(10 * secondsIntoYear, ((byte) (secondsIntoYear % 255))));
-                case DBR_WAVEFORM_DOUBLE -> new VectorValue<Double>(
-                        Collections.nCopies(10 * secondsIntoYear, ((double) secondsIntoYear)));
-                case DBR_WAVEFORM_ENUM, DBR_WAVEFORM_SHORT -> new VectorValue<Short>(
-                        Collections.nCopies(10 * secondsIntoYear, ((short) secondsIntoYear)));
-                case DBR_WAVEFORM_FLOAT -> new VectorValue<Float>(
-                        Collections.nCopies(10 * secondsIntoYear, ((float) secondsIntoYear)));
-                case DBR_WAVEFORM_INT -> new VectorValue<Integer>(
-                        Collections.nCopies(10 * secondsIntoYear, secondsIntoYear));
-                case DBR_WAVEFORM_STRING -> new VectorStringSampleValue(
-                        Collections.nCopies(10 * secondsIntoYear, Integer.toString(secondsIntoYear)));
+                case DBR_SCALAR_STRING, DBR_V4_GENERIC_BYTES ->
+                    new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
+                case DBR_WAVEFORM_BYTE ->
+                    new VectorValue<Byte>(Collections.nCopies(10 * secondsIntoYear, ((byte) (secondsIntoYear % 255))));
+                case DBR_WAVEFORM_DOUBLE ->
+                    new VectorValue<Double>(Collections.nCopies(10 * secondsIntoYear, ((double) secondsIntoYear)));
+                case DBR_WAVEFORM_ENUM, DBR_WAVEFORM_SHORT ->
+                    new VectorValue<Short>(Collections.nCopies(10 * secondsIntoYear, ((short) secondsIntoYear)));
+                case DBR_WAVEFORM_FLOAT ->
+                    new VectorValue<Float>(Collections.nCopies(10 * secondsIntoYear, ((float) secondsIntoYear)));
+                case DBR_WAVEFORM_INT ->
+                    new VectorValue<Integer>(Collections.nCopies(10 * secondsIntoYear, secondsIntoYear));
+                case DBR_WAVEFORM_STRING ->
+                    new VectorStringSampleValue(
+                            Collections.nCopies(10 * secondsIntoYear, Integer.toString(secondsIntoYear)));
             };
         }
     }
