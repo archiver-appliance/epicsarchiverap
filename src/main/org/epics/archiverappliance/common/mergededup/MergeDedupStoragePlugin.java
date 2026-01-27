@@ -121,6 +121,23 @@ public class MergeDedupStoragePlugin
     }
 
     @Override
+    public List<ETLInfo> getAllStreams(String pv, ETLContext context) throws IOException {
+        List<ETLInfo> infos = ((ETLSource) dest).getAllStreams(pv, context);
+        if (infos == null) {
+            logger.error("No ETL streams from " + dest.getDescription());
+            return infos;
+        }
+        for (ETLInfo info : infos) {
+            Instant startTime = TimeUtils.getPreviousPartitionLastSecond(
+                    info.getFirstEvent().getEventTimeStamp(), info.getGranularity());
+            Instant endTime = TimeUtils.getNextPartitionFirstSecond(
+                    info.getFirstEvent().getEventTimeStamp(), info.getGranularity());
+            info.setStrmCreator(new MergeStreamCreator(info.getStrmCreator(), info.getPvName(), startTime, endTime));
+        }
+        return infos;
+    }
+
+    @Override
     public Event getFirstKnownEvent(BasicContext context, String pvName) throws IOException {
         Event destE = dest.getFirstKnownEvent(context, pvName);
         Event otherE = other.getFirstKnownEvent(context, pvName);
