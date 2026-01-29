@@ -91,7 +91,8 @@ public class ETLWithRecurringFilesTest {
         PlainCommonSetup srcSetup = new PlainCommonSetup();
         PlainCommonSetup destSetup = new PlainCommonSetup();
         etlTestPlugins.dest().setBackupFilesBeforeETL(backUpFiles);
-        PlainStoragePlugin etlNewDest = new PlainStoragePlugin();
+        PlainStoragePlugin etlNewDest =
+                new PlainStoragePlugin(etlTestPlugins.dest().getPlainFileHandler());
 
         srcSetup.setUpRootFolder(etlTestPlugins.src(), "RecurringFilesTestSrc" + granularity, granularity);
         destSetup.setUpRootFolder(

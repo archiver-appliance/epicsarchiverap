@@ -1,9 +1,9 @@
 package org.epics.archiverappliance.etl;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -29,12 +29,15 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
@@ -53,6 +56,10 @@ public class ETLPostProcessorTest {
     short currentYear = TimeUtils.getCurrentYear();
     ArchDBRTypes type = ArchDBRTypes.DBR_SCALAR_DOUBLE;
 
+    private static Stream<Arguments> provideArguments() {
+        return ETLTestPlugins.providePlainStorageTypeArguments();
+    }
+
     @BeforeAll
     public static void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
@@ -65,17 +72,17 @@ public class ETLPostProcessorTest {
 
     private static int countAndValidateEvents(List<Callable<EventStream>> callables, String pvName) {
         int eventCount = 0;
-        long previousEventEpochSeconds = 0;
+        Instant previousEventTime = Instant.EPOCH;
         try (EventStream stream = new CurrentThreadWorkerEventStream(pvName, callables)) {
             for (Event e : stream) {
-                long currentEpochSeconds = e.getEpochSeconds();
+                Instant currentEpochSeconds = e.getEventTimeStamp();
                 Assertions.assertTrue(
-                        currentEpochSeconds > previousEventEpochSeconds,
+                        currentEpochSeconds.isAfter(previousEventTime),
                         "Timestamps are not sequential current = "
-                                + TimeUtils.convertToHumanReadableString(currentEpochSeconds)
+                                + e.getEventTimeStamp()
                                 + " previous = "
-                                + TimeUtils.convertToHumanReadableString(previousEventEpochSeconds));
-                previousEventEpochSeconds = currentEpochSeconds;
+                                + previousEventTime);
+                previousEventTime = currentEpochSeconds;
                 eventCount++;
             }
         } catch (IOException e) {
@@ -84,19 +91,22 @@ public class ETLPostProcessorTest {
         return eventCount;
     }
 
-    @Test
-    public void testPostProcessorDuringETL() throws Exception {
+    @ParameterizedTest
+    @MethodSource("provideArguments")
+    public void testPostProcessorDuringETL(PlainStorageType stsPlainStorageType, PlainStorageType mtsPlainStorageType)
+            throws Exception {
 
-        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETLPostProcessorTest";
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ETLPostProcessorTest"
+                + stsPlainStorageType + mtsPlainStorageType;
         PlainStoragePlugin srcPlainPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
-                        PB_PLUGIN_IDENTIFIER,
+                        stsPlainStorageType,
                         "localhost",
                         "name=STS&rootFolder=" + rootFolderName + "/src&partitionGranularity=PARTITION_HOUR"),
                 configService);
         PlainStoragePlugin destPlainPlugin = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
-                        PB_PLUGIN_IDENTIFIER,
+                        mtsPlainStorageType,
                         "localhost",
                         "name=MTS&rootFolder="
                                 + rootFolderName + "/dest&partitionGranularity=PARTITION_DAY&pp="

@@ -1,6 +1,6 @@
 package org.epics.archiverappliance.zipfs;
 
-import static edu.stanford.slac.archiverappliance.plain.PlainStoragePlugin.PB_PLUGIN_IDENTIFIER;
+import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 
 import edu.stanford.slac.archiverappliance.plain.PathNameUtility;
@@ -145,7 +145,7 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PlainStoragePlugin.pbFileExtension,
+                    pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
                     pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
@@ -178,7 +178,7 @@ public class ZipCachedFetchTest {
                     pvName,
                     startTime,
                     endTime,
-                    PlainStoragePlugin.pbFileExtension,
+                    pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
                     pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
