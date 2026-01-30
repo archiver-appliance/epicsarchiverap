@@ -10,7 +10,6 @@ package edu.stanford.slac.archiverappliance.plain.utils;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -37,7 +36,7 @@ public class CountEventsInPBFile {
         int totalInvalid = 0;
         for (String fileName : args) {
             Path path = Paths.get(fileName);
-            PlainFileHandler handler = getHandler(path);
+            PlainFileHandler handler = PlainStorageType.getHandler(path);
             FileInfo info = handler.fileInfo(path);
             long start = System.currentTimeMillis();
             long previousEpochSeconds = 0L;
@@ -116,16 +115,5 @@ public class CountEventsInPBFile {
             }
         }
         System.exit(totalInvalid);
-    }
-
-    private static PlainFileHandler getHandler(Path path) {
-        String filename = path.getFileName().toString();
-        for (PlainStorageType type : PlainStorageType.values()) {
-            PlainFileHandler handler = type.plainFileHandler();
-            if (filename.endsWith(handler.getExtensionString())) {
-                return handler;
-            }
-        }
-        return new PBPlainFileHandler();
     }
 }

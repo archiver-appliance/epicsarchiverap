@@ -11,7 +11,6 @@ import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -92,18 +91,7 @@ public class SlicePBFile {
             return;
         }
 
-        slicePBFile(srcPath, startTs, endTs, destPath, getHandler(srcPath));
-    }
-
-    private static PlainFileHandler getHandler(Path path) {
-        String filename = path.getFileName().toString();
-        for (PlainStorageType type : PlainStorageType.values()) {
-            PlainFileHandler handler = type.plainFileHandler();
-            if (filename.endsWith(handler.getExtensionString())) {
-                return handler;
-            }
-        }
-        return new PBPlainFileHandler();
+        slicePBFile(srcPath, startTs, endTs, destPath, PlainStorageType.getHandler(srcPath));
     }
 
     private static void printHelpMsg() {

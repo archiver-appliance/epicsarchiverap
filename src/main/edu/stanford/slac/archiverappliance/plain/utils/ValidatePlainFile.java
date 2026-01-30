@@ -9,7 +9,6 @@ package edu.stanford.slac.archiverappliance.plain.utils;
 
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -139,7 +138,10 @@ public class ValidatePlainFile {
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                if (!validatePlainFile(file, verboseMode, getHandler(file))) {
+                                if (!validatePlainFile(
+                                        file,
+                                        verboseMode,
+                                        edu.stanford.slac.archiverappliance.plain.PlainStorageType.getHandler(file))) {
                                     failures.incrementAndGet();
                                 }
                                 return FileVisitResult.CONTINUE;
@@ -156,25 +158,16 @@ public class ValidatePlainFile {
                             }
                         }.init(verboseMode));
             } else {
-                if (!validatePlainFile(path, verboseMode, getHandler(path))) {
+                if (!validatePlainFile(
+                        path,
+                        verboseMode,
+                        edu.stanford.slac.archiverappliance.plain.PlainStorageType.getHandler(path))) {
                     failures.incrementAndGet();
                 }
             }
         }
         // Return number of failures as exit code.
         System.exit(failures.get());
-    }
-
-    private static PlainFileHandler getHandler(Path path) {
-        String filename = path.getFileName().toString();
-        for (edu.stanford.slac.archiverappliance.plain.PlainStorageType type :
-                edu.stanford.slac.archiverappliance.plain.PlainStorageType.values()) {
-            PlainFileHandler handler = type.plainFileHandler();
-            if (filename.endsWith(handler.getExtensionString())) {
-                return handler;
-            }
-        }
-        return new PBPlainFileHandler();
     }
 
     private static void printHelpMsg() {

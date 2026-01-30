@@ -9,7 +9,7 @@ package edu.stanford.slac.archiverappliance.plain.utils;
 
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -89,12 +89,16 @@ public class ValidateAndFixPBFile {
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                PlainFileHandler handler = getHandler(file);
+                                PlainFileHandler handler = PlainStorageType.getHandler(file);
+
                                 boolean isValid = ValidatePlainFile.validatePlainFile(file, verboseMode, handler);
+
                                 if (!isValid) {
                                     logger.debug("Path " + file + " is not a valid PB file");
+
                                     fixPBFile(file, verboseMode, makeBackups, handler);
                                 }
+
                                 return FileVisitResult.CONTINUE;
                             }
 
@@ -109,26 +113,17 @@ public class ValidateAndFixPBFile {
                             }
                         }.init(verboseMode, makeBackups));
             } else {
-                PlainFileHandler handler = getHandler(path);
+                PlainFileHandler handler = PlainStorageType.getHandler(path);
+
                 boolean isValid = ValidatePlainFile.validatePlainFile(path, verboseMode, handler);
+
                 if (!isValid) {
                     logger.debug("Path " + path + " is not a valid PB file");
+
                     fixPBFile(path, verboseMode, makeBackups, handler);
                 }
             }
         }
-    }
-
-    private static PlainFileHandler getHandler(Path path) {
-        String filename = path.getFileName().toString();
-        for (edu.stanford.slac.archiverappliance.plain.PlainStorageType type :
-                edu.stanford.slac.archiverappliance.plain.PlainStorageType.values()) {
-            PlainFileHandler handler = type.plainFileHandler();
-            if (filename.endsWith(handler.getExtensionString())) {
-                return handler;
-            }
-        }
-        return new PBPlainFileHandler();
     }
 
     private static void printHelpMsg() {

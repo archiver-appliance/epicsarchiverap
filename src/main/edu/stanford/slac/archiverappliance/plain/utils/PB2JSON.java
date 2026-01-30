@@ -10,7 +10,6 @@ package edu.stanford.slac.archiverappliance.plain.utils;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -37,7 +36,7 @@ public class PB2JSON {
         boolean firstline = true;
         for (String fileName : args) {
             Path path = Paths.get(fileName);
-            PlainFileHandler handler = getHandler(path);
+            PlainFileHandler handler = PlainStorageType.getHandler(path);
             FileInfo info = handler.fileInfo(path);
             try (EventStream strm = handler.getStream(info.getPVName(), path, info.getType())) {
                 for (Event ev : strm) {
@@ -63,16 +62,5 @@ public class PB2JSON {
         }
         System.out.println();
         System.out.println(']');
-    }
-
-    private static PlainFileHandler getHandler(Path path) {
-        String filename = path.getFileName().toString();
-        for (PlainStorageType type : PlainStorageType.values()) {
-            PlainFileHandler handler = type.plainFileHandler();
-            if (filename.endsWith(handler.getExtensionString())) {
-                return handler;
-            }
-        }
-        return new PBPlainFileHandler();
     }
 }
