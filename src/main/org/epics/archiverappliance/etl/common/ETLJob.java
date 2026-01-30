@@ -64,6 +64,18 @@ public class ETLJob implements Runnable {
             return;
         }
 
+        String namedFlagForSkippingDataSource =
+                "SKIP_" + this.etlStage.getETLDest().getName() + "_FOR_ETL";
+        boolean skipETLForThisDest = this.configService.getNamedFlag(namedFlagForSkippingDataSource);
+        if (skipETLForThisDest) {
+            logger.warn(
+                    "Skipping ETL for dest {} for PV {} as the flag {} is set to true",
+                    this.etlStage.getETLDest().getName(),
+                    this.etlStage.getPvName(),
+                    namedFlagForSkippingDataSource);
+            return;
+        }
+
         if (this.configService.getETLLookup().getIsRunningInsideUnitTests()) {
             // Skip the check for times...
         } else {
