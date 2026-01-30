@@ -4,6 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PartitionGranularity;
+import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
@@ -40,6 +41,8 @@ public interface PlainFileHandler extends PlainStreams {
             String rootFolder,
             String desc,
             PVNameToKeyMapping pv2key);
+
+    EventFileWriter createEventFileWriter(String pvName, Path path, ArchDBRTypes type, short year) throws IOException;
 
     void markForDeletion(Path path) throws IOException;
 

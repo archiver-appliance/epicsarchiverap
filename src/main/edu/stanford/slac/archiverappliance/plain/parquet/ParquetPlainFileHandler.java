@@ -3,6 +3,7 @@ package edu.stanford.slac.archiverappliance.plain.parquet;
 import static edu.stanford.slac.archiverappliance.plain.parquet.ParquetInfo.baseOptions;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
+import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
@@ -46,6 +47,7 @@ import java.util.Map;
  * @see ParquetInfo
  */
 public class ParquetPlainFileHandler implements PlainFileHandler {
+
     public static final String PARQUET_PLUGIN_IDENTIFIER = "parquet";
     public static final String ZSTD_BUFFER_POOL_ENABLED = "parquet.compression.codec.zstd.bufferPool.enabled";
     public static final String ZSTD_LEVEL = "parquet.compression.codec.zstd.level";
@@ -60,7 +62,7 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
 
     @Override
     public String toString() {
-        return "ParquetPlainFileHandler{" + ", compressionCodecName=" + compressionCodecName + '}';
+        return ("ParquetPlainFileHandler{" + ", compressionCodecName=" + compressionCodecName + '}');
     }
 
     @Override
@@ -85,11 +87,9 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
 
     @Override
     public void initCompression(Map<String, String> queryStrings) {
-
         var readOptionsBuilder = ParquetReadOptions.builder().copy(parquetReadOptions);
         compressionCodecName = CompressionCodecName.valueOf(queryStrings.get(URLKey.COMPRESS.key()));
         if (compressionCodecName.equals(CompressionCodecName.ZSTD)) {
-
             if (queryStrings.containsKey(URLKey.ZSTD_BUFFER_POOL.key())) {
                 readOptionsBuilder.set(ZSTD_BUFFER_POOL_ENABLED, queryStrings.get(URLKey.ZSTD_BUFFER_POOL.key()));
             }
@@ -204,6 +204,12 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
     }
 
     @Override
+    public EventFileWriter createEventFileWriter(String pvName, Path path, ArchDBRTypes type, short year)
+            throws IOException {
+        return new ParquetEventFileWriter(pvName, path, type, year, this.compressionCodecName);
+    }
+
+    @Override
     public void markForDeletion(Path path) throws IOException {
         Path checkSumPath = Path.of(String.valueOf(path.getParent()), "." + path.getFileName() + ".crc");
         if (Files.exists(checkSumPath)) {
@@ -269,7 +275,6 @@ public class ParquetPlainFileHandler implements PlainFileHandler {
 
     @Override
     public Map<URLKey, String> urlOptions() {
-
         if (compressionCodecName.equals(CompressionCodecName.ZSTD)) {
             Map<URLKey, String> map = new EnumMap<>(URLKey.class);
             map.put(URLKey.COMPRESS, compressionCodecName.name());

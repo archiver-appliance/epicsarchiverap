@@ -24,6 +24,9 @@ import java.time.Instant;
  *
  */
 public abstract class AppendDataStateData {
+
+    protected EventFileWriter writer;
+
     private static final Logger logger = LogManager.getLogger(AppendDataStateData.class.getName());
     protected final String rootFolder;
     protected final String desc;
@@ -42,6 +45,7 @@ public abstract class AppendDataStateData {
     protected PathResolver getPathResolver() {
         return this.pathResolver;
     }
+
     /**
      * @param partitionGranularity partitionGranularity of the PB plugin.
      * @param rootFolder           RootFolder of the PB plugin
@@ -64,6 +68,7 @@ public abstract class AppendDataStateData {
         if (lastKnownTimestamp != null) {
             this.lastKnownTimeStamp = lastKnownTimestamp;
             this.previousYear = TimeUtils.getYear(lastKnownTimestamp);
+            this.currentEventsYear = this.previousYear;
         }
     }
 
@@ -82,16 +87,48 @@ public abstract class AppendDataStateData {
      * @return eventsAppended  &emsp;
      * @throws IOException &emsp;
      */
-    public abstract int partitionBoundaryAwareAppendData(
+    public int partitionBoundaryAwareAppendData(
             BasicContext context, String pvName, EventStream stream, String extension, String extensionToCopyFrom)
-            throws IOException;
+            throws IOException {
+        try (stream) {
+            int eventsAppended = 0;
+            for (Event event : stream) {
+                Instant ts = event.getEventTimeStamp();
+                if (shouldISkipEventBasedOnTimeStamps(event)) continue;
+
+                Path pvPath = null;
+                shouldISwitchPartitions(context, pvName, extension, ts);
+
+                if (writer == null) {
+                    preparePartition(
+                            pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, getPathResolver());
+                }
+
+                // We check for monotonicity in timestamps again as we had some fresh data from an existing file.
+
+                if (shouldISkipEventBasedOnTimeStamps(event)) continue;
+
+                writer.append(event);
+
+                this.previousYear = this.currentEventsYear;
+                this.lastKnownTimeStamp = event.getEventTimeStamp();
+                eventsAppended++;
+            }
+            return eventsAppended;
+        } catch (Throwable t) {
+            logger.error("Exception appending data for PV " + pvName, t);
+            throw new IOException(t);
+        } finally {
+            this.closeStreams();
+        }
+    }
 
     protected Event checkStream(
             String pvName, ETLContext context, ETLBulkStream bulkStream, Class<? extends ETLBulkStream> streamType)
             throws IOException {
         if (!(streamType.isInstance(bulkStream))) {
-            logger.debug("Can't use bulk stream between different file formats "
-                    + pvName + " for stream "
+            logger.debug("Can't use bulk stream between different file formats " + pvName
+                    + " for stream "
                     + bulkStream.getDescription().getSource());
             return null;
         }
@@ -100,7 +137,8 @@ public abstract class AppendDataStateData {
         if (this.shouldISkipEventBasedOnTimeStamps(firstEvent)) {
             logger.error(
                     "The bulk append functionality works only if we the first event fits cleanly in the current stream for pv "
-                            + pvName + " for stream "
+                            + pvName
+                            + " for stream "
                             + bulkStream.getDescription().getSource());
             return null;
         }
@@ -133,7 +171,6 @@ public abstract class AppendDataStateData {
      */
     protected void shouldISwitchPartitions(BasicContext context, String pvName, String extension, Instant ts)
             throws IOException {
-
         if (ts.equals(this.nextPartitionFirstSecond) || ts.isAfter(this.nextPartitionFirstSecond)) {
             Path nextPath = PathNameUtility.getFileName(
                     this.rootFolder,
@@ -149,14 +186,17 @@ public abstract class AppendDataStateData {
             if (logger.isDebugEnabled()) {
                 if (this.previousFilePath != null) {
                     logger.debug(desc + ": Encountering a change in partitions in the event stream. "
-                            + "Closing out " + this.previousFilePath
-                            + " to make way for " + nextPath
+                            + "Closing out "
+                            + this.previousFilePath
+                            + " to make way for "
+                            + nextPath
                             + " Next partition is to be switched at "
                             + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
                 } else {
-                    logger.debug(
-                            desc + ": New partition into file " + nextPath + " Next partition is to be switched at "
-                                    + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
+                    logger.debug(desc + ": New partition into file "
+                            + nextPath
+                            + " Next partition is to be switched at "
+                            + TimeUtils.convertToISO8601String(this.nextPartitionFirstSecond));
                 }
             }
             this.closeStreams();
@@ -198,7 +238,8 @@ public abstract class AppendDataStateData {
         }
         if (this.currentEventsYear < this.previousYear) {
             // Same test as above.
-            logger.info("Skipping data from a year " + this.currentEventsYear + "older than the previous year "
+            logger.info("Skipping data from a year " + this.currentEventsYear
+                    + "older than the previous year "
                     + this.previousYear);
             return true;
         }
@@ -256,33 +297,42 @@ public abstract class AppendDataStateData {
                 Path pathToCopyFrom = context.getPaths()
                         .get(preparePath.toAbsolutePath().toString().replace(extension, extensionToCopyFrom));
                 if (Files.exists(pathToCopyFrom)) {
-                    logger.debug("Making a backup from "
-                            + pathToCopyFrom.toAbsolutePath() + " to file "
-                            + preparePath.toAbsolutePath() + " when appending data for pv " + pvName);
+                    logger.debug("Making a backup from " + pathToCopyFrom.toAbsolutePath()
+                            + " to file "
+                            + preparePath.toAbsolutePath()
+                            + " when appending data for pv "
+                            + pvName);
                     Files.copy(pathToCopyFrom, preparePath);
                     // We still have to create an os so that the logic can continue.
                     updateStateBasedOnExistingFile(pvName, preparePath);
-
                 } else {
-                    logger.debug("File to copy from "
-                            + pathToCopyFrom.toAbsolutePath() + " does not exist when appending data for pv "
+                    logger.debug("File to copy from " + pathToCopyFrom.toAbsolutePath()
+                            + " does not exist when appending data for pv "
                             + pvName);
-                    createNewFileAndWriteAHeader(pvName, preparePath, stream);
+                    writer = createNewWriter(pvName, preparePath, stream);
+                    this.previousFilePath = preparePath;
                 }
             } else {
                 logger.debug("File to copy from is not specified and the file " + preparePath.toAbsolutePath()
-                        + " does not exist when appending data for pv " + pvName);
-                createNewFileAndWriteAHeader(pvName, preparePath, stream);
+                        + " does not exist when appending data for pv "
+                        + pvName);
+                writer = createNewWriter(pvName, preparePath, stream);
+                this.previousFilePath = preparePath;
             }
         } else {
             if (Files.size(preparePath) <= 0) {
                 logger.debug("The dest file " + preparePath.toAbsolutePath()
-                        + " exists but is 0 bytes long. Writing the header for pv " + pvName);
-                createNewFileAndWriteAHeader(pvName, preparePath, stream);
+                        + " exists but is 0 bytes long. Writing the header for pv "
+                        + pvName);
+                writer = createNewWriter(pvName, preparePath, stream);
+                this.previousFilePath = preparePath;
             } else {
                 if (logger.isDebugEnabled()) {
                     logger.debug(this.desc + ": Appending to existing PB file "
-                            + preparePath.toAbsolutePath() + " for PV " + pvName + " for year "
+                            + preparePath.toAbsolutePath()
+                            + " for PV "
+                            + pvName
+                            + " for year "
                             + this.currentEventsYear);
                 }
                 updateStateBasedOnExistingFile(pvName, preparePath);
@@ -291,10 +341,15 @@ public abstract class AppendDataStateData {
         return preparePath;
     }
 
-    protected abstract void createNewFileAndWriteAHeader(String pvName, Path pvPath, EventStream stream)
+    protected abstract EventFileWriter createNewWriter(String pvName, Path pvPath, EventStream stream)
             throws IOException;
 
     protected abstract void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException;
 
-    public abstract void closeStreams() throws IOException;
+    public void closeStreams() throws IOException {
+        if (writer != null) {
+            writer.close();
+            writer = null;
+        }
+    }
 }

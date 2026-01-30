@@ -7,31 +7,28 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
-import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
+import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
-import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.mergededup.MergeDedupEventStream;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 
-import java.io.BufferedOutputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.LinkedList;
 
 /**
- * Merge two PB files for the same PV and year into the third file.
+ * Merge two Plain files for the same PV and year into the third file.
  *
  * @author mshankar
  */
 public class MergePBFile {
+
     private static Logger logger = LogManager.getLogger(MergePBFile.class.getName());
     private static boolean verboseMode = false;
 
@@ -89,7 +86,9 @@ public class MergePBFile {
             System.exit(-1);
         }
 
-        PBFileInfo fileInfo0 = new PBFileInfo(srcPath0), fileInfo1 = new PBFileInfo(srcPath1);
+        PlainFileHandler handler0 = PlainStorageType.getHandler(srcPath0);
+        PlainFileHandler handler1 = PlainStorageType.getHandler(srcPath1);
+        FileInfo fileInfo0 = handler0.fileInfo(srcPath0), fileInfo1 = handler1.fileInfo(srcPath1);
         if (!fileInfo0.getPVName().equals(fileInfo1.getPVName())) {
             logger.error("The two sources files are not for the same PV");
             System.exit(-1);
@@ -103,7 +102,7 @@ public class MergePBFile {
             System.exit(-1);
         }
 
-        mergePBFile(srcPath0, srcPath1, destPath);
+        mergePBFile(srcPath0, srcPath1, destPath, handler0);
     }
 
     private static void printHelpMsg() {
@@ -122,31 +121,17 @@ public class MergePBFile {
         System.out.println();
     }
 
-    public static void mergePBFile(Path srcPath0, Path srcPath1, Path destPath) throws Exception {
+    public static void mergePBFile(Path srcPath0, Path srcPath1, Path destPath, PlainFileHandler handler)
+            throws Exception {
         logger.info("Merging " + srcPath0.toString() + " and " + srcPath1.toString() + " into " + destPath);
         try (ArchPaths contexts = new ArchPaths()) {
-            PBFileInfo info0 = new PBFileInfo(srcPath0), info1 = new PBFileInfo(srcPath1);
-            try (FileBackedPBEventStream strm0 =
-                            new FileBackedPBEventStream(info0.getPVName(), srcPath0, info0.getType());
-                    FileBackedPBEventStream strm1 =
-                            new FileBackedPBEventStream(info1.getPVName(), srcPath1, info1.getType());
+            FileInfo info0 = handler.fileInfo(srcPath0);
+            try (EventStream strm0 = handler.getStream(info0.getPVName(), srcPath0, info0.getType());
+                    EventStream strm1 = handler.getStream(info0.getPVName(), srcPath1, info0.getType());
                     MergeDedupEventStream mergestream = new MergeDedupEventStream(strm0, strm1);
-                    OutputStream os = new BufferedOutputStream(Files.newOutputStream(
-                            destPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-                byte[] headerBytes = LineEscaper.escapeNewLines(PayloadInfo.newBuilder()
-                        .setPvname(info0.getPVName())
-                        .setType(strm0.getDescription().getArchDBRType().getPBPayloadType())
-                        .setYear(info0.getDataYear())
-                        .build()
-                        .toByteArray());
-                os.write(headerBytes);
-                os.write(LineEscaper.NEWLINE_CHAR);
-
-                for (Event ev : mergestream) {
-                    ByteArray val = ev.getRawForm();
-                    os.write(val.data, val.off, val.len);
-                    os.write(LineEscaper.NEWLINE_CHAR);
-                }
+                    EventFileWriter writer = handler.createEventFileWriter(
+                            info0.getPVName(), destPath, info0.getType(), info0.getDataYear())) {
+                writer.writeStreamToFile(mergestream);
             }
         }
     }

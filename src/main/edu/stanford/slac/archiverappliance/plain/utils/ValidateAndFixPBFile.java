@@ -7,22 +7,17 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
-import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
-import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
-import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
@@ -30,7 +25,6 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.LinkedList;
@@ -43,6 +37,7 @@ import java.util.LinkedList;
  * @author mshankar
  */
 public class ValidateAndFixPBFile {
+
     private static final Logger logger = LogManager.getLogger(ValidateAndFixPBFile.class.getName());
 
     /**
@@ -94,12 +89,16 @@ public class ValidateAndFixPBFile {
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                boolean isValid = ValidatePlainFile.validatePlainFile(
-                                        file, verboseMode, new PBPlainFileHandler());
+                                PlainFileHandler handler = PlainStorageType.getHandler(file);
+
+                                boolean isValid = ValidatePlainFile.validatePlainFile(file, verboseMode, handler);
+
                                 if (!isValid) {
                                     logger.debug("Path " + file + " is not a valid PB file");
-                                    fixPBFile(file, verboseMode, makeBackups);
+
+                                    fixPBFile(file, verboseMode, makeBackups, handler);
                                 }
+
                                 return FileVisitResult.CONTINUE;
                             }
 
@@ -114,10 +113,14 @@ public class ValidateAndFixPBFile {
                             }
                         }.init(verboseMode, makeBackups));
             } else {
-                boolean isValid = ValidatePlainFile.validatePlainFile(path, verboseMode, new PBPlainFileHandler());
+                PlainFileHandler handler = PlainStorageType.getHandler(path);
+
+                boolean isValid = ValidatePlainFile.validatePlainFile(path, verboseMode, handler);
+
                 if (!isValid) {
                     logger.debug("Path " + path + " is not a valid PB file");
-                    fixPBFile(path, verboseMode, makeBackups);
+
+                    fixPBFile(path, verboseMode, makeBackups, handler);
                 }
             }
         }
@@ -135,7 +138,7 @@ public class ValidateAndFixPBFile {
         System.out.println();
     }
 
-    public static void fixPBFile(Path path, boolean verboseMode, boolean makeBackups) {
+    public static void fixPBFile(Path path, boolean verboseMode, boolean makeBackups, PlainFileHandler handler) {
         System.out.println("Fixing " + path + " which is an invalid PB file " + (makeBackups ? " with backups " : ""));
         long skippedEvents = 0;
         try (ArchPaths contexts = new ArchPaths()) {
@@ -145,34 +148,26 @@ public class ValidateAndFixPBFile {
             Path tempPath = path.resolveSibling(tempFileName);
             if (tempPath.equals(path)) {
                 throw new IOException("When computing the temp file name, the original file name " + path
-                        + " and the temp file name " + tempPath + " are the same ");
+                        + " and the temp file name "
+                        + tempPath
+                        + " are the same ");
             }
             if (verboseMode)
                 logger.info("Temporary file is " + tempPath + " with final component of temp file " + tempFileName);
             try {
-                FileInfo info = new PBFileInfo(path);
+                FileInfo info = handler.fileInfo(path);
                 long previousEpochSeconds = Long.MIN_VALUE;
                 long eventnum = 0;
-                try (FileBackedPBEventStream strm =
-                                new FileBackedPBEventStream(info.getPVName(), path, info.getType());
-                        OutputStream os = new BufferedOutputStream(Files.newOutputStream(
-                                tempPath, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
-                    byte[] headerBytes = LineEscaper.escapeNewLines(PayloadInfo.newBuilder()
-                            .setPvname(info.getPVName())
-                            .setType(strm.getDescription().getArchDBRType().getPBPayloadType())
-                            .setYear(info.getDataYear())
-                            .build()
-                            .toByteArray());
-                    os.write(headerBytes);
-                    os.write(LineEscaper.NEWLINE_CHAR);
+                try (EventStream strm = handler.getStream(info.getPVName(), path, info.getType());
+                        edu.stanford.slac.archiverappliance.plain.EventFileWriter writer =
+                                handler.createEventFileWriter(
+                                        info.getPVName(), tempPath, info.getType(), info.getDataYear())) {
                     for (Event ev : strm) {
                         try {
                             long epochSeconds = ev.getEpochSeconds();
                             if (epochSeconds >= previousEpochSeconds) {
                                 previousEpochSeconds = epochSeconds;
-                                ByteArray val = ev.getRawForm();
-                                os.write(val.data, val.off, val.len);
-                                os.write(LineEscaper.NEWLINE_CHAR);
+                                writer.append(ev);
                             } else {
                                 if (verboseMode)
                                     logger.debug("Skipping non sequential event " + eventnum + " in file " + path);
