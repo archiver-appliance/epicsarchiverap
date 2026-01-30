@@ -34,13 +34,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  */
 public class ValidatePlainFile {
+
     private static final Logger logger = LogManager.getLogger(ValidatePlainFile.class.getName());
 
     public static boolean validatePlainFile(Path path, boolean verboseMode, PlainFileHandler plainFileHandler)
             throws IOException {
         FileInfo info = plainFileHandler.fileInfo(path);
-        logger.info("File " + path.getFileName().toString() + " is for PV " + info.getPVName() + " of type "
-                + info.getType() + " for year " + info.getDataYear());
+        logger.info("File " + path.getFileName().toString()
+                + " is for PV "
+                + info.getPVName()
+                + " of type "
+                + info.getType()
+                + " for year "
+                + info.getDataYear());
         Instant previousTimestamp = Instant.EPOCH;
         long eventnum = 0;
         try (EventStream strm = plainFileHandler.getStream(info.getPVName(), path, info.getType())) {
@@ -52,7 +58,8 @@ public class ValidatePlainFile {
                     previousTimestamp = eventTimeStamp;
                 } else {
                     throw new IOException("We expect to see monotonically increasing timestamps in a PB file"
-                            + ". This is not true at " + eventnum
+                            + ". This is not true at "
+                            + eventnum
                             + ". The previous time stamp is "
                             + previousTimestamp
                             + ". The current time stamp is "
@@ -65,7 +72,9 @@ public class ValidatePlainFile {
 
             if (verboseMode) {
                 assert firstEvent != null;
-                logger.info("File " + path.getFileName().toString() + " appears to be valid. It has " + eventnum
+                logger.info("File " + path.getFileName().toString()
+                        + " appears to be valid. It has "
+                        + eventnum
                         + " events ranging from "
                         + firstEvent.getEventTimeStamp()
                         + " to "
@@ -89,7 +98,6 @@ public class ValidatePlainFile {
      * @throws Exception  &emsp;
      */
     public static void main(String[] args) throws Exception {
-
         if (args == null || args.length <= 0) {
             printHelpMsg();
             return;
@@ -131,7 +139,7 @@ public class ValidatePlainFile {
 
                             @Override
                             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                if (!validatePlainFile(file, verboseMode, new PBPlainFileHandler())) {
+                                if (!validatePlainFile(file, verboseMode, getHandler(file))) {
                                     failures.incrementAndGet();
                                 }
                                 return FileVisitResult.CONTINUE;
@@ -148,13 +156,25 @@ public class ValidatePlainFile {
                             }
                         }.init(verboseMode));
             } else {
-                if (!validatePlainFile(path, verboseMode, new PBPlainFileHandler())) {
+                if (!validatePlainFile(path, verboseMode, getHandler(path))) {
                     failures.incrementAndGet();
                 }
             }
         }
         // Return number of failures as exit code.
         System.exit(failures.get());
+    }
+
+    private static PlainFileHandler getHandler(Path path) {
+        String filename = path.getFileName().toString();
+        for (edu.stanford.slac.archiverappliance.plain.PlainStorageType type :
+                edu.stanford.slac.archiverappliance.plain.PlainStorageType.values()) {
+            PlainFileHandler handler = type.plainFileHandler();
+            if (filename.endsWith(handler.getExtensionString())) {
+                return handler;
+            }
+        }
+        return new PBPlainFileHandler();
     }
 
     private static void printHelpMsg() {
