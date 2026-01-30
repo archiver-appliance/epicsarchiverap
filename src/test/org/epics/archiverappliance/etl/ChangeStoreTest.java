@@ -98,9 +98,7 @@ class ChangeStoreTest {
         String pvName =
                 ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + testPlugins.pvNamePrefix() + "ChangeStoreTest";
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
-        String[] dataStores = new String[] {
-            srcPlugin.getURLRepresentation(),
-        };
+        String[] dataStores = new String[] {srcPlugin.getURLRepresentation()};
         typeInfo.setDataStores(dataStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
@@ -173,5 +171,79 @@ class ChangeStoreTest {
                     ValidatePlainFile.validatePlainFile(destPath, true, destPlugin.getPlainFileHandler()),
                     "File validation failed for " + destPath.toAbsolutePath());
         }
+    }
+
+    static Stream<String> provideCompressionOptions() {
+        return Stream.of("UNCOMPRESSED", "ZSTD", "GZIP");
+    }
+
+    /**
+     * Parameterized Benchmark for Parquet compression.
+     * Moves 10,000 events from PB to Parquet with specified compression.
+     */
+    @ParameterizedTest
+    @MethodSource("provideCompressionOptions")
+    void testParquetBenchmark(String compression) throws Exception {
+        int eventCount = 100000;
+        String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + "ParquetBench_" + compression;
+        PartitionGranularity granularity = PartitionGranularity.PARTITION_DAY;
+        Instant startTime = TimeUtils.getStartOfYear(TimeUtils.getCurrentYear());
+        Instant endTime = startTime.plusSeconds(eventCount);
+
+        // 1. Setup Source (PB)
+        PlainStoragePlugin srcPlugin =
+                new PlainStoragePlugin(edu.stanford.slac.archiverappliance.plain.PlainStorageType.PB);
+        srcSetup.setUpRootFolder(srcPlugin, "ChangeStoreTest_Src_" + pvName, granularity);
+
+        PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+        typeInfo.setDataStores(new String[] {srcPlugin.getURLRepresentation()});
+        configService.updateTypeInfoForPV(pvName, typeInfo);
+        configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
+        configService.getETLLookup().manualControlForUnitTests();
+
+        SimulationEventStream simstream =
+                new SimulationEventStream(ArchDBRTypes.DBR_SCALAR_DOUBLE, new SineGenerator(0), startTime, endTime, 1);
+        try (BasicContext context = new BasicContext()) {
+            srcPlugin.appendData(context, pvName, simstream);
+        }
+
+        long srcCount = countEvents(srcPlugin, pvName, startTime, endTime.plusSeconds(1));
+        logger.info("Generated {} events for {}", srcCount, pvName);
+        Assertions.assertTrue(srcCount >= eventCount, "Source event count mismatch for " + pvName);
+
+        // 2. Setup Destination (Parquet) with Compression
+        PlainStoragePlugin destPlugin =
+                new PlainStoragePlugin(edu.stanford.slac.archiverappliance.plain.PlainStorageType.PARQUET);
+        String destFolder = "ChangeStoreTest_Dest_Parquet_" + compression + "_" + pvName;
+        File tempFolder = new File(configService.getPBRootFolder() + File.separator + destFolder);
+        if (tempFolder.exists()) {
+            org.apache.commons.io.FileUtils.deleteDirectory(tempFolder);
+        }
+        tempFolder.mkdirs();
+
+        String pluginUrl = org.epics.archiverappliance.utils.ui.URIUtils.pluginString(
+                destPlugin.getPluginIdentifier(),
+                "localhost",
+                "name=Dest" + compression
+                        + "&rootFolder="
+                        + tempFolder.getAbsolutePath()
+                        + "&partitionGranularity="
+                        + granularity.toString()
+                        + "&compress="
+                        + compression);
+
+        destPlugin.initialize(pluginUrl, configService);
+        destPlugin.setRootFolder(tempFolder.getAbsolutePath());
+        destPlugin.setPartitionGranularity(granularity);
+        destPlugin.setName("Dest" + compression);
+
+        // 3. Move Data
+        ETLExecutor.moveDataFromOneStorageToAnother(
+                configService, pvName, srcPlugin.getName(), destPlugin.getURLRepresentation());
+
+        // 4. Validate
+        validateDestinationFiles(destPlugin, pvName);
+        long destCount = countEvents(destPlugin, pvName, startTime, endTime.plusSeconds(1));
+        Assertions.assertEquals(srcCount, destCount, "Destination event count mismatch for " + compression);
     }
 }
