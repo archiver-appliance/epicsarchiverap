@@ -176,6 +176,7 @@ dependencies {
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(":pbrawclient:0.2.2")
 	testImplementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
+	testImplementation("org.mockito:mockito-core:5.21.0")
 }
 
 // =================================================================
