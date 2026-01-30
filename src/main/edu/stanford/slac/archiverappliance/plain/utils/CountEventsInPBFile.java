@@ -7,11 +7,14 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
-import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
+import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 
 import java.nio.file.Path;
@@ -23,7 +26,9 @@ import java.nio.file.Paths;
  *
  */
 public class CountEventsInPBFile {
+
     private static final Logger logger = LogManager.getLogger(CountEventsInPBFile.class);
+
     /**
      * @param args &emsp;
      * @throws Exception  &emsp;
@@ -32,7 +37,8 @@ public class CountEventsInPBFile {
         int totalInvalid = 0;
         for (String fileName : args) {
             Path path = Paths.get(fileName);
-            PBFileInfo info = new PBFileInfo(path);
+            PlainFileHandler handler = getHandler(path);
+            FileInfo info = handler.fileInfo(path);
             long start = System.currentTimeMillis();
             long previousEpochSeconds = 0L;
             Event firstEvent = null;
@@ -40,7 +46,7 @@ public class CountEventsInPBFile {
             int lineNumber = 0;
             int validCount = 0;
             int invalidCount = 0;
-            try (FileBackedPBEventStream strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType())) {
+            try (EventStream strm = handler.getStream(info.getPVName(), path, info.getType())) {
                 for (Event e : strm) {
                     lineNumber += 1;
                     try {
@@ -54,7 +60,8 @@ public class CountEventsInPBFile {
                                     "Current epoch seconds " + TimeUtils.convertToISO8601String(currEpochSeconds)
                                             + " is less than previous epoch seconds "
                                             + TimeUtils.convertToISO8601String(previousEpochSeconds)
-                                            + " at about line " + lineNumber);
+                                            + " at about line "
+                                            + lineNumber);
                         }
                         validCount++;
                     } catch (Exception ex) {
@@ -64,32 +71,61 @@ public class CountEventsInPBFile {
                 }
                 long end = System.currentTimeMillis();
                 if (firstEvent != null) {
-                    System.out.println("There are " + validCount + " events "
-                            + "starting from " + TimeUtils.convertToISO8601String(firstEvent.getEpochSeconds())
-                            + " to " + TimeUtils.convertToISO8601String(lastEvent.getEpochSeconds())
-                            + " in " + fileName
-                            + " for PV " + info.getPVName()
-                            + " which is of type " + info.getType()
-                            + " with data for the year " + info.getDataYear()
-                            + " - determined this in " + (end - start) + "(ms)");
+                    System.out.println("There are " + validCount
+                            + " events "
+                            + "starting from "
+                            + TimeUtils.convertToISO8601String(firstEvent.getEpochSeconds())
+                            + " to "
+                            + TimeUtils.convertToISO8601String(lastEvent.getEpochSeconds())
+                            + " in "
+                            + fileName
+                            + " for PV "
+                            + info.getPVName()
+                            + " which is of type "
+                            + info.getType()
+                            + " with data for the year "
+                            + info.getDataYear()
+                            + " - determined this in "
+                            + (end - start)
+                            + "(ms)");
                     System.out.println("There are " + invalidCount + " invalid events");
                 } else {
                     System.out.println("There is a valid header but no events for PV " + info.getPVName()
-                            + " in " + fileName
-                            + " which is of type " + info.getType()
-                            + " with data for the year " + info.getDataYear()
-                            + " - determined this in " + (end - start) + "(ms)");
+                            + " in "
+                            + fileName
+                            + " which is of type "
+                            + info.getType()
+                            + " with data for the year "
+                            + info.getDataYear()
+                            + " - determined this in "
+                            + (end - start)
+                            + "(ms)");
                 }
                 totalInvalid += invalidCount;
             } catch (Exception ex) {
                 System.out.println("Exception at about line " + lineNumber
-                        + " when processing file " + path.toAbsolutePath().toString()
-                        + " containing data from " + info.getPVName()
-                        + " for year " + info.getDataYear()
-                        + " of type " + info.getType());
+                        + " when processing file "
+                        + path.toAbsolutePath().toString()
+                        + " containing data from "
+                        + info.getPVName()
+                        + " for year "
+                        + info.getDataYear()
+                        + " of type "
+                        + info.getType());
                 logger.error(ex.getMessage(), ex);
             }
         }
         System.exit(totalInvalid);
+    }
+
+    private static PlainFileHandler getHandler(Path path) {
+        String filename = path.getFileName().toString();
+        for (PlainStorageType type : PlainStorageType.values()) {
+            PlainFileHandler handler = type.plainFileHandler();
+            if (filename.endsWith(handler.getExtensionString())) {
+                return handler;
+            }
+        }
+        return new PBPlainFileHandler();
     }
 }
