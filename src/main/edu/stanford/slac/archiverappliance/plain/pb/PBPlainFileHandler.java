@@ -1,6 +1,7 @@
 package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
+import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
@@ -30,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PBPlainFileHandler implements PlainFileHandler {
+
     public static final String PB_PLUGIN_IDENTIFIER = "pb";
     public static final String pbFileExtension = ".pb";
     public static int SIZE_THAT_DETERMINES_A_SMALL_FILE = 4 * 1024;
@@ -45,8 +47,9 @@ public class PBPlainFileHandler implements PlainFileHandler {
     public PathResolver getPathResolver() {
         return switch (compressionMode) {
             case NONE -> PathResolver.BASE_PATH_RESOLVER;
-            case ZIP_PER_PV -> (paths, createParentFolder, rootFolder, pvComponent, pvKey) ->
-                    paths.get(createParentFolder, rootFolder, pvKey + "_pb.zip!", pvComponent);
+            case ZIP_PER_PV ->
+                (paths, createParentFolder, rootFolder, pvComponent, pvKey) ->
+                        paths.get(createParentFolder, rootFolder, pvKey + "_pb.zip!", pvComponent);
         };
     }
 
@@ -74,7 +77,7 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     @Override
     public String toString() {
-        return "PBPlainFileHandler{" + "compressionMode=" + compressionMode + '}';
+        return ("PBPlainFileHandler{" + "compressionMode=" + compressionMode + '}');
     }
 
     @Override
@@ -105,6 +108,12 @@ public class PBPlainFileHandler implements PlainFileHandler {
             PVNameToKeyMapping pv2key) {
         return new PBAppendDataStateData(
                 partitionGranularity, rootFolder, desc, timestamp, compressionMode, pv2key, getPathResolver());
+    }
+
+    @Override
+    public EventFileWriter createEventFileWriter(String pvName, Path path, ArchDBRTypes type, short year)
+            throws IOException {
+        return new PBEventFileWriter(pvName, path, type, year);
     }
 
     @Override
@@ -143,7 +152,6 @@ public class PBPlainFileHandler implements PlainFileHandler {
             Instant startAtTime,
             BiDirectionalIterable.IterationDirection direction)
             throws IOException {
-
         for (Path path : pathList) {
             logger.info("Iterating thru {}", path);
             FileInfo fileInfo = fileInfo(path);
@@ -173,9 +181,9 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     private static boolean foundEvent(
             Instant eventTime, Instant atTime, BiDirectionalIterable.IterationDirection direction) {
-        return (direction == BiDirectionalIterable.IterationDirection.BACKWARDS && eventTime.isBefore(atTime))
+        return ((direction == BiDirectionalIterable.IterationDirection.BACKWARDS && eventTime.isBefore(atTime))
                 || (direction == BiDirectionalIterable.IterationDirection.FORWARDS && eventTime.isAfter(atTime))
-                || eventTime.equals(atTime);
+                || eventTime.equals(atTime));
     }
 
     /**
@@ -253,7 +261,7 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     @Override
     public boolean backUpFiles(boolean backupFilesBeforeETL) {
-        return this.compressionMode.equals(PBCompressionMode.NONE) && backupFilesBeforeETL;
+        return (this.compressionMode.equals(PBCompressionMode.NONE) && backupFilesBeforeETL);
     }
 
     @Override
