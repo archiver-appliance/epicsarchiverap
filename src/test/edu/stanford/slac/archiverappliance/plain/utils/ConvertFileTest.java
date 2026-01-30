@@ -7,18 +7,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
+import edu.stanford.slac.archiverappliance.plain.URLKey;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
+import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
+import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 public class ConvertFileTest {
 
@@ -91,5 +101,96 @@ public class ConvertFileTest {
         assertThrows(IllegalArgumentException.class, () -> {
             ConvertFile.convert(srcPath, destPath, type);
         });
+    }
+
+    private static Stream<Arguments> provideConvertVariations() {
+        List<Arguments> args = new ArrayList<>();
+        int[] counts = {10, 1000, 10000, 100000};
+
+        for (int count : counts) {
+            // PB -> Parquet (Uncompressed)
+            args.add(Arguments.of(
+                    PlainStorageType.PB,
+                    PlainStorageType.PARQUET,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    count,
+                    "UNCOMPRESSED"));
+            // PB -> Parquet (ZSTD)
+            args.add(Arguments.of(
+                    PlainStorageType.PB, PlainStorageType.PARQUET, ArchDBRTypes.DBR_SCALAR_DOUBLE, count, "ZSTD"));
+            // PB -> Parquet (SNAPPY)
+            args.add(Arguments.of(
+                    PlainStorageType.PB, PlainStorageType.PARQUET, ArchDBRTypes.DBR_SCALAR_DOUBLE, count, "SNAPPY"));
+            // Parquet -> PB
+            args.add(Arguments.of(
+                    PlainStorageType.PARQUET, PlainStorageType.PB, ArchDBRTypes.DBR_SCALAR_DOUBLE, count, "NONE"));
+
+            // Varied Types (subset of counts to save time, or full range if desired)
+            args.add(Arguments.of(
+                    PlainStorageType.PB, PlainStorageType.PARQUET, ArchDBRTypes.DBR_WAVEFORM_DOUBLE, count, "ZSTD"));
+            args.add(Arguments.of(
+                    PlainStorageType.PARQUET, PlainStorageType.PB, ArchDBRTypes.DBR_SCALAR_STRING, count, "NONE"));
+        }
+        return args.stream();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideConvertVariations")
+    public void testConvertFileVariations(
+            PlainStorageType srcType, PlainStorageType destType, ArchDBRTypes dbrType, int count, String compression)
+            throws Exception {
+        String pvName = "TestVar_" + srcType + "_" + destType + "_" + dbrType + "_" + count + "_" + compression;
+        short year = (short) TimeUtils.getCurrentYear();
+
+        // 1. Generate Data
+        PlainFileHandler srcHandler = srcType.plainFileHandler();
+        Path srcPath = tempDir.resolve(pvName + srcHandler.getExtensionString());
+
+        SimulationValueGenerator generator = new SineGenerator(0);
+
+        try (EventFileWriter writer = srcHandler.createEventFileWriter(pvName, srcPath, dbrType, year)) {
+            for (int i = 0; i < count; i++) {
+                SampleValue val = generator.getSampleValue(dbrType, i);
+                writer.append(new SimulationEvent(i, year, dbrType, val));
+            }
+        }
+        assertTrue(Files.exists(srcPath));
+
+        // 2. Configure Destination Handler
+        PlainFileHandler destHandler = destType.plainFileHandler();
+        if (destType == PlainStorageType.PARQUET
+                && compression != null
+                && !compression.equals("NONE")
+                && !compression.equals("UNCOMPRESSED")) {
+            Map<String, String> options = new java.util.HashMap<>();
+            options.put(URLKey.COMPRESS.key(), compression);
+            destHandler.initCompression(options);
+        }
+
+        Path destPath = tempDir.resolve(pvName + destHandler.getExtensionString());
+
+        // 3. Convert
+        ConvertFile.convert(srcPath, destPath, destHandler);
+
+        // 4. Verify
+        assertTrue(Files.exists(destPath));
+
+        int readCount = 0;
+        try (EventStream stream = destHandler.getStream(pvName, destPath, dbrType)) {
+            for (Event e : stream) {
+                // Verify value match for Double
+                if (dbrType == ArchDBRTypes.DBR_SCALAR_DOUBLE) {
+                    org.epics.archiverappliance.data.SampleValue expectedVal =
+                            generator.getSampleValue(dbrType, readCount);
+                    assertEquals(
+                            expectedVal.getValue().doubleValue(),
+                            e.getSampleValue().getValue().doubleValue(),
+                            0.0001,
+                            "Value mismatch at index " + readCount);
+                }
+                readCount++;
+            }
+        }
+        assertEquals(count, readCount, "Event count mismatch");
     }
 }

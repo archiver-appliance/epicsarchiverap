@@ -17,12 +17,14 @@ import java.util.logging.Logger;
  * This tool is intended for ad-hoc conversions between different storage types (e.g., PB to Parquet).
  */
 public class ConvertFile {
+
     private static final Logger logger = Logger.getLogger(ConvertFile.class.getName());
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.err.println("Usage: ConvertFile <source_file_path> <new_type> [destination_path]");
+            System.err.println("Usage: ConvertFile <source_file_path> <new_type> [destination_path] [key=value ...]");
             System.err.println("Example: ConvertFile /data/pv.pb PARQUET");
+            System.err.println("Example: ConvertFile /data/pv.pb PARQUET compress=ZSTD zstdLevel=3");
             System.err.println(
                     "Note: If destination_path is not provided, it defaults to the same directory with the new extension.");
             System.exit(1);
@@ -47,14 +49,35 @@ public class ConvertFile {
             return;
         }
 
-        Path destPath;
-        if (args.length >= 3) {
-            destPath = Paths.get(args[2]);
-        } else {
+        Path destPath = null;
+        int nextArgIndex = 2;
+
+        if (args.length > 2) {
+            // Check if args[2] is a path or an option
+            // We assume that if it contains '=', it's an option.
+            if (!args[2].contains("=")) {
+                destPath = Paths.get(args[2]);
+                nextArgIndex = 3;
+            }
+        }
+
+        if (destPath == null) {
             String fileName = sourcePath.getFileName().toString();
             String rawName = fileName.substring(0, fileName.lastIndexOf('.'));
             String newExtension = destType.plainFileHandler().getExtensionString();
             destPath = sourcePath.resolveSibling(rawName + newExtension);
+        }
+
+        // Parse remaining arguments as options
+        java.util.Map<String, String> options = new java.util.HashMap<>();
+        for (int i = nextArgIndex; i < args.length; i++) {
+            String arg = args[i];
+            String[] parts = arg.split("=", 2);
+            if (parts.length == 2) {
+                options.put(parts[0], parts[1]);
+            } else {
+                System.err.println("Ignored invalid option: " + arg);
+            }
         }
 
         // Ensure destination path is different from source path if it's the same type (although this tool targets
@@ -66,7 +89,11 @@ public class ConvertFile {
         }
 
         try {
-            convert(sourcePath, destPath, destType);
+            PlainFileHandler destHandler = destType.plainFileHandler();
+            if (!options.isEmpty()) {
+                destHandler.initCompression(options);
+            }
+            convert(sourcePath, destPath, destHandler);
             System.out.println("Successfully converted " + sourcePath + " to " + destPath);
         } catch (Exception e) {
             e.printStackTrace();
@@ -83,8 +110,19 @@ public class ConvertFile {
      * @throws IOException If an I/O error occurs.
      */
     public static void convert(Path sourcePath, Path destPath, PlainStorageType destType) throws Exception {
+        convert(sourcePath, destPath, destType.plainFileHandler());
+    }
+
+    /**
+     * Converts a source file to a destination file using the specified destination handler.
+     *
+     * @param sourcePath  Path to the source file.
+     * @param destPath    Path to the destination file.
+     * @param destHandler The handler for the destination file type.
+     * @throws Exception If an error occurs.
+     */
+    public static void convert(Path sourcePath, Path destPath, PlainFileHandler destHandler) throws Exception {
         PlainFileHandler srcHandler = PlainStorageType.getHandler(sourcePath);
-        PlainFileHandler destHandler = destType.plainFileHandler();
 
         // Check if source and destination handlers are of the same type
         if (srcHandler.getClass().equals(destHandler.getClass())) {
