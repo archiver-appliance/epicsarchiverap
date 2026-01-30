@@ -7,9 +7,12 @@
  *******************************************************************************/
 package edu.stanford.slac.archiverappliance.plain.utils;
 
-import edu.stanford.slac.archiverappliance.plain.pb.FileBackedPBEventStream;
-import edu.stanford.slac.archiverappliance.plain.pb.PBFileInfo;
+import edu.stanford.slac.archiverappliance.plain.FileInfo;
+import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
+import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
+import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.json.simple.JSONObject;
@@ -22,6 +25,7 @@ import java.nio.file.Paths;
  *	Prints a JSON version of the data in a PB file.
  */
 public class PB2JSON {
+
     @SuppressWarnings("unchecked")
     public static void main(String[] args) throws Exception {
         if (args == null || args.length < 1) {
@@ -33,8 +37,9 @@ public class PB2JSON {
         boolean firstline = true;
         for (String fileName : args) {
             Path path = Paths.get(fileName);
-            PBFileInfo info = new PBFileInfo(path);
-            try (FileBackedPBEventStream strm = new FileBackedPBEventStream(info.getPVName(), path, info.getType())) {
+            PlainFileHandler handler = getHandler(path);
+            FileInfo info = handler.fileInfo(path);
+            try (EventStream strm = handler.getStream(info.getPVName(), path, info.getType())) {
                 for (Event ev : strm) {
                     DBRTimeEvent tev = (DBRTimeEvent) ev;
                     JSONObject obj = new JSONObject();
@@ -58,5 +63,16 @@ public class PB2JSON {
         }
         System.out.println();
         System.out.println(']');
+    }
+
+    private static PlainFileHandler getHandler(Path path) {
+        String filename = path.getFileName().toString();
+        for (PlainStorageType type : PlainStorageType.values()) {
+            PlainFileHandler handler = type.plainFileHandler();
+            if (filename.endsWith(handler.getExtensionString())) {
+                return handler;
+            }
+        }
+        return new PBPlainFileHandler();
     }
 }
