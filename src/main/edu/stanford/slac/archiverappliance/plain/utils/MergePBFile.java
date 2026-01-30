@@ -11,7 +11,6 @@ import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
 import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PlainFileHandler;
 import edu.stanford.slac.archiverappliance.plain.PlainStorageType;
-import edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.EventStream;
@@ -87,8 +86,8 @@ public class MergePBFile {
             System.exit(-1);
         }
 
-        PlainFileHandler handler0 = getHandler(srcPath0);
-        PlainFileHandler handler1 = getHandler(srcPath1);
+        PlainFileHandler handler0 = PlainStorageType.getHandler(srcPath0);
+        PlainFileHandler handler1 = PlainStorageType.getHandler(srcPath1);
         FileInfo fileInfo0 = handler0.fileInfo(srcPath0), fileInfo1 = handler1.fileInfo(srcPath1);
         if (!fileInfo0.getPVName().equals(fileInfo1.getPVName())) {
             logger.error("The two sources files are not for the same PV");
@@ -104,17 +103,6 @@ public class MergePBFile {
         }
 
         mergePBFile(srcPath0, srcPath1, destPath, handler0);
-    }
-
-    private static PlainFileHandler getHandler(Path path) {
-        String filename = path.getFileName().toString();
-        for (PlainStorageType type : PlainStorageType.values()) {
-            PlainFileHandler handler = type.plainFileHandler();
-            if (filename.endsWith(handler.getExtensionString())) {
-                return handler;
-            }
-        }
-        return new PBPlainFileHandler();
     }
 
     private static void printHelpMsg() {
