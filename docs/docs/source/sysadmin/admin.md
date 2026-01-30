@@ -190,3 +190,7 @@ Use a named flag based on the storage plugin's name.
     For example, if the name is LTS, the named flag
     SKIP_LTS_FOR_RETRIEVAL can used to temporarily turn off
     using the LTS for retrieval.
+
+
+Similarly, use a named flag `SKIP_LTS_FOR_ETL` to temporarily suspend
+ETL into the `LTS` data store.
