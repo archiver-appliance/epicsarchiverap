@@ -83,7 +83,7 @@ public class ChangeStore implements BPLAction {
 
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
         if (typeInfo == null) {
-            logger.debug("Unable to find typeinfo for PV...");
+            logger.debug("Unable to find typeinfo for PV " + pvName);
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
