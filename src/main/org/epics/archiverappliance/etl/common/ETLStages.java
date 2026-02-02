@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 /*
  * All the ETLStage's for a PV
@@ -132,7 +133,7 @@ public class ETLStages implements Runnable {
             if (f == null) {
                 throw new IOException("Completable future is null");
             }
-            f.get(); // Wait for the future to complete
+            f.get(24, TimeUnit.HOURS); // Wait for the future to complete
         } catch (Exception ex) {
             logger.error("Exception running ETL Job for PV " + this.pvName, ex);
         }

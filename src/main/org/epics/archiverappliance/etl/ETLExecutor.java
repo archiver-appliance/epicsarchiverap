@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Run ETLs for one PV; mostly for unit tests..
@@ -160,7 +161,7 @@ public class ETLExecutor {
                         PBThreeTierETLPVLookup.determineOutOfSpaceHandling(configService)));
 
                 Future<?> f = scheduleWorker.submit(etlStages::runAll);
-                f.get();
+                f.get(24, TimeUnit.HOURS);
             }
         } catch (Exception ex) {
             logger.error("Exception consolidating data for PV " + pvName, ex);
