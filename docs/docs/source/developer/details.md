@@ -209,7 +209,7 @@ resp = requests.get("http://archappl.slac.stanford.edu/mgmt/bpl/getAllPVs?pv=VPI
 print("\n".join(resp.json()))
 ```
 
-Click [here](api/mgmt_scriptables.html) for a list of
+Click [here](mgmt_scriptables.md) for a list of
 business logic accessible thru scripting.
 
 ## EPICS 7
