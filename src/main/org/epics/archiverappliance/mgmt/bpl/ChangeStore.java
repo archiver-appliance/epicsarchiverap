@@ -56,7 +56,6 @@ public class ChangeStore implements BPLAction {
             return;
         }
 
-        // String pvNameFromRequest = pvName;
         String realName = configService.getRealNameForAlias(pvName);
         if (realName != null) pvName = realName;
 
