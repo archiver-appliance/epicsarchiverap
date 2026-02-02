@@ -119,15 +119,6 @@ public class ChangeStore implements BPLAction {
             }
         }
 
-        if (!typeInfo.isPaused()) {
-            infoValues.put("validation", "Cannot consolidate unless PV " + pvName + " is paused.");
-            logger.error(infoValues.get("validation"));
-            try (PrintWriter out = resp.getWriter()) {
-                out.println(JSONValue.toJSONString(infoValues));
-            }
-            return;
-        }
-
         String etlConsolidateURL = info.getEtlURL() + "/consolidateDataForPV"
                 + "?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                 + "&storage=" + URLEncoder.encode(storage, StandardCharsets.UTF_8)
