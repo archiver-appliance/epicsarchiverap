@@ -61,11 +61,8 @@ public class PBAppendDataStateData extends AppendDataStateData {
      * <li>We generate clean partitions.</li>
      * </ol>
      *
-     * @param context             &emsp;
      * @param pvName              The PV name
      * @param stream              &emsp;
-     * @param extension           &emsp;
-     * @param extensionToCopyFrom &emsp;
      * @return eventsAppended  &emsp;
      * @throws IOException &emsp;
      */
