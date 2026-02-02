@@ -151,7 +151,7 @@ public class ProcessMgmtScriptables {
                 out.println(actionDetail.path);
                 out.println("</h1><div>");
                 out.println(actionDetail.actiondesc);
-                out.print("</div><br/>For more details, please see the <a href=\"");
+                out.print("</div><br/>For more details, please see the <a href=\"../_static/javadoc/");
                 out.print(actionDetail.bplclass.replace('.', '/'));
                 out.println(".html\">javadoc</a><div><dl>");
                 for (BPLParam param : actionDetail.paramDesc) {
