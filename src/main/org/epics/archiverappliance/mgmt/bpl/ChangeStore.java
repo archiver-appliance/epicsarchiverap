@@ -23,7 +23,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  *
- * @epics.BPLAction - Change the file type of the PV to the specified type. The PV needs to be paused first. For best results, consolidate all the data to one store. Note, this is actually changing the data so you should make a backup just in case. There is every chance that this may leave the data for this PV in an inconsistent state. It is also possible that the plugin may do nothing in which case you may have to rename the existing PV to a new PV; delete this PV and issue a fresh archival request.
+ * @epics.BPLAction - Change the file type of the PV to the specified type. The PV needs to be paused first. For best results, consolidate all the data to one store.
  * @epics.BPLActionParam pv - The name of the pv.
  * @epics.BPLActionParam newbackend - The new backend - A storage plugin url
  * @epics.BPLActionParam storage - The name of the store
