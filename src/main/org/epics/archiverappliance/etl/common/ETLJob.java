@@ -26,6 +26,7 @@ public class ETLJob implements Runnable {
     private final ETLStage etlStage;
     private final Instant runAsIfAtTime;
     private final ConfigService configService;
+    private final boolean allData;
 
     /**
      *
@@ -36,6 +37,18 @@ public class ETLJob implements Runnable {
         this.etlStage = etlStage;
         this.runAsIfAtTime = runAsIfAtTime;
         this.configService = configService;
+        this.allData = false;
+    }
+    /**
+     *
+     * @param etlStage    ETLStage
+     * @param runAsIfAtTime Instant
+     */
+    public ETLJob(ETLStage etlStage, Instant runAsIfAtTime, ConfigService configService, boolean allData) {
+        this.etlStage = etlStage;
+        this.runAsIfAtTime = runAsIfAtTime;
+        this.configService = configService;
+        this.allData = allData;
     }
 
     @Override
@@ -76,7 +89,7 @@ public class ETLJob implements Runnable {
             return;
         }
 
-        if (this.configService.getETLLookup().getIsRunningInsideUnitTests()) {
+        if (this.configService.getETLLookup().getIsRunningInsideUnitTests() || this.allData) {
             // Skip the check for times...
         } else {
             if (processingTime.isBefore(this.etlStage.getNextETLStart())) {
@@ -101,7 +114,7 @@ public class ETLJob implements Runnable {
                 logger.debug("Processing ETL for pv " + etlStage.getPvName() + " from "
                         + etlStage.getETLSource().getDescription()
                         + etlStage.getETLDest().getDescription() + " as if it is "
-                        + TimeUtils.convertToHumanReadableString(processingTime));
+                        + TimeUtils.convertToHumanReadableString(processingTime) + " using all data " + allData);
             }
 
             ETLSource curETLSource = etlStage.getETLSource();
@@ -116,7 +129,9 @@ public class ETLJob implements Runnable {
             long time1 = System.currentTimeMillis();
 
             long time4getETLStreams = 0;
-            List<ETLInfo> etlInfoList = curETLSource.getETLStreams(pvName, processingTime, etlContext);
+            List<ETLInfo> etlInfoList = !allData
+                    ? curETLSource.getETLStreams(pvName, processingTime, etlContext)
+                    : curETLSource.getAllStreams(pvName, etlContext);
             time4getETLStreams = time4getETLStreams + System.currentTimeMillis() - time1;
             if (etlInfoList != null && !etlInfoList.isEmpty()) {
                 List<ETLInfo> movedList = new LinkedList<>();
