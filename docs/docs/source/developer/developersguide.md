@@ -186,7 +186,7 @@ separate projects in the same repository.
    - Please do use Eclipse/Netbeans/Intelij to navigate the code.
      This makes life so much easier.
    - To get a quick sense of what a class/interface does, you can use
-     the [javadoc](api/index.html). Some attempts have been made to
+     the [javadoc](../_static/javadoc/index.html). Some attempts have been made to
      have some Javadoc in most classes and all interfaces
    - We use Tomcat purely as a servlet container; that is, a quick
      way of servicing HTTP requests using Java code.
