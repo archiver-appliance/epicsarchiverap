@@ -10,7 +10,6 @@ import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.StorageMetrics;
 
-import java.io.Console;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.Collections;
@@ -145,8 +144,8 @@ public class ETLStages implements Runnable {
                 }
             }
         }
-        
-        return CompletableFuture.runAsync(new Runnable(){
+
+        return CompletableFuture.runAsync(new Runnable() {
             @Override
             public void run() {
                 for (Runnable consolidateTask : consolidateTasks) {

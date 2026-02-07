@@ -261,7 +261,8 @@ public final class PBThreeTierETLPVLookup {
                     logger.error(message, t);
                 }
             }
-            CompletableFuture<Void> allCancelFutures = CompletableFuture.allOf(cancelFutures.toArray(new CompletableFuture[0]));
+            CompletableFuture<Void> allCancelFutures =
+                    CompletableFuture.allOf(cancelFutures.toArray(new CompletableFuture[0]));
             try {
                 allCancelFutures.get();
             } catch (Exception e) {
