@@ -140,7 +140,7 @@ public class ETLStages implements Runnable {
         }
     }
 
-    public void cancelJob() {
+    public CompletableFuture<Void> cancelJob() {
         List<Runnable> consolidateTasks = new LinkedList<Runnable>();
 
         for (ETLStage etlStage : this.etlStages) {
@@ -165,7 +165,7 @@ public class ETLStages implements Runnable {
             }
         }
         
-        CompletableFuture.runAsync(new Runnable(){
+        return CompletableFuture.runAsync(new Runnable(){
             @Override
             public void run() {
                 for (Runnable consolidateTask : consolidateTasks) {
