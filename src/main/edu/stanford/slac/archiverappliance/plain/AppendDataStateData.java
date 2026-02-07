@@ -98,7 +98,7 @@ public abstract class AppendDataStateData {
 
         Event firstEvent = bulkStream.getFirstEvent(context);
         if (this.shouldISkipEventBasedOnTimeStamps(firstEvent)) {
-            logger.error(
+            logger.debug(
                     "The bulk append functionality works only if we the first event fits cleanly in the current stream for pv "
                             + pvName + " for stream "
                             + bulkStream.getDescription().getSource());
