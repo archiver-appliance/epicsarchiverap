@@ -46,6 +46,7 @@ user/archiveviewer.md
 
 sysadmin/admin.md
 sysadmin/customization.md
+sysadmin/storage_plugins.md
 sysadmin/installguide.md
 sysadmin/quickstart.md
 sysadmin/redundancy.md
