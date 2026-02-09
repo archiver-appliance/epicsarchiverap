@@ -36,7 +36,7 @@ storage provider that provides block storage. The PlainStoragePlugin
 supports multiple backends for serialization:
 
 1.  [**Protocol Buffers (PB)**](../developer/pb_pbraw): The default backend, using the `pb:` scheme.
-2.  [**Apache Parquet**](../developer/parquet): A columnar storage backend, using the `parquet:` scheme. For more details on its benefits and configuration, see the [Parquet backend](../developer/parquet) page.
+2.  [**Apache Parquet**](../developer/parquet): A columnar storage backend, using the `parquet:` scheme.
 
 For existing PVs, you can modify storage parameters or switch backends using the [`/changeStore`](#changestore-bpl) Management BPL action. This allows for updating partition granularity, compression settings, or migrating between PB and Parquet without losing data.
 
@@ -71,54 +71,9 @@ serialization mechanisms.
 
 For more detailed information on implementation and tools for analyzing Parquet files, see the [Parquet backend](../developer/parquet) page.
 
-## Protocol Buffers (PB) Backend
-
-The Protocol Buffers (PB) backend is the default storage format for the EPICS Archiver Appliance. It is a row-based serialization format that prioritizes simplicity and write performance.
-
-### Characteristics
-
-- **Row-Based**: Data is stored one event per line, which is highly efficient for the sequential write patterns of an archiver.
-- **Monotonicity**: PB files rely on monotonically increasing timestamps to allow for efficient binary searches without external indexing.
-- **Partitioning**: Like Parquet, PB data is partitioned into well-defined time chunks (hourly, daily, or yearly).
-
-For more detailed information on the `.pb` file format, the binary protocol, and available tools, see the [PB and PBRAW](../developer/pb_pbraw) page.
-
-## Apache Parquet Backend
-
-The EPICS Archiver Appliance supports [Apache Parquet](https://parquet.apache.org/) as an alternative storage backend to the default Protocol Buffers (PB) format. Parquet is a columnar storage file format available to any project in the Hadoop ecosystem, regardless of the choice of data processing framework, data model, or programming language.
-
-### Benefits of Parquet
-
-Using Parquet as a backend offers several advantages:
-
-1.  **Efficiency**: Parquet's columnar format allows for better compression and encoding, often resulting in smaller file sizes compared to the row-based PB format.
-2.  **Predicate Pushdown**: Parquet supports predicate pushdown, allowing the archiver to skip reading irrelevant data based on time filters, which can significantly improve retrieval performance for large datasets.
-3.  **Interoperability**: Parquet files can be easily read by many data analysis tools and frameworks (e.g., Apache Spark, Pandas, Dask, DuckDB, Apache Arrow) without needing specialized archiver libraries.
-4.  **Schema Evolution**: While the archiver uses a fixed schema for EPICS events, Parquet's support for nested data types and schema evolution provides a robust foundation for future extensions.
-
-### Compression
-
-Parquet supports various compression codecs. The archiver appliance specifically supports:
-
-- **UNCOMPRESSED**: No compression.
-- **SNAPPY**: High speed, reasonable compression.
-- **GZIP**: High compression, lower speed.
-- **LZO**: High speed, reasonable compression.
-- **BROTLI**: High compression, lower speed.
-- **LZ4**: High speed, reasonable compression.
-- **ZSTD**: Excellent balance between compression ratio and speed.
-
-#### ZSTD Configuration
-
-When using ZSTD compression, several advanced configuration options are available via the storage plugin URL:
-
-- `zstdBufferPool` (boolean): Enables the use of a buffer pool for ZSTD compression/decompression. Defaults to `false`.
-- `zstdLevel` (integer): Sets the ZSTD compression level (typically 1-22). Defaults to `3`.
-- `zstdWorkers` (integer): Sets the number of worker threads for ZSTD. Defaults to `0` (single-threaded).
-
 ## Configuration
 
-To use the Parquet backend, use the `parquet:` scheme in your `dataStores` definition within `policies.py`.
+To use the Parquet backend, use the `parquet:` scheme in your `dataStores` definition within `policies.py`. For the protobuf backend, use the `pb:` scheme.
 
 Example:
 
@@ -130,16 +85,29 @@ Example:
 ]
 ```
 
+### Compression
+
+Parquet supports various compression codecs. The archiver appliance specifically supports:
+
+- **UNCOMPRESSED**: No compression.
+- **SNAPPY**: High speed, reasonable compression.
+- **ZSTD**: Excellent balance between compression ratio and speed.
+
+Protobuf supports zip per file compression:
+
+- **ZIP_PER_PV**: Compresses each PV's data into a single zip file.
+
+#### ZSTD Configuration
+
+When using ZSTD compression, several advanced configuration options are available via the storage plugin URL:
+
+- `zstdBufferPool` (boolean): Enables the use of a buffer pool for ZSTD compression/decompression. Defaults to `false`.
+- `zstdLevel` (integer): Sets the ZSTD compression level (typically 1-22). Defaults to `3`.
+- `zstdWorkers` (integer): Sets the number of worker threads for ZSTD. Defaults to `0` (single-threaded).
+
 ## Conversion
 
 The archiver appliance provides several ways to convert data between different backends or to update storage parameters for existing PVs.
-
-### Tools for Analysis and Repair
-
-Depending on the backend in use, several tools are available for inspecting, validating, and repairing data files:
-
-- **For PB files**: The `pbutils` suite (including `validate.sh` and `repair.sh`) is available for managing row-based PB data. See the [PB Tools](../developer/pb_pbraw#the-pb-file-format) section for details.
-- **For Parquet files**: Standard tools like `parquet-cli` and `parquet-tools` can be used for deep inspection of columnar data. See the [Parquet Tools](../developer/parquet#tools-for-analyzing-parquet-files) section for details.
 
 ### ConvertFile Utility
 
@@ -152,28 +120,9 @@ java -cp ... edu.stanford.slac.archiverappliance.plain.utils.ConvertFile /data/p
 
 ### ChangeStore BPL
 
-For a more automated approach, the `/changeStore` Management BPL action can be used to update the storage configuration for a single PV. This action allows you to:
+For a more automated approach, the `/changeStore` [Management BPL action](../developer/mgmt_scriptables.md) can be used to update the storage configuration for a single PV. This action allows you to:
 
-1.  **Change Backend**: Convert existing data from one backend to another (e.g., from `pb` to `parquet`).
-2.  **Update Parameters**: Change partition granularity (e.g., from `PARTITION_HOUR` to `PARTITION_DAY`) or any other storage plugin URL parameters (like compression settings).
-
-**Requirements and Usage**:
-
-- The PV **must be paused** before calling `/changeStore`.
-- The call will automatically trigger a consolidation process that moves and converts the data to the new format or configuration.
-
-**Parameters**:
-
-- `pv`: The name of the PV.
-- `storage`: The name of the storage stage to change (e.g., `STS`, `MTS`, or `LTS`).
-- `newbackend`: The new storage plugin URL (e.g., `parquet://localhost?name=STS&rootFolder=${ARCHAPPL_SHORT_TERM_FOLDER}&partitionGranularity=PARTITION_DAY&compress=ZSTD`).
-
-Example call:
-
-```bash
-curl "http://mgmt_host:17665/mgmt/bpl/changeStore?pv=MY:PV:NAME&storage=STS&newbackend=parquet%3A%2F%2Flocalhost%3Fname%3DSTS%26rootFolder%3D%24%7BARCHAPPL_SHORT_TERM_FOLDER%7D%26partitionGranularity%3DPARTITION_DAY%26compress%3DZSTD"
-```
-
-:::{warning}
-Changing the storage configuration is a sensitive operation. Ensure you have backups and that the PV is paused before proceeding.
-:::
+- **Change Backend**: Convert existing data from one backend to another (e.g., from `pb` to `parquet`).
+- **Update Partition Granularity**: Change partition granularity (e.g., from `PARTITION_HOUR` to `PARTITION_DAY`)
+- **Compression Parameters**: any other storage plugin URL parameters (like compression settings).
+- **etc**
