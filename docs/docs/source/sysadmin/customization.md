@@ -228,6 +228,12 @@ business processes in the archiver appliance understand these
 time-partitions and deal with them efficiently. Each chunk has a well
 defined [key](#key-mapping) and one can choose to store a chunk in any
 storage provider that provides block storage. The PlainStoragePlugin
+supports multiple backends for serialization:
+
+1.  **Protocol Buffers (PB)**: The default backend, using the `pb:` scheme.
+2.  **Apache Parquet**: A columnar storage backend, using the `parquet:` scheme. For more details on its benefits and configuration, see the [Parquet backend](../developer/parquet) page.
+
+The PlainStoragePlugin
 uses Java
 [NIO2](http://docs.oracle.com/javase/7/docs/api/java/nio/file/package-summary.html)
 as the storage API. Java NIO2 has a [documented
