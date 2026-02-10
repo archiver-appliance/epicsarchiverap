@@ -46,6 +46,7 @@ user/archiveviewer.md
 
 sysadmin/admin.md
 sysadmin/customization.md
+sysadmin/storage_plugins.md
 sysadmin/installguide.md
 sysadmin/quickstart.md
 sysadmin/redundancy.md
@@ -61,5 +62,6 @@ sysadmin/sqlite.md
 developer/details.md
 developer/developersguide.md
 developer/pb_pbraw.md
+developer/parquet.md
 Management Scriptables <developer/mgmt_scriptables.md>
 ```

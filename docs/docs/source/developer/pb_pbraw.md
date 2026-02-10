@@ -30,6 +30,10 @@ determine the number of events in a PB file. The \"sample per line\"
 constraint also lets us determine where a sample begins and ends at any
 arbitrary location in the file.
 
+## Configuration
+
+For details on how to configure the Protocol Buffers backend, including time partitioning and storage stage setup, please see the [Storage Plugins](../../sysadmin/storage_plugins#protocol-buffers-pb-backend) page in the Sysadmin guide.
+
 PB files try to optimize on storage consumption. On an average, an
 `EPICS DBR_DOUBLE/PB ScalarDouble` consumes about 21 bytes per sample.
 To save space, the record processing timestamps in the samples are split
