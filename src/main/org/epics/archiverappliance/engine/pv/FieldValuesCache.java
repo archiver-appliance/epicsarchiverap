@@ -376,7 +376,7 @@ public class FieldValuesCache {
     private static HashMap<String, String> v3NamedValues(final Map<String, String> fieldValues) {
         final HashMap<String, String> result = new HashMap<>();
         for (final Entry<String, String> e : fieldValues.entrySet()) {
-
+            if (e.getValue() == null) continue;
             final var v3Name = (FieldValuesCache.v4FieldNames2v3FieldNames).get(e.getKey());
             if (v3Name != null) {
                 result.put(v3Name, e.getValue());
