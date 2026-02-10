@@ -439,7 +439,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
                 saveAllMetaData(dbrTimeEvent);
                 fireValueUpdate(dbrTimeEvent);
             } catch (Exception e) {
-                logger.error("exception when reading pv", e);
+                logger.error("exception when reading pv " + this.name, e);
             }
             try {
                 if (pvaChannel.getState() != ClientChannelState.CONNECTED) {
