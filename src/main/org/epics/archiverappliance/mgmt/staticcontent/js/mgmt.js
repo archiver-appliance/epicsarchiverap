@@ -207,11 +207,19 @@ function archivePVsWithDetails() {
     if (!pvQuery) return;
     HTTPMethod = "POST";
     pvQuery = JSON.parse(pvQuery);
-    pvQuery.forEach(function(pv){
-      if(samplingPeriodParam != "") { pv["samplingperiod"] = samplingPeriod };
-      if(samplingMethodParam != "") { pv["samplingmethod"] = samplingMethod };
-      if(controllingPVParam != "") { pv["controllingPV"] = controllingPV };
-      if(policyParam != "") { pv["policy"] = policySelected.trim() };
+    pvQuery.forEach(function (pv) {
+      if (samplingPeriodParam != "") {
+        pv["samplingperiod"] = samplingPeriod;
+      }
+      if (samplingMethodParam != "") {
+        pv["samplingmethod"] = samplingMethod;
+      }
+      if (controllingPVParam != "") {
+        pv["controllingPV"] = controllingPV;
+      }
+      if (policyParam != "") {
+        pv["policy"] = policySelected.trim();
+      }
     });
     $.ajax({
       url: "../bpl/archivePV",
@@ -409,43 +417,49 @@ function getPVNames() {
     return;
   }
 
-  const url = "../bpl/getMatchingPVsForThisAppliance?regex=" + pvName + "&limit=-1";
+  const url =
+    "../bpl/getMatchingPVsForThisAppliance?regex=" + pvName + "&limit=-1";
   const tabledivname = "archstatsdiv";
-  createReportTable(url, tabledivname, [
-    {
-      srcAttr: "pvName",
-      label: "PV Name",
-      srcFunction: function (curdata) {
-        return curdata;
+  createReportTable(
+    url,
+    tabledivname,
+    [
+      {
+        srcAttr: "pvName",
+        label: "PV Name",
+        srcFunction: function (curdata) {
+          return curdata;
+        },
       },
-    },
-    {
-      srcAttr: "pvName",
-      sortType: "none",
-      label: "Details",
-      srcFunction: function (curdata) {
-        return (
-          '<a href="pvdetails.html?pv=' +
-          encodeURIComponent(curdata) +
-          '" ><img class="imgintable" src="comm/img/details.png"></a>'
-        );
+      {
+        srcAttr: "pvName",
+        sortType: "none",
+        label: "Details",
+        srcFunction: function (curdata) {
+          return (
+            '<a href="pvdetails.html?pv=' +
+            encodeURIComponent(curdata) +
+            '" ><img class="imgintable" src="comm/img/details.png"></a>'
+          );
+        },
       },
-    },
-    {
-      srcAttr: "pvName",
-      sortType: "none",
-      label: "Delete",
-      srcFunction: function (curdata) {
-        return (
-          '<a onclick="showDialogForDeletePausedPV(' +
-          "'" +
-          curdata +
-          "'" +
-          ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'
-        );
+      {
+        srcAttr: "pvName",
+        sortType: "none",
+        label: "Delete",
+        srcFunction: function (curdata) {
+          return (
+            '<a onclick="showDialogForDeletePausedPV(' +
+            "'" +
+            curdata +
+            "'" +
+            ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'
+          );
+        },
       },
-    },
-  ], null);
+    ],
+    null
+  );
   $("#archstatsdiv").show();
   $("#pvStopArchivingOk").click(deletePausedPV);
 }
