@@ -39,6 +39,25 @@ public class FieldValuesCacheTest {
     }
 
     @Test
+    void testNullValues() throws Exception {
+        var pvaStructure = new PVAStructure(
+                "pvaStructure", "struct_name", new PVAString("string0", "String0"), new PVAString("string1", null));
+        var fieldValuesCache = new FieldValuesCache(pvaStructure, false);
+        var expectedMap = new HashMap<>();
+
+        expectedMap.put("string0", "String0");
+        Assertions.assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
+
+        ((PVAString) pvaStructure.get("string0")).set(null);
+        var bitSet = new BitSet();
+        bitSet.set(1, true);
+        fieldValuesCache.updateFieldValues(pvaStructure, bitSet);
+        fieldValuesCache.getUpdatedFieldValues(false, new ArrayList<>());
+        expectedMap.remove("string0");
+        Assertions.assertEquals(expectedMap, fieldValuesCache.getCurrentFieldValues());
+    }
+
+    @Test
     public void testTimeStampSubStructure() throws Exception {
         var timeStamp = new PVATimeStamp(Instant.now());
         var pvaStructure = new PVAStructure(
