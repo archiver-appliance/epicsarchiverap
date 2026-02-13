@@ -207,11 +207,19 @@ function archivePVsWithDetails() {
     if (!pvQuery) return;
     HTTPMethod = "POST";
     pvQuery = JSON.parse(pvQuery);
-    pvQuery.forEach(function(pv){
-      if(samplingPeriodParam != "") { pv["samplingperiod"] = samplingPeriod };
-      if(samplingMethodParam != "") { pv["samplingmethod"] = samplingMethod };
-      if(controllingPVParam != "") { pv["controllingPV"] = controllingPV };
-      if(policyParam != "") { pv["policy"] = policySelected.trim() };
+    pvQuery.forEach(function (pv) {
+      if (samplingPeriodParam != "") {
+        pv["samplingperiod"] = samplingPeriod;
+      }
+      if (samplingMethodParam != "") {
+        pv["samplingmethod"] = samplingMethod;
+      }
+      if (controllingPVParam != "") {
+        pv["controllingPV"] = controllingPV;
+      }
+      if (policyParam != "") {
+        pv["policy"] = policySelected.trim();
+      }
     });
     $.ajax({
       url: "../bpl/archivePV",
@@ -388,65 +396,6 @@ function checkPVStatus() {
     },
   ]);
   $("#archstatsdiv").show();
-}
-
-//Get a report on the PV's that are currently paused
-function getPVNames() {
-  //http://172.21.225.187:17665/mgmt/bpl/getMatchingPVsForThisAppliance?regex=.*&limit=1000
-
-  var pvNames = $(archstatpVNames).val();
-  if (sessionStorage && pvNames != null) {
-    sessionStorage["archstatpVNames"] = $(archstatpVNames).val();
-  }
-
-  const pvQuery = getPVQueryParam();
-  if (!pvQuery) return;
-
-  let pvName;
-  if (pvQuery.length > 0) {
-    pvName = pvQuery[0].get("pv");
-  } else {
-    return;
-  }
-  const url = "../bpl/getMatchingPVsForThisAppliance?" + pvName + "&limit=-1";
-  const tabledivname = "archstatsdiv";
-  createReportTable([], url, tabledivname, [
-    {
-      srcAttr: "pvName",
-      label: "PV Name",
-      srcFunction: function (curdata) {
-        return curdata;
-      },
-    },
-    {
-      srcAttr: "pvName",
-      sortType: "none",
-      label: "Details",
-      srcFunction: function (curdata) {
-        return (
-          '<a href="pvdetails.html?pv=' +
-          encodeURIComponent(curdata) +
-          '" ><img class="imgintable" src="comm/img/details.png"></a>'
-        );
-      },
-    },
-    {
-      srcAttr: "pvName",
-      sortType: "none",
-      label: "Delete",
-      srcFunction: function (curdata) {
-        return (
-          '<a onclick="showDialogForDeletePausedPV(' +
-          "'" +
-          curdata +
-          "'" +
-          ')" ><img class="imgintable" src="comm/img/edit-delete.png"></a>'
-        );
-      },
-    },
-  ]);
-  $("#archstatsdiv").show();
-  $("#pvStopArchivingOk").click(deletePausedPV);
 }
 
 function getPVDetails() {
@@ -2009,20 +1958,8 @@ function deleteMultiplePVs() {
     type: HTTPMethod,
     dataType: "json",
     contentType: "application/json",
-    success: function (data, textStatus, jqXHR) {
-      if (
-        data.status != null &&
-        data.status != undefined &&
-        data.status == "ok"
-      ) {
-        getPVNames();
-      } else if (data.validation != null && data.validation != undefined) {
-        alert(data.validation);
-      } else {
-        alert(
-          "deleteMultiplePVs returned something valid but did not have a status field."
-        );
-      }
+    success: function () {
+      checkPVStatus();
     },
     error: function (jqXHR, textStatus, errorThrown) {
       alert(
