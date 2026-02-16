@@ -18,6 +18,7 @@ import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Objects;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -69,8 +70,9 @@ public class ChangeStore implements BPLAction {
         if (!info.getIdentity().equals(configService.getMyApplianceInfo().getIdentity())) {
             // We should proxy this call to the actual appliance hosting the PV.
             String redirectURL =
-                    info.getMgmtURL() + "/convertFiles?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
-                            + "&newbackend=" + URLEncoder.encode(newbackend, StandardCharsets.UTF_8);
+                    info.getMgmtURL() + "/changeStore?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
+                            + "&newbackend=" + URLEncoder.encode(newbackend, StandardCharsets.UTF_8)
+                            + "&storage=" + URLEncoder.encode(storage, StandardCharsets.UTF_8);
             logger.debug("Routing request to the appliance hosting the PV " + pvName + " using URL " + redirectURL);
             JSONObject status = GetUrlContent.getURLContentAsJSONObject(redirectURL);
             resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
@@ -97,6 +99,7 @@ public class ChangeStore implements BPLAction {
             try (PrintWriter out = resp.getWriter()) {
                 out.println(JSONValue.toJSONString(infoValues));
             }
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
         }
 
@@ -114,29 +117,50 @@ public class ChangeStore implements BPLAction {
             try (PrintWriter out = resp.getWriter()) {
                 infoValues.put("validation", "Cannot find storage with name " + storage + " for pv " + pvName);
                 out.println(JSONValue.toJSONString(infoValues));
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
                 return;
             }
         }
 
-        String etlConsolidateURL = info.getEtlURL() + "/consolidateDataForPV"
+        String etlChangeStoreUrl = info.getEtlURL() + "/changeStore"
                 + "?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
                 + "&storage=" + URLEncoder.encode(storage, StandardCharsets.UTF_8)
                 + "&newbackend=" + URLEncoder.encode(newbackend, StandardCharsets.UTF_8);
-        logger.info("Consolidating data for PV using URL " + etlConsolidateURL);
+        logger.info("Changing backends for data for PV using URL " + etlChangeStoreUrl);
 
-        // Update the type info in the database.
-        configService.updateTypeInfoForPV(pvName, typeInfo);
-
-        JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(etlConsolidateURL);
+        JSONObject pvStatus = GetUrlContent.getURLContentAsJSONObject(etlChangeStoreUrl);
         if (pvStatus != null && !pvStatus.equals("")) {
+            // Update the type info in the database.
+            updateTheTypeInfoDataStore(configService, typeInfo, storage, newbackend, pvName);
+
             try (PrintWriter out = resp.getWriter()) {
                 out.println(JSONValue.toJSONString(pvStatus));
             }
         } else {
             try (PrintWriter out = resp.getWriter()) {
-                infoValues.put("validation", "Unable to consolidate data for PV " + pvName);
+                infoValues.put("validation", "Unable to change backends for data for PV " + pvName);
                 out.println(JSONValue.toJSONString(infoValues));
+                resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             }
         }
+    }
+
+    private static void updateTheTypeInfoDataStore(
+            ConfigService configService, final PVTypeInfo typeInfo, String storage, String newbackend, String pvName)
+            throws IOException {
+        String[] newStores = new String[typeInfo.getDataStores().length];
+        for (int i = 0; i < typeInfo.getDataStores().length; i++) {
+            if (Objects.requireNonNull(
+                            StoragePluginURLParser.parseStoragePlugin(typeInfo.getDataStores()[i], configService))
+                    .getName()
+                    .equals(storage)) {
+                newStores[i] = newbackend;
+            } else {
+                newStores[i] = typeInfo.getDataStores()[i];
+            }
+        }
+        typeInfo.setDataStores(newStores);
+        configService.updateTypeInfoForPV(pvName, typeInfo);
+        logger.info("Updating the typeinfo for " + pvName + " with storage plugins " + typeInfo.getDataStores());
     }
 }

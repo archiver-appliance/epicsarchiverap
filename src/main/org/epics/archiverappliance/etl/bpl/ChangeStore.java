@@ -23,7 +23,7 @@ public class ChangeStore implements BPLAction {
             throws IOException {
         String pvName = req.getParameter("pv");
         String storageName = req.getParameter("storage");
-        String newPlugin = req.getParameter("newPlugin");
+        String newPlugin = req.getParameter("newbackend");
         if (StringUtils.isEmpty(pvName) || StringUtils.isEmpty(storageName) || StringUtils.isEmpty(newPlugin)) {
             resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
             return;
@@ -35,7 +35,7 @@ public class ChangeStore implements BPLAction {
             HashMap<String, Object> infoValues = new HashMap<String, Object>();
             try (PrintWriter out = resp.getWriter()) {
                 infoValues.put("status", "ok");
-                infoValues.put("desc", "Successfully consolidated PV " + pvName + " into " + storageName);
+                infoValues.put("desc", "Successfully changed the storage for PV " + pvName + " into " + storageName);
                 out.println(JSONValue.toJSONString(infoValues));
             }
         } catch (IOException e) {
