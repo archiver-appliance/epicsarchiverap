@@ -7,10 +7,10 @@ plugins {
 	`java-library`
 	war
 	eclipse
-	id("ca.cutterslade.analyze") version "1.9.2" // Analyzes dependencies for usage
-	id("com.palantir.git-version") version "3.0.0"
-	id("com.diffplug.spotless") version "8.1.0"
-	id("com.google.protobuf") version "0.9.5"
+	alias(libs.plugins.analyze) // Analyzes dependencies for usage
+	alias(libs.plugins.git.version)
+	alias(libs.plugins.spotless)
+	alias(libs.plugins.protobuf)
 }
 
 // =================================================================
@@ -110,73 +110,73 @@ dependencies {
 	implementation(files("lib/jamtio_071005.jar", "lib/redisnio_0.0.1.jar"))
 
 	// GitHub dependency via Ivy
-	viewer("archiver-appliance:svg_viewer:v1.2.1@zip")
+	viewer("archiver-appliance:svg_viewer:${libs.versions.svg.viewer.get()}@zip")
 
 	// Provided by Servlet Container (e.g., Tomcat)
-	implementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
+	implementation(libs.tomcat.servlet.api)
 
 	// Core Libraries
-	implementation("org.epics:jca:2.4.7")
-	implementation("com.google.guava:guava:33.5.0-jre")
-	implementation("com.hazelcast:hazelcast:5.5.0")
-	implementation("redis.clients:jedis:7.0.0")
-	implementation("org.python:jython-standalone:2.7.3")
-	implementation("com.google.protobuf:protobuf-java:${findProperty("protobufJavaVersion")}")
-	implementation("org.phoebus:core-pva:5.0.2")
-	implementation("jakarta.validation:jakarta.validation-api:3.1.1")
+	implementation(libs.jca)
+	implementation(libs.guava)
+	implementation(libs.hazelcast)
+	implementation(libs.jedis)
+	implementation(libs.jython)
+	implementation(libs.protobuf.java)
+	implementation(libs.core.pva)
+	implementation(libs.jakarta.validation)
 
 	// Apache Commons
-	implementation("commons-codec:commons-codec:1.15")
-	implementation("org.apache.commons:commons-fileupload2-jakarta-servlet6:2.0.0-M3")
-	implementation("org.apache.commons:commons-fileupload2-core:2.0.0-M3")
-	implementation("commons-io:commons-io:2.14.0")
-	implementation("org.apache.commons:commons-lang3:3.18.0")
-	implementation("org.apache.commons:commons-math3:3.6.1")
-	implementation("commons-validator:commons-validator:1.7")
+	implementation(libs.commons.codec)
+	implementation(libs.commons.fileupload2.jakarta)
+	implementation(libs.commons.fileupload2.core)
+	implementation(libs.commons.io)
+	implementation(libs.commons.lang3)
+	implementation(libs.commons.math3)
+	implementation(libs.commons.validator)
 
 
 	// HTTP Clients
-	implementation("org.apache.httpcomponents:httpclient:4.5.14")
-	implementation("org.apache.httpcomponents:httpcore:4.4.16")
+	implementation(libs.httpclient)
+	implementation(libs.httpcore)
 
 	// Data Formats & DB
-	implementation("jdbm:jdbm:2.4") // clojar dependency
-	implementation("com.googlecode.json-simple:json-simple:1.1.1")
-	implementation("org.json:json:20250517")
-	implementation("com.opencsv:opencsv:5.7.1")
-	runtimeOnly("org.mariadb.jdbc:mariadb-java-client:3.3.3")
+	implementation(libs.jdbm) // clojar dependency
+	implementation(libs.json.simple)
+	implementation(libs.json)
+	implementation(libs.opencsv)
+	runtimeOnly(libs.mariadb)
 
 	// Logging
-	runtimeOnly("org.apache.logging.log4j:log4j-1.2-api:${findProperty("log4jVersion")}") // TODO remove log4j 1 from dependencies
-	implementation("org.apache.logging.log4j:log4j-api:${findProperty("log4jVersion")}")
-	implementation("org.apache.logging.log4j:log4j-slf4j2-impl:${findProperty("log4jVersion")}")
-	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-slf4j2-impl:${findProperty("log4jVersion")}")
-	implementation("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
-	"permitUnusedDeclared"("org.apache.logging.log4j:log4j-jul:${findProperty("log4jVersion")}")
-	runtimeOnly("org.apache.logging.log4j:log4j-core:${findProperty("log4jVersion")}")
-	runtimeOnly("com.lmax:disruptor:3.4.4") // Needed for async logging
+	runtimeOnly(libs.log4j.one.two.api) // TODO remove log4j 1 from dependencies
+	implementation(libs.log4j.api)
+	implementation(libs.log4j.slf4j2)
+	"permitUnusedDeclared"(libs.log4j.slf4j2)
+	implementation(libs.log4j.jul)
+	"permitUnusedDeclared"(libs.log4j.jul)
+	runtimeOnly(libs.log4j.core)
+	runtimeOnly(libs.disruptor) // Needed for async logging
 
 	// Parquet support
-	implementation("org.apache.parquet:parquet-protobuf:1.17.0")
-	implementation("org.apache.parquet:parquet-column:1.17.0")
-	implementation("org.apache.parquet:parquet-common:1.17.0")
-	implementation("org.apache.parquet:parquet-hadoop:1.17.0")
-	implementation("org.apache.hadoop:hadoop-common:3.3.6")
-	runtimeOnly("org.apache.hadoop:hadoop-client-api:3.3.6")
+	implementation(libs.parquet.protobuf)
+	implementation(libs.parquet.column)
+	implementation(libs.parquet.common)
+	implementation(libs.parquet.hadoop)
+	implementation(libs.hadoop.common)
+	runtimeOnly(libs.hadoop.client)
 
 	// Testing
-	testImplementation("org.junit.jupiter:junit-jupiter-api:${findProperty("junitJupiterVersion")}")
-	testImplementation("org.junit.jupiter:junit-jupiter-params:${findProperty("junitJupiterVersion")}")
-	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${findProperty("junitJupiterVersion")}")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher:${findProperty("junitPlatformVersion")}")
-	testImplementation("org.awaitility:awaitility:4.2.0")
-	testImplementation("org.apache.commons:commons-compress:1.26.0")
-	testImplementation("commons-cli:commons-cli:1.5.0")
-	testImplementation("com.hubspot.jinjava:jinjava:2.8.1")
+	testImplementation(libs.junit.jupiter.api)
+	testImplementation(libs.junit.jupiter.params)
+	testRuntimeOnly(libs.junit.jupiter.engine)
+	testRuntimeOnly(libs.junit.platform.launcher)
+	testImplementation(libs.awaitility)
+	testImplementation(libs.commons.compress)
+	testImplementation(libs.commons.cli)
+	testImplementation(libs.jinjava)
 	testImplementation(files("lib/test/BPLTaglets.jar"))
 	testImplementation(":pbrawclient:0.2.2")
-	testImplementation("org.apache.tomcat:tomcat-servlet-api:${findProperty("tomcatVersion")}")
-	testImplementation("org.mockito:mockito-core:5.21.0")
+	testImplementation(libs.tomcat.servlet.api)
+	testImplementation(libs.mockito)
 }
 
 // =================================================================
@@ -345,7 +345,7 @@ protobuf {
 	// Configure the protoc executable
 	protoc {
 		// Download from repositories
-		artifact = "com.google.protobuf:protoc:${findProperty("protobufJavaVersion")}"
+		artifact = "com.google.protobuf:protoc:${libs.versions.protobufJava.get()}"
 	}
 }
 
