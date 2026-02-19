@@ -534,6 +534,9 @@ tasks.register<Tar>("buildRelease") {
 // =================================================================
 
 tasks.withType<Test>().configureEach {
+	testClassesDirs = sourceSets.test.get().output.classesDirs
+	classpath = sourceSets.test.get().runtimeClasspath
+
 	maxParallelForks = if (runTestsSequentially) {
 		1
 	} else {
