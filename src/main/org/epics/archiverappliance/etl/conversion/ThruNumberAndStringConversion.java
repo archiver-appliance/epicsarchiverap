@@ -9,7 +9,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.etl.ConversionException;
 import org.epics.archiverappliance.etl.ConversionFunction;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
 
 import java.io.IOException;

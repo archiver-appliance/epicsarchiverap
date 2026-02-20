@@ -23,7 +23,7 @@ import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaActionException;
 import org.epics.archiverappliance.retrieval.DataSourceResolution;
 import org.epics.archiverappliance.retrieval.MismatchedDBRTypeException;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.RetrievalResult;
 import org.epics.archiverappliance.retrieval.UnitOfRetrieval;
 import org.epics.archiverappliance.retrieval.postprocessors.AfterAllStreams;

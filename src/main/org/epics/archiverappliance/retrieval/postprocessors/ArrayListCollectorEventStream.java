@@ -8,9 +8,9 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.engine.membuf.ArrayListEventStream;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.RemotableOverRaw;
+import org.epics.archiverappliance.common.remotable.ArrayListEventStream;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableOverRaw;
 
 /**
  * An event stream that wraps an ArrayList event stream; use this if the data in your consolidated results do not fit a clean binning pattern and you need to return results that span multiple years.

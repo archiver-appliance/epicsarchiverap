@@ -12,7 +12,7 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.json.simple.JSONValue;
 
 import java.io.OutputStream;

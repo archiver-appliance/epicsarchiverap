@@ -5,14 +5,12 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package org.epics.archiverappliance.engine.membuf;
+package org.epics.archiverappliance.common.remotable;
 
 import java.util.ArrayList;
 
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
 /**
  * Implements an event stream on top of an arraylist

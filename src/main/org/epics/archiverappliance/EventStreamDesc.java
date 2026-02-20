@@ -8,7 +8,7 @@
 package org.epics.archiverappliance;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.retrieval.RemotableOverRaw;
+import org.epics.archiverappliance.common.remotable.RemotableOverRaw;
 
 /**
  * An event stream should also support this additional information about the stream.
