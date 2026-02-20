@@ -3,7 +3,7 @@ package org.epics.archiverappliance.config;
 import java.lang.reflect.Constructor;
 
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 
 /**
  * Interface for translating from JCA to Event (actually DBRTimeEvents).

@@ -23,7 +23,7 @@ import org.epics.archiverappliance.data.FieldValues;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
-import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 
 import java.io.IOException;
 import java.nio.file.Files;

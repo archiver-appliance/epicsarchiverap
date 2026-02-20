@@ -17,6 +17,7 @@ import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.common.remotable.RemotableOverRaw;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 
 import java.io.IOException;

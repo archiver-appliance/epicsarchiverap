@@ -9,7 +9,7 @@ import org.epics.archiverappliance.common.remotable.ArrayListEventStream;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.engine.model.SampleBuffer;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
-import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
