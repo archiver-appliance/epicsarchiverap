@@ -12,9 +12,9 @@ import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.Writer;
 import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.common.remotable.ArrayListEventStream;
 import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
+import org.epics.archiverappliance.config.ArchDBRTypes;
 
 import java.io.IOException;
 

@@ -1,16 +1,16 @@
 package org.epics.archiverappliance.retrieval;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Callable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.common.remotable.ArrayListEventStream;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Encapsulates an event stream into a callable.
@@ -18,52 +18,54 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
  *
  */
 public class CallableEventStream implements Callable<EventStream> {
-	private static Logger logger = LogManager.getLogger(CallableEventStream.class.getName());
-	private EventStream theStream = null;
-	
-	public CallableEventStream(EventStream st) {
-		this.theStream = st;
-	}
+    private static Logger logger = LogManager.getLogger(CallableEventStream.class.getName());
+    private EventStream theStream = null;
 
-	@Override
-	public EventStream call() throws Exception {
-		return theStream;
-	}
+    public CallableEventStream(EventStream st) {
+        this.theStream = st;
+    }
 
-	public static List<Callable<EventStream>> makeOneStreamCallableList(EventStream st) {
-		List<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
-		ret.add(new CallableEventStream(st));
-		return ret;
-	}
-	
-	public static List<Callable<EventStream>> makeOneStreamCallableList(EventStream st, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
-		List<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
-		if(wrapWithPostProcessor && postProcessor != null) {
-			ret.add(postProcessor.wrap(new CallableEventStream(st)));
-		} else { 
-			ret.add(new CallableEventStream(st));
-		}
-		return ret;
-	}
-	
-	public static Callable<EventStream> makeOneStreamCallable(EventStream st, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
-		if(wrapWithPostProcessor) {
-			return postProcessor.wrap(new CallableEventStream(st));
-		} else { 
-			logger.debug("Skipping wrapping for " + st.getDescription().getSource());
-			return new CallableEventStream(st);
-		}
-	}
+    @Override
+    public EventStream call() throws Exception {
+        return theStream;
+    }
 
-	public static Callable<EventStream> makeOneEventCallable(Event ev, RemotableEventStreamDesc desc, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
-		ArrayListEventStream strm = new ArrayListEventStream(1, desc);
-		strm.add(ev);
-		if(wrapWithPostProcessor) {
-			return postProcessor.wrap(new CallableEventStream(strm));
-		} else { 
-			logger.debug("Skipping wrapping for " + strm.getDescription().getSource());
-			return new CallableEventStream(strm);
-		}
-	}
+    public static List<Callable<EventStream>> makeOneStreamCallableList(EventStream st) {
+        List<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
+        ret.add(new CallableEventStream(st));
+        return ret;
+    }
 
+    public static List<Callable<EventStream>> makeOneStreamCallableList(
+            EventStream st, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
+        List<Callable<EventStream>> ret = new ArrayList<Callable<EventStream>>();
+        if (wrapWithPostProcessor && postProcessor != null) {
+            ret.add(postProcessor.wrap(new CallableEventStream(st)));
+        } else {
+            ret.add(new CallableEventStream(st));
+        }
+        return ret;
+    }
+
+    public static Callable<EventStream> makeOneStreamCallable(
+            EventStream st, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
+        if (wrapWithPostProcessor) {
+            return postProcessor.wrap(new CallableEventStream(st));
+        } else {
+            logger.debug("Skipping wrapping for " + st.getDescription().getSource());
+            return new CallableEventStream(st);
+        }
+    }
+
+    public static Callable<EventStream> makeOneEventCallable(
+            Event ev, RemotableEventStreamDesc desc, PostProcessor postProcessor, boolean wrapWithPostProcessor) {
+        ArrayListEventStream strm = new ArrayListEventStream(1, desc);
+        strm.add(ev);
+        if (wrapWithPostProcessor) {
+            return postProcessor.wrap(new CallableEventStream(strm));
+        } else {
+            logger.debug("Skipping wrapping for " + strm.getDescription().getSource());
+            return new CallableEventStream(strm);
+        }
+    }
 }

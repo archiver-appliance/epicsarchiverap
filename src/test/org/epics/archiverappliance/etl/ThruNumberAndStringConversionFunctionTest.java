@@ -6,6 +6,8 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.remotable.ArrayListEventStream;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
@@ -13,9 +15,7 @@ import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorStringSampleValue;
 import org.epics.archiverappliance.data.VectorValue;
-import org.epics.archiverappliance.common.remotable.ArrayListEventStream;
 import org.epics.archiverappliance.etl.conversion.ThruNumberAndStringConversion;
-import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationValueGenerator;
 import org.junit.jupiter.api.Assertions;
@@ -159,20 +159,21 @@ public class ThruNumberAndStringConversionFunctionTest {
                 case DBR_SCALAR_ENUM, DBR_SCALAR_SHORT -> new ScalarValue<Short>((short) secondsIntoYear);
                 case DBR_SCALAR_FLOAT -> new ScalarValue<Float>((float) secondsIntoYear);
                 case DBR_SCALAR_INT -> new ScalarValue<Integer>((int) secondsIntoYear);
-                case DBR_SCALAR_STRING, DBR_V4_GENERIC_BYTES -> new ScalarStringSampleValue(
-                        Integer.toString(secondsIntoYear));
-                case DBR_WAVEFORM_BYTE -> new VectorValue<Byte>(
-                        Collections.nCopies(10 * secondsIntoYear, ((byte) (secondsIntoYear % 255))));
-                case DBR_WAVEFORM_DOUBLE -> new VectorValue<Double>(
-                        Collections.nCopies(10 * secondsIntoYear, ((double) secondsIntoYear)));
-                case DBR_WAVEFORM_ENUM, DBR_WAVEFORM_SHORT -> new VectorValue<Short>(
-                        Collections.nCopies(10 * secondsIntoYear, ((short) secondsIntoYear)));
-                case DBR_WAVEFORM_FLOAT -> new VectorValue<Float>(
-                        Collections.nCopies(10 * secondsIntoYear, ((float) secondsIntoYear)));
-                case DBR_WAVEFORM_INT -> new VectorValue<Integer>(
-                        Collections.nCopies(10 * secondsIntoYear, ((int) secondsIntoYear)));
-                case DBR_WAVEFORM_STRING -> new VectorStringSampleValue(
-                        Collections.nCopies(10 * secondsIntoYear, Integer.toString(secondsIntoYear)));
+                case DBR_SCALAR_STRING, DBR_V4_GENERIC_BYTES ->
+                    new ScalarStringSampleValue(Integer.toString(secondsIntoYear));
+                case DBR_WAVEFORM_BYTE ->
+                    new VectorValue<Byte>(Collections.nCopies(10 * secondsIntoYear, ((byte) (secondsIntoYear % 255))));
+                case DBR_WAVEFORM_DOUBLE ->
+                    new VectorValue<Double>(Collections.nCopies(10 * secondsIntoYear, ((double) secondsIntoYear)));
+                case DBR_WAVEFORM_ENUM, DBR_WAVEFORM_SHORT ->
+                    new VectorValue<Short>(Collections.nCopies(10 * secondsIntoYear, ((short) secondsIntoYear)));
+                case DBR_WAVEFORM_FLOAT ->
+                    new VectorValue<Float>(Collections.nCopies(10 * secondsIntoYear, ((float) secondsIntoYear)));
+                case DBR_WAVEFORM_INT ->
+                    new VectorValue<Integer>(Collections.nCopies(10 * secondsIntoYear, ((int) secondsIntoYear)));
+                case DBR_WAVEFORM_STRING ->
+                    new VectorStringSampleValue(
+                            Collections.nCopies(10 * secondsIntoYear, Integer.toString(secondsIntoYear)));
             };
         }
     }
