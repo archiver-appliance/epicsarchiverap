@@ -7,10 +7,10 @@ import org.epics.archiverappliance.EventStreamDesc;
 import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.etl.ConversionException;
 import org.epics.archiverappliance.etl.ConversionFunction;
-import org.epics.archiverappliance.data.HashMapEvent;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
