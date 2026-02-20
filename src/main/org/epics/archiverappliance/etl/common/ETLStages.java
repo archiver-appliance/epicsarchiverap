@@ -139,7 +139,9 @@ public class ETLStages implements Runnable {
         }
     }
 
-    public void cancelJob() {
+    public CompletableFuture<Void> cancelJob() {
+        List<Runnable> consolidateTasks = new LinkedList<Runnable>();
+
         for (ETLStage etlStage : this.etlStages) {
             ScheduledFuture<?> cancellingFuture = etlStage.getCancellingFuture();
             if (cancellingFuture != null) {
@@ -155,14 +157,25 @@ public class ETLStages implements Runnable {
                                 + 365L * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),
                         0);
                 try {
-                    CompletableFuture<Void> f = CompletableFuture.runAsync(
-                            new ETLJob(etlStage, oneYearLaterTimeStamp, configService), this.theWorker);
-                    f.get();
+                    consolidateTasks.add(new ETLJob(etlStage, oneYearLaterTimeStamp, configService));
                 } catch (Exception ex) {
-                    logger.error("Exception running ETL Job for PV " + this.pvName, ex);
+                    logger.error("Exception running ETL Job for PV " + pvName, ex);
                 }
             }
         }
+
+        return CompletableFuture.runAsync(new Runnable() {
+            @Override
+            public void run() {
+                for (Runnable consolidateTask : consolidateTasks) {
+                    try {
+                        consolidateTask.run();
+                    } catch (Exception ex) {
+                        logger.error("Exception running ETL Job for PV " + pvName, ex);
+                    }
+                }
+            }
+        });
     }
 
     public Event getLatestEventFromDataStores() throws IOException {

@@ -22,7 +22,10 @@ import org.epics.archiverappliance.etl.StorageMetrics;
 
 import java.io.IOException;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -197,14 +200,16 @@ public final class PBThreeTierETLPVLookup {
      * Cancel the ETL jobs for each of the ETL lifetime transitions and also remove from internal structures.
      * @param pvName The name of PV.
      */
-    public void deleteETLJobs(String pvName) {
+    public CompletableFuture<Void> deleteETLJobs(String pvName) {
         if (etlStagesForPVs.containsKey(pvName)) {
             logger.debug(
                     "deleting etl jobs for  pv " + pvName + " from the locally cached copy of pvs for this appliance");
-            etlStagesForPVs.get(pvName).cancelJob();
+            CompletableFuture<Void> cancelFuture = etlStagesForPVs.get(pvName).cancelJob();
             etlStagesForPVs.remove(pvName);
+            return cancelFuture;
         } else {
             logger.debug("Not deleting ETL jobs for PV missing from pvsForWhomWeHaveAddedETLJobs " + pvName);
+            return CompletableFuture.completedFuture(null);
         }
     }
 
@@ -246,13 +251,22 @@ public final class PBThreeTierETLPVLookup {
             } catch (Throwable t) {
                 logger.error(message, t);
             }
+            List<CompletableFuture<Void>> cancelFutures = new LinkedList<>();
             LinkedHashSet<String> pvNames = new LinkedHashSet<String>(theLookup.etlStagesForPVs.keySet());
             for (String pvName : pvNames) {
                 try {
-                    theLookup.deleteETLJobs(pvName);
+                    CompletableFuture<Void> cancelFuture = theLookup.deleteETLJobs(pvName);
+                    cancelFutures.add(cancelFuture);
                 } catch (Throwable t) {
                     logger.error(message, t);
                 }
+            }
+            CompletableFuture<Void> allCancelFutures =
+                    CompletableFuture.allOf(cancelFutures.toArray(new CompletableFuture[0]));
+            try {
+                allCancelFutures.get();
+            } catch (Exception e) {
+                logger.error(message, e);
             }
             try {
                 theLookup.theWorker.shutdown();
