@@ -44,6 +44,7 @@ import org.epics.archiverappliance.retrieval.postprocessors.PostProcessor;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessorWithConsolidatedEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.PostProcessors;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.epics.archiverappliance.utils.nio.PVPath;
 import org.epics.archiverappliance.utils.ui.URIUtils;
 
 import java.io.IOException;
@@ -703,14 +704,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         logger.debug("Setting root folder to " + rootFolder);
         try (ArchPaths paths = new ArchPaths()) {
             String rootFolderPath = plainFileHandler.rootFolderPath(this.rootFolder);
-            Path path = paths.get(rootFolderPath);
-            if (!Files.exists(path)) {
-                logger.warn(desc + ": The root folder specified does not exist - " + rootFolder + ". Creating it");
-                Files.createDirectories(path);
-                return;
-            }
-
-            if (!Files.isDirectory(path)) {
+            PVPath pvPath = PVPath.fromRootFolder(rootFolderPath);
+            Path parentPath = paths.get(pvPath, true);
+            if (!Files.isDirectory(parentPath)) {
                 logger.error(desc + ": The root folder specified is not a directory - " + rootFolder);
                 return;
             }
@@ -813,11 +809,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
                 FileInfo fileinfo = fileInfo(path);
                 // To make sure deletion later knows the files are in the zip file system
-                String pathKey = this.plainFileHandler.getPathKey(path);
                 ETLInfo etlInfo = new ETLInfo(
                         pvName,
                         fileinfo.getType(),
-                        pathKey,
+                        path,
                         partitionGranularity,
                         new PlainETLStreamCreator(pvName, path, fileinfo, plainFileHandler),
                         fileinfo.getFirstEvent(),
@@ -910,11 +905,10 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
                 FileInfo fileinfo = plainFileHandler.fileInfo(path);
                 // To make sure deletion later knows the files are in the zip file system
-                String pathKey = this.plainFileHandler.getPathKey(path);
                 ETLInfo etlInfo = new ETLInfo(
                         pvName,
                         fileinfo.getType(),
-                        pathKey,
+                        path,
                         partitionGranularity,
                         new PlainETLStreamCreator(pvName, path, fileinfo, plainFileHandler),
                         fileinfo.getFirstEvent(),
@@ -934,7 +928,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
     @Override
     public void markForDeletion(ETLInfo info, ETLContext context) {
         try {
-            Path path = context.getPaths().get(info.getKey());
+            Path path = info.getKey();
             this.plainFileHandler.markForDeletion(path);
             long size = Files.size(path);
             long sizeFromInfo = info.getSize();
@@ -1051,10 +1045,9 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 logger.debug(desc + " Found " + appendDataPaths.length + " matching files for pv " + pvName);
 
             for (Path srcPath : appendDataPaths) {
-                Path destPath = context.getPaths()
-                        .get(srcPath.toUri()
-                                .toString()
-                                .replace(appendExtension, plainFileHandler.getExtensionString()));
+                Path destPath = srcPath.resolveSibling(srcPath.getName(srcPath.getNameCount() - 1)
+                        .toString()
+                        .replace(appendExtension, plainFileHandler.getExtensionString()));
                 Files.move(srcPath, destPath, REPLACE_EXISTING, ATOMIC_MOVE);
             }
         }
@@ -1204,10 +1197,12 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
         LinkedList<PPMissingPaths> ret = new LinkedList<PPMissingPaths>();
         for (Path rawPath : rawPaths) {
-            String expectedPPPath = rawPath.toUri().toString().replace(plainFileHandler.getExtensionString(), ppExt);
+            Path expectedPPPath = rawPath.resolveSibling(rawPath.getName(rawPath.getNameCount() - 1)
+                    .toString()
+                    .replace(plainFileHandler.getExtensionString(), ppExt));
             if (!ppPathsMap.containsKey(expectedPPPath)) {
                 if (logger.isDebugEnabled()) logger.debug("Missing pp path " + expectedPPPath);
-                ret.add(new PPMissingPaths(rawPath, context.getPaths().get(expectedPPPath)));
+                ret.add(new PPMissingPaths(rawPath, expectedPPPath));
             } else {
                 if (logger.isDebugEnabled()) logger.debug("pp path " + expectedPPPath + " already present");
                 Path actualPPPath = ppPathsMap.get(expectedPPPath);
@@ -1217,7 +1212,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                     logger.debug("Modification time of src " + rawPathTime + " and of pp file " + ppPathTime);
                 if (rawPathTime.compareTo(ppPathTime) > 0) {
                     logger.debug("Raw file is newer than PP file for " + expectedPPPath);
-                    ret.add(new PPMissingPaths(rawPath, context.getPaths().get(expectedPPPath)));
+                    ret.add(new PPMissingPaths(rawPath, expectedPPPath));
                 }
             }
         }

@@ -1,14 +1,13 @@
 package edu.stanford.slac.archiverappliance.plain;
 
 import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.epics.archiverappliance.utils.nio.PVPath;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
 public interface PathResolver {
-    PathResolver BASE_PATH_RESOLVER = (paths, createParentFolder, rootFolder, pvComponent, pvKey) ->
-            paths.get(createParentFolder, rootFolder, pvComponent);
+    PathResolver BASE_PATH_RESOLVER = (paths, createParentFolder, pvPath) -> paths.get(pvPath, createParentFolder);
 
-    Path get(ArchPaths paths, boolean createParentFolder, String rootFolder, String pvPathComponent, String pvKey)
-            throws IOException;
+    Path get(ArchPaths paths, boolean createParentFolder, PVPath pvPath) throws IOException;
 }

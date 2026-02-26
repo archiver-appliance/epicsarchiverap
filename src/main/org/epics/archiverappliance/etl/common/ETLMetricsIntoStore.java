@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.epics.archiverappliance.utils.nio.PVPath;
 
 import java.io.IOException;
 import java.nio.file.FileStore;
@@ -58,7 +59,7 @@ public class ETLMetricsIntoStore implements StorageMetricsContext {
                 .build(new CacheLoader<String, FileStoreSpace>() {
                     public FileStoreSpace load(@NotNull String rootFolder) throws IOException {
                         try (ArchPaths paths = new ArchPaths()) {
-                            Path rootF = paths.get(rootFolder);
+                            Path rootF = paths.get(PVPath.fromRootFolder(rootFolder));
                             logger.info("Loading available space from file store for root folder {}", rootFolder);
                             FileStore fileStore = Files.getFileStore(rootF);
                             return new FileStoreSpace(fileStore.getUsableSpace(), fileStore.getTotalSpace());
@@ -196,7 +197,8 @@ public class ETLMetricsIntoStore implements StorageMetricsContext {
     @Override
     public long getUsableSpaceFromCache(String rootFolder) throws IOException {
         try {
-            FileStoreSpace space = this.fileStoreCache.get(rootFolder);
+            PVPath pvPath = PVPath.fromRootFolder(rootFolder);
+            FileStoreSpace space = this.fileStoreCache.get(pvPath.getParentPathForCreation());
             return space.usableSpace;
         } catch (Exception ex) {
             throw new IOException(ex);
@@ -206,7 +208,8 @@ public class ETLMetricsIntoStore implements StorageMetricsContext {
     @Override
     public long getTotalSpaceFromCache(String rootFolder) throws IOException {
         try {
-            FileStoreSpace space = this.fileStoreCache.get(rootFolder);
+            PVPath pvPath = PVPath.fromRootFolder(rootFolder);
+            FileStoreSpace space = this.fileStoreCache.get(pvPath.getParentPathForCreation());
             return space.totalSpace;
         } catch (Exception ex) {
             throw new IOException(ex);

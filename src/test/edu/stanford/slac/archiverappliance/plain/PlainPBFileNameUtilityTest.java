@@ -111,6 +111,25 @@ public class PlainPBFileNameUtilityTest {
                     extension));
         }
 
+        {
+            // This really tests that we do not pick files from PV's that could glob match this PV's files.
+            // If we have incorrect GLOB's, we'll see NumberFormatException's as we try to parse the time component of
+            // the file name.
+            String pvNameWithSuffix = pvName + "suffix";
+            for (long nGranularity = 0; nGranularity < nIntervals; nGranularity++) {
+                fileTime = startOfYear.plusSeconds(nGranularity * granularity.getApproxSecondsPerChunk());
+                mkPath(PathNameUtility.getPathNameForTime(
+                        rootFolderStr,
+                        pvNameWithSuffix,
+                        fileTime,
+                        granularity,
+                        new ArchPaths(),
+                        PathResolver.BASE_PATH_RESOLVER,
+                        configService.getPVNameToKeyConverter(),
+                        extension));
+            }
+        }
+
         Path[] matchingPaths = PathNameUtility.getPathsWithData(
                 new ArchPaths(),
                 rootFolderStr,

@@ -294,8 +294,10 @@ public abstract class AppendDataStateData {
                 // This is an attempt to not lose data during ETL appends.
                 // We make a copy of the original file if it exists, append to the copy and then do an atomic move.
                 // Should we should use path's resolve here?
-                Path pathToCopyFrom = context.getPaths()
-                        .get(preparePath.toAbsolutePath().toString().replace(extension, extensionToCopyFrom));
+                Path pathToCopyFrom = preparePath.resolveSibling(preparePath
+                        .getName(preparePath.getNameCount() - 1)
+                        .toString()
+                        .replace(extension, extensionToCopyFrom));
                 if (Files.exists(pathToCopyFrom)) {
                     logger.debug("Making a backup from " + pathToCopyFrom.toAbsolutePath()
                             + " to file "
