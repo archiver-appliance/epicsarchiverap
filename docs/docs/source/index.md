@@ -1,4 +1,4 @@
-# EPICS Archiver Appliance
+# Archiver Appliance documentation
 
 The EPICS Archiver Appliance (EAA) is an implementation of an archiver for
 [EPICS](http://www.aps.anl.gov/epics/index.php) control systems that
@@ -13,55 +13,67 @@ At a high level, some features are
 - Focus on data retrieval performance.
 - Focus on zero oversight.
 
-For a more detailed description, please see the [Details](developer/details)
-page.
-
-To get started, please see the [Quickstart](sysadmin/quickstart) guide.
-
 Last published on {sub-ref}`today`. This project is part of the
 [AccelUtils](http://accelutils.sourceforge.net/) collaboration.
 
 ```{toctree}
----
-hidden:
-maxdepth: 1
----
-faq.md
-license.md
+:caption: Operator documentation
+:maxdepth: 3
+:glob:
+
+operator/tutorials/index
+operator/guides/index
+operator/explanations/index
+operator/references/index
 ```
 
 ```{toctree}
-:hidden:
-:caption: User
+:caption: Integrator documentation
+:maxdepth: 3
+:glob:
 
-user/cstudio.md
-user/matlab.md
-user/userguide.md
-user/archiveviewer.md
+integrator/tutorials/index
+integrator/guides/index
+integrator/explanations/index
+integrator/references/index
 ```
 
 ```{toctree}
-:hidden:
-:caption: Sysadmin
+:caption: System admin documentation
+:maxdepth: 3
+:glob:
 
-sysadmin/admin.md
-sysadmin/customization.md
-sysadmin/storage_plugins.md
-sysadmin/installguide.md
-sysadmin/quickstart.md
-sysadmin/redundancy.md
-sysadmin/reassign.md
-sysadmin/site_specific.md
-sysadmin/sqlite.md
+sysadmin/tutorials/index
+sysadmin/guides/index
+sysadmin/explanations/index
+sysadmin/references/index
 ```
 
 ```{toctree}
-:hidden:
-:caption: Developer
+:caption: Developer documentation
+:maxdepth: 3
+:glob:
 
-developer/details.md
-developer/developersguide.md
-developer/pb_pbraw.md
-developer/parquet.md
-Management Scriptables <developer/mgmt_scriptables.md>
+developer/tutorials/index
+developer/guides/index
+developer/explanations/index
+developer/references/index
+```
+
+```{toctree}
+:caption: Contributor documentation
+:maxdepth: 3
+:glob:
+
+contributor/tutorials/index
+contributor/guides/index
+contributor/explanations/index
+contributor/references/index
+```
+
+```{toctree}
+:caption: Miscellaneous documentation
+:maxdepth: 3
+:glob:
+FAQ <faq>
 ```
