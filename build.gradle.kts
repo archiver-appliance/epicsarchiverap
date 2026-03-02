@@ -162,7 +162,8 @@ dependencies {
 	implementation(libs.parquet.common)
 	implementation(libs.parquet.hadoop)
 	implementation(libs.hadoop.common)
-	runtimeOnly(libs.hadoop.client)
+	runtimeOnly(libs.hadoop.client.api)
+	runtimeOnly(libs.hadoop.client.runtime)
 
 	// Testing
 	testImplementation(libs.junit.jupiter.api)
