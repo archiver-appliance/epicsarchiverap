@@ -27,8 +27,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  formatcheck:
-    name: Check the formatting
+  check:
+    name: Check formatting and dependencies
     runs-on: ubuntu-latest
 
     steps:
@@ -43,13 +43,15 @@ jobs:
           distribution: "temurin"
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Build with Gradle
+      - name: Check Formatting
         run: ./gradlew spotlessCheck
+      - name: Analyze Dependencies
+        run: ./gradlew analyzeDependencies
       - name: Upload build reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: formatcheck-build-reports
+          name: check-build-reports
           path: build/reports/
 
   unittests:
