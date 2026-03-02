@@ -84,12 +84,6 @@ jobs:
         with:
           name: unitests-build-reports
           path: build/reports/
-      - name: Upload package
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-package
-          path: build/distributions/*.tar.gz
 
   epicstests:
     name: Run all unit tests reliant on EPICS install
