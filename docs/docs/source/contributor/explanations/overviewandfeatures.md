@@ -41,3 +41,11 @@ Here are the main features.
 - Support for retrieval of data using [CS-Studio](../user/cstudio), the
   [ArchiveViewer](../user/archiveviewer) and Matlab.
 - Limited integration with existing Channel Archiver data sources.
+
+## Motivation
+
+Archiving millions of PVs requires a few additional features beyond a
+simple archiver. In addition to focusing on the EPICS side of the
+equation, we also need to address the various IT aspects like
+flexibility, scriptability, and policy enforcement. An integrated
+multi-head, multi-stage solution was called for; hence the appliance.

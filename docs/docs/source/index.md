@@ -70,10 +70,3 @@ contributor/guides/index
 contributor/explanations/index
 contributor/references/index
 ```
-
-```{toctree}
-:caption: Miscellaneous documentation
-:maxdepth: 3
-:glob:
-FAQ <faq>
-```

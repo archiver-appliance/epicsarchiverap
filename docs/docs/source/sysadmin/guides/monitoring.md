@@ -1,3 +1,11 @@
+## Log file locations
+
+Most deployments have four Tomcat containers per appliance — one each
+for the engine, ETL, retrieval and mgmt components. All logs are
+typically sent to `arch.log` or similar files in the `logs/` folder of
+each container's `CATALINA_BASE`. Log levels are controlled using a
+`log4j2.xml` file in the `TOMCAT_HOME/lib` folder of each container.
+
 ## Monitoring your EPICS archiver appliance
 
 Here are some aspects of the EPICS archiver appliance that should be

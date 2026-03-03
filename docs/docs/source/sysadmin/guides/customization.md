@@ -79,57 +79,8 @@ extensible for other distributions.
 
 ## Policies
 
-As outlined in the [details](../developer/details) page, the archiver appliance
-support a wide variety of configurations. Not only that, we also support
-configuration on a per PV basis. We avoid exposing all of this
-complexity to the end user (the one who is requesting PVs to be
-archived) by using policies to provide intelligent defaults. Policies
-are contained in a python/jython script called `policies.py` that is
-typically located in the `WEB-INF/classes` of the `mgmt` webapp or by
-using the environment variable `ARCHAPPL_POLICIES`.
-
-At a very high level, when users request PVs to be archived, the mgmt &
-engine webapps sample the PV to determine event rate, storage rate and
-other parameters. In addition, various fields of the PV like `.NAME`,
-`.ADEL`, `.MDEL`, `.RTYP` etc are also determined. All of these
-parameters are passed to the `policies.py` python script as a dictionary
-argument to a method in `policies.py` called `determinePolicy`; see the
-[javadoc](../_static/javadoc/org/epics/archiverappliance/mgmt/policy/ExecutePolicy.html)
-for more details. This method is expected to use all of this information
-to make decisions on various archiving parameters including storage
-locations, storage technologies used etc and return these decisions as
-another dictionary. For example, the resulting dictionary contains a
-field called `dataStores` which is an array of
-[StoragePlugin](../_static/javadoc/org/epics/archiverappliance/StoragePlugin.html)
-URL\'s that can be parsed by the
-[StoragePluginURLParser](../_static/javadoc/org/epics/archiverappliance/config/StoragePluginURLParser.html).
-For more details on the available storage plugins and their configuration, see the [Storage Plugins](storage_plugins) page.
-This is converted into a sequence of StoragePlugin\'s that is used like
-so
-
-1. The engine webapp writes data into the first StoragePlugin in the
-   sequence, i.e. `dataStores[0]`
-2. The ETL webapp schedules data transfers from one StoragePlugin to
-   the next in the sequence according to their
-   [PartitionGranularity](../_static/javadoc/org/epics/archiverappliance/common/PartitionGranularity.html)\'s
-3. When servicing a data retrieval request, the retrieval webapp
-   retrieves data from all of the datastores and then combines them
-   using a merge/dedup operator.
-
-Optionally, as part of a policy, we can also archive fields in addition
-to the VAL field. That is, one can establish a blanket policy that says
-something like _For all `ai's`, in addition to the `.VAL` field, also
-archive the `.HIHI, .LOLO` etc_ These fields are stored as part of the
-data for .VAL field.
-
-For more details and an example of a policy file, please look at the
-`src/sitespecific/tests/policies.py` that is shipped as part of the
-`tests` site. In addition to the `determinePolicy` method, there are a
-few more methods that need to be defined. These include
-
-1. `getPolicyList` \-- This returns a list of available policy names.
-2. `getFieldsArchivedAsPartOfStream` \-- This returns a list of fields
-   that are to be archived as part of the stream.
+For information on creating and configuring a policies file, see
+[Policies file](policies).
 
 ## Site specific properties
 

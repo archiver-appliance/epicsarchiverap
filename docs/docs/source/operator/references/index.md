@@ -3,6 +3,7 @@
 ```{toctree}
 :maxdepth: 2
 
+Post-processors <post-processors>
+
 [Clients]
-[Post Processors]
 ```
