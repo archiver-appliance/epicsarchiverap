@@ -5,8 +5,8 @@ data and one of the supported MIME-types is the Matlab file format. The
 process of getting archive data into Matlab consists of
 
 1. Constructing a URL to the server. See
-   [this](userguide.html#retrieval_url_formula) section on for the URL
-   format for data retrieval.
+   [Constructing a data retrieval URL](./web-client.md#constructing-a-data-retrieval-url)
+   for the URL format for data retrieval.
 2. Using `urlwrite` to download data from this URL into a file.
 3. Loading this file into Matlab.
 

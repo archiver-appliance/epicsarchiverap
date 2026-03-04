@@ -31,8 +31,6 @@ and `S2` belong to the same bin if
 quotient after integer division. Samples belonging to the same bin are
 gathered together and sent thru various statistics operators.
 
-## Available operators
-
 firstSample
 : Returns the first sample in a bin. This is the default sparsification operator.
 

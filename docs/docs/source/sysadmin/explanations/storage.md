@@ -20,9 +20,9 @@ key/value store).
     :::{note}
     By default, the PlainStoragePlugin maps PV names to keys using a
     simple algorithm that relies on the presence of a good PV naming
-    convention. To use your own mapping scheme, see the [Key Mapping](../sysadmin/customization#key_mapping) section in the
+    convention. To use your own mapping scheme, see the [Key Mapping](../guides/customization#key-mapping) section in the
     customization guide.
     :::
 
 To add support for other storage technologies - see the [customization
-guide](../sysadmin/customization) for details.
+guide](../guides/customization) for details.

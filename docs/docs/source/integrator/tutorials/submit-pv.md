@@ -3,8 +3,6 @@
 The EPICS Archiver Appliance offers a web UI for typical configuration
 tasks. This UI works best with a recent version of Firefox or Chrome.
 
-## Add a PV
-
 1. Go to the home page of the archiver appliance.
    ![image](../../images/archive_pv.png)
 2. Enter any number of PV's in the text area (one per line) and click

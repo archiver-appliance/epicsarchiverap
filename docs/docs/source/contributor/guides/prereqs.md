@@ -1,7 +1,7 @@
 ## Prerequisites
 
-Please see the [details](./details#system-requirements) page for
-prerequisites to build and test the EPICS Archiver Appliance. An
+Please see the [system requirements](../../sysadmin/references/system-requirements.md)
+page for prerequisites to build and test the EPICS Archiver Appliance. An
 installation of Tomcat is required to build successfully; this is
 located using the environment variable `TOMCAT_HOME`. Use something like
 
