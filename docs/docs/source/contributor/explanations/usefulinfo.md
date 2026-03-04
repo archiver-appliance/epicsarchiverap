@@ -46,5 +46,16 @@
    - The
      [ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html)
      class does all configuration management.
-   - The [customization guide](../sysadmin/customization) is also a good
+   - The [customization guide](../../sysadmin/guides/customization) is also a good
      guide to way in which this product can be customized.
+
+## ConfigService
+
+All of the configuration in the archiver appliance is handled thru
+implementations of the
+[ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html)
+interface. Each webapp has one instance of this interface and this
+instance is dependency injected into the classes that need it. If all
+else fails, you can create your implementation of the ConfigService and
+register it in the servlet context
+[listener](../_static/javadoc/org/epics/archiverappliance/config/ArchServletContextListener.html).

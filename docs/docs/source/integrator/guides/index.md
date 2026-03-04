@@ -3,7 +3,7 @@
 ```{toctree}
 :maxdepth: 2
 
-Save/Restore API <save-restore>
+Check PV status <check-pv-status>
 
 [Manage a PV]
 [Troubleshoot a PV not archiving]

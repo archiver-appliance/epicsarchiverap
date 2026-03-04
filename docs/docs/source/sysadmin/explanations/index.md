@@ -4,6 +4,10 @@
 :maxdepth: 2
 
 Configuration <configuration>
+Policies <policies>
+Scripting <scripting>
+Monitoring <monitoring>
+Storage <storage>
 Redundancy in the EPICS Archiver Appliance <redundancy>
 Reports and metrics <reports>
 

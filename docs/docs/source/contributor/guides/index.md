@@ -8,6 +8,4 @@ Building and testing <building>
 Running Tomcat <runningtomcat>
 Unit testing <unittesting>
 Formatting <formatting>
-Scripting <scripting>
-Deployment guides <deployment-guides/index>
 ```

@@ -6,11 +6,10 @@
 Deployment <deployment>
 Tomcat setup <tomcat-setup>
 MySQL setup <mysql-setup>
-Policies file <policies>
-Scripting <scripting>
 Backing up your config databases <backingupconfig>
+Channel Archiver integration <channel-archiver>
+Deployment guides <deployment-guides/index>
 Recovering from a lost appliance <recovery>
-Monitoring your EPICS archiver appliance <monitoring>
 Inspecting the Channel Access ( also PVAccess ) protocol <inspectingcapva>
 Temporarily suspend using a store <suspendstore>
 Dynamic (re)-assignment of PVs to appliances <reassign>
