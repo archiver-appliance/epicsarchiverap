@@ -6,7 +6,7 @@ The `appliances.xml` is a file that lists all the appliances in a
 cluster of archiver appliance. While it is not necessary to point to the
 same physical file, the contents are expected to be identical across all
 appliances in the cluster. The details of the file are outlined in the
-[ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES){.external}
+[ConfigService](../_static/javadoc/org/epics/archiverappliance/config/ConfigService.html#ARCHAPPL_APPLIANCES)
 javadoc. A sample `appliances.xml` with two appliances looks like
 
 ```xml
@@ -96,7 +96,7 @@ javadoc. A sample `appliances.xml` with two appliances looks like
      of Apache to load-balance among any of the appliances in the
      cluster.
 
-     ![Using Apache HTTP on `archiver` to load balance data retrieval between `appliance0` and `appliance1`.](../images/ApacheasLB.png)
+     ![Using Apache HTTP on `archiver` to load balance data retrieval between `appliance0` and `appliance1`.](../../images/ApacheasLB.png)
 
      - Note there are also other load-balancing solutions available
        that load-balance the HTTP protocol that may be more

@@ -84,7 +84,7 @@ Channel Archiver installations.
 - To import ChannelArchiver `XML` configuration files, click on the
   `Choose Files` button, select any number of ChannelArchiver `XML`
   configuration files and press `Upload`.
-  ![image](../images/importCAConfig.png)
+  ![image](../../images/importCAConfig.png)
 
   The `DTD` for the ChannelArchiver `XML` file can be found in the
   ChannelArchiver documentation or in the ChannelArchiver source

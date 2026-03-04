@@ -6,7 +6,7 @@ tasks. This UI works best with a recent version of Firefox or Chrome.
 ## Add a PV
 
 1. Go to the home page of the archiver appliance.
-   ![image](../../operator/images/archive_pv.png)
+   ![image](../../images/archive_pv.png)
 2. Enter any number of PV's in the text area (one per line) and click
    on the `Archive` button.
 3. If you wish to specify the sampling period, then click on the
@@ -50,7 +50,7 @@ tasks. This UI works best with a recent version of Firefox or Chrome.
    [GLOB](http://en.wikipedia.org/wiki/Glob_%28programming%29)
    expressions like `XCOR*` and the archiver appliance will then
    display the status of all PV's that match the GLOB expression.
-   ![image](../../operator/images/check_status_glob.png)
+   ![image](../../images/check_status_glob.png)
 
    Note that the number of matched PV's can be quite large; for now,
    no attempt is made to restrict the number of entries in this

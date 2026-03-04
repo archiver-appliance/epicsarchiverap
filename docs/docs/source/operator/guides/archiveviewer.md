@@ -14,12 +14,12 @@ Archiver Appliance using a URL that looks like so
 replacing the string _http_ with the string _pbraw_ in the
 `data_retrieval_url` element of your `appliances.xml`.
 
-![Connecting using pbraw](../images/av_connect.png)
+![Connecting using pbraw](../../images/av_connect.png)
 
 Once you have established a connection to the server, you should be able
 to use the Archive Viewer as before to retrieve and display data.
 
-![Plotting](../images/av_plot.png)
+![Plotting](../../images/av_plot.png)
 
 The Archive Viewer is also used to retrieve data from the Channel
 Archiver; this has a concept of indexes that form part of the data

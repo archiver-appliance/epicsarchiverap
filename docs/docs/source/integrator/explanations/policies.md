@@ -3,7 +3,7 @@
 All of the various configurations can get quite tricky for end users to
 navigate. Rather than expose all of this variation to the end users and
 to provide a simple interface to end users, the archiver appliance uses
-[policies](../_static/javadoc/org/epics/archiverappliance/mgmt/policy/package-summary.html){.external}.
+[policies](../_static/javadoc/org/epics/archiverappliance/mgmt/policy/package-summary.html).
 Policies are Python scripts that make these decisions on behalf of the
 users. Policies are site-specific and identical across all appliances in
 the cluster. When a user requests a new PV to be archived, the archiver

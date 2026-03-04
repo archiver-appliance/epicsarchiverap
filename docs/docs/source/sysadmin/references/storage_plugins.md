@@ -24,9 +24,9 @@ technologies. For more details, please see the Javadoc.
 ## NIO2
 
 The
-[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html)
 can be viewed as a chunking
-[StoragePlugin](../_static/javadoc/org/epics/archiverappliance/StoragePlugin.html){.external}. It
+[StoragePlugin](../_static/javadoc/org/epics/archiverappliance/StoragePlugin.html). It
 chunks data into `Time instant t ↔ Chunk key`,
 well-defined time-partitions (instead of individual samples) and various
 business processes in the archiver appliance understand these

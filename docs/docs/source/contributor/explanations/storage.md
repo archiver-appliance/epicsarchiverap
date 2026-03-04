@@ -3,7 +3,7 @@
 Out of the box, the following storage technologies/plugins are
 supported.
 
-[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html)
 : This plugin serializes samples using either Google\'s
 [ProtocolBuffers](https://developers.google.com/protocol-buffers) (PB) or
 [Apache Parquet](parquet) and stores data in chunks. Each chunk has a

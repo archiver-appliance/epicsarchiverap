@@ -137,4 +137,4 @@ fig.line(xpoints, ypoints)
 show(fig)
 ```
 
-![image](../images/bokeh_in_jupyter.png)
+![image](../../images/bokeh_in_jupyter.png)

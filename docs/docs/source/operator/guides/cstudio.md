@@ -21,10 +21,10 @@ Archive data servers. From the top menu select
 
 Example:
 
-![Connecting using pbraw](../images/csstudio_config.png)
+![Connecting using pbraw](../../images/csstudio_config.png)
 
 Once the URL has been added to the preferences, the archiver appliance
 can be used in the databrowser like any other data source. Users can
 search the archive for PV's, retrieve data and plot it, etc.
 
-![Plotting](../images/csstudio_plot.jpg)
+![Plotting](../../images/csstudio_plot.jpg)

@@ -36,7 +36,7 @@ data
 Here\'s a screenshot of this sample code being executed in a Matlab
 environment.
 
-![image](../images/matlab1.png)
+![image](../../images/matlab1.png)
 
 The `.mat` response contains two objects, a header and a data object.
 
