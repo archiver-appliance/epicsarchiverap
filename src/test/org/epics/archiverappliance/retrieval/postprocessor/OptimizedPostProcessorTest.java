@@ -12,6 +12,7 @@ import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorValue;
 import org.epics.archiverappliance.retrieval.CallableEventStream;
+import org.epics.archiverappliance.retrieval.ChangeInYearsException;
 import org.epics.archiverappliance.retrieval.postprocessors.Optimized;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.Assertions;
@@ -321,5 +322,69 @@ public class OptimizedPostProcessorTest {
                 Arguments.of(49999, 51000, Arrays.asList(40.0, 50.0)),
                 Arguments.of(50000, 51000, Arrays.asList(50.0)),
                 Arguments.of(51000, 52000, Arrays.asList(50.0)));
+    }
+
+    @Test
+    public void testOptimizedCrossYearDetection() {
+        String optimizedTestPVName = "Test_OptimizedCrossYearDetection";
+
+        YearSecondTimestamp start2024 =
+                TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String("2024-12-31T23:59:50.000Z"));
+        YearSecondTimestamp start2025 =
+                TimeUtils.convertToYearSecondTimestamp(TimeUtils.convertFromISO8601String("2025-01-01T00:00:00.000Z"));
+
+        double valueIn2024 = 1.0;
+        double valueIn2025 = 2.0;
+
+        ArrayListEventStream testData = new ArrayListEventStream(
+                2,
+                new RemotableEventStreamDesc(ArchDBRTypes.DBR_SCALAR_DOUBLE, optimizedTestPVName, start2024.getYear()));
+
+        // Add 1 first-year event
+        testData.add(new SimulationEvent(
+                start2024.getSecondsintoyear(),
+                start2024.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(valueIn2024)));
+
+        // Add 1 second-year event
+        testData.add(new SimulationEvent(
+                start2025.getSecondsintoyear(),
+                start2025.getYear(),
+                ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                new ScalarValue<>(valueIn2025)));
+
+        Optimized optimizedPostProcessor = new Optimized();
+        try {
+            optimizedPostProcessor.initialize("optimized_5760", optimizedTestPVName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        var callableEventStream = CallableEventStream.makeOneStreamCallable(testData, null, false);
+
+        var callable = optimizedPostProcessor.wrap(callableEventStream);
+
+        try {
+            callable.call();
+        } catch (Exception e) {
+            Assertions.fail(
+                    "An exception occurred when calling optimizedPostProcessor.wrap(callableEventStream).call()");
+        }
+
+        EventStream eventStream = optimizedPostProcessor.getConsolidatedEventStream();
+
+        // First event is in 2024 - do not trigger the ChangeInYearsException
+        Event first = eventStream.iterator().next();
+        Assertions.assertEquals(valueIn2024, first.getSampleValue().getValue());
+
+        // Second event is in 2025 - trigger the ChangeInYearsException
+        ChangeInYearsException ex = Assertions.assertThrows(
+                ChangeInYearsException.class,
+                eventStream.iterator()::next,
+                "Expected ChangeInYearsException when year changes");
+
+        Assertions.assertEquals(start2024.getYear(), ex.getPreviousYear());
+        Assertions.assertEquals(start2025.getYear(), ex.getCurrentYear());
     }
 }
