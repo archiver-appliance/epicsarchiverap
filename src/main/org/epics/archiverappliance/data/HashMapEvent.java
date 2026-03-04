@@ -5,7 +5,7 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package org.epics.archiverappliance.retrieval.channelarchiver;
+package org.epics.archiverappliance.data;
 
 import com.google.protobuf.Message;
 import org.apache.logging.log4j.LogManager;
@@ -13,13 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.data.ByteBufSampleValue;
-import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.data.SampleValue;
-import org.epics.archiverappliance.data.ScalarStringSampleValue;
-import org.epics.archiverappliance.data.ScalarValue;
-import org.epics.archiverappliance.data.VectorStringSampleValue;
-import org.epics.archiverappliance.data.VectorValue;
 import org.json.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;

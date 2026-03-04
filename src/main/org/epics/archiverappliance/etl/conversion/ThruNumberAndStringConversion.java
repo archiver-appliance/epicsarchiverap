@@ -4,13 +4,13 @@ import edu.stanford.slac.archiverappliance.PB.data.DBR2PBTypeMapping;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.etl.ConversionException;
 import org.epics.archiverappliance.etl.ConversionFunction;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.channelarchiver.HashMapEvent;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -37,8 +37,8 @@ public class ThruNumberAndStringConversion implements ConversionFunction {
     }
 
     @Override
-    public EventStream convertStream(
-            final EventStream srcEventStream, Instant streamStartTime, Instant streamEndTime) throws IOException {
+    public EventStream convertStream(final EventStream srcEventStream, Instant streamStartTime, Instant streamEndTime)
+            throws IOException {
         return new ThruNumStrConversionWrapper(srcEventStream);
     }
 
@@ -89,16 +89,16 @@ public class ThruNumberAndStringConversion implements ConversionFunction {
 
                 private String convert2DestType(SampleValue sampleValue) {
                     return switch (destDBRType) {
-                        case DBR_SCALAR_BYTE -> Byte.toString(
-                                sampleValue.getValue().byteValue());
-                        case DBR_SCALAR_DOUBLE -> Double.toString(
-                                sampleValue.getValue().doubleValue());
-                        case DBR_SCALAR_ENUM, DBR_SCALAR_SHORT -> Short.toString(
-                                sampleValue.getValue().shortValue());
-                        case DBR_SCALAR_FLOAT -> Float.toString(
-                                sampleValue.getValue().floatValue());
-                        case DBR_SCALAR_INT -> Integer.toString(
-                                sampleValue.getValue().intValue());
+                        case DBR_SCALAR_BYTE ->
+                            Byte.toString(sampleValue.getValue().byteValue());
+                        case DBR_SCALAR_DOUBLE ->
+                            Double.toString(sampleValue.getValue().doubleValue());
+                        case DBR_SCALAR_ENUM, DBR_SCALAR_SHORT ->
+                            Short.toString(sampleValue.getValue().shortValue());
+                        case DBR_SCALAR_FLOAT ->
+                            Float.toString(sampleValue.getValue().floatValue());
+                        case DBR_SCALAR_INT ->
+                            Integer.toString(sampleValue.getValue().intValue());
                         case DBR_SCALAR_STRING -> sampleValue.getStringValue(0);
                         default -> throw new UnsupportedOperationException();
                     };

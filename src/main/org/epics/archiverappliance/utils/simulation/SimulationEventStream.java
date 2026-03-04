@@ -10,9 +10,9 @@ package org.epics.archiverappliance.utils.simulation;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableOverRaw;
 import org.epics.archiverappliance.config.ArchDBRTypes;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -32,7 +32,9 @@ public class SimulationEventStream implements EventStream, RemotableOverRaw {
 
     public SimulationEventStream(
             ArchDBRTypes type,
-            SimulationValueGenerator valueGenerator, Instant start, Instant end,
+            SimulationValueGenerator valueGenerator,
+            Instant start,
+            Instant end,
             int periodInSeconds) {
         this.type = type;
         this.valueGenerator = valueGenerator;
@@ -40,7 +42,6 @@ public class SimulationEventStream implements EventStream, RemotableOverRaw {
         this.end = end;
         this.periodInSeconds = periodInSeconds;
     }
-
 
     @Override
     public Iterator<Event> iterator() {

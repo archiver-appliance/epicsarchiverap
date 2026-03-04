@@ -23,10 +23,10 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.EmptyEventIterator;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableOverRaw;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
 import java.io.IOException;
 import java.nio.file.Path;

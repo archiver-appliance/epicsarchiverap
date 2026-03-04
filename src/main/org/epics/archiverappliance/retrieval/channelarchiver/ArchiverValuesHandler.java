@@ -13,11 +13,12 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.common.TimeUtils;
+import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
+import org.epics.archiverappliance.common.remotable.RemotableOverRaw;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.data.HashMapEvent;
 import org.epics.archiverappliance.retrieval.ChangeInYearsException;
-import org.epics.archiverappliance.retrieval.RemotableEventStreamDesc;
-import org.epics.archiverappliance.retrieval.RemotableOverRaw;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -368,7 +369,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
                         buf = new StringWriter();
                         break;
                     default:
-                        // Should not really be here. Don't do anything..
+                    // Should not really be here. Don't do anything..
                 }
                 streamReader.next();
             }
@@ -416,7 +417,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
                         buf = new StringWriter();
                         break;
                     default:
-                        // Should not really be here. Don't do anything..
+                    // Should not really be here. Don't do anything..
                 }
                 streamReader.next();
             }
