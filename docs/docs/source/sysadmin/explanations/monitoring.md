@@ -86,3 +86,13 @@ was lost.
   (obtained using the `/getPausedPVsReport`) but are now alive.
 - Optionally, you can potentially delete PVs that have been paused
   for some time and are still not alive.
+
+## Scripting for bulk operations
+
+For bulk operations, most administrators will find the scripting
+interface useful. All actions in the management UI (plus a few not
+exposed in the UI) are accessible from scripts — see
+[Scripting](../../developer/guides/scripting.md) for details, and the
+[management scriptables reference](../../developer/references/mgmt_scriptables.md)
+for the full list of callable operations. Sample scripts are also
+available in the `tomcat_mgmt/webapps/mgmt/ui/help/samples/` folder.
