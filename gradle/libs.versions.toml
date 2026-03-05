@@ -38,6 +38,7 @@ spotless-plugin = "8.1.0"
 git-version-plugin = "3.0.0"
 analyze-plugin  = "1.9.2"
 protobuf-plugin = "0.9.5"
+stax-api       = "1.0-2"
 
 [libraries]
 guava                    = { module = "com.google.guava:guava", version.ref = "guava" }
@@ -85,6 +86,7 @@ commons-compress         = { module = "org.apache.commons:commons-compress", ver
 commons-cli              = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
 jinjava                  = { module = "com.hubspot.jinjava:jinjava", version.ref = "jinjava" }
 mockito                  = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+stax-api                 = { module = "javax.xml.stream:stax-api", version.ref = "stax-api"}
 
 [bundles]
 parquet      = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]

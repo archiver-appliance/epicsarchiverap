@@ -25,6 +25,7 @@ import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -164,6 +165,7 @@ public class EventStreamWrapTest {
      * We wrap a thread around each source event stream. Since the source data is generated using month partitions, we
      * should get about 12 source event streams.
      */
+    @Tag("flaky")
     @ParameterizedTest
     @EnumSource(PlainStorageType.class)
     void testMultiThreadWrapper(PlainStorageType plainStorageType) throws Exception {

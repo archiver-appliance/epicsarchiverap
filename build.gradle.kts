@@ -153,6 +153,7 @@ dependencies {
 	"permitUnusedDeclared"(libs.log4j.slf4j2)
 	implementation(libs.log4j.jul)
 	"permitUnusedDeclared"(libs.log4j.jul)
+	"permitUsedUndeclared"(libs.stax.api)
 	runtimeOnly(libs.log4j.core)
 	runtimeOnly(libs.disruptor) // Needed for async logging
 
