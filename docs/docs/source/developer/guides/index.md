@@ -4,7 +4,7 @@
 :maxdepth: 2
 
 Scripting <scripting>
+Fetch data <fetch_data_guide>
 
-[Basic script to fetch data]
 [Fetch data at a specific time]
 ```

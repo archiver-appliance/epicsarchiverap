@@ -3,7 +3,7 @@
 ```{toctree}
 :maxdepth: 2
 
-Retrieving data using the web client <web-client>
+[Web client]
 Configuring CS-Studio <cstudio>
 Retrieving data using the ArchiveViewer <archiveviewer>
 Retrieving data using Matlab <matlab>

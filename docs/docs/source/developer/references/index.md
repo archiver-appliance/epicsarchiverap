@@ -8,8 +8,9 @@ Side Projects <sideprojects>
 Parquet format <parquet>
 pbraw format <pb_pbraw>
 
+Retrieval API <retrieval-api>
+
 [Protobuf specification]
 [Management API]
-[Retrieval API]
 
 ```
