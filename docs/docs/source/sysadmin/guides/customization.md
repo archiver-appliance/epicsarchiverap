@@ -80,4 +80,4 @@ extensible for other distributions.
 ## Policies
 
 For information on creating and configuring a policies file, see
-[Policies](../explanations/policies).
+[Create your policies file](./create-policy-file.md).

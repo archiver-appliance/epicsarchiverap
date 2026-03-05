@@ -3,6 +3,7 @@
 ```{toctree}
 :maxdepth: 2
 
+Create your policies file <create-policy-file>
 Deployment <deployment>
 Tomcat setup <tomcat-setup>
 MySQL setup <mysql-setup>
