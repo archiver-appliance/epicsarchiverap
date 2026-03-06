@@ -3,5 +3,5 @@
 ```{toctree}
 :maxdepth: 2
 
-[Java docs]
+[TODO: Java docs]
 ```

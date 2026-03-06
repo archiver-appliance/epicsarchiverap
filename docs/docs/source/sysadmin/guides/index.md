@@ -9,7 +9,6 @@ Tomcat setup <tomcat-setup>
 MySQL setup <mysql-setup>
 Backing up your config databases <backingupconfig>
 Channel Archiver integration <channel-archiver>
-Deployment guides <deployment-guides/index>
 Recovering from a lost appliance <recovery>
 Inspecting the Channel Access ( also PVAccess ) protocol <inspectingcapva>
 Temporarily suspend using a store <suspendstore>
@@ -18,14 +17,18 @@ Customization <customization>
 Making simple site-specific content changes <site_specific>
 Using SQLite as a configuration database <sqlite>
 
-[Upgrading the Archiver]
-[Fixing existing data]
-[Troubleshooting missing data]
-[Migrate data]
-[Checking the status of a PV]
-[Management for System Administrators]
-[Identifying the problematic PVs]
-[Customize the UI]
-[Log configuration]
-[Redundancy]
+[TODO: Deploying on bare-metal]
+[TODO: Deploying with Docker]
+[TODO: Deploying with Docker Swarm]
+[TODO: Deploying with Kubernetes]
+[TODO: Upgrading the Archiver]
+[TODO: Fixing existing data]
+[TODO: Troubleshooting missing data]
+[TODO: Migrate data]
+[TODO: Checking the status of a PV]
+[TODO: Management for System Administrators]
+[TODO: Identifying the problematic PVs]
+[TODO: Customize the UI]
+[TODO: Log configuration]
+[TODO: Redundancy]
 ```

@@ -9,10 +9,10 @@ Storage <storage>
 Redundancy in the EPICS Archiver Appliance <redundancy>
 Reports and metrics <reports>
 
-[Architecture]
-[Configuration Database]
-[Data Errors]
-[Management UI]
-[Appliance picking Algorithm]
-[ETL Process]
+[TODO: Architecture]
+[TODO: Configuration Database]
+[TODO: Data Errors]
+[TODO: Management UI]
+[TODO: Appliance picking Algorithm]
+[TODO: ETL Process]
 ```

@@ -8,9 +8,9 @@ Screenshots <screenshots>
 System requirements <system-requirements>
 Environment variables <env-vars>
 
-[Management API]
-[Settings file]
-[Appliances configuration]
-[Docker compose]
-[Scripts list]
+[TODO: Management API]
+[TODO: Settings file]
+[TODO: Appliances configuration]
+[TODO: Docker compose]
+[TODO: Scripts list]
 ```

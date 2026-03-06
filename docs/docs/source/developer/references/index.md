@@ -10,7 +10,7 @@ pbraw format <pb_pbraw>
 
 Retrieval API <retrieval-api>
 
-[Protobuf specification]
-[Management API]
+[TODO: Protobuf specification]
+[TODO: Management API]
 
 ```
