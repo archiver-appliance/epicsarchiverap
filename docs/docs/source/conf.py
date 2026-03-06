@@ -29,8 +29,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", ".venv", ".pixi"]
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = ['_static', '../../../build/docs']
+html_static_path = ['_static', '../../../build/docs', "js"]
 
+templates_path = ['templates']
+
+html_js_files = [
+    'keybindings.js',
+]
 
 # -- Options for MyST's markdown -----------------------------------------------
 # https://myst-parser.readthedocs.io/en/latest/configuration.html
