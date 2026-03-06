@@ -1,5 +1,7 @@
 # How-to guides
 
+Operational guides covering initial setup, deployment to various targets, and ongoing maintenance tasks such as backup, customization, and data management.
+
 ```{toctree}
 :maxdepth: 2
 

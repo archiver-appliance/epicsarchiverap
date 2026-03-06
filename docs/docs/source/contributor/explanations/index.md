@@ -1,5 +1,7 @@
 # Explanations
 
+Background on the archiver's internal architecture, clustering model, and other useful context for understanding the codebase before contributing.
+
 ```{toctree}
 :maxdepth: 2
 

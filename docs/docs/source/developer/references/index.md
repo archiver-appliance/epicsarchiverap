@@ -1,5 +1,7 @@
 # References
 
+Technical reference for the archiver's APIs and data formats: management scriptables, the retrieval API, binary storage formats, and related projects.
+
 ```{toctree}
 :maxdepth: 2
 

@@ -1,5 +1,7 @@
 # How-to guides
 
+How to retrieve archived data using supported client applications — the web client, CS-Studio, Archive Viewer, and Matlab.
+
 ```{toctree}
 :maxdepth: 2
 
