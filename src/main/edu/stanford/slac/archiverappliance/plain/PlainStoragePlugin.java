@@ -1165,7 +1165,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 new ArchPaths(), rootFolder, pvName, "", this.getPathResolver(), this.pv2key);
         long spaceConsumed = 0;
         for (Path f : rawPaths) {
-            spaceConsumed = spaceConsumed + f.toFile().length();
+            spaceConsumed = spaceConsumed + Files.size(f);
         }
 
         return spaceConsumed;
