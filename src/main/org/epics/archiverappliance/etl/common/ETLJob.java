@@ -8,6 +8,8 @@ import org.epics.archiverappliance.etl.ETLContext;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLInfo;
 import org.epics.archiverappliance.etl.ETLInfoListStatistics;
+import org.epics.archiverappliance.etl.ETLOptimizable;
+import org.epics.archiverappliance.etl.ETLPostOptimizers;
 import org.epics.archiverappliance.etl.ETLSource;
 
 import java.io.IOException;
@@ -104,8 +106,12 @@ public class ETLJob implements Runnable {
             }
         }
 
+        // Bulk appends only work if the source partition granularity fits cleanly in the dest partition granularity
+        boolean skipBulkAppend = etlStage.getETLDest().getPartitionGranularity().getApproxSecondsPerChunk()
+                <= etlStage.getETLSource().getPartitionGranularity().getApproxSecondsPerChunk();
+
         // We create a brand new context for each run.
-        try (ETLContext etlContext = new ETLContext()) {
+        try (ETLContext etlContext = new ETLContext(skipBulkAppend)) {
             this.etlStage.beginRunning();
 
             long pvETLStartEpochMilliSeconds = TimeUtils.getCurrentEpochMilliSeconds();
@@ -177,6 +183,50 @@ public class ETLJob implements Runnable {
                 } catch (Exception e) {
                     logger.error("Exception running post processors for pv " + pvName, e);
                 }
+
+                // See if any ETLDest's need post ETL optimizations.
+                if (curETLDest instanceof ETLPostOptimizers) {
+                    if (etlInfoListStatistics.totalSrcBytes() <= 0) {
+                        logger.debug(
+                                "No source bytes were processed for pv {}, skipping post ETL optimizations for ETL dest {}",
+                                pvName,
+                                curETLDest.getName());
+                    } else {
+                        ETLPostOptimizers postOptimizers = (ETLPostOptimizers) curETLDest;
+                        try {
+                            var optimizables = postOptimizers.getPostETLOptimizables(pvName, etlContext);
+                            if (optimizables != null && !optimizables.isEmpty()) {
+                                for (ETLOptimizable optimizable : optimizables) {
+                                    etlContext.addPostETLTask(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            logger.debug(
+                                                    "Running post ETL optimization for ETL dest {} for pv {}",
+                                                    curETLDest.getName(),
+                                                    pvName);
+                                            try {
+                                                boolean optimized = optimizable.optimize();
+                                                logger.info(
+                                                        "Completed post ETL optimization for ETL dest {} for pv {} with result {}",
+                                                        curETLDest.getName(),
+                                                        pvName,
+                                                        optimized);
+                                            } catch (IOException ioex) {
+                                                logger.error(
+                                                        "IOException optimizing ETL dest " + curETLDest.getName()
+                                                                + " for pv " + pvName,
+                                                        ioex);
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (IOException ioex) {
+                            logger.error("IOException getting optimizables for ETL storage for pv " + pvName, ioex);
+                        }
+                    }
+                }
+
                 logger.debug("Executing post ETL tasks for this run");
                 long time6 = System.currentTimeMillis();
                 etlContext.executePostETLTasks();

@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.zipfs;
+package org.epics.archiverappliance.utils.nio.zipfs;
 
 import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB_PLUGIN_IDENTIFIER;
 import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
