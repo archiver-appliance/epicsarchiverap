@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,13 +22,13 @@ import java.nio.file.attribute.FileTime;
  * A null tarEntry acts as a Path for the tar file itself.
  * We don't really maintain directories in the tar file; the GZTar is a two level file system
  */
-public class GZPath implements Path {
-    private static final Logger logger = LogManager.getLogger(GZPath.class.getName());
+public class TarPath implements Path {
+    private static final Logger logger = LogManager.getLogger(TarPath.class.getName());
 
-    final GZTarFileSystem fileSystem;
+    final TarFileSystem fileSystem;
     final TarEntry tarEntry;
 
-    public GZPath(GZTarFileSystem fileSystem, TarEntry tarEntry) {
+    public TarPath(TarFileSystem fileSystem, TarEntry tarEntry) {
         this.fileSystem = fileSystem;
         this.tarEntry = tarEntry;
     }
@@ -64,7 +64,7 @@ public class GZPath implements Path {
         if (this.tarEntry != null) {
             logger.debug(
                     "Getting parent of GZPath {} + {}", this.fileSystem.tarPath.toString(), this.tarEntry.entryName());
-            return new GZPath(this.fileSystem, null);
+            return new TarPath(this.fileSystem, null);
         }
 
         logger.debug("Getting parent of tar file itself {}", this.fileSystem.tarPath.toString());
@@ -131,13 +131,13 @@ public class GZPath implements Path {
             logger.debug(
                     "No entry found for {}, returning empty GZPath",
                     other.toUri().toString());
-            return new GZPath(this.fileSystem, null);
+            return new TarPath(this.fileSystem, null);
         } else {
             logger.debug(
                     "Found entry for {}, returning GZPath for tar entry {}",
                     other.toUri().toString(),
                     entry);
-            return new GZPath(this.fileSystem, entry);
+            return new TarPath(this.fileSystem, entry);
         }
     }
 
@@ -177,8 +177,8 @@ public class GZPath implements Path {
 
     @Override
     public int compareTo(Path other) {
-        if (other instanceof GZPath) {
-            GZPath otp = (GZPath) other;
+        if (other instanceof TarPath) {
+            TarPath otp = (TarPath) other;
             if (this.tarEntry != null && otp.tarEntry != null) {
                 return this.tarEntry.entryName().compareTo(otp.tarEntry.entryName());
             }
@@ -195,7 +195,7 @@ public class GZPath implements Path {
         return this.toUri().toString();
     }
 
-    private static BasicFileAttributes readAttributes(GZTarFileSystem fileSystem, TarEntry tarEntry) {
+    private static BasicFileAttributes readAttributes(TarFileSystem fileSystem, TarEntry tarEntry) {
         return new BasicFileAttributes() {
 
             @Override
@@ -245,8 +245,8 @@ public class GZPath implements Path {
                 }
 
                 TarEntry latest = fileSystem.lookupTarEntry(tarEntry.entryName(), tarEntry);
-                logger.debug("Getting size for tar entry {}: {}", latest.entryName(), latest.uncompressedsize());
-                return latest.uncompressedsize();
+                logger.debug("Getting size for tar entry {}: {}", latest.entryName(), latest.size());
+                return latest.size();
             }
 
             @Override

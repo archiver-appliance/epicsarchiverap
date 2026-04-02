@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,9 +42,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * Each gztar file is a new file system.
  */
 
-public class GZTarFileSystemProvider extends FileSystemProvider {
-    static final Logger logger = LogManager.getLogger(GZTarFileSystemProvider.class.getName());
-    private final Map<Path, GZTarFileSystem> filesystems = new ConcurrentHashMap<Path, GZTarFileSystem>();
+public class TarFileSystemProvider extends FileSystemProvider {
+    static final Logger logger = LogManager.getLogger(TarFileSystemProvider.class.getName());
+    private final Map<Path, TarFileSystem> filesystems = new ConcurrentHashMap<Path, TarFileSystem>();
 
     @Override
     public String getScheme() {
@@ -57,7 +57,7 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
         Path pathToTarFile = URIUtils.getPathToTarFile(uri);
         logger.debug("Creating new file system for {}", pathToTarFile.toString());
 
-        GZTarFileSystem gztarfs = new GZTarFileSystem(this, pathToTarFile, env);
+        TarFileSystem gztarfs = new TarFileSystem(this, pathToTarFile, env);
         filesystems.put(pathToTarFile, gztarfs);
         logger.debug("Done creating new file system for {}", pathToTarFile.toString());
         return gztarfs;
@@ -98,12 +98,12 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
     @Override
     public SeekableByteChannel newByteChannel(
             Path srcpath, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
-        if (!(srcpath instanceof GZPath)) {
+        if (!(srcpath instanceof TarPath)) {
             throw new IOException("Path " + srcpath.toString() + " is not a GZPath"); // Why are we even here?
         }
-        GZPath path = (GZPath) srcpath;
+        TarPath path = (TarPath) srcpath;
         TarEntry tarEntry = path.getTarEntry();
-        GZTarFileSystem gfs = (GZTarFileSystem) path.getFileSystem();
+        TarFileSystem gfs = (TarFileSystem) path.getFileSystem();
         // Get the latest tar entry from the catalog in case something has written to it behind our backs.
         tarEntry = gfs.lookupTarEntry(tarEntry.entryName(), tarEntry);
         logger.debug(
@@ -115,24 +115,7 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
             if (!tarEntry.isInsideTar()) {
                 throw new IOException("Path " + path.toString() + " does not have an entry in the tar file");
             }
-            File cachedTmpFile = gfs.getCachedTempFile(tarEntry.entryName());
-            if (cachedTmpFile == null) {
-                File tmpFile = File.createTempFile("__eaa", ".pb");
-                try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
-                    try (FileChannel tmpChannel = fos.getChannel()) {
-                        gfs.getTarFile().extractAndGUnzip(tarEntry, tmpChannel);
-                    }
-                }
-                gfs.putCachedTempFile(tarEntry.entryName(), tmpFile);
-                logger.debug("Adding temp file {} for {} to cache", tmpFile.getAbsolutePath(), tarEntry.entryName());
-                cachedTmpFile = tmpFile;
-            } else {
-                logger.debug(
-                        "Reusing cached temp file {} for {}", cachedTmpFile.getAbsolutePath(), tarEntry.entryName());
-            }
-            @SuppressWarnings("resource")
-            FileInputStream fis = new FileInputStream(cachedTmpFile);
-            return new GZTarSeekableByteChannel(fis, fis.getChannel(), null, null, null, null);
+            return gfs.getTarFile().getReadOnlyByteChannel(tarEntry);
         }
 
         if (options.contains(StandardOpenOption.TRUNCATE_EXISTING) || options.contains(StandardOpenOption.APPEND)) {
@@ -144,23 +127,23 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
                 logger.debug("Extracting existing content for APPEND for {}", tarEntry.entryName());
                 try (FileOutputStream fos = new FileOutputStream(tmpFile)) {
                     try (FileChannel tmpChannel = fos.getChannel()) {
-                        gfs.getTarFile().extractAndGUnzip(tarEntry, tmpChannel);
+                        gfs.getTarFile().extract(tarEntry, tmpChannel);
                     }
                 }
             }
             @SuppressWarnings("resource")
             FileOutputStream fos = new FileOutputStream(tmpFile, options.contains(StandardOpenOption.APPEND));
             FileChannel channel = fos.getChannel();
-            return new GZTarSeekableByteChannel(fos, channel, tarEntry, gfs, tmpFile, tmpFile.toPath());
+            return new TarSeekableByteChannel(fos, channel, tarEntry, gfs, tmpFile, tmpFile.toPath());
         }
         throw new IOException("Unsupported channel open options " + options.toString());
     }
 
     private class GZTarDirectoryStream implements DirectoryStream<Path> {
-        private GZTarFileSystem gfs;
+        private TarFileSystem gfs;
         private DirectoryStream.Filter<? super Path> filter;
 
-        public GZTarDirectoryStream(GZTarFileSystem gfs, DirectoryStream.Filter<? super Path> filter) {
+        public GZTarDirectoryStream(TarFileSystem gfs, DirectoryStream.Filter<? super Path> filter) {
             this.gfs = gfs;
             this.filter = filter;
         }
@@ -175,7 +158,7 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
             List<Path> ret = new LinkedList<Path>();
             Map<String, TarEntry> catalog = this.gfs.getTarFileCatalog();
             for (TarEntry tarEntry : catalog.values()) {
-                GZPath path = new GZPath(gfs, tarEntry);
+                TarPath path = new TarPath(gfs, tarEntry);
                 try {
                     if (this.filter.accept(path)) {
                         logger.debug("Adding {}", tarEntry.entryName());
@@ -193,11 +176,11 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
     @Override
     public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter)
             throws IOException {
-        if (!(dir instanceof GZPath)) {
+        if (!(dir instanceof TarPath)) {
             throw new IOException("Path " + dir.toString() + " is not a GZPath"); // Why are we even here?
         }
-        GZPath path = (GZPath) dir;
-        GZTarFileSystem gfs = (GZTarFileSystem) path.getFileSystem();
+        TarPath path = (TarPath) dir;
+        TarFileSystem gfs = (TarFileSystem) path.getFileSystem();
         return new GZTarDirectoryStream(gfs, filter);
     }
 
@@ -208,16 +191,16 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void delete(Path path) throws IOException {
-        if (!(path instanceof GZPath)) {
+        if (!(path instanceof TarPath)) {
             throw new IOException("Path " + path.toString() + " is not a GZPath"); // Why are we even here?
         }
-        GZPath gzpath = (GZPath) path;
+        TarPath gzpath = (TarPath) path;
 
         if (gzpath.getTarEntry() == null) {
             throw new NoSuchFileException(
                     "Path " + path.toString() + " was not found in the tar file"); // Why are we even here?
         }
-        GZTarFileSystem gfs = (GZTarFileSystem) path.getFileSystem();
+        TarFileSystem gfs = (TarFileSystem) path.getFileSystem();
         TarEntry tarEntry = gfs.lookupTarEntry(gzpath.getTarEntry().entryName());
         if (tarEntry == null || !tarEntry.isInsideTar()) {
             throw new NoSuchFileException(
@@ -233,14 +216,14 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
 
     @Override
     public void move(Path source, Path target, CopyOption... options) throws IOException {
-        if (!(source instanceof GZPath) || !(target instanceof GZPath)) {
+        if (!(source instanceof TarPath) || !(target instanceof TarPath)) {
             throw new IOException("Path " + source.toString() + " or " + target.toString()
                     + " is not a GZPath"); // Why are we even here?
         }
-        GZPath srGzPath = (GZPath) source;
-        GZPath tgGzPath = (GZPath) target;
-        GZTarFileSystem srGfs = srGzPath.fileSystem;
-        GZTarFileSystem tgGfs = tgGzPath.fileSystem;
+        TarPath srGzPath = (TarPath) source;
+        TarPath tgGzPath = (TarPath) target;
+        TarFileSystem srGfs = srGzPath.fileSystem;
+        TarFileSystem tgGfs = tgGzPath.fileSystem;
         logger.debug(
                 "Moving path {} to {} from tar {} to tar {}",
                 srGzPath,
@@ -277,10 +260,10 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
 
     @Override
     public FileStore getFileStore(Path path) throws IOException {
-        if (!(path instanceof GZPath)) {
+        if (!(path instanceof TarPath)) {
             throw new IOException("Path " + path.toString() + " is not a GZPath"); // Why are we even here?
         }
-        GZPath gzpath = (GZPath) path;
+        TarPath gzpath = (TarPath) path;
         return Files.getFileStore(gzpath.fileSystem.tarPath.getParent());
     }
 
@@ -297,10 +280,10 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
     @Override
     public <A extends BasicFileAttributes> A readAttributes(Path path, Class<A> type, LinkOption... options)
             throws IOException {
-        if (!(path instanceof GZPath)) {
+        if (!(path instanceof TarPath)) {
             throw new IOException("Path " + path.toString() + " is not a GZPath"); // Why are we even here?
         }
-        GZPath gzpath = (GZPath) path;
+        TarPath gzpath = (TarPath) path;
         return gzpath.getBasicFileAttributes(type, options);
     }
 
@@ -314,7 +297,7 @@ public class GZTarFileSystemProvider extends FileSystemProvider {
         throw new IOException("Unsupported operation");
     }
 
-    public void closeFileSystem(String tarFileName, GZTarFileSystem fs) {
+    public void closeFileSystem(String tarFileName, TarFileSystem fs) {
         this.filesystems.remove(Paths.get(tarFileName));
     }
 }

@@ -1,5 +1,6 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -16,11 +17,15 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import java.io.Closeable;
 import java.io.File;
 import java.net.URLEncoder;
-import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,38 +33,37 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /*
- * Performance test. Generate a decades worth of 1Hz PV data into a gztar plugin and then measure the performance for data reqrieval.
- * This can take a really lomg time especially with debug logging turned on; that's why this is not a unit test
- * For best results run this from within gradle; create a minimal_log4j2.xml first
- * <code>tasks.register('gzTarPerf', JavaExec) {
-        group = 'application'
-        description = 'Runs the GZTar performance'
-		dependsOn("compileJava")
-        classpath = sourceSets.test.runtimeClasspath
-        mainClass = 'edu.stanford.slac.archiverappliance.PB.compression.gztar.Perf'
-		jvmArgs = [
-			"-Dlog4j2.configurationFile=/work/minimal_log4j2.xml"
-		]
-}</code>
-    Then one can do a
-    <code>gradle gzTarPerf --args "/work/test 10 60"</code>
+ * Test append into an existing PB file inside a gztar file.
+ * This is testing something that the gztar plugin is not really intended for.
+ * Very similar to the PBPlugin test except we use a month's granularity inside the tar file
  */
-public class Perf implements Closeable {
+public class SeqAppendTest {
     private static final Logger logger = LogManager.getLogger();
+    private static final String rootFolderStr = ConfigServiceForTests.getDefaultPBTestFolder() + "/gztar/SeqAppend";
     private static final String pvName = "epics:arch:gztartest";
     private static final String chunkKey = pvName.replace(":", File.separator);
-    private final String rootFolderStr;
-    private ConfigServiceForTests configService;
+    private static ConfigServiceForTests configService;
 
-    public Perf(String rootFolder) throws Exception {
-        this.rootFolderStr = rootFolder;
+    @BeforeAll
+    public static void setUp() throws Exception {
+        File rootFolder = new File(rootFolderStr);
+        FileUtils.deleteDirectory(rootFolder);
+        Path pvPath = Paths.get(rootFolderStr, chunkKey);
+        logger.debug("Creating folder {}", pvPath.getParent().toFile().toString());
+        assert pvPath.getParent().toFile().mkdirs();
         configService = new ConfigServiceForTests(1);
+    }
+
+    @AfterAll
+    public static void tearDown() throws Exception {
+        FileUtils.cleanDirectory(new File(rootFolderStr));
+        FileUtils.deleteDirectory(new File(rootFolderStr));
     }
 
     private void appendAndTestForYear(short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
-                        + "&partitionGranularity=PARTITION_DAY",
+                        + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         try (BasicContext context = new BasicContext()) {
             short year = forYear;
@@ -84,82 +88,64 @@ public class Perf implements Closeable {
 
         EAATar tarFile = new EAATar(rootFolderStr + File.separator + chunkKey + ".tar");
         Map<String, TarEntry> entries = tarFile.loadCatalog();
+        Assertions.assertTrue(
+                entries.size() == expectedCatalogEntryCount,
+                "Expecting " + expectedCatalogEntryCount + " entries; got " + entries.size() + " entries");
     }
 
-    private int testRetrieval(Instant start, Instant end, int expectedEventCount) throws Exception {
+    private void testRetrieval(Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
-                        + "&partitionGranularity=PARTITION_DAY",
+                        + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         logger.debug(
                 "Looking for data between {} and {}",
                 TimeUtils.convertToISO8601String(start),
                 TimeUtils.convertToISO8601String(end));
-        int eventCount = 0;
         try (BasicContext context = new BasicContext()) {
+            int eventCount = 0;
             for (Callable<EventStream> callable :
                     storagePlugin.getDataForPV(context, pvName, start, end, new DefaultRawPostProcessor())) {
                 try (EventStream strm = callable.call()) {
+                    logger.debug(strm.getDescription());
                     for (Event ev : strm) {
-                        // logger.debug("Found event at {} {}",
-                        // TimeUtils.convertToISO8601String(ev.getEventTimeStamp()),
-                        // TimeUtils.convertToHumanReadableString(ev.getEventTimeStamp()));
+                        logger.debug(
+                                "Found event at {} {}",
+                                TimeUtils.convertToISO8601String(ev.getEventTimeStamp()),
+                                TimeUtils.convertToHumanReadableString(ev.getEventTimeStamp()));
+                        Assertions.assertEquals(
+                                ev.getEventTimeStamp().getEpochSecond(),
+                                ev.getSampleValue().getValue().doubleValue());
                         eventCount++;
                     }
                 }
             }
             logger.debug("Done counting events");
+            Assertions.assertTrue(
+                    eventCount == expectedEventCount,
+                    "Expecting " + expectedEventCount + " events; got " + eventCount + " events");
         }
-        return eventCount;
     }
 
-    public void close() {
-        this.configService.shutdownNow();
-    }
-
-    public static void main(String[] args) throws Exception {
-        if (args.length < 3) {
-            System.err.println(
-                    "Usage: java edu.stanford.slac.archiverappliance.PB.compression.gztar.Perf <FolderName> <NumYears> <NumDaysForRetrieval>");
-            return;
-        }
-
-        String folderName = args[0];
-        if (!Files.isDirectory(Paths.get(folderName))) {
-            System.err.println("Please specify a root folder that exists");
-            return;
-        }
-        int numYears = Integer.parseInt(args[1]);
-        int numDays = Integer.parseInt(args[2]);
-
-        short currentYear = TimeUtils.getCurrentYear();
-
-        Perf perf = new Perf(folderName);
-        if (!Files.exists(Paths.get(folderName + File.separator + chunkKey + ".tar"))) {
-            for (int y = numYears; y >= 0; y--) {
-                perf.appendAndTestForYear((short) (currentYear - y), 365 * (numYears - y + 1), 1);
-            }
-        } else {
-            System.out.println("GZTar file already exists");
-        }
-
+    @Test
+    public void testAppendThruPlugin() throws Exception {
+        short currentYear = (short) (TimeUtils.getCurrentYear() - 1);
+        appendAndTestForYear(currentYear, 12, 60);
         // Test retrieval
-        Instant end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 90);
-        perf.testRetrieval(end.minus(1, ChronoUnit.DAYS), end, (1 * 24 * 60 * 60) + 1 + 1); // Precompile
-        for (int days = 1; days < numDays; days++) {
-            Instant start = end.minus(days, ChronoUnit.DAYS);
-            long before = System.currentTimeMillis();
-            int events = perf.testRetrieval(
-                    start,
-                    end,
-                    (days * 24 * 60 * 60)
-                            + 1
-                            + 1); // One for the last known event and one for the event that's exactly at the end time.
-            long after = System.currentTimeMillis();
-            System.out.println(
-                    "Took " + (after - before) + "(ms) to retrieve " + events + " events for " + days + " days");
+        Instant end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
+        for (int days = 1; days < 10; days++) {
+            Instant start = end.minus(days, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
+            testRetrieval(start, end, (days * 24 * 60) + 1 + 1);
         }
 
-        perf.close();
+        try (ArchPaths archPaths = new ArchPaths()) {
+            EAATar tarFile = new EAATar(rootFolderStr + File.separator + chunkKey + ".tar");
+            tarFile.optimize();
+        }
+
+        for (int days = 1; days < 10; days++) {
+            Instant start = end.minus(days, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
+            testRetrieval(start, end, (days * 24 * 60) + 1 + 1);
+        }
     }
 }

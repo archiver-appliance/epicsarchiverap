@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 import java.io.File;
 
@@ -7,14 +7,14 @@ import java.io.File;
  */
 
 public record TarEntry(
-        String entryName, long headeroffset, long dataoffset, long size, long uncompressedsize, File srcContent) {
+        String entryName, long headeroffset, long dataoffset, long size, File srcContent) {
 
     public TarEntry(String entryName, File srcContent) {
-        this(entryName, -1, -1, -1, -1, srcContent);
+        this(entryName, -1, -1, -1, srcContent);
     }
 
-    public TarEntry(String entryName, long headeroffset, long dataoffset, long size, long uncompressedsize) {
-        this(entryName, headeroffset, dataoffset, size, uncompressedsize, null);
+    public TarEntry(String entryName, long headeroffset, long dataoffset, long size) {
+        this(entryName, headeroffset, dataoffset, size, null);
     }
 
     @Override
@@ -26,9 +26,7 @@ public record TarEntry(
                     .append(" starting at ")
                     .append(dataoffset)
                     .append(" and size ")
-                    .append(size)
-                    .append(" uncompressed ")
-                    .append(uncompressedsize);
+                    .append(size);
         } else {
             buf.append("File: ").append(entryName).append(" with source at ").append(srcContent.getAbsolutePath());
         }

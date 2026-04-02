@@ -1425,12 +1425,14 @@ public class PlainStoragePlugin
             // We may need to get the filesystem from the parent for some NIO2 implementations.
             // But for now, only gztar implements this interface and that uses the same filesystem object for the path
             // and the parent.
-            FileSystem fs = path.getFileSystem();
-            if (fs != null && fs instanceof ETLOptimizable) {
-                List<ETLOptimizable> optimizables = new ArrayList<ETLOptimizable>();
-                ETLOptimizable optimizableFS = (ETLOptimizable) fs;
-                optimizables.add(optimizableFS);
-                return optimizables;
+            if(path != null) {
+                FileSystem fs = path.getFileSystem();
+                if (fs != null && fs instanceof ETLOptimizable) {
+                    List<ETLOptimizable> optimizables = new ArrayList<ETLOptimizable>();
+                    ETLOptimizable optimizableFS = (ETLOptimizable) fs;
+                    optimizables.add(optimizableFS);
+                    return optimizables;
+                }
             }
         }
 

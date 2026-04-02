@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 /*
  * Generate a DB with 500 million potential gztar file catalog entries and check performance of query.
@@ -38,8 +38,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 public class EAATar {
     private static final int TAR_RECORD_SIZE = 512;
@@ -175,8 +173,7 @@ public class EAATar {
                                     fileName,
                                     headerOffset,
                                     dataOffset,
-                                    dataSize,
-                                    Long.parseLong(entry.getGroupName(), GZTAR_MAX_RADIX));
+                                    dataSize);
                             if (!filter.test(te)) {
                                 logger.debug("Rejected tar entry {}", te);
                                 return;
@@ -216,8 +213,7 @@ public class EAATar {
                 logger.debug(
                         "Added entry {} to catalog at offset {} size {}",
                         te.entryName(),
-                        te.dataoffset(),
-                        te.uncompressedsize());
+                        te.dataoffset());
                 return true;
             }
         });
@@ -240,7 +236,11 @@ public class EAATar {
         return hasDeleted[0];
     }
 
-    public void extractAndGUnzip(TarEntry entry, WritableByteChannel destChannel) throws IOException {
+    public TarReadOnlyByteChannel getReadOnlyByteChannel(TarEntry entry) throws IOException {
+        return new TarReadOnlyByteChannel(this.tarFileName, entry);
+    }
+
+    public void extract(TarEntry entry, WritableByteChannel destChannel) throws IOException {
         logger.debug("Extracting and decompressing {}", entry);
         try (RandomAccessFile rf = new RandomAccessFile(this.tarFileName, "r")) {
             FileChannel channel = rf.getChannel();
@@ -255,17 +255,15 @@ public class EAATar {
 
             ByteBuffer databuf = ByteBuffer.allocate(DEFAULT_BUFFER_SIZE);
             try (FileInputStream tmpis = new FileInputStream(tmpFile)) {
-                try (GZIPInputStream gis = new GZIPInputStream(tmpis)) {
-                    try (ReadableByteChannel gzipchannel = Channels.newChannel(gis)) {
-                        databuf.clear();
-                        int bytesRead = 0;
-                        while ((bytesRead = gzipchannel.read(databuf)) > 0) {
-                            databuf.flip();
-                            if (databuf.hasRemaining()) {
-                                destChannel.write(databuf);
-                            }
-                            databuf.clear();
+                try (ReadableByteChannel gzipchannel = Channels.newChannel(tmpis)) {
+                    databuf.clear();
+                    int bytesRead = 0;
+                    while ((bytesRead = gzipchannel.read(databuf)) > 0) {
+                        databuf.flip();
+                        if (databuf.hasRemaining()) {
+                            destChannel.write(databuf);
                         }
+                        databuf.clear();
                     }
                 }
             }
@@ -302,19 +300,17 @@ public class EAATar {
                     Path tmpPath = Files.createTempFile("Eaa", ".gz");
                     File tmpFile = tmpPath.toFile();
                     try (FileOutputStream tmpos = new FileOutputStream(tmpFile)) {
-                        try (GZIPOutputStream gos = new GZIPOutputStream(tmpos)) {
-                            try (WritableByteChannel gzipchannel = Channels.newChannel(gos)) {
-                                try (FileInputStream fis = new FileInputStream(file)) {
-                                    try (FileChannel srcChannel = fis.getChannel()) {
-                                        databuf.clear();
-                                        int bytesRead = 0;
-                                        while ((bytesRead = srcChannel.read(databuf)) > 0) {
-                                            databuf.flip();
-                                            if (databuf.hasRemaining()) {
-                                                gzipchannel.write(databuf);
-                                            }
-                                            databuf.clear();
+                        try (WritableByteChannel gzipchannel = Channels.newChannel(tmpos)) {
+                            try (FileInputStream fis = new FileInputStream(file)) {
+                                try (FileChannel srcChannel = fis.getChannel()) {
+                                    databuf.clear();
+                                    int bytesRead = 0;
+                                    while ((bytesRead = srcChannel.read(databuf)) > 0) {
+                                        databuf.flip();
+                                        if (databuf.hasRemaining()) {
+                                            gzipchannel.write(databuf);
                                         }
+                                        databuf.clear();
                                     }
                                 }
                             }
@@ -432,7 +428,6 @@ public class EAATar {
                             TarArchiveEntry entry = new TarArchiveEntry(te.entryName());
                             entry.clearExtraPaxHeaders();
                             entry.setSize(te.size());
-                            entry.setGroupName(Long.toString(te.uncompressedsize(), GZTAR_MAX_RADIX));
                             entry.writeEntryHeader(headerbuf, UTF8_ENC, true);
                             destChannel.write(ByteBuffer.wrap(headerbuf));
                         } catch (IOException ex) {
@@ -525,7 +520,7 @@ public class EAATar {
                 logger.info("Found tar file entry for " + fileNameInArchive + " " + entry.toString());
                 try (FileOutputStream fos = new FileOutputStream(new File(outputFileName))) {
                     try (FileChannel destChannel = fos.getChannel()) {
-                        tarFile.extractAndGUnzip(entry, destChannel);
+                        tarFile.extract(entry, destChannel);
                         System.out.println("Done extracting " + fileNameInArchive + " to " + outputFileName);
                     }
                 }

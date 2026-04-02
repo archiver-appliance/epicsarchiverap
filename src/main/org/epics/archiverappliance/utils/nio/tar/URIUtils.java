@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

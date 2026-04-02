@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,18 +37,17 @@ import java.util.concurrent.ConcurrentHashMap;
  * ETL into a GZTar data store is expected to be infrequent ( maybe once a year )
  * ETL out of a GZTar data store is not expected to happen.
  */
-public class GZTarFileSystem extends FileSystem implements ETLOptimizable {
-    private static final Logger logger = LogManager.getLogger(GZTarFileSystem.class.getName());
+public class TarFileSystem extends FileSystem implements ETLOptimizable {
+    private static final Logger logger = LogManager.getLogger(TarFileSystem.class.getName());
 
-    private GZTarFileSystemProvider provider;
+    private TarFileSystemProvider provider;
     final Path tarPath;
     final Map<String, ?> env;
     final EAATar tarFile;
 
     private Map<String, TarEntry> tarFileCatalog;
-    private ConcurrentHashMap<String, File> readTempFileCache = new ConcurrentHashMap<String, File>();
 
-    GZTarFileSystem(GZTarFileSystemProvider provider, Path tarPath, Map<String, ?> env) throws IOException {
+    TarFileSystem(TarFileSystemProvider provider, Path tarPath, Map<String, ?> env) throws IOException {
         logger.debug("Creating GZTarFileSystem for {}", tarPath.toString());
         this.provider = provider;
         this.tarPath = tarPath;
@@ -61,13 +60,6 @@ public class GZTarFileSystem extends FileSystem implements ETLOptimizable {
     @Override
     public void close() throws IOException {
         logger.debug("Closing file system for {}", this.tarPath);
-        Map<String, File> cachedFilesCopy = Map.copyOf(readTempFileCache);
-        readTempFileCache.clear();
-        for (Entry<String, File> tFileEntry : cachedFilesCopy.entrySet()) {
-            logger.debug(
-                    "Deleting temp file {} for entry {}", tFileEntry.getValue().getAbsolutePath(), tFileEntry.getKey());
-            Files.delete(tFileEntry.getValue().toPath());
-        }
         this.provider.closeFileSystem(this.tarFile.getTarFileName(), this);
     }
 
@@ -85,18 +77,18 @@ public class GZTarFileSystem extends FileSystem implements ETLOptimizable {
             String entryName = combined.toString();
             if (entryName == null || entryName.isEmpty() || entryName.equals("/")) {
                 logger.debug("Asking for the file system root");
-                return new GZPath(this, new TarEntry("/", null));
+                return new TarPath(this, new TarEntry("/", null));
             }
 
             entry = this.tarFileCatalog.get(entryName);
 
             if (entry == null) {
                 logger.debug("Empty GZPath for {}", entryName);
-                return new GZPath(this, new TarEntry(entryName, null));
+                return new TarPath(this, new TarEntry(entryName, null));
 
             } else {
                 logger.debug("GZPath for tar entry {}", entry);
-                return new GZPath(this, entry);
+                return new TarPath(this, entry);
             }
         } catch (Exception ex) {
             logger.error("Exception parsing URI " + combined.toString(), ex);
@@ -196,21 +188,9 @@ public class GZTarFileSystem extends FileSystem implements ETLOptimizable {
         this.tarFileCatalog = this.tarFile.loadCatalog();
     }
 
-    public File getCachedTempFile(String entryName) throws IOException {
-        return this.readTempFileCache.get(entryName);
-    }
-
-    public File putCachedTempFile(String entryName, File tempFile) throws IOException {
-        return this.readTempFileCache.put(entryName, tempFile);
-    }
-
-    public File removeCachedTempFile(String entryName) throws IOException {
-        return this.readTempFileCache.remove(entryName);
-    }
-
     @Override
     public boolean equals(Object obj) {
-        GZTarFileSystem other = (GZTarFileSystem) obj;
+        TarFileSystem other = (TarFileSystem) obj;
         return this.tarPath.equals(other.tarPath);
     }
 

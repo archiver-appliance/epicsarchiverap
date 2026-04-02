@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.utils.nio.gztar;
+package org.epics.archiverappliance.utils.nio.tar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,24 +18,24 @@ import java.util.Arrays;
  * For reads, this is mostly cleanup
  * For writes, this updates the tar file and then does cleanup.
  */
-public class GZTarSeekableByteChannel implements SeekableByteChannel {
-    static final Logger logger = LogManager.getLogger(GZTarSeekableByteChannel.class.getName());
+public class TarSeekableByteChannel implements SeekableByteChannel {
+    static final Logger logger = LogManager.getLogger(TarSeekableByteChannel.class.getName());
 
     Closeable streamToClose; // The stream to close when the channel closes, typically the FileInputStream or
     // FileOutputStream from which proxied below is derived
     FileChannel proxied; // The channel to proxy; all SeekableByteChannel are delegated to this.
     TarEntry tarEntry; // The tarEntry to replace; only the entryName matters here. Can be null in which case we only
     // close the stream
-    GZTarFileSystem gfs; // The Tar file to manipulate
+    TarFileSystem gfs; // The Tar file to manipulate
     File fileToAppend; // The file whose contents will become the new data for the tarentry
     Path deletFileOnClose; // Delete this file on close ( typically this is a temp file )
     boolean somethingWritten;
 
-    public GZTarSeekableByteChannel(
+    public TarSeekableByteChannel(
             Closeable streamToClose,
             FileChannel proxied,
             TarEntry tarEntry,
-            GZTarFileSystem gfs,
+            TarFileSystem gfs,
             File fileToAppend,
             Path deletFileOnClose) {
         this.streamToClose = streamToClose;
@@ -88,15 +88,6 @@ public class GZTarSeekableByteChannel implements SeekableByteChannel {
                 }
                 this.gfs.reloadCatalog();
 
-                File cachedTempFile = this.gfs.getCachedTempFile(tarEntry.entryName());
-                if (cachedTempFile != null) {
-                    logger.debug(
-                            "Removing cached entry and deleting temp file {} for {} ",
-                            cachedTempFile.getAbsolutePath(),
-                            tarEntry.entryName());
-                    this.gfs.removeCachedTempFile(tarEntry.entryName());
-                    Files.delete(cachedTempFile.toPath());
-                }
                 logger.debug(
                         "Done appending new content for {} from temp file {} into tar file {} ",
                         this.tarEntry.entryName(),
