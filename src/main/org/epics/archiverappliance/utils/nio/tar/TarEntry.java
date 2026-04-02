@@ -6,8 +6,7 @@ import java.io.File;
  * Encapsulates both the tar entries in a tar file and also the inputs to the tar file
  */
 
-public record TarEntry(
-        String entryName, long headeroffset, long dataoffset, long size, File srcContent) {
+public record TarEntry(String entryName, long headeroffset, long dataoffset, long size, File srcContent) {
 
     public TarEntry(String entryName, File srcContent) {
         this(entryName, -1, -1, -1, srcContent);

@@ -169,11 +169,7 @@ public class EAATar {
                             }
                         } else if (fileName != null && fileName.length() > 0) {
                             long dataOffset = channel.position();
-                            TarEntry te = new TarEntry(
-                                    fileName,
-                                    headerOffset,
-                                    dataOffset,
-                                    dataSize);
+                            TarEntry te = new TarEntry(fileName, headerOffset, dataOffset, dataSize);
                             if (!filter.test(te)) {
                                 logger.debug("Rejected tar entry {}", te);
                                 return;
@@ -210,10 +206,7 @@ public class EAATar {
                     return true;
                 }
                 ret.put(te.entryName(), te);
-                logger.debug(
-                        "Added entry {} to catalog at offset {} size {}",
-                        te.entryName(),
-                        te.dataoffset());
+                logger.debug("Added entry {} to catalog at offset {} size {}", te.entryName(), te.dataoffset());
                 return true;
             }
         });

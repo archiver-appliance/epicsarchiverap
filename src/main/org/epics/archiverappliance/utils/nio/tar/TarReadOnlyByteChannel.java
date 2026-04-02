@@ -22,10 +22,7 @@ public class TarReadOnlyByteChannel implements SeekableByteChannel {
     final RandomAccessFile rf;
     final FileChannel proxied;
 
-    public TarReadOnlyByteChannel(
-        String tarFileName,
-        TarEntry tarEntry
-    ) throws IOException {
+    public TarReadOnlyByteChannel(String tarFileName, TarEntry tarEntry) throws IOException {
         this.tarFile = new File(tarFileName);
         this.tarEntry = tarEntry;
         this.rf = new RandomAccessFile(tarFile, "r");
@@ -68,10 +65,10 @@ public class TarReadOnlyByteChannel implements SeekableByteChannel {
 
     @Override
     public SeekableByteChannel position(long newPosition) throws IOException {
-        if(newPosition < 0) {
+        if (newPosition < 0) {
             throw new IOException("Cannot set position before the start of the tar entry data");
         }
-        if(newPosition > tarEntry.size()) {
+        if (newPosition > tarEntry.size()) {
             throw new IOException("Cannot set position beyond the end of the tar entry data");
         }
         proxied.position(tarEntry.dataoffset() + newPosition);
