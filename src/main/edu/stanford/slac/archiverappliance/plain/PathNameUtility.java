@@ -98,8 +98,7 @@ public class PathNameUtility {
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
 
         ArrayList<Path> retVal = new ArrayList<>();
-        try (DirectoryStream<Path> paths =
-                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
+        try (DirectoryStream<Path> paths = getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
             for (Path path : paths) {
                 String name = path.getFileName().toString();
                 try {
@@ -191,8 +190,7 @@ public class PathNameUtility {
             PVNameToKeyMapping pv2key)
             throws IOException {
         ArrayList<Path> retval = new ArrayList<>();
-        try (DirectoryStream<Path> paths =
-                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
+        try (DirectoryStream<Path> paths = getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
             for (Path path : paths) {
                 retval.add(path);
             }
@@ -394,11 +392,7 @@ public class PathNameUtility {
      * @throws IOException &emsp;
      */
     private static DirectoryStream<Path> getDirectoryStreamsForPV(
-            ArchPaths paths,
-            String rootFolder,
-            final String pvName,
-            final String extension,
-            PVNameToKeyMapping pv2key)
+            ArchPaths paths, String rootFolder, final String pvName, final String extension, PVNameToKeyMapping pv2key)
             throws IOException {
         try {
             PVPath pvPath = new PVPath(rootFolder, pv2key.convertPVNameToKey(pvName), null, null);
