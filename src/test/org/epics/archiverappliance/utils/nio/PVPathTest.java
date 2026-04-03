@@ -434,4 +434,31 @@ public class PVPathTest {
                 URI.create("s3:///arch/lts"),
                 new PVPath("s3:///arch/lts", "ArchUnitTest/sine:", null, null).toRootURI());
     }
+
+
+    @Test
+    public void testScheme() {
+        Assertions.assertNull(new PVPath("/arch/lts", "ArchUnitTest/sine:", null, null).getScheme());
+        Assertions.assertEquals("jar", new PVPath("jar:file:///arch/lts", "ArchUnitTest/sine:", null, null).getScheme());
+        Assertions.assertEquals("jar", new PVPath("jar://arch/lts", "ArchUnitTest/sine:", null, null).getScheme());
+        Assertions.assertEquals("tar", new PVPath("tar:///arch/lts", "ArchUnitTest/sine:", null, null).getScheme());
+        Assertions.assertEquals("tar", new PVPath("tar:s3:///arch/lts", "ArchUnitTest/sine:", null, null).getScheme());
+        Assertions.assertEquals("s3", new PVPath("s3:///arch/lts", "ArchUnitTest/sine:", null, null).getScheme());
+    }
+    
+    @Test
+    public void testIsPlainFile() {
+        Assertions.assertTrue(new PVPath("/arch/lts", "ArchUnitTest/sine:", null, null).isPlainFile());
+        Assertions.assertFalse(new PVPath("jar:file:///arch/lts", "ArchUnitTest/sine:", null, null).isPlainFile());
+        Assertions.assertFalse(new PVPath("tar:///arch/lts", "ArchUnitTest/sine:", null, null).isPlainFile());
+        Assertions.assertFalse(new PVPath("s3:///arch/lts", "ArchUnitTest/sine:", null, null).isPlainFile());
+    }
+
+    @Test
+    public void testIsPackFile() {
+        Assertions.assertFalse(new PVPath("/arch/lts", "ArchUnitTest/sine:", null, null).isPackFile());
+        Assertions.assertTrue(new PVPath("jar:file:///arch/lts", "ArchUnitTest/sine:", null, null).isPackFile());
+        Assertions.assertTrue(new PVPath("tar:///arch/lts", "ArchUnitTest/sine:", null, null).isPackFile());
+        Assertions.assertFalse(new PVPath("s3:///arch/lts", "ArchUnitTest/sine:", null, null).isPackFile());
+    }
 }

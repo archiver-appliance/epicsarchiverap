@@ -83,6 +83,15 @@ public class PVPath {
         return this.scheme != null;
     }
 
+    public String getScheme() {
+        return scheme;
+    }
+
+    /*
+     * Used by ArchPaths to determine if we need to look up a FileSystem using NIO2
+     * or if this is a plain file on the local filesystem and can be accessed directly without
+     * NIO2 lookup.
+     */
     public boolean isPlainFile() {
         return !this.isPackFile && (this.scheme == null || this.scheme.equals("file"));
     }
