@@ -93,14 +93,13 @@ public class PathNameUtility {
             final Instant endts,
             final String extension,
             final PartitionGranularity granularity,
-            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
 
         ArrayList<Path> retVal = new ArrayList<>();
         try (DirectoryStream<Path> paths =
-                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key)) {
+                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
             for (Path path : paths) {
                 String name = path.getFileName().toString();
                 try {
@@ -168,7 +167,6 @@ public class PathNameUtility {
                 reqEndTime,
                 extension,
                 granularity,
-                pathResolver,
                 pv2key);
     }
 
@@ -194,7 +192,7 @@ public class PathNameUtility {
             throws IOException {
         ArrayList<Path> retval = new ArrayList<>();
         try (DirectoryStream<Path> paths =
-                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key)) {
+                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
             for (Path path : paths) {
                 retval.add(path);
             }
@@ -391,7 +389,6 @@ public class PathNameUtility {
      * @param rootFolder      The root folder for the plugin
      * @param pvName          Name of the PV.
      * @param extension       The file extension.
-     * @param pathResolver    Path Resolver
      * @param pv2key          PVNameToKeyMapping
      * @return DirectoryStream  NIO2 directory stream;
      * @throws IOException &emsp;
@@ -401,7 +398,6 @@ public class PathNameUtility {
             String rootFolder,
             final String pvName,
             final String extension,
-            PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         try {

@@ -138,7 +138,6 @@ public class PlainPBFileNameUtilityTest {
                 startOfYear.plusSeconds(nIntervals * granularity.getApproxSecondsPerChunk() - 1),
                 extension,
                 granularity,
-                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(nIntervals, matchingPaths.length, "File count " + matchingPaths.length);
 
@@ -209,7 +208,6 @@ public class PlainPBFileNameUtilityTest {
                 endYear.minusSeconds(1).toInstant(),
                 extension,
                 partition,
-                PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
         Assertions.assertEquals(8, matchingPaths.length, "File count " + matchingPaths.length);
 

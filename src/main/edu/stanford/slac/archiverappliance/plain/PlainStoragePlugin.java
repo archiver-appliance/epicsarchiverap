@@ -281,7 +281,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         endTime,
                         this.plainFileHandler.getExtensionString(),
                         partitionGranularity,
-                        this.getPathResolver(),
                         this.pv2key);
             } else {
                 paths = PathNameUtility.getPathsWithData(
@@ -292,7 +291,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                         endTime,
                         extension,
                         partitionGranularity,
-                        this.getPathResolver(),
                         this.pv2key);
                 if (paths.length == 0) {
                     logger.info("Did not find any cached entries for " + pvName + " for post processor " + extension
@@ -306,7 +304,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                             endTime,
                             plainFileHandler.getExtensionString(),
                             partitionGranularity,
-                            this.getPathResolver(),
                             this.pv2key);
                 } else {
                     logger.info("Found " + paths.length + " cached entries for " + pvName + " for post processor "
@@ -434,7 +431,6 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 eTime,
                 getExtensionString(),
                 partitionGranularity,
-                this.getPathResolver(),
                 pv2key);
         if (paths == null) return null;
         List<Path> pathList = Arrays.asList(paths);
