@@ -5,6 +5,7 @@ import static edu.stanford.slac.archiverappliance.plain.pb.PBPlainFileHandler.PB
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -12,7 +13,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.junit.jupiter.api.AfterEach;
@@ -76,10 +76,10 @@ public class DeletePVAfterRestartTest {
     @Test
     public void testSimpleDeletePV() throws Exception {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
         GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pvNameToArchive), false);
         Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 15);
     }
 
     private static PVTypeInfo generatePVTypeInfo(String pvName, String applianceIdentity) {

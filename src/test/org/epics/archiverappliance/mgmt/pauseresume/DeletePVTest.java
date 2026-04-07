@@ -3,12 +3,12 @@ package org.epics.archiverappliance.mgmt.pauseresume;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
@@ -66,22 +66,22 @@ public class DeletePVTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 10);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 10);
         logger.info("We are now archiving the PV; let's go into the details page; pause and delete");
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 5);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 5);
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 5);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 5);
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 5);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 5);
 
         GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pvNameToArchive), false);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 5);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 5);
     }
 }

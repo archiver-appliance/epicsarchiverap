@@ -3,12 +3,12 @@ package org.epics.archiverappliance.mgmt.pauseresume;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
@@ -73,7 +73,7 @@ public class DeleteMultiplePVTest {
         logger.info("Archiving 5 PV");
         GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
         for (String pv : pvs) {
-            PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
+            ArchiveTestUtils.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
         }
 
         logger.info("Pausing 2 PV");
@@ -81,19 +81,19 @@ public class DeleteMultiplePVTest {
         for (String pv : pvsToDelete) {
             GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pv), false);
             Thread.sleep(2 * 1000);
-            PVAccessUtil.waitForStatusChange(pv, "Paused", 10, mgmtURL, 15);
+            ArchiveTestUtils.waitForStatusChange(pv, "Paused", 10, mgmtURL, 15);
         }
 
         for (String pv : pvsToDelete) {
             GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pv), false);
             Thread.sleep(2 * 1000);
-            PVAccessUtil.waitForStatusChange(pv, "Not being archived", 10, mgmtURL, 15);
+            ArchiveTestUtils.waitForStatusChange(pv, "Not being archived", 10, mgmtURL, 15);
         }
 
         logger.info("Checking other PV are still there");
         for (String pv : pvs) {
             if (!pvsToDelete.contains(pv)) {
-                PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
+                ArchiveTestUtils.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
             }
         }
     }

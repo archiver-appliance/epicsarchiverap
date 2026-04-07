@@ -2,13 +2,13 @@ package org.epics.archiverappliance.mgmt;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
@@ -103,7 +103,7 @@ public class ArchiveFieldsNotInStreamTest {
         logger.info("Archiving multiple PVs");
         GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
         for (String pv : fieldsToArchive) {
-            PVAccessUtil.waitForStatusChange(pv, "Being archived", 20, mgmtURL, 15);
+            ArchiveTestUtils.waitForStatusChange(pv, "Being archived", 20, mgmtURL, 15);
         }
 
         // Check that we have PVTypeInfo's for the main PV. Also check the archiveFields.
@@ -129,7 +129,7 @@ public class ArchiveFieldsNotInStreamTest {
         SIOCSetup.caput("ArchUnitTest:fieldtst:cnt", "0.0");
         String retrievalURL =
                 "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw";
-        PVAccessUtil.waitForData("ArchUnitTest:fieldtst.C", 9, retrievalURL);
+        ArchiveTestUtils.waitForData("ArchUnitTest:fieldtst.C", 9, retrievalURL);
         testRetrievalCount("ArchUnitTest:fieldtst", new double[] {0.0});
         testRetrievalCount("ArchUnitTest:fieldtst.C", new double[] {3.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5});
         testRetrievalCount("ArchUnitTest:fieldtstalias", new double[] {0.0});

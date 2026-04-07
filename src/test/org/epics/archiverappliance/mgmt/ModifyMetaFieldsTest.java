@@ -3,13 +3,13 @@ package org.epics.archiverappliance.mgmt;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
 import org.junit.jupiter.api.AfterEach;
@@ -71,7 +71,7 @@ public class ModifyMetaFieldsTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvName)))));
-        PVAccessUtil.waitForStatusChange(pvName, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvName, "Being archived", 10, mgmtURL, 15);
         String aapl0 = checkInPersistence(pvName, 0);
         String aapl1 = checkInPersistence(pvName, 1);
         Assertions.assertTrue(
