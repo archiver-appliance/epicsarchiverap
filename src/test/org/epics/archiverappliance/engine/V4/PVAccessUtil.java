@@ -4,6 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
+import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.data.SampleValue;
@@ -13,6 +15,7 @@ import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
+import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.data.Hexdump;
@@ -157,6 +160,39 @@ public class PVAccessUtil {
         var firstValueSubString = dataString.indexOf("value", 0);
 
         return dataString.substring(firstValueSubString + 5).replaceAll(" ", "");
+    }
+
+    /**
+     * Polls the raw retrieval API until at least one event is available for the given PV.
+     * Fails the test if no data appears within 5 minutes.
+     */
+    public static void waitForData(String pvName, String retrievalURL) {
+        waitForData(pvName, 1, retrievalURL);
+    }
+
+    /**
+     * Polls the raw retrieval API until at least {@code minEvents} events are available for the given PV.
+     * Fails the test if the condition is not met within 5 minutes.
+     */
+    public static void waitForData(String pvName, int minEvents, String retrievalURL) {
+        Awaitility.await()
+                .pollInterval(5, TimeUnit.SECONDS)
+                .atMost(5, TimeUnit.MINUTES)
+                .until(() -> {
+                    RawDataRetrievalAsEventStream raw = new RawDataRetrievalAsEventStream(retrievalURL);
+                    java.time.Instant end = TimeUtils.plusDays(TimeUtils.now(), 1);
+                    java.time.Instant start = TimeUtils.minusDays(end, 8);
+                    try (EventStream stream = raw.getDataForPVS(new String[] {pvName}, start, end, null)) {
+                        if (stream == null) return false;
+                        int count = 0;
+                        for (Event ignored : stream) {
+                            if (++count >= minEvents) return true;
+                        }
+                        return false;
+                    } catch (IOException e) {
+                        return false;
+                    }
+                });
     }
 
     public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl) {

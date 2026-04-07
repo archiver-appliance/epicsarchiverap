@@ -63,7 +63,9 @@ public class ArchiveAliasedPVTest {
         SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
         Thread.sleep(2 * 1000);
         logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-        Thread.sleep(2 * 60 * 1000);
+        String retrievalURL =
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw";
+        PVAccessUtil.waitForData("UnitTestNoNamingConvention:sine", retrievalURL);
 
         // Test retrieval of data using the real name and the aliased name
         testRetrievalCount("UnitTestNoNamingConvention:sine");
