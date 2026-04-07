@@ -127,7 +127,9 @@ public class ArchiveFieldsNotInStreamTest {
         // values
         testRetrievalCount("ArchUnitTest:fieldtst", new double[] {0.0});
         SIOCSetup.caput("ArchUnitTest:fieldtst:cnt", "0.0");
-        Thread.sleep(2 * 60 * 1000);
+        String retrievalURL =
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw";
+        PVAccessUtil.waitForData("ArchUnitTest:fieldtst.C", 9, retrievalURL);
         testRetrievalCount("ArchUnitTest:fieldtst", new double[] {0.0});
         testRetrievalCount("ArchUnitTest:fieldtst.C", new double[] {3.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5});
         testRetrievalCount("ArchUnitTest:fieldtstalias", new double[] {0.0});

@@ -92,7 +92,9 @@ public class ClusterAliasTest {
         SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
         Thread.sleep(2 * 1000);
         logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-        Thread.sleep(2 * 60 * 1000);
+        PVAccessUtil.waitForData(
+                "UnitTestNoNamingConvention:sine",
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
         String aapl0 = checkInPersistence("UnitTestNoNamingConvention:sine", 0);
         String aapl1 = checkInPersistence("UnitTestNoNamingConvention:sine", 1);

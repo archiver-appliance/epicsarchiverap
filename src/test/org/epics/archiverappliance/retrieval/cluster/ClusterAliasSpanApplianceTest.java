@@ -90,7 +90,9 @@ public class ClusterAliasSpanApplianceTest {
         SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
         Thread.sleep(2 * 1000);
         logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-        Thread.sleep(2 * 60 * 1000);
+        PVAccessUtil.waitForData(
+                "UnitTestNoNamingConvention:sine",
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
         // We have the appliance identity in either aapl0 or aapl1
         // Manually add an alias into the other appliance.
