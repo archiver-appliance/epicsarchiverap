@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetArchivedPVs;
@@ -97,8 +98,8 @@ public class PvaGetArchivedPVsTest {
                     .build();
             pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
 
-            // Wait 2 mins for the pv's to start archiving
-            Thread.sleep(2 * 60 * 1000);
+            // Wait for a representative PV to confirm the batch has been processed
+            PVAccessUtil.waitForStatusChange("test_0", "Being archived", 30, "http://localhost:17665/mgmt/bpl/", 5);
 
             archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
                     .name(PvaArchivePVAction.NAME)
