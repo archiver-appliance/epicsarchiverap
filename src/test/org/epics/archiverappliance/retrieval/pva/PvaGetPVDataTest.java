@@ -1,5 +1,9 @@
 package org.epics.archiverappliance.retrieval.pva;
 
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+import static org.epics.archiverappliance.retrieval.pva.PvaDataRetrievalService.PVA_DATA_SERVICE;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,10 +45,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.epics.archiverappliance.retrieval.pva.PvaDataRetrievalService.PVA_DATA_SERVICE;
 
 @Tag("integration")
 @Tag("localEpics")
@@ -147,22 +147,25 @@ public class PvaGetPVDataTest {
         expectedData.put(instant, formatInput(value));
         serverPV.update(data);
 
-        // Get data from archiver via pv access
-        // Wait for the writer to write the data
-        Thread.sleep(30 * 1000);
-        PVAAnyArray valuesAnyArray = getRetrievalPvaAnyArray(pvNames).get("value");
-
-        PVAny[] allPVValues = valuesAnyArray.get();
-        Map<Instant, String> actualData = new HashMap<>();
-        for (PVAny any : allPVValues) {
-            PVAStructureArray structureArray = any.get();
-            for (PVAStructure structure : structureArray.get()) {
-                actualData.put(PVATimeStamp.getTimeStamp(structure).instant(), formatInput(structure.get("value")));
-            }
-        }
-
-        // Check data is expected
-        Assertions.assertEquals(expectedData, actualData);
+        // Poll until the archiver has written and the retrieval service returns the expected data
+        Awaitility.await()
+                .pollInterval(fibonacci(TimeUnit.SECONDS))
+                .atMost(2, TimeUnit.MINUTES)
+                .untilAsserted(() -> {
+                    PVAAnyArray valuesAnyArray =
+                            getRetrievalPvaAnyArray(pvNames).get("value");
+                    PVAny[] allPVValues = valuesAnyArray.get();
+                    Map<Instant, String> actualData = new HashMap<>();
+                    for (PVAny any : allPVValues) {
+                        PVAStructureArray structureArray = any.get();
+                        for (PVAStructure structure : structureArray.get()) {
+                            actualData.put(
+                                    PVATimeStamp.getTimeStamp(structure).instant(),
+                                    formatInput(structure.get("value")));
+                        }
+                    }
+                    Assertions.assertEquals(expectedData, actualData);
+                });
     }
 
     private static PVAStructure getRetrievalPvaAnyArray(List<String> pvNames)
@@ -238,26 +241,28 @@ public class PvaGetPVDataTest {
             }
         });
 
-        // Get data from archiver via pv access
-        // Wait for the writer to write the data
-        Thread.sleep(30 * 1000);
-        PVAStructure result = getRetrievalPvaAnyArray(pvNames);
-        PVAStringArray pvaLabels = result.get("labels");
-        String[] labels = pvaLabels.get();
-        PVAAnyArray pvaAnyArray = result.get("value");
-        PVAny[] anyArray = pvaAnyArray.get();
-
-        Map<String, Map<Instant, String>> actualData = new HashMap<>();
-        for (int i = 0; i < labels.length; i++) {
-            Map<Instant, String> pvDataResult = new HashMap<>();
-            PVAStructureArray structureArray = anyArray[i].get();
-            for (PVAStructure structure : structureArray.get()) {
-                pvDataResult.put(PVATimeStamp.getTimeStamp(structure).instant(), formatInput(structure.get("value")));
-            }
-            actualData.put(labels[i], pvDataResult);
-        }
-
-        // Check data is expected
-        Assertions.assertEquals(expectedData, actualData);
+        // Poll until the archiver has written and the retrieval service returns the expected data
+        Awaitility.await()
+                .pollInterval(fibonacci(TimeUnit.SECONDS))
+                .atMost(2, TimeUnit.MINUTES)
+                .untilAsserted(() -> {
+                    PVAStructure result = getRetrievalPvaAnyArray(pvNames);
+                    PVAStringArray pvaLabels = result.get("labels");
+                    String[] labels = pvaLabels.get();
+                    PVAAnyArray pvaAnyArray = result.get("value");
+                    PVAny[] anyArray = pvaAnyArray.get();
+                    Map<String, Map<Instant, String>> actualData = new HashMap<>();
+                    for (int i = 0; i < labels.length; i++) {
+                        Map<Instant, String> pvDataResult = new HashMap<>();
+                        PVAStructureArray structureArray = anyArray[i].get();
+                        for (PVAStructure structure : structureArray.get()) {
+                            pvDataResult.put(
+                                    PVATimeStamp.getTimeStamp(structure).instant(),
+                                    formatInput(structure.get("value")));
+                        }
+                        actualData.put(labels[i], pvDataResult);
+                    }
+                    Assertions.assertEquals(expectedData, actualData);
+                });
     }
 }
