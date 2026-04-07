@@ -3,9 +3,8 @@ package org.epics.archiverappliance.engine.V4;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
-import org.epics.archiverappliance.EventStream;
-import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.data.SampleValue;
@@ -15,8 +14,6 @@ import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
-import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
-import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.data.Hexdump;
 import org.epics.pva.data.PVAData;
@@ -28,14 +25,9 @@ import org.epics.pva.data.nt.MustBeArrayException;
 import org.epics.pva.data.nt.PVATable;
 import org.epics.pva.data.nt.PVATimeStamp;
 import org.epics.pva.server.ServerPV;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.junit.jupiter.api.Assertions;
 
-import java.io.IOException;
-import java.net.URLEncoder;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -51,27 +43,12 @@ public class PVAccessUtil {
 
     public static Map<Instant, SampleValue> getReceivedValues(MemBufWriter writer, ConfigService configService)
             throws Exception {
-
-        return getReceivedEvents(writer, configService).entrySet().stream()
-                .map((e) -> Map.entry(e.getKey(), e.getValue().getSampleValue()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return ArchiveTestUtils.getReceivedValues(writer, configService);
     }
 
     public static HashMap<Instant, Event> getReceivedEvents(MemBufWriter writer, ConfigService configService)
             throws Exception {
-        double secondsToBuffer = configService.getEngineContext().getWritePeriod();
-        // Need to wait for the writer to write all the received data.
-        Thread.sleep((long) secondsToBuffer * 1000);
-
-        HashMap<Instant, Event> actualValues = new HashMap<>();
-        try {
-            for (Event event : writer.getCollectedSamples()) {
-                actualValues.put(event.getEventTimeStamp(), event);
-            }
-        } catch (IOException e) {
-            Assertions.fail(e.getMessage());
-        }
-        return actualValues;
+        return ArchiveTestUtils.getReceivedEvents(writer, configService);
     }
 
     public static Map.Entry<Instant, PVAStructure> updateStructure(PVAStructure pvaStructure, ServerPV serverPV) {
@@ -162,61 +139,28 @@ public class PVAccessUtil {
         return dataString.substring(firstValueSubString + 5).replaceAll(" ", "");
     }
 
-    /**
-     * Polls the raw retrieval API until at least one event is available for the given PV.
-     * Fails the test if no data appears within 5 minutes.
-     */
+    /** @see ArchiveTestUtils#waitForData(String, String) */
     public static void waitForData(String pvName, String retrievalURL) {
-        waitForData(pvName, 1, retrievalURL);
+        ArchiveTestUtils.waitForData(pvName, retrievalURL);
     }
 
-    /**
-     * Polls the raw retrieval API until at least {@code minEvents} events are available for the given PV.
-     * Fails the test if the condition is not met within 5 minutes.
-     */
+    /** @see ArchiveTestUtils#waitForData(String, int, String) */
     public static void waitForData(String pvName, int minEvents, String retrievalURL) {
-        Awaitility.await()
-                .pollInterval(5, TimeUnit.SECONDS)
-                .atMost(5, TimeUnit.MINUTES)
-                .until(() -> {
-                    RawDataRetrievalAsEventStream raw = new RawDataRetrievalAsEventStream(retrievalURL);
-                    java.time.Instant end = TimeUtils.plusDays(TimeUtils.now(), 1);
-                    java.time.Instant start = TimeUtils.minusDays(end, 8);
-                    try (EventStream stream = raw.getDataForPVS(new String[] {pvName}, start, end, null)) {
-                        if (stream == null) return false;
-                        int count = 0;
-                        for (Event ignored : stream) {
-                            if (++count >= minEvents) return true;
-                        }
-                        return false;
-                    } catch (IOException e) {
-                        return false;
-                    }
-                });
+        ArchiveTestUtils.waitForData(pvName, minEvents, retrievalURL);
     }
 
+    /** @see ArchiveTestUtils#waitForStatusChange(String, String, int, String) */
     public static void waitForStatusChange(String pvName, String expectedStatus, int maxTries, String mgmtUrl) {
-        waitForStatusChange(pvName, expectedStatus, maxTries, mgmtUrl, 5);
+        ArchiveTestUtils.waitForStatusChange(pvName, expectedStatus, maxTries, mgmtUrl);
     }
 
+    /** @see ArchiveTestUtils#waitForStatusChange(String, String, int, String, long) */
     public static void waitForStatusChange(
             String pvName, String expectedStatus, int maxTries, String mgmtUrl, long waitPeriodSeconds) {
-        Awaitility.await()
-                .pollInterval(waitPeriodSeconds, TimeUnit.SECONDS)
-                .atMost(maxTries * waitPeriodSeconds, TimeUnit.SECONDS)
-                .untilAsserted(() -> Assertions.assertEquals(expectedStatus, getCurentStatus(pvName, mgmtUrl)));
+        ArchiveTestUtils.waitForStatusChange(pvName, expectedStatus, maxTries, mgmtUrl, waitPeriodSeconds);
     }
 
-    private static String getCurentStatus(String pvName, String mgmtUrl) {
-        String curentStatus;
-        // Check archiving
-        String statusPVURL = mgmtUrl + "getPVStatus?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
-        JSONArray pvStatus = GetUrlContent.getURLContentAsJSONArray(statusPVURL);
-        curentStatus = ((JSONObject) pvStatus.get(0)).get("status").toString();
-        logger.debug("status is " + curentStatus);
-        return curentStatus;
-    }
-
+    /** @see ArchiveTestUtils#waitForPVDetail(String, String, String, int, String, long) */
     public static void waitForPVDetail(
             String pvName,
             String detailName,
@@ -224,22 +168,12 @@ public class PVAccessUtil {
             int maxTries,
             String mgmtUrl,
             long waitPeriodSeconds) {
-        Awaitility.await()
-                .pollInterval(waitPeriodSeconds, TimeUnit.SECONDS)
-                .atMost(maxTries * waitPeriodSeconds, TimeUnit.SECONDS)
-                .untilAsserted(() -> Assertions.assertEquals(expectedValue, getPVDetail(pvName, mgmtUrl, detailName)));
+        ArchiveTestUtils.waitForPVDetail(pvName, detailName, expectedValue, maxTries, mgmtUrl, waitPeriodSeconds);
     }
 
+    /** @see ArchiveTestUtils#getPVDetail(String, String, String) */
     public static String getPVDetail(String pvName, String mgmtUrl, String detailName) {
-        String pvDetailsURL = mgmtUrl + "getPVDetails?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
-        List<Map<String, String>> pvDetails =
-                (List<Map<String, String>>) GetUrlContent.getURLContentAsJSONArray(pvDetailsURL);
-        for (Map<String, String> pvDetail : pvDetails) {
-            if (pvDetail.get("name").equals(detailName)) {
-                return pvDetail.get("value");
-            }
-        }
-        return null;
+        return ArchiveTestUtils.getPVDetail(pvName, mgmtUrl, detailName);
     }
 
     /**

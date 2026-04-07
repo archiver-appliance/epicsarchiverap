@@ -3,6 +3,7 @@ package org.epics.archiverappliance.reshard;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
@@ -17,7 +18,6 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -102,7 +102,7 @@ public class BasicReshardingTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         PVTypeInfo typeInfoBeforePausing = getPVTypeInfo();
         // We determine the appliance for the PV by getting it's typeInfo.
@@ -202,7 +202,7 @@ public class BasicReshardingTest {
                 false);
         Thread.sleep(2 * 1000);
 
-        String obtainedAppliance = PVAccessUtil.getPVDetail(pvNameToArchive, mgmtURL, "Instance archiving PV");
+        String obtainedAppliance = ArchiveTestUtils.getPVDetail(pvNameToArchive, mgmtURL, "Instance archiving PV");
         Assertions.assertEquals(
                 otherAppliance,
                 obtainedAppliance,
