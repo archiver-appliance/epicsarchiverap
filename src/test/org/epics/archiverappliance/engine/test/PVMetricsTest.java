@@ -9,6 +9,8 @@ package org.epics.archiverappliance.engine.test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -21,6 +23,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * test of getting pv metrics
@@ -68,7 +72,7 @@ public class PVMetricsTest {
                     null,
                     false,
                     false);
-            Thread.sleep(2000);
+            ArchiveTestUtils.waitForPVConnected(pvName, testConfigService);
             PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
             // System.out.println(tempPVMetrics.getDetailedStatus());
             Assertions.assertTrue(tempPVMetrics != null, "PVMetrics for " + pvName + " should not be null");
@@ -98,7 +102,7 @@ public class PVMetricsTest {
                     null,
                     false,
                     false);
-            Thread.sleep(2000);
+            ArchiveTestUtils.waitForPVConnected(pvName, testConfigService);
             PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
             // System.out.println(tempPVMetrics.getDetailedStatus());
             Assertions.assertTrue(tempPVMetrics != null, "PVMetrics for " + pvName + " should not be null");
@@ -129,7 +133,9 @@ public class PVMetricsTest {
                     null,
                     false,
                     false);
-            Thread.sleep(2000);
+            Awaitility.await()
+                    .atMost(10, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService) != null);
             PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
             // System.out.println(tempPVMetrics.getDetailedStatus());
             Assertions.assertNotNull(tempPVMetrics, "PVMetrics for " + pvName + " should not be null");
