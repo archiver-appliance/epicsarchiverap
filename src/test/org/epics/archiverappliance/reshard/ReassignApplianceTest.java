@@ -7,6 +7,7 @@ import static org.epics.archiverappliance.utils.ui.URIUtils.pluginString;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
@@ -39,6 +40,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Simple test to test reassigning a PV from one appliance to another.
@@ -135,14 +137,15 @@ public class ReassignApplianceTest {
                 MGMT_URL + "/resumeArchivingPV?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8));
 
         logger.info("Added " + pvName + " to appliance0");
-        Thread.sleep(60 * 1000 + 5 * 1000);
-
-        Assertions.assertTrue(GetUrlContent.getURLContentAsJSONArray(
-                                appliance0URLPrefix + "/etl/bpl/getPVDetails?pv="
-                                        + URLEncoder.encode(pvName, StandardCharsets.UTF_8),
-                                true)
-                        .size()
-                > 5);
+        Awaitility.await()
+                .pollInterval(10, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.MINUTES)
+                .untilAsserted(() -> Assertions.assertTrue(GetUrlContent.getURLContentAsJSONArray(
+                                        appliance0URLPrefix + "/etl/bpl/getPVDetails?pv="
+                                                + URLEncoder.encode(pvName, StandardCharsets.UTF_8),
+                                        true)
+                                .size()
+                        > 5));
         Assertions.assertTrue(GetUrlContent.getURLContentAsJSONArray(
                                 appliance1URLPrefix + "/etl/bpl/getPVDetails?pv="
                                         + URLEncoder.encode(pvName, StandardCharsets.UTF_8),
@@ -173,7 +176,13 @@ public class ReassignApplianceTest {
                 true);
 
         logger.info("Reassigned " + pvName + " to appliance1");
-        Thread.sleep(60 * 1000 + 10 * 1000);
+        Awaitility.await()
+                .pollInterval(10, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.MINUTES)
+                .untilAsserted(() -> Assertions.assertTrue(logAndGet(appliance1URLPrefix + "/etl/bpl/getPVDetails?pv="
+                                        + URLEncoder.encode(pvName, StandardCharsets.UTF_8))
+                                .size()
+                        > 5));
 
         Assertions.assertTrue(logAndGet(appliance0URLPrefix + "/etl/bpl/getPVDetails?pv="
                                 + URLEncoder.encode(pvName, StandardCharsets.UTF_8))
