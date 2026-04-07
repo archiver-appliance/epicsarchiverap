@@ -7,6 +7,7 @@ import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringA
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.client.PVAClient;
@@ -89,8 +90,13 @@ public class PvaSuiteTstArchivePV {
                     expectedStatus,
                     extractStringArray(PVATable.fromStructure(result).getColumn("status")));
 
-            // Try submitting the request again...this time you should get a "already submitted" status response.
-            Thread.sleep(60000L);
+            // Wait until the archiving workflow has processed the first submission before re-submitting
+            PVAccessUtil.waitForStatusChange(
+                    pvPrefix + "UnitTestNoNamingConvention:sine",
+                    "Being archived",
+                    30,
+                    "http://localhost:17665/mgmt/bpl/",
+                    5);
             String[] expectedSuccessfulStatus = new String[] {"Already submitted", "Already submitted"};
             result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
             logger.info("results" + result.toString());

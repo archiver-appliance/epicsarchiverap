@@ -66,28 +66,22 @@ public class DeletePVTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        // Need this delay to make sure the typeinfo is stable in the cluster
-        Thread.sleep(90 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 10);
         logger.info("We are now archiving the PV; let's go into the details page; pause and delete");
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 5);
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 5);
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 5);
 
         GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "deletePV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 15);
+        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Not being archived", 10, mgmtURL, 5);
     }
 }
