@@ -3,6 +3,7 @@ package org.epics.archiverappliance.retrieval.cluster;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
@@ -12,7 +13,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
@@ -80,10 +80,11 @@ public class ClusterAliasTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 20, mgmtURL, 15);
 
         // Wait for the fields to connect using "Connected channels for the extra fields"
-        PVAccessUtil.waitForPVDetail(pvNameToArchive, "Connected channels for the extra fields", "7", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForPVDetail(
+                pvNameToArchive, "Connected channels for the extra fields", "7", 10, mgmtURL, 15);
 
         SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 2.0);
         Thread.sleep(2 * 1000);
@@ -92,7 +93,7 @@ public class ClusterAliasTest {
         SIOCSetup.caput("UnitTestNoNamingConvention:sine.HIHI", 4.0);
         Thread.sleep(2 * 1000);
         logger.info("Done updating UnitTestNoNamingConvention:sine.HIHI");
-        PVAccessUtil.waitForData(
+        ArchiveTestUtils.waitForData(
                 "UnitTestNoNamingConvention:sine",
                 "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
