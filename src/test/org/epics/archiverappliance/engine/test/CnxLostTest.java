@@ -3,6 +3,7 @@ package org.epics.archiverappliance.engine.test;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -10,7 +11,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
@@ -124,8 +124,7 @@ public class CnxLostTest {
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         // UnitTestNoNamingConvention:inactive1 is SCAN passive without autosave so it should have an invalid timestamp.
         // We caput something to generate a valid timestamp..
@@ -143,8 +142,7 @@ public class CnxLostTest {
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "pauseArchivingPV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Paused", 10, mgmtURL, 15);
 
         SIOCSetup.caput(pvNameToArchive, "3.0"); // We are paused; so we should miss this event
         Thread.sleep(1 * 1000);
@@ -153,8 +151,7 @@ public class CnxLostTest {
 
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
-        Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         checkRetrieval(pvNameToArchive, new ExpectedEventType[] {
             new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1),
