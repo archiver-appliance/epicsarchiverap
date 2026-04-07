@@ -243,6 +243,11 @@ public class ChangeArchivalParametersTest {
                     null,
                     false,
                     false);
+            Awaitility.await()
+                    .atMost(15, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService) != null
+                            && ArchiveEngine.getMetricsforPV(pvName, testConfigService)
+                                    .isConnected());
             ArchiveEngine.changeArchivalParameters(
                     pvName, 0.1F, SamplingMethod.MONITOR, testConfigService, writer, false, false);
             Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() -> {
