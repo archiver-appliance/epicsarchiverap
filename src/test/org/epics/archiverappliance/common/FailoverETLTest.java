@@ -43,6 +43,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -57,7 +58,6 @@ public class FailoverETLTest {
     private static final Logger logger = LogManager.getLogger(FailoverETLTest.class.getName());
     private ConfigServiceForTests configService;
     String pvName = "FailoverETLTest";
-    ArchDBRTypes dbrType = ArchDBRTypes.DBR_SCALAR_DOUBLE;
     TomcatSetup tomcatSetup = new TomcatSetup();
     long tCount = 0;
     long stepSeconds = 2;
@@ -81,8 +81,8 @@ public class FailoverETLTest {
      */
     private long generateDataAndRegisterPV(String applURL, String applianceName, Instant lastMonth, int startingOffset)
             throws Exception {
-        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File(
-                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
+        JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(
+                "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json")));
         PVTypeInfo destPVTypeInfo = new PVTypeInfo();
         JSONDecoder<PVTypeInfo> decoder = JSONDecoder.getDecoder(PVTypeInfo.class);
         JSONEncoder<PVTypeInfo> encoder = JSONEncoder.getEncoder(PVTypeInfo.class);
@@ -115,8 +115,9 @@ public class FailoverETLTest {
                 for (Event e : stream) {
                     long evEpoch = TimeUtils.convertToEpochSeconds(e.getEventTimeStamp());
                     if (lastEvEpoch != 0) {
-                        Assertions.assertTrue(
-                                (evEpoch - lastEvEpoch) == stepSeconds,
+                        Assertions.assertEquals(
+                                stepSeconds,
+                                (evEpoch - lastEvEpoch),
                                 "We got events more than " + stepSeconds + " seconds apart "
                                         + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  "
                                         + TimeUtils.convertToHumanReadableString(evEpoch));
@@ -128,8 +129,9 @@ public class FailoverETLTest {
                 Assertions.fail("Stream is null when retrieving data.");
             }
         }
-        Assertions.assertTrue(
-                genEventCount == rtvlEventCount,
+        Assertions.assertEquals(
+                genEventCount,
+                rtvlEventCount,
                 "We expected event count  " + genEventCount + " but got  " + rtvlEventCount);
         return rtvlEventCount;
     }
@@ -185,11 +187,21 @@ public class FailoverETLTest {
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());
+        // Use explicit absolute paths for dest_appliance storage to avoid polluting the
+        // system properties of the already-running embedded Tomcat at port 17665.
+        // Both Tomcats share the same JVM, so changing ARCHAPPL_*_FOLDER system properties
+        // mid-test would cause the Tomcat to resolve its own storage to the wrong folder.
+        String destBase = new File("build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/dest_appliance")
+                .getAbsolutePath();
+        String destMTSUrl = "pb://localhost?name=MTS&rootFolder=" + destBase + "/mts"
+                + "&partitionGranularity=PARTITION_DAY&hold=2&gather=1";
+        destPVTypeInfo.getDataStores()[2] =
+                "pb://localhost?name=LTS&rootFolder=" + destBase + "/lts" + "&partitionGranularity=PARTITION_YEAR";
         String otherURL = "pbraw://localhost?name=MTS&rawURL="
-                + URLEncoder.encode("http://localhost:17665/retrieval/data/getData.raw", "UTF-8");
+                + URLEncoder.encode("http://localhost:17665/retrieval/data/getData.raw", StandardCharsets.UTF_8);
         destPVTypeInfo.getDataStores()[1] = "merge://localhost?name=MTS&dest="
-                + URLEncoder.encode(destPVTypeInfo.getDataStores()[1], "UTF-8")
-                + "&other=" + URLEncoder.encode(otherURL, "UTF-8");
+                + URLEncoder.encode(destMTSUrl, StandardCharsets.UTF_8)
+                + "&other=" + URLEncoder.encode(otherURL, StandardCharsets.UTF_8);
         configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
         configService.getETLLookup().manualControlForUnitTests();
@@ -209,7 +221,7 @@ public class FailoverETLTest {
         try (BasicContext context = new BasicContext()) {
             List<Callable<EventStream>> callables =
                     plugin.getDataForPV(context, pvName, startTime, endTime, new DefaultRawPostProcessor());
-            Assertions.assertTrue(callables.size() > 0, "We got zero callables");
+            Assertions.assertTrue(!callables.isEmpty(), "We got zero callables");
             for (Callable<EventStream> callable : callables) {
                 EventStream ev = callable.call();
                 logger.error("Event Stream " + ev.getDescription());
@@ -223,8 +235,9 @@ public class FailoverETLTest {
                                 "We got events out of order " + TimeUtils.convertToHumanReadableString(lastEvEpoch)
                                         + " and  " + TimeUtils.convertToHumanReadableString(evEpoch)
                                         + " at event count " + rtvlEventCount);
-                        Assertions.assertTrue(
-                                (evEpoch - lastEvEpoch) == stepSeconds / 2,
+                        Assertions.assertEquals(
+                                stepSeconds / 2,
+                                (evEpoch - lastEvEpoch),
                                 "We got events more than a second apart "
                                         + TimeUtils.convertToHumanReadableString(lastEvEpoch) + " and  "
                                         + TimeUtils.convertToHumanReadableString(evEpoch) + " at event count "
@@ -247,18 +260,6 @@ public class FailoverETLTest {
         long oCount =
                 generateDataAndRegisterPV("http://localhost:17665", ConfigServiceForTests.TESTAPPLIANCE0, lastMonth, 0);
 
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_SHORT_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts");
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_MEDIUM_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts");
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_LONG_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts");
         long dCount = generateData("dest_appliance", lastMonth, 1);
 
         tCount = dCount + oCount;
@@ -273,6 +274,6 @@ public class FailoverETLTest {
                 "dest_appliance",
                 TimeUtils.minusDays(TimeUtils.now(), 365 * 2),
                 TimeUtils.plusDays(TimeUtils.now(), 365 * 2));
-        Assertions.assertTrue(tCount == rCount, "We expected event count  " + tCount + " but got  " + rCount);
+        Assertions.assertEquals(tCount, rCount, "We expected event count  " + tCount + " but got  " + rCount);
     }
 }
