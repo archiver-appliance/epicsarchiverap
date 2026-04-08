@@ -91,17 +91,11 @@ public class TomcatSetup implements AutoCloseable {
     /**
      * Start a dest/other appliance pair for failover testing.
      *
-     * <p>Storage folders are fixed under {@code build/tomcats/tomcat_<testName>} and survive the
-     * per-instance system-property reset because they are stored in {@code extraProperties}.
+     * <p>Each appliance gets isolated storage folders under its own work directory; see
+     * {@link #configureProperties} for details.
      */
     public void setUpFailoverWithWebApps(String testName) throws Exception {
         prepare(testName);
-
-        // These must outlive the per-instance property reset in configureProperties(), so
-        // register them as extraProperties rather than raw System.setProperty() calls.
-        extraProperties.put("ARCHAPPL_SHORT_TERM_FOLDER", new File(testFolder, "sts").getAbsolutePath());
-        extraProperties.put("ARCHAPPL_MEDIUM_TERM_FOLDER", new File(testFolder, "mts").getAbsolutePath());
-        extraProperties.put("ARCHAPPL_LONG_TERM_FOLDER", new File(testFolder, "lts").getAbsolutePath());
 
         logger.info("Starting up dest appliance");
         start(
@@ -182,7 +176,7 @@ public class TomcatSetup implements AutoCloseable {
         addWebapp(tomcat, "/etl", "./build/exploded/etl");
         addWebapp(tomcat, "/engine", "./build/exploded/engine");
 
-        configureProperties(applianceName, appliancesXML);
+        configureProperties(applianceName, appliancesXML, workFolder);
 
         CountDownLatch latch = new CountDownLatch(1);
         LatchAppender appender = new LatchAppender("latch-" + applianceName, latch, STARTUP_COMPLETE_MSG);
@@ -238,7 +232,7 @@ public class TomcatSetup implements AutoCloseable {
      * <p>Uses a fresh flat copy of {@code savedProperties} so that {@code containsKey()} behaves
      * correctly (the defaults-chain form of {@link Properties} would fool it).
      */
-    private void configureProperties(String applianceName, Path appliancesXML) {
+    private void configureProperties(String applianceName, Path appliancesXML, File workFolder) {
         Properties fresh = new Properties();
         fresh.putAll(savedProperties);
         System.setProperties(fresh);
@@ -273,8 +267,23 @@ public class TomcatSetup implements AutoCloseable {
             }
         }
 
-        // Re-apply any extra properties (e.g. failover storage folders) that must survive
-        // the reset above.
+        // With embedded Tomcat the JVM working directory is the project root, so any relative
+        // (or absent) storage folder property must be converted to an absolute path inside the
+        // appliance's own work folder to restore that per-appliance isolation.
+        for (String[] pair : new String[][] {
+            {"ARCHAPPL_SHORT_TERM_FOLDER", "sts"},
+            {"ARCHAPPL_MEDIUM_TERM_FOLDER", "mts"},
+            {"ARCHAPPL_LONG_TERM_FOLDER", "lts"}
+        }) {
+            String current = System.getProperty(pair[0]);
+            if (current == null || !new File(current).isAbsolute()) {
+                File dir = new File(workFolder, pair[1]);
+                dir.mkdirs();
+                System.setProperty(pair[0], dir.getAbsolutePath());
+            }
+        }
+
+        // Re-apply any extra properties that must survive the reset above.
         extraProperties.forEach(System::setProperty);
     }
 

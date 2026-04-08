@@ -182,10 +182,18 @@ public class FailoverMultiStepETLTest {
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());
+        // Use explicit absolute paths for dest_appliance storage to avoid polluting the
+        // system properties of the already-running embedded Tomcat at port 17665.
+        String destBase = new File("build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/dest_appliance")
+                .getAbsolutePath();
+        String destMTSUrl = "pb://localhost?name=MTS&rootFolder=" + destBase + "/mts"
+                + "&partitionGranularity=PARTITION_DAY&hold=2&gather=1";
+        destPVTypeInfo.getDataStores()[2] =
+                "pb://localhost?name=LTS&rootFolder=" + destBase + "/lts" + "&partitionGranularity=PARTITION_YEAR";
         String otherURL = "pbraw://localhost?name=MTS&rawURL="
                 + URLEncoder.encode("http://localhost:17665/retrieval/data/getData.raw", "UTF-8");
         destPVTypeInfo.getDataStores()[1] = "merge://localhost?name=MTS&dest="
-                + URLEncoder.encode(destPVTypeInfo.getDataStores()[1], "UTF-8")
+                + URLEncoder.encode(destMTSUrl, "UTF-8")
                 + "&other=" + URLEncoder.encode(otherURL, "UTF-8");
         configService.updateTypeInfoForPV(pvName, destPVTypeInfo);
         configService.registerPVToAppliance(pvName, configService.getMyApplianceInfo());
@@ -248,19 +256,6 @@ public class FailoverMultiStepETLTest {
                 TimeUtils.minusDays(TimeUtils.now(), 5 * 365),
                 TimeUtils.plusDays(TimeUtils.now(), 10),
                 oCount);
-
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_SHORT_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/sts");
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_MEDIUM_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/mts");
-        System.getProperties()
-                .put(
-                        "ARCHAPPL_LONG_TERM_FOLDER",
-                        "build/tomcats/tomcat_" + this.getClass().getSimpleName() + "/" + "dest_appliance" + "/lts");
 
         long dCount = 0;
         for (Instant ts = startTime; ts.isBefore(endTime); ts = TimeUtils.plusDays(ts, 1)) {
