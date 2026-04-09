@@ -17,8 +17,14 @@ import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.model.SampleBuffer;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -30,20 +36,30 @@ public class WriterRunnable implements Runnable {
     private static final Logger logger = LogManager.getLogger(WriterRunnable.class);
     /** Minimum write period [seconds] */
     private static final double MIN_WRITE_PERIOD = 1.0;
-    /**the sample buffer hash map*/
-    private final ConcurrentHashMap<String, SampleBuffer> buffers = new ConcurrentHashMap<String, SampleBuffer>();
+    /** the sample buffer hash map */
+    private final ConcurrentHashMap<String, SampleBuffer> buffers = new ConcurrentHashMap<>();
 
-    /**the configservice used by this WriterRunnable*/
-    private ConfigService configservice = null;
-    /**guards against concurrent write() invocations*/
+    /** the configservice used by this WriterRunnable */
+    private final ConfigService configservice;
+    /** guards against concurrent write() invocations */
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
+    /** virtual thread executor for parallel per-channel I/O */
+    private final ExecutorService writeExecutor = Executors.newVirtualThreadPerTaskExecutor();
+    /** tracks in-flight year-change write futures per channel to prevent duplicate submission */
+    private final ConcurrentHashMap<String, Future<?>> yearChangeFutures = new ConcurrentHashMap<>();
+    /** optional semaphore capping concurrent channel writes; null means unlimited */
+    private final Semaphore writeSemaphore;
+
     /**
      * the constructor
      * @param configservice the configservice used by this WriterRunnable
      */
     public WriterRunnable(ConfigService configservice) {
-
         this.configservice = configservice;
+        int limit = Integer.parseInt(configservice
+                .getInstallationProperties()
+                .getProperty("org.epics.archiverappliance.engine.epics.writeThreadCount", "0"));
+        this.writeSemaphore = (limit > 0) ? new Semaphore(limit) : null;
     }
 
     /** Add a channel's buffer that this thread reads
@@ -52,6 +68,7 @@ public class WriterRunnable implements Runnable {
     public void addChannel(final ArchiveChannel channel) {
         addSampleBuffer(channel.getName(), channel.getSampleBuffer());
     }
+
     /**
      * remove one sample buffer from the buffer hash map.
      * At the same time. it also removes the channel from the channel hash map in the engine context
@@ -90,7 +107,7 @@ public class WriterRunnable implements Runnable {
     }
 
     /**
-     * set the writing period. when the writing period is at least 10 seonds.
+     * set the writing period. when the writing period is at least 10 seconds.
      * When write_period &lt; 10 , the writing period is 10 seconds actually.
      * @param write_period  the writing period in second
      * @return the actual writing period in second
@@ -98,7 +115,6 @@ public class WriterRunnable implements Runnable {
     public double setWritingPeriod(double write_period) {
         double tempwrite_period = write_period;
         if (tempwrite_period < MIN_WRITE_PERIOD) {
-
             tempwrite_period = MIN_WRITE_PERIOD;
         }
         return tempwrite_period;
@@ -107,7 +123,6 @@ public class WriterRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            // final long written = write();
             long startTime = System.currentTimeMillis();
             write();
             long endTime = System.currentTimeMillis();
@@ -119,12 +134,15 @@ public class WriterRunnable implements Runnable {
 
     /**
      * Flush a single channel's sample buffer on a year boundary.
-     * The isRunning guard is intentionally absent: year-change callbacks are already
-     * serialised on the scheduler thread, so there is no re-entrancy risk. The old guard
-     * was silently dropping year-change flushes whenever a bulk write cycle was running.
+     * Submits the blocking I/O to the virtual thread executor. Skips submission if a
+     * year-change write for this channel is already in-flight, preventing duplicate writes.
      * @param buffer the sample buffer to be written
      */
     private void writeYearChange(SampleBuffer buffer) {
+        if (writeExecutor.isShutdown()) {
+            logger.warn("Skipping year-change flush for {} — executor already shut down", buffer.getChannelName());
+            return;
+        }
         String channelName = buffer.getChannelName();
         ConcurrentHashMap<String, ArchiveChannel> channelList =
                 configservice.getEngineContext().getChannelList();
@@ -136,53 +154,94 @@ public class WriterRunnable implements Runnable {
         ArchiveChannel channel = channelList.get(channelName);
         if (channel == null) return;
 
-        try (BasicContext basicContext = new BasicContext()) {
-            channel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
-            channel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
-            channel.getWriter().appendData(basicContext, channelName, previousSamples);
-            logger.info(channelName + ": year change");
-        } catch (IOException e) {
-            logger.error("Exception writing year-change buffer for " + channelName, e);
+        Future<?> existing = yearChangeFutures.get(channelName);
+        if (existing != null && !existing.isDone()) {
+            logger.debug("Year-change write already in-flight for {}; skipping duplicate", channelName);
+            return;
         }
+
+        channel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
+        channel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
+
+        Future<?> future = writeExecutor.submit(() -> {
+            try (BasicContext ctx = new BasicContext()) {
+                channel.getWriter().appendData(ctx, channelName, previousSamples);
+                logger.info(channelName + ": year change write complete");
+            } catch (IOException e) {
+                logger.error("Exception writing year-change buffer for " + channelName, e);
+            } finally {
+                yearChangeFutures.remove(channelName);
+            }
+        });
+        yearChangeFutures.put(channelName, future);
     }
 
     /**
-     * write all sample buffers into short term storage
+     * Write all sample buffers into short term storage in parallel using Java 21 virtual threads.
+     * All buffer swaps happen on the scheduler thread before fan-out so that every channel shares
+     * a consistent epoch snapshot for the write cycle.
      * @throws Exception error occurs during writing the sample buffer to the short term storage
      */
     private void write() throws Exception {
         if (!isRunning.compareAndSet(false, true)) return;
+
+        final long writeTimestamp = System.currentTimeMillis() / 1000;
         ConcurrentHashMap<String, ArchiveChannel> channelList =
                 configservice.getEngineContext().getChannelList();
 
         try {
+            // Phase 1 (scheduler thread): swap all active buffers and prepare write tasks.
+            // Doing all swaps before submitting any I/O ensures a consistent epoch snapshot —
+            // no channel accumulates new data in its "previous" buffer while another is still writing.
+            record WriteTask(ArchiveChannel channel, String name, ArrayListEventStream samples) {}
+            List<WriteTask> tasks = new ArrayList<>(buffers.size());
+
             for (Entry<String, SampleBuffer> entry : buffers.entrySet()) {
                 SampleBuffer buffer = entry.getValue();
-                String channelNname = buffer.getChannelName();
+                if (!buffer.hasCurrentSamples()) continue;
 
+                String channelName = buffer.getChannelName();
                 buffer.resetSamples();
                 ArrayListEventStream previousSamples = buffer.getPreviousSamples();
-                try (BasicContext basicContext = new BasicContext()) {
-                    if (!previousSamples.isEmpty()) {
-                        ArchiveChannel tempChannel = channelList.get(channelNname);
-                        tempChannel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
-                        tempChannel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
-                        tempChannel.getWriter().appendData(basicContext, channelNname, previousSamples);
+                if (previousSamples.isEmpty()) continue;
+
+                ArchiveChannel channel = channelList.get(channelName);
+                if (channel == null) continue;
+
+                channel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
+                channel.setlastRotateLogsEpochSeconds(writeTimestamp);
+                tasks.add(new WriteTask(channel, channelName, previousSamples));
+            }
+
+            // Phase 2: fan out blocking I/O to virtual threads
+            List<Future<?>> futures = new ArrayList<>(tasks.size());
+            for (WriteTask task : tasks) {
+                futures.add(writeExecutor.submit(() -> {
+                    if (writeSemaphore != null) writeSemaphore.acquireUninterruptibly();
+                    try (BasicContext ctx = new BasicContext()) {
+                        task.channel().getWriter().appendData(ctx, task.name(), task.samples());
+                    } catch (IOException e) {
+                        logger.error("Exception writing channel " + task.name(), e);
+                    } finally {
+                        if (writeSemaphore != null) writeSemaphore.release();
                     }
-                } catch (IOException e) {
-                    throw (e);
-                }
+                }));
+            }
+
+            // Phase 3: join — preserves backpressure on the scheduler
+            for (Future<?> future : futures) {
+                future.get();
             }
         } finally {
             isRunning.set(false);
         }
     }
+
     /**
      * flush out the sample buffer to the short term storage before shutting down the engine
      * @throws Exception  error occurs during writing the sample buffer to the short term storage
      */
     public void flushBuffer() throws Exception {
-
         write();
     }
 }
