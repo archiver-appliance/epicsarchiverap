@@ -1041,7 +1041,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 logger.debug(desc + " Found " + appendDataPaths.length + " matching files for pv " + pvName);
 
             for (Path srcPath : appendDataPaths) {
-                Path destPath = srcPath.resolveSibling(srcPath.getName(srcPath.getNameCount() - 1)
+                Path destPath = srcPath.resolveSibling(srcPath.getFileName()
                         .toString()
                         .replace(appendExtension, plainFileHandler.getExtensionString()));
                 Files.move(srcPath, destPath, REPLACE_EXISTING, ATOMIC_MOVE);
@@ -1193,7 +1193,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
         LinkedList<PPMissingPaths> ret = new LinkedList<PPMissingPaths>();
         for (Path rawPath : rawPaths) {
-            Path expectedPPPath = rawPath.resolveSibling(rawPath.getName(rawPath.getNameCount() - 1)
+            Path expectedPPPath = rawPath.resolveSibling(rawPath.getFileName()
                     .toString()
                     .replace(plainFileHandler.getExtensionString(), ppExt));
             if (!ppPathsMap.containsKey(expectedPPPath)) {

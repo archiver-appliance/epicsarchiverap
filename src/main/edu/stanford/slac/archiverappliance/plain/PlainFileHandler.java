@@ -65,7 +65,7 @@ public interface PlainFileHandler extends PlainStreams {
                 PathNameUtility.getAllPathsForPV(context.getPaths(), rootFolder, pvName, suffix, pathResolver, pv2key);
         for (Path path : paths) {
             Path destPath = path.resolveSibling(
-                    path.getName(path.getNameCount() - 1).toString().replace(randSuffix, ""));
+                    path.getFileName().toString().replace(randSuffix, ""));
             logger.debug("Moving path " + path + " to " + destPath);
             Files.move(path, destPath, StandardCopyOption.ATOMIC_MOVE);
         }
