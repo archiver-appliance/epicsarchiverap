@@ -152,6 +152,11 @@ public class SampleBuffer {
         return currentSamples.size();
     }
 
+    /** @return true if there are samples currently waiting in the active buffer. */
+    public boolean hasCurrentSamples() {
+        return !currentSamples.isEmpty();
+    }
+
     /** @return <code>true</code> if currently experiencing write errors */
     public static boolean isInErrorState() {
         return error;
