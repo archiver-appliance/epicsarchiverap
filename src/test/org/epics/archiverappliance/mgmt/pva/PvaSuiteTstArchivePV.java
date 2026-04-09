@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,14 +18,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.epics.archiverappliance.mgmt.pva.PvaTest.pvPrefix;
-import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 
 /**
  *
@@ -31,9 +31,11 @@ import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringA
  */
 @Tag("integration")
 @Tag("localEpics")
+@ExtendWith(PvaTestSetupExtension.class)
 public class PvaSuiteTstArchivePV {
 
     private static final Logger logger = LogManager.getLogger(PvaSuiteTstArchivePV.class.getName());
+    private static final String pvPrefix = "PvaTest";
 
     private static PVAClient pvaClient;
     private static PVAChannel pvaChannel;

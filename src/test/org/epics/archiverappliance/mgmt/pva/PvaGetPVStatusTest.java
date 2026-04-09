@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,9 +34,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.awaitility.pollinterval.FibonacciPollInterval.fibonacci;
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-
 /**
  * {@link PvaGetArchivedPVs}
  *
@@ -56,7 +56,7 @@ public class PvaGetPVStatusTest {
         logger.info("Set up for the PvaGetArchivedPVsTest");
         try {
             siocSetup.startSIOCWithDefaultDB();
-            tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
+            tomcatSetup.setUpWebApps("PvaTest");
 
             logger.info(ZonedDateTime.now(ZoneId.systemDefault())
                     + " Waiting three mins for the service setup to complete");

@@ -53,7 +53,7 @@ log4j-api                = { module = "org.apache.logging.log4j:log4j-api", vers
 log4j-core               = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 log4j-slf4j2             = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 log4j-jul                = { module = "org.apache.logging.log4j:log4j-jul", version.ref = "log4j" }
-log4j-one-two-api    = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
+log4j-one-two-api        = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
 disruptor                = { module = "com.lmax:disruptor", version.ref = "disruptor" }
 commons-codec            = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 commons-io               = { module = "commons-io:commons-io", version.ref = "commons-io" }
@@ -89,10 +89,10 @@ mockito                  = { module = "org.mockito:mockito-core", version.ref = 
 stax-api                 = { module = "javax.xml.stream:stax-api", version.ref = "stax-api"}
 
 [bundles]
-parquet      = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
-log4j-impl   = ["log4j-slf4j2", "log4j-jul"]
-log4j-runtime = ["log4j-core", "log4j-one-two-api", "disruptor"]
-junit-impl   = ["junit-jupiter-api", "junit-jupiter-params"]
+parquet        = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
+log4j-impl     = ["log4j-slf4j2", "log4j-jul"]
+log4j-runtime  = ["log4j-core", "log4j-one-two-api", "disruptor"]
+junit-impl     = ["junit-jupiter-api", "junit-jupiter-params"]
 commons-shared = ["commons-codec", "commons-io", "commons-lang3", "commons-math3", "commons-validator"]
 
 [plugins]
