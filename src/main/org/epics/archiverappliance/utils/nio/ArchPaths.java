@@ -73,7 +73,7 @@ public class ArchPaths implements Closeable {
             fs = this.fileSystemList.get(rootURI);
         } else {
             // Should we do a getFileSystem here and it that thread safe?
-            fs = FileSystems.newFileSystem(rootURI, Map.of("create", createParentFolder ? "true" : "false"));
+            fs = FileSystems.newFileSystem(rootURI, Map.of("create", createParentFolder ? "true" : "false"), this.getClass().getClassLoader());
             this.fileSystemList.put(rootURI, fs);
         }
 
