@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,8 +24,6 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 
 /**
  * {@link PvaGetArchivedPVs}
@@ -48,7 +48,7 @@ public class PvaGetArchivedPVsTest {
         logger.info("Set up for the PvaGetArchivedPVsTest");
         try {
             siocSetup.startSIOCWithDefaultDB();
-            tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
+            tomcatSetup.setUpWebApps("PvaTest");
 
             pvaClient = new PVAClient();
             pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
