@@ -120,6 +120,7 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
         if (recompress) {
             rewriteOptionsBuilder = rewriteOptionsBuilder.transform(compressionCodecName);
         }
+        rewriteOptionsBuilder = rewriteOptionsBuilder.ignoreJoinFilesMetadata(true);
         RewriteOptions rewriteOptions = rewriteOptionsBuilder.build();
         try (ParquetRewriter rewriter = new ParquetRewriter(rewriteOptions)) {
             rewriter.processBlocks();
