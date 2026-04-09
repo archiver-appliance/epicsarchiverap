@@ -25,6 +25,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -243,5 +244,21 @@ public class WriterRunnable implements Runnable {
      */
     public void flushBuffer() throws Exception {
         write();
+    }
+
+    /**
+     * Shut down the virtual thread executor, waiting up to 30 seconds for in-flight writes to complete.
+     */
+    public void shutdown() {
+        writeExecutor.shutdown();
+        try {
+            if (!writeExecutor.awaitTermination(30, TimeUnit.SECONDS)) {
+                logger.warn("Write executor did not terminate within 30 seconds; forcing shutdown.");
+                writeExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            writeExecutor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 }

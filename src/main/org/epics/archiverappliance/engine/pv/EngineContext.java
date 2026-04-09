@@ -219,6 +219,7 @@ public class EngineContext {
                 }
 
                 writer.flushBuffer();
+                writer.shutdown();
                 channelList.clear();
 
                 // stop the controlling pv
