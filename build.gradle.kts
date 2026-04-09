@@ -647,21 +647,11 @@ tasks.register<Test>("epicsTests") {
 	}
 }
 
-tasks.register<Test>("singleForkTests") {
-	group = "Test"
-	description = "Run the single fork tests. Ones that require a fork every test."
-	forkEvery = 1
-	useJUnitPlatform {
-		includeTags("singleFork")
-		excludeTags("slow", "flaky", "integration", "localEpics")
-	}
-}
-
 // Configure the default 'test' task
 tasks.named<Test>("test") {
 	group = "Test"
 	useJUnitPlatform {
-		excludeTags("integration", "localEpics", "flaky", "singleFork", "slow")
+		excludeTags("integration", "localEpics", "flaky", "slow")
 	}
 }
 
@@ -669,7 +659,7 @@ tasks.named<Test>("test") {
 tasks.register("allTests") {
 	group = "Verification"
 	description = "Run all the tests."
-	dependsOn("unitTests", "singleForkTests", "integrationTests", "flakyTests", "epicsTests")
+	dependsOn("unitTests", "integrationTests", "flakyTests", "epicsTests")
 }
 
 tasks.register<Test>("automationTests") {
