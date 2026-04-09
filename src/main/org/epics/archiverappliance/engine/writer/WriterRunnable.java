@@ -60,10 +60,20 @@ public class WriterRunnable implements Runnable {
     public void removeChannel(final String channelName) {
         SampleBuffer buffer = buffers.get(channelName);
         if (buffer != null) {
-            try {
-                write(buffer);
-            } catch (Throwable e) {
-                logger.error("Exception flushing data for " + channelName, e);
+            ConcurrentHashMap<String, ArchiveChannel> channelList =
+                    configservice.getEngineContext().getChannelList();
+            buffer.resetSamples();
+            ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+            if (!previousSamples.isEmpty()) {
+                ArchiveChannel channel = channelList.get(channelName);
+                if (channel != null) {
+                    try (BasicContext ctx = new BasicContext()) {
+                        channel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
+                        channel.getWriter().appendData(ctx, channelName, previousSamples);
+                    } catch (IOException e) {
+                        logger.error("Exception flushing buffer on channel removal for " + channelName, e);
+                    }
+                }
             }
         }
         buffers.remove(channelName);
@@ -75,19 +85,8 @@ public class WriterRunnable implements Runnable {
      * @param buffer the sample buffer for this channel
      */
     void addSampleBuffer(final String name, final SampleBuffer buffer) {
-        // buffers.add(buffer);
         buffers.put(name, buffer);
-        buffer.addYearListener(sampleBuffer -> {
-            //
-            configservice.getEngineContext().getScheduler().execute(() -> {
-                try {
-                    write(sampleBuffer);
-                    logger.info(sampleBuffer.getChannelName() + ":year change");
-                } catch (IOException e) {
-                    logger.error("Exception", e);
-                }
-            });
-        });
+        buffer.addYearListener(this::writeYearChange);
     }
 
     /**
@@ -117,31 +116,36 @@ public class WriterRunnable implements Runnable {
             logger.error("Exception", e);
         }
     }
+
     /**
-     * write the sample buffer to the short term storage
+     * Flush a single channel's sample buffer on a year boundary.
+     * The isRunning guard is intentionally absent: year-change callbacks are already
+     * serialised on the scheduler thread, so there is no re-entrancy risk. The old guard
+     * was silently dropping year-change flushes whenever a bulk write cycle was running.
      * @param buffer the sample buffer to be written
-     * @throws IOException  error occurs during writing the sample buffer to the short term storage
      */
-    private void write(SampleBuffer buffer) throws IOException {
-        if (!isRunning.compareAndSet(false, true)) return;
+    private void writeYearChange(SampleBuffer buffer) {
+        String channelName = buffer.getChannelName();
         ConcurrentHashMap<String, ArchiveChannel> channelList =
                 configservice.getEngineContext().getChannelList();
-        String channelNname = buffer.getChannelName();
+
         buffer.resetSamples();
         ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+        if (previousSamples.isEmpty()) return;
+
+        ArchiveChannel channel = channelList.get(channelName);
+        if (channel == null) return;
 
         try (BasicContext basicContext = new BasicContext()) {
-            if (!previousSamples.isEmpty()) {
-                ArchiveChannel tempChannel = channelList.get(channelNname);
-                tempChannel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
-                tempChannel.getWriter().appendData(basicContext, channelNname, previousSamples);
-            }
+            channel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
+            channel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
+            channel.getWriter().appendData(basicContext, channelName, previousSamples);
+            logger.info(channelName + ": year change");
         } catch (IOException e) {
-            throw (e);
-        } finally {
-            isRunning.set(false);
+            logger.error("Exception writing year-change buffer for " + channelName, e);
         }
     }
+
     /**
      * write all sample buffers into short term storage
      * @throws Exception error occurs during writing the sample buffer to the short term storage
