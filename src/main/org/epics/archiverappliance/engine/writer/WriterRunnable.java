@@ -108,10 +108,13 @@ public class WriterRunnable implements Runnable {
     }
 
     /**
-     * set the writing period. when the writing period is at least 10 seconds.
-     * When write_period &lt; 10 , the writing period is 10 seconds actually.
-     * @param write_period  the writing period in second
-     * @return the actual writing period in second
+     * Validates and returns the effective write period, enforcing the minimum.
+     * The minimum of {@value MIN_WRITE_PERIOD} second guards against excessive file
+     * open/write/close frequency across all channels. With parallel virtual-thread
+     * writes the write cycle itself completes quickly, so this floor is about
+     * storage I/O frequency rather than write-cycle duration.
+     * @param write_period  the requested writing period in seconds
+     * @return the actual writing period in seconds (at least {@value MIN_WRITE_PERIOD})
      */
     public double setWritingPeriod(double write_period) {
         double tempwrite_period = write_period;
