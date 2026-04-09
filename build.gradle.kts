@@ -180,6 +180,8 @@ dependencies {
 	testImplementation(":pbrawclient:0.2.2")
 	testImplementation(libs.tomcat.servlet.api)
 	testImplementation(libs.mockito)
+	testImplementation(libs.tomcat.embed.core)
+	testRuntimeOnly(libs.tomcat.embed.jasper)
 }
 
 // =================================================================
@@ -575,6 +577,20 @@ tasks.withType<Test>().configureEach {
 	}
 }
 
+val explodeTasks = mapOf("Mgmt" to "mgmt", "Engine" to "engine", "Retrieval" to "retrieval", "ETL" to "etl")
+	.map { (suffix, dir) ->
+		tasks.register<Sync>("explode$suffix") {
+			group = "wars"
+			dependsOn("${dir}War")
+			into(layout.buildDirectory.file("exploded/$dir"))
+			from(project.zipTree(tasks.named<War>("${dir}War").get().archiveFile))
+		}
+	}
+
+tasks.register("explodeWars") {
+	dependsOn(explodeTasks)
+}
+
 tasks.named<ProcessResources>("processTestResources") {
 	from(layout.projectDirectory.file("src/sitespecific/tests/classpathfiles"))
 	from(layout.projectDirectory.file("src/resources/test")) {
@@ -601,67 +617,30 @@ tasks.register<Test>("flakyTests") {
 	}
 }
 
-tasks.register<Exec>("shutdownAllTomcats") {
-	group = "Test"
-	description = "Task to shut down all tomcats after running integration tests, if they didn't shut down correctly."
-	setIgnoreExitValue(true)
-	// pkill is not available on Windows, so only run this on non-Windows systems.
-	if (!Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine("pkill", "-9", "-f", "Deaatag=eaatesttm")
-	} else {
-		doFirst {
-			logger.warn("pkill for tomcat shutdown is not supported on Windows. Skipping.")
-		}
-	}
-}
-
 tasks.register("integrationTestSetup") {
 	group = "Test"
 	description = "Setup for Integration Tests by backing up Tomcat's conf directory."
-	dependsOn("buildRelease")
-
-	val tomcatHome = System.getenv("TOMCAT_HOME")
-	// Only configure and run this task if TOMCAT_HOME is set.
-	onlyIf {
-		if (tomcatHome == null) {
-			logger.warn("TOMCAT_HOME environment variable is not set. Skipping integration test setup.")
-			false
-		} else {
-			true
-		}
-	}
-
-	doLast {
-		// This logic is deferred to the execution phase, which is safer.
-		val tomcatConfOriginal = file("$tomcatHome/conf_original")
-		if (!tomcatConfOriginal.exists()) {
-			logger.lifecycle("Backing up Tomcat configuration to $tomcatConfOriginal")
-			project.copy {
-				from("$tomcatHome/conf")
-				into(tomcatConfOriginal)
-			}
-		} else {
-			logger.info("Tomcat configuration backup already exists at $tomcatConfOriginal")
-		}
-	}
+	dependsOn("explodeWars")
 }
 
 tasks.register<Test>("integrationTests") {
 	group = "Test"
 	description = "Run the integration tests, ones that require a tomcat installation."
-	forkEvery = 1
+	testClassesDirs = sourceSets.test.get().output.classesDirs
+	classpath = sourceSets.test.get().runtimeClasspath
 	maxParallelForks = 1 // Set to > 1 for parallel execution if tests are isolated
 	dependsOn("integrationTestSetup")
 	useJUnitPlatform {
 		includeTags("integration")
 		excludeTags("slow", "flaky")
 	}
-	finalizedBy("shutdownAllTomcats")
 }
 
 tasks.register<Test>("epicsTests") {
 	group = "Test"
 	description = "Run the epics integration tests with parallel iocs."
+	testClassesDirs = sourceSets.test.get().output.classesDirs
+	classpath = sourceSets.test.get().runtimeClasspath
 	useJUnitPlatform {
 		includeTags("localEpics")
 		excludeTags("slow", "flaky", "integration")
@@ -702,7 +681,6 @@ tasks.register<Test>("automationTests") {
 	useJUnitPlatform {
 		// No include/exclude means run all tests
 	}
-	finalizedBy("shutdownAllTomcats")
 }
 
 tasks.register<JavaExec>("testRun") {
