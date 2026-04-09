@@ -154,6 +154,7 @@ dependencies {
 	implementation(libs.log4j.jul)
 	"permitUnusedDeclared"(libs.log4j.jul)
 	"permitUsedUndeclared"(libs.stax.api)
+	testImplementation(libs.log4j.core)
 	runtimeOnly(libs.log4j.core)
 	runtimeOnly(libs.disruptor) // Needed for async logging
 
@@ -171,6 +172,8 @@ dependencies {
 	testImplementation(libs.junit.jupiter.params)
 	testRuntimeOnly(libs.junit.jupiter.engine)
 	testRuntimeOnly(libs.junit.platform.launcher)
+	testRuntimeOnly(libs.junit.platform.suite)
+	testImplementation(libs.junit.platform.suite.api)
 	testImplementation(libs.awaitility)
 	testImplementation(libs.commons.compress)
 	testImplementation(libs.commons.cli)
@@ -654,6 +657,7 @@ tasks.register<Test>("integrationTests") {
 	useJUnitPlatform {
 		includeTags("integration")
 		excludeTags("slow", "flaky")
+		excludeEngines("junit-platform-suite")
 	}
 	finalizedBy("shutdownAllTomcats")
 }
@@ -664,16 +668,7 @@ tasks.register<Test>("epicsTests") {
 	useJUnitPlatform {
 		includeTags("localEpics")
 		excludeTags("slow", "flaky", "integration")
-	}
-}
-
-tasks.register<Test>("singleForkTests") {
-	group = "Test"
-	description = "Run the single fork tests. Ones that require a fork every test."
-	forkEvery = 1
-	useJUnitPlatform {
-		includeTags("singleFork")
-		excludeTags("slow", "flaky", "integration", "localEpics")
+		excludeEngines("junit-platform-suite")
 	}
 }
 
@@ -681,19 +676,20 @@ tasks.register<Test>("singleForkTests") {
 tasks.named<Test>("test") {
 	group = "Test"
 	useJUnitPlatform {
-		excludeTags("integration", "localEpics", "flaky", "singleFork", "slow")
+		excludeTags("integration", "localEpics", "flaky", "slow")
+		excludeEngines("junit-platform-suite")
 	}
 }
 
 // A lifecycle task to run all test suites.
 tasks.register("allTests") {
-	group = "Verification"
+	group = "Test"
 	description = "Run all the tests."
-	dependsOn("unitTests", "singleForkTests", "integrationTests", "flakyTests", "epicsTests")
+	dependsOn("unitTests", "integrationTests", "flakyTests", "epicsTests")
 }
 
 tasks.register<Test>("automationTests") {
-	group = "Verification"
+	group = "Test"
 	description = "Run all the tests in an automated environment"
 	forkEvery = 1
 	maxParallelForks = 1
