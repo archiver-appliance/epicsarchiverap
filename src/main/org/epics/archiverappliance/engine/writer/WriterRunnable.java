@@ -124,10 +124,19 @@ public class WriterRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            long startTime = System.currentTimeMillis();
-            write();
-            long endTime = System.currentTimeMillis();
-            configservice.getEngineContext().setSecondsConsumedByWriter((double) (endTime - startTime) / 1000);
+            long startMillis = System.currentTimeMillis();
+            WriteCycleMetrics metrics = write();
+            long wallClockMillis = System.currentTimeMillis() - startMillis;
+            if (metrics == null) {
+                configservice.getEngineContext().recordSkippedWriteCycle();
+            } else {
+                configservice
+                        .getEngineContext()
+                        .recordWriteCycle(
+                                wallClockMillis / 1000.0,
+                                metrics.totalChannelIOMillis() / 1000.0,
+                                metrics.channelsWritten());
+            }
         } catch (Exception e) {
             logger.error("Exception", e);
         }
@@ -180,22 +189,27 @@ public class WriterRunnable implements Runnable {
     /** Carries the data needed to write one channel's buffer in a single write cycle. */
     private record WriteTask(ArchiveChannel channel, String name, ArrayListEventStream samples) {}
 
+    /** Summary of a completed write cycle returned to run() for metrics reporting. */
+    private record WriteCycleMetrics(int channelsWritten, long totalChannelIOMillis) {}
+
     /**
      * Write all sample buffers into short term storage in parallel using Java 21 virtual threads.
      * All buffer swaps happen on the scheduler thread before fan-out so that every channel shares
      * a consistent epoch snapshot for the write cycle.
+     * @return metrics for the completed cycle, or null if the cycle was skipped due to a prior cycle still running
      * @throws Exception error occurs during writing the sample buffer to the short term storage
      */
-    private void write() throws Exception {
-        if (!isRunning.compareAndSet(false, true)) return;
+    private WriteCycleMetrics write() throws Exception {
+        if (!isRunning.compareAndSet(false, true)) return null;
         try {
             final long writeTimestamp = System.currentTimeMillis() / 1000;
             ConcurrentHashMap<String, ArchiveChannel> channelList =
                     configservice.getEngineContext().getChannelList();
 
             List<WriteTask> tasks = collectWriteTasks(channelList, writeTimestamp);
-            List<Future<?>> futures = submitWriteTasks(tasks);
-            awaitWriteCompletion(futures);
+            List<Future<Long>> futures = submitWriteTasks(tasks);
+            long totalChannelIOMillis = awaitWriteCompletion(futures);
+            return new WriteCycleMetrics(tasks.size(), totalChannelIOMillis);
         } finally {
             isRunning.set(false);
         }
@@ -231,12 +245,14 @@ public class WriterRunnable implements Runnable {
     /**
      * Submits each channel's appendData() call to the virtual thread executor,
      * optionally throttled by the write semaphore.
+     * Each future returns the elapsed wall-clock milliseconds for that channel's write.
      */
-    private List<Future<?>> submitWriteTasks(List<WriteTask> tasks) {
-        List<Future<?>> futures = new ArrayList<>(tasks.size());
+    private List<Future<Long>> submitWriteTasks(List<WriteTask> tasks) {
+        List<Future<Long>> futures = new ArrayList<>(tasks.size());
         for (WriteTask task : tasks) {
             futures.add(writeExecutor.submit(() -> {
                 if (writeSemaphore != null) writeSemaphore.acquireUninterruptibly();
+                long t0 = System.currentTimeMillis();
                 try (BasicContext ctx = new BasicContext()) {
                     task.channel().getWriter().appendData(ctx, task.name(), task.samples());
                 } catch (IOException e) {
@@ -244,20 +260,24 @@ public class WriterRunnable implements Runnable {
                 } finally {
                     if (writeSemaphore != null) writeSemaphore.release();
                 }
+                return System.currentTimeMillis() - t0;
             }));
         }
         return futures;
     }
 
     /**
-     * Waits for all submitted write futures to complete. Joining here preserves backpressure
-     * on the scheduler: if I/O is slow the next scheduled tick will observe isRunning=true
-     * and skip, rather than queuing up unbounded work.
+     * Waits for all submitted write futures to complete and returns the sum of per-channel
+     * elapsed times in milliseconds. Joining here preserves backpressure on the scheduler:
+     * if I/O is slow the next scheduled tick will observe isRunning=true and skip, rather
+     * than queuing up unbounded work.
      */
-    private void awaitWriteCompletion(List<Future<?>> futures) throws Exception {
-        for (Future<?> future : futures) {
-            future.get();
+    private long awaitWriteCompletion(List<Future<Long>> futures) throws Exception {
+        long total = 0;
+        for (Future<Long> future : futures) {
+            total += future.get();
         }
+        return total;
     }
 
     /**
@@ -265,7 +285,7 @@ public class WriterRunnable implements Runnable {
      * @throws Exception  error occurs during writing the sample buffer to the short term storage
      */
     public void flushBuffer() throws Exception {
-        write();
+        write(); // metrics from this flush cycle are intentionally discarded
     }
 
     /**

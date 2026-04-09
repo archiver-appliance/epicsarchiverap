@@ -81,10 +81,16 @@ public class EngineContext {
 
     private PVAClient pvaClient;
 
-    /**the total time consumed by the writer*/
+    /** total wall-clock seconds consumed by write cycles */
     private double totalTimeConsumedByWriter;
-    /**the total times of writer executed*/
+    /** total sum of per-channel I/O seconds across all write cycles */
+    private double totalChannelIOTimeConsumedByWriter;
+    /** total channels written summed across all write cycles */
+    private long totalChannelsWritten = 0;
+    /** number of completed write cycles */
     private long countOfWrittingByWriter = 0;
+    /** number of write cycles skipped due to backpressure (prior cycle still running) */
+    private long skippedWriteCycles = 0;
     /**the list of pvs controlling other pvs*/
     private final ConcurrentHashMap<String, ControllingPV> controlingPVList =
             new ConcurrentHashMap<String, ControllingPV>();
@@ -124,21 +130,44 @@ public class EngineContext {
         return controlingPVList;
     }
     /**
-     * set the time consumed by writer to write the sample buffer once
-     * @param secondsConsumedByWriter  the time in second consumed by writer to write the sample buffer once
-     *
+     * Record the outcome of a completed write cycle.
+     * @param wallClockSeconds  elapsed wall-clock seconds for the full cycle
+     * @param totalChannelIOSeconds  sum of per-channel I/O seconds across all channels written
+     * @param channelsWritten  number of channels that had data to write this cycle
      */
-    public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
+    public void recordWriteCycle(double wallClockSeconds, double totalChannelIOSeconds, int channelsWritten) {
         countOfWrittingByWriter++;
-        totalTimeConsumedByWriter = totalTimeConsumedByWriter + secondsConsumedByWriter;
+        totalTimeConsumedByWriter += wallClockSeconds;
+        totalChannelIOTimeConsumedByWriter += totalChannelIOSeconds;
+        totalChannelsWritten += channelsWritten;
     }
-    /**
-     *
-     * @return the average time in second consumed by writer
-     */
+
+    /** Record a write cycle that was skipped because the prior cycle was still running. */
+    public void recordSkippedWriteCycle() {
+        skippedWriteCycles++;
+    }
+
+    /** @return average write-cycle wall-clock time in seconds */
     public double getAverageSecondsConsumedByWriter() {
         if (countOfWrittingByWriter == 0) return 0;
         return totalTimeConsumedByWriter / countOfWrittingByWriter;
+    }
+
+    /** @return average sum of per-channel I/O seconds per write cycle (equivalent sequential load) */
+    public double getAverageTotalChannelIOSeconds() {
+        if (countOfWrittingByWriter == 0) return 0;
+        return totalChannelIOTimeConsumedByWriter / countOfWrittingByWriter;
+    }
+
+    /** @return average number of channels written per write cycle */
+    public double getAverageChannelsWrittenPerCycle() {
+        if (countOfWrittingByWriter == 0) return 0;
+        return (double) totalChannelsWritten / countOfWrittingByWriter;
+    }
+
+    /** @return total number of write cycles skipped due to backpressure */
+    public long getSkippedWriteCycles() {
+        return skippedWriteCycles;
     }
 
     /** @return Maximum concurrent channel writes per cycle; 0 means unlimited. */
