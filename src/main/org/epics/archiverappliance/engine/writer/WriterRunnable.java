@@ -177,6 +177,9 @@ public class WriterRunnable implements Runnable {
         yearChangeFutures.put(channelName, future);
     }
 
+    /** Carries the data needed to write one channel's buffer in a single write cycle. */
+    private record WriteTask(ArchiveChannel channel, String name, ArrayListEventStream samples) {}
+
     /**
      * Write all sample buffers into short term storage in parallel using Java 21 virtual threads.
      * All buffer swaps happen on the scheduler thread before fan-out so that every channel shares
@@ -185,56 +188,75 @@ public class WriterRunnable implements Runnable {
      */
     private void write() throws Exception {
         if (!isRunning.compareAndSet(false, true)) return;
-
-        final long writeTimestamp = System.currentTimeMillis() / 1000;
-        ConcurrentHashMap<String, ArchiveChannel> channelList =
-                configservice.getEngineContext().getChannelList();
-
         try {
-            // Phase 1 (scheduler thread): swap all active buffers and prepare write tasks.
-            // Doing all swaps before submitting any I/O ensures a consistent epoch snapshot —
-            // no channel accumulates new data in its "previous" buffer while another is still writing.
-            record WriteTask(ArchiveChannel channel, String name, ArrayListEventStream samples) {}
-            List<WriteTask> tasks = new ArrayList<>(buffers.size());
+            final long writeTimestamp = System.currentTimeMillis() / 1000;
+            ConcurrentHashMap<String, ArchiveChannel> channelList =
+                    configservice.getEngineContext().getChannelList();
 
-            for (Entry<String, SampleBuffer> entry : buffers.entrySet()) {
-                SampleBuffer buffer = entry.getValue();
-                if (!buffer.hasCurrentSamples()) continue;
-
-                String channelName = buffer.getChannelName();
-                buffer.resetSamples();
-                ArrayListEventStream previousSamples = buffer.getPreviousSamples();
-                if (previousSamples.isEmpty()) continue;
-
-                ArchiveChannel channel = channelList.get(channelName);
-                if (channel == null) continue;
-
-                channel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
-                channel.setlastRotateLogsEpochSeconds(writeTimestamp);
-                tasks.add(new WriteTask(channel, channelName, previousSamples));
-            }
-
-            // Phase 2: fan out blocking I/O to virtual threads
-            List<Future<?>> futures = new ArrayList<>(tasks.size());
-            for (WriteTask task : tasks) {
-                futures.add(writeExecutor.submit(() -> {
-                    if (writeSemaphore != null) writeSemaphore.acquireUninterruptibly();
-                    try (BasicContext ctx = new BasicContext()) {
-                        task.channel().getWriter().appendData(ctx, task.name(), task.samples());
-                    } catch (IOException e) {
-                        logger.error("Exception writing channel " + task.name(), e);
-                    } finally {
-                        if (writeSemaphore != null) writeSemaphore.release();
-                    }
-                }));
-            }
-
-            // Phase 3: join — preserves backpressure on the scheduler
-            for (Future<?> future : futures) {
-                future.get();
-            }
+            List<WriteTask> tasks = collectWriteTasks(channelList, writeTimestamp);
+            List<Future<?>> futures = submitWriteTasks(tasks);
+            awaitWriteCompletion(futures);
         } finally {
             isRunning.set(false);
+        }
+    }
+
+    /**
+     * Swaps the double-buffer for every active channel on the scheduler thread, preparing a
+     * snapshot of each channel's pending samples. All swaps happen before any I/O is submitted
+     * so no channel accumulates new data into its previous buffer while another is still writing.
+     */
+    private List<WriteTask> collectWriteTasks(
+            ConcurrentHashMap<String, ArchiveChannel> channelList, long writeTimestamp) {
+        List<WriteTask> tasks = new ArrayList<>(buffers.size());
+        for (Entry<String, SampleBuffer> entry : buffers.entrySet()) {
+            SampleBuffer buffer = entry.getValue();
+            if (!buffer.hasCurrentSamples()) continue;
+
+            String channelName = buffer.getChannelName();
+            buffer.resetSamples();
+            ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+            if (previousSamples.isEmpty()) continue;
+
+            ArchiveChannel channel = channelList.get(channelName);
+            if (channel == null) continue;
+
+            channel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
+            channel.setlastRotateLogsEpochSeconds(writeTimestamp);
+            tasks.add(new WriteTask(channel, channelName, previousSamples));
+        }
+        return tasks;
+    }
+
+    /**
+     * Submits each channel's appendData() call to the virtual thread executor,
+     * optionally throttled by the write semaphore.
+     */
+    private List<Future<?>> submitWriteTasks(List<WriteTask> tasks) {
+        List<Future<?>> futures = new ArrayList<>(tasks.size());
+        for (WriteTask task : tasks) {
+            futures.add(writeExecutor.submit(() -> {
+                if (writeSemaphore != null) writeSemaphore.acquireUninterruptibly();
+                try (BasicContext ctx = new BasicContext()) {
+                    task.channel().getWriter().appendData(ctx, task.name(), task.samples());
+                } catch (IOException e) {
+                    logger.error("Exception writing channel " + task.name(), e);
+                } finally {
+                    if (writeSemaphore != null) writeSemaphore.release();
+                }
+            }));
+        }
+        return futures;
+    }
+
+    /**
+     * Waits for all submitted write futures to complete. Joining here preserves backpressure
+     * on the scheduler: if I/O is slow the next scheduled tick will observe isRunning=true
+     * and skip, rather than queuing up unbounded work.
+     */
+    private void awaitWriteCompletion(List<Future<?>> futures) throws Exception {
+        for (Future<?> future : futures) {
+            future.get();
         }
     }
 

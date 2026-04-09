@@ -48,6 +48,7 @@ class WriterRunnableTest {
     private static final int PARALLEL_CHANNEL_COUNT = 200;
     /** Channels and samples used for the data-integrity test */
     private static final int DATA_CHANNEL_COUNT = 100;
+
     private static final int SAMPLES_PER_CHANNEL = 20;
     /** Per-channel I/O delay used in timing-sensitive tests */
     private static final long WRITE_DELAY_MS = 50;
@@ -177,7 +178,9 @@ class WriterRunnableTest {
         for (int i = 0; i < activeCount + idleCount; i++) {
             String name = "TEST:PV:" + i;
             SampleBuffer buffer = new SampleBuffer(
-                    name, 10, ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    name,
+                    10,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
                     new PVMetrics(name, null, -1, ArchDBRTypes.DBR_SCALAR_DOUBLE));
             if (i < activeCount) {
                 buffer.add(makeEvent());
@@ -195,9 +198,10 @@ class WriterRunnableTest {
         writerRunnable.run();
         writerRunnable.shutdown();
 
-        assertEquals(expectedActive, channelsWritten,
-                "appendData must be called for exactly the " + activeCount
-                        + " active channels — no more, no fewer");
+        assertEquals(
+                expectedActive,
+                channelsWritten,
+                "appendData must be called for exactly the " + activeCount + " active channels — no more, no fewer");
     }
 
     /**
@@ -240,7 +244,9 @@ class WriterRunnableTest {
         for (int i = 0; i < DATA_CHANNEL_COUNT; i++) {
             String name = "TEST:PV:" + i;
             SampleBuffer buffer = new SampleBuffer(
-                    name, SAMPLES_PER_CHANNEL + 5, ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    name,
+                    SAMPLES_PER_CHANNEL + 5,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
                     new PVMetrics(name, null, -1, ArchDBRTypes.DBR_SCALAR_DOUBLE));
 
             Set<Instant> channelExpected = new HashSet<>();
@@ -262,11 +268,13 @@ class WriterRunnableTest {
         writerRunnable.run();
         writerRunnable.shutdown();
 
-        assertEquals(DATA_CHANNEL_COUNT, actual.size(),
-                "Every channel must have been written");
+        assertEquals(DATA_CHANNEL_COUNT, actual.size(), "Every channel must have been written");
         for (Map.Entry<String, Set<Instant>> entry : expected.entrySet()) {
-            assertEquals(entry.getValue(), actual.get(entry.getKey()),
-                    "Events for " + entry.getKey() + " must be written exactly as buffered — no loss, no duplication, no corruption");
+            assertEquals(
+                    entry.getValue(),
+                    actual.get(entry.getKey()),
+                    "Events for " + entry.getKey()
+                            + " must be written exactly as buffered — no loss, no duplication, no corruption");
         }
     }
 
@@ -284,7 +292,9 @@ class WriterRunnableTest {
         for (int i = 0; i < PARALLEL_CHANNEL_COUNT; i++) {
             String name = "TEST:PV:" + i;
             SampleBuffer buffer = new SampleBuffer(
-                    name, 10, ArchDBRTypes.DBR_SCALAR_DOUBLE,
+                    name,
+                    10,
+                    ArchDBRTypes.DBR_SCALAR_DOUBLE,
                     new PVMetrics(name, null, -1, ArchDBRTypes.DBR_SCALAR_DOUBLE));
             buffer.add(makeEvent());
 
@@ -302,9 +312,12 @@ class WriterRunnableTest {
         writerRunnable.shutdown();
 
         long sequentialMs = PARALLEL_CHANNEL_COUNT * WRITE_DELAY_MS;
-        assertEquals(PARALLEL_CHANNEL_COUNT, slowWriter.getWriteCount(),
+        assertEquals(
+                PARALLEL_CHANNEL_COUNT,
+                slowWriter.getWriteCount(),
                 "All " + PARALLEL_CHANNEL_COUNT + " channels must be written");
-        assertTrue(elapsed < sequentialMs,
+        assertTrue(
+                elapsed < sequentialMs,
                 "Parallel writes took " + elapsed + "ms; sequential would take ~" + sequentialMs
                         + "ms — expected much less");
     }
