@@ -19,6 +19,7 @@ import org.epics.archiverappliance.engine.model.SampleBuffer;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * WriterRunnable is scheduled by the executor in the engine context every writing period.
@@ -34,8 +35,8 @@ public class WriterRunnable implements Runnable {
 
     /**the configservice used by this WriterRunnable*/
     private ConfigService configservice = null;
-    /**is running?*/
-    private boolean isRunning = false;
+    /**guards against concurrent write() invocations*/
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     /**
      * the constructor
      * @param configservice the configservice used by this WriterRunnable
@@ -122,8 +123,7 @@ public class WriterRunnable implements Runnable {
      * @throws IOException  error occurs during writing the sample buffer to the short term storage
      */
     private void write(SampleBuffer buffer) throws IOException {
-        if (isRunning) return;
-        isRunning = true;
+        if (!isRunning.compareAndSet(false, true)) return;
         ConcurrentHashMap<String, ArchiveChannel> channelList =
                 configservice.getEngineContext().getChannelList();
         String channelNname = buffer.getChannelName();
@@ -131,7 +131,6 @@ public class WriterRunnable implements Runnable {
         ArrayListEventStream previousSamples = buffer.getPreviousSamples();
 
         try (BasicContext basicContext = new BasicContext()) {
-
             if (!previousSamples.isEmpty()) {
                 ArchiveChannel tempChannel = channelList.get(channelNname);
                 tempChannel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
@@ -140,43 +139,39 @@ public class WriterRunnable implements Runnable {
         } catch (IOException e) {
             throw (e);
         } finally {
-            isRunning = false;
+            isRunning.set(false);
         }
-        isRunning = false;
     }
     /**
      * write all sample buffers into short term storage
      * @throws Exception error occurs during writing the sample buffer to the short term storage
      */
     private void write() throws Exception {
-        if (isRunning) return;
-        isRunning = true;
+        if (!isRunning.compareAndSet(false, true)) return;
         ConcurrentHashMap<String, ArchiveChannel> channelList =
                 configservice.getEngineContext().getChannelList();
 
-        for (Entry<String, SampleBuffer> entry : buffers.entrySet()) {
+        try {
+            for (Entry<String, SampleBuffer> entry : buffers.entrySet()) {
+                SampleBuffer buffer = entry.getValue();
+                String channelNname = buffer.getChannelName();
 
-            SampleBuffer buffer = entry.getValue();
-
-            String channelNname = buffer.getChannelName();
-
-            buffer.resetSamples();
-            ArrayListEventStream previousSamples = buffer.getPreviousSamples();
-            try (BasicContext basicContext = new BasicContext()) {
-                if (!previousSamples.isEmpty()) {
-                    ArchiveChannel tempChannel = channelList.get(channelNname);
-                    tempChannel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
-                    tempChannel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
-                    tempChannel.getWriter().appendData(basicContext, channelNname, previousSamples);
+                buffer.resetSamples();
+                ArrayListEventStream previousSamples = buffer.getPreviousSamples();
+                try (BasicContext basicContext = new BasicContext()) {
+                    if (!previousSamples.isEmpty()) {
+                        ArchiveChannel tempChannel = channelList.get(channelNname);
+                        tempChannel.aboutToWriteBuffer((DBRTimeEvent) previousSamples.getLast());
+                        tempChannel.setlastRotateLogsEpochSeconds(System.currentTimeMillis() / 1000);
+                        tempChannel.getWriter().appendData(basicContext, channelNname, previousSamples);
+                    }
+                } catch (IOException e) {
+                    throw (e);
                 }
-            } catch (IOException e) {
-                throw (e);
-            } finally {
-                isRunning = false;
             }
+        } finally {
+            isRunning.set(false);
         }
-
-        isRunning = false;
     }
     /**
      * flush out the sample buffer to the short term storage before shutting down the engine
