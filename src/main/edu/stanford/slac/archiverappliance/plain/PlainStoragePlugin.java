@@ -1193,9 +1193,8 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
 
         LinkedList<PPMissingPaths> ret = new LinkedList<PPMissingPaths>();
         for (Path rawPath : rawPaths) {
-            Path expectedPPPath = rawPath.resolveSibling(rawPath.getFileName()
-                    .toString()
-                    .replace(plainFileHandler.getExtensionString(), ppExt));
+            Path expectedPPPath = rawPath.resolveSibling(
+                    rawPath.getFileName().toString().replace(plainFileHandler.getExtensionString(), ppExt));
             if (!ppPathsMap.containsKey(expectedPPPath)) {
                 if (logger.isDebugEnabled()) logger.debug("Missing pp path " + expectedPPPath);
                 ret.add(new PPMissingPaths(rawPath, expectedPPPath));
