@@ -81,7 +81,6 @@ public class GetDataAtTimeTest {
         logger.debug("Creating folder {}", pvPath.getParent().toFile().toString());
         assert pvPath.getParent().toFile().mkdirs();
 
-
         String pluginURI = plugin + "://localhost?name=XLTS&rootFolder="
                 + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8") + "&partitionGranularity=PARTITION_DAY";
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(pluginURI, configService);

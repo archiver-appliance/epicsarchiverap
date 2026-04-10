@@ -68,13 +68,12 @@ public class ConversionTest {
 
     static Stream<Arguments> pluginsAndPVs() {
         return Stream.of(
-            Arguments.of("pb", "epics:arch:gztartest:pb"),
-            Arguments.of("parquet", "epics:arch:gztartest:parquet")
-        );
+                Arguments.of("pb", "epics:arch:tartest:pb"),
+                Arguments.of("parquet", "epics:arch:tartest:parquet"));
     }
 
     @ParameterizedTest
-    @MethodSource("pluginsAndPVs")    
+    @MethodSource("pluginsAndPVs")
     public void testAppendThruPlugin(String plugin, String pvName) throws Exception {
         String chunkKey = pvName.replace(":", File.separator);
 
@@ -116,9 +115,10 @@ public class ConversionTest {
             long after = System.currentTimeMillis();
             logger.debug("Took {}(ms) to retrieve data for {} days", (after - before), days);
         }
-    }    
+    }
 
-    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
+    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
+            throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
@@ -152,7 +152,8 @@ public class ConversionTest {
                 "Expecting " + expectedCatalogEntryCount + " entries; got " + entries.size() + " entries");
     }
 
-    private void testRetrieval(String pvName, Instant start, Instant end, int expectedEventCount, ArchDBRTypes expectedType)
+    private void testRetrieval(
+            String pvName, Instant start, Instant end, int expectedEventCount, ArchDBRTypes expectedType)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
@@ -197,6 +198,4 @@ public class ConversionTest {
             storagePlugin.convert(context, pvName, new ThruNumberAndStringConversion(ArchDBRTypes.DBR_SCALAR_FLOAT));
         }
     }
-
-
 }

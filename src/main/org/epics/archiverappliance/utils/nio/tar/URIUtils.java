@@ -11,20 +11,20 @@ import java.util.ArrayList;
 public class URIUtils {
     private static final Logger logger = LogManager.getLogger(URIUtils.class.getName());
 
-    public static final String GZTAR_SCHEME = "gztar";
-    public static final String GZTAR_TERMINATOR = ".tar!";
+    public static final String TAR_SCHEME = "tar";
+    public static final String TAR_TERMINATOR = ".tar!";
 
     private static void checkScheme(URI uri) throws IllegalArgumentException {
         String scheme = uri.getScheme();
-        if ((scheme == null) || !scheme.equalsIgnoreCase(GZTAR_SCHEME)) {
-            throw new IllegalArgumentException("URI scheme is not '" + GZTAR_SCHEME + "'. It is " + scheme);
+        if ((scheme == null) || !scheme.equalsIgnoreCase(TAR_SCHEME)) {
+            throw new IllegalArgumentException("URI scheme is not '" + TAR_SCHEME + "'. It is " + scheme);
         }
     }
 
     public static Path getPathToTarFile(URI uri) {
         checkScheme(uri);
         String spec = uri.getRawSchemeSpecificPart();
-        int sep = spec.lastIndexOf(GZTAR_TERMINATOR);
+        int sep = spec.lastIndexOf(TAR_TERMINATOR);
         if (sep != -1) {
             spec = spec.substring(0, sep);
         }
@@ -37,17 +37,17 @@ public class URIUtils {
         // See if we can use nulls/empty strings/non empty strings to indicate path to file system, the tar file itself
         // and an entry in the tar file
         String spec = uri.getRawSchemeSpecificPart();
-        int sep = spec.lastIndexOf(GZTAR_TERMINATOR);
-        String finalPathComponent = spec.substring(sep + GZTAR_TERMINATOR.length());
+        int sep = spec.lastIndexOf(TAR_TERMINATOR);
+        String finalPathComponent = spec.substring(sep + TAR_TERMINATOR.length());
         return finalPathComponent;
     }
 
     public static String generateURI(String pathToTarFile, String pathWithinTarFile) {
         StringBuilder buf = new StringBuilder();
-        buf.append(GZTAR_SCHEME);
+        buf.append(TAR_SCHEME);
         buf.append("://");
         buf.append(pathToTarFile.replaceAll("\\.tar$", ""));
-        buf.append(GZTAR_TERMINATOR);
+        buf.append(TAR_TERMINATOR);
         if (pathWithinTarFile != null && !pathWithinTarFile.isEmpty()) {
             buf.append(pathWithinTarFile);
         }
@@ -58,7 +58,7 @@ public class URIUtils {
 
     private static void appendPart(StringBuilder buf, String part, boolean isFirst) {
         if (part.contains(".pb") || part.contains(".parquet")) {
-            buf.append(GZTAR_TERMINATOR);
+            buf.append(TAR_TERMINATOR);
             buf.append(part);
         } else {
             if (!isFirst) {
@@ -69,8 +69,8 @@ public class URIUtils {
     }
 
     public static String combinePathElements(boolean createParent, String first, String... more) {
-        if (!first.startsWith(GZTAR_SCHEME + "://")) {
-            throw new IllegalArgumentException("The first part of the URI must start with the gztar scheme");
+        if (!first.startsWith(TAR_SCHEME + "://")) {
+            throw new IllegalArgumentException("The first part of the URI must start with the tar scheme");
         }
         ArrayList<String> pathParts = new ArrayList<>();
         {

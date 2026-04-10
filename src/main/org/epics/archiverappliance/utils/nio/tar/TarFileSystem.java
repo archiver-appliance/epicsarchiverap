@@ -19,20 +19,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/*
+/**
  * An NIO2 file system that encapsulates a tar file containing gzipped pb files.
- * This is intended to be user as a extra-long-term-store where performance of retrieval is not necessarily a requirement.
- * There is limited support for updating a file; updating an existing entry relies on logical deletes and is extrememly inefficient.
- * One can optimize a bloated gztar file by copying into a new file and discarding all the logically deleted blocks ( similar to MySQL's optimize )
+ * This is intended to be used as a extra-long-term-store where performance of retrieval is not necessarily a requirement.
+ * There is limited support for updating a file; updating an existing entry relies on logical deletes and is inefficient.
+ * There is support for optimizing a tar file by copying into a new file and discarding all the logically deleted blocks ( similar to MySQL's optimize )
  * Only the final component of the path is used to identify the tar entry.
- * Given a path of the form gztar:///arch/XLTS/mshankar/arch/gztartest:2016.pb, we map it to the tar file /arch/XLTS/mshankar/arch/gztartest.tar
- * and the entry gztartest:2016.pb within the tar file.
- * We do not maintain nested paths inside a GZTar file system; the tar catalog is treated as a single directory containing all the entries in the tar file.
+ * Given a path of the form <code>tar:///arch/XLTS/epics/arch/tartest:2016.pb</code>, we map it to the tar file <code>/arch/XLTS/epics/arch/tartest.tar</code>
+ * and the entry <code>tartest:2016.pb</code> or <code>tartest:2016.parquet</code> within the tar file.
+ * We do not maintain nested paths inside a tar file system; the tar catalog is treated as a single directory containing all the entries in the tar file.
  * Also, for now, we do not support links, devices and other tar features.
- * Because updates and deletes are inefficient logical operations, a GZTar data store is expected to be the very last data store in a PVTypeInfo.
- * ETL into a GZTar data store is expected to be infrequent ( maybe once a year )
- * ETL out of a GZTar data store is not expected to happen.
- */
+ * Because updates and deletes are inefficient logical operations, a tar data store is expected to be the very last data store in a PVTypeInfo.
+ * ETL into and out of an tar data store is expected to be infrequent ( maybe once a year ).
+ **/
 public class TarFileSystem extends FileSystem implements ETLOptimizable {
     private static final Logger logger = LogManager.getLogger(TarFileSystem.class.getName());
 

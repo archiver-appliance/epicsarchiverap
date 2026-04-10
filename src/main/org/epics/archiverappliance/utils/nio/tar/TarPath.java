@@ -17,11 +17,11 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
-/*
- * A GZPath consists of the tar file ( represented by the fileSystem ) and the entry in the tar file.
+/**
+ * A TarPath consists of the tar file ( represented by the fileSystem ) and the entry in the tar file.
  * A null tarEntry acts as a Path for the tar file itself.
- * We don't really maintain directories in the tar file; the GZTar is a two level file system
- */
+ * We don't really maintain directories in the tar file; the tar file is a two level file system
+ **/
 public class TarPath implements Path {
     private static final Logger logger = LogManager.getLogger(TarPath.class.getName());
 

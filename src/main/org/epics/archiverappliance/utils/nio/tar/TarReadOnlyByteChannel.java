@@ -10,11 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
 
-/*
+/**
  * Wraps a SeekableByteChannel to present a read only view of the tar entry.
  * tar.dataoffset() is the offset of the start of the data in the tar file, and tar.size() is the size of the data.
  * The position of the channel is relative to the start of the tar file, so we need to adjust the position and limit of the channel to present a view of the tar entry data.
- */
+ **/
 public class TarReadOnlyByteChannel implements SeekableByteChannel {
     static final Logger logger = LogManager.getLogger(TarReadOnlyByteChannel.class.getName());
     final TarEntry tarEntry;

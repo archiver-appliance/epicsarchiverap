@@ -13,11 +13,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 
-/*
+/**
  * Wraps a SeekableByteChannel and takes some actions when the channel is closed.
  * For reads, this is mostly cleanup
  * For writes, this updates the tar file and then does cleanup.
- */
+ **/
 public class TarSeekableByteChannel implements SeekableByteChannel {
     static final Logger logger = LogManager.getLogger(TarSeekableByteChannel.class.getName());
 

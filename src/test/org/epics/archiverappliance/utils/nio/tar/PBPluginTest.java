@@ -68,13 +68,12 @@ public class PBPluginTest {
 
     static Stream<Arguments> pluginsAndPVs() {
         return Stream.of(
-            Arguments.of("pb", "epics:arch:gztartest:pb"),
-            Arguments.of("parquet", "epics:arch:gztartest:parquet")
-        );
+                Arguments.of("pb", "epics:arch:tartest:pb"),
+                Arguments.of("parquet", "epics:arch:tartest:parquet"));
     }
 
     @ParameterizedTest
-    @MethodSource("pluginsAndPVs")    
+    @MethodSource("pluginsAndPVs")
     public void testAppendThruPlugin(String plugin, String pvName) throws Exception {
         String chunkKey = pvName.replace(":", File.separator);
         short currentYear = TimeUtils.getCurrentYear();
@@ -127,7 +126,7 @@ public class PBPluginTest {
             String currYearStr = Short.toString(currentYear);
             for (Path path : PathNameUtility.getAllPathsForPV(
                     archPaths,
-                    URIUtils.GZTAR_SCHEME + "://" + rootFolderStr,
+                    URIUtils.TAR_SCHEME + "://" + rootFolderStr,
                     pvName,
                     ".pb",
                     PathResolver.BASE_PATH_RESOLVER,
@@ -155,12 +154,13 @@ public class PBPluginTest {
                             + 1
                             + 1); // We generate data once every two minutes; so we should halve the number of samples
         }
-    }    
+    }
 
-    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
+    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
+            throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder="
-                        + URLEncoder.encode(URIUtils.GZTAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                        + URLEncoder.encode(URIUtils.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
@@ -197,7 +197,7 @@ public class PBPluginTest {
     private void testRetrieval(String pvName, Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder="
-                        + URLEncoder.encode(URIUtils.GZTAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                        + URLEncoder.encode(URIUtils.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         logger.debug(

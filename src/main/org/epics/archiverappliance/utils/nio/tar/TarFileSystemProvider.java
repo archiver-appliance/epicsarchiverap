@@ -35,19 +35,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/*
- * Given a path of the form gztar:///arch/XLTS/mshankar/arch/gztartest:2016.pb, we map it to the tar file /arch/XLTS/mshankar/arch/gztartest.tar
- * and the entry 2016.pb within the tar file.
- * Each gztar file is a new file system.
- */
-
+/**
+ * Like the JDK's jar plugin, each tar file is a separate file system.
+ **/
 public class TarFileSystemProvider extends FileSystemProvider {
     static final Logger logger = LogManager.getLogger(TarFileSystemProvider.class.getName());
     private final Map<Path, TarFileSystem> filesystems = new ConcurrentHashMap<Path, TarFileSystem>();
 
     @Override
     public String getScheme() {
-        return URIUtils.GZTAR_SCHEME;
+        return URIUtils.TAR_SCHEME;
     }
 
     @Override
@@ -111,8 +108,10 @@ public class TarFileSystemProvider extends FileSystemProvider {
                 options.toString(),
                 tarEntry);
         boolean openForRead = options.isEmpty() || options.contains(StandardOpenOption.READ);
-        boolean openForWrite = options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.CREATE)
-                || options.contains(StandardOpenOption.CREATE_NEW) || options.contains(StandardOpenOption.APPEND)
+        boolean openForWrite = options.contains(StandardOpenOption.WRITE)
+                || options.contains(StandardOpenOption.CREATE)
+                || options.contains(StandardOpenOption.CREATE_NEW)
+                || options.contains(StandardOpenOption.APPEND)
                 || options.contains(StandardOpenOption.TRUNCATE_EXISTING);
         if (openForWrite) {
             openForRead = false;
@@ -126,14 +125,16 @@ public class TarFileSystemProvider extends FileSystemProvider {
         }
 
         if (openForWrite) {
-            if(tarEntry.isInsideTar()) {
-                if(options.contains(StandardOpenOption.CREATE_NEW)) {
-                    throw new FileAlreadyExistsException("Path " + srcpath.toString() + " already exists in the tar file");
+            if (tarEntry.isInsideTar()) {
+                if (options.contains(StandardOpenOption.CREATE_NEW)) {
+                    throw new FileAlreadyExistsException(
+                            "Path " + srcpath.toString() + " already exists in the tar file");
                 }
             }
-            if(!tarEntry.isInsideTar()) {
+            if (!tarEntry.isInsideTar()) {
                 // We do not have a entry in the tar file.
-                boolean okToCreateFile = options.contains(StandardOpenOption.CREATE) || options.contains(StandardOpenOption.CREATE_NEW);
+                boolean okToCreateFile =
+                        options.contains(StandardOpenOption.CREATE) || options.contains(StandardOpenOption.CREATE_NEW);
                 if (!okToCreateFile) {
                     throw new IOException("Path " + srcpath.toString() + " does not have an entry in the tar file");
                 }

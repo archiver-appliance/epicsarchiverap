@@ -39,6 +39,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+/**
+ * Layer on top of Apache Commons Compress TarArchiveEntry and TarArchiveInputStream.
+ * The Wikipedia article on tar files https://en.wikipedia.org/wiki/Tar_(computing) is quite comprehensive.
+ * This class can also be used as a command line utility to do basic operations on tar files.
+ **/
 public class EAATar {
     private static final int TAR_RECORD_SIZE = 512;
     private static final int GZTAR_MAX_RADIX = 36;
