@@ -29,7 +29,8 @@ import org.epics.archiverappliance.retrieval.PVWithData;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,14 +61,7 @@ public class GetDataAtTimeTest {
 
     @BeforeAll
     public static void setUp() throws Exception {
-        File rootFolder = new File(rootFolderStr);
-        FileUtils.deleteDirectory(rootFolder);
-        Path pvPath = Paths.get(rootFolderStr, "epics/arch/gztartest");
-        logger.debug("Creating folder {}", pvPath.getParent().toFile().toString());
-        assert pvPath.getParent().toFile().mkdirs();
         configService = new ConfigServiceForTests(1);
-
-        createTestData();
     }
 
     @AfterAll
@@ -80,8 +74,15 @@ public class GetDataAtTimeTest {
         FileUtils.deleteDirectory(new File(rootFolderStr));
     }
 
-    private static void createTestData() throws IOException {
-        String pluginURI = "pb://localhost?name=XLTS&rootFolder="
+    private static void createTestData(String plugin) throws IOException {
+        File rootFolder = new File(rootFolderStr);
+        FileUtils.deleteDirectory(rootFolder);
+        Path pvPath = Paths.get(rootFolderStr, "epics/arch/gztartest");
+        logger.debug("Creating folder {}", pvPath.getParent().toFile().toString());
+        assert pvPath.getParent().toFile().mkdirs();
+
+
+        String pluginURI = plugin + "://localhost?name=XLTS&rootFolder="
                 + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8") + "&partitionGranularity=PARTITION_DAY";
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(pluginURI, configService);
 
@@ -118,8 +119,11 @@ public class GetDataAtTimeTest {
         }
     }
 
-    @Test
-    public void testGetDataAtTime() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"pb", "parquet"})
+    public void testGetDataAtTime(String plugin) throws Exception {
+        createTestData(plugin);
+
         Period searchPeriod = Period.parse("P1D");
         Random random = new Random();
         for (int day = 1; day < 365; day += 60) {

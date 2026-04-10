@@ -24,7 +24,7 @@ public class ParquetEventFileWriter implements EventFileWriter {
     public ParquetEventFileWriter(
             String pvName, Path path, ArchDBRTypes type, short year, CompressionCodecName compressionCodecName)
             throws IOException {
-        if (Files.exists(path)) {
+        if (Files.exists(path) && Files.size(path) >= 0) {
             if (Files.size(path) == 0) {
                 Files.delete(path);
             } else {

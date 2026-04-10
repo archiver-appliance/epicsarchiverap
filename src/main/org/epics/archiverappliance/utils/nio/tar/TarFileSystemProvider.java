@@ -110,16 +110,33 @@ public class TarFileSystemProvider extends FileSystemProvider {
                 path.toUri().toString(),
                 options.toString(),
                 tarEntry);
-        if (options.isEmpty() || options.contains(StandardOpenOption.READ)) {
+        boolean openForRead = options.isEmpty() || options.contains(StandardOpenOption.READ);
+        boolean openForWrite = options.contains(StandardOpenOption.WRITE) || options.contains(StandardOpenOption.CREATE)
+                || options.contains(StandardOpenOption.CREATE_NEW) || options.contains(StandardOpenOption.APPEND)
+                || options.contains(StandardOpenOption.TRUNCATE_EXISTING);
+        if (openForWrite) {
+            openForRead = false;
+        }
+
+        if (openForRead) {
             if (!tarEntry.isInsideTar()) {
                 throw new IOException("Path " + path.toString() + " does not have an entry in the tar file");
             }
             return gfs.getTarFile().getReadOnlyByteChannel(tarEntry);
         }
 
-        if (options.contains(StandardOpenOption.TRUNCATE_EXISTING) || options.contains(StandardOpenOption.APPEND)) {
-            if (!options.contains(StandardOpenOption.CREATE) && !tarEntry.isInsideTar()) {
-                throw new IOException("Path " + srcpath.toString() + " does not have an entry in the tar file");
+        if (openForWrite) {
+            if(tarEntry.isInsideTar()) {
+                if(options.contains(StandardOpenOption.CREATE_NEW)) {
+                    throw new FileAlreadyExistsException("Path " + srcpath.toString() + " already exists in the tar file");
+                }
+            }
+            if(!tarEntry.isInsideTar()) {
+                // We do not have a entry in the tar file.
+                boolean okToCreateFile = options.contains(StandardOpenOption.CREATE) || options.contains(StandardOpenOption.CREATE_NEW);
+                if (!okToCreateFile) {
+                    throw new IOException("Path " + srcpath.toString() + " does not have an entry in the tar file");
+                }
             }
             File tmpFile = File.createTempFile("__eaa", ".pb");
             if (options.contains(StandardOpenOption.APPEND)) {

@@ -23,7 +23,9 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -37,6 +39,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /*
  * Create gztar files thru the PlainPBStoragePlugin.
@@ -44,14 +47,13 @@ import java.util.concurrent.Callable;
 public class PBPluginTest {
     private static final Logger logger = LogManager.getLogger();
     private static final String rootFolderStr = ConfigServiceForTests.getDefaultPBTestFolder() + "/gztar/PBPluginTest";
-    private static final String pvName = "epics:arch:gztartest";
-    private static final String chunkKey = pvName.replace(":", File.separator);
     private static ConfigServiceForTests configService;
 
     @BeforeAll
     public static void setUp() throws Exception {
         File rootFolder = new File(rootFolderStr);
         FileUtils.deleteDirectory(rootFolder);
+        String chunkKey = "epics:arch:gztartest:pb".replace(":", File.separator);
         Path pvPath = Paths.get(rootFolderStr, chunkKey);
         logger.debug("Creating folder {}", pvPath.getParent().toFile().toString());
         assert pvPath.getParent().toFile().mkdirs();
@@ -64,7 +66,98 @@ public class PBPluginTest {
         FileUtils.deleteDirectory(new File(rootFolderStr));
     }
 
-    private void appendAndTestForYear(short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
+    static Stream<Arguments> pluginsAndPVs() {
+        return Stream.of(
+            Arguments.of("pb", "epics:arch:gztartest:pb"),
+            Arguments.of("parquet", "epics:arch:gztartest:parquet")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("pluginsAndPVs")    
+    public void testAppendThruPlugin(String plugin, String pvName) throws Exception {
+        String chunkKey = pvName.replace(":", File.separator);
+        short currentYear = TimeUtils.getCurrentYear();
+        for (int y = 3; y >= 0; y--) {
+            appendAndTestForYear(pvName, (short) (currentYear - y), 365 * (3 - y + 1), 60);
+        }
+
+        Files.walk(Paths.get(rootFolderStr))
+                .forEach(p -> logger.debug("---- " + p.toAbsolutePath().toString()));
+        EAATar tarFile = new EAATar(rootFolderStr + File.separator + chunkKey + ".tar");
+        logger.debug("Loading catalog for {}", tarFile);
+        Map<String, TarEntry> entries = tarFile.loadCatalog();
+        List<String> entryNames = new LinkedList<String>(entries.keySet());
+        Collections.sort(entryNames);
+        Assertions.assertTrue(
+                entryNames.size() == 4 * 365, "Expecting " + 4 * 365 + " entries; got " + entries.size() + " entries");
+        // for(String entryName : entryNames) {
+        //     logger.debug("Entry {}", entryName);
+        // }
+
+        Files.walk(Paths.get(rootFolderStr))
+                .forEach(p -> logger.debug("---- " + p.toAbsolutePath().toString()));
+
+        // Test retrieval
+        Instant end = TimeUtils.getStartOfYear(currentYear - 1).plusSeconds(24 * 60 * 60 * (365 / 2));
+        for (int days = 1; days < 60; days++) {
+            Instant start = end.minus(days, ChronoUnit.DAYS);
+            long before = System.currentTimeMillis();
+            testRetrieval(
+                    pvName,
+                    start,
+                    end,
+                    (days * 24 * 60)
+                            + 1
+                            + 1); // One for the last known event and one for the event that's exactly at the end time.
+            long after = System.currentTimeMillis();
+            logger.debug("Took {}(ms) to retrieve data for {} days", (after - before), days);
+        }
+
+        // Before update
+        end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
+        for (int days = 1; days < 10; days++) {
+            Instant start = end.minus(days, ChronoUnit.DAYS);
+            testRetrieval(pvName, start, end, (days * 24 * 60) + 1 + 1);
+        }
+
+        // Delete the files that we are updating ( otherwise we'll be appending and we'll get the wrong result )
+        logger.debug("Deleting some files now");
+        try (ArchPaths archPaths = new ArchPaths()) {
+            String currYearStr = Short.toString(currentYear);
+            for (Path path : PathNameUtility.getAllPathsForPV(
+                    archPaths,
+                    URIUtils.GZTAR_SCHEME + "://" + rootFolderStr,
+                    pvName,
+                    ".pb",
+                    PathResolver.BASE_PATH_RESOLVER,
+                    configService.getPVNameToKeyConverter())) {
+                if (path.toString().contains(currYearStr)) {
+                    logger.debug("Deleting {}", path.toString());
+                    Files.delete(path);
+                }
+            }
+        }
+        logger.debug("Done deleting some files now");
+
+        logger.info("Updating some PB files now");
+        appendAndTestForYear(pvName, currentYear, 365 * 4, 120);
+
+        // After update
+        end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
+        for (int days = 1; days < 10; days++) {
+            Instant start = end.minus(days, ChronoUnit.DAYS);
+            testRetrieval(
+                    pvName,
+                    start,
+                    end,
+                    ((days * 24 * 60) / 2)
+                            + 1
+                            + 1); // We generate data once every two minutes; so we should halve the number of samples
+        }
+    }    
+
+    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder="
                         + URLEncoder.encode(URIUtils.GZTAR_SCHEME + "://" + rootFolderStr, "UTF-8")
@@ -91,6 +184,8 @@ public class PBPluginTest {
             }
         }
 
+        String chunkKey = pvName.replace(":", File.separator);
+
         EAATar tarFile = new EAATar(rootFolderStr + File.separator + chunkKey + ".tar");
         logger.debug("Loading catalog for {}", tarFile);
         Map<String, TarEntry> entries = tarFile.loadCatalog();
@@ -99,7 +194,7 @@ public class PBPluginTest {
                 "Expecting " + expectedCatalogEntryCount + " entries; got " + entries.size() + " entries");
     }
 
-    private void testRetrieval(Instant start, Instant end, int expectedEventCount) throws Exception {
+    private void testRetrieval(String pvName, Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder="
                         + URLEncoder.encode(URIUtils.GZTAR_SCHEME + "://" + rootFolderStr, "UTF-8")
@@ -131,86 +226,6 @@ public class PBPluginTest {
                     "Expecting " + expectedEventCount + " events; got "
                             + eventCount + " events" + " when looking from "
                             + TimeUtils.convertToISO8601String(start) + " to " + TimeUtils.convertToISO8601String(end));
-        }
-    }
-
-    @Test
-    public void testAppendThruPlugin() throws Exception {
-        short currentYear = TimeUtils.getCurrentYear();
-        for (int y = 3; y >= 0; y--) {
-            appendAndTestForYear((short) (currentYear - y), 365 * (3 - y + 1), 60);
-        }
-
-        Files.walk(Paths.get(rootFolderStr))
-                .forEach(p -> logger.debug("---- " + p.toAbsolutePath().toString()));
-        EAATar tarFile = new EAATar(rootFolderStr + File.separator + chunkKey + ".tar");
-        logger.debug("Loading catalog for {}", tarFile);
-        Map<String, TarEntry> entries = tarFile.loadCatalog();
-        List<String> entryNames = new LinkedList<String>(entries.keySet());
-        Collections.sort(entryNames);
-        Assertions.assertTrue(
-                entryNames.size() == 4 * 365, "Expecting " + 4 * 365 + " entries; got " + entries.size() + " entries");
-        // for(String entryName : entryNames) {
-        //     logger.debug("Entry {}", entryName);
-        // }
-
-        Files.walk(Paths.get(rootFolderStr))
-                .forEach(p -> logger.debug("---- " + p.toAbsolutePath().toString()));
-
-        // Test retrieval
-        Instant end = TimeUtils.getStartOfYear(currentYear - 1).plusSeconds(24 * 60 * 60 * (365 / 2));
-        for (int days = 1; days < 60; days++) {
-            Instant start = end.minus(days, ChronoUnit.DAYS);
-            long before = System.currentTimeMillis();
-            testRetrieval(
-                    start,
-                    end,
-                    (days * 24 * 60)
-                            + 1
-                            + 1); // One for the last known event and one for the event that's exactly at the end time.
-            long after = System.currentTimeMillis();
-            logger.debug("Took {}(ms) to retrieve data for {} days", (after - before), days);
-        }
-
-        // Before update
-        end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
-        for (int days = 1; days < 10; days++) {
-            Instant start = end.minus(days, ChronoUnit.DAYS);
-            testRetrieval(start, end, (days * 24 * 60) + 1 + 1);
-        }
-
-        // Delete the files that we are updating ( otherwise we'll be appending and we'll get the wrong result )
-        logger.debug("Deleting some files now");
-        try (ArchPaths archPaths = new ArchPaths()) {
-            String currYearStr = Short.toString(currentYear);
-            for (Path path : PathNameUtility.getAllPathsForPV(
-                    archPaths,
-                    URIUtils.GZTAR_SCHEME + "://" + rootFolderStr,
-                    pvName,
-                    ".pb",
-                    PathResolver.BASE_PATH_RESOLVER,
-                    configService.getPVNameToKeyConverter())) {
-                if (path.toString().contains(currYearStr)) {
-                    logger.debug("Deleting {}", path.toString());
-                    Files.delete(path);
-                }
-            }
-        }
-        logger.debug("Done deleting some files now");
-
-        logger.info("Updating some PB files now");
-        appendAndTestForYear(currentYear, 365 * 4, 120);
-
-        // After update
-        end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
-        for (int days = 1; days < 10; days++) {
-            Instant start = end.minus(days, ChronoUnit.DAYS);
-            testRetrieval(
-                    start,
-                    end,
-                    ((days * 24 * 60) / 2)
-                            + 1
-                            + 1); // We generate data once every two minutes; so we should halve the number of samples
         }
     }
 }

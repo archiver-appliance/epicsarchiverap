@@ -21,7 +21,9 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.net.URLEncoder;
@@ -31,6 +33,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 /*
  * Test append into an existing PB file inside a gztar file.
@@ -40,15 +43,13 @@ import java.util.concurrent.Callable;
 public class SeqAppendTest {
     private static final Logger logger = LogManager.getLogger();
     private static final String rootFolderStr = ConfigServiceForTests.getDefaultPBTestFolder() + "/gztar/SeqAppend";
-    private static final String pvName = "epics:arch:gztartest";
-    private static final String chunkKey = pvName.replace(":", File.separator);
     private static ConfigServiceForTests configService;
 
     @BeforeAll
     public static void setUp() throws Exception {
         File rootFolder = new File(rootFolderStr);
         FileUtils.deleteDirectory(rootFolder);
-        Path pvPath = Paths.get(rootFolderStr, chunkKey);
+        Path pvPath = Paths.get(rootFolderStr, "epics/arch/gztartest");
         logger.debug("Creating folder {}", pvPath.getParent().toFile().toString());
         assert pvPath.getParent().toFile().mkdirs();
         configService = new ConfigServiceForTests(1);
@@ -60,7 +61,7 @@ public class SeqAppendTest {
         FileUtils.deleteDirectory(new File(rootFolderStr));
     }
 
-    private void appendAndTestForYear(short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
+    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_MONTH",
@@ -86,6 +87,7 @@ public class SeqAppendTest {
             }
         }
 
+        String chunkKey = pvName.replace(":", File.separator);
         EAATar tarFile = new EAATar(rootFolderStr + File.separator + chunkKey + ".tar");
         Map<String, TarEntry> entries = tarFile.loadCatalog();
         Assertions.assertTrue(
@@ -93,7 +95,7 @@ public class SeqAppendTest {
                 "Expecting " + expectedCatalogEntryCount + " entries; got " + entries.size() + " entries");
     }
 
-    private void testRetrieval(Instant start, Instant end, int expectedEventCount) throws Exception {
+    private void testRetrieval(String pvName, Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_MONTH",
@@ -127,15 +129,24 @@ public class SeqAppendTest {
         }
     }
 
-    @Test
-    public void testAppendThruPlugin() throws Exception {
+    static Stream<Arguments> pluginsAndPVs() {
+        return Stream.of(
+            Arguments.of("pb", "epics:arch:gztartest:pb"),
+            Arguments.of("parquet", "epics:arch:gztartest:parquet")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("pluginsAndPVs")    
+    public void testAppendThruPlugin(String plugin, String pvName) throws Exception {
+        String chunkKey = pvName.replace(":", File.separator);
         short currentYear = (short) (TimeUtils.getCurrentYear() - 1);
-        appendAndTestForYear(currentYear, 12, 60);
+        appendAndTestForYear(pvName, currentYear, 12, 60);
         // Test retrieval
         Instant end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
         for (int days = 1; days < 10; days++) {
             Instant start = end.minus(days, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
-            testRetrieval(start, end, (days * 24 * 60) + 1 + 1);
+            testRetrieval(pvName, start, end, (days * 24 * 60) + 1 + 1);
         }
 
         try (ArchPaths archPaths = new ArchPaths()) {
@@ -145,7 +156,7 @@ public class SeqAppendTest {
 
         for (int days = 1; days < 10; days++) {
             Instant start = end.minus(days, ChronoUnit.DAYS).minus(1, ChronoUnit.MILLIS);
-            testRetrieval(start, end, (days * 24 * 60) + 1 + 1);
+            testRetrieval(pvName, start, end, (days * 24 * 60) + 1 + 1);
         }
     }
 }

@@ -22,7 +22,6 @@ import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.io.InputFile;
-import org.apache.parquet.io.LocalInputFile;
 import org.apache.parquet.proto.ProtoParquetReader;
 import org.epics.archiverappliance.common.YearSecondTimestamp;
 import org.epics.archiverappliance.config.ArchDBRTypes;
@@ -86,7 +85,7 @@ public class ParquetInfo extends FileInfo {
 
     public ParquetInfo(Path pvPath, ParquetReadOptions readOptions) throws IOException {
         super();
-        inputFile = new LocalInputFile(pvPath);
+        inputFile = new NIOInputFile(pvPath);
         fileReader = ParquetFileReader.open(inputFile, readOptions);
         footer = fileReader.getFooter();
         var metadata = footer.getFileMetaData();

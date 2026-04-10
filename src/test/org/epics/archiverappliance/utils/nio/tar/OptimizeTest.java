@@ -21,7 +21,9 @@ import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProces
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -41,7 +43,7 @@ import java.util.concurrent.Callable;
 
 public class OptimizeTest {
     private static final Logger logger = LogManager.getLogger();
-    private static final String pvName = OptimizeTest.class.getSimpleName() + ":PV1";
+    private static final String pvNameBase = OptimizeTest.class.getSimpleName();
     private static final short startYear = 2010;
     private static final short endYear = 2020;
     private static final File ltsFolder = new File(System.getenv("ARCHAPPL_LONG_TERM_FOLDER") + "/OptimizeTest");
@@ -51,6 +53,16 @@ public class OptimizeTest {
     @BeforeAll
     public static void setUp() throws Exception {
         configService = new ConfigServiceForTests(new File("./bin"), 1);
+        if (ltsFolder.exists()) {
+            FileUtils.deleteDirectory(ltsFolder);
+        }
+        if (xltsFolder.exists()) {
+            FileUtils.deleteDirectory(xltsFolder);
+        }
+    }
+
+    @BeforeEach
+    public void beforeEach() throws Exception {
         if (ltsFolder.exists()) {
             FileUtils.deleteDirectory(ltsFolder);
         }
@@ -70,13 +82,15 @@ public class OptimizeTest {
         configService.shutdownNow();
     }
 
-    @Test
-    public void testOptimize() throws Exception {
+    @ParameterizedTest
+    @ValueSource(strings = {"pb", "parquet"})
+    public void testOptimize(String plugin) throws Exception {
+        String pvName = pvNameBase + ":" + plugin;
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         String[] dataStores = new String[] {
             "pb://localhost?name=LTS&rootFolder=" + ltsFolder.getAbsolutePath()
                     + "&partitionGranularity=PARTITION_YEAR",
-            "pb://localhost?name=XLTS&rootFolder=gztar://" + xltsFolder.getAbsolutePath()
+            plugin + "://localhost?name=XLTS&rootFolder=gztar://" + xltsFolder.getAbsolutePath()
                     + "&partitionGranularity=PARTITION_DAY&hold=730&gather=365",
             "blackhole://localhost?name=BLACKHOLE"
         };
@@ -106,7 +120,7 @@ public class OptimizeTest {
         }
 
         StoragePlugin xlts = StoragePluginURLParser.parseStoragePlugin(dataStores[1], configService);
-        Path tarPath = Paths.get(xltsFolder.getAbsolutePath(), OptimizeTest.class.getSimpleName(), "PV1.tar");
+        Path tarPath = Paths.get(xltsFolder.getAbsolutePath(), pvNameBase, plugin + ".tar");
         EAATar xltsTar = new EAATar(tarPath.toString());
         for (short year = startYear + 2; year <= endYear; year++) {
             logger.debug("Running ETL for year {}", year);
@@ -128,13 +142,13 @@ public class OptimizeTest {
                     catalogSize <= 4 * 365,
                     "Expected at most 4 years worth in the XLTS GZTar after ETL Got " + catalogSize + " entries");
 
-            int eventCount = getEventCount(xlts);
+            int eventCount = getEventCount(pvName, xlts);
             Assertions.assertTrue(
                     eventCount > 0, "Expected at least a few events from the xlts. Got " + eventCount + " events");
         }
     }
 
-    private static int getEventCount(StoragePlugin xlts) throws Exception {
+    private static int getEventCount(String pvName, StoragePlugin xlts) throws Exception {
         try (BasicContext context = new BasicContext()) {
             List<Callable<EventStream>> streams = xlts.getDataForPV(
                     context,

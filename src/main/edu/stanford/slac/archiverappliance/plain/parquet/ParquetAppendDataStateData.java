@@ -13,7 +13,6 @@ import org.apache.parquet.hadoop.metadata.CompressionCodecName;
 import org.apache.parquet.hadoop.rewrite.ParquetRewriter;
 import org.apache.parquet.hadoop.rewrite.RewriteOptions;
 import org.apache.parquet.io.InputFile;
-import org.apache.parquet.io.LocalInputFile;
 import org.apache.parquet.io.LocalOutputFile;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
@@ -110,10 +109,10 @@ public class ParquetAppendDataStateData extends AppendDataStateData {
                     return;
                 }
             } else {
-                rewriteInPaths.add(new LocalInputFile(outPath));
+                rewriteInPaths.add(new NIOInputFile(outPath));
             }
         }
-        rewriteInPaths.addAll(inPaths.stream().map(LocalInputFile::new).toList());
+        rewriteInPaths.addAll(inPaths.stream().map(NIOInputFile::new).toList());
         ParquetConfiguration conf = new PlainParquetConfiguration();
         RewriteOptions.Builder rewriteOptionsBuilder =
                 new RewriteOptions.Builder(conf, rewriteInPaths, new LocalOutputFile(outTempPath));
