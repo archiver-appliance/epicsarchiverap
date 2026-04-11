@@ -25,7 +25,6 @@ import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -47,7 +46,6 @@ import java.util.concurrent.Future;
  * @author mshankar
  *
  */
-@Disabled("Disabled until we add back support for zip compression thru NIO2")
 public class ZipCachedFetchTest {
     private static final Logger logger = LogManager.getLogger(ZipCachedFetchTest.class.getName());
     String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZipCachedFetchTest/";
@@ -93,8 +91,7 @@ public class ZipCachedFetchTest {
                 pluginString(
                         PB_PLUGIN_IDENTIFIER,
                         "localhost",
-                        "name=STS&rootFolder=" + rootFolderName
-                                + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
+                        "name=STS&rootFolder=jar:file://" + rootFolderName + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         if (new File(rootFolderName).exists()) {
             FileUtils.deleteDirectory(new File(rootFolderName));
@@ -149,7 +146,6 @@ public class ZipCachedFetchTest {
                     endTime,
                     pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
             long previousEpochSeconds = 0L;
             long eventCount = 0;
@@ -182,7 +178,6 @@ public class ZipCachedFetchTest {
                     endTime,
                     pbplugin.getExtensionString(),
                     pbplugin.getPartitionGranularity(),
-                    pbplugin.getPathResolver(),
                     configService.getPVNameToKeyConverter());
 
             List<Future<EventStream>> futures = new LinkedList<Future<EventStream>>();

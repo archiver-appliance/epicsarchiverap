@@ -23,7 +23,6 @@ import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -34,11 +33,13 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
-@Disabled("Disabled until we add back support for zip compression thru NIO2")
 @Tag("slow")
 public class ZipETLTest {
     private static Logger logger = LogManager.getLogger(ZipETLTest.class.getName());
     File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipETLTest");
+    private final String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
+    private final String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
+
     private ConfigService configService;
 
     @BeforeEach
@@ -48,6 +49,8 @@ public class ZipETLTest {
             FileUtils.deleteDirectory(testFolder);
         }
         testFolder.mkdirs();
+        new File(srcRootFolder).mkdirs();
+        new File(destRootFolder).mkdirs();
     }
 
     @AfterEach
@@ -58,7 +61,6 @@ public class ZipETLTest {
     @Test
     public void testETLIntoZipPerPV() throws Exception {
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":ETLZipTest";
-        String srcRootFolder = testFolder.getAbsolutePath() + File.separator + "srcFiles";
         PlainStoragePlugin etlSrc = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
                         PB_PLUGIN_IDENTIFIER,
@@ -79,13 +81,11 @@ public class ZipETLTest {
             etlSrc.appendData(context, pvName, simstream);
         }
 
-        String destRootFolder = testFolder.getAbsolutePath() + File.separator + "destFiles";
         PlainStoragePlugin etlDest = (PlainStoragePlugin) StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
                         PB_PLUGIN_IDENTIFIER,
                         "localhost",
-                        "name=ZipETL&rootFolder=" + destRootFolder
-                                + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
+                        "name=ZipETL&rootFolder=jar:file://" + destRootFolder + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         logger.info(etlDest.getURLRepresentation());
 
@@ -105,8 +105,9 @@ public class ZipETLTest {
         ETLExecutor.runETLs(configService, timeETLruns);
         logger.info("Done performing ETL");
 
-        File expectedZipFile = new File(destRootFolder + File.separator
-                + configService.getPVNameToKeyConverter().convertPVNameToKey(pvName) + "_pb.zip");
+        String zipFileName = configService.getPVNameToKeyConverter().convertPVNameToKey(pvName);
+        zipFileName = zipFileName.substring(0, zipFileName.length() - 1) + ".zip";
+        File expectedZipFile = new File(destRootFolder + File.separator + zipFileName);
         Assertions.assertTrue(expectedZipFile.exists(), "Zip file does not seem to exist " + expectedZipFile);
 
         logger.info("Testing retrieval for zip per pv");

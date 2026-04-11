@@ -13,6 +13,7 @@ import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.epics.archiverappliance.utils.nio.PVPath;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -92,14 +93,12 @@ public class PathNameUtility {
             final Instant endts,
             final String extension,
             final PartitionGranularity granularity,
-            final PathResolver pathResolver,
             PVNameToKeyMapping pv2key)
             throws IOException {
         String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
 
         ArrayList<Path> retVal = new ArrayList<>();
-        try (DirectoryStream<Path> paths =
-                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key)) {
+        try (DirectoryStream<Path> paths = getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
             for (Path path : paths) {
                 String name = path.getFileName().toString();
                 try {
@@ -167,7 +166,6 @@ public class PathNameUtility {
                 reqEndTime,
                 extension,
                 granularity,
-                pathResolver,
                 pv2key);
     }
 
@@ -192,8 +190,7 @@ public class PathNameUtility {
             PVNameToKeyMapping pv2key)
             throws IOException {
         ArrayList<Path> retval = new ArrayList<>();
-        try (DirectoryStream<Path> paths =
-                getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pathResolver, pv2key)) {
+        try (DirectoryStream<Path> paths = getDirectoryStreamsForPV(archPaths, rootFolder, pvName, extension, pv2key)) {
             for (Path path : paths) {
                 retval.add(path);
             }
@@ -343,8 +340,8 @@ public class PathNameUtility {
             throws IOException {
         String partitionNameComponent = TimeUtils.getPartitionName(ts, partitionGranularity);
         String pvKey = pv2key.convertPVNameToKey(pvName);
-        String pvPathComponent = pvKey + partitionNameComponent + extension;
-        return pathResolver.get(paths, createParentFolder, rootFolder, pvPathComponent, pvKey);
+        return pathResolver.get(
+                paths, createParentFolder, new PVPath(rootFolder, pvKey, partitionNameComponent, extension));
     }
 
     /**
@@ -357,32 +354,6 @@ public class PathNameUtility {
     private static String getFinalNameComponent(String pvName, PVNameToKeyMapping pv2key) {
         Path pvPathAlone = Paths.get(pv2key.convertPVNameToKey(pvName));
         return pvPathAlone.getFileName().toString();
-    }
-
-    /**
-     * A pv is mapped to a path that can span folders. This method returns the parent path of the pv; we search for pv
-     * data in this folder.
-     *
-     * @param paths           ArchPaths - The replacement for NIO Paths
-     * @param rootFolder      The root folder for the plugin
-     * @param pvName          Name of the PV.
-     * @param pathResolver    PathResolver
-     * @param pv2key          PVNameToKeyMapping
-     * @return Path A list of all the paths
-     * @throws IOException &emsp;
-     */
-    private static Path getParentPath(
-            ArchPaths paths,
-            String rootFolder,
-            final String pvName,
-            PathResolver pathResolver,
-            PVNameToKeyMapping pv2key)
-            throws IOException {
-        String pvKey = pv2key.convertPVNameToKey(pvName);
-        boolean createParentFolder = false; // should we create parent folder if it does not exist
-        return pathResolver
-                .get(paths, createParentFolder, rootFolder, pvKey, pvKey)
-                .getParent();
     }
 
     /**
@@ -416,26 +387,19 @@ public class PathNameUtility {
      * @param rootFolder      The root folder for the plugin
      * @param pvName          Name of the PV.
      * @param extension       The file extension.
-     * @param pathResolver    Path Resolver
      * @param pv2key          PVNameToKeyMapping
      * @return DirectoryStream  NIO2 directory stream;
      * @throws IOException &emsp;
      */
     private static DirectoryStream<Path> getDirectoryStreamsForPV(
-            ArchPaths paths,
-            String rootFolder,
-            final String pvName,
-            final String extension,
-            PathResolver pathResolver,
-            PVNameToKeyMapping pv2key)
+            ArchPaths paths, String rootFolder, final String pvName, final String extension, PVNameToKeyMapping pv2key)
             throws IOException {
         try {
-            Path parentFolder = getParentPath(paths, rootFolder, pvName, pathResolver, pv2key);
-            String pvFinalNameComponent = getFinalNameComponent(pvName, pv2key);
-            String matchGlob = pvFinalNameComponent + "*" + extension;
-            logger.debug(pvName + ": Looking for " + matchGlob + " in parentFolder " + parentFolder.toString());
-
-            return Files.newDirectoryStream(parentFolder, matchGlob);
+            PVPath pvPath = new PVPath(rootFolder, pv2key.convertPVNameToKey(pvName), null, null);
+            ArchPaths.GlobSearchParams gs = paths.getGlobSearchParams(pvPath, extension);
+            logger.debug(pvName + ": Looking for " + gs.globPattern() + " in parentFolder "
+                    + gs.searchFolder().toString());
+            return Files.newDirectoryStream(gs.searchFolder(), gs.globPattern());
         } catch (NotDirectoryException nex) {
             logger.debug("Possibly empty zip file when looking for data for pv " + pvName, nex);
             // Return an empty directory stream in this case.
@@ -471,7 +435,8 @@ public class PathNameUtility {
                 String pvName, String pathName, String pvFinalNameComponent, PartitionGranularity granularity)
                 throws IOException {
             String afterpvname = pathName.substring(pvFinalNameComponent.length());
-            logger.debug("After pvName, name of the file is " + afterpvname);
+            logger.debug("After pvName, name of the file is " + afterpvname + " with final name component "
+                    + pvFinalNameComponent);
             String justtheTimeComponent = afterpvname.split("\\.")[0];
             logger.debug("Just the time component is " + justtheTimeComponent);
             String[] timecomponents = justtheTimeComponent.split("_");

@@ -26,7 +26,6 @@ import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -41,7 +40,6 @@ import java.util.concurrent.Callable;
  * @author mshankar
  *
  */
-@Disabled("Disabled until we add back support for zip compression thru NIO2")
 public class ZipSingleDayRawFetchTest {
     private static final Logger logger = LogManager.getLogger(ZipSingleDayRawFetchTest.class.getName());
     String rootFolderName = ConfigServiceForTests.getDefaultPBTestFolder() + "/" + "ZipSingleDayRawFetch/";
@@ -57,8 +55,7 @@ public class ZipSingleDayRawFetchTest {
                 pluginString(
                         PB_PLUGIN_IDENTIFIER,
                         "localhost",
-                        "name=STS&rootFolder=" + rootFolderName
-                                + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
+                        "name=STS&rootFolder=jar:file://" + rootFolderName + "&partitionGranularity=PARTITION_DAY"),
                 configService);
         if (new File(rootFolderName).exists()) {
             FileUtils.deleteDirectory(new File(rootFolderName));

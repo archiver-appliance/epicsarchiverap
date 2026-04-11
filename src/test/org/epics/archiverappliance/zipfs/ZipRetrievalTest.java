@@ -18,12 +18,12 @@ import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.retrieval.workers.CurrentThreadWorkerEventStream;
 import org.epics.archiverappliance.utils.nio.ArchPaths;
+import org.epics.archiverappliance.utils.nio.PVPath;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.epics.archiverappliance.utils.simulation.SineGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -41,7 +41,6 @@ import java.time.Instant;
  * @author mshankar
  *
  */
-@Disabled("Disabled until we add back support for zip compression thru NIO2")
 public class ZipRetrievalTest {
     private static Logger logger = LogManager.getLogger(ZipRetrievalTest.class.getName());
     File testFolder = new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ZipRetrievalTest");
@@ -74,7 +73,8 @@ public class ZipRetrievalTest {
         }
 
         try (ArchPaths paths = new ArchPaths()) {
-            Path zipPath = paths.get(true, "jar:file://" + testFolder.getAbsolutePath(), "sk.zip!/sk.txt");
+            // Path zipPath = paths.get(true, "jar:file://" + testFolder.getAbsolutePath(), "sk.zip!/sk.txt");
+            Path zipPath = paths.get(new PVPath("jar:file:" + testFolder.getAbsolutePath(), "sk:", "sk", ".txt"), true);
             Files.copy(skFile.toPath(), zipPath, StandardCopyOption.REPLACE_EXISTING);
         }
 
@@ -82,7 +82,7 @@ public class ZipRetrievalTest {
         Assertions.assertTrue(new File(zipFileStr).exists(), "Zip file does not exist " + zipFileStr);
         logger.info("Checking seeks etc");
         try (ArchPaths paths = new ArchPaths()) {
-            Path zipPath = paths.get("jar:file://" + testFolder.getAbsolutePath(), "sk.zip!/sk.txt");
+            Path zipPath = paths.get(new PVPath("jar:file:" + testFolder.getAbsolutePath(), "sk:", "sk", ".txt"));
             logger.debug(zipPath.toUri().toString());
             // Each line has 6 bytes...
             DecimalFormat format = new DecimalFormat("00000");
@@ -107,8 +107,7 @@ public class ZipRetrievalTest {
                 pluginString(
                         PB_PLUGIN_IDENTIFIER,
                         "localhost",
-                        "name=ZipTest&rootFolder=" + rootFolder
-                                + "&partitionGranularity=PARTITION_HOUR&compress=ZIP_PER_PV"),
+                        "name=ZipTest&rootFolder=jar:file://" + rootFolder + "&partitionGranularity=PARTITION_HOUR"),
                 configService);
         logger.info(storagePlugin.getURLRepresentation());
         String pvName = ConfigServiceForTests.ARCH_UNIT_TEST_PVNAME_PREFIX + ":SimpleZipTest";
@@ -124,9 +123,11 @@ public class ZipRetrievalTest {
         try (BasicContext context = new BasicContext()) {
             storagePlugin.appendData(context, pvName, simstream);
         }
-        File expectedZipFile = new File(testFolder + File.separator
-                + configService.getPVNameToKeyConverter().convertPVNameToKey(pvName) + "_pb.zip");
+        String zipFileName = configService.getPVNameToKeyConverter().convertPVNameToKey(pvName);
+        zipFileName = zipFileName.substring(0, zipFileName.length() - 1) + ".zip";
+        File expectedZipFile = new File(testFolder + File.separator + zipFileName);
         Assertions.assertTrue(expectedZipFile.exists(), "Zip file does not seem to exist " + expectedZipFile);
+        logger.info("Zip file " + expectedZipFile + " exists");
 
         logger.info("Testing retrieval for zip per pv");
         try (BasicContext context = new BasicContext();
@@ -179,8 +180,7 @@ public class ZipRetrievalTest {
                     pluginString(
                             PB_PLUGIN_IDENTIFIER,
                             "localhost",
-                            "name=ZipTest&rootFolder=" + rootFolder
-                                    + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
+                            "name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY"),
                     configService);
             logger.info(storagePlugin.getURLRepresentation());
             int phasediffindegrees = 10;
@@ -240,8 +240,7 @@ public class ZipRetrievalTest {
                     pluginString(
                             PB_PLUGIN_IDENTIFIER,
                             "localhost",
-                            "name=ZipTest&rootFolder=" + rootFolder
-                                    + "&partitionGranularity=PARTITION_DAY&compress=ZIP_PER_PV"),
+                            "name=ZipTest&rootFolder=" + rootFolder + "&partitionGranularity=PARTITION_DAY"),
                     configService);
             DecimalFormat format = new DecimalFormat("00");
             long totalTimeConsumed = 0;

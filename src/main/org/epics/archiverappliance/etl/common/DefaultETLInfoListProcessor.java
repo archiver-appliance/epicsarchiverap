@@ -37,7 +37,8 @@ public class DefaultETLInfoListProcessor extends ETLInfoListProcessor {
             long checkSzStart = System.currentTimeMillis();
             long sizeOfSrcStream = infoItem.getSize();
             totalSrcBytes += sizeOfSrcStream;
-            if (notEnoughFreeSpace(sizeOfSrcStream, curETLDest, etlStage, infoItem.getKey(), pvName)) {
+            if (notEnoughFreeSpace(
+                    sizeOfSrcStream, curETLDest, etlStage, infoItem.getKey().toString(), pvName)) {
                 if (deleteSrcStreamWhenOutOfSpace(
                         List.of(infoItem), etlStage.getOutOfSpaceHandling(), movedList, etlStage, pvName)) {
                     continue;
@@ -55,7 +56,7 @@ public class DefaultETLInfoListProcessor extends ETLInfoListProcessor {
                 boolean status = this.curETLDest.appendToETLAppendData(pvName, stream, etlContext);
                 movedList.add(infoItem);
                 time4appendToETLAppendData = time4appendToETLAppendData + System.currentTimeMillis() - time3;
-                checkAppendStatus(pvName, status, infoItem.getKey(), infoItem.getGranularity());
+                checkAppendStatus(pvName, status, infoItem.getKey().toString(), infoItem.getGranularity());
             } catch (IOException ex) {
                 // TODO What do we do in the case of exceptions? Do we remove the source still? Do we stop the
                 // engine from recording this PV?
