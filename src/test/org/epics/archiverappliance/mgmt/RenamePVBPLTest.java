@@ -6,6 +6,7 @@ import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
@@ -17,7 +18,6 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.InfoChangeHandler;
@@ -118,7 +118,7 @@ public class RenamePVBPLTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvName)))));
-        PVAccessUtil.waitForStatusChange(pvName, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvName, "Being archived", 10, mgmtURL, 15);
         // We have now archived this PV, get some data and validate we got the expected number of events
         long beforeRenameCount = checkRetrieval(pvName, 3 * 365 * 86400);
         logger.info("Before renaming, we had this many events from retrieval" + beforeRenameCount);
@@ -127,7 +127,7 @@ public class RenamePVBPLTest {
         // Let's pause the PV.
         GetUrlContent.getURLContentWithQueryParameters(mgmtURL + "pauseArchivingPV", Map.of("pv", pvName), false);
         Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvName, "Paused", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvName, "Paused", 10, mgmtURL, 15);
         logger.info("Successfully paused the PV " + pvName);
 
         // Let's rename the PV.
@@ -161,7 +161,7 @@ public class RenamePVBPLTest {
                         && deletePVtatus.get("status").equals("ok"),
                 "Cannot delete old PV");
         Thread.sleep(2 * 1000);
-        PVAccessUtil.waitForStatusChange(pvName, "Not being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvName, "Not being archived", 10, mgmtURL, 15);
         logger.info("Done with deleting the old PV....." + pvName);
 
         // Let's rename the PV back to its original name

@@ -3,11 +3,12 @@ package org.epics.archiverappliance.retrieval.extrafields;
 import edu.stanford.slac.archiverappliance.PB.EPICSEvent.PayloadInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.InfoChangeHandler;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * We want to make sure we capture changes in EGU and return them as part of the retrieval request.
@@ -61,7 +63,7 @@ public class EGUChangeTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         // We have now archived this PV, get some data and make sure the EGU is as expected.
         checkEGU("apples");
@@ -73,7 +75,7 @@ public class EGUChangeTest {
         Assertions.assertTrue(
                 pauseStatus.containsKey("status") && pauseStatus.get("status").equals("ok"), "Cannot pause PV");
         logger.info("Done pausing PV " + pvName);
-        Thread.sleep(5 * 1000);
+        ArchiveTestUtils.waitForStatusChange(pvName, "Paused", 10, mgmtURL, 5);
         String resumePVURL =
                 "http://localhost:17665/mgmt/bpl/resumeArchivingPV?pv=" + URLEncoder.encode(pvName, "UTF-8");
         JSONObject resumeStatus = GetUrlContent.getURLContentAsJSONObject(resumePVURL);
@@ -82,8 +84,10 @@ public class EGUChangeTest {
         logger.info("Done resuming PV " + pvName);
 
         // Now check the EGU again...
-        Thread.sleep(1 * 60 * 1000);
-        checkEGU("oranges");
+        Awaitility.await()
+                .pollInterval(10, TimeUnit.SECONDS)
+                .atMost(2, TimeUnit.MINUTES)
+                .untilAsserted(() -> checkEGU("oranges"));
     }
 
     private void checkEGU(String expectedEGUValue) throws IOException {

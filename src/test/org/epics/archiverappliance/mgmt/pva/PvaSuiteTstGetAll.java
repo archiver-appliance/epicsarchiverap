@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetAllPVs;
@@ -12,10 +14,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.TimeUnit;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 
 /**
  * Test the pvAccess mgmt service's ability to start archiving a pv
@@ -25,6 +26,7 @@ import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVI
  */
 @Tag("integration")
 @Tag("localEpics")
+@ExtendWith(PvaTestSetupExtension.class)
 public class PvaSuiteTstGetAll {
 
     private static final Logger logger = LogManager.getLogger(PvaSuiteTstGetAll.class.getName());
