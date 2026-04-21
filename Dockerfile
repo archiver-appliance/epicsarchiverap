@@ -14,7 +14,7 @@ RUN cd etl && jar -xvf etl.war && rm etl.war && rm -rf WEB-INF/lib/*
 RUN cd engine && jar -xvf engine.war && rm engine.war && rm -rf WEB-INF/lib/*
 RUN cd retrieval && jar -xvf retrieval.war && rm retrieval.war && rm -rf WEB-INF/lib/*
 
-FROM tomcat:9 AS tomcat-base
+FROM tomcat:11 AS tomcat-base
 
 ENV ARCHAPPL_APPLIANCES=/usr/local/tomcat/archappl_conf/appliances.xml
 ENV ARCHAPPL_POLICIES=/usr/local/tomcat/archappl_conf/policies.py
