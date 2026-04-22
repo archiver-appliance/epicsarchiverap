@@ -1,80 +1,13 @@
-# syntax=docker/dockerfile:1.4
+FROM mambaorg/micromamba:2.5.0
 
-# Stage: Download and extract EPICS source
-# This stage is responsible only for getting the EPICS source code.
-FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS epics-download-extract
-ARG EPICSVERSION=7.0.8.1
-SHELL ["/bin/bash", "-c"]
-RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates \
-    && wget -q --show-progress "https://epics.anl.gov/download/base/base-${EPICSVERSION}.tar.gz" -O /tmp/base.tar.gz \
-    && mkdir /epics \
-    && tar -xf /tmp/base.tar.gz -C /epics \
-    && rm /tmp/base.tar.gz \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+COPY --chown=$MAMBA_USER:$MAMBA_USER env.yml /tmp/env.yml
+RUN micromamba install -y -n base -f /tmp/env.yml && \
+    micromamba clean --all --yes
+ARG MAMBA_DOCKERFILE_ACTIVATE=1
 
-# Define a common base for different architectures
-FROM debian:bookworm-slim AS base
+COPY basic.db /basic.db
 
-# Create architecture-specific base images with the correct EPICS_HOST_ARCH
-FROM base AS base-amd64
-ENV EPICS_HOST_ARCH=linux-x86_64
-FROM base AS base-386
-ENV EPICS_HOST_ARCH=linux-x86
-FROM base AS base-arm64
-ENV EPICS_HOST_ARCH=linux-arm
-FROM base AS base-arm
-ENV EPICS_HOST_ARCH=linux-arm
-
-# Stage: Build EPICS for the target architecture
-# This stage uses the appropriate base image to compile EPICS.
-FROM base-$TARGETARCH AS build-epics
-ARG EPICSVERSION=7.0.8.1
-SHELL ["/bin/bash", "-c"]
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update \
- && apt-get install --no-install-recommends -y \
-    build-essential \
-    ca-certificates \
-    libreadline-dev \
-    telnet \
- && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /epics
-COPY --from=epics-download-extract /epics /epics
-RUN mv "base-${EPICSVERSION}" base
-RUN cd base && make -j$(nproc)
-
-# Stage: Final development image
-# This stage assembles the final image with Java, EPICS, Tomcat, and other tools.
-FROM base-$TARGETARCH AS gradle-base
-
-# Combine all package installations into a single RUN layer to reduce image size
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        ca-certificates \
-        git \
-        libreadline-dev \
-        python-is-python3 \
-        python3-venv \
-        wget && \
-    # Install Java from Adoptium
-    wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc && \
-    echo "deb https://packages.adoptium.net/artifactory/deb bullseye main" | tee /etc/apt/sources.list.d/adoptium.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends temurin-21-jdk && \
-    # Clean up apt caches
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-COPY --from=build-epics /epics /epics
-
-# Set up environment variables
-ENV EPICS_ROOT=/epics
-ENV EPICS_BASE=${EPICS_ROOT}/base
-ENV EPICS_BASE_BIN=${EPICS_BASE}/bin/${EPICS_HOST_ARCH}
-ENV EPICS_BASE_LIB=${EPICS_BASE}/lib/${EPICS_HOST_ARCH}
-ENV LD_LIBRARY_PATH=${EPICS_BASE_LIB}:${LD_LIBRARY_PATH}
-ENV PATH=${PATH}:${EPICS_BASE_BIN}
+ENTRYPOINT ["/usr/local/bin/_entrypoint.sh", "sh", "-c", "tail -f /dev/null | softIocPVX -m \"P=$IOC_NAME\" -d /basic.db"]
 
 LABEL org.opencontainers.image.source=https://github.com/archiver-appliance/epicsarchiverap
-LABEL org.opencontainers.image.description="Docker image for building and testing the Archiver Appliance."
+LABEL org.opencontainers.image.description="Docker image for running basic IOC with PVA support."
