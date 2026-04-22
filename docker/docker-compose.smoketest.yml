@@ -1,0 +1,52 @@
+version: '3.7'
+name: archappl-smoketest
+services:
+  mariadb:
+    image: mariadb:11
+    environment:
+      MYSQL_ROOT_PASSWORD: archappl
+      MYSQL_DATABASE: archappl
+      MYSQL_USER: archappl
+      MYSQL_PASSWORD: archappl
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - mariainit:/docker-entrypoint-initdb.d
+  archappl:
+    hostname: archappl
+    build:
+      context: ../
+      dockerfile: Dockerfile
+      target: singletomcat
+    environment:
+      ARCHAPPL_APPLIANCES: /usr/local/tomcat/archappl_conf/singleappliances.xml
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/mgmt/bpl/getApplianceInfo"]
+      interval: 10s
+      timeout: 5s
+      retries: 18
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    volumes:
+      - archapplconfig:/usr/local/tomcat/archappl_conf
+      - archapplstorage:/usr/local/tomcat/storage/
+volumes:
+  archapplstorage: {}
+  mariainit:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./archappl/conf/sql
+      o: bind
+  archapplconfig:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./archappl/conf
+      o: bind
