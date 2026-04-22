@@ -14,6 +14,12 @@ RUN cd etl && jar -xvf etl.war && rm etl.war && rm -rf WEB-INF/lib/*
 RUN cd engine && jar -xvf engine.war && rm engine.war && rm -rf WEB-INF/lib/*
 RUN cd retrieval && jar -xvf retrieval.war && rm retrieval.war && rm -rf WEB-INF/lib/*
 
+# Pack compiled archappl classes into Tomcat's common lib/ so Hazelcast's
+# internal partition threads (common classloader) can deserialize PVTypeInfo.
+# All four WARs share the same compiled source, so mgmt/WEB-INF/classes covers all.
+RUN jar cf lib/archappl-shared.jar -C mgmt/WEB-INF/classes .
+RUN rm -rf mgmt/WEB-INF/classes etl/WEB-INF/classes engine/WEB-INF/classes retrieval/WEB-INF/classes
+
 FROM tomcat:11 AS tomcat-base
 
 ENV ARCHAPPL_APPLIANCES=/usr/local/tomcat/archappl_conf/appliances.xml
