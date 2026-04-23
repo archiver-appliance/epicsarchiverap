@@ -1412,7 +1412,7 @@ public class PlainStoragePlugin
 
     @Override
     public Collection<ETLOptimizable> getPostETLOptimizables(String pvName, ETLContext context) throws IOException {
-        if (this.rootFolder.startsWith("gztar://")) {
+        if (this.rootFolder.startsWith(ArchPaths.TAR_SCHEME + "://")) {
             Path path = PathNameUtility.getPathNameForTime(
                     this.rootFolder,
                     pvName,
@@ -1423,7 +1423,7 @@ public class PlainStoragePlugin
                     this.pv2key,
                     this.plainFileHandler.getExtensionString());
             // We may need to get the filesystem from the parent for some NIO2 implementations.
-            // But for now, only gztar implements this interface and that uses the same filesystem object for the path
+            // But for now, only tar implements this interface and that uses the same filesystem object for the path
             // and the parent.
             if (path != null) {
                 FileSystem fs = path.getFileSystem();

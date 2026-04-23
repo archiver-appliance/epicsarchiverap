@@ -25,6 +25,7 @@ public class ArchPaths implements Closeable {
     public static final String ZIP_PREFIX = "jar:file://";
     private static final Logger logger = LogManager.getLogger(ArchPaths.class.getName());
     private final ConcurrentHashMap<URI, FileSystem> fileSystemList = new ConcurrentHashMap<URI, FileSystem>();
+    public static final String TAR_SCHEME = "tar";
 
     /**
      * Returns a seekable byte channel.

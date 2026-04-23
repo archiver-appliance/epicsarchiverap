@@ -18,6 +18,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.etl.conversion.ThruNumberAndStringConversion;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -119,7 +120,7 @@ public class ConversionTest {
     private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
@@ -155,7 +156,7 @@ public class ConversionTest {
             String pvName, Instant start, Instant end, int expectedEventCount, ArchDBRTypes expectedType)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         logger.debug(
@@ -190,7 +191,7 @@ public class ConversionTest {
     private void convertPV(String pvName) throws IOException {
         logger.debug("Starting conversion to DBR_SCALAR_FLOAT");
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {

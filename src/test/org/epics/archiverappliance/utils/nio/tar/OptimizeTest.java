@@ -18,6 +18,7 @@ import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.etl.ETLExecutor;
 import org.epics.archiverappliance.retrieval.postprocessors.DefaultRawPostProcessor;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -90,7 +91,7 @@ public class OptimizeTest {
         String[] dataStores = new String[] {
             "pb://localhost?name=LTS&rootFolder=" + ltsFolder.getAbsolutePath()
                     + "&partitionGranularity=PARTITION_YEAR",
-            plugin + "://localhost?name=XLTS&rootFolder=gztar://" + xltsFolder.getAbsolutePath()
+            plugin + "://localhost?name=XLTS&rootFolder=" + ArchPaths.TAR_SCHEME + "://" + xltsFolder.getAbsolutePath()
                     + "&partitionGranularity=PARTITION_DAY&hold=730&gather=365",
             "blackhole://localhost?name=BLACKHOLE"
         };

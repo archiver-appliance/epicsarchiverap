@@ -26,6 +26,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.retrieval.GetDataAtTime;
 import org.epics.archiverappliance.retrieval.PVWithData;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -82,7 +83,7 @@ public class GetDataAtTimeTest {
         assert pvPath.getParent().toFile().mkdirs();
 
         String pluginURI = plugin + "://localhost?name=XLTS&rootFolder="
-                + URLEncoder.encode("gztar://" + rootFolderStr, "UTF-8") + "&partitionGranularity=PARTITION_DAY";
+                + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8") + "&partitionGranularity=PARTITION_DAY";
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(pluginURI, configService);
 
         for (String pvName : pvNames.keySet()) {

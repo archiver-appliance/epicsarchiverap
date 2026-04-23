@@ -125,7 +125,7 @@ public class PBPluginTest {
             String currYearStr = Short.toString(currentYear);
             for (Path path : PathNameUtility.getAllPathsForPV(
                     archPaths,
-                    URIUtils.TAR_SCHEME + "://" + rootFolderStr,
+                    ArchPaths.TAR_SCHEME + "://" + rootFolderStr,
                     pvName,
                     ".pb",
                     PathResolver.BASE_PATH_RESOLVER,
@@ -159,7 +159,7 @@ public class PBPluginTest {
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder="
-                        + URLEncoder.encode(URIUtils.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                        + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
@@ -196,7 +196,7 @@ public class PBPluginTest {
     private void testRetrieval(String pvName, Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 "pb://localhost?name=Test&rootFolder="
-                        + URLEncoder.encode(URIUtils.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                        + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         logger.debug(

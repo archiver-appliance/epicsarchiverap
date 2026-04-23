@@ -2,6 +2,7 @@ package org.epics.archiverappliance.utils.nio.tar;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.utils.nio.ArchPaths;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -11,13 +12,12 @@ import java.util.ArrayList;
 public class URIUtils {
     private static final Logger logger = LogManager.getLogger(URIUtils.class.getName());
 
-    public static final String TAR_SCHEME = "tar";
     public static final String TAR_TERMINATOR = ".tar!";
 
     private static void checkScheme(URI uri) throws IllegalArgumentException {
         String scheme = uri.getScheme();
-        if ((scheme == null) || !scheme.equalsIgnoreCase(TAR_SCHEME)) {
-            throw new IllegalArgumentException("URI scheme is not '" + TAR_SCHEME + "'. It is " + scheme);
+        if ((scheme == null) || !scheme.equalsIgnoreCase(ArchPaths.TAR_SCHEME)) {
+            throw new IllegalArgumentException("URI scheme is not '" + ArchPaths.TAR_SCHEME + "'. It is " + scheme);
         }
     }
 
@@ -44,7 +44,7 @@ public class URIUtils {
 
     public static String generateURI(String pathToTarFile, String pathWithinTarFile) {
         StringBuilder buf = new StringBuilder();
-        buf.append(TAR_SCHEME);
+        buf.append(ArchPaths.TAR_SCHEME);
         buf.append("://");
         buf.append(pathToTarFile.replaceAll("\\.tar$", ""));
         buf.append(TAR_TERMINATOR);
@@ -69,7 +69,7 @@ public class URIUtils {
     }
 
     public static String combinePathElements(boolean createParent, String first, String... more) {
-        if (!first.startsWith(TAR_SCHEME + "://")) {
+        if (!first.startsWith(ArchPaths.TAR_SCHEME + "://")) {
             throw new IllegalArgumentException("The first part of the URI must start with the tar scheme");
         }
         ArrayList<String> pathParts = new ArrayList<>();
