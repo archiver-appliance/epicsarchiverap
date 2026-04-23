@@ -74,7 +74,7 @@ RUN apt-get update && \
     wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | tee /etc/apt/trusted.gpg.d/adoptium.asc && \
     echo "deb https://packages.adoptium.net/artifactory/deb bullseye main" | tee /etc/apt/sources.list.d/adoptium.list && \
     apt-get update && \
-    apt-get install -y --no-install-recommends temurin-21-jdk && \
+    apt-get install -y --no-install-recommends temurin-25-jdk && \
     # Clean up apt caches
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
