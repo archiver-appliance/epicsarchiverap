@@ -68,8 +68,7 @@ public class PBPluginTest {
 
     static Stream<Arguments> pluginsAndPVs() {
         return Stream.of(
-                Arguments.of("pb", "epics:arch:tartest:pb"),
-                Arguments.of("parquet", "epics:arch:tartest:parquet"));
+                Arguments.of("pb", "epics:arch:tartest:pb"), Arguments.of("parquet", "epics:arch:tartest:parquet"));
     }
 
     @ParameterizedTest
