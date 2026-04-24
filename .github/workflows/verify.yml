@@ -101,6 +101,39 @@ jobs:
           name: epicstests-build-reports
           path: build/reports/
 
+  dockersmoketest:
+    name: Run a smoke test to ensure the application starts up correctly in a containerized environment
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+      - name: Build and run smoketest containers
+        run: |
+          docker compose -f docker/docker-compose.smoketest.yml up --build
+      - name: Wait for archiver to be healthy
+        run: |
+          for i in $(seq 1 36); do
+            if docker compose -f docker/docker-compose.smoketest.yml ps archappl \
+                | grep -q "healthy"; then
+              echo "Archiver ready"; break
+            fi
+            echo "Waiting ($i/36)..."; sleep 5
+          done
+      - name: Submit PV to be archived
+        run: |
+          curl -sf \
+            "http://localhost:8080/mgmt/bpl/archivePV?pv=IOCtest_0&samplingperiod=1&samplingmethod=MONITOR" \
+            -o /dev/null
+      - name: Wait for archive workflow to run
+        run: sleep 15
+      - name: Verify PV is being archived
+        run : |
+          curl -sf "http://localhost:8080//mgmt/bpl/getPVStatus&pv=IOCtest_0" | grep -q "Being archived"
+
   integrationtests:
     name: Run all unit tests reliant on web and possibly epics
     runs-on: ubuntu-latest
