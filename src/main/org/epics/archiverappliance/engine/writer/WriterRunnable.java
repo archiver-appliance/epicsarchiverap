@@ -57,9 +57,14 @@ public class WriterRunnable implements Runnable {
      */
     public WriterRunnable(ConfigService configservice) {
         this.configservice = configservice;
-        int limit = Integer.parseInt(configservice
-                .getInstallationProperties()
-                .getProperty("org.epics.archiverappliance.engine.epics.writeThreadCount", "0"));
+        int limit = 0;
+        try {
+            limit = Integer.parseInt(configservice
+                    .getInstallationProperties()
+                    .getProperty("org.epics.archiverappliance.engine.epics.writeThreadCount", "0"));
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid writeThreadCount configuration, using default value: 0", e);
+        }
         this.writeSemaphore = (limit > 0) ? new Semaphore(limit) : null;
     }
 
