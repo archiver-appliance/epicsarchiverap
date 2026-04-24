@@ -14,7 +14,6 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.metadata.MetaGet;
 import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
-import org.epics.archiverappliance.engine.pv.PVContext;
 import org.epics.archiverappliance.engine.pv.PVMetrics;
 
 import java.text.DecimalFormat;
@@ -23,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * POJO with some basic metrics.
@@ -40,6 +38,9 @@ public class EngineMetrics implements Details {
     private double eventRate;
     private double dataRate;
     private double secondsConsumedByWriter = 0.00;
+    private double totalChannelIOSeconds = 0.00;
+    private double avgChannelsWrittenPerCycle = 0.00;
+    private long skippedWriteCycles = 0;
     // private static Logger logger=Logger.getLogger(EngineMetrics.class.getName());
 
     public double getSecondsConsumedByWriter() {
@@ -48,6 +49,30 @@ public class EngineMetrics implements Details {
 
     public void setSecondsConsumedByWriter(double secondsConsumedByWriter) {
         this.secondsConsumedByWriter = secondsConsumedByWriter;
+    }
+
+    public double getTotalChannelIOSeconds() {
+        return totalChannelIOSeconds;
+    }
+
+    public void setTotalChannelIOSeconds(double totalChannelIOSeconds) {
+        this.totalChannelIOSeconds = totalChannelIOSeconds;
+    }
+
+    public double getAvgChannelsWrittenPerCycle() {
+        return avgChannelsWrittenPerCycle;
+    }
+
+    public void setAvgChannelsWrittenPerCycle(double avgChannelsWrittenPerCycle) {
+        this.avgChannelsWrittenPerCycle = avgChannelsWrittenPerCycle;
+    }
+
+    public long getSkippedWriteCycles() {
+        return skippedWriteCycles;
+    }
+
+    public void setSkippedWriteCycles(long skippedWriteCycles) {
+        this.skippedWriteCycles = skippedWriteCycles;
     }
 
     public double getEventRate() {
@@ -97,6 +122,9 @@ public class EngineMetrics implements Details {
         engineMetrics.put("disconnectedPVCount", Integer.toString(disconnectedPVCount));
         engineMetrics.put("formattedWriteThreadSeconds", twoSignificantDigits.format(secondsConsumedByWriter));
         engineMetrics.put("secondsConsumedByWriter", Double.toString(secondsConsumedByWriter));
+        engineMetrics.put("totalChannelIOSeconds", Double.toString(totalChannelIOSeconds));
+        engineMetrics.put("avgChannelsWrittenPerCycle", twoSignificantDigits.format(avgChannelsWrittenPerCycle));
+        engineMetrics.put("skippedWriteCycles", Long.toString(skippedWriteCycles));
 
         return engineMetrics;
     }
@@ -122,11 +150,24 @@ public class EngineMetrics implements Details {
                 "Data Rate in (GB/year)",
                 twoSignificantDigits.format((dataRate * 60 * 60 * 24 * 365) / (1024 * 1024 * 1024))));
         details.add(this.metricDetail(
-                "Time consumed for writing samplebuffers to STS (in secs)",
-                twoSignificantDigits.format(secondsConsumedByWriter)));
-        if (secondsConsumedByWriter != 0) {
-            double writesPerSec = eventRate * context.getWritePeriod() / secondsConsumedByWriter;
-            double writeBytesPerSec = (dataRate * context.getWritePeriod() / secondsConsumedByWriter) / (1024 * 1024);
+                "Write cycle elapsed time (secs)", twoSignificantDigits.format(secondsConsumedByWriter)));
+        details.add(this.metricDetail(
+                "Equivalent sequential I/O time per cycle (secs)", twoSignificantDigits.format(totalChannelIOSeconds)));
+        details.add(this.metricDetail(
+                "Avg channels written per cycle", twoSignificantDigits.format(avgChannelsWrittenPerCycle)));
+        details.add(this.metricDetail("Skipped write cycles (backpressure)", Long.toString(skippedWriteCycles)));
+        double writePeriod = context.getWritePeriod();
+        if (writePeriod > 0) {
+            details.add(this.metricDetail(
+                    "Write cycle scheduling load (%)",
+                    twoSignificantDigits.format(secondsConsumedByWriter * 100.0 / writePeriod)));
+            details.add(this.metricDetail(
+                    "Equivalent sequential I/O load (%)",
+                    twoSignificantDigits.format(totalChannelIOSeconds * 100.0 / writePeriod)));
+        }
+        if (totalChannelIOSeconds > 0) {
+            double writesPerSec = eventRate * writePeriod / totalChannelIOSeconds;
+            double writeBytesPerSec = (dataRate * writePeriod / totalChannelIOSeconds) / (1024 * 1024);
             details.add(this.metricDetail(
                     "Benchmark - writing at (events/sec)", twoSignificantDigits.format(writesPerSec)));
             details.add(this.metricDetail(
@@ -199,6 +240,9 @@ public class EngineMetrics implements Details {
         }
         engineMetrics.setTotalEPICSChannels(totalchannelCount);
         engineMetrics.setSecondsConsumedByWriter(engineContext.getAverageSecondsConsumedByWriter());
+        engineMetrics.setTotalChannelIOSeconds(engineContext.getAverageTotalChannelIOSeconds());
+        engineMetrics.setAvgChannelsWrittenPerCycle(engineContext.getAverageChannelsWrittenPerCycle());
+        engineMetrics.setSkippedWriteCycles(engineContext.getSkippedWriteCycles());
 
         return engineMetrics;
     }

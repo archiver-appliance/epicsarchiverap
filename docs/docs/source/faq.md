@@ -73,6 +73,22 @@
       - sampleBufferCapacityAdjustment is a system-wide adjustment
         for the buffer side and is set in archappl.properties.
 
+      The engine flushes all channel buffers in parallel using Java 21
+      virtual threads, so `write_period` no longer needs to be sized
+      around how long sequential writes take. The tradeoffs are now:
+
+      - **Buffer memory**: shorter period = smaller per-PV buffers = less JVM heap.
+      - **File I/O frequency**: shorter period = more file open/write/close
+        operations per second across all channels. Reduce cautiously on
+        NFS or shared SAN storage.
+      - **STS data latency**: shorter period = data appears in the short-term
+        store sooner.
+
+      The engine metrics page exposes an "Equivalent sequential I/O load (%)"
+      value that shows how loaded storage would be under the old sequential
+      model. If that figure is well below 100%, the write period can safely
+      be reduced.
+
       For example, if the `write_period` is 10 seconds, and the
       `pvSamplingPeriod` is 1 second, we would allocate
       `10/1 + 1 = 11` samples for the default
