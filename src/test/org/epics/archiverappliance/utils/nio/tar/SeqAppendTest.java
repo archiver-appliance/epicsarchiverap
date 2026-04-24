@@ -64,7 +64,8 @@ public class SeqAppendTest {
     private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder="
+                        + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         try (BasicContext context = new BasicContext()) {
@@ -98,7 +99,8 @@ public class SeqAppendTest {
 
     private void testRetrieval(String pvName, Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder="
+                        + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_MONTH",
                 configService);
         logger.debug(

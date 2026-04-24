@@ -83,7 +83,8 @@ public class GetDataAtTimeTest {
         assert pvPath.getParent().toFile().mkdirs();
 
         String pluginURI = plugin + "://localhost?name=XLTS&rootFolder="
-                + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8") + "&partitionGranularity=PARTITION_DAY";
+                + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                + "&partitionGranularity=PARTITION_DAY";
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(pluginURI, configService);
 
         for (String pvName : pvNames.keySet()) {

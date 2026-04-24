@@ -59,7 +59,8 @@ public class Perf implements Closeable {
 
     private void appendAndTestForYear(short forYear, int expectedCatalogEntryCount, int skipSeconds) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder="
+                        + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         try (BasicContext context = new BasicContext()) {
@@ -89,7 +90,8 @@ public class Perf implements Closeable {
 
     private int testRetrieval(Instant start, Instant end, int expectedEventCount) throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder=" + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
+                "pb://localhost?name=Test&rootFolder="
+                        + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
         logger.debug(
