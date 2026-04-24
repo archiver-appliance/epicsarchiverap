@@ -1,10 +1,21 @@
+FROM eclipse-temurin:21-jdk AS build
+
+ARG ARCHAPPL_SITEID=default
+ENV ARCHAPPL_SITEID=${ARCHAPPL_SITEID}
+
+RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+RUN ./gradlew mgmtWar etlWar engineWar retrievalWar --no-daemon
+
 FROM eclipse-temurin:21-jdk AS expand-wars
 
 WORKDIR /wars
-COPY build/libs/mgmt.war /wars/mgmt/
-COPY build/libs/etl.war /wars/etl/
-COPY build/libs/engine.war /wars/engine/
-COPY build/libs/retrieval.war /wars/retrieval/
+COPY --from=build /src/build/libs/mgmt.war /wars/mgmt/
+COPY --from=build /src/build/libs/etl.war /wars/etl/
+COPY --from=build /src/build/libs/engine.war /wars/engine/
+COPY --from=build /src/build/libs/retrieval.war /wars/retrieval/
 
 RUN cd mgmt && jar -xvf mgmt.war && rm mgmt.war
 
@@ -27,25 +38,25 @@ ENV CATALINA_OUT=/dev/stdout
 FROM tomcat-base AS copy-webapp
 COPY docker/archappl/copy_conf/context.xml /usr/local/tomcat/conf
 
-COPY --from=expand-wars wars/lib /usr/local/tomcat/lib
+COPY --from=expand-wars /wars/lib /usr/local/tomcat/lib
 
 FROM copy-webapp AS singletomcat
-COPY --from=expand-wars wars/mgmt /usr/local/tomcat/webapps/mgmt
-COPY --from=expand-wars wars/etl /usr/local/tomcat/webapps/etl
-COPY --from=expand-wars wars/engine /usr/local/tomcat/webapps/engine
-COPY --from=expand-wars wars/retrieval /usr/local/tomcat/webapps/retrieval
+COPY --from=expand-wars /wars/mgmt /usr/local/tomcat/webapps/mgmt
+COPY --from=expand-wars /wars/etl /usr/local/tomcat/webapps/etl
+COPY --from=expand-wars /wars/engine /usr/local/tomcat/webapps/engine
+COPY --from=expand-wars /wars/retrieval /usr/local/tomcat/webapps/retrieval
 
 FROM copy-webapp AS mgmt
-COPY --from=expand-wars wars/mgmt /usr/local/tomcat/webapps/mgmt
+COPY --from=expand-wars /wars/mgmt /usr/local/tomcat/webapps/mgmt
 
 FROM copy-webapp AS etl
-COPY --from=expand-wars wars/etl /usr/local/tomcat/webapps/etl
+COPY --from=expand-wars /wars/etl /usr/local/tomcat/webapps/etl
 
 FROM copy-webapp AS engine
-COPY --from=expand-wars wars/engine /usr/local/tomcat/webapps/engine
+COPY --from=expand-wars /wars/engine /usr/local/tomcat/webapps/engine
 
 FROM copy-webapp AS retrieval
-COPY --from=expand-wars wars/retrieval /usr/local/tomcat/webapps/retrieval
+COPY --from=expand-wars /wars/retrieval /usr/local/tomcat/webapps/retrieval
 
 LABEL org.opencontainers.image.source=https://github.com/archiver-appliance/epicsarchiverap
 LABEL org.opencontainers.image.description="Docker image for the Archiver Appliance, both as a singletomcat or single war image."
