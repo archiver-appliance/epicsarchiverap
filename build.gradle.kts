@@ -183,6 +183,9 @@ dependencies {
 	testImplementation(libs.mockito)
 	testImplementation(libs.tomcat.embed.core)
 	testRuntimeOnly(libs.tomcat.embed.jasper)
+	testImplementation(libs.testcontainers)
+	testImplementation(libs.testcontainers.junit)
+	testImplementation(libs.slf4j.api)
 }
 
 // =================================================================
@@ -612,7 +615,7 @@ tasks.register<Test>("unitTests") {
 	group = "Test"
 	description = "Run all unit tests."
 	useJUnitPlatform {
-		excludeTags("flaky", "integration", "localEpics")
+		excludeTags("flaky", "integration", "localEpics", "docker")
 	}
 }
 
@@ -621,7 +624,7 @@ tasks.register<Test>("flakyTests") {
 	description = "Run unit tests that due to timing or machine specifics, could fail."
 	useJUnitPlatform {
 		includeTags("flaky")
-		excludeTags("slow", "integration", "localEpics")
+		excludeTags("slow", "integration", "localEpics", "docker")
 	}
 }
 
@@ -640,7 +643,7 @@ tasks.register<Test>("integrationTests") {
 	dependsOn("integrationTestSetup")
 	useJUnitPlatform {
 		includeTags("integration")
-		excludeTags("slow", "flaky")
+		excludeTags("slow", "flaky", "docker")
 	}
 }
 
@@ -651,7 +654,28 @@ tasks.register<Test>("epicsTests") {
 	classpath = sourceSets.test.get().runtimeClasspath
 	useJUnitPlatform {
 		includeTags("localEpics")
-		excludeTags("slow", "flaky", "integration")
+		excludeTags("slow", "flaky", "integration", "docker")
+	}
+}
+
+tasks.register<Exec>("buildSmoketestImages") {
+	group = "Test"
+	description = "Build the Docker images used by the smoke test."
+	// Build (and tag) the images up front, in a process that keeps the BuildKit
+	// session alive. An inline `compose up --build` of this long build can hit
+	// "no active session: context deadline exceeded" during the image export.
+	commandLine("docker", "compose", "-f", "docker/docker-compose.smoketest.yml", "build")
+}
+
+tasks.register<Test>("dockerSmokeTest") {
+	group = "Test"
+	description = "Run the Docker smoke test, which builds and exercises the packaged image. Requires Docker."
+	testClassesDirs = sourceSets.test.get().output.classesDirs
+	classpath = sourceSets.test.get().runtimeClasspath
+	maxParallelForks = 1
+	dependsOn("buildSmoketestImages")
+	useJUnitPlatform {
+		includeTags("docker")
 	}
 }
 
@@ -659,7 +683,7 @@ tasks.register<Test>("epicsTests") {
 tasks.named<Test>("test") {
 	group = "Test"
 	useJUnitPlatform {
-		excludeTags("integration", "localEpics", "flaky", "slow")
+		excludeTags("integration", "localEpics", "flaky", "slow", "docker")
 	}
 }
 
@@ -677,7 +701,8 @@ tasks.register<Test>("automationTests") {
 	maxParallelForks = 1
 	dependsOn("integrationTestSetup")
 	useJUnitPlatform {
-		// No include/exclude means run all tests
+		// Run all tests except the Docker smoke test, which requires a Docker daemon.
+		excludeTags("docker")
 	}
 }
 
