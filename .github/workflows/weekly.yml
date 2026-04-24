@@ -16,18 +16,9 @@ jobs:
       contents: read
       checks: write
 
-  docker-tests:
-    name: Docker tests
-    uses: ./.github/workflows/docker-tests.yml
-    with:
-      use-prebuilt-image: false
-    permissions:
-      contents: read
-      packages: write
-
   build:
     name: Build artifacts
-    needs: [docker-tests]
+    needs: [verify]
     uses: ./.github/workflows/build.yml
     with:
       task: buildRelease
@@ -37,7 +28,7 @@ jobs:
 
   publish-image:
     name: Publish images
-    needs: [docker-tests]
+    needs: [verify]
     uses: ./.github/workflows/publish-image.yml
     with:
       weekly: true

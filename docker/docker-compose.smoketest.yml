@@ -8,6 +8,8 @@ services:
       MYSQL_DATABASE: archappl
       MYSQL_USER: archappl
       MYSQL_PASSWORD: archappl
+    networks:
+      - archapplnet
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
@@ -21,6 +23,8 @@ services:
       context: ../
       dockerfile: Dockerfile
       target: singletomcat
+    networks:
+      - archapplnet
     environment:
       ARCHAPPL_APPLIANCES: /usr/local/tomcat/archappl_conf/singleappliances.xml
     healthcheck:
@@ -36,6 +40,16 @@ services:
     volumes:
       - archapplconfig:/usr/local/tomcat/archappl_conf
       - archapplstorage:/usr/local/tomcat/storage/
+  example-ioc:
+    build:
+      context: .
+      dockerfile: Dockerfile.testioc
+    environment:
+      IOC_NAME: IOC
+    networks:
+      - archapplnet
+networks:
+  archapplnet:
 volumes:
   archapplstorage: {}
   mariainit:
