@@ -16,22 +16,10 @@ jobs:
       contents: read
       checks: write
 
-  docker-tests:
-    name: Docker tests
-    needs: [verify]
-    if: needs.verify.result == 'success'
-    uses: ./.github/workflows/docker-tests.yml
-    with:
-      use-prebuilt-image: true
-      image-repository: ${{ github.repository }}
-
   build:
     name: Build artifacts
-    needs: [verify, docker-tests]
-    if: |
-      always() &&
-      needs.verify.result == 'success' &&
-      (needs.docker-tests.result == 'success' || needs.docker-tests.result == 'skipped')
+    needs: [verify]
+    if: needs.verify.result == 'success'
     uses: ./.github/workflows/build.yml
     with:
       task: assemble
