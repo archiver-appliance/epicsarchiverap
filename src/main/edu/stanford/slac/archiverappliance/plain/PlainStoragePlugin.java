@@ -33,6 +33,8 @@ import org.epics.archiverappliance.etl.ETLBulkStream;
 import org.epics.archiverappliance.etl.ETLContext;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.ETLInfo;
+import org.epics.archiverappliance.etl.ETLOptimizable;
+import org.epics.archiverappliance.etl.ETLPostOptimizers;
 import org.epics.archiverappliance.etl.ETLSource;
 import org.epics.archiverappliance.etl.StorageMetrics;
 import org.epics.archiverappliance.etl.StorageMetricsContext;
@@ -52,6 +54,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -60,6 +63,7 @@ import java.time.Instant;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -147,7 +151,8 @@ import java.util.stream.Stream;
  * @author mshankar
  *
  */
-public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime {
+public class PlainStoragePlugin
+        implements StoragePlugin, ETLSource, ETLDest, StorageMetrics, DataAtTime, ETLPostOptimizers {
     private static final Logger logger = LogManager.getLogger(PlainStoragePlugin.class.getName());
     private final String appendExtension;
     private final PlainFileHandler plainFileHandler;
@@ -509,7 +514,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
         }
 
         boolean bulkInserted = false;
-        if (stream instanceof ETLBulkStream bulkStream) {
+        if (stream instanceof ETLBulkStream bulkStream && !context.isSkipBulkAppend()) {
             if (backupFilesBeforeETL) {
                 bulkInserted = state.bulkAppend(
                         pvName, context, bulkStream, appendExtension, plainFileHandler.getExtensionString());
@@ -1165,7 +1170,7 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
                 new ArchPaths(), rootFolder, pvName, "", this.getPathResolver(), this.pv2key);
         long spaceConsumed = 0;
         for (Path f : rawPaths) {
-            spaceConsumed = spaceConsumed + f.toFile().length();
+            spaceConsumed = spaceConsumed + Files.size(f);
         }
 
         return spaceConsumed;
@@ -1403,5 +1408,34 @@ public class PlainStoragePlugin implements StoragePlugin, ETLSource, ETLDest, St
             this.srcPath = srcPath;
             this.ppsPath = ppsPath;
         }
+    }
+
+    @Override
+    public Collection<ETLOptimizable> getPostETLOptimizables(String pvName, ETLContext context) throws IOException {
+        if (this.rootFolder.startsWith(ArchPaths.TAR_SCHEME + "://")) {
+            Path path = PathNameUtility.getPathNameForTime(
+                    this.rootFolder,
+                    pvName,
+                    Instant.now(),
+                    this.getPartitionGranularity(),
+                    context.getPaths(),
+                    this.getPathResolver(),
+                    this.pv2key,
+                    this.plainFileHandler.getExtensionString());
+            // We may need to get the filesystem from the parent for some NIO2 implementations.
+            // But for now, only tar implements this interface and that uses the same filesystem object for the path
+            // and the parent.
+            if (path != null) {
+                FileSystem fs = path.getFileSystem();
+                if (fs != null && fs instanceof ETLOptimizable) {
+                    List<ETLOptimizable> optimizables = new ArrayList<ETLOptimizable>();
+                    ETLOptimizable optimizableFS = (ETLOptimizable) fs;
+                    optimizables.add(optimizableFS);
+                    return optimizables;
+                }
+            }
+        }
+
+        return null;
     }
 }

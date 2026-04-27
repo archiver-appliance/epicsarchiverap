@@ -1,4 +1,4 @@
-package org.epics.archiverappliance.zipfs;
+package org.epics.archiverappliance.utils.nio.zipfs;
 
 import com.google.common.base.Ascii;
 import edu.stanford.slac.archiverappliance.PB.utils.LineEscaper;

@@ -1,4 +1,4 @@
-package edu.stanford.slac.archiverappliance.PB.compression.zipfs;
+package org.epics.archiverappliance.utils.nio;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
@@ -8,8 +8,6 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.common.PartitionGranularity;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.utils.nio.ArchPaths;
-import org.epics.archiverappliance.utils.nio.PVPath;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
