@@ -54,8 +54,9 @@ PlainStoragePlugin using storage technologies like
 3. Other technologies that may be more appropriate
 
 Using NIO2, the PlainStoragePlugin can also pack chunks in
-1. [TAR](https://en.wikipedia.org/wiki/Tar_(computing)) files by using a NIO2 plugin shipped with the EAA. To pack `.pb` or `.parquet` files into a tar file, use a URI with the `tar` scheme as the `rootFolder` in the storage plugin definition.
-For example, using `tar:///path/to/toplevel/folder` as the `rootFolder` will store all the files for the PV `epics:arch:test` into the `.tar` file `/path/to/toplevel/folder/epics/arch/test.tar`.
+
+1. [TAR](<https://en.wikipedia.org/wiki/Tar_(computing)>) files by using a NIO2 plugin shipped with the EAA. To pack `.pb` or `.parquet` files into a tar file, use a URI with the `tar` scheme as the `rootFolder` in the storage plugin definition.
+   For example, using `tar:///path/to/toplevel/folder` as the `rootFolder` will store all the files for the PV `epics:arch:test` into the `.tar` file `/path/to/toplevel/folder/epics/arch/test.tar`.
 2. Zip files by using the JDK's `jar` [plugin](https://github.com/openjdk/jdk/blob/master/src/jdk.zipfs/share/classes/jdk/nio/zipfs/ZipFileSystemProvider.java). To pack `.pb` or `.parquet` files into a zip file, use the `jar` scheme ( for example, `jar:file:///path/to/toplevel/folder`) as the `rootFolder`.
 
 Packing files into `.tar` or `.zip` files is often useful in reducing the number of files/inodes consumed by EAA especially in extra-long-term storage where IOC's can generate more than 10,000 files over the course of a decade. Packing all these files into `.tar` or `.zip` files keeps the total number of files constant ( equal to the number of PV's, one `.tar` or `.zip` file per PV ), significantly reducing the load on the metadata servers for your storage systems.
