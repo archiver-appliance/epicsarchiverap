@@ -53,7 +53,7 @@ log4j-api                = { module = "org.apache.logging.log4j:log4j-api", vers
 log4j-core               = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
 log4j-slf4j2             = { module = "org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 log4j-jul                = { module = "org.apache.logging.log4j:log4j-jul", version.ref = "log4j" }
-log4j-one-two-api    = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
+log4j-one-two-api        = { module = "org.apache.logging.log4j:log4j-1.2-api", version.ref = "log4j" }
 disruptor                = { module = "com.lmax:disruptor", version.ref = "disruptor" }
 commons-codec            = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
 commons-io               = { module = "commons-io:commons-io", version.ref = "commons-io" }
@@ -77,6 +77,8 @@ hadoop-common            = { module = "org.apache.hadoop:hadoop-common", version
 hadoop-client-api        = { module = "org.apache.hadoop:hadoop-client-api", version.ref = "hadoop" }
 hadoop-client-runtime    = { module = "org.apache.hadoop:hadoop-client-runtime", version.ref = "hadoop" }
 tomcat-servlet-api       = { module = "org.apache.tomcat:tomcat-servlet-api", version.ref = "tomcat" }
+tomcat-embed-core        = { module = "org.apache.tomcat.embed:tomcat-embed-core", version.ref = "tomcat"}
+tomcat-embed-jasper      = { module = "org.apache.tomcat.embed:tomcat-embed-jasper", version.ref = "tomcat"}
 junit-jupiter-api        = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
 junit-jupiter-params     = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter" }
 junit-jupiter-engine     = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
@@ -89,11 +91,12 @@ mockito                  = { module = "org.mockito:mockito-core", version.ref = 
 stax-api                 = { module = "javax.xml.stream:stax-api", version.ref = "stax-api"}
 
 [bundles]
-parquet      = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
-log4j-impl   = ["log4j-slf4j2", "log4j-jul"]
-log4j-runtime = ["log4j-core", "log4j-one-two-api", "disruptor"]
-junit-impl   = ["junit-jupiter-api", "junit-jupiter-params"]
+parquet        = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
+log4j-impl     = ["log4j-slf4j2", "log4j-jul"]
+log4j-runtime  = ["log4j-core", "log4j-one-two-api", "disruptor"]
+junit-impl     = ["junit-jupiter-api", "junit-jupiter-params"]
 commons-shared = ["commons-codec", "commons-io", "commons-lang3", "commons-math3", "commons-validator"]
+tomcat         = ["tomcat-servlet-api", "tomcat-embed-jasper", "tomcat-embed-core"]
 
 [plugins]
 spotless     = { id = "com.diffplug.spotless", version.ref = "spotless-plugin" }

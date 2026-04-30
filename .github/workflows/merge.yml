@@ -1,0 +1,27 @@
+name: Merge to Master
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+  checks: write
+  packages: write
+
+jobs:
+  verify:
+    uses: ./.github/workflows/verify.yml
+    permissions:
+      contents: read
+      checks: write
+
+  build:
+    name: Build artifacts
+    needs: [verify]
+    if: needs.verify.result == 'success'
+    uses: ./.github/workflows/build.yml
+    with:
+      task: assemble
+      site-ids: '["slacdev", "default", "tests"]'
+      artifact-prefix: merge-

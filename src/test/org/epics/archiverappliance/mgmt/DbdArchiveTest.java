@@ -1,5 +1,7 @@
 package org.epics.archiverappliance.mgmt;
 
+import static org.epics.archiverappliance.ArchiveTestUtils.waitForStatusChange;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -18,8 +20,6 @@ import org.junit.jupiter.api.Test;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 
 @Tag("integration")
 public class DbdArchiveTest {

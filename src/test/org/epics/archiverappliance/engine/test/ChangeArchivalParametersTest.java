@@ -9,6 +9,7 @@ package org.epics.archiverappliance.engine.test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -21,6 +22,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * test for changing archiving parameters of pvs.
@@ -72,12 +75,19 @@ public class ChangeArchivalParametersTest {
                     false,
                     false);
 
-            Thread.sleep(5000);
+            Awaitility.await()
+                    .atMost(15, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService) != null
+                            && ArchiveEngine.getMetricsforPV(pvName, testConfigService)
+                                    .isConnected());
 
             ArchiveEngine.changeArchivalParameters(
                     pvName, 8, SamplingMethod.SCAN, testConfigService, writer, false, false);
 
-            Thread.sleep(11000);
+            Awaitility.await().atMost(30, TimeUnit.SECONDS).until(() -> {
+                PVMetrics m = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
+                return m != null && Math.abs(m.getSamplingPeriod() - 8.0) < 0.001;
+            });
 
             // ArchiveChannel
             // archiveChannel=testConfigService.getEngineContext().getChannelList().get(pvName);
@@ -127,12 +137,19 @@ public class ChangeArchivalParametersTest {
                     false,
                     false);
 
-            Thread.sleep(5000);
+            Awaitility.await()
+                    .atMost(15, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService) != null
+                            && ArchiveEngine.getMetricsforPV(pvName, testConfigService)
+                                    .isConnected());
 
             ArchiveEngine.changeArchivalParameters(
                     pvName, 0.1F, SamplingMethod.MONITOR, testConfigService, writer, false, false);
 
-            Thread.sleep(5000);
+            Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() -> {
+                PVMetrics m = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
+                return m != null && m.isMonitor();
+            });
 
             PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
             boolean isMonitor = tempPVMetrics.isMonitor();
@@ -174,10 +191,20 @@ public class ChangeArchivalParametersTest {
                     false,
                     false);
 
-            Thread.sleep(5000);
+            Awaitility.await()
+                    .atMost(15, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService) != null
+                            && ArchiveEngine.getMetricsforPV(pvName, testConfigService)
+                                    .isConnected());
+
             ArchiveEngine.changeArchivalParameters(
                     pvName, 2, SamplingMethod.SCAN, testConfigService, writer, false, false);
-            Thread.sleep(5000);
+
+            Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() -> {
+                PVMetrics m = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
+                return m != null && !m.isMonitor();
+            });
+
             PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
             boolean isMonitor = tempPVMetrics.isMonitor();
             Assertions.assertTrue(
@@ -216,12 +243,23 @@ public class ChangeArchivalParametersTest {
                     null,
                     false,
                     false);
+            Awaitility.await()
+                    .atMost(15, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService) != null
+                            && ArchiveEngine.getMetricsforPV(pvName, testConfigService)
+                                    .isConnected());
             ArchiveEngine.changeArchivalParameters(
                     pvName, 0.1F, SamplingMethod.MONITOR, testConfigService, writer, false, false);
-            Thread.sleep(5000);
+            Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() -> {
+                PVMetrics m = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
+                return m != null && m.isMonitor();
+            });
             ArchiveEngine.changeArchivalParameters(
                     pvName, 2, SamplingMethod.MONITOR, testConfigService, writer, false, false);
-            Thread.sleep(5000);
+            Awaitility.await().atMost(15, TimeUnit.SECONDS).until(() -> {
+                PVMetrics m = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
+                return m != null && m.isMonitor() && Math.abs(m.getSamplingPeriod() - 2.0) < 0.001;
+            });
             PVMetrics tempPVMetrics = ArchiveEngine.getMetricsforPV(pvName, testConfigService);
             boolean isMonitor = tempPVMetrics.isMonitor();
             Assertions.assertTrue(
