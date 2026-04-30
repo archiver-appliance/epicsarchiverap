@@ -111,15 +111,21 @@ jobs:
           fetch-depth: 0
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      - name: Build and run smoketest containers
+      - name: Build smoketest containers
         run: |
-          docker compose -f docker/docker-compose.smoketest.yml up --build
+          docker compose -f docker/docker-compose.smoketest.yml build
+      - name: Run smoketest containers
+        run: |
+          docker compose -f docker/docker-compose.smoketest.yml up -d
       - name: Wait for archiver to be healthy
         run: |
           for i in $(seq 1 36); do
             if docker compose -f docker/docker-compose.smoketest.yml ps archappl \
                 | grep -q "healthy"; then
               echo "Archiver ready"; break
+            fi
+            if [ "$i" -eq 36 ]; then
+              echo "Archiver never became healthy"; exit 1
             fi
             echo "Waiting ($i/36)..."; sleep 5
           done
@@ -132,7 +138,7 @@ jobs:
         run: sleep 15
       - name: Verify PV is being archived
         run : |
-          curl -sf "http://localhost:8080//mgmt/bpl/getPVStatus&pv=IOCtest_0" | grep -q "Being archived"
+          curl -sf "http://localhost:8080/mgmt/bpl/getPVStatus?pv=IOCtest_0" | grep -q "Being archived"
 
   integrationtests:
     name: Run all unit tests reliant on web and possibly epics
