@@ -62,6 +62,9 @@ jobs:
             type=schedule,pattern=${{ matrix.imagetag }}-weekly-%Y%m%d
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
+      - name: Get version
+        id: get-version
+        run: echo "version=$(git describe --tags --always --first-parent)" >> $GITHUB_OUTPUT
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -70,7 +73,9 @@ jobs:
           push: true
           platforms: linux/amd64,linux/arm64
           target: ${{ matrix.imagetag }}
-          build-args: ARCHAPPL_SITEID=default
+          build-args: |
+            ARCHAPPL_SITEID=default
+            VERSION=${{ steps.get-version.outputs.version }}
           tags: ${{ inputs.weekly && steps.meta-weekly.outputs.tags || steps.meta-release.outputs.tags }}
           labels: ${{ inputs.weekly && steps.meta-weekly.outputs.labels || steps.meta-release.outputs.labels }}
           cache-from: type=gha
