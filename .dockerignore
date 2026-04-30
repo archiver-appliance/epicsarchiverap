@@ -1,0 +1,44 @@
+# Version control
+.git
+
+# Build output
+**/build/
+stage/
+wars
+
+# Test sources (not needed for WAR build)
+src/test
+
+# Gradle cache (not the wrapper)
+.gradle
+gradle-app.setting
+.gradletasknamecache
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# IDE / editor
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# OS
+.DS_Store
+*.swp
+
+# Logs & runtime artefacts
+*.log
+logs
+tomcat_*
+/mts
+
+# Docs build artefacts
+RELEASE_NOTES
+bin/
+docs/EPICSEvent.proto
+docs/LICENSE
+docs/api/
+docs/docs/build
+docs/**/*.egg-info

@@ -1,13 +1,30 @@
-FROM eclipse-temurin:21-jdk AS build
+FROM gradle:9.3.0-jdk21 AS javadoc-build
+
+USER root
+WORKDIR /src
+COPY . .
+RUN gradle javadoc --no-daemon
+
+FROM python:3.12-slim AS docs-build
+
+WORKDIR /docs
+COPY docs/ .
+COPY --from=javadoc-build /src/docs/api api
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir . && \
+    sphinx-build docs/source docs/build
+
+FROM gradle:9.3.0-jdk21 AS build
 
 ARG ARCHAPPL_SITEID=default
 ENV ARCHAPPL_SITEID=${ARCHAPPL_SITEID}
+ARG VERSION=unknown
 
-RUN apt-get update && apt-get install -y --no-install-recommends python3 python3-venv && rm -rf /var/lib/apt/lists/*
-
+USER root
 WORKDIR /src
 COPY . .
-RUN ./gradlew mgmtWar etlWar engineWar retrievalWar --no-daemon
+COPY --from=docs-build /docs/docs/build docs/docs/build
+RUN gradle mgmtWar etlWar engineWar retrievalWar --no-daemon -PprojVersion=${VERSION} -x sphinx -x javadoc
 
 FROM eclipse-temurin:21-jdk AS expand-wars
 
