@@ -78,19 +78,19 @@ public class ConversionTest {
         String chunkKey = pvName.replace(":", File.separator);
 
         short currentYear = TimeUtils.getCurrentYear();
-        appendAndTestForYear(pvName, currentYear, 365, 60);
+        appendAndTestForYear(plugin, pvName, currentYear, 365, 60);
 
         // Test retrieval before convert
         Instant end = TimeUtils.getStartOfYear(currentYear).plusSeconds(24 * 60 * 60 * 32);
         for (int days = 1; days < 5; days++) {
             Instant start = end.minus(days, ChronoUnit.DAYS);
             long before = System.currentTimeMillis();
-            testRetrieval(pvName, start, end, (days * 24 * 60) + 1, ArchDBRTypes.DBR_SCALAR_DOUBLE);
+            testRetrieval(plugin, pvName, start, end, (days * 24 * 60) + 1, ArchDBRTypes.DBR_SCALAR_DOUBLE);
             long after = System.currentTimeMillis();
             logger.debug("Took {}(ms) to retrieve data for {} days", (after - before), days);
         }
 
-        convertPV(pvName);
+        convertPV(plugin, pvName);
 
         Path tarPath = Paths.get(rootFolderStr, chunkKey + ".tar");
         Assertions.assertTrue(Files.exists(tarPath), "Expecting tar file to be present after conversion");
@@ -111,16 +111,16 @@ public class ConversionTest {
         for (int days = 1; days < 5; days++) {
             Instant start = end.minus(days, ChronoUnit.DAYS);
             long before = System.currentTimeMillis();
-            testRetrieval(pvName, start, end, (days * 24 * 60) + 1, ArchDBRTypes.DBR_SCALAR_FLOAT);
+            testRetrieval(plugin, pvName, start, end, (days * 24 * 60) + 1, ArchDBRTypes.DBR_SCALAR_FLOAT);
             long after = System.currentTimeMillis();
             logger.debug("Took {}(ms) to retrieve data for {} days", (after - before), days);
         }
     }
 
-    private void appendAndTestForYear(String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
+    private void appendAndTestForYear(String plugin, String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder="
+                plugin + "://localhost?name=Test&rootFolder="
                         + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
@@ -154,10 +154,10 @@ public class ConversionTest {
     }
 
     private void testRetrieval(
-            String pvName, Instant start, Instant end, int expectedEventCount, ArchDBRTypes expectedType)
+            String plugin, String pvName, Instant start, Instant end, int expectedEventCount, ArchDBRTypes expectedType)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder="
+                plugin + "://localhost?name=Test&rootFolder="
                         + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
@@ -190,10 +190,10 @@ public class ConversionTest {
         }
     }
 
-    private void convertPV(String pvName) throws IOException {
+    private void convertPV(String plugin, String pvName) throws IOException {
         logger.debug("Starting conversion to DBR_SCALAR_FLOAT");
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
-                "pb://localhost?name=Test&rootFolder="
+                plugin + "://localhost?name=Test&rootFolder="
                         + URLEncoder.encode(ArchPaths.TAR_SCHEME + "://" + rootFolderStr, "UTF-8")
                         + "&partitionGranularity=PARTITION_DAY",
                 configService);
