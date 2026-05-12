@@ -14,6 +14,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -57,7 +58,7 @@ public class ReverseLineByteStream implements Closeable {
 
     public ReverseLineByteStream(Path path, long startPosition, long endPosition) throws IOException {
         this(path);
-        if (endPosition > 0 && endPosition < path.toFile().length()) {
+        if (endPosition > 0 && endPosition < Files.size(path)) {
             this.seekToBeforePreviousLine(endPosition);
         }
         this.stopAtPosition = startPosition;

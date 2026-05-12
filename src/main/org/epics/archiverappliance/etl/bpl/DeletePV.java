@@ -69,7 +69,7 @@ public class DeletePV implements BPLAction {
             if (deleteData) {
                 HashMap<String, String> timingValues = new HashMap<String, String>();
                 infoValues.put("deletes_timing", timingValues);
-                try (ETLContext context = new ETLContext()) {
+                try (ETLContext context = new ETLContext(false)) {
                     Instant tenYearsLaterTimeStamp = TimeUtils.convertFromEpochSeconds(
                             TimeUtils.getCurrentEpochSeconds()
                                     + 10 * 365 * PartitionGranularity.PARTITION_DAY.getApproxSecondsPerChunk(),

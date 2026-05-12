@@ -26,7 +26,7 @@ sourceSets {
 			srcDir("src/proto")
 		}
 		resources {
-			setSrcDirs(emptyList<String>())
+			srcDir("src/resources")
 		}
 	}
 	test {
@@ -133,6 +133,7 @@ dependencies {
 	implementation(libs.commons.lang3)
 	implementation(libs.commons.math3)
 	implementation(libs.commons.validator)
+	implementation(libs.commons.compress)
 
 
 	// HTTP Clients
@@ -172,7 +173,6 @@ dependencies {
 	testRuntimeOnly(libs.junit.jupiter.engine)
 	testRuntimeOnly(libs.junit.platform.launcher)
 	testImplementation(libs.awaitility)
-	testImplementation(libs.commons.compress)
 	testImplementation(libs.commons.cli)
 	testImplementation(libs.jinjava)
 	testImplementation(files("lib/test/BPLTaglets.jar"))
@@ -309,6 +309,10 @@ tasks.register("stage") {
 	copy {
 		from(srcDir.asFile.resolve("org/epics/archiverappliance/mgmt/staticcontent"))
 		into(stageDir.asFile.resolve("org/epics/archiverappliance/mgmt/staticcontent"))
+	}
+	copy {
+		from(sourceSets.main.get().resources) { include("META-INF/**") }
+		into(stageDir.asFile.resolve("WEB-INF/classes"))
 	}
 	doLast {
 		stageDir
@@ -549,6 +553,7 @@ tasks.withType<Test>().configureEach {
 		temporaryDir.resolve("sts").mkdirs()
 		temporaryDir.resolve("mts").mkdirs()
 		temporaryDir.resolve("lts").mkdirs()
+		temporaryDir.resolve("xlts").mkdirs()
 		logger.lifecycle("Running tests with maxParallelForks = {}", maxParallelForks)
 	}
 
@@ -564,12 +569,14 @@ tasks.withType<Test>().configureEach {
 	environment("ARCHAPPL_SHORT_TERM_FOLDER", temporaryDir.resolve("sts").path)
 	environment("ARCHAPPL_MEDIUM_TERM_FOLDER", temporaryDir.resolve("mts").path)
 	environment("ARCHAPPL_LONG_TERM_FOLDER", temporaryDir.resolve("lts").path)
+	environment("ARCHAPPL_XLTS_TERM_FOLDER", temporaryDir.resolve("xlts").path)
 
 	doLast {
 		delete(
 			temporaryDir.resolve("sts"),
 			temporaryDir.resolve("mts"),
-			temporaryDir.resolve("lts")
+			temporaryDir.resolve("lts"),
+			temporaryDir.resolve("xlts")
 		)
 	}
 }
@@ -712,6 +719,7 @@ tasks.register<JavaExec>("testRun") {
 	environment("ARCHAPPL_SHORT_TERM_FOLDER", "${layout.buildDirectory.get()}/storage/sts")
 	environment("ARCHAPPL_MEDIUM_TERM_FOLDER", "${layout.buildDirectory.get()}/storage/mts")
 	environment("ARCHAPPL_LONG_TERM_FOLDER", "${layout.buildDirectory.get()}/storage/lts")
+	environment("ARCHAPPL_XLTS_TERM_FOLDER", "${layout.buildDirectory.get()}/storage/xlts")
 
 	mainClass.set("org.epics.archiverappliance.TestRun")
 	classpath = sourceSets.test.get().runtimeClasspath
