@@ -69,7 +69,6 @@ try {
 val stageDir = layout.buildDirectory.file("stage").get()
 val srcDir = layout.projectDirectory.file("src/main")
 val libDir = layout.projectDirectory.file("lib")
-val resourcesDir = layout.projectDirectory.file("src/resources")
 val apiDocsDir = layout.projectDirectory.file("docs/api")
 val archapplsite = System.getenv("ARCHAPPL_SITEID") ?: "tests"
 val defaultsitespecificpath = "src/sitespecific/$archapplsite"
@@ -312,8 +311,8 @@ tasks.register("stage") {
 		into(stageDir.asFile.resolve("org/epics/archiverappliance/mgmt/staticcontent"))
 	}
 	copy {
-		from(resourcesDir.asFile.resolve("META-INF"))
-		into(stageDir.asFile.resolve("WEB-INF/classes/META-INF"))
+		from(sourceSets.main.get().resources) { include("META-INF/**") }
+		into(stageDir.asFile.resolve("WEB-INF/classes"))
 	}
 	doLast {
 		stageDir
