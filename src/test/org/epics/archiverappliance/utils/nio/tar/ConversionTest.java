@@ -117,7 +117,8 @@ public class ConversionTest {
         }
     }
 
-    private void appendAndTestForYear(String plugin, String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
+    private void appendAndTestForYear(
+            String plugin, String pvName, short forYear, int expectedCatalogEntryCount, int skipSeconds)
             throws Exception {
         StoragePlugin storagePlugin = StoragePluginURLParser.parseStoragePlugin(
                 plugin + "://localhost?name=Test&rootFolder="
