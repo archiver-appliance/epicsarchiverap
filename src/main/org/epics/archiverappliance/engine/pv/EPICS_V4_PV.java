@@ -11,6 +11,7 @@ import org.epics.pva.client.ClientChannelListener;
 import org.epics.pva.client.ClientChannelState;
 import org.epics.pva.client.MonitorListener;
 import org.epics.pva.client.PVAChannel;
+import org.epics.pva.client.RecordOptions;
 import org.epics.pva.data.PVAData;
 import org.epics.pva.data.PVAStructure;
 
@@ -450,7 +451,13 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
                 state = PVConnectionState.Subscribing;
                 totalMetaInfo.setStartTime(System.currentTimeMillis());
                 int pipeline = 0;
-                subscriptionCloseable = pvaChannel.subscribe("", pipeline, this);
+                subscriptionCloseable = pvaChannel.subscribe(
+                        "",
+                        RecordOptions.builder()
+                                .dbeMask(RecordOptions.DBEMask.DBE_ARCHIVE)
+                                .pipeline(pipeline)
+                                .build(),
+                        this);
             } catch (final Exception ex) {
                 logger.error("exception when subscribing pv", ex);
             }
