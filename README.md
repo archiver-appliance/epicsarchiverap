@@ -14,7 +14,7 @@ For more details, please see the [documentation](http://epicsarchiver.readthedoc
 
 ### Prerequisites
 
-- Java JDK 21 (or later) - [OpenJDK](https://openjdk.java.net/) or othersupplier
+- Java JDK 25 (or later) - [OpenJDK](https://openjdk.java.net/) or othersupplier
 - [Tomcat 11](https://tomcat.apache.org/download-11.cgi) (For integration tests)
 - [Gradle](https://gradle.org/)
 
