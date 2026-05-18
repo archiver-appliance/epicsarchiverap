@@ -30,7 +30,6 @@ Other useful tools:
 - [Docker](https://www.docker.com/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - An IDE of your choice (e.g. IntelliJ, Eclipse, VS Code)
-- sphinx for building the documentation
 
 ### Build
 
@@ -150,5 +149,12 @@ deployments see the [samples folder](docs/samples).
 
 ## Build Documentation
 
-Documentation for the website is built using [Read the Docs](http://readthedocs.org).
-To build it and run it locally, see the [build_docs.sh](docs/build_docs.sh).
+Documentation is published at <https://epicsarchiver.readthedocs.io/> via ReadTheDocs.
+To build or preview locally, Gradle manages the Python environment automatically:
+
+| Command | Description |
+|---------|-------------|
+| `./gradlew sphinx` | Build HTML docs into `docs/build/` |
+| `./gradlew liveviewdocs` | Live-reload server at <http://127.0.0.1:8000> |
+
+See the [docs README](docs/README.md) for more details.

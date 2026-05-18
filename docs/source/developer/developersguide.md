@@ -79,6 +79,23 @@ BUILD SUCCESSFUL in 16s
 The build can then be found in `epicsarchiverap/build/distributions` or
 the war files in `epicsarchiverap/build/libs`.
 
+## Building the Documentation
+
+The documentation is written in Markdown (MyST) and built with Sphinx.
+A Python virtual environment is managed automatically by Gradle — no manual
+Python setup required.
+
+| Gradle task | Description |
+|-------------|-------------|
+| `./gradlew sphinx` | Build HTML docs into `docs/build/` |
+| `./gradlew liveviewdocs` | Live-reload server at <http://127.0.0.1:8000> for development |
+| `./gradlew javadoc sphinx` | Build including the Java API reference |
+
+The generated docs are embedded in `mgmt.war` at `ui/help/` for local
+application use. The published version is hosted at
+[ReadTheDocs](https://epicsarchiver.readthedocs.io/) and rebuilt
+automatically on each push to the main branch.
+
 ## Deploying
 
 To deploy the EPICS archiver appliance, you simply have to copy the
