@@ -207,14 +207,8 @@ public class PBVectorFloat implements DBRTimeEvent {
     }
 
     private void unmarshallEventIfNull() {
-        try {
-            if (dbevent == null) {
-                dbevent = EPICSEvent.VectorFloat.newBuilder()
-                        .mergeFrom(bar.inPlaceUnescape().unescapedData, bar.off, bar.unescapedLen)
-                        .build();
-            }
-        } catch (Exception ex) {
-            throw new PBParseException(bar.toBytes(), ex);
+        if (dbevent == null) {
+            dbevent = PBEventRecovery.parseWithRecovery(EPICSEvent.VectorFloat::newBuilder, bar);
         }
     }
 

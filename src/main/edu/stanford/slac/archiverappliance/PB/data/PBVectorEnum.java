@@ -213,14 +213,8 @@ public class PBVectorEnum implements DBRTimeEvent {
     }
 
     private void unmarshallEventIfNull() {
-        try {
-            if (dbevent == null) {
-                dbevent = EPICSEvent.VectorEnum.newBuilder()
-                        .mergeFrom(bar.inPlaceUnescape().unescapedData, bar.off, bar.unescapedLen)
-                        .build();
-            }
-        } catch (Exception ex) {
-            throw new PBParseException(bar.toBytes(), ex);
+        if (dbevent == null) {
+            dbevent = PBEventRecovery.parseWithRecovery(EPICSEvent.VectorEnum::newBuilder, bar);
         }
     }
 

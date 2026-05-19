@@ -224,14 +224,8 @@ public class PBVectorByte implements DBRTimeEvent {
     }
 
     private void unmarshallEventIfNull() {
-        try {
-            if (dbevent == null) {
-                dbevent = EPICSEvent.VectorChar.newBuilder()
-                        .mergeFrom(bar.inPlaceUnescape().unescapedData, bar.off, bar.unescapedLen)
-                        .build();
-            }
-        } catch (Exception ex) {
-            throw new PBParseException(bar.toBytes(), ex);
+        if (dbevent == null) {
+            dbevent = PBEventRecovery.parseWithRecovery(EPICSEvent.VectorChar::newBuilder, bar);
         }
     }
 
