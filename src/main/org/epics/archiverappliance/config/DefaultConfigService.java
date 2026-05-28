@@ -525,6 +525,7 @@ public class DefaultConfigService implements ConfigService {
                         }
                     }
                 }
+                config.setClassLoader(Thread.currentThread().getContextClassLoader());
                 hzinstance = Hazelcast.newHazelcastInstance(config);
             } catch (Exception ex) {
                 throw new ConfigException("Exception adding member to cluster", ex);
@@ -574,6 +575,7 @@ public class DefaultConfigService implements ConfigService {
                         + clientConfig.getNetworkConfig().isRedoOperation());
                 logger.info("client config properties: "
                         + clientConfig.getProperties().toString());
+                clientConfig.setClassLoader(Thread.currentThread().getContextClassLoader());
                 hzinstance = HazelcastClient.newHazelcastClient(clientConfig);
             } catch (Exception ex) {
                 throw new ConfigException("Exception adding client to cluster", ex);
