@@ -2,9 +2,9 @@ package org.epics.archiverappliance.mgmt;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -47,7 +47,7 @@ public class ArchivePVTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
         JSONArray statuses = GetUrlContent.getURLContentAsJSONArray(mgmtURL + "/getPVStatus?pv=" + pvNameToArchive);
         Assertions.assertNotNull(statuses);
         Assertions.assertTrue(statuses.size() > 0);

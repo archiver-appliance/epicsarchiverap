@@ -1,14 +1,15 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.client.PVAClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.TimeUnit;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 
 /**
  * Check if the pva management rpc service has started and is accessible.
@@ -18,6 +19,7 @@ import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVI
  */
 @Tag("integration")
 @Tag("localEpics")
+@ExtendWith(PvaTestSetupExtension.class)
 public class PvaSuiteTstMgmtServiceStartup {
 
     /**

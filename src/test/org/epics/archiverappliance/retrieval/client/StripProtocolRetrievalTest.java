@@ -1,5 +1,9 @@
 package org.epics.archiverappliance.retrieval.client;
 
+import static org.epics.archiverappliance.ArchiveTestUtils.waitForStatusChange;
+import static org.epics.archiverappliance.config.PVNames.V3_PREFIX;
+import static org.epics.archiverappliance.config.PVNames.V4_PREFIX;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -22,10 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.epics.archiverappliance.config.PVNames.V3_PREFIX;
-import static org.epics.archiverappliance.config.PVNames.V4_PREFIX;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 
 @Tag("integration")
 @Tag("localEpics")

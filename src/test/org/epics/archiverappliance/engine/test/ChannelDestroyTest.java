@@ -9,6 +9,7 @@ package org.epics.archiverappliance.engine.test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -65,10 +66,10 @@ public class ChannelDestroyTest {
                     null,
                     false,
                     false);
-            Thread.sleep(2000);
+            ArchiveTestUtils.waitForChannelInList(pvName, testConfigService);
 
             ArchiveEngine.destoryPv(pvName, testConfigService);
-            Thread.sleep(2000);
+            ArchiveTestUtils.waitForChannelRemovedFromList(pvName, testConfigService);
             ArchiveChannel archiveChannel =
                     testConfigService.getEngineContext().getChannelList().get(pvName);
             Assertions.assertNull(archiveChannel, "the channel for " + pvName + " should be destroyed but it is not");
@@ -97,10 +98,10 @@ public class ChannelDestroyTest {
                     null,
                     false,
                     false);
-            Thread.sleep(2000);
+            ArchiveTestUtils.waitForChannelInList(pvName, testConfigService);
 
             ArchiveEngine.destoryPv(pvName, testConfigService);
-            Thread.sleep(2000);
+            ArchiveTestUtils.waitForChannelRemovedFromList(pvName, testConfigService);
             ArchiveChannel archiveChannel =
                     testConfigService.getEngineContext().getChannelList().get(pvName);
             Assertions.assertNull(archiveChannel, "the channel for " + pvName + " should be destroyed but it is not");

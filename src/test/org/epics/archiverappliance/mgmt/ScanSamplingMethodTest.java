@@ -2,6 +2,7 @@ package org.epics.archiverappliance.mgmt;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.EventStreamDesc;
@@ -10,7 +11,6 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.retrieval.client.RetrievalEventProcessor;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
@@ -69,7 +69,7 @@ public class ScanSamplingMethodTest {
         logger.info("Archiving PVs SCAN/1.0");
         GetUrlContent.postDataAndGetContentAsJSONArray(mgmtURL + "archivePV", GetUrlContent.from(arSpecs));
         for (String pv : pvs) {
-            PVAccessUtil.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
+            ArchiveTestUtils.waitForStatusChange(pv, "Being archived", 10, mgmtURL, 15);
         }
 
         Thread.sleep(60 * 1000);

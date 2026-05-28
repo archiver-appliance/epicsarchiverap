@@ -3,13 +3,13 @@ package org.epics.archiverappliance.mgmt;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
@@ -77,8 +77,8 @@ public class VALNoVALTest {
                 GetUrlContent.from(List.of(
                         new JSONObject(Map.of("pv", pvNameToArchive1)),
                         new JSONObject(Map.of("pv", pvNameToArchive2)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive1, "Being archived", 10, mgmtURL, 15);
-        PVAccessUtil.waitForStatusChange(pvNameToArchive2, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive1, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive2, "Being archived", 10, mgmtURL, 15);
 
         testRetrievalCountOnServer(pvNameToArchive1, 2);
         testRetrievalCountOnServer(pvNameToArchive1 + ".VAL", 2);

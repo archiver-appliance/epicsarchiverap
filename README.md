@@ -64,7 +64,7 @@ gradle spotlessCheck
 
 ### Test
 
-The tests are organised into different tags: "slow", "integration", "localEpics", "flaky", "singleFork", "unit".
+The tests are organised into different tags: "slow", "integration", "localEpics", "flaky", "unit".
 
 #### Unit Tests
 

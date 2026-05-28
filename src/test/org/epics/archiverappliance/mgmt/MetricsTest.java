@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.mgmt;
 
+import static java.util.Map.entry;
+import static org.epics.archiverappliance.ArchiveTestUtils.waitForStatusChange;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,9 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import static java.util.Map.entry;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 
 @Tag("integration")
 public class MetricsTest {

@@ -1,0 +1,50 @@
+name: Build Artifacts
+
+on:
+  workflow_call:
+    inputs:
+      task:
+        type: string
+        default: buildRelease
+        description: "Gradle task to run (assemble or buildRelease)"
+      site-ids:
+        type: string
+        default: '["default"]'
+        description: "JSON array of ARCHAPPL_SITEID values for the build matrix"
+      artifact-prefix:
+        type: string
+        default: ""
+        description: "Prefix for uploaded artifact names"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build ${{ matrix.siteid }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        siteid: ${{ fromJson(inputs.site-ids) }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: "21"
+          distribution: "temurin"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Build with Gradle
+        run: ./gradlew ${{ inputs.task }}
+        env:
+          ARCHAPPL_SITEID: ${{ matrix.siteid }}
+      - name: Upload package
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact-prefix }}${{ matrix.siteid }}-package
+          path: build/distributions/*.tar.gz

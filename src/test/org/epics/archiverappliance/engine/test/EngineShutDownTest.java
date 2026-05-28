@@ -9,6 +9,7 @@ package org.epics.archiverappliance.engine.test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * test of engine shuting down
@@ -67,10 +70,19 @@ public class EngineShutDownTest {
                         false);
                 Thread.sleep(10);
             }
-            Thread.sleep(2000);
+            Awaitility.await()
+                    .atMost(30, TimeUnit.SECONDS)
+                    .until(() -> testConfigService
+                                    .getEngineContext()
+                                    .getChannelList()
+                                    .size()
+                            >= 100);
 
             testConfigService.shutdownNow();
-            Thread.sleep(2000);
+            Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> !testConfigService
+                    .getPVsForThisAppliance()
+                    .iterator()
+                    .hasNext());
             int num = 0;
             for (String s : testConfigService.getPVsForThisAppliance()) {
                 num++;

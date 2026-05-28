@@ -9,6 +9,7 @@ package org.epics.archiverappliance.engine.test;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
@@ -19,6 +20,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * test of sample buffer over flow
@@ -64,7 +67,11 @@ public class SampleBufferOverFlowTest {
                     false,
                     false);
 
-            Thread.sleep(30000);
+            Awaitility.await()
+                    .atMost(60, TimeUnit.SECONDS)
+                    .until(() -> ArchiveEngine.getMetricsforPV(pvName, testConfigService)
+                                    .getSampleBufferFullLostEventCount()
+                            > 0);
 
             long num = ArchiveEngine.getMetricsforPV(pvName, testConfigService).getSampleBufferFullLostEventCount();
             Assertions.assertTrue(

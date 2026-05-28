@@ -1,8 +1,12 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaArchivePVAction;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.client.PVAClient;
@@ -15,14 +19,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
-import static org.epics.archiverappliance.mgmt.pva.PvaTest.pvPrefix;
-import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringArray;
 
 /**
  *
@@ -31,9 +32,11 @@ import static org.epics.archiverappliance.mgmt.pva.actions.NTUtil.extractStringA
  */
 @Tag("integration")
 @Tag("localEpics")
+@ExtendWith(PvaTestSetupExtension.class)
 public class PvaSuiteTstArchivePV {
 
     private static final Logger logger = LogManager.getLogger(PvaSuiteTstArchivePV.class.getName());
+    private static final String pvPrefix = "PvaTest";
 
     private static PVAClient pvaClient;
     private static PVAChannel pvaChannel;
@@ -87,8 +90,13 @@ public class PvaSuiteTstArchivePV {
                     expectedStatus,
                     extractStringArray(PVATable.fromStructure(result).getColumn("status")));
 
-            // Try submitting the request again...this time you should get a "already submitted" status response.
-            Thread.sleep(60000L);
+            // Wait until the archiving workflow has processed the first submission before re-submitting
+            ArchiveTestUtils.waitForStatusChange(
+                    pvPrefix + "UnitTestNoNamingConvention:sine",
+                    "Being archived",
+                    30,
+                    "http://localhost:17665/mgmt/bpl/",
+                    5);
             String[] expectedSuccessfulStatus = new String[] {"Already submitted", "Already submitted"};
             result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
             logger.info("results" + result.toString());

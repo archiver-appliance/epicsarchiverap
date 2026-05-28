@@ -1,0 +1,67 @@
+name: Weekly Build
+
+on:
+  schedule:
+    - cron: "0 2 * * 0" # 2 AM UTC every Sunday
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  verify:
+    name: Verify
+    uses: ./.github/workflows/verify.yml
+    permissions:
+      contents: read
+      checks: write
+
+  docker-tests:
+    name: Docker tests
+    uses: ./.github/workflows/docker-tests.yml
+    with:
+      use-prebuilt-image: false
+    permissions:
+      contents: read
+      packages: write
+
+  build:
+    name: Build artifacts
+    needs: [docker-tests]
+    uses: ./.github/workflows/build.yml
+    with:
+      task: buildRelease
+      site-ids: '["default"]'
+    permissions:
+      contents: read
+
+  publish-image:
+    name: Publish images
+    needs: [docker-tests]
+    uses: ./.github/workflows/publish-image.yml
+    with:
+      weekly: true
+    permissions:
+      contents: read
+      packages: write
+
+  update-nightly-release:
+    name: Update nightly release
+    runs-on: ubuntu-latest
+    needs: [build]
+    permissions:
+      contents: write
+    steps:
+      - name: Download the built artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: default-package
+      - name: Update nightly release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: weekly-$(date +%Y-%m-%d)
+          tag_name: weekly-$(date +%Y-%m-%d)
+          prerelease: true
+          make_latest: false
+          files: "*.tar.gz"
+          generate_release_notes: false

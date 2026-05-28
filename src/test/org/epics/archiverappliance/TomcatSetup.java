@@ -7,349 +7,332 @@
  *******************************************************************************/
 package org.epics.archiverappliance;
 
+import org.apache.catalina.Context;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.core.StandardContext;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.DefaultConfigService;
 import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.text.MessageFormat;
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Setup Tomcat without having to import all the tomcat jars into your project.
- * @author mshankar
+ * Manages embedded Tomcat instances for integration tests.
  *
+ * <p>Implements {@link AutoCloseable} so it can be used in try-with-resources or registered as a
+ * JUnit 5 root-store {@code CloseableResource} (see {@code PvaTestSetupExtension}).
+ *
+ * @author mshankar
  */
-public class TomcatSetup {
-    private static final Logger logger = LogManager.getLogger(TomcatSetup.class.getName());
-    HashMap<String, Process> watchedProcesses = new HashMap<String, Process>();
-    LinkedList<File> cleanupFolders = new LinkedList<File>();
-    protected static final int DEFAULT_SERVER_STARTUP_PORT = 16000;
+public class TomcatSetup implements AutoCloseable {
 
-    private static void overrideEnvWithSystemProperty(Map<String, String> environment, String key) {
-        if (System.getProperties().containsKey(key)) {
-            String value = (String) System.getProperties().get(key);
-            logger.debug("Overriding " + key + " from the system properties " + value);
-            environment.put(key, value);
-        }
-    }
+    private static final Logger logger = LogManager.getLogger(TomcatSetup.class);
 
-    /**
-     * Set up an individual tomcat with the webapps loaded.
-     * We create a work folder appropriate for the test; create the webapps/logs/conf folders and then call catalina.sh run.
-     * @throws Exception
-     */
+    public static final int DEFAULT_SERVER_STARTUP_PORT = 16000;
+    private static final int BASE_STARTUP_PORT = DEFAULT_SERVER_STARTUP_PORT;
+    private static final int STARTUP_TIMEOUT_MINUTES = 2;
+    private static final String STARTUP_COMPLETE_MSG = "All components in this appliance have started up";
+
+    /** Tomcat instances keyed by appliance name, in startup order. */
+    private final Map<String, Tomcat> instances = new LinkedHashMap<>();
+
+    /** Additional system properties to re-apply after each per-instance property reset. */
+    private final Map<String, String> extraProperties = new HashMap<>();
+
+    private File testFolder;
+    private Properties savedProperties;
+
+    // -------------------------------------------------------------------------
+    // Public API
+    // -------------------------------------------------------------------------
+
+    /** Start a single-appliance setup for {@code testName}. */
     public void setUpWebApps(String testName) throws Exception {
-        initialSetup(testName);
-        AppliancesXMLGenerator.ApplianceXMLConfig applianceXMLConfig =
-                new AppliancesXMLGenerator.ApplianceXMLConfig(testName, 1);
-        Path xml = applianceXMLConfig.writeAppliancesXML();
+        prepare(testName);
+        AppliancesXMLGenerator.ApplianceXMLConfig config = new AppliancesXMLGenerator.ApplianceXMLConfig(testName, 1);
+        Path xml = config.writeAppliancesXML();
         AppliancesXMLGenerator.AppliancePorts ports =
-                applianceXMLConfig.appliancePortsList().get(0);
-        createAndStartTomcatInstance(testName, ports.identity(), ports.retrievalPort(), ports.serverStartUpPort(), xml);
+                config.appliancePortsList().get(0);
+        start(ports.identity(), ports.retrievalPort(), BASE_STARTUP_PORT, xml);
     }
 
-    /**
-     * Set up a cluster of tomcat instances.
-     * Note that these are NOT clustered using tomcat's clustering technology (which is geared towards session replication and the such).
-     * @param clusterCount
-     * @throws Exception
-     */
+    /** Start a cluster of {@code clusterCount} appliances for {@code testName}. */
     public void setUpClusterWithWebApps(String testName, int clusterCount) throws Exception {
-        initialSetup(testName);
-        AppliancesXMLGenerator.ApplianceXMLConfig applianceXMLConfig =
+        prepare(testName);
+        AppliancesXMLGenerator.ApplianceXMLConfig config =
                 new AppliancesXMLGenerator.ApplianceXMLConfig(testName, clusterCount);
-        Path xml = applianceXMLConfig.writeAppliancesXML();
-        for (AppliancesXMLGenerator.AppliancePorts appliancePorts : applianceXMLConfig.appliancePortsList()) {
-            logger.info(String.format("Starting up %s", appliancePorts.identity()));
-            createAndStartTomcatInstance(
-                    testName,
-                    appliancePorts.identity(),
-                    appliancePorts.retrievalPort(),
-                    appliancePorts.serverStartUpPort(),
-                    xml);
-            logger.info(String.format("Done starting up %s", appliancePorts.identity()));
+        Path xml = config.writeAppliancesXML();
+        int startupPort = BASE_STARTUP_PORT;
+        for (AppliancesXMLGenerator.AppliancePorts ports : config.appliancePortsList()) {
+            logger.info("Starting up {}", ports.identity());
+            start(ports.identity(), ports.retrievalPort(), startupPort++, xml);
+            logger.info("Done starting up {}", ports.identity());
         }
     }
 
     /**
-     * Set up a dest/other pair to test failover.
-     * @param testName
-     * @throws Exception
+     * Start a dest/other appliance pair for failover testing.
+     *
+     * <p>Each appliance gets isolated storage folders under its own work directory; see
+     * {@link #configureProperties} for details.
      */
     public void setUpFailoverWithWebApps(String testName) throws Exception {
-        initialSetup(testName);
-        logger.info("Starting up dest appliance");
-        // We are in the tomcat logs folder...
-        System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", "../sts");
-        System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts");
-        System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", "../lts");
+        prepare(testName);
 
-        createAndStartTomcatInstance(
-                testName,
+        logger.info("Starting up dest appliance");
+        start(
                 "dest_appliance",
                 ConfigServiceForTests.RETRIEVAL_TEST_PORT,
-                DEFAULT_SERVER_STARTUP_PORT,
+                BASE_STARTUP_PORT,
                 Path.of("src/sitespecific/tests/classpathfiles/failover_dest.xml"));
-        logger.info("Done starting up dest appliance");
         logger.info("Starting up other appliance");
-        createAndStartTomcatInstance(
-                testName,
+        start(
                 "other_appliance",
                 ConfigServiceForTests.RETRIEVAL_TEST_PORT + 4,
-                DEFAULT_SERVER_STARTUP_PORT + 4,
+                BASE_STARTUP_PORT + 4,
                 Path.of("src/sitespecific/tests/classpathfiles/failover_other.xml"));
-        logger.info("Done starting up other appliance");
     }
 
-    private void initialSetup(String testName) throws IOException {
-        File testFolder = new File("build/tomcats/tomcat_" + testName);
+    /** Stop a single appliance by name, leaving the others running. */
+    public void shutDownAppliance(String applianceName) throws Exception {
+        Tomcat tomcat = instances.get(applianceName);
+        if (tomcat == null) {
+            throw new IllegalArgumentException("No Tomcat instance found for appliance: " + applianceName);
+        }
+        logger.info("Stopping Tomcat instance for {}", applianceName);
+        try {
+            tomcat.stop();
+            tomcat.destroy();
+        } catch (LifecycleException e) {
+            logger.error("Error stopping {}", applianceName, e);
+        }
+        instances.remove(applianceName);
+    }
+
+    /** Stop all appliances, delete the test folder, and restore system properties. */
+    public void tearDown() throws Exception {
+        stopAll();
+        deleteTestFolder();
+        restoreSystemProperties();
+    }
+
+    @Override
+    public void close() throws Exception {
+        tearDown();
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    private void prepare(String testName) throws IOException {
+        // Snapshot system properties using putAll so the copy is a flat map, not a
+        // defaults-chain. Properties.containsKey() does not search defaults, so using
+        // new Properties(original) as a "reset" would silently hide keys.
+        savedProperties = new Properties();
+        savedProperties.putAll(System.getProperties());
+
+        testFolder = new File("build/tomcats/tomcat_" + testName);
         if (testFolder.exists()) {
             FileUtils.deleteDirectory(testFolder);
         }
-        assert testFolder.mkdirs();
-        cleanupFolders.add(testFolder);
+        if (!testFolder.mkdirs()) {
+            throw new IOException("Could not create test folder: " + testFolder.getAbsolutePath());
+        }
     }
 
-    public void shutDownAppliance(String applianceName) throws Exception {
-        Process process = watchedProcesses.get(applianceName);
-        if (process == null) {
-            throw new Exception("Cannot find process for appliance " + applianceName);
-        }
-        // First try to kill the process cleanly
-        process.destroy();
-        logger.info("Sending a signal to " + process.pid());
+    private void start(String applianceName, int port, int startupPort, Path appliancesXML)
+            throws IOException, LifecycleException {
+
+        File workFolder = makeWorkFolder(applianceName);
+
+        Tomcat tomcat = new Tomcat();
+        tomcat.setBaseDir(workFolder.getAbsolutePath());
+        tomcat.setPort(port);
+        tomcat.getServer().setPort(startupPort);
+        // Required to initialise the connector before start()
+        tomcat.getConnector();
+
+        addWebapp(tomcat, "/mgmt", "./build/exploded/mgmt");
+        addWebapp(tomcat, "/retrieval", "./build/exploded/retrieval");
+        addWebapp(tomcat, "/etl", "./build/exploded/etl");
+        addWebapp(tomcat, "/engine", "./build/exploded/engine");
+
+        configureProperties(applianceName, appliancesXML, workFolder);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        LatchAppender appender = new LatchAppender("latch-" + applianceName, latch, STARTUP_COMPLETE_MSG);
+        appender.start();
+
+        org.apache.logging.log4j.core.Logger rootLogger =
+                (org.apache.logging.log4j.core.Logger) LogManager.getRootLogger();
+        rootLogger.addAppender(appender);
         try {
-            Thread.sleep(15 * 1000);
-        } catch (Exception ignored) {
-        }
-
-        if (process.isAlive()) {
-            logger.warn("Tomcat process did not stop properly within time. Forcibly stopping it.");
-            process.destroyForcibly();
-            try {
-                Thread.sleep(60 * 1000);
-            } catch (Exception ignored) {
+            tomcat.start();
+            instances.put(applianceName, tomcat);
+            logger.info("Waiting for {} to start...", applianceName);
+            if (!latch.await(STARTUP_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
+                throw new RuntimeException(
+                        applianceName + " did not start within " + STARTUP_TIMEOUT_MINUTES + " minutes");
             }
-        }
-        watchedProcesses.remove(applianceName);
-    }
-
-    public void tearDown() throws Exception {
-        killProcesses();
-        deleteUsedDirectories();
-    }
-
-    private void deleteUsedDirectories() throws IOException {
-        for (File f : cleanupFolders) {
-            if (f.exists()) {
-                FileUtils.deleteDirectory(f);
-            }
+            logger.info("{} started successfully.", applianceName);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException("Interrupted while waiting for " + applianceName + " to start", e);
+        } finally {
+            rootLogger.removeAppender(appender);
+            appender.stop();
         }
     }
 
-    private void killProcesses() {
-        for (Process process : watchedProcesses.values()) {
-            // First try to kill the process cleanly
-            process.destroy();
-            logger.info("Sending a signal to " + process.pid());
-            try {
-                Thread.sleep(15 * 1000);
-            } catch (Exception ignored) {
-            }
-            if (process.isAlive()) {
-                logger.warn("Tomcat process did not stop properly within time. Forcibly stopping it.");
-                process.destroyForcibly();
-                try {
-                    Thread.sleep(60 * 1000);
-                } catch (Exception ignored) {
-                }
-            }
+    private void addWebapp(Tomcat tomcat, String contextPath, String docBase) throws IOException {
+        File dir = new File(docBase);
+        if (!dir.exists()) {
+            throw new IOException("Exploded webapp not found at " + dir.getAbsolutePath()
+                    + " — run the 'explodeWars' Gradle task first.");
         }
+        Context ctx = tomcat.addWebapp(contextPath, dir.getAbsolutePath());
+        // Delegate class loading to the parent (test) classloader first. Without this, each
+        // webapp loads Log4j2 from its own WEB-INF/lib and creates a separate LoggerContext,
+        // so LatchAppender (registered on the test's root logger) never sees webapp log events.
+        ((StandardContext) ctx).setDelegate(true);
     }
 
-    private static void catchApplianceLog(String applianceName, Process p, CountDownLatch latch, BufferedReader li) {
-        Logger applianceLogger = LogManager.getLogger("APP" + applianceName);
-        try {
-            String msg;
-            while ((msg = li.readLine()) != null && p.isAlive()) {
-                applianceLogger.info(applianceName + " | " + msg);
-                if (msg.contains("All components in this appliance have started up")) {
-                    logger.info(applianceName + " has started up.");
-                    latch.countDown();
-                }
-            }
-        } catch (Exception ex) {
-            logger.error("Exception starting Tomcat", ex);
-        }
-    }
-
-    private void createAndStartTomcatInstance(
-            String testName, final String applianceName, int port, int startupPort, Path appliancesXML)
-            throws IOException {
-        File workFolder = makeTomcatFolders(testName, applianceName, port, startupPort);
-        File logsFolder = new File(workFolder, "logs");
-        assert (logsFolder.exists());
-
-        ProcessBuilder pb = new ProcessBuilder(
-                System.getenv("TOMCAT_HOME") + File.separator + "bin" + File.separator + "catalina.sh", "run");
-        createEnvironment(testName, applianceName, pb.environment(), appliancesXML);
-        pb.directory(logsFolder);
-        pb.redirectErrorStream(true);
-        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
-        Process p = pb.start();
-        watchedProcesses.put(applianceName, p);
-
-        final CountDownLatch latch = new CountDownLatch(1);
-
-        final BufferedReader li = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        Thread t = new Thread(() -> {
-            catchApplianceLog(applianceName, p, latch, li);
-        });
-        t.start();
-
-        // We wait for some time to make sure the server started up
-        try {
-            latch.await(2, TimeUnit.MINUTES);
-        } catch (InterruptedException ignored) {
-        }
-        logger.info("Done starting " + applianceName + " Releasing latch");
-    }
-
-    /**
-     * @param testName
-     * @param applianceName
-     * @param port
-     * @param startupPort
-     * @return Returns the CATALINA_BASE for this instance
-     * @throws IOException
-     */
-    private File makeTomcatFolders(String testName, String applianceName, int port, int startupPort)
-            throws IOException {
-        File testFolder = new File("build/tomcats/tomcat_" + testName);
-        assert (testFolder.exists());
+    private File makeWorkFolder(String applianceName) throws IOException {
         File workFolder = new File(testFolder, applianceName);
-        assert (workFolder.mkdir());
-
-        File webAppsFolder = new File(workFolder, "webapps");
-        assert (webAppsFolder.mkdir());
-        File logsFolder = new File(workFolder, "logs");
-        assert (logsFolder.mkdir());
-
-        FileUtils.copyFile(new File("src/resources/test/log4j2.xml"), new File(logsFolder, "log4j2.xml"));
-        File tempFolder = new File(workFolder, "temp");
-        assert (tempFolder.mkdir());
-
-        logger.debug("Copying the webapps wars to " + webAppsFolder.getAbsolutePath());
-        FileUtils.copyFile(new File("./build/libs/mgmt.war"), new File(webAppsFolder, "mgmt.war"));
-        FileUtils.copyFile(new File("./build/libs/retrieval.war"), new File(webAppsFolder, "retrieval.war"));
-        FileUtils.copyFile(new File("./build/libs/etl.war"), new File(webAppsFolder, "etl.war"));
-        FileUtils.copyFile(new File("./build/libs/engine.war"), new File(webAppsFolder, "engine.war"));
-
-        File confOriginal = new File(System.getenv("TOMCAT_HOME"), "conf_original");
-        File confFolder = new File(workFolder, "conf");
-        logger.debug(
-                "Copying the config from " + confOriginal.getAbsolutePath() + " to " + confFolder.getAbsolutePath());
-        if (!confOriginal.exists()) {
-            throw new IOException(
-                    "For the tomcat tests to work, we expect that when you extract the tomcat distrbution to "
-                            + System.getenv("TOMCAT_HOME")
-                            + ", you copy the pristine conf folder to a folder called conf_original. This folder "
-                            + confOriginal.getAbsolutePath() + " does not seem to exist.");
+        if (!workFolder.mkdir()) throw new IOException("Could not create: " + workFolder);
+        for (String sub : new String[] {"webapps", "logs", "temp", "conf"}) {
+            File d = new File(workFolder, sub);
+            if (!d.mkdir()) throw new IOException("Could not create: " + d.getAbsolutePath());
         }
-        // We expect that when you set up TOMCAT_HOME,
-        FileUtils.copyDirectory(confOriginal, confFolder);
-
-        // We then replace the server.xml with one we generate.
-        // TomcatSampleServer.xml is a simple MessageFormat template with entries for
-        // 0) server http port
-        // 1) server startup port
-        String serverXML = new String(
-                Files.readAllBytes(Paths.get("./src/test/org/epics/archiverappliance/TomcatSampleServer.xml")));
-        String formattedServerXML = MessageFormat.format(serverXML, port, startupPort);
-        Files.write(
-                Paths.get(confFolder.getAbsolutePath(), "server.xml"),
-                formattedServerXML.getBytes(),
-                StandardOpenOption.TRUNCATE_EXISTING);
-        logger.debug("Done generating server.xml");
-
         return workFolder;
     }
 
-    private void createEnvironment(
-            String testName, String applianceName, Map<String, String> environment, Path appliancesXML) {
-        environment.putAll(System.getenv());
-        environment.remove("CLASSPATH");
-        environment.put("CATALINA_HOME", System.getenv("TOMCAT_HOME"));
-        File workFolder = new File("build/tomcats/tomcat_" + testName + File.separator + applianceName);
-        assert (workFolder.exists());
-        environment.put("CATALINA_BASE", workFolder.getAbsolutePath());
-        environment.put("CATALINA_OPTS", "-Deaatag=eaatesttm"); // The tag is for pkill during testing
+    /**
+     * Reset system properties to the saved snapshot, then layer instance-specific settings on top.
+     *
+     * <p>Uses a fresh flat copy of {@code savedProperties} so that {@code containsKey()} behaves
+     * correctly (the defaults-chain form of {@link Properties} would fool it).
+     */
+    private void configureProperties(String applianceName, Path appliancesXML, File workFolder) {
+        Properties fresh = new Properties();
+        fresh.putAll(savedProperties);
+        System.setProperties(fresh);
 
-        environment.put("LOG4J_CONFIGURATION_FILE", (new File("src/resources/test/log4j2.xml")).getAbsolutePath());
-        environment.put(ConfigService.ARCHAPPL_CONFIGSERVICE_IMPL, ConfigServiceForTests.class.getName());
-        environment.put(DefaultConfigService.SITE_FOR_UNIT_TESTS_NAME, DefaultConfigService.SITE_FOR_UNIT_TESTS_VALUE);
+        System.setProperty("catalina.base", new File(testFolder, applianceName).getAbsolutePath());
+        System.setProperty("LOG4J_CONFIGURATION_FILE", new File("src/resources/test/log4j2.xml").getAbsolutePath());
+        System.setProperty(ConfigService.ARCHAPPL_CONFIGSERVICE_IMPL, ConfigServiceForTests.class.getName());
+        System.setProperty(
+                DefaultConfigService.SITE_FOR_UNIT_TESTS_NAME, DefaultConfigService.SITE_FOR_UNIT_TESTS_VALUE);
+        System.setProperty(ConfigService.ARCHAPPL_MYIDENTITY, applianceName);
 
-        environment.put(ConfigService.ARCHAPPL_MYIDENTITY, applianceName);
-        if (!System.getProperties().containsKey(ConfigService.ARCHAPPL_APPLIANCES)) {
-            environment.put(
+        if (!fresh.containsKey(ConfigService.ARCHAPPL_APPLIANCES)) {
+            System.setProperty(
                     ConfigService.ARCHAPPL_APPLIANCES,
                     appliancesXML.toAbsolutePath().toString());
-        } else {
-            environment.put(ConfigService.ARCHAPPL_APPLIANCES, (String)
-                    System.getProperties().get(ConfigService.ARCHAPPL_APPLIANCES));
         }
 
-        if (!System.getProperties().containsKey(ConfigService.ARCHAPPL_PERSISTENCE_LAYER)
-                || System.getProperties()
-                        .get(ConfigService.ARCHAPPL_PERSISTENCE_LAYER)
-                        .equals(InMemoryPersistence.class.getName())) {
-            environment.put(
-                    ConfigService.ARCHAPPL_PERSISTENCE_LAYER,
-                    "org.epics.archiverappliance.config.persistence.InMemoryPersistence");
+        String persistenceLayer = fresh.getProperty(ConfigService.ARCHAPPL_PERSISTENCE_LAYER);
+        if (persistenceLayer == null || persistenceLayer.equals(InMemoryPersistence.class.getName())) {
+            System.setProperty(ConfigService.ARCHAPPL_PERSISTENCE_LAYER, InMemoryPersistence.class.getName());
         } else {
-            String persistenceFile = (String) System.getProperties().get(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME);
-            logger.info("Persistence layer is provided by "
-                    + System.getProperties().get(ConfigService.ARCHAPPL_PERSISTENCE_LAYER));
-            assert (persistenceFile != null);
-            String persistenceFileForMember = persistenceFile.replace(".jdbm2", "_" + applianceName + ".jdbm2");
-            environment.put(ConfigService.ARCHAPPL_PERSISTENCE_LAYER, (String)
-                    System.getProperties().get(ConfigService.ARCHAPPL_PERSISTENCE_LAYER));
-            environment.put(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME, persistenceFileForMember);
-            logger.info("Persistence file for member " + persistenceFileForMember);
-        }
-
-        overrideEnvWithSystemProperty(environment, "ARCHAPPL_SHORT_TERM_FOLDER");
-        overrideEnvWithSystemProperty(environment, "ARCHAPPL_MEDIUM_TERM_FOLDER");
-        overrideEnvWithSystemProperty(environment, "ARCHAPPL_LONG_TERM_FOLDER");
-        overrideEnvWithSystemProperty(environment, "ARCHAPPL_POLICIES");
-
-        for (Object pkey : System.getProperties().keySet()) {
-            String key = (String) pkey;
-            if (key.startsWith("org.epics.archiverappliance")) {
-                environment.put(key, (String) System.getProperties().get(key));
+            logger.info("Persistence layer for {}: {}", applianceName, persistenceLayer);
+            String persistenceFile = fresh.getProperty(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME);
+            if (persistenceFile != null) {
+                System.setProperty(
+                        JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME,
+                        persistenceFile.replace(".jdbm2", "_" + applianceName + ".jdbm2"));
+                logger.info(
+                        "Persistence file for {}: {}",
+                        applianceName,
+                        System.getProperty(JDBM2Persistence.ARCHAPPL_JDBM2_FILENAME));
             }
         }
 
-        if (logger.isDebugEnabled()) {
-            for (String key : environment.keySet()) {
-                logger.debug("Env " + key + "=" + environment.get(key));
+        // With embedded Tomcat the JVM working directory is the project root, so any relative
+        // (or absent) storage folder property must be converted to an absolute path inside the
+        // appliance's own work folder to restore that per-appliance isolation.
+        for (String[] pair : new String[][] {
+            {"ARCHAPPL_SHORT_TERM_FOLDER", "sts"},
+            {"ARCHAPPL_MEDIUM_TERM_FOLDER", "mts"},
+            {"ARCHAPPL_LONG_TERM_FOLDER", "lts"}
+        }) {
+            String current = System.getProperty(pair[0]);
+            if (current == null || !new File(current).isAbsolute()) {
+                File dir = new File(workFolder, pair[1]);
+                dir.mkdirs();
+                System.setProperty(pair[0], dir.getAbsolutePath());
+            }
+        }
+
+        // Re-apply any extra properties that must survive the reset above.
+        extraProperties.forEach(System::setProperty);
+    }
+
+    private void stopAll() {
+        for (Map.Entry<String, Tomcat> entry : instances.entrySet()) {
+            logger.info("Stopping Tomcat instance for {}", entry.getKey());
+            try {
+                entry.getValue().stop();
+                entry.getValue().destroy();
+            } catch (LifecycleException e) {
+                logger.error("Error stopping {}", entry.getKey(), e);
+            }
+        }
+        instances.clear();
+    }
+
+    private void deleteTestFolder() throws IOException {
+        if (testFolder != null && testFolder.exists()) {
+            FileUtils.deleteDirectory(testFolder);
+        }
+    }
+
+    private void restoreSystemProperties() {
+        if (savedProperties != null) {
+            Properties restored = new Properties();
+            restored.putAll(savedProperties);
+            System.setProperties(restored);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Inner class
+    // -------------------------------------------------------------------------
+
+    /** Log4j2 appender that counts down a latch when a specific message is logged. */
+    private static class LatchAppender extends AbstractAppender {
+        private final CountDownLatch latch;
+        private final String trigger;
+
+        LatchAppender(String name, CountDownLatch latch, String trigger) {
+            super(name, null, PatternLayout.createDefaultLayout(), false, Property.EMPTY_ARRAY);
+            this.latch = latch;
+            this.trigger = trigger;
+        }
+
+        @Override
+        public void append(LogEvent event) {
+            if (event.getMessage().getFormattedMessage().contains(trigger)) {
+                latch.countDown();
             }
         }
     }

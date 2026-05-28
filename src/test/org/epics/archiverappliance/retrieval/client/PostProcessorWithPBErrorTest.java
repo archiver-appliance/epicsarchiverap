@@ -9,6 +9,7 @@ import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.StoragePlugin;
 import org.epics.archiverappliance.TomcatSetup;
@@ -21,7 +22,6 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.StoragePluginURLParser;
 import org.epics.archiverappliance.data.ScalarValue;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
@@ -129,7 +129,7 @@ public class PostProcessorWithPBErrorTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         int totalCount = checkRetrieval(pvName, dataGeneratedForYears * 365 * 24 * 60, true);
         logger.info("*** -> Corrupting some data now");

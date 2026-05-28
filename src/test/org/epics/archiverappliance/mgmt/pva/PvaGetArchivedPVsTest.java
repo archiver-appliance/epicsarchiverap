@@ -1,8 +1,11 @@
 package org.epics.archiverappliance.mgmt.pva;
 
+import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
@@ -22,8 +25,6 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVICE;
 
 /**
  * {@link PvaGetArchivedPVs}
@@ -48,7 +49,7 @@ public class PvaGetArchivedPVsTest {
         logger.info("Set up for the PvaGetArchivedPVsTest");
         try {
             siocSetup.startSIOCWithDefaultDB();
-            tomcatSetup.setUpWebApps(PvaTest.class.getSimpleName());
+            tomcatSetup.setUpWebApps("PvaTest");
 
             pvaClient = new PVAClient();
             pvaChannel = pvaClient.getChannel(PVA_MGMT_SERVICE);
@@ -97,8 +98,8 @@ public class PvaGetArchivedPVsTest {
                     .build();
             pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
 
-            // Wait 2 mins for the pv's to start archiving
-            Thread.sleep(2 * 60 * 1000);
+            // Wait for a representative PV to confirm the batch has been processed
+            ArchiveTestUtils.waitForStatusChange("test_0", "Being archived", 30, "http://localhost:17665/mgmt/bpl/", 5);
 
             archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
                     .name(PvaArchivePVAction.NAME)

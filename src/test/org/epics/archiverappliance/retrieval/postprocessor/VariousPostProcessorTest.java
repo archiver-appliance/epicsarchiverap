@@ -3,6 +3,7 @@ package org.epics.archiverappliance.retrieval.postprocessor;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.PVCaPut;
@@ -10,7 +11,6 @@ import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
-import org.epics.archiverappliance.engine.V4.PVAccessUtil;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.archiverappliance.utils.ui.GetUrlContent;
 import org.json.simple.JSONObject;
@@ -91,7 +91,7 @@ public class VariousPostProcessorTest {
         String mgmtURL = "http://localhost:17665/mgmt/bpl/";
         GetUrlContent.postDataAndGetContentAsJSONArray(
                 mgmtURL + "/archivePV", GetUrlContent.from(List.of(new JSONObject(Map.of("pv", pvNameToArchive)))));
-        PVAccessUtil.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
 
         // Change the values for the PV
         logger.info("Changing pv " + pvName + " and generating " + sampleValues.length + " values");
