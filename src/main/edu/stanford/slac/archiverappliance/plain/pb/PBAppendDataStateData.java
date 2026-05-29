@@ -16,6 +16,7 @@ import org.epics.archiverappliance.etl.ETLContext;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,7 +70,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
 
     @Override
     public void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException {
-        FileInfo info = new PBFileInfo(pvPath);
+        PBFileInfo info = new PBFileInfo(pvPath);
         if (!info.getPVName().equals(pvName))
             throw new IOException("Trying to append data for " + pvName
                     + " to a file "
@@ -79,6 +80,14 @@ public class PBAppendDataStateData extends AppendDataStateData {
         this.previousYear = info.getDataYear();
         if (info.getLastEvent() != null) {
             this.lastKnownTimeStamp = info.getLastEvent().getEventTimeStamp();
+            long truncationPoint = info.getTruncationPoint();
+            long fileSize = Files.size(pvPath);
+            if (truncationPoint < fileSize) {
+                logger.warn("Incomplete record detected at end of {} (likely a crash mid-write); truncating {} -> {} bytes before appending", pvPath, fileSize, truncationPoint);
+                try (FileChannel fc = FileChannel.open(pvPath, StandardOpenOption.WRITE)) {
+                    fc.truncate(truncationPoint);
+                }
+            }
         } else {
             logger.error("Cannot determine last known timestamp when updating state for PV " + pvName
                     + " and path "

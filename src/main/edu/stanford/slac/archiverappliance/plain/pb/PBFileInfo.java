@@ -36,6 +36,7 @@ public class PBFileInfo extends FileInfo {
     PayloadInfo info;
     long positionOfFirstSample = 0L;
     long positionOfLastSample = 0;
+    private long truncationPoint = 0;
 
     @Override
     public String toString() {
@@ -62,6 +63,7 @@ public class PBFileInfo extends FileInfo {
             positionOfFirstSample = lis.getCurrentPosition();
             // This is not strictly correct; but this will be adjusted below.
             positionOfLastSample = Files.size(path);
+            truncationPoint = Files.size(path);
 
             ArchDBRTypes type = ArchDBRTypes.valueOf(info.getType());
             Constructor<? extends DBRTimeEvent> unmarshallingConstructor =
@@ -120,6 +122,10 @@ public class PBFileInfo extends FileInfo {
         return positionOfLastSample;
     }
 
+    public long getTruncationPoint() {
+        return truncationPoint;
+    }
+
     /**
      * Checks the payload info and makes sure we are using appropriate files.
      * This assumes that the lis is positioned at the start and subsequently positions the lis just past the first line.
@@ -164,6 +170,7 @@ public class PBFileInfo extends FileInfo {
                 lastEvent = (DBRTimeEvent) unmarshallingConstructor.newInstance(getDataYear(), new ByteArray(lastLine));
                 lastEvent.getEventTimeStamp();
                 positionOfLastSample = posn;
+                truncationPoint = lis.getCurrentPosition();
                 return;
             } catch (PBParseException ex) {
                 logger.warn(
