@@ -157,7 +157,7 @@ public class PBFileInfo extends FileInfo {
         int lineTries = 0;
         byte[] lastLine = lis.readLine();
         while (lastLine == null && posn > 0 && lineTries < 1000) {
-            lis.seekToBeforePreviousLine(posn - 2);
+            lis.seekToBeforePreviousLine(posn);
             posn = lis.getCurrentPosition();
             lastLine = lis.readLine();
             lineTries++;
@@ -178,12 +178,12 @@ public class PBFileInfo extends FileInfo {
                                 + " seems to have some data corruption at the end of the file; moving onto the previous line",
                         ex);
                 lastEvent = null;
-                lis.seekToBeforePreviousLine(posn - 2);
+                lis.seekToBeforePreviousLine(posn);
                 posn = lis.getCurrentPosition();
                 lineTries = 0;
                 lastLine = lis.readLine();
                 while (lastLine == null && posn > 0 && lineTries < 1000) {
-                    lis.seekToBeforePreviousLine(posn - 2);
+                    lis.seekToBeforePreviousLine(posn);
                     posn = lis.getCurrentPosition();
                     lastLine = lis.readLine();
                     lineTries++;
