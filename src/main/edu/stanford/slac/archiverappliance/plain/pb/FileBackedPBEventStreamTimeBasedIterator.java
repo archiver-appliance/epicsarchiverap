@@ -147,8 +147,10 @@ public class FileBackedPBEventStreamTimeBasedIterator implements FileBackedPBEve
 
         Event popEvent() {
             Event previousEvent = event1;
-            this.clear();
-
+            // Do not clear line1: the returned event's getRawForm() references it directly,
+            // and clear() resets len=0 making toBytes() return null. The raw form is valid
+            // until the iterator next advances; callers spanning iterations should use makeClone().
+            event1 = null;
             return previousEvent;
         }
 

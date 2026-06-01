@@ -194,14 +194,8 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     }
 
     private void unmarshallEventIfNull() {
-        try {
-            if (dbevent == null) {
-                dbevent = EPICSEvent.V4GenericBytes.newBuilder()
-                        .mergeFrom(bar.inPlaceUnescape().unescapedData, bar.off, bar.unescapedLen)
-                        .build();
-            }
-        } catch (Exception ex) {
-            throw new PBParseException(bar.toBytes(), ex);
+        if (dbevent == null) {
+            dbevent = PBEventRecovery.parseWithRecovery(EPICSEvent.V4GenericBytes::newBuilder, bar);
         }
     }
 
