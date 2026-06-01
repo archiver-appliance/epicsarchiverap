@@ -65,10 +65,11 @@ public class TarSeekableByteChannel implements SeekableByteChannel {
                     logger.debug("{} is the last entry in the tar file", tarEntry.entryName());
                     lastFilenInTar = true;
                 }
+
+                TarEntry toBeDeletedTarEntry = null;
                 if (this.tarEntry.isInsideTar()) {
                     if (!lastFilenInTar) {
-                        this.gfs.tarFile.markFileAsDeleted(this.tarEntry);
-                        logger.debug("Done deleting any existing tar entries for {}", this.tarEntry.entryName());
+                        toBeDeletedTarEntry = this.tarEntry;
                     }
                 }
                 if (!Files.exists(this.gfs.getTarPath())
@@ -86,6 +87,13 @@ public class TarSeekableByteChannel implements SeekableByteChannel {
                 } else {
                     this.gfs.tarFile.appendFiles(Arrays.asList(appendTarEntry));
                 }
+
+                if (toBeDeletedTarEntry != null) {
+                    this.gfs.tarFile.markFileAsDeleted(this.tarEntry);
+                    logger.debug("Done deleting previously existing tar entries for {}", this.tarEntry.entryName());
+                    toBeDeletedTarEntry = null;
+                }
+
                 this.gfs.reloadCatalog();
 
                 logger.debug(
