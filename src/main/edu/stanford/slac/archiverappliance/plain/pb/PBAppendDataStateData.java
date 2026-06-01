@@ -80,14 +80,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
         this.previousYear = info.getDataYear();
         if (info.getLastEvent() != null) {
             this.lastKnownTimeStamp = info.getLastEvent().getEventTimeStamp();
-            long truncationPoint = info.getTruncationPoint();
-            long fileSize = Files.size(pvPath);
-            if (truncationPoint < fileSize) {
-                logger.warn("Incomplete record detected at end of {} (likely a crash mid-write); truncating {} -> {} bytes before appending", pvPath, fileSize, truncationPoint);
-                try (FileChannel fc = FileChannel.open(pvPath, StandardOpenOption.WRITE)) {
-                    fc.truncate(truncationPoint);
-                }
-            }
+            truncateCorruptFile(pvPath, info.getTruncationPoint());
         } else {
             logger.error("Cannot determine last known timestamp when updating state for PV " + pvName
                     + " and path "
@@ -95,6 +88,16 @@ public class PBAppendDataStateData extends AppendDataStateData {
         }
         this.writer = new PBEventFileWriter(pvName, pvPath, info.getType(), this.previousYear, true);
         this.previousFilePath = pvPath;
+    }
+
+    private static void truncateCorruptFile(Path pvPath, long truncationPoint) throws IOException {
+        long fileSize = Files.size(pvPath);
+        if (truncationPoint < fileSize) {
+            logger.warn("Incomplete record detected at end of {} (likely a crash mid-write); truncating {} -> {} bytes before appending", pvPath, fileSize, truncationPoint);
+            try (FileChannel fc = FileChannel.open(pvPath, StandardOpenOption.WRITE)) {
+                fc.truncate(truncationPoint);
+            }
+        }
     }
 
     @Override
