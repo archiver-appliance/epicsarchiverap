@@ -2,7 +2,6 @@ package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
-import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,7 +92,11 @@ public class PBAppendDataStateData extends AppendDataStateData {
     private static void truncateCorruptFile(Path pvPath, long truncationPoint) throws IOException {
         long fileSize = Files.size(pvPath);
         if (truncationPoint < fileSize) {
-            logger.warn("Incomplete record detected at end of {} (likely a crash mid-write); truncating {} -> {} bytes before appending", pvPath, fileSize, truncationPoint);
+            logger.warn(
+                    "Incomplete record detected at end of {} (likely a crash mid-write); truncating {} -> {} bytes before appending",
+                    pvPath,
+                    fileSize,
+                    truncationPoint);
             try (FileChannel fc = FileChannel.open(pvPath, StandardOpenOption.WRITE)) {
                 fc.truncate(truncationPoint);
             }
