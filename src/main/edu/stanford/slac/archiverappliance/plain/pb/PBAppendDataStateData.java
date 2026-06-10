@@ -2,7 +2,6 @@ package edu.stanford.slac.archiverappliance.plain.pb;
 
 import edu.stanford.slac.archiverappliance.plain.AppendDataStateData;
 import edu.stanford.slac.archiverappliance.plain.EventFileWriter;
-import edu.stanford.slac.archiverappliance.plain.FileInfo;
 import edu.stanford.slac.archiverappliance.plain.PathResolver;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,6 +15,7 @@ import org.epics.archiverappliance.etl.ETLContext;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,7 +69,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
 
     @Override
     public void updateStateBasedOnExistingFile(String pvName, Path pvPath) throws IOException {
-        FileInfo info = new PBFileInfo(pvPath);
+        PBFileInfo info = new PBFileInfo(pvPath);
         if (!info.getPVName().equals(pvName))
             throw new IOException("Trying to append data for " + pvName
                     + " to a file "
@@ -79,6 +79,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
         this.previousYear = info.getDataYear();
         if (info.getLastEvent() != null) {
             this.lastKnownTimeStamp = info.getLastEvent().getEventTimeStamp();
+            truncateCorruptFile(pvPath, info.getTruncationPoint());
         } else {
             logger.error("Cannot determine last known timestamp when updating state for PV " + pvName
                     + " and path "
@@ -86,6 +87,20 @@ public class PBAppendDataStateData extends AppendDataStateData {
         }
         this.writer = new PBEventFileWriter(pvName, pvPath, info.getType(), this.previousYear, true);
         this.previousFilePath = pvPath;
+    }
+
+    private static void truncateCorruptFile(Path pvPath, long truncationPoint) throws IOException {
+        long fileSize = Files.size(pvPath);
+        if (truncationPoint < fileSize) {
+            logger.warn(
+                    "Incomplete record detected at end of {} (likely a crash mid-write); truncating {} -> {} bytes before appending",
+                    pvPath,
+                    fileSize,
+                    truncationPoint);
+            try (FileChannel fc = FileChannel.open(pvPath, StandardOpenOption.WRITE)) {
+                fc.truncate(truncationPoint);
+            }
+        }
     }
 
     @Override
