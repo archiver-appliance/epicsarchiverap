@@ -1,5 +1,6 @@
 package edu.stanford.slac.archiverappliance.PB.compression;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -65,7 +66,7 @@ public class GZIPUtil {
         try {
             // ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream("tar", gzIn);
 
-            ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream("tar", inputStrem);
+            ArchiveInputStream<? extends ArchiveEntry> in = new ArchiveStreamFactory().createArchiveInputStream("tar", inputStrem);
 
             // BufferedInputStream bufferedInputStream = new BufferedInputStream(in);
 
