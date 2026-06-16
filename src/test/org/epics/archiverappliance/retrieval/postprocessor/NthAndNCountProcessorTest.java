@@ -91,8 +91,8 @@ public class NthAndNCountProcessorTest {
             nthProcessor.initialize("nth_" + j, pvName);
             nthProcessor.estimateMemoryConsumption(pvName, pvTypeInfo, start, end, null);
             nthProcessor
-                .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
-                .call();
+                    .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                    .call();
             EventStream retData = nthProcessor.getConsolidatedEventStream();
             int eventCount = 0;
             Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
@@ -100,23 +100,23 @@ public class NthAndNCountProcessorTest {
             for (Event e : retData) {
                 Instant eventTs = e.getEventTimeStamp();
                 Assertions.assertTrue(
-                    eventTs.compareTo(previousTimeStamp) >= 0,
-                    "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
-                        + " is the same or after previous timestamp "
-                        + TimeUtils.convertToISO8601String(previousTimeStamp));
+                        eventTs.compareTo(previousTimeStamp) >= 0,
+                        "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
+                                + " is the same or after previous timestamp "
+                                + TimeUtils.convertToISO8601String(previousTimeStamp));
                 Assertions.assertEquals(
-                    testData.get(n).getSampleValue().getValue().doubleValue(),
-                    e.getSampleValue().getValue().doubleValue(),
-                    Double.MIN_VALUE,
-                    "Event value should match the n-th value in the test data");
+                        testData.get(n).getSampleValue().getValue().doubleValue(),
+                        e.getSampleValue().getValue().doubleValue(),
+                        Double.MIN_VALUE,
+                        "Event value should match the n-th value in the test data");
                 n += j;
                 previousTimeStamp = eventTs;
                 eventCount++;
             }
             Assertions.assertEquals(
-                expectedSamplesInPeriod / j,
-                eventCount,
-                "The number of events should be the total number of events in time range divided by sampling number");
+                    expectedSamplesInPeriod / j,
+                    eventCount,
+                    "The number of events should be the total number of events in time range divided by sampling number");
         }
     }
 
@@ -145,8 +145,8 @@ public class NthAndNCountProcessorTest {
             nthProcessor.initialize("nth_" + j, pvName);
             nthProcessor.estimateMemoryConsumption(pvName, pvTypeInfo, start, end, null);
             nthProcessor
-                .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
-                .call();
+                    .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                    .call();
             EventStream retData = nthProcessor.getConsolidatedEventStream();
             int eventCount = 0;
             Instant previousTimeStamp = TimeUtils.convertFromYearSecondTimestamp(startOfSamples);
@@ -155,23 +155,23 @@ public class NthAndNCountProcessorTest {
             for (Event e : retData) {
                 Instant eventTs = e.getEventTimeStamp();
                 Assertions.assertTrue(
-                    eventTs.compareTo(previousTimeStamp) >= 0,
-                    "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
-                        + " is the same or after previous timestamp "
-                        + TimeUtils.convertToISO8601String(previousTimeStamp));
+                        eventTs.compareTo(previousTimeStamp) >= 0,
+                        "Event timestamp " + TimeUtils.convertToISO8601String(eventTs)
+                                + " is the same or after previous timestamp "
+                                + TimeUtils.convertToISO8601String(previousTimeStamp));
                 Assertions.assertEquals(
-                    testData.get(n).getSampleValue().getValue().doubleValue(),
-                    e.getSampleValue().getValue().doubleValue(),
-                    Double.MIN_VALUE,
-                    "Event value should match the n-th value in the test data");
+                        testData.get(n).getSampleValue().getValue().doubleValue(),
+                        e.getSampleValue().getValue().doubleValue(),
+                        Double.MIN_VALUE,
+                        "Event value should match the n-th value in the test data");
                 n += j;
                 previousTimeStamp = eventTs;
                 eventCount++;
             }
             Assertions.assertEquals(
-                expectedSamplesInPeriod / j,
-                eventCount,
-                "The number of events should be the total number of events in the time range divided by sampling number");
+                    expectedSamplesInPeriod / j,
+                    eventCount,
+                    "The number of events should be the total number of events in the time range divided by sampling number");
         }
     }
 

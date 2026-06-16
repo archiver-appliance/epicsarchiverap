@@ -1355,7 +1355,7 @@ public class PvaGetPVData implements PvaAction {
         List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvInfos.size());
         for (PVInfoForClusterRetrieval pvInfo : pvInfos) {
             executorResults.add(determineExecutorForPostProcessing(
-                pvInfo.getPVName(), pvInfo.getTypeInfo(), requestTimes, pvInfo.getPostProcessor()));
+                    pvInfo.getPVName(), pvInfo.getTypeInfo(), requestTimes, pvInfo.getPostProcessor()));
         }
 
         // Get list of lists of futures of retrieval results. Basically, this is setting
