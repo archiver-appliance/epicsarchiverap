@@ -33,8 +33,7 @@ public class GeneratePBFileAndCompress {
 
                 File[] files = parentFile.listFiles();
                 ArrayList<File> filesList = new ArrayList<File>();
-                for (int i = 0; i < files.length; i++) {
-                    File tempFile = files[i];
+                for (File tempFile : files) {
                     String fileName = tempFile.getName();
                     if (fileName.endsWith("gz")) {
                         filesList.add(tempFile);

@@ -123,9 +123,7 @@ public class GZIPUtil {
         ZipArchiveOutputStream os = new ZipArchiveOutputStream(out);
         if (useZip64) os.setUseZip64(Zip64Mode.Always);
 
-        for (int i = 0; i < sources.length; i++) {
-
-            File file = sources[i];
+        for (File file : sources) {
 
             try {
 
@@ -197,9 +195,7 @@ public class GZIPUtil {
 
         TarArchiveOutputStream os = new TarArchiveOutputStream(out);
 
-        for (int i = 0; i < sources.length; i++) {
-
-            File file = sources[i];
+        for (File file : sources) {
 
             try {
 

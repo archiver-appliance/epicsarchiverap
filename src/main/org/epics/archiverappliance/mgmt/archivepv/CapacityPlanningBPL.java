@@ -144,16 +144,13 @@ public class CapacityPlanningBPL {
                   }
  
          ApplianceAndTotalRate reulstApplianceInfo=null;
-         for(int s=0;s<resultTempList.size();s++)
-         {
-                 ApplianceAndTotalRate temp=resultTempList.get(s);
-                 if(reulstApplianceInfo==null )reulstApplianceInfo=temp;
-                 if(temp.getTotalDataRate()<reulstApplianceInfo.getTotalDataRate())
-                 {
-                         reulstApplianceInfo=temp;
-                 }
- 
-         }
+            for (ApplianceAndTotalRate temp : resultTempList) {
+                if (reulstApplianceInfo == null) reulstApplianceInfo = temp;
+                if (temp.getTotalDataRate() < reulstApplianceInfo.getTotalDataRate()) {
+                    reulstApplianceInfo = temp;
+                }
+
+            }
  
          if(reulstApplianceInfo==null)
          {
@@ -419,15 +416,12 @@ public class CapacityPlanningBPL {
                   //get the max of the average
                   //this is the max result
                   NormalizationFactor  resultFactor=new NormalizationFactor("tempFactor",0);
-                  for(int s11=0;s11<allNormalizationFactor.size();s11++)
-                  {
-                          NormalizationFactor tempNormalizationFactor11=allNormalizationFactor.get(s11);
-                          if (tempNormalizationFactor11.getPercentage()>=resultFactor.getPercentage())
-                          {
-                                  resultFactor=tempNormalizationFactor11;
-                                  
-                          }
-                  }
+                    for (NormalizationFactor tempNormalizationFactor11 : allNormalizationFactor) {
+                        if (tempNormalizationFactor11.getPercentage() >= resultFactor.getPercentage()) {
+                            resultFactor = tempNormalizationFactor11;
+
+                        }
+                    }
                   if(resultFactor.getIdentify().equals("tempFactor"))
                   {
                 	  

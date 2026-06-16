@@ -100,9 +100,9 @@ public class ProcessMetricsChartData implements BPLAction {
             HashMap<String, Object> processMetric = new HashMap<String, Object>();
             processMetric.put("label", chartlabel);
             LinkedList<Object> data = new LinkedList<Object>();
-            for (int i = 0; i < processMetrics.size(); i++) {
+            for (Object metric : processMetrics) {
                 @SuppressWarnings("unchecked")
-                HashMap<String, String> engineMetric = (HashMap<String, String>) processMetrics.get(i);
+                HashMap<String, String> engineMetric = (HashMap<String, String>) metric;
                 String timeInEpochSecondsStr = engineMetric.get("timeInEpochSeconds");
                 long epochMillisUTC = Long.parseLong(timeInEpochSecondsStr) * 1000;
                 long epochMillisLocalTZ = TimeUtils.convertToLocalEpochMillis(epochMillisUTC);
