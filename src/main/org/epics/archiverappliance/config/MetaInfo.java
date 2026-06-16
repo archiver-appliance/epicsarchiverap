@@ -678,7 +678,7 @@ public class MetaInfo {
 					|| (typeInfo.getUnits() != null && this.unit != null && !typeInfo.getUnits().equals(this.unit))) {
 				configLogger.info("Updating units and precision for pv " + pvName + " to " + this.unit + " and " + this.precision);
 				typeInfo.setUnits(this.unit);
-				typeInfo.setPrecision(Double.valueOf(this.precision));
+				typeInfo.setPrecision((double) this.precision);
 				updated = true;
 			}
 			

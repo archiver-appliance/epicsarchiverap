@@ -81,7 +81,7 @@ public class GenerateLargeVectorData {
                 YearSecondTimestamp yts = TimeUtils.convertToYearSecondTimestamp(currentSeconds);
                 List<Double> vals = new ArrayList<Double>(80000);
                 for (int k = 0; k < 80000; k++) {
-                    vals.add(Double.valueOf(k));
+                    vals.add((double) k);
                 }
                 instream.add(new SimulationEvent(
                         yts.getSecondsintoyear(),

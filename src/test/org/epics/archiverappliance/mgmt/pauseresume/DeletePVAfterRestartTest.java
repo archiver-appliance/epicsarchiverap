@@ -84,8 +84,8 @@ public class DeletePVAfterRestartTest {
 
     private static PVTypeInfo generatePVTypeInfo(String pvName, String applianceIdentity) {
         PVTypeInfo typeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, false, 1);
-        typeInfo.setUpperDisplayLimit(Double.valueOf(1.0));
-        typeInfo.setLowerDisplayLimit(Double.valueOf(-1.0));
+        typeInfo.setUpperDisplayLimit(1.0);
+        typeInfo.setLowerDisplayLimit(-1.0);
         typeInfo.setHasReducedDataSet(true);
         typeInfo.setComputedEventRate(1.0f);
         typeInfo.setComputedStorageRate(12.0f);
