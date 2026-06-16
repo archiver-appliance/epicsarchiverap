@@ -165,25 +165,25 @@ public class CapacityPlanningBPL {
                 //////////////////////////////////////////////
 
                 ApplianceAggregateInfo tempApplianceAggregateInfo66 =
-                    tempCapacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
+                        tempCapacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
                 float totalDataRate = tempCapacityPlanningMetrics.getCurrentTotalStorageRate();
 
                 float totalDataRateforpvadded = (float) tempApplianceAggregateInfo66.getTotalStorageRate();
 
                 HashMap<String, Long> totalEstimageStoragePVAddedAndAddingBydifferentDestinationList =
-                    tempApplianceAggregateInfo66.getTotalStorageImpact();
+                        tempApplianceAggregateInfo66.getTotalStorageImpact();
 
                 for (Entry<String, Integer> entryTemp99 : dataStoresAddingpv.entrySet()) {
                     String identifypvAdding = entryTemp99.getKey();
                     ETLMetrics tempETLMetrics555 = etlMetrics.get(identifypvAdding);
                     if (tempETLMetrics555 != null) {
                         tempETLMetrics555.estimateStoragePVadded =
-                            totalEstimageStoragePVAddedAndAddingBydifferentDestinationList.get(identifypvAdding);
+                                totalEstimageStoragePVAddedAndAddingBydifferentDestinationList.get(identifypvAdding);
                     }
                 }
 
-                for (Entry<String, Long> entryTemp66 : totalEstimageStoragePVAddedAndAddingBydifferentDestinationList
-                    .entrySet()) {
+                for (Entry<String, Long> entryTemp66 :
+                        totalEstimageStoragePVAddedAndAddingBydifferentDestinationList.entrySet()) {
                     Long tempToalEstimateStorage = entryTemp66.getValue();
                     String tempIdentity66 = entryTemp66.getKey();
 
@@ -208,17 +208,17 @@ public class CapacityPlanningBPL {
 
                     if (tempSeconds7777 != null) {
                         long estimateStorageSize7777 =
-                            totalEstimageStoragePVAddedAndAddingBydifferentDestinationList.get(identity7777);
+                                totalEstimageStoragePVAddedAndAddingBydifferentDestinationList.get(identity7777);
                         if (estimateStorageSize7777 > alvailableStorage) {
                             tempCapacityPlanningMetrics.setAvailable(false);
                             configlogger.error("There is not enough storage to accommodate " + pvName + " for "
-                                + identity7777 + ". Estimated storage for " + pvName + " is "
-                                + estimateStorageSize7777 + " while available storage is " + alvailableStorage);
+                                    + identity7777 + ". Estimated storage for " + pvName + " is "
+                                    + estimateStorageSize7777 + " while available storage is " + alvailableStorage);
 
                             if (isDebug) {
 
                                 logger.error(identity7777 + ":  testestimateStorageSize7777=" + estimateStorageSize7777
-                                    + ",alvailableStorage=" + alvailableStorage);
+                                        + ",alvailableStorage=" + alvailableStorage);
                                 logger.error("testestimateStorageSize7777>alvailableStorage");
                             }
                         }
@@ -240,27 +240,27 @@ public class CapacityPlanningBPL {
                 }
 
                 float currentUsedWriterPercentage = tempCapacityPlanningMetrics.getEngineWriteThreadUsage(
-                    PVTypeInfo.getSecondsToBuffer(configService));
+                        PVTypeInfo.getSecondsToBuffer(configService));
                 if (currentUsedWriterPercentage > CapacityPlanningBPL.percentageLimitation) {
                     tempCapacityPlanningMetrics.setAvailable(false);
                     if (isDebug) logger.error("test exceed the limitation");
                     configlogger.error("There is not enough time left for writer to write " + pvName
-                        + " into short term storage. Estimated writing percentage for "
-                        + pvName + " is "
-                        + currentUsedWriterPercentage + " while the percentage limitation is "
-                        + CapacityPlanningBPL.percentageLimitation);
+                            + " into short term storage. Estimated writing percentage for "
+                            + pvName + " is "
+                            + currentUsedWriterPercentage + " while the percentage limitation is "
+                            + CapacityPlanningBPL.percentageLimitation);
                 }
                 float percentageForWriter =
-                    currentUsedWriterPercentage * (totalDataRateforpvadded + totalDataRate) / (totalDataRate);
+                        currentUsedWriterPercentage * (totalDataRateforpvadded + totalDataRate) / (totalDataRate);
                 tempCapacityPlanningMetrics.setPercentageTimeForWriter(percentageForWriter);
                 if (percentageForWriter > CapacityPlanningBPL.percentageLimitation) {
                     tempCapacityPlanningMetrics.setAvailable(false);
 
                     configlogger.error("There is not enough time left for writer to write " + pvName
-                        + " into short term storage. Estimated writing percentage for "
-                        + pvName + " is "
-                        + percentageForWriter + " while the percentage limitation is "
-                        + CapacityPlanningBPL.percentageLimitation);
+                            + " into short term storage. Estimated writing percentage for "
+                            + pvName + " is "
+                            + percentageForWriter + " while the percentage limitation is "
+                            + CapacityPlanningBPL.percentageLimitation);
                     if (isDebug) logger.error("testpercentageForWriter>CapacityPlanningBPL.percentageLimitation");
                 }
 
@@ -275,26 +275,26 @@ public class CapacityPlanningBPL {
                     if (temptempETLTimeTaken > CapacityPlanningBPL.percentageLimitation) {
                         tempCapacityPlanningMetrics.setAvailable(false);
                         configlogger.error("There is not enough time left for ETL to write " + pvName + " into "
-                            + tempETLMetrics8888.identity + ". Estimated percentage time is " + temptempETLTimeTaken
-                            + " while the percentage limitation is " + CapacityPlanningBPL.percentageLimitation);
+                                + tempETLMetrics8888.identity + ". Estimated percentage time is " + temptempETLTimeTaken
+                                + " while the percentage limitation is " + CapacityPlanningBPL.percentageLimitation);
                         if (isDebug) logger.error("testtemptempETLTimeTaken>CapacityPlanningBPL.percentageLimitation");
                     }
 
                     double tempEstimateETLtimePercentageAfterPVadded = temptempETLTimeTaken
-                        * (double) (storageUsed + tempETLMetrics8888.estimateStoragePVadded)
-                        / (double) storageUsed;
+                            * (double) (storageUsed + tempETLMetrics8888.estimateStoragePVadded)
+                            / (double) storageUsed;
                     tempETLMetrics8888.estimateETLtimePercentageAfterPVadded =
-                        tempEstimateETLtimePercentageAfterPVadded;
+                            tempEstimateETLtimePercentageAfterPVadded;
 
                     if (tempEstimateETLtimePercentageAfterPVadded > CapacityPlanningBPL.percentageLimitation) {
                         if (isDebug)
                             logger.error(
-                                "testtempEstimateETLtimePercentageAfterPVadded>CapacityPlanningBPL.percentageLimitation");
+                                    "testtempEstimateETLtimePercentageAfterPVadded>CapacityPlanningBPL.percentageLimitation");
                         tempCapacityPlanningMetrics.setAvailable(false);
                         configlogger.error("There is not enough time left for ETL to write " + pvName + " into "
-                            + tempETLMetrics8888.identity + ". Estimated percentage time is "
-                            + tempEstimateETLtimePercentageAfterPVadded + " while the percentage limitation is "
-                            + CapacityPlanningBPL.percentageLimitation);
+                                + tempETLMetrics8888.identity + ". Estimated percentage time is "
+                                + tempEstimateETLtimePercentageAfterPVadded + " while the percentage limitation is "
+                                + CapacityPlanningBPL.percentageLimitation);
                     }
                 }
                 if (isDebug) logger.error(entry.getKey().getIdentity() + " is called");
@@ -340,12 +340,12 @@ public class CapacityPlanningBPL {
                         Double TempValue = averagePercentageETL.get(identifypvAdding66);
                         if (TempValue == null) {
                             averagePercentageETL.put(
-                                identifypvAdding66, tempETLMetrics33.estimateETLtimePercentageAfterPVadded);
+                                    identifypvAdding66, tempETLMetrics33.estimateETLtimePercentageAfterPVadded);
                             if (isDebug) logger.error(identifypvAdding66 + " is null ");
                         } else {
                             averagePercentageETL.put(
-                                identifypvAdding66,
-                                TempValue + tempETLMetrics33.estimateETLtimePercentageAfterPVadded);
+                                    identifypvAdding66,
+                                    TempValue + tempETLMetrics33.estimateETLtimePercentageAfterPVadded);
                             if (isDebug) logger.error(identifypvAdding66 + " is added ");
                         }
                     }
@@ -367,7 +367,7 @@ public class CapacityPlanningBPL {
                 Double tempPercentageETL = entryTemp99666.getValue();
                 averagePercentageETL.put(identifypvAdding6666, tempPercentageETL / availableAppliancesNum);
                 allNormalizationFactor.add(
-                    new NormalizationFactor(identifypvAdding6666, tempPercentageETL.floatValue()));
+                        new NormalizationFactor(identifypvAdding6666, tempPercentageETL.floatValue()));
             }
 
             // get the max of the average
@@ -420,14 +420,14 @@ public class CapacityPlanningBPL {
 
                     ETLMetrics minETLMetric = minETLMetrics.get(minIdentify);
                     double minEstimateETLtimePercentageAfterPVadded =
-                        minETLMetric.estimateETLtimePercentageAfterPVadded;
+                            minETLMetric.estimateETLtimePercentageAfterPVadded;
 
                     ConcurrentHashMap<String, ETLMetrics> tempETLMetrics88 =
-                        tempCapacityPlanningMetric88.getEtlMetrics();
+                            tempCapacityPlanningMetric88.getEtlMetrics();
 
                     ETLMetrics tempETLMetric88 = tempETLMetrics88.get(minIdentify);
                     double estimateETLtimePercentageAfterPVadded88 =
-                        tempETLMetric88.estimateETLtimePercentageAfterPVadded;
+                            tempETLMetric88.estimateETLtimePercentageAfterPVadded;
                     if (estimateETLtimePercentageAfterPVadded88 < minEstimateETLtimePercentageAfterPVadded) {
                         minResultApplianceInfo = tempApplianceInfo88;
                     }
