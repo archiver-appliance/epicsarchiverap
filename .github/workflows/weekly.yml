@@ -43,6 +43,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Get date
+        id: date
+        run: echo "date=$(date +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
       - name: Download the built artifact
         uses: actions/download-artifact@v8
         with:
@@ -50,8 +53,8 @@ jobs:
       - name: Update nightly release
         uses: softprops/action-gh-release@v2
         with:
-          name: weekly-$(date +%Y-%m-%d)
-          tag_name: weekly-$(date +%Y-%m-%d)
+          name: weekly-${{ steps.date.outputs.date }}
+          tag_name: weekly-${{ steps.date.outputs.date }}
           prerelease: true
           make_latest: false
           files: "*.tar.gz"
