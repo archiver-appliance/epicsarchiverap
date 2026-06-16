@@ -66,7 +66,8 @@ public class GZIPUtil {
         try {
             // ArchiveInputStream in = new ArchiveStreamFactory().createArchiveInputStream("tar", gzIn);
 
-            ArchiveInputStream<? extends ArchiveEntry> in = new ArchiveStreamFactory().createArchiveInputStream("tar", inputStrem);
+            ArchiveInputStream<? extends ArchiveEntry> in =
+                    new ArchiveStreamFactory().createArchiveInputStream("tar", inputStrem);
 
             // BufferedInputStream bufferedInputStream = new BufferedInputStream(in);
 
