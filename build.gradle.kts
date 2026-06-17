@@ -51,19 +51,19 @@ val runTestsSequentially: Boolean by extra {
 
 val gitVersion: groovy.lang.Closure<String> by extra
 val versionDetails: groovy.lang.Closure<VersionDetails> by extra
-var gitWorks = true
+// Whether git is actually usable: binary installed AND .git present with origin/master.
+// Spotless's ratchetFrom below needs this. Probe git directly rather than inferring it
+// from the version path, so a missing git binary or absent .git both disable Spotless.
+// The version itself may still be overridden by -PprojVersion (e.g. the Docker build,
+// where .git is excluded from the build context).
+val gitWorks = runCatching { gitVersion() }.isSuccess
 
-if (project.hasProperty("projVersion")) {
-	// An explicitly supplied version always wins (e.g. the Docker build, where .git
-	// is excluded from the build context so gitVersion() is unavailable).
-	version = project.property("projVersion") as String
-} else {
-	try {
-		version = gitVersion()
-	} catch (e: Throwable) {
-		gitWorks = false
-		version = "unknown"
-		logger.error("Failed to get git version: $e")
+version = when {
+	project.hasProperty("projVersion") -> project.property("projVersion") as String
+	gitWorks -> gitVersion()
+	else -> {
+		logger.error("Failed to get git version; using 'unknown'")
+		"unknown"
 	}
 }
 
