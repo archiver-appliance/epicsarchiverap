@@ -23,7 +23,8 @@ ARG VERSION=unknown
 USER root
 WORKDIR /src
 COPY . .
-COPY --from=docs-build /docs/docs/build docs/docs/build
+# Docs are not baked into the WARs here; they are injected into the mgmt/singletomcat
+# images at assembly time (see below), so this stage does not depend on docs-build.
 RUN gradle mgmtWar etlWar engineWar retrievalWar --no-daemon -PprojVersion=${VERSION} -x sphinx -x javadoc
 
 FROM eclipse-temurin:21-jdk AS expand-wars
@@ -59,12 +60,14 @@ COPY --from=expand-wars /wars/lib /usr/local/tomcat/lib
 
 FROM copy-webapp AS singletomcat
 COPY --from=expand-wars /wars/mgmt /usr/local/tomcat/webapps/mgmt
+COPY --from=docs-build /docs/docs/build /usr/local/tomcat/webapps/mgmt/ui/help
 COPY --from=expand-wars /wars/etl /usr/local/tomcat/webapps/etl
 COPY --from=expand-wars /wars/engine /usr/local/tomcat/webapps/engine
 COPY --from=expand-wars /wars/retrieval /usr/local/tomcat/webapps/retrieval
 
 FROM copy-webapp AS mgmt
 COPY --from=expand-wars /wars/mgmt /usr/local/tomcat/webapps/mgmt
+COPY --from=docs-build /docs/docs/build /usr/local/tomcat/webapps/mgmt/ui/help
 
 FROM copy-webapp AS etl
 COPY --from=expand-wars /wars/etl /usr/local/tomcat/webapps/etl
