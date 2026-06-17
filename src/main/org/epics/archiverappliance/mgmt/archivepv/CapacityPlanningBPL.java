@@ -37,7 +37,8 @@ public class CapacityPlanningBPL {
     private static Logger logger = LogManager.getLogger(CapacityPlanningBPL.class.getName());
     private static boolean isDebug = false;
     /**
-     * the percentage limitation for the ETL and Writer
+     * The maximum percentage of capacity (storage, writer time and ETL time) that an appliance may
+     * use before it is considered unavailable for new PVs.
      */
     private static float percentageLimitation = 80;
 
@@ -93,7 +94,7 @@ public class CapacityPlanningBPL {
 
                 ApplianceInfo tempApplianceInfo667 = entry667.getKey();
 
-                // judge the appliance has all the destinatons of the pv adding
+                // check whether the appliance has all the destinations of the PV being added
 
                 ConcurrentHashMap<String, ETLMetrics> etlMetrics667 = tempCapacityPlanningMetrics667.getEtlMetrics();
                 if (etlMetrics667.size() == 0) {
@@ -106,7 +107,7 @@ public class CapacityPlanningBPL {
             }
 
             if (nullETLMetricsAppliances.size() != 0) {
-                // compare total pv envent rate of pv added and return the appliance
+                // compare the total PV event rate after adding the PV and return the best appliance
 
                 Iterator<Entry<ApplianceInfo, CapacityPlanningData>> tempIt =
                         appliances.entrySet().iterator();
@@ -149,20 +150,17 @@ public class CapacityPlanningBPL {
                 }
             }
 
-            //////////////////////////////////////////////
-            /////////////////////////////////// until now, we have finished computing the estimate storage
-            /////////////////////////////////////// in the following, we will compare the estimate storage with the
-            /////////// the estimate storage/////////////////////////////////////
+            // For each appliance, estimate the storage the PV would add and compare it against the
+            // storage, writer time and ETL time available on that appliance, marking the appliance
+            // unavailable if any limit would be exceeded.
             for (Entry<ApplianceInfo, CapacityPlanningData> entry : appliances.entrySet()) {
                 CapacityPlanningData tempCapacityPlanningMetrics = entry.getValue();
 
                 tempCapacityPlanningMetrics.setAvailable(true);
 
-                // judge the appliance has all the destinatons of the pv adding
+                // check whether the appliance has all the destinations of the PV being added
 
                 ConcurrentHashMap<String, ETLMetrics> etlMetrics = tempCapacityPlanningMetrics.getEtlMetrics();
-
-                //////////////////////////////////////////////
 
                 ApplianceAggregateInfo tempApplianceAggregateInfo66 =
                         tempCapacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
@@ -193,12 +191,8 @@ public class CapacityPlanningBPL {
                     }
                 }
 
-                /////////////////////////////////// until now, we have finished computing the estimate storage
-                // ////////////////////////////////////////////////////////
-
-                /////////////////////////////////////// in the following, we will compare the estimate storage with the
-                // available storage of all applicance ////////
-                /////////// the estimate storage/////////////////////////////////////
+                // The estimated storage has been computed above; now compare it against the
+                // available storage for each destination on this appliance.
                 for (Entry<String, ETLMetrics> entry7777 : etlMetrics.entrySet()) {
                     ETLMetrics tempETLMetrics7777 = entry7777.getValue();
                     String identity7777 = tempETLMetrics7777.identity;
@@ -233,7 +227,7 @@ public class CapacityPlanningBPL {
                         if (isDebug) logger.error("testtempCapacityPlanningMetrics.isAvailable()---1---");
                         break;
                     }
-                } // end while
+                } // end for
                 if (!tempCapacityPlanningMetrics.isAvailable()) {
                     if (isDebug) logger.error("testtempCapacityPlanningMetrics.isAvailable()---2---");
                     continue;
@@ -264,14 +258,13 @@ public class CapacityPlanningBPL {
                     if (isDebug) logger.error("testpercentageForWriter>CapacityPlanningBPL.percentageLimitation");
                 }
 
-                // normalize ETL time
-                // the time consumed by ETL=((the estimate storage size+usedstorage)/usedstorage)*TimeofETl.
-                // the estimate storage size=sum(pvaddedDataRate*partitionTime);
+                // Normalize ETL time:
+                //   ETL time after the PV is added = ((estimateStorageSize + usedStorage) / usedStorage) * etlTimeTaken
+                //   estimateStorageSize = sum(pvAddedDataRate * partitionTime)
                 for (Entry<String, ETLMetrics> entry8888 : etlMetrics.entrySet()) {
                     ETLMetrics tempETLMetrics8888 = entry8888.getValue();
                     long storageUsed = tempETLMetrics8888.totalSpace - tempETLMetrics8888.etlStorageAvailable;
                     double temptempETLTimeTaken = tempETLMetrics8888.etlTimeTaken;
-                    // if(temptempETLTimeTaken>60)
                     if (temptempETLTimeTaken > CapacityPlanningBPL.percentageLimitation) {
                         tempCapacityPlanningMetrics.setAvailable(false);
                         configlogger.error("There is not enough time left for ETL to write " + pvName + " into "
@@ -298,15 +291,12 @@ public class CapacityPlanningBPL {
                     }
                 }
                 if (isDebug) logger.error(entry.getKey().getIdentity() + " is called");
-            } // end while
+            } // end for
 
-            /////////////////////////////////////////////////////////////// until now ,finish the
-            // normalization//////next step is to find the maximum of the
-            // average///////////////////////////////////////////////////////////////////////////////////
-            // compute the average of the time percent of the writer
+            // Normalization is done. Now find the highest average percentage across all factors
+            // (writer and each ETL destination), starting with the average writer time percentage.
             Iterator<Entry<ApplianceInfo, CapacityPlanningData>> it33 =
                     appliances.entrySet().iterator();
-            // totalDataList
             float averagePercentageWriter = 0;
 
             int availableAppliancesNum = 0;
@@ -316,7 +306,7 @@ public class CapacityPlanningBPL {
             if (isDebug) logger.error("dataStoresAddingpv.size()2=" + dataStoresAddingpv.size());
             while (it33.hasNext()) {
 
-                // list through all appliances
+                // iterate over all appliances
                 Entry<ApplianceInfo, CapacityPlanningData> entry33 =
                         (Entry<ApplianceInfo, CapacityPlanningData>) it33.next();
                 CapacityPlanningData tempCapacityPlanningMetrics33 = entry33.getValue();
@@ -332,7 +322,7 @@ public class CapacityPlanningBPL {
                 if (isDebug) logger.error("ETLMetrics.size()=" + ETLMetrics.size());
                 // compute ETL Time
 
-                // through all etls in one appliance
+                // accumulate ETL time across all ETL destinations in this appliance
                 for (Entry<String, Integer> entryTemp9966 : dataStoresAddingpv.entrySet()) {
                     String identifypvAdding66 = entryTemp9966.getKey();
                     ETLMetrics tempETLMetrics33 = ETLMetrics.get(identifypvAdding66);
@@ -370,8 +360,7 @@ public class CapacityPlanningBPL {
                         new NormalizationFactor(identifypvAdding6666, tempPercentageETL.floatValue()));
             }
 
-            // get the max of the average
-            // this is the max result
+            // pick the factor with the maximum average percentage
             NormalizationFactor resultFactor = new NormalizationFactor("tempFactor", 0);
             for (NormalizationFactor tempNormalizationFactor11 : allNormalizationFactor) {
                 if (tempNormalizationFactor11.getPercentage() >= resultFactor.getPercentage()) {
