@@ -64,8 +64,8 @@ public class CapacityPlanningBPL {
             for (String tempDataStores : dataStores) {
                 ETLSource tempETLSource = StoragePluginURLParser.parseETLSource(tempDataStores, configService);
                 if (tempETLSource == null) {
-                    logger.debug("the ETLSource of " + tempDataStores + "is null");
-                    if (isDebug) logger.error("the ETLSource of " + tempDataStores + "is null");
+                    logger.debug("the ETLSource of " + tempDataStores + " is null");
+                    if (isDebug) logger.error("the ETLSource of " + tempDataStores + " is null");
                     continue;
                 }
 
@@ -372,7 +372,7 @@ public class CapacityPlanningBPL {
                 if (isDebug) logger.error("allNormalizationFactor.size()=" + allNormalizationFactor.size());
                 configlogger.error("there are some error in computing the max (percentage)");
                 configlogger.error(
-                        "there is one error during capaicity planning computing and use the local appliance as the default");
+                        "there is one error during capacity planning computing and use the local appliance as the default");
                 return configService.getMyApplianceInfo();
             }
             logger.debug("the max (percentage) is :" + resultFactor.getIdentify() + ",value:"
@@ -425,7 +425,7 @@ public class CapacityPlanningBPL {
 
             if (minResultApplianceInfo == null) {
                 logger.error(
-                        "there is one error during capaicity planning computing and use the local appliance as the default");
+                        "there is one error during capacity planning computing and use the local appliance as the default");
                 return configService.getMyApplianceInfo();
             }
             return minResultApplianceInfo;
