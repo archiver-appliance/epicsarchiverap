@@ -621,8 +621,8 @@ public class PvaGetPVData implements PvaAction {
         }
 
         List<PVTypeInfo> typeInfos = new ArrayList<PVTypeInfo>(pvNames.size());
-        for (int i = 0; i < pvNames.size(); i++) {
-            typeInfos.add(PVNames.determineAppropriatePVTypeInfo(pvNames.get(i), configService));
+        for (String name : pvNames) {
+            typeInfos.add(PVNames.determineAppropriatePVTypeInfo(name, configService));
         }
 
         pmansProfiler.mark("After PVTypeInfo");
@@ -1353,8 +1353,7 @@ public class PvaGetPVData implements PvaAction {
 
         // Get the executors for the PVs in other clusters
         List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvInfos.size());
-        for (int i = 0; i < pvInfos.size(); i++) {
-            PVInfoForClusterRetrieval pvInfo = pvInfos.get(i);
+        for (PVInfoForClusterRetrieval pvInfo : pvInfos) {
             executorResults.add(determineExecutorForPostProcessing(
                     pvInfo.getPVName(), pvInfo.getTypeInfo(), requestTimes, pvInfo.getPostProcessor()));
         }

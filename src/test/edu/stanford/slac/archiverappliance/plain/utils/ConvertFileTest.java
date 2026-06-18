@@ -71,7 +71,7 @@ public class ConvertFileTest {
             for (Event e : stream) {
                 assertEquals(
                         (double) count,
-                        ((ScalarValue) e.getSampleValue()).getValue(),
+                        ((ScalarValue<?>) e.getSampleValue()).getValue(),
                         "Value mismatch at index " + count);
                 count++;
             }

@@ -58,7 +58,7 @@ public class EventFileWriterTest {
             for (Event e : stream) {
                 count++;
 
-                assertEquals(1.0, ((ScalarValue) e.getSampleValue()).getValue());
+                assertEquals(1.0, ((ScalarValue<?>) e.getSampleValue()).getValue());
             }
         }
 
@@ -108,7 +108,7 @@ public class EventFileWriterTest {
 
         try (EventStream stream = handler.getStream(pvName, filePath, ArchDBRTypes.DBR_SCALAR_DOUBLE)) {
             for (Event e : stream) {
-                assertEquals((double) count, ((ScalarValue) e.getSampleValue()).getValue());
+                assertEquals((double) count, ((ScalarValue<?>) e.getSampleValue()).getValue());
 
                 count++;
             }

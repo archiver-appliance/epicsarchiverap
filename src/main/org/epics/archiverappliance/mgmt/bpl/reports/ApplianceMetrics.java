@@ -78,7 +78,7 @@ public class ApplianceMetrics implements BPLAction {
         for (Map.Entry<String, CachedPVCounts> entry : pvCountsByAppliance.entrySet()) {
             String applianceIdentity = entry.getKey();
             CachedPVCounts cachedPVCounts = entry.getValue();
-            pvCounts.put(applianceIdentity, Long.valueOf(cachedPVCounts.totalPVCount()));
+            pvCounts.put(applianceIdentity, (long) cachedPVCounts.totalPVCount());
             logger.info("PVCount {} Count {}", applianceIdentity, pvCounts.get(applianceIdentity));
         }
         return pvCounts;

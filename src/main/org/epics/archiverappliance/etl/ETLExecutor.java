@@ -137,8 +137,8 @@ public class ETLExecutor {
         }
 
         ETLSource oldDataSource = null;
-        for (int i = 0; i < dataStores.length; i++) {
-            ETLSource etlSource = StoragePluginURLParser.parseETLSource(dataStores[i], configService);
+        for (String dataStore : dataStores) {
+            ETLSource etlSource = StoragePluginURLParser.parseETLSource(dataStore, configService);
 
             if (storageName.equals(etlSource.getName())) {
                 oldDataSource = etlSource;

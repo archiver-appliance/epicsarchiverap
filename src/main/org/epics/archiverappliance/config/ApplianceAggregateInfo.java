@@ -1,12 +1,11 @@
 package org.epics.archiverappliance.config;
 
-import java.util.HashMap;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.StorageMetrics;
 
+import java.util.HashMap;
 
 /**
  * POJO facilitating various optimizations for BPL that uses appliance wide information.
@@ -18,133 +17,136 @@ import org.epics.archiverappliance.etl.StorageMetrics;
  *
  */
 public class ApplianceAggregateInfo {
-	private double totalStorageRate;
-	private double totalEventRate;
-	private double totalPVCount;
-	private HashMap<String, Long> totalStorageImpact= new HashMap<String, Long>();
-	private static Logger logger = LogManager.getLogger(DefaultConfigService.class.getName());
-	
-	public ApplianceAggregateInfo clone() {
-		ApplianceAggregateInfo retval = new ApplianceAggregateInfo();
-		retval.totalStorageRate = this.totalStorageRate;
-		retval.totalEventRate = this.totalEventRate;
-		retval.totalPVCount = this.totalPVCount;
-		retval.totalStorageImpact = new HashMap<String, Long>();
-		for(String key : this.totalStorageImpact.keySet()) {
-			retval.totalStorageImpact.put(key, this.totalStorageImpact.get(key));
-		}
-		return retval;
-	}
-	
-	public void addInfoForPV(String pvName, PVTypeInfo typeInfo, ConfigService configService) {
-		synchronized(this) {
-			totalStorageRate += typeInfo.getComputedStorageRate();
-			totalEventRate += typeInfo.getComputedEventRate();
-			totalPVCount++;
-			if(typeInfo.getDataStores() != null && typeInfo.getDataStores().length > 0) {
-				for(String dataStore : typeInfo.getDataStores()) {
-					try {
-						ETLDest etlDest = StoragePluginURLParser.parseETLDest(dataStore, configService);
-						if(etlDest instanceof StorageMetrics) {
-							StorageMetrics stMetrics = (StorageMetrics) etlDest;
-							String identity = stMetrics.getName();
-							double storageImpact = etlDest.getPartitionGranularity().getApproxSecondsPerChunk()*typeInfo.getComputedStorageRate();
-							if(!totalStorageImpact.containsKey(identity)) {
-								totalStorageImpact.put(identity, Long.valueOf(0));
-							}
+    private double totalStorageRate;
+    private double totalEventRate;
+    private double totalPVCount;
+    private HashMap<String, Long> totalStorageImpact = new HashMap<String, Long>();
+    private static Logger logger = LogManager.getLogger(DefaultConfigService.class.getName());
 
-							long currentStorageImpact = totalStorageImpact.get(identity);
-							currentStorageImpact += storageImpact;
-							totalStorageImpact.put(identity, currentStorageImpact);
-						}
-					} catch(Exception ex) {
-						logger.error("Exception parsing storage metrics url " + dataStore, ex);
-					}
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Gets the aggregated total computedStorageRate for this appliance
-	 * @return totalStorageRate  &emsp;
-	 */
-	public double getTotalStorageRate() {
-		return totalStorageRate;
-	}
+    public ApplianceAggregateInfo clone() {
+        ApplianceAggregateInfo retval = new ApplianceAggregateInfo();
+        retval.totalStorageRate = this.totalStorageRate;
+        retval.totalEventRate = this.totalEventRate;
+        retval.totalPVCount = this.totalPVCount;
+        retval.totalStorageImpact = new HashMap<String, Long>();
+        for (String key : this.totalStorageImpact.keySet()) {
+            retval.totalStorageImpact.put(key, this.totalStorageImpact.get(key));
+        }
+        return retval;
+    }
 
-	/**
-	 * Gets the aggregated total computedEventRate for this appliance
-	 * @return totalEventRate  &emsp;
-	 */
-	public double getTotalEventRate() {
-		return totalEventRate;
-	}
+    public void addInfoForPV(String pvName, PVTypeInfo typeInfo, ConfigService configService) {
+        synchronized (this) {
+            totalStorageRate += typeInfo.getComputedStorageRate();
+            totalEventRate += typeInfo.getComputedEventRate();
+            totalPVCount++;
+            if (typeInfo.getDataStores() != null && typeInfo.getDataStores().length > 0) {
+                for (String dataStore : typeInfo.getDataStores()) {
+                    try {
+                        ETLDest etlDest = StoragePluginURLParser.parseETLDest(dataStore, configService);
+                        if (etlDest instanceof StorageMetrics) {
+                            StorageMetrics stMetrics = (StorageMetrics) etlDest;
+                            String identity = stMetrics.getName();
+                            double storageImpact =
+                                    etlDest.getPartitionGranularity().getApproxSecondsPerChunk()
+                                            * typeInfo.getComputedStorageRate();
+                            if (!totalStorageImpact.containsKey(identity)) {
+                                totalStorageImpact.put(identity, 0L);
+                            }
 
-	/**
-	 * Gets the aggregated pv count for this appliance.
-	 * @return totalPVCount  &emsp;
-	 */
-	public double getTotalPVCount() {
-		return totalPVCount;
-	}
+                            long currentStorageImpact = totalStorageImpact.get(identity);
+                            currentStorageImpact += storageImpact;
+                            totalStorageImpact.put(identity, currentStorageImpact);
+                        }
+                    } catch (Exception ex) {
+                        logger.error("Exception parsing storage metrics url " + dataStore, ex);
+                    }
+                }
+            }
+        }
+    }
 
+    /**
+     * Gets the aggregated total computedStorageRate for this appliance
+     * @return totalStorageRate  &emsp;
+     */
+    public double getTotalStorageRate() {
+        return totalStorageRate;
+    }
 
-	public void setTotalStorageRate(double totalStorageRate) {
-		this.totalStorageRate = totalStorageRate;
-	}
+    /**
+     * Gets the aggregated total computedEventRate for this appliance
+     * @return totalEventRate  &emsp;
+     */
+    public double getTotalEventRate() {
+        return totalEventRate;
+    }
 
-	public void setTotalEventRate(double totalEventRate) {
-		this.totalEventRate = totalEventRate;
-	}
+    /**
+     * Gets the aggregated pv count for this appliance.
+     * @return totalPVCount  &emsp;
+     */
+    public double getTotalPVCount() {
+        return totalPVCount;
+    }
 
-	public void setTotalPVCount(double totalPVCount) {
-		this.totalPVCount = totalPVCount;
-	}
+    public void setTotalStorageRate(double totalStorageRate) {
+        this.totalStorageRate = totalStorageRate;
+    }
 
-	/**
-	 * The storage impact is the impact of a PV on the particular store. 
-	 * It is the product of the estimated storage rate and the partition granularity of the source.
-	 * This returns the aggregated impact on the various stores on this appliance indexed by the identity of the store.
-	 * @return totalStorageImpact 
-	 */
-	public HashMap<String, Long> getTotalStorageImpact() {
-		return totalStorageImpact;
-	}
+    public void setTotalEventRate(double totalEventRate) {
+        this.totalEventRate = totalEventRate;
+    }
 
-	public void setTotalStorageImpact(HashMap<String, String> totalStorageImpact) {
-		// The JSON Encoder and Decoder can only understand a HashMap<String, String> so we override the set method to take on HashMap<String, String>
-		for(String id : totalStorageImpact.keySet()) {
-			String impact = totalStorageImpact.get(id);
-			try {
-				long impactLong = Long.parseLong(impact);
-				this.totalStorageImpact.put(id, impactLong);
-			} catch(NumberFormatException ex) { 
-				logger.error("Exception parsing number " + impact, ex);
-			}
-		}
-	}
-	
-	
-	/**
-	 * This returns a new ApplianceAggregateInfo that is the difference between this info and the other info.
-	 * Used to maintain the delta of ApplianceAggregateInfo's between the periodic fetches of the CapacityPlanningMetricsPerApplianceForPV
-	 * @param other ApplianceAggregateInfo
-	 * @return ApplianceAggregateInfo  &emsp;
-	 */
-	public ApplianceAggregateInfo getDifference(ApplianceAggregateInfo other) {
-		ApplianceAggregateInfo retval = new ApplianceAggregateInfo();
-		retval.totalPVCount = this.totalPVCount - other.totalPVCount;
-		retval.totalEventRate = this.totalEventRate - other.totalEventRate;
-		retval.totalStorageRate = this.totalStorageRate - other.totalStorageRate;
-		if(logger.isDebugEnabled()) logger.debug("Returning " + retval.totalStorageRate + " this.totalStorageRate " + this.totalStorageRate + " other.totalStorageRate " + other.totalStorageRate);
-		for(String key : totalStorageImpact.keySet()) {
-			long si = totalStorageImpact.get(key);
-			if(other.totalStorageImpact.containsKey(key)) {
-				si = si - other.totalStorageImpact.get(key);
-			}
-			retval.totalStorageImpact.put(key, Long.valueOf(si));
-		}
-		return retval;
-	}
+    public void setTotalPVCount(double totalPVCount) {
+        this.totalPVCount = totalPVCount;
+    }
+
+    /**
+     * The storage impact is the impact of a PV on the particular store.
+     * It is the product of the estimated storage rate and the partition granularity of the source.
+     * This returns the aggregated impact on the various stores on this appliance indexed by the identity of the store.
+     * @return totalStorageImpact
+     */
+    public HashMap<String, Long> getTotalStorageImpact() {
+        return totalStorageImpact;
+    }
+
+    public void setTotalStorageImpact(HashMap<String, String> totalStorageImpact) {
+        // The JSON Encoder and Decoder can only understand a HashMap<String, String> so we override the set method to
+        // take on HashMap<String, String>
+        for (String id : totalStorageImpact.keySet()) {
+            String impact = totalStorageImpact.get(id);
+            try {
+                long impactLong = Long.parseLong(impact);
+                this.totalStorageImpact.put(id, impactLong);
+            } catch (NumberFormatException ex) {
+                logger.error("Exception parsing number " + impact, ex);
+            }
+        }
+    }
+
+    /**
+     * This returns a new ApplianceAggregateInfo that is the difference between this info and the other info.
+     * Used to maintain the delta of ApplianceAggregateInfo's between the periodic fetches of the CapacityPlanningMetricsPerApplianceForPV
+     * @param other ApplianceAggregateInfo
+     * @return ApplianceAggregateInfo  &emsp;
+     */
+    public ApplianceAggregateInfo getDifference(ApplianceAggregateInfo other) {
+        ApplianceAggregateInfo retval = new ApplianceAggregateInfo();
+        retval.totalPVCount = this.totalPVCount - other.totalPVCount;
+        retval.totalEventRate = this.totalEventRate - other.totalEventRate;
+        retval.totalStorageRate = this.totalStorageRate - other.totalStorageRate;
+        if (logger.isDebugEnabled())
+            logger.debug("Returning " + retval.totalStorageRate + " this.totalStorageRate " + this.totalStorageRate
+                    + " other.totalStorageRate " + other.totalStorageRate);
+        for (String key : totalStorageImpact.keySet()) {
+            long si = totalStorageImpact.get(key);
+            if (other.totalStorageImpact.containsKey(key)) {
+                si = si - other.totalStorageImpact.get(key);
+            }
+            retval.totalStorageImpact.put(key, si);
+        }
+        return retval;
+    }
 }

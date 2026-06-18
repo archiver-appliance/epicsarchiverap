@@ -86,9 +86,9 @@ public class NthAndNCountProcessorTest {
         PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         pvTypeInfo.setSamplingPeriod(60);
 
-        for (int i = 0; i < sampling.length; i++) {
+        for (int j : sampling) {
             Nth nthProcessor = new Nth();
-            nthProcessor.initialize("nth_" + sampling[i], pvName);
+            nthProcessor.initialize("nth_" + j, pvName);
             nthProcessor.estimateMemoryConsumption(pvName, pvTypeInfo, start, end, null);
             nthProcessor
                     .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
@@ -109,12 +109,12 @@ public class NthAndNCountProcessorTest {
                         e.getSampleValue().getValue().doubleValue(),
                         Double.MIN_VALUE,
                         "Event value should match the n-th value in the test data");
-                n += sampling[i];
+                n += j;
                 previousTimeStamp = eventTs;
                 eventCount++;
             }
             Assertions.assertEquals(
-                    expectedSamplesInPeriod / sampling[i],
+                    expectedSamplesInPeriod / j,
                     eventCount,
                     "The number of events should be the total number of events in time range divided by sampling number");
         }
@@ -140,9 +140,9 @@ public class NthAndNCountProcessorTest {
         PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         pvTypeInfo.setSamplingPeriod(60);
 
-        for (int i = 0; i < sampling.length; i++) {
+        for (int j : sampling) {
             Nth nthProcessor = new Nth();
-            nthProcessor.initialize("nth_" + sampling[i], pvName);
+            nthProcessor.initialize("nth_" + j, pvName);
             nthProcessor.estimateMemoryConsumption(pvName, pvTypeInfo, start, end, null);
             nthProcessor
                     .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
@@ -164,12 +164,12 @@ public class NthAndNCountProcessorTest {
                         e.getSampleValue().getValue().doubleValue(),
                         Double.MIN_VALUE,
                         "Event value should match the n-th value in the test data");
-                n += sampling[i];
+                n += j;
                 previousTimeStamp = eventTs;
                 eventCount++;
             }
             Assertions.assertEquals(
-                    expectedSamplesInPeriod / sampling[i],
+                    expectedSamplesInPeriod / j,
                     eventCount,
                     "The number of events should be the total number of events in the time range divided by sampling number");
         }
