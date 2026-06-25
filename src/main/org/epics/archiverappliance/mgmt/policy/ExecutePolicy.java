@@ -56,7 +56,6 @@ public class ExecutePolicy implements AutoCloseable {
             interp.execfile(is);
             fetchFieldsArchivedAsPartOfStream();
         }
-
     }
 
     @Override
@@ -96,7 +95,6 @@ public class ExecutePolicy implements AutoCloseable {
             dataStores.add((String) dataStore);
         }
         policyConfig.setDataStores(dataStores.toArray(new String[0]));
-
 
         LinkedList<String> archiveFields = new LinkedList<String>();
         if (policy.containsKey("archiveFields")) {
