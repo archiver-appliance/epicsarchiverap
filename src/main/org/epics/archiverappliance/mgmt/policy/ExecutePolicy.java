@@ -48,6 +48,9 @@ public class ExecutePolicy implements AutoCloseable {
     public ExecutePolicy(ConfigService configService) throws IOException {
 
         interp = new PythonInterpreter();
+        // Pin the interpreter to this class's loader; Jython's global state must not hold on to a
+        // webapp classloader that may have been destroyed.
+        interp.getSystemState().setClassLoader(ExecutePolicy.class.getClassLoader());
         // Load the policies.py into the interpreter.
         try (InputStream is = configService.getPolicyText()) {
             interp.execfile(is);

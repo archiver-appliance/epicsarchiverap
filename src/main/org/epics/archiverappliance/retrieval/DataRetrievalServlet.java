@@ -1657,6 +1657,8 @@ public class DataRetrievalServlet extends HttpServlet {
     private PVTypeInfo createDefaultPVTypeInfoFromPolicies(String pvName) throws IOException {
         // Create Python interpreter to access policies.py methods
         try (PySystemState systemState = new PySystemState()) {
+            // Pin to this class's loader; Jython must not resolve against a destroyed webapp loader.
+            systemState.setClassLoader(DataRetrievalServlet.class.getClassLoader());
             PythonInterpreter interp = new PythonInterpreter(null, systemState);
 
             // Load the policies.py into the interpreter.
