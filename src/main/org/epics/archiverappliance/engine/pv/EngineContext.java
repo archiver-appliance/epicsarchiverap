@@ -269,6 +269,9 @@ public class EngineContext {
                     commandThread.shutdown();
                 }
 
+                // Clear the JVM-global JCA state for the next engine deploy in this JVM.
+                PVContext.reset();
+
             } catch (Exception e) {
                 logger.error("Exception when execuing ShutdownHook inconfigservice", e);
             }

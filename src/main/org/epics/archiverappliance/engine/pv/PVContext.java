@@ -81,6 +81,18 @@ public class PVContext {
         PVContext.configservice = configservice;
     }
 
+    /**
+     * Reset the JVM-global JCA state on engine shutdown.
+     *
+     * <p>In the shared-JVM integration tests the engine webapp is deployed and undeployed many
+     * times in one JVM; resetting the refcount and config service here means a subsequent engine
+     * (re)deploy starts from a clean slate rather than inheriting stale static state.
+     */
+    public static synchronized void reset() {
+        jca_refs = 0;
+        configservice = null;
+    }
+
     /** Initialize the JA library, start the command thread. */
     static void initJCA() throws Exception {
 
