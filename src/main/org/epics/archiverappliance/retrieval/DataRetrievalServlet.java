@@ -17,6 +17,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -1421,7 +1422,26 @@ public class DataRetrievalServlet extends HttpServlet {
                 String redirectURIStr = redirectURI.normalize() + "?" + req.getQueryString();
                 logger.debug("URI for proxying is " + redirectURIStr);
 
-                try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+                // Bound the proxy request so a hung peer appliance cannot block this thread forever.
+                int connectTimeoutMs = Integer.parseInt(configService
+                        .getInstallationProperties()
+                        .getProperty(
+                                "org.epics.archiverappliance.retrieval.DataRetrievalServlet.proxyConnectTimeoutMs",
+                                "10000"));
+                int socketTimeoutMs = Integer.parseInt(configService
+                        .getInstallationProperties()
+                        .getProperty(
+                                "org.epics.archiverappliance.retrieval.DataRetrievalServlet.proxySocketTimeoutMs",
+                                "30000"));
+                RequestConfig requestConfig = RequestConfig.custom()
+                        .setConnectTimeout(connectTimeoutMs)
+                        .setConnectionRequestTimeout(connectTimeoutMs)
+                        .setSocketTimeout(socketTimeoutMs)
+                        .build();
+
+                try (CloseableHttpClient httpclient = HttpClients.custom()
+                        .setDefaultRequestConfig(requestConfig)
+                        .build()) {
                     HttpGet getMethod = new HttpGet(redirectURIStr);
                     getMethod.addHeader(
                             "Connection",
