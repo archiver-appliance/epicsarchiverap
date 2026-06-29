@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.config;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import org.apache.logging.log4j.LogManager;
@@ -77,6 +78,31 @@ public class ConfigServiceForTests extends DefaultConfigService {
     private File webInfClassesFolder;
 
     /**
+     * A single JVM-wide Hazelcast instance backing the config-service maps for every
+     * {@link ConfigServiceForTests}, so the shared test JVM holds one member, not one per class.
+     */
+    private static volatile HazelcastInstance testHzInstance;
+
+    /**
+     * Lazily build the shared test Hazelcast instance: an isolated single member with all
+     * discovery/join mechanisms disabled.
+     */
+    private static synchronized HazelcastInstance getTestHazelcastInstance() {
+        if (testHzInstance == null) {
+            Config config = new Config();
+            config.setClusterName("archappl-tests");
+            config.setProperty("hazelcast.phone.home.enabled", "false");
+            config.getMetricsConfig().setEnabled(false);
+            var join = config.getNetworkConfig().getJoin();
+            join.getAutoDetectionConfig().setEnabled(false);
+            join.getMulticastConfig().setEnabled(false);
+            join.getTcpIpConfig().setEnabled(false);
+            testHzInstance = Hazelcast.newHazelcastInstance(config);
+        }
+        return testHzInstance;
+    }
+
+    /**
      * Special Constructor for Integration tests Do not use in unit tests.
      *
      * @throws ConfigException
@@ -95,7 +121,9 @@ public class ConfigServiceForTests extends DefaultConfigService {
         this.webInfClassesFolder = WebInfClassesFolder;
         configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
 
-        HazelcastInstance hzinstance = Hazelcast.newHazelcastInstance();
+        // These must be Hazelcast IMaps (the config service runs Hz predicate queries on them),
+        // but a fresh member per construction leaks; reuse the one JVM-wide instance.
+        HazelcastInstance hzinstance = getTestHazelcastInstance();
         pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
         namedFlags = hzinstance.getMap("namedflags");
         typeInfos = hzinstance.getMap(TYPEINFO);
@@ -105,6 +133,17 @@ public class ConfigServiceForTests extends DefaultConfigService {
         appliancesConfigLoaded = hzinstance.getMap("appliancesConfigLoaded");
         aliasNamesToRealNames = hzinstance.getMap("aliasNamesToRealNames");
         pv2ChannelArchiverDataServer = hzinstance.getMap("pv2ChannelArchiverDataServer");
+
+        // Each construction starts from clean maps; safe because the suite runs sequentially.
+        pv2appliancemapping.clear();
+        namedFlags.clear();
+        typeInfos.clear();
+        archivePVRequests.clear();
+        channelArchiverDataServers.clear();
+        clusterInet2ApplianceIdentity.clear();
+        appliancesConfigLoaded.clear();
+        aliasNamesToRealNames.clear();
+        pv2ChannelArchiverDataServer.clear();
 
         appliances = new HashMap<String, ApplianceInfo>();
 
