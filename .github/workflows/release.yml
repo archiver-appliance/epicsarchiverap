@@ -21,7 +21,7 @@ jobs:
   publish-image:
     uses: ./.github/workflows/publish-image.yml
     with:
-      nightly: false
+      weekly: false
     permissions:
       contents: read
       packages: write

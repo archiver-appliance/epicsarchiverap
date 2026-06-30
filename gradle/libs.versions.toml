@@ -32,6 +32,7 @@ commons-compress = "1.26.0"
 commons-cli     = "1.5.0"
 jinjava         = "2.8.1"
 mockito         = "5.21.0"
+testcontainers  = "1.20.4"
 jakarta-validation = "3.1.1"
 svg-viewer      = "v1.2.1"
 spotless-plugin = "8.1.0"
@@ -39,6 +40,7 @@ git-version-plugin = "3.0.0"
 analyze-plugin  = "1.9.2"
 protobuf-plugin = "0.9.5"
 stax-api       = "1.0-2"
+slf4j          = "2.0.16"
 
 [libraries]
 guava                    = { module = "com.google.guava:guava", version.ref = "guava" }
@@ -88,7 +90,10 @@ commons-compress         = { module = "org.apache.commons:commons-compress", ver
 commons-cli              = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
 jinjava                  = { module = "com.hubspot.jinjava:jinjava", version.ref = "jinjava" }
 mockito                  = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+testcontainers           = { module = "org.testcontainers:testcontainers", version.ref = "testcontainers" }
+testcontainers-junit     = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 stax-api                 = { module = "javax.xml.stream:stax-api", version.ref = "stax-api"}
+slf4j-api                = { module = "org.slf4j:slf4j-api", version.ref = "slf4j"}
 
 [bundles]
 parquet        = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
