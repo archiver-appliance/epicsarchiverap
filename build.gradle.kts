@@ -34,7 +34,7 @@ sourceSets {
 			srcDir("src/test/")
 		}
 		resources {
-			setSrcDirs(emptyList<String>())
+			setSrcDirs(listOf("src/test/resources"))
 		}
 	}
 }
@@ -173,7 +173,8 @@ dependencies {
 	testImplementation(libs.junit.jupiter.api)
 	testImplementation(libs.junit.jupiter.params)
 	testRuntimeOnly(libs.junit.jupiter.engine)
-	testRuntimeOnly(libs.junit.platform.launcher)
+	testImplementation(libs.junit.platform.launcher)
+	testImplementation(libs.junit.platform.engine)
 	testImplementation(libs.awaitility)
 	testImplementation(libs.commons.cli)
 	testImplementation(libs.jinjava)
