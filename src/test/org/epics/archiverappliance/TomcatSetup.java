@@ -60,6 +60,20 @@ public class TomcatSetup implements AutoCloseable {
     private File testFolder;
     private Properties savedProperties;
 
+    /**
+     * System properties captured once at class load, before any test's {@code @BeforeEach} can
+     * pollute them. Teardown restores this baseline so a test's property changes (e.g. JDBM2
+     * persistence settings) never outlive its own run in the shared JVM.
+     */
+    private static final Properties pristineSystemProperties = snapshotProperties(System.getProperties());
+
+    private static Properties snapshotProperties(Properties source) {
+        // Flat copy, not a defaults-chain, so containsKey() behaves correctly.
+        Properties copy = new Properties();
+        copy.putAll(source);
+        return copy;
+    }
+
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
@@ -144,11 +158,7 @@ public class TomcatSetup implements AutoCloseable {
     // -------------------------------------------------------------------------
 
     private void prepare(String testName) throws IOException {
-        // Snapshot system properties using putAll so the copy is a flat map, not a
-        // defaults-chain. Properties.containsKey() does not search defaults, so using
-        // new Properties(original) as a "reset" would silently hide keys.
-        savedProperties = new Properties();
-        savedProperties.putAll(System.getProperties());
+        savedProperties = snapshotProperties(System.getProperties());
 
         testFolder = new File("build/tomcats/tomcat_" + testName);
         if (testFolder.exists()) {
@@ -307,11 +317,9 @@ public class TomcatSetup implements AutoCloseable {
     }
 
     private void restoreSystemProperties() {
-        if (savedProperties != null) {
-            Properties restored = new Properties();
-            restored.putAll(savedProperties);
-            System.setProperties(restored);
-        }
+        // The pristine baseline, not savedProperties: the latter is captured after @BeforeEach
+        // and may already contain this test's pollution.
+        System.setProperties(snapshotProperties(pristineSystemProperties));
     }
 
     // -------------------------------------------------------------------------
