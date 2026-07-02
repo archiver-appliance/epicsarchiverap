@@ -275,6 +275,15 @@ public class ArchivePVState {
                         currentState = ArchivePVStateMachine.ABORTED;
                         return;
                     }
+                    if (typeInfo.isPaused()) {
+                        // The PV was paused while the archive request was still in flight; starting
+                        // to archive now would silently undo the pause.
+                        logger.info("PV " + pvName + " was paused mid-workflow; completing without archiving");
+                        configService.archiveRequestWorkflowCompleted(pvName);
+                        configService.getMgmtRuntimeState().finishedPVWorkflow(pvName);
+                        currentState = ArchivePVStateMachine.FINISHED;
+                        return;
+                    }
                     ArchivePVState.startArchivingPV(
                             pvName, configService, configService.getAppliance(typeInfo.getApplianceIdentity()));
                     registerAliasesIfAny(typeInfo);
