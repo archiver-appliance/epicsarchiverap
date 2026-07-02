@@ -67,8 +67,8 @@ public class PostProcessorWithPBErrorDailyTest {
     StoragePlugin storageplugin;
     private ConfigServiceForTests configService;
     private final short dataGeneratedForYears = 5;
-    private String mtsFolderName =
-            "build/tomcats/tomcat_" + PostProcessorWithPBErrorDailyTest.class.getSimpleName() + "/appliance0/mts";
+    // The same MTS folder the appliance resolves ${ARCHAPPL_MEDIUM_TERM_FOLDER} to.
+    private String mtsFolderName = System.getenv("ARCHAPPL_MEDIUM_TERM_FOLDER");
     private File mtsFolder = new File(mtsFolderName + "/UnitTestNoNamingConvention");
 
     @BeforeEach
@@ -78,9 +78,6 @@ public class PostProcessorWithPBErrorDailyTest {
         }
 
         configService = new ConfigServiceForTests(-1);
-        System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", "../sts");
-        System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts");
-        System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", "../lts");
         storageplugin = StoragePluginURLParser.parseStoragePlugin(
                 pluginString(
                         PB_PLUGIN_IDENTIFIER,

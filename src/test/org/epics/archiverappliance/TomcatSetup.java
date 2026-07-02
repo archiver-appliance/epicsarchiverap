@@ -277,20 +277,25 @@ public class TomcatSetup implements AutoCloseable {
             }
         }
 
-        // With embedded Tomcat the JVM working directory is the project root, so any relative
-        // (or absent) storage folder property must be converted to an absolute path inside the
-        // appliance's own work folder to restore that per-appliance isolation.
+        // Tests seed data via the ARCHAPPL_*_FOLDER env vars and macro expansion prefers system
+        // properties over env, so a property may only be set here if a test set one explicitly.
         for (String[] pair : new String[][] {
             {"ARCHAPPL_SHORT_TERM_FOLDER", "sts"},
             {"ARCHAPPL_MEDIUM_TERM_FOLDER", "mts"},
             {"ARCHAPPL_LONG_TERM_FOLDER", "lts"}
         }) {
-            String current = System.getProperty(pair[0]);
-            if (current == null || !new File(current).isAbsolute()) {
-                File dir = new File(workFolder, pair[1]);
-                dir.mkdirs();
-                System.setProperty(pair[0], dir.getAbsolutePath());
+            String fromProperty = System.getProperty(pair[0]);
+            if (fromProperty != null && new File(fromProperty).isAbsolute()) {
+                continue;
             }
+            String fromEnv = System.getenv(pair[0]);
+            if (fromEnv != null && new File(fromEnv).isAbsolute()) {
+                System.clearProperty(pair[0]);
+                continue;
+            }
+            File dir = new File(workFolder, pair[1]);
+            dir.mkdirs();
+            System.setProperty(pair[0], dir.getAbsolutePath());
         }
 
         // Re-apply any extra properties that must survive the reset above.
