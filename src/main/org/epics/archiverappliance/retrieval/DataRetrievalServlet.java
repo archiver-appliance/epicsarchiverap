@@ -114,7 +114,9 @@ public class DataRetrievalServlet extends HttpServlet {
             "org.epics.archiverappliance.retrieval.SearchStoreForRetiredPvs";
     private static final Logger logger = LogManager.getLogger(DataRetrievalServlet.class.getName());
     private static final HashMap<String, MimeMappingInfo> mimeresponses = new HashMap<String, MimeMappingInfo>();
-    private static ConfigService configService = null;
+    // Must be an instance field: with several appliances embedded in one JVM (integration tests),
+    // a static here would let the last webapp to initialize hijack every appliance's retrieval.
+    private ConfigService configService = null;
 
     static {
         mimeresponses.put("raw", new MimeMappingInfo(PBRAWResponse.class, "application/x-protobuf"));
