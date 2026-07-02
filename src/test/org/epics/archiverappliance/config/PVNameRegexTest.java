@@ -71,6 +71,22 @@ public class PVNameRegexTest {
         Assertions.assertEquals(pvName + fieldModifier, PVNames.normalizeChannelName(channelName));
     }
 
+    private static Stream<Arguments> provideTransferFieldCases() {
+        return Stream.of(
+                Arguments.of("ABC:123", "DEF:456", "DEF:456"),
+                Arguments.of("ABC:123.DESC", "DEF:456", "DEF:456.DESC"),
+                Arguments.of("ABC:123.{'dbnd':{'abs':1}}", "DEF:456", "DEF:456.{'dbnd':{'abs':1}}"),
+                Arguments.of("ABC:123.DESC.{'dbnd':{'abs':1}}", "DEF:456", "DEF:456.DESC.{'dbnd':{'abs':1}}"),
+                Arguments.of("ABC:123.VAL", "DEF:456", "DEF:456"));
+    }
+
+    /** {@link PVNames#transferField} must carry field names and field modifiers onto the new name. */
+    @ParameterizedTest
+    @MethodSource("provideTransferFieldCases")
+    public void testTransferField(String srcName, String destName, String expected) {
+        Assertions.assertEquals(expected, PVNames.transferField(srcName, destName));
+    }
+
     @ParameterizedTest
     @ValueSource(
             strings = {

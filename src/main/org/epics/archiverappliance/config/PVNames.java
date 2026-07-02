@@ -161,19 +161,24 @@ public class PVNames {
     }
 
     /**
-     * Transfer any fields from the source name to the dest name
+     * Transfer any fields and field modifiers from the source name to the dest name
      * Transferring ABC:123 onto DEF:456 should give DEF:456
      * Transferring ABC:123.DESC onto DEF:456 should give DEF:456.DESC
+     * Transferring ABC:123.{'dbnd':{'abs':1}} onto DEF:456 should give DEF:456.{'dbnd':{'abs':1}}
      * @param srcName The source name
      * @param destName The destination name
      * @return String transferField
      */
     public static String transferField(String srcName, String destName) {
-        if (isFieldOrFieldModifier(srcName)) {
-            return normalizePVNameWithField(destName, getGroupMatch(srcName, GROUP_FIELD_NAME));
-        } else {
-            return destName;
+        String result = destName;
+        if (isField(srcName)) {
+            result = normalizePVNameWithField(destName, getGroupMatch(srcName, GROUP_FIELD_NAME));
         }
+        String fieldModifier = getGroupMatch(srcName, GROUP_FIELD_MODIFIER);
+        if (!fieldModifier.isEmpty()) {
+            result = result + "." + fieldModifier;
+        }
+        return result;
     }
 
     /**
