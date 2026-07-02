@@ -75,22 +75,9 @@ public class PVContext {
     /** The JCA context reference count. */
     private static long jca_refs = 0;
 
-    private static ConfigService configservice;
-
-    public static void setConfigservice(ConfigService configservice) {
-        PVContext.configservice = configservice;
-    }
-
-    /**
-     * Reset the JVM-global JCA state on engine shutdown.
-     *
-     * <p>In the shared-JVM integration tests the engine webapp is deployed and undeployed many
-     * times in one JVM; resetting the refcount and config service here means a subsequent engine
-     * (re)deploy starts from a clean slate rather than inheriting stale static state.
-     */
+    /** Reset the JVM-global JCA refcount on engine shutdown so a redeploy starts from a clean slate. */
     public static synchronized void reset() {
         jca_refs = 0;
-        configservice = null;
     }
 
     /** Initialize the JA library, start the command thread. */
@@ -122,7 +109,11 @@ public class PVContext {
      * @see #releaseChannel
      */
     public static synchronized Channel getChannel(
-            final String name, int jcaCommandThreadId, final ConnectionListener conn_callback) throws Exception {
+            final ConfigService configservice,
+            final String name,
+            int jcaCommandThreadId,
+            final ConnectionListener conn_callback)
+            throws Exception {
 
         initJCA();
         final Channel channel = configservice
@@ -159,6 +150,7 @@ public class PVContext {
 
     /**
      * Add a command to the JCACommandThread.
+     * @param configservice The config service of the engine this PV belongs to.
      * @param pvName The name of the PV that this applies to
      * @param jcaCommandThreadId The JCA Command thread for this PV.
      * @param theChannel this can be null
@@ -166,7 +158,12 @@ public class PVContext {
      * @param command The runnable that will run in the specified command thread
      */
     public static void scheduleCommand(
-            String pvName, int jcaCommandThreadId, Channel theChannel, String msg, final Runnable command) {
+            ConfigService configservice,
+            String pvName,
+            int jcaCommandThreadId,
+            Channel theChannel,
+            String msg,
+            final Runnable command) {
         try {
             if (theChannel != null) {
                 if (!configservice

@@ -253,6 +253,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 logger.error("The meta get listener was not successful for EPICS_V3_PV " + name);
             }
             PVContext.scheduleCommand(
+                    EPICS_V3_PV.this.configservice,
                     EPICS_V3_PV.this.name,
                     EPICS_V3_PV.this.jcaCommandThreadId,
                     EPICS_V3_PV.this.theChannel,
@@ -334,7 +335,6 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         this.plain = plain;
         this.configservice = configservice;
         this.jcaCommandThreadId = jcaCommandThreadId;
-        PVContext.setConfigservice(configservice);
     }
 
     /** @return Returns the name. */
@@ -360,28 +360,32 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
      */
     private void connect() throws Exception {
         logger.debug("pv of" + this.name + " connectting");
-        PVContext.scheduleCommand(this.name, this.jcaCommandThreadId, this.theChannel, "connect", new Runnable() {
-            @Override
-            public void run() {
-                //
-                try {
-                    state = PVConnectionState.Connecting;
-                    // Already attempted a connection?
-                    synchronized (this) {
-                        if (theChannel == null) {
-                            theChannel =
-                                    PVContext.getChannel(name, EPICS_V3_PV.this.jcaCommandThreadId, EPICS_V3_PV.this);
-                        }
-                        fireConnectionRequestMade();
-                        if (theChannel.getConnectionState() == ConnectionState.CONNECTED) {
-                            handleConnected(theChannel);
+        PVContext.scheduleCommand(
+                this.configservice, this.name, this.jcaCommandThreadId, this.theChannel, "connect", new Runnable() {
+                    @Override
+                    public void run() {
+                        //
+                        try {
+                            state = PVConnectionState.Connecting;
+                            // Already attempted a connection?
+                            synchronized (this) {
+                                if (theChannel == null) {
+                                    theChannel = PVContext.getChannel(
+                                            EPICS_V3_PV.this.configservice,
+                                            name,
+                                            EPICS_V3_PV.this.jcaCommandThreadId,
+                                            EPICS_V3_PV.this);
+                                }
+                                fireConnectionRequestMade();
+                                if (theChannel.getConnectionState() == ConnectionState.CONNECTED) {
+                                    handleConnected(theChannel);
+                                }
+                            }
+                        } catch (Exception e) {
+                            logger.error("exception when connecting pv " + name, e);
                         }
                     }
-                } catch (Exception e) {
-                    logger.error("exception when connecting pv " + name, e);
-                }
-            }
-        });
+                });
     }
 
     /**
@@ -530,11 +534,12 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
     @Override
     public void stop() {
         running = false;
-        PVContext.scheduleCommand(this.name, this.jcaCommandThreadId, this.theChannel, "stop", () -> {
-            logger.debug("Stopping channel " + EPICS_V3_PV.this.name);
-            unsubscribe();
-            disconnect();
-        });
+        PVContext.scheduleCommand(
+                this.configservice, this.name, this.jcaCommandThreadId, this.theChannel, "stop", () -> {
+                    logger.debug("Stopping channel " + EPICS_V3_PV.this.name);
+                    unsubscribe();
+                    disconnect();
+                });
     }
 
     /** ConnectionListener interface. */
@@ -554,6 +559,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             //
             // EngineContext.getInstance().getScheduler().execute(new Runnable()
             PVContext.scheduleCommand(
+                    this.configservice,
                     this.name,
                     this.jcaCommandThreadId,
                     this.theChannel,
@@ -566,6 +572,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                     });
         } else {
             PVContext.scheduleCommand(
+                    this.configservice,
                     this.name,
                     this.jcaCommandThreadId,
                     this.theChannel,
