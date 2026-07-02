@@ -66,9 +66,6 @@ public class FailoverMultiStepETLTest {
     @BeforeEach
     public void setUp() throws Exception {
         configService = new ConfigServiceForTests(-1);
-        System.getProperties().put("ARCHAPPL_SHORT_TERM_FOLDER", "../sts");
-        System.getProperties().put("ARCHAPPL_MEDIUM_TERM_FOLDER", "../mts");
-        System.getProperties().put("ARCHAPPL_LONG_TERM_FOLDER", "../lts");
         tomcatSetup.setUpWebApps(this.getClass().getSimpleName());
     }
 
@@ -100,6 +97,8 @@ public class FailoverMultiStepETLTest {
         destPVTypeInfo.setPaused(true);
         destPVTypeInfo.setPvName(pvName);
         destPVTypeInfo.setApplianceIdentity(applianceName);
+        destPVTypeInfo.setDataStores(
+                TomcatSetup.perApplianceDataStores(this.getClass().getSimpleName(), applianceName));
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());

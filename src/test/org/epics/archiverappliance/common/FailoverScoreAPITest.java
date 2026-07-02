@@ -134,6 +134,8 @@ public class FailoverScoreAPITest {
         destPVTypeInfo.setPaused(true);
         destPVTypeInfo.setPvName(pvName);
         destPVTypeInfo.setApplianceIdentity(applianceName);
+        destPVTypeInfo.setDataStores(
+                TomcatSetup.perApplianceDataStores(this.getClass().getSimpleName(), applianceName));
         destPVTypeInfo.setChunkKey(configService.getPVNameToKeyConverter().convertPVNameToKey(pvName));
         destPVTypeInfo.setCreationTime(TimeUtils.convertFromISO8601String("2020-11-11T14:49:58.523Z"));
         destPVTypeInfo.setModificationTime(TimeUtils.now());

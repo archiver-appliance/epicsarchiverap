@@ -78,6 +78,24 @@ public class TomcatSetup implements AutoCloseable {
     // Public API
     // -------------------------------------------------------------------------
 
+    /**
+     * Storage plugin URLs rooted in {@code build/tomcats/tomcat_<testName>/<applianceName>}.
+     *
+     * <p>{@code ${ARCHAPPL_*_FOLDER}} macros expand against process-global system properties and so
+     * cannot resolve per-appliance in the shared JVM; tests needing per-appliance storage (e.g.
+     * failover) post typeinfos with these explicit URLs instead. Granularities and ETL parameters
+     * mirror {@code retrieval/postprocessor/data/PVTypeInfoPrototype.json}.
+     */
+    public static String[] perApplianceDataStores(String testName, String applianceName) {
+        String base = new File("build/tomcats/tomcat_" + testName, applianceName).getAbsolutePath();
+        return new String[] {
+            "pb://localhost?name=STS&rootFolder=" + base
+                    + "/sts&partitionGranularity=PARTITION_HOUR&consolidateOnShutdown=true",
+            "pb://localhost?name=MTS&rootFolder=" + base + "/mts&partitionGranularity=PARTITION_DAY&hold=2&gather=1",
+            "pb://localhost?name=LTS&rootFolder=" + base + "/lts&partitionGranularity=PARTITION_YEAR"
+        };
+    }
+
     /** Start a single-appliance setup for {@code testName}. */
     public void setUpWebApps(String testName) throws Exception {
         prepare(testName);
