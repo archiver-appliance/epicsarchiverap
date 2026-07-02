@@ -238,8 +238,11 @@ public class EngineContext {
                     scheduler.shutdown();
                 }
 
-                scanScheduler.shutdown();
-                scanScheduler = null;
+                // The shutdown hook can run more than once; tolerate an already-shutdown engine.
+                if (scanScheduler != null) {
+                    scanScheduler.shutdown();
+                    scanScheduler = null;
+                }
 
                 for (Entry<String, ArchiveChannel> channelentry : channelList.entrySet()) {
                     ArchiveChannel channeltemp = channelentry.getValue();
