@@ -499,6 +499,13 @@ public class ArchiveEngine {
         EngineContext engineContext = configservice.getEngineContext();
         ArchiveChannel channel = engineContext.getChannelList().get(pvName);
         if (channel != null) {
+            if (channel.isRunning() && !channel.isPaused()) {
+                // Restarting a live channel drops and recreates the CA/PVA monitor, losing events and
+                // recording a spurious connection loss. Archival parameter changes are applied via the
+                // explicit engine BPLs, so resuming an already-archiving PV is a no-op.
+                logger.debug("PV " + pvName + " is already being archived; not restarting the channel on resume");
+                return;
+            }
             channel.stop();
             channel.start();
             channel.setPaused(false);
@@ -522,6 +529,10 @@ public class ArchiveEngine {
         EngineContext engineContext = configservice.getEngineContext();
         ArchiveChannel channel = engineContext.getChannelList().get(pvName);
         if (channel != null) {
+            if (channel.isRunning() && !channel.isPaused()) {
+                logger.debug("PV " + pvName + " is already being archived; not restarting the channel on resume");
+                return;
+            }
             channel.stop();
             channel.start();
         } else {
