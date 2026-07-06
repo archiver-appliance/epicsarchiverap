@@ -299,7 +299,7 @@ public class DefaultConfigService implements ConfigService {
             }
             for (Object apkeyobj : archapplproperties.keySet()) {
                 String apkey = (String) apkeyobj;
-                if (System.getProperties().contains(apkey)) {
+                if (System.getProperties().containsKey(apkey)) {
                     String nval = System.getProperty(apkey);
                     configlogger.info("Overriding {} in archappl.properties with JVM property {}", apkey, nval);
                     archapplproperties.put(apkey, nval);
