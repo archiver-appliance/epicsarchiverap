@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.mgmt;
 
+import static org.epics.archiverappliance.ArchiveTestUtils.waitForPVDetail;
 import static org.epics.archiverappliance.ArchiveTestUtils.waitForStatusChange;
 
 import org.apache.logging.log4j.LogManager;
@@ -65,6 +66,9 @@ public class DbdArchiveTest {
 
             GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
             waitForStatusChange(fullPVName, "Being archived", 60, mgmtUrl, 10);
+            // "Being archived" is reported before the CA connection completes; wait for the
+            // monitor to be live so the caputs below are not missed.
+            waitForPVDetail(fullPVName, "Is this PV currently connected?", "yes", 12, mgmtUrl, 5);
 
             SIOCSetup.caput(pvName, 0);
             SIOCSetup.caput(pvName, 0.1);
@@ -84,7 +88,12 @@ public class DbdArchiveTest {
 
             int totalEvents = 0;
             for (Event e : stream) {
-                logger.info("event " + e.getSampleValue().toString());
+                logger.info("event " + e.getSampleValue().toString() + " at " + e.getEventTimeStamp());
+                // Retrieval also returns the last sample at-or-before the window start; only count
+                // events this test generated.
+                if (e.getEventTimeStamp().isBefore(firstInstant)) {
+                    continue;
+                }
                 totalEvents++;
             }
             Assertions.assertEquals(3, totalEvents, "We should have some events in the current samples " + totalEvents);
