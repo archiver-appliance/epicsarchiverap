@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.awaitility.Awaitility;
 import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.Event;
+import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.data.SampleValue;
@@ -14,6 +15,7 @@ import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.archiverappliance.mgmt.policy.PolicyConfig;
 import org.epics.archiverappliance.mgmt.pva.actions.NTUtil;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaGetPVStatus;
+import org.epics.archiverappliance.retrieval.client.RawDataRetrievalAsEventStream;
 import org.epics.pva.client.PVAChannel;
 import org.epics.pva.data.Hexdump;
 import org.epics.pva.data.PVAData;
@@ -30,8 +32,10 @@ import org.junit.jupiter.api.Assertions;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -231,5 +235,36 @@ public class PVAccessUtil {
             result.put(pvs[i], statuses[i]);
         }
         return result;
+    }
+
+    /**
+     * Count the distinct sample timestamps retrievable for {@code pvName} between {@code start}
+     * and now. Shaped for use inside an Awaitility {@code until(...)} so the poll body reads as
+     * one line at the call site.
+     */
+    public static int countRetrievedSamples(
+            RawDataRetrievalAsEventStream rawDataRetrieval, String pvName, Instant start) {
+        Set<Instant> timestamps = new HashSet<>();
+        EventStream stream = null;
+        try {
+            stream = rawDataRetrieval.getDataForPVS(
+                    new String[] {pvName},
+                    start,
+                    Instant.now(),
+                    desc -> logger.debug("Polling data for PV " + desc.getPvName()));
+            if (stream == null) {
+                return 0;
+            }
+            for (Event e : stream) {
+                timestamps.add(e.getEventTimeStamp());
+            }
+        } finally {
+            if (stream != null)
+                try {
+                    stream.close();
+                } catch (Throwable ignored) {
+                }
+        }
+        return timestamps.size();
     }
 }
