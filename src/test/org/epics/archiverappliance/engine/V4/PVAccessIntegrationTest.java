@@ -1,7 +1,12 @@
 package org.epics.archiverappliance.engine.V4;
 
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.countRetrievedSamples;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.fromGenericSampleValueToPVAData;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.TomcatSetup;
@@ -39,10 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.fromGenericSampleValueToPVAData;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 
 /**
  * A basic integration test of using pvAccess to archive a pv
@@ -320,9 +323,17 @@ public class PVAccessIntegrationTest {
 
         Instant start = firstInstant;
 
-        long samplingPeriodMilliSeconds = 100;
+        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
-        Thread.sleep(samplingPeriodMilliSeconds);
+        // "Being archived" can be reported before the engine's monitor has subscribed. Wait until the
+        // initial snapshot is retrievable before updating; otherwise the update replaces the initial
+        // value on the server and the engine never sees it.
+        Awaitility.await()
+                .pollInterval(2, TimeUnit.SECONDS)
+                .atMost(2, TimeUnit.MINUTES)
+                .until(() -> countRetrievedSamples(rawDataRetrieval, pvName, start) >= 1);
+
         Instant instant = Instant.now();
         value.setValue(inputPvaDataList.get(1));
         timeStamp.set(instant);
@@ -330,14 +341,12 @@ public class PVAccessIntegrationTest {
 
         expectedValues.put(instant, inputPvaDataList.get(1));
 
-        Thread.sleep(samplingPeriodMilliSeconds);
-        double secondsToBuffer = 5.0;
         // Need to wait for the writer to write all the received data.
-        Thread.sleep((long) secondsToBuffer * 1000);
+        Awaitility.await()
+                .pollInterval(2, TimeUnit.SECONDS)
+                .atMost(2, TimeUnit.MINUTES)
+                .until(() -> countRetrievedSamples(rawDataRetrieval, pvName, start) >= 2);
         Instant end = Instant.now();
-
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
         EventStream stream = null;
         Map<Instant, PVA> actualValues = new HashMap<>();
