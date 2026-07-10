@@ -72,30 +72,6 @@ public class PVContext {
      * Changes only have an effect before the very first channel is created.
      */
 
-    /** The JCA context reference count. */
-    private static long jca_refs = 0;
-
-    /** Reset the JVM-global JCA refcount on engine shutdown so a redeploy starts from a clean slate. */
-    public static synchronized void reset() {
-        jca_refs = 0;
-    }
-
-    /** Initialize the JA library, start the command thread. */
-    static void initJCA() throws Exception {
-
-        ++jca_refs;
-    }
-
-    /**
-     * Disconnect from the JA library.
-     * <p>
-     * Without this step, JCA threads can stay around and prevent the
-     * application from quitting.
-     */
-    private static void exitJCA() {
-        --jca_refs;
-    }
-
     /**
      * Get a new channel, or a reference to an existing one.
      *
@@ -115,7 +91,6 @@ public class PVContext {
             final ConnectionListener conn_callback)
             throws Exception {
 
-        initJCA();
         final Channel channel = configservice
                 .getEngineContext()
                 .getJCACommandThread(jcaCommandThreadId)
@@ -145,7 +120,6 @@ public class PVContext {
             // You'd get this if the channel is already closed
             logger.debug("Exception removing connection listener from channel " + channelname, ex);
         }
-        exitJCA();
     }
 
     /**
@@ -183,14 +157,5 @@ public class PVContext {
             logger.error("Exception scheduling command for pv " + pvName, t);
         }
         configservice.getEngineContext().getJCACommandThread(jcaCommandThreadId).addCommand(command);
-    }
-
-    /**
-     * Helper for unit test.
-     *
-     * @return <code>true</code> if all has been release.
-     */
-    static boolean allReleased() {
-        return jca_refs == 0;
     }
 }
