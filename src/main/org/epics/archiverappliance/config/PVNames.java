@@ -27,7 +27,8 @@ public class PVNames {
     private static final Logger logger = LogManager.getLogger(PVNames.class.getName());
     private static final Pattern pvNamePattern = Pattern.compile("[a-zA-Z0-9_\\-+:\\[\\]<>;/,#{}^]+");
     private static final Pattern fieldNamePattern = Pattern.compile("[a-zA-Z_][a-zA-Z0-9_]*");
-    private static final Pattern fieldModifierPattern = Pattern.compile("\\{[a-zA-Z0-9:()-{}\"',]+}|\\[[0-9]+:[0-9]+]");
+    private static final Pattern fieldModifierPattern =
+            Pattern.compile("\\{[a-zA-Z0-9:(){}.\"',-]+}|\\[[0-9]+:[0-9]+]");
     public static final String GROUP_PV_NAME = "PVNAME";
     public static final String GROUP_FIELD_NAME = "FIELDNAME";
     public static final String GROUP_FIELD_MODIFIER = "FIELDMODIFIER";

@@ -35,6 +35,7 @@ public class PVNameRegexTest {
     private static final List<String> validFieldNames = List.of(".HIHI", ".LO", "");
     private static final List<String> validFieldModifiers = List.of(
             ".{'dbnd':{'abs':1}}",
+            ".{'dbnd':{'abs':0.1}}",
             ".{flv('H-GX')}",
             ".{'dbnd':{'abs':1.5}}",
             ".{\"dbnd\":{'a':'b',\"s\",'b'}}",
@@ -76,6 +77,7 @@ public class PVNameRegexTest {
                 Arguments.of("ABC:123", "DEF:456", "DEF:456"),
                 Arguments.of("ABC:123.DESC", "DEF:456", "DEF:456.DESC"),
                 Arguments.of("ABC:123.{'dbnd':{'abs':1}}", "DEF:456", "DEF:456.{'dbnd':{'abs':1}}"),
+                Arguments.of("ABC:123.{'dbnd':{'abs':0.1}}", "DEF:456", "DEF:456.{'dbnd':{'abs':0.1}}"),
                 Arguments.of("ABC:123.DESC.{'dbnd':{'abs':1}}", "DEF:456", "DEF:456.DESC.{'dbnd':{'abs':1}}"),
                 Arguments.of("ABC:123.VAL", "DEF:456", "DEF:456"));
     }
@@ -110,6 +112,9 @@ public class PVNameRegexTest {
                 "archappl:sine.{",
                 "archappl:sine.}",
                 "archappl:sine.5",
+                "archappl:sine.{'a'=1}",
+                "archappl:sine.{a;b}",
+                "archappl:sine.{a[b}",
                 ""
             })
     public void testInvalidPVNames(String pvName) {
