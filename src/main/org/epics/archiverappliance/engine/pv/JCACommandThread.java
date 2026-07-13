@@ -224,7 +224,7 @@ public class JCACommandThread extends Thread {
             try {
                 Thread.sleep(DELAY_MILLIS);
             } catch (InterruptedException ex) {
-                // Interrupted by shutdown(); the loop will re-check run and exit promptly.
+                logger.warn("Interrupted by shutdown.");
                 break;
             }
         }
