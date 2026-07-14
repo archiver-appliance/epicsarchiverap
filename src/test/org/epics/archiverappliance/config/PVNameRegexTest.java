@@ -89,6 +89,21 @@ public class PVNameRegexTest {
         Assertions.assertEquals(expected, PVNames.transferField(srcName, destName));
     }
 
+    /**
+     * The protocol-prefixed names.
+     */
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "pva://UnitTestNoNamingConvention:sine",
+                "ca://UnitTestNoNamingConvention:sine",
+                "pva://UnitTestNoNamingConvention:sine.VAL",
+                "ca://UnitTestNoNamingConvention:sine.VAL"
+            })
+    public void testProtocolPrefixedChannelNames(String pvName) {
+        Assertions.assertTrue(PVNames.isValidChannelName(pvName), "Valid pvName is deemed invalid " + pvName);
+    }
+
     @ParameterizedTest
     @ValueSource(
             strings = {

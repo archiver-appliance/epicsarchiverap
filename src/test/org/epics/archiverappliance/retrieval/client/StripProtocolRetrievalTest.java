@@ -1,5 +1,6 @@
 package org.epics.archiverappliance.retrieval.client;
 
+import static org.epics.archiverappliance.ArchiveTestUtils.waitForData;
 import static org.epics.archiverappliance.ArchiveTestUtils.waitForStatusChange;
 import static org.epics.archiverappliance.config.PVNames.V3_PREFIX;
 import static org.epics.archiverappliance.config.PVNames.V4_PREFIX;
@@ -67,17 +68,17 @@ public class StripProtocolRetrievalTest {
         GetUrlContent.getURLContentAsJSONArray(archivePVURL + pvURLName);
         waitForStatusChange(pvName, "Being archived", 60, mgmtUrl, 10);
 
-        long samplingPeriodMilliSeconds = 100;
+        String retrievalURL =
+                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw";
+        int minExpectedSamples = 6;
 
-        Thread.sleep(samplingPeriodMilliSeconds);
-        double secondsToBuffer = 5.0;
-
-        // Need to wait for the writer to write all the received data.
-        Thread.sleep((long) secondsToBuffer * 1000);
+        // "Being archived" can be reported before the engine's monitor has subscribed and while the writer
+        // has yet to flush; on a slow CI runner a fixed sleep is not enough for the samples to accumulate.
+        // Poll retrieval until enough samples are written instead.
+        waitForData(protocol + pvName, minExpectedSamples, retrievalURL);
         Instant end = Instant.now();
 
-        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
-                "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
+        RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(retrievalURL);
 
         EventStream stream = null;
         Map<Instant, SampleValue> actualValues = new HashMap<>();
@@ -104,6 +105,6 @@ public class StripProtocolRetrievalTest {
                 }
         }
         logger.info("Data was {}", actualValues);
-        Assertions.assertTrue(actualValues.size() > secondsToBuffer);
+        Assertions.assertTrue(actualValues.size() >= minExpectedSamples);
     }
 }
