@@ -5,6 +5,7 @@ import static org.epics.archiverappliance.mgmt.pva.PvaMgmtService.PVA_MGMT_SERVI
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.ArchiveTestUtils;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
@@ -101,21 +102,36 @@ public class PvaGetArchivedPVsTest {
             // Wait for a representative PV to confirm the batch has been processed
             ArchiveTestUtils.waitForStatusChange("test_0", "Being archived", 30, "http://localhost:17665/mgmt/bpl/", 5);
 
-            archivePvReqTable = PVATable.PVATableBuilder.aPVATable()
+            PVATable getArchivedPVsReqTable = PVATable.PVATableBuilder.aPVATable()
                     .name(PvaArchivePVAction.NAME)
                     .descriptor(PvaGetArchivedPVs.NAME)
                     .addColumn(new PVAStringArray("pv", pvNamesAll.toArray(new String[pvNamesAll.size()])))
                     .build();
-            PVAStructure result = pvaChannel.invoke(archivePvReqTable).get(30, TimeUnit.SECONDS);
-            Assertions.assertArrayEquals(
-                    pvNamesAll.toArray(new String[1000]),
-                    NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("pv")));
-            Assertions.assertArrayEquals(
-                    expectedStatus.toArray(new String[1000]),
-                    NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("status")));
+            // The archive workflows for the whole batch complete over several minutes; retry until they have.
+            Awaitility.await()
+                    .pollInterval(10, TimeUnit.SECONDS)
+                    .atMost(5, TimeUnit.MINUTES)
+                    .untilAsserted(
+                            () -> assertAllPVsArchived(pvaChannel, getArchivedPVsReqTable, pvNamesAll, expectedStatus));
         } catch (Exception e) {
             e.printStackTrace();
             Assertions.fail(e.getMessage());
         }
+    }
+
+    /** Assert the getArchivedPVs response reports every PV with its expected status, in order. */
+    private static void assertAllPVsArchived(
+            PVAChannel pvaChannel,
+            PVATable getArchivedPVsReqTable,
+            List<String> pvNamesAll,
+            List<String> expectedStatus)
+            throws Exception {
+        PVAStructure result = pvaChannel.invoke(getArchivedPVsReqTable).get(30, TimeUnit.SECONDS);
+        Assertions.assertArrayEquals(
+                pvNamesAll.toArray(new String[0]),
+                NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("pv")));
+        Assertions.assertArrayEquals(
+                expectedStatus.toArray(new String[0]),
+                NTUtil.extractStringArray(PVATable.fromStructure(result).getColumn("status")));
     }
 }

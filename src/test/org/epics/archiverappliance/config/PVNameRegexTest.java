@@ -35,6 +35,7 @@ public class PVNameRegexTest {
     private static final List<String> validFieldNames = List.of(".HIHI", ".LO", "");
     private static final List<String> validFieldModifiers = List.of(
             ".{'dbnd':{'abs':1}}",
+            ".{'dbnd':{'abs':0.1}}",
             ".{flv('H-GX')}",
             ".{'dbnd':{'abs':1.5}}",
             ".{\"dbnd\":{'a':'b',\"s\",'b'}}",
@@ -71,6 +72,38 @@ public class PVNameRegexTest {
         Assertions.assertEquals(pvName + fieldModifier, PVNames.normalizeChannelName(channelName));
     }
 
+    private static Stream<Arguments> provideTransferFieldCases() {
+        return Stream.of(
+                Arguments.of("ABC:123", "DEF:456", "DEF:456"),
+                Arguments.of("ABC:123.DESC", "DEF:456", "DEF:456.DESC"),
+                Arguments.of("ABC:123.{'dbnd':{'abs':1}}", "DEF:456", "DEF:456.{'dbnd':{'abs':1}}"),
+                Arguments.of("ABC:123.{'dbnd':{'abs':0.1}}", "DEF:456", "DEF:456.{'dbnd':{'abs':0.1}}"),
+                Arguments.of("ABC:123.DESC.{'dbnd':{'abs':1}}", "DEF:456", "DEF:456.DESC.{'dbnd':{'abs':1}}"),
+                Arguments.of("ABC:123.VAL", "DEF:456", "DEF:456"));
+    }
+
+    /** {@link PVNames#transferField} must carry field names and field modifiers onto the new name. */
+    @ParameterizedTest
+    @MethodSource("provideTransferFieldCases")
+    public void testTransferField(String srcName, String destName, String expected) {
+        Assertions.assertEquals(expected, PVNames.transferField(srcName, destName));
+    }
+
+    /**
+     * The protocol-prefixed names.
+     */
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "pva://UnitTestNoNamingConvention:sine",
+                "ca://UnitTestNoNamingConvention:sine",
+                "pva://UnitTestNoNamingConvention:sine.VAL",
+                "ca://UnitTestNoNamingConvention:sine.VAL"
+            })
+    public void testProtocolPrefixedChannelNames(String pvName) {
+        Assertions.assertTrue(PVNames.isValidChannelName(pvName), "Valid pvName is deemed invalid " + pvName);
+    }
+
     @ParameterizedTest
     @ValueSource(
             strings = {
@@ -94,6 +127,9 @@ public class PVNameRegexTest {
                 "archappl:sine.{",
                 "archappl:sine.}",
                 "archappl:sine.5",
+                "archappl:sine.{'a'=1}",
+                "archappl:sine.{a;b}",
+                "archappl:sine.{a[b}",
                 ""
             })
     public void testInvalidPVNames(String pvName) {

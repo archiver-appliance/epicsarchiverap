@@ -17,6 +17,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -113,7 +114,9 @@ public class DataRetrievalServlet extends HttpServlet {
             "org.epics.archiverappliance.retrieval.SearchStoreForRetiredPvs";
     private static final Logger logger = LogManager.getLogger(DataRetrievalServlet.class.getName());
     private static final HashMap<String, MimeMappingInfo> mimeresponses = new HashMap<String, MimeMappingInfo>();
-    private static ConfigService configService = null;
+    // Must be an instance field: with several appliances embedded in one JVM (integration tests),
+    // a static here would let the last webapp to initialize hijack every appliance's retrieval.
+    private ConfigService configService = null;
 
     static {
         mimeresponses.put("raw", new MimeMappingInfo(PBRAWResponse.class, "application/x-protobuf"));
@@ -1421,7 +1424,26 @@ public class DataRetrievalServlet extends HttpServlet {
                 String redirectURIStr = redirectURI.normalize() + "?" + req.getQueryString();
                 logger.debug("URI for proxying is " + redirectURIStr);
 
-                try (CloseableHttpClient httpclient = HttpClients.createDefault()) {
+                // Bound the proxy request so a hung peer appliance cannot block this thread forever.
+                int connectTimeoutMs = Integer.parseInt(configService
+                        .getInstallationProperties()
+                        .getProperty(
+                                "org.epics.archiverappliance.retrieval.DataRetrievalServlet.proxyConnectTimeoutMs",
+                                "10000"));
+                int socketTimeoutMs = Integer.parseInt(configService
+                        .getInstallationProperties()
+                        .getProperty(
+                                "org.epics.archiverappliance.retrieval.DataRetrievalServlet.proxySocketTimeoutMs",
+                                "30000"));
+                RequestConfig requestConfig = RequestConfig.custom()
+                        .setConnectTimeout(connectTimeoutMs)
+                        .setConnectionRequestTimeout(connectTimeoutMs)
+                        .setSocketTimeout(socketTimeoutMs)
+                        .build();
+
+                try (CloseableHttpClient httpclient = HttpClients.custom()
+                        .setDefaultRequestConfig(requestConfig)
+                        .build()) {
                     HttpGet getMethod = new HttpGet(redirectURIStr);
                     getMethod.addHeader(
                             "Connection",
@@ -1637,6 +1659,8 @@ public class DataRetrievalServlet extends HttpServlet {
     private PVTypeInfo createDefaultPVTypeInfoFromPolicies(String pvName) throws IOException {
         // Create Python interpreter to access policies.py methods
         try (PySystemState systemState = new PySystemState()) {
+            // Pin to this class's loader; Jython must not resolve against a destroyed webapp loader.
+            systemState.setClassLoader(DataRetrievalServlet.class.getClassLoader());
             PythonInterpreter interp = new PythonInterpreter(null, systemState);
 
             // Load the policies.py into the interpreter.

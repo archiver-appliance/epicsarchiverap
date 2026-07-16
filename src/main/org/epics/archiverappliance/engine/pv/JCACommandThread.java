@@ -114,15 +114,23 @@ public class JCACommandThread extends Thread {
      */
     public void shutdown() throws InterruptedException {
 
-        // destory context
-
+        // Context destruction must run on the command thread itself, so enqueue it and give the
+        // thread a brief window to drain the queue before stopping the loop.
         destoryContext();
 
         for (int m = 0; m < 30; m++) {
-            Thread.sleep(1000);
             if (command_queue.isEmpty()) break;
+            Thread.sleep(100);
         }
         run = false;
+
+        // Wake the run-loop sleep and wait for the thread (and the CAJ context's own threads)
+        // to actually exit before the engine webapp is undeployed.
+        this.interrupt();
+        this.join(10_000);
+        if (this.isAlive()) {
+            logger.warn("JCA command thread {} did not terminate within 10s of shutdown", commandThreadId);
+        }
     }
 
     public Channel createChannel(final String name, final ConnectionListener conn_callback)
@@ -132,6 +140,11 @@ public class JCACommandThread extends Thread {
 
     public boolean hasContextBeenInitialized() {
         return this.jca_context != null && this.jca_context.isInitialized();
+    }
+
+    /** @return whether the underlying CAJ context has been destroyed */
+    boolean isContextDestroyed() {
+        return this.jca_context != null && this.jca_context.isDestroyed();
     }
 
     public boolean doesChannelContextMatchThreadContext(Channel channel) {
@@ -211,8 +224,8 @@ public class JCACommandThread extends Thread {
             try {
                 Thread.sleep(DELAY_MILLIS);
             } catch (InterruptedException ex) {
-                /* don't even ignore */
-                logger.error("exception when thread sleeping in JCACommandThread", ex);
+                logger.warn("Interrupted by shutdown.");
+                break;
             }
         }
     }

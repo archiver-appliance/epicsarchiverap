@@ -1,7 +1,9 @@
 package org.epics.archiverappliance.config;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
@@ -17,9 +19,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 import jakarta.servlet.ServletContext;
 
 public class ConfigServiceForTests extends DefaultConfigService {
@@ -77,6 +83,77 @@ public class ConfigServiceForTests extends DefaultConfigService {
     private File webInfClassesFolder;
 
     /**
+     * A single JVM-wide Hazelcast instance backing the config-service maps for every
+     * {@link ConfigServiceForTests}, so the shared test JVM holds one member, not one per class.
+     */
+    private static volatile HazelcastInstance testHzInstance;
+
+    /**
+     * Lazily build the shared test Hazelcast instance: an isolated single member with all
+     * discovery/join mechanisms disabled.
+     */
+    private static synchronized HazelcastInstance getTestHazelcastInstance() {
+        if (testHzInstance == null) {
+            Config config = new Config();
+            config.setClusterName("archappl-tests");
+            config.setProperty("hazelcast.phone.home.enabled", "false");
+            config.getMetricsConfig().setEnabled(false);
+            var join = config.getNetworkConfig().getJoin();
+            join.getAutoDetectionConfig().setEnabled(false);
+            join.getMulticastConfig().setEnabled(false);
+            join.getTcpIpConfig().setEnabled(false);
+            testHzInstance = Hazelcast.newHazelcastInstance(config);
+        }
+        return testHzInstance;
+    }
+
+    /**
+     * Test-driver instances to shut down when the creating test class finishes; drained by
+     * {@code ConfigServiceForTestsCleanupListener}.
+     */
+    private static final Set<ConfigServiceForTests> liveTestInstances = ConcurrentHashMap.newKeySet();
+
+    /** Uniquifies this instance's map names on the shared Hazelcast member. */
+    private static final AtomicLong instanceCounter = new AtomicLong();
+
+    private final long instanceId = instanceCounter.incrementAndGet();
+
+    /** Shut down and forget every tracked test-driver instance. */
+    public static void shutdownTrackedInstances() {
+        for (ConfigServiceForTests cs : liveTestInstances) {
+            liveTestInstances.remove(cs);
+            try {
+                cs.shutdownNow();
+            } catch (Throwable t) {
+                logger.warn("Exception shutting down tracked test ConfigService", t);
+            }
+        }
+    }
+
+    /**
+     * Exempt this instance from automatic teardown; for static helpers reused across test classes.
+     */
+    public void keepAliveAcrossTests() {
+        liveTestInstances.remove(this);
+    }
+
+    private final List<IMap<?, ?>> perInstanceMaps = new ArrayList<>();
+
+    private <K, V> IMap<K, V> perInstanceMap(HazelcastInstance hzinstance, String name) {
+        IMap<K, V> map = hzinstance.getMap(name + "-" + instanceId);
+        perInstanceMaps.add(map);
+        return map;
+    }
+
+    @Override
+    public void shutdownNow() {
+        super.shutdownNow();
+        // Release this instance's maps on the shared member so they don't accumulate over the suite.
+        perInstanceMaps.forEach(IMap::destroy);
+        perInstanceMaps.clear();
+    }
+
+    /**
      * Special Constructor for Integration tests Do not use in unit tests.
      *
      * @throws ConfigException
@@ -95,16 +172,20 @@ public class ConfigServiceForTests extends DefaultConfigService {
         this.webInfClassesFolder = WebInfClassesFolder;
         configlogger.info("The WEB-INF/classes folder is " + this.webInfClassesFolder.getAbsolutePath());
 
-        HazelcastInstance hzinstance = Hazelcast.newHazelcastInstance();
-        pv2appliancemapping = hzinstance.getMap("pv2appliancemapping");
-        namedFlags = hzinstance.getMap("namedflags");
-        typeInfos = hzinstance.getMap(TYPEINFO);
-        archivePVRequests = hzinstance.getMap("archivePVRequests");
-        channelArchiverDataServers = hzinstance.getMap("channelArchiverDataServers");
-        clusterInet2ApplianceIdentity = hzinstance.getMap(CLUSTER_INET_2_APPLIANCE_IDENTITY);
-        appliancesConfigLoaded = hzinstance.getMap("appliancesConfigLoaded");
-        aliasNamesToRealNames = hzinstance.getMap("aliasNamesToRealNames");
-        pv2ChannelArchiverDataServer = hzinstance.getMap("pv2ChannelArchiverDataServer");
+        // These must be Hazelcast IMaps (the config service runs Hz predicate queries on them),
+        // but a fresh member per construction leaks; reuse the one JVM-wide instance. Map names
+        // are per-instance: several instances coexist (test drivers, PVCaPut helpers, ...) and
+        // must not see or clear each other's state. Destroyed in shutdownNow().
+        HazelcastInstance hzinstance = getTestHazelcastInstance();
+        pv2appliancemapping = perInstanceMap(hzinstance, "pv2appliancemapping");
+        namedFlags = perInstanceMap(hzinstance, "namedflags");
+        typeInfos = perInstanceMap(hzinstance, TYPEINFO);
+        archivePVRequests = perInstanceMap(hzinstance, "archivePVRequests");
+        channelArchiverDataServers = perInstanceMap(hzinstance, "channelArchiverDataServers");
+        clusterInet2ApplianceIdentity = perInstanceMap(hzinstance, CLUSTER_INET_2_APPLIANCE_IDENTITY);
+        appliancesConfigLoaded = perInstanceMap(hzinstance, "appliancesConfigLoaded");
+        aliasNamesToRealNames = perInstanceMap(hzinstance, "aliasNamesToRealNames");
+        pv2ChannelArchiverDataServer = perInstanceMap(hzinstance, "pv2ChannelArchiverDataServer");
 
         appliances = new HashMap<String, ApplianceInfo>();
 
@@ -158,6 +239,9 @@ public class ConfigServiceForTests extends DefaultConfigService {
 
         startupState = STARTUP_SEQUENCE.STARTUP_COMPLETE;
         this.addShutdownHook(() -> startupExecutor.shutdown());
+
+        // Tracked for teardown by the cleanup listener; shared helpers opt out via keepAliveAcrossTests().
+        liveTestInstances.add(this);
     }
 
     public static String getDefaultPBTestFolder() {

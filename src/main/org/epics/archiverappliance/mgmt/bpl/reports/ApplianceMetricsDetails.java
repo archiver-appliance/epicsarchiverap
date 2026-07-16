@@ -99,8 +99,7 @@ public class ApplianceMetricsDetails implements BPLAction {
                 applianceAggregateDifferenceFromLastFetch =
                         capacityPlanningMetrics.getApplianceAggregateDifferenceFromLastFetch(configService);
 
-                addDetailedStatus(
-                        result, "Capacity planning last update", capacityPlanningMetrics.getStaticDataLastUpdated());
+                addDetailedStatus(result, "Capacity planning last update", cpStaticData.getStaticDataLastUpdated());
                 addDetailedStatus(
                         result,
                         "Engine write thread usage",

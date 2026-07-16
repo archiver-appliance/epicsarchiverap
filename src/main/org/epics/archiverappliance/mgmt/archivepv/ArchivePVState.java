@@ -257,6 +257,12 @@ public class ArchivePVState {
                 }
                 case POLICY_COMPUTED: {
                     PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+                    if (typeInfo == null) {
+                        // The PV can be paused/deleted while the archive request is still in flight.
+                        abortReason = "Typeinfo for " + pvName + " deleted mid-workflow (POLICY_COMPUTED)";
+                        currentState = ArchivePVStateMachine.ABORTED;
+                        return;
+                    }
                     if (typeInfo.getApplianceIdentity().equals(applianceIdentityAfterCapacityPlanning)) {
                         currentState = ArchivePVStateMachine.TYPEINFO_STABLE;
                     }
@@ -264,6 +270,20 @@ public class ArchivePVState {
                 }
                 case TYPEINFO_STABLE: {
                     PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+                    if (typeInfo == null) {
+                        abortReason = "Typeinfo for " + pvName + " deleted mid-workflow (TYPEINFO_STABLE)";
+                        currentState = ArchivePVStateMachine.ABORTED;
+                        return;
+                    }
+                    if (typeInfo.isPaused()) {
+                        // The PV was paused while the archive request was still in flight; starting
+                        // to archive now would silently undo the pause.
+                        logger.info("PV " + pvName + " was paused mid-workflow; completing without archiving");
+                        configService.archiveRequestWorkflowCompleted(pvName);
+                        configService.getMgmtRuntimeState().finishedPVWorkflow(pvName);
+                        currentState = ArchivePVStateMachine.FINISHED;
+                        return;
+                    }
                     ArchivePVState.startArchivingPV(
                             pvName, configService, configService.getAppliance(typeInfo.getApplianceIdentity()));
                     registerAliasesIfAny(typeInfo);

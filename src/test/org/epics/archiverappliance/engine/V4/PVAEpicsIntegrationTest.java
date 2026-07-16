@@ -1,7 +1,11 @@
 package org.epics.archiverappliance.engine.V4;
 
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.countRetrievedSamples;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.EventStream;
 import org.epics.archiverappliance.SIOCSetup;
@@ -22,8 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+import java.util.concurrent.TimeUnit;
 
 @Tag("integration")
 @Tag("localEpics")
@@ -77,33 +80,31 @@ public class PVAEpicsIntegrationTest {
         logger.info("Restart the ioc");
         siocSetup.startSIOCWithDefaultDB();
         Thread.sleep(samplingPeriodMilliSeconds);
-        // Need to wait for the writer to write all the received data.
-        Thread.sleep((long) secondsToBuffer * 1000);
-        Instant end = Instant.now();
 
         RawDataRetrievalAsEventStream rawDataRetrieval = new RawDataRetrievalAsEventStream(
                 "http://localhost:" + ConfigServiceForTests.RETRIEVAL_TEST_PORT + "/retrieval/data/getData.raw");
 
-        EventStream stream = null;
-        Map<Instant, SampleValue> actualValues = new HashMap<>();
-        try {
-            stream = rawDataRetrieval.getDataForPVS(
-                    new String[] {pvName}, start, end, desc -> logger.info("Getting data for PV " + desc.getPvName()));
+        // Archiving resumes a few seconds after the IOC restarts; poll until enough of the
+        // 1 Hz samples have been archived.
+        Awaitility.await()
+                .pollInterval(2, TimeUnit.SECONDS)
+                .atMost(2, TimeUnit.MINUTES)
+                .until(() -> countRetrievedSamples(rawDataRetrieval, pvName, start) > secondsToBuffer);
 
+        // Verify the retrieved stream once, after the wait: right DBR type and enough samples.
+        Map<Instant, SampleValue> actualValues = new HashMap<>();
+        try (EventStream stream = rawDataRetrieval.getDataForPVS(
+                new String[] {pvName},
+                start,
+                Instant.now(),
+                desc -> logger.info("Getting data for PV " + desc.getPvName()))) {
+            Assertions.assertNotNull(stream, "Got a null stream back from retrieval");
             // Make sure we get the DBR type we expect
             Assertions.assertEquals(
                     ArchDBRTypes.DBR_SCALAR_DOUBLE, stream.getDescription().getArchDBRType());
-
-            // We are making sure that the stream we get back has times in sequential order...
             for (Event e : stream) {
                 actualValues.put(e.getEventTimeStamp(), e.getSampleValue());
             }
-        } finally {
-            if (stream != null)
-                try {
-                    stream.close();
-                } catch (Throwable ignored) {
-                }
         }
         logger.info("Data was {}", actualValues);
         Assertions.assertTrue(actualValues.size() > secondsToBuffer);

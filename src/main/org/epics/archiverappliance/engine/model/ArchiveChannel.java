@@ -407,6 +407,11 @@ public abstract class ArchiveChannel {
         return pv.isConnected();
     }
 
+    /** @return <code>true</code> if this channel has been started and not stopped since */
+    public final boolean isRunning() {
+        return is_running;
+    }
+
     /** Start archiving this channel.
      *
      * @throws Exception  &emsp;

@@ -85,6 +85,7 @@ junit-jupiter-api        = { module = "org.junit.jupiter:junit-jupiter-api", ver
 junit-jupiter-params     = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit-jupiter" }
 junit-jupiter-engine     = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
 junit-platform-launcher  = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }
+junit-platform-engine    = { module = "org.junit.platform:junit-platform-engine", version.ref = "junit-platform" }
 awaitility               = { module = "org.awaitility:awaitility", version.ref = "awaitility" }
 commons-compress         = { module = "org.apache.commons:commons-compress", version.ref = "commons-compress" }
 commons-cli              = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }

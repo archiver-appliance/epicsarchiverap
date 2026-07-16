@@ -60,9 +60,41 @@ public class TomcatSetup implements AutoCloseable {
     private File testFolder;
     private Properties savedProperties;
 
+    /**
+     * System properties captured once at class load, before any test's {@code @BeforeEach} can
+     * pollute them. Teardown restores this baseline so a test's property changes (e.g. JDBM2
+     * persistence settings) never outlive its own run in the shared JVM.
+     */
+    private static final Properties pristineSystemProperties = snapshotProperties(System.getProperties());
+
+    private static Properties snapshotProperties(Properties source) {
+        // Flat copy, not a defaults-chain, so containsKey() behaves correctly.
+        Properties copy = new Properties();
+        copy.putAll(source);
+        return copy;
+    }
+
     // -------------------------------------------------------------------------
     // Public API
     // -------------------------------------------------------------------------
+
+    /**
+     * Storage plugin URLs rooted in {@code build/tomcats/tomcat_<testName>/<applianceName>}.
+     *
+     * <p>{@code ${ARCHAPPL_*_FOLDER}} macros expand against process-global system properties and so
+     * cannot resolve per-appliance in the shared JVM; tests needing per-appliance storage (e.g.
+     * failover) post typeinfos with these explicit URLs instead. Granularities and ETL parameters
+     * mirror {@code retrieval/postprocessor/data/PVTypeInfoPrototype.json}.
+     */
+    public static String[] perApplianceDataStores(String testName, String applianceName) {
+        String base = new File("build/tomcats/tomcat_" + testName, applianceName).getAbsolutePath();
+        return new String[] {
+            "pb://localhost?name=STS&rootFolder=" + base
+                    + "/sts&partitionGranularity=PARTITION_HOUR&consolidateOnShutdown=true",
+            "pb://localhost?name=MTS&rootFolder=" + base + "/mts&partitionGranularity=PARTITION_DAY&hold=2&gather=1",
+            "pb://localhost?name=LTS&rootFolder=" + base + "/lts&partitionGranularity=PARTITION_YEAR"
+        };
+    }
 
     /** Start a single-appliance setup for {@code testName}. */
     public void setUpWebApps(String testName) throws Exception {
@@ -144,11 +176,7 @@ public class TomcatSetup implements AutoCloseable {
     // -------------------------------------------------------------------------
 
     private void prepare(String testName) throws IOException {
-        // Snapshot system properties using putAll so the copy is a flat map, not a
-        // defaults-chain. Properties.containsKey() does not search defaults, so using
-        // new Properties(original) as a "reset" would silently hide keys.
-        savedProperties = new Properties();
-        savedProperties.putAll(System.getProperties());
+        savedProperties = snapshotProperties(System.getProperties());
 
         testFolder = new File("build/tomcats/tomcat_" + testName);
         if (testFolder.exists()) {
@@ -267,20 +295,25 @@ public class TomcatSetup implements AutoCloseable {
             }
         }
 
-        // With embedded Tomcat the JVM working directory is the project root, so any relative
-        // (or absent) storage folder property must be converted to an absolute path inside the
-        // appliance's own work folder to restore that per-appliance isolation.
+        // Tests seed data via the ARCHAPPL_*_FOLDER env vars and macro expansion prefers system
+        // properties over env, so a property may only be set here if a test set one explicitly.
         for (String[] pair : new String[][] {
             {"ARCHAPPL_SHORT_TERM_FOLDER", "sts"},
             {"ARCHAPPL_MEDIUM_TERM_FOLDER", "mts"},
             {"ARCHAPPL_LONG_TERM_FOLDER", "lts"}
         }) {
-            String current = System.getProperty(pair[0]);
-            if (current == null || !new File(current).isAbsolute()) {
-                File dir = new File(workFolder, pair[1]);
-                dir.mkdirs();
-                System.setProperty(pair[0], dir.getAbsolutePath());
+            String fromProperty = System.getProperty(pair[0]);
+            if (fromProperty != null && new File(fromProperty).isAbsolute()) {
+                continue;
             }
+            String fromEnv = System.getenv(pair[0]);
+            if (fromEnv != null && new File(fromEnv).isAbsolute()) {
+                System.clearProperty(pair[0]);
+                continue;
+            }
+            File dir = new File(workFolder, pair[1]);
+            dir.mkdirs();
+            System.setProperty(pair[0], dir.getAbsolutePath());
         }
 
         // Re-apply any extra properties that must survive the reset above.
@@ -307,11 +340,9 @@ public class TomcatSetup implements AutoCloseable {
     }
 
     private void restoreSystemProperties() {
-        if (savedProperties != null) {
-            Properties restored = new Properties();
-            restored.putAll(savedProperties);
-            System.setProperties(restored);
-        }
+        // The pristine baseline, not savedProperties: the latter is captured after @BeforeEach
+        // and may already contain this test's pollution.
+        System.setProperties(snapshotProperties(pristineSystemProperties));
     }
 
     // -------------------------------------------------------------------------

@@ -6,6 +6,7 @@ import static org.epics.archiverappliance.ArchiveTestUtils.waitForStatusChange;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.awaitility.Awaitility;
 import org.epics.archiverappliance.SIOCSetup;
 import org.epics.archiverappliance.TomcatSetup;
 import org.epics.archiverappliance.config.ConfigService;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Tag("integration")
@@ -108,9 +110,12 @@ public class MetricsTest {
 
     private static Map<String, String> convertToStringMap(List<Map<String, String>> actualMetrics) {
         logger.info("Actual metrics are: " + actualMetrics);
+        // Details like "Open channels" repeat once per channel; merge repeated names into one entry.
         return actualMetrics.stream()
                 .collect((Collectors.toMap(
-                        m -> m.get("source") + m.get("name"), m -> StringUtils.defaultString(m.get("value")))));
+                        m -> m.get("source") + m.get("name"),
+                        m -> StringUtils.defaultString(m.get("value")),
+                        (a, b) -> a + ", " + b)));
     }
 
     String retrievalSource = ConfigService.WAR_FILE.RETRIEVAL.name();
@@ -162,8 +167,15 @@ public class MetricsTest {
         expectedMetricsDetails.put(engineSource + "Connected PV count", "1");
         expectedMetricsDetails.put(engineSource + "Total channels", "8"); // All the meta channels
 
-        assertApplianceMetricsMatch(expectedApplianceMetrics);
-        assertApplianceMetricsDetailsMatch(expectedMetricsDetails, "appliance0");
+        // The PV reports "Being archived" as soon as the engine creates the channel; the CA connection
+        // and the meta channels complete shortly after, so poll until the metrics settle.
+        Awaitility.await()
+                .pollInterval(5, TimeUnit.SECONDS)
+                .atMost(1, TimeUnit.MINUTES)
+                .untilAsserted(() -> {
+                    assertApplianceMetricsMatch(expectedApplianceMetrics);
+                    assertApplianceMetricsDetailsMatch(expectedMetricsDetails, "appliance0");
+                });
 
         Map<String, String> expectedPVDetails = new HashMap<>(Map.ofEntries(
                 entry(mgmtSource + "PV Name", pvName),

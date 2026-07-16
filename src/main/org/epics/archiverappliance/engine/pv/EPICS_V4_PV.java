@@ -262,7 +262,12 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         }
     }
 
-    private static boolean timeStampUpdated(BitSet changes, BitSet timeStampBits) {
+    static boolean timeStampUpdated(BitSet changes, BitSet timeStampBits) {
+        // Bit 0 marks the entire structure as changed - as in the initial monitor snapshot on
+        // (re)connect - which includes the timestamp.
+        if (changes.get(0)) {
+            return true;
+        }
         if (!timeStampBits.isEmpty()) {
             return changes.intersects(timeStampBits);
         }
@@ -485,7 +490,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         }
     }
 
-    private static HashMap<String, String> metaInfoToStore(MetaInfo totalMetaInfo) {
+    static HashMap<String, String> metaInfoToStore(MetaInfo totalMetaInfo) {
         HashMap<String, String> tempHashMap = new HashMap<>();
         if (totalMetaInfo != null) {
             if (totalMetaInfo.getUnit() != null) {
@@ -498,7 +503,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         return tempHashMap;
     }
 
-    private static ArchDBRTypes determineDBRType(String structureID, String valueTypeId, String valueFormatType) {
+    static ArchDBRTypes determineDBRType(String structureID, String valueTypeId, String valueFormatType) {
         if (structureID == null || valueTypeId == null) {
             return ArchDBRTypes.DBR_V4_GENERIC_BYTES;
         }

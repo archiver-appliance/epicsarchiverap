@@ -164,11 +164,8 @@ public class ReassignApplianceTest {
                         + URLEncoder.encode(pvName, StandardCharsets.UTF_8),
                 false));
 
-        int expectedSampleCount = 60 * 10;
-        List<Integer> valsBefore = getEvents();
-        Assertions.assertTrue(
-                valsBefore.size() >= expectedSampleCount,
-                "Expected at least " + expectedSampleCount + " got " + valsBefore.size());
+        int expectedSampleCountBefore = 60 * 10;
+        List<Integer> valsBefore = awaitAtLeastSamples(expectedSampleCountBefore);
 
         GetUrlContent.getURLContentAsJSONObject(
                 MGMT_URL + "/reassignAppliance?pv=" + URLEncoder.encode(pvName, StandardCharsets.UTF_8)
@@ -200,11 +197,8 @@ public class ReassignApplianceTest {
                         .size()
                 > 5);
 
-        List<Integer> valsAfter = getEvents();
-        expectedSampleCount = 2 * 60 * 10;
-        Assertions.assertTrue(
-                valsAfter.size() >= expectedSampleCount,
-                "Expected at least " + expectedSampleCount + " got " + valsAfter.size());
+        int expectedSampleCountAfter = 2 * 60 * 10;
+        List<Integer> valsAfter = awaitAtLeastSamples(expectedSampleCountAfter);
 
         // Confirm that every sample in the before made it into the after.
         // This is largely a matter of confirming the setup.
@@ -231,6 +225,16 @@ public class ReassignApplianceTest {
             logger.info(ret.toJSONString());
         }
         return ret;
+    }
+
+    /** Poll retrieval until at least {@code expected} samples are archived, then return them. */
+    private List<Integer> awaitAtLeastSamples(int expected) throws IOException {
+        Awaitility.await()
+                .pollInterval(10, TimeUnit.SECONDS)
+                .atMost(3, TimeUnit.MINUTES)
+                .untilAsserted(
+                        () -> Assertions.assertTrue(getEvents().size() >= expected, "Expected at least " + expected));
+        return getEvents();
     }
 
     private LinkedList<Integer> getEvents() throws IOException {

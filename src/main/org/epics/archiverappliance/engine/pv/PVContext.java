@@ -72,31 +72,6 @@ public class PVContext {
      * Changes only have an effect before the very first channel is created.
      */
 
-    /** The JCA context reference count. */
-    private static long jca_refs = 0;
-
-    private static ConfigService configservice;
-
-    public static void setConfigservice(ConfigService configservice) {
-        PVContext.configservice = configservice;
-    }
-
-    /** Initialize the JA library, start the command thread. */
-    static void initJCA() throws Exception {
-
-        ++jca_refs;
-    }
-
-    /**
-     * Disconnect from the JA library.
-     * <p>
-     * Without this step, JCA threads can stay around and prevent the
-     * application from quitting.
-     */
-    private static void exitJCA() {
-        --jca_refs;
-    }
-
     /**
      * Get a new channel, or a reference to an existing one.
      *
@@ -110,9 +85,12 @@ public class PVContext {
      * @see #releaseChannel
      */
     public static synchronized Channel getChannel(
-            final String name, int jcaCommandThreadId, final ConnectionListener conn_callback) throws Exception {
+            final ConfigService configservice,
+            final String name,
+            int jcaCommandThreadId,
+            final ConnectionListener conn_callback)
+            throws Exception {
 
-        initJCA();
         final Channel channel = configservice
                 .getEngineContext()
                 .getJCACommandThread(jcaCommandThreadId)
@@ -142,11 +120,11 @@ public class PVContext {
             // You'd get this if the channel is already closed
             logger.debug("Exception removing connection listener from channel " + channelname, ex);
         }
-        exitJCA();
     }
 
     /**
      * Add a command to the JCACommandThread.
+     * @param configservice The config service of the engine this PV belongs to.
      * @param pvName The name of the PV that this applies to
      * @param jcaCommandThreadId The JCA Command thread for this PV.
      * @param theChannel this can be null
@@ -154,7 +132,12 @@ public class PVContext {
      * @param command The runnable that will run in the specified command thread
      */
     public static void scheduleCommand(
-            String pvName, int jcaCommandThreadId, Channel theChannel, String msg, final Runnable command) {
+            ConfigService configservice,
+            String pvName,
+            int jcaCommandThreadId,
+            Channel theChannel,
+            String msg,
+            final Runnable command) {
         try {
             if (theChannel != null) {
                 if (!configservice
@@ -174,14 +157,5 @@ public class PVContext {
             logger.error("Exception scheduling command for pv " + pvName, t);
         }
         configservice.getEngineContext().getJCACommandThread(jcaCommandThreadId).addCommand(command);
-    }
-
-    /**
-     * Helper for unit test.
-     *
-     * @return <code>true</code> if all has been release.
-     */
-    static boolean allReleased() {
-        return jca_refs == 0;
     }
 }

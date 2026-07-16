@@ -33,6 +33,9 @@ public class PlainCommonSetup {
     static {
         try {
             configService = new ConfigServiceForTests(1);
+            // This is a shared helper reused across many test classes, so its config service must
+            // outlive any single test; exempt it from the per-test EngineContext teardown.
+            configService.keepAliveAcrossTests();
         } catch (ConfigException e) {
             throw new RuntimeException(e);
         }

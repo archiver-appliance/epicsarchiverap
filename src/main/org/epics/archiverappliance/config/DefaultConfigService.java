@@ -97,6 +97,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -174,7 +175,8 @@ public class DefaultConfigService implements ConfigService {
     // Runtime state ends here
 
     protected ApplianceAggregateInfo applianceAggregateInfo = new ApplianceAggregateInfo();
-    protected EventBus eventBus = new AsyncEventBus(Executors.newSingleThreadExecutor(r -> new Thread(r, "Event bus")));
+    protected ExecutorService eventBusExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Event bus"));
+    protected EventBus eventBus = new AsyncEventBus(eventBusExecutor);
     protected Properties archapplproperties = new Properties();
     protected PVNameToKeyMapping pvName2KeyConverter = null;
     protected ConfigPersistence persistanceLayer;
@@ -297,7 +299,7 @@ public class DefaultConfigService implements ConfigService {
             }
             for (Object apkeyobj : archapplproperties.keySet()) {
                 String apkey = (String) apkeyobj;
-                if (System.getProperties().contains(apkey)) {
+                if (System.getProperties().containsKey(apkey)) {
                     String nval = System.getProperty(apkey);
                     configlogger.info("Overriding {} in archappl.properties with JVM property {}", apkey, nval);
                     archapplproperties.put(apkey, nval);
@@ -385,7 +387,12 @@ public class DefaultConfigService implements ConfigService {
 
         this.addShutdownHook(() -> {
             logger.info("Shutting down startup scheduled executor...");
-            startupExecutor.shutdown();
+            shutdownAndAwait(startupExecutor, "Startup executor");
+        });
+
+        this.addShutdownHook(() -> {
+            logger.info("Shutting down event bus executor...");
+            shutdownAndAwait(eventBusExecutor, "Event bus");
         });
 
         this.startupState = STARTUP_SEQUENCE.READY_TO_JOIN_APPLIANCE;
@@ -1473,6 +1480,26 @@ public class DefaultConfigService implements ConfigService {
     @Override
     public void addShutdownHook(Runnable runnable) {
         shutdownHooks.add(runnable);
+    }
+
+    /**
+     * Shut down an executor and wait briefly for it to terminate, falling back to
+     * {@link ExecutorService#shutdownNow()}, so its threads do not leak.
+     */
+    private static void shutdownAndAwait(ExecutorService executor, String name) {
+        if (executor == null) {
+            return;
+        }
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                logger.warn("Executor {} did not terminate within 10s; forcing shutdown", name);
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     private void runShutDownHooksAndCleanup() {

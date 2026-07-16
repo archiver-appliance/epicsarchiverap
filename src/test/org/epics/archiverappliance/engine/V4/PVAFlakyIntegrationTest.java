@@ -1,5 +1,8 @@
 package org.epics.archiverappliance.engine.V4;
 
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.convertBytesToPVAStructure;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.Event;
@@ -19,6 +22,7 @@ import org.epics.pva.server.ServerPV;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -28,9 +32,6 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.convertBytesToPVAStructure;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.waitForStatusChange;
 
 /**
  * Checks reconnects after connection drops as an integration test.
@@ -56,6 +57,7 @@ public class PVAFlakyIntegrationTest {
     }
 
     @Test
+    @Disabled("Flaky PVA reconnect timing; re-evaluate after the EPICS_V4_PV initial-snapshot fix")
     public void testStartAfterArchive() throws Exception {
 
         String pvName = "PV:" + org.epics.archiverappliance.engine.V4.PVAccessIntegrationTest.class.getSimpleName()

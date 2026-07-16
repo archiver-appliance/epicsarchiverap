@@ -13,6 +13,9 @@ import org.json.simple.JSONObject;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -46,7 +49,10 @@ public class CapacityPlanningData {
     private ApplianceAggregateInfo applianceAggregateInfoAsOfLastFetch;
     private String identity;
     private boolean isAvailable = true;
-    private static CPStaticData cachedCPStaticData = null;
+    // Cached per config service: a single static slot would leak one appliance's cluster metrics
+    // into another's when several appliances share a JVM. Weak keys so undeployed webapps can be GC'd.
+    private static final Map<ConfigService, CPStaticData> cachedCPStaticData =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     class ETLMetrics {
         String identity;
@@ -121,13 +127,14 @@ public class CapacityPlanningData {
 
     public static CPStaticData getMetricsForAppliances(ConfigService configService) throws IOException {
         Instant now = TimeUtils.now();
-        if (cachedCPStaticData != null) {
-            if ((now.toEpochMilli() - cachedCPStaticData.timeofData.toEpochMilli()) > MEASURED_DATA_CACHE_TIME) {
+        CPStaticData cachedData = cachedCPStaticData.get(configService);
+        if (cachedData != null) {
+            if ((now.toEpochMilli() - cachedData.timeofData.toEpochMilli()) > MEASURED_DATA_CACHE_TIME) {
                 logger.debug("Refetching static data for capacity planning as it is stale "
-                        + (now.toEpochMilli() - cachedCPStaticData.timeofData.toEpochMilli()));
+                        + (now.toEpochMilli() - cachedData.timeofData.toEpochMilli()));
             } else {
                 logger.debug("Using cached copy of measured data");
-                return cachedCPStaticData;
+                return cachedData;
             }
         }
 
@@ -139,12 +146,12 @@ public class CapacityPlanningData {
         }
 
         CPStaticData newStaticData = new CPStaticData(capacityMetrics, now);
-        cachedCPStaticData = newStaticData;
-        return cachedCPStaticData;
+        cachedCPStaticData.put(configService, newStaticData);
+        return newStaticData;
     }
 
     public static CPStaticData getCachedMetricsForAppliances(ConfigService configService) throws IOException {
-        return cachedCPStaticData;
+        return cachedCPStaticData.get(configService);
     }
 
     public static class CPStaticData {
@@ -155,6 +162,10 @@ public class CapacityPlanningData {
                 ConcurrentHashMap<ApplianceInfo, CapacityPlanningData> cpApplianceMetrics, Instant timeofData) {
             this.cpApplianceMetrics = cpApplianceMetrics;
             this.timeofData = timeofData;
+        }
+
+        public String getStaticDataLastUpdated() {
+            return TimeUtils.convertToHumanReadableString(this.timeofData);
         }
     }
 
@@ -203,13 +214,5 @@ public class CapacityPlanningData {
 
     public void setAvailable(boolean isAvailable) {
         this.isAvailable = isAvailable;
-    }
-
-    public String getStaticDataLastUpdated() {
-        if (cachedCPStaticData != null) {
-            return TimeUtils.convertToHumanReadableString(cachedCPStaticData.timeofData);
-        } else {
-            return "Unknown";
-        }
     }
 }
