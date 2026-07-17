@@ -10,6 +10,10 @@ At a high level, some features are
 
 For more details, please see the [documentation](http://epicsarchiver.readthedocs.io/), or the [current branch documentation](docs).
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to build, run, test and format the
+appliance, and [ARCHITECTURE.md](ARCHITECTURE.md) for an overview of how it is put
+together.
+
 ## Development
 
 ### Prerequisites

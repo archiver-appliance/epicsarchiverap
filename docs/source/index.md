@@ -108,3 +108,19 @@ sysadmin/guides/index
 sysadmin/explanations/index
 sysadmin/references/index
 ```
+
+**Maintainer** — build, understand and contribute to the appliance itself.
+
+```{toctree}
+:caption: Maintainer documentation
+:maxdepth: 1
+
+maintainer/contributing
+maintainer/architecture
+```
+
+```{toctree}
+:hidden:
+
+license
+```
