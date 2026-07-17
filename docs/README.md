@@ -16,3 +16,7 @@ automatically — no manual Python setup required.
 
 The first run of `sphinx` or `liveviewdocs` will create `docs/.venv/` and install
 all dependencies from `docs/pyproject.toml` automatically.
+
+By default the venv is created and populated with `pip`. Pass
+`-PdocsInstaller=uv` to use [uv](https://docs.astral.sh/uv/) instead (much
+faster; requires `uv` on your `PATH`), e.g. `./gradlew sphinx -PdocsInstaller=uv`.

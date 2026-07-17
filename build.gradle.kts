@@ -338,25 +338,49 @@ tasks.register<Exec>("generateReleaseNotes") {
 	isIgnoreExitValue = true
 }
 
+// Docs Python environment installer. Pass -PdocsInstaller=uv to use uv instead
+// of the default pip; both populate the same docs/.venv so the sphinx tasks are
+// unaffected by the choice.
+val docsInstaller = (project.findProperty("docsInstaller") as String? ?: "pip").lowercase()
+require(docsInstaller == "pip" || docsInstaller == "uv") {
+	"docsInstaller must be 'pip' or 'uv', got '$docsInstaller'"
+}
+val venvDir = layout.projectDirectory.file("docs/.venv").asFile.path
+val venvPython = layout.projectDirectory.file(
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/python.exe" else "docs/.venv/bin/python"
+).asFile.path
+
 val docsVenv = tasks.register<Exec>("docsVenv") {
 	group = "Documentation"
-	description = "Create Python virtual environment for docs."
-	val python = if (Os.isFamily(Os.FAMILY_WINDOWS)) "python" else "python3"
-	commandLine(python, "-m", "venv", layout.projectDirectory.file("docs/.venv").asFile.path)
+	description = "Create Python virtual environment for docs. Pass -PdocsInstaller=uv to use uv."
+	if (docsInstaller == "uv") {
+		commandLine("uv", "venv", venvDir)
+	} else {
+		val python = if (Os.isFamily(Os.FAMILY_WINDOWS)) "python" else "python3"
+		commandLine(python, "-m", "venv", venvDir)
+	}
+	// Re-run when the installer choice changes so switching uv<->pip rebuilds the venv.
+	inputs.property("docsInstaller", docsInstaller)
 	outputs.dir("docs/.venv")
 }
 
 val docsInstall = tasks.register<Exec>("docsInstall") {
 	group = "Documentation"
-	description = "Install Sphinx dependencies into docs venv."
+	description = "Install Sphinx dependencies into docs venv. Pass -PdocsInstaller=uv to use uv."
 	dependsOn(docsVenv)
-	// Use absolute path for pip so it resolves correctly regardless of workingDir
-	val pip = layout.projectDirectory.file(
-		if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/pip.exe" else "docs/.venv/bin/pip"
-	).asFile.path
-	commandLine(pip, "install", "-q", ".[dev]")
 	workingDir = project.projectDir.resolve("docs")
+	if (docsInstaller == "uv") {
+		// uv installs into the venv targeted explicitly via --python.
+		commandLine("uv", "pip", "install", "--python", venvPython, "-q", ".[dev]")
+	} else {
+		// Use absolute path for pip so it resolves correctly regardless of workingDir
+		val pip = layout.projectDirectory.file(
+			if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/pip.exe" else "docs/.venv/bin/pip"
+		).asFile.path
+		commandLine(pip, "install", "-q", ".[dev]")
+	}
 	inputs.file("docs/pyproject.toml")
+	inputs.property("docsInstaller", docsInstaller)
 	// Use a stamp file so Gradle re-runs this when pyproject.toml changes
 	outputs.file("docs/.venv/.installed-stamp")
 	doLast {
