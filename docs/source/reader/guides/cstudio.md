@@ -1,13 +1,13 @@
-# CS Studio Integration
+## CS Studio Integration
 
 [CS-Studio](http://controlsystemstudio.org/) 4.X onwards comes with
 support for the EPICS Archiver Appliance as a data source for the
 databrowser.
 
-## Configuring CS-Studio
+### Configuring CS-Studio
 
 CS-Studio communicates with the appliance using the
-[PB/HTTP](../developer/pb_pbraw) protocol. The databrowser can be configured to
+[PB/HTTP](../../reader/references/pb_pbraw) protocol. The databrowser can be configured to
 use the appliance by including the client retrieval URL to the list of
 Archive data servers. From the top menu select
 `Edit` > `Preferences` > `CSS Applications` > `Trends`
@@ -21,10 +21,10 @@ Archive data servers. From the top menu select
 
 Example:
 
-![Connecting using pbraw](../images/csstudio_config.png)
+![Connecting using pbraw](../../images/csstudio_config.png)
 
 Once the URL has been added to the preferences, the archiver appliance
 can be used in the databrowser like any other data source. Users can
 search the archive for PV's, retrieve data and plot it, etc.
 
-![Plotting](../images/csstudio_plot.jpg)
+![Plotting](../../images/csstudio_plot.jpg)

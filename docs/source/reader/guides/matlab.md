@@ -1,12 +1,12 @@
-# Retrieving data using Matlab
+## Retrieving data using Matlab
 
 The EPICS Archiver Appliance support multiple MIME-types when retrieving
 data and one of the supported MIME-types is the Matlab file format. The
 process of getting archive data into Matlab consists of
 
 1. Constructing a URL to the server. See
-   [this](userguide.html#retrieval_url_formula) section on for the URL
-   format for data retrieval.
+   [Constructing a data retrieval URL](../../reader/references/retrieval-api)
+   for the URL format for data retrieval.
 2. Using `urlwrite` to download data from this URL into a file.
 3. Loading this file into Matlab.
 
@@ -36,7 +36,7 @@ data
 Here\'s a screenshot of this sample code being executed in a Matlab
 environment.
 
-![image](../images/matlab1.png)
+![image](../../images/matlab1.png)
 
 The `.mat` response contains two objects, a header and a data object.
 

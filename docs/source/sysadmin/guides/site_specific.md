@@ -1,4 +1,4 @@
-# Making simple site-specific content changes
+## Making simple site-specific content changes
 
 While the [Customization Guide](customization) has details on a
 more flexible mechanism to customize the EPICS archiver appliance on a
@@ -64,4 +64,4 @@ java -cp ${TOMCAT_HOME}/webapps/mgmt/WEB-INF/classes:${TOMCAT_HOME}/webapps/mgmt
 
 to generate
 
-![image](../images/simple_static_content.png)
+![image](../../images/simple_static_content.png)

@@ -1,8 +1,8 @@
-# Retrieving data using the ArchiveViewer
+## Retrieving data using the ArchiveViewer
 
 The EPICS Archiver Appliance comes with a client plugin for the
 ArchiveViewer that enables the user to retrieve and display data in the
-ArchiveViewer using the [PB/HTTP](../developer/pb_pbraw) protocol. To download a
+ArchiveViewer using the [PB/HTTP](../../reader/references/pb_pbraw) protocol. To download a
 version of the Archive Viewer with the client plugin for the EPICS
 Archiver Appliance, please see the
 [Download](https://github.com/slacmshankar/epicsarchiverap/releases/)\'s
@@ -14,12 +14,12 @@ Archiver Appliance using a URL that looks like so
 replacing the string _http_ with the string _pbraw_ in the
 `data_retrieval_url` element of your `appliances.xml`.
 
-![Connecting using pbraw](../images/av_connect.png)
+![Connecting using pbraw](../../images/av_connect.png)
 
 Once you have established a connection to the server, you should be able
 to use the Archive Viewer as before to retrieve and display data.
 
-![Plotting](../images/av_plot.png)
+![Plotting](../../images/av_plot.png)
 
 The Archive Viewer is also used to retrieve data from the Channel
 Archiver; this has a concept of indexes that form part of the data

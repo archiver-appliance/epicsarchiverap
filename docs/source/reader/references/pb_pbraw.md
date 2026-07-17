@@ -3,7 +3,7 @@
 ## The `.pb` file format
 
 The
-[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html)
 in the EPICS archiver appliance uses Google\'s
 [ProtocolBuffers](https://developers.google.com/protocol-buffers) as the
 serialization mechanism. The PB definitions mapping EPICS DBR types to
@@ -13,7 +13,7 @@ The first line in a PB file is a header (`PayloadInfo` PB message) that
 contains some basic information like the PV name, its DBR type and so
 on.
 
-![image](../images/pbfile.png)
+![image](../../images/pbfile.png)
 
 As serialized PB messages are binary data; after serialization, newline
 characters are escaped to maintain a \"sample per line\" constraint.
@@ -32,7 +32,7 @@ arbitrary location in the file.
 
 ## Configuration
 
-For details on how to configure the Protocol Buffers backend, including time partitioning and storage stage setup, please see the [Storage Plugins](../../sysadmin/storage_plugins#protocol-buffers-pb-backend) page in the Sysadmin guide.
+For details on how to configure the Protocol Buffers backend, including time partitioning and storage stage setup, please see the [Storage Plugins](../../sysadmin/references/storage_plugins#protocol-buffers-pb-backend) page in the Sysadmin guide.
 
 PB files try to optimize on storage consumption. On an average, an
 `EPICS DBR_DOUBLE/PB ScalarDouble` consumes about 21 bytes per sample.
@@ -86,4 +86,4 @@ and [carchivetools](https://github.com/epicsdeb/carchivetools) handle
 the multiple chunks in a seamless fashion and present the data to the
 caller as a single event stream.
 
-![image](../images/pbhttp.png)
+![image](../../images/pbhttp.png)

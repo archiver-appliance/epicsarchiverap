@@ -31,13 +31,21 @@ html_theme = "sphinx_rtd_theme"
 
 # conf.py is at docs/source/conf.py; parents[0]=source, parents[1]=docs, parents[2]=repo root
 _javadoc_dir = Path(__file__).resolve().parents[2] / "build" / "docs"
-html_static_path = ["_static"]
+html_static_path = ["_static", "js"]
 if _javadoc_dir.exists():
     html_static_path.append(str(_javadoc_dir))
+
+templates_path = ["templates"]
+
+html_js_files = [
+    "keybindings.js",
+]
 
 
 # -- Options for MyST's markdown -----------------------------------------------
 # https://myst-parser.readthedocs.io/en/latest/configuration.html
+
+myst_heading_anchors = 4
 
 myst_enable_extensions = [
     "amsmath",

@@ -3,9 +3,9 @@
 ## Implementation Details
 
 The Parquet backend is implemented as a
-[PlainFileHandler](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainFileHandler.html){.external}
+[PlainFileHandler](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainFileHandler.html)
 within the
-[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}. It uses the same partitioning logic as the PB backend (e.g., hourly, daily, or yearly partitions).
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html). It uses the same partitioning logic as the PB backend (e.g., hourly, daily, or yearly partitions).
 
 ### Schema
 
@@ -13,7 +13,7 @@ The schema used in Parquet files is derived from the Protocol Buffers definition
 
 ## Configuration and Management
 
-For details on how to configure the Parquet backend, including compression settings and data conversion, please see the [Storage Plugins](../../sysadmin/storage_plugins#apache-parquet-backend) page in the Sysadmin guide.
+For details on how to configure the Parquet backend, including compression settings and data conversion, please see the [Storage Plugins](../../sysadmin/references/storage_plugins.md#apache-parquet-backend) page in the Sysadmin guide.
 
 ## Tools for Analyzing Parquet Files
 

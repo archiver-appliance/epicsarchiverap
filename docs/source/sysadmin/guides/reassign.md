@@ -1,4 +1,4 @@
-# Dynamic (re)-assignment of PVs to appliances
+## Dynamic (re)-assignment of PVs to appliances
 
 The EAA primarily uses clustering to support archiving millions of PVs.
 When a PV `PV1` is added to EAA, the `mgmt` component in EAA assigns the PV to one of the appliances in the cluster.
