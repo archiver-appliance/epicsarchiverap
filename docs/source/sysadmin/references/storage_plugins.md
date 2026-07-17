@@ -24,9 +24,9 @@ technologies. For more details, please see the Javadoc.
 ## NIO2
 
 The
-[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html){.external}
+[PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html)
 can be viewed as a chunking
-[StoragePlugin](../_static/javadoc/org/epics/archiverappliance/StoragePlugin.html){.external}. It
+[StoragePlugin](../_static/javadoc/org/epics/archiverappliance/StoragePlugin.html). It
 chunks data into `Time instant t ↔ Chunk key`,
 well-defined time-partitions (instead of individual samples) and various
 business processes in the archiver appliance understand these
@@ -35,8 +35,8 @@ defined [key](#key-mapping) and one can choose to store a chunk in any
 storage provider that provides block storage. The PlainStoragePlugin
 supports multiple backends for serialization:
 
-1.  [**Protocol Buffers (PB)**](../developer/pb_pbraw): The default backend, using the `pb:` scheme.
-2.  [**Apache Parquet**](../developer/parquet): A columnar storage backend, using the `parquet:` scheme.
+1.  [**Protocol Buffers (PB)**](../../reader/references/pb_pbraw): The default backend, using the `pb:` scheme.
+2.  [**Apache Parquet**](../../sysadmin/references/parquet): A columnar storage backend, using the `parquet:` scheme.
 
 For existing PVs, you can modify storage parameters or switch backends using the [`/changeStore`](#changestore-bpl) Management BPL action. This allows for updating partition granularity, compression settings, or migrating between PB and Parquet without losing data.
 
@@ -76,7 +76,7 @@ support for [alternate type systems](../_static/javadoc/org/epics/archiverapplia
 contact the collaboration if you\'d want to consider using alternate
 serialization mechanisms.
 
-For more detailed information on implementation and tools for analyzing Parquet files, see the [Parquet backend](../developer/parquet) page.
+For more detailed information on implementation and tools for analyzing Parquet files, see the [Parquet backend](../../sysadmin/references/parquet) page.
 
 ## Configuration
 
@@ -123,7 +123,7 @@ java -cp ... edu.stanford.slac.archiverappliance.plain.utils.ConvertFile /data/p
 
 ### ChangeStore BPL
 
-For a more automated approach, the `/changeStore` [Management BPL action](../developer/mgmt_scriptables.md) can be used to update the storage configuration for a single PV. This action allows you to:
+For a more automated approach, the `/changeStore` [Management BPL action](../../manager/references/mgmt_scriptables.md) can be used to update the storage configuration for a single PV. This action allows you to:
 
 - **Change Backend**: Convert existing data from one backend to another (e.g., from `pb` to `parquet`).
 - **Update Partition Granularity**: Change partition granularity (e.g., from `PARTITION_HOUR` to `PARTITION_DAY`)
