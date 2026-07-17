@@ -607,6 +607,14 @@ tasks.register<Tar>("buildRelease") {
 // Test Task Definitions
 // =================================================================
 
+// Remove test dependencies from the analyzeClassesDependencies task
+// workaround for bug in 2.0.0
+tasks.named("analyzeClassesDependencies") {
+	setDependsOn(dependsOn.filterNot {
+		it is String && (it.contains("test") || it.contains("Test"))
+	})
+}
+
 tasks.withType<Test>().configureEach {
 	testClassesDirs = sourceSets.test.get().output.classesDirs
 	classpath = sourceSets.test.get().runtimeClasspath
