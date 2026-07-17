@@ -5,19 +5,30 @@ run, test, and format the EPICS Archiver Appliance and its documentation.
 
 ## Prerequisites
 
-Please see the [system requirements](https://epicsarchiver.readthedocs.io/en/latest/sysadmin/references/system-requirements.html)
-page for prerequisites to build and test the EPICS Archiver Appliance. An
-installation of Tomcat is required to build successfully; this is
-located using the environment variable `TOMCAT_HOME`. Use something like
+- Java JDK 21 (or later) — [OpenJDK](https://openjdk.java.net/) or another supplier
+- [Tomcat 11](https://tomcat.apache.org/download-11.cgi) — for the integration tests; the appliance supports up to Tomcat 11
+- [Gradle](https://gradle.org/) — optional; the `./gradlew` wrapper downloads a matching Gradle for you. To use a system `gradle`, match the major version of the wrapper in [gradle-wrapper.properties](https://github.com/archiver-appliance/epicsarchiverap/blob/master/gradle/wrapper/gradle-wrapper.properties).
+- [EPICS base](https://github.com/epics-base/epics-base) — for the EPICS integration tests
+
+Other useful tools:
+
+- [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/)
+- An IDE of your choice (e.g. IntelliJ, Eclipse, VS Code)
+
+See the [system requirements](https://epicsarchiver.readthedocs.io/en/latest/sysadmin/references/system-requirements.html)
+page for more detail on what is needed to build and test.
+
+An installation of Tomcat is required to build successfully; it is located
+using the environment variable `TOMCAT_HOME`:
 
 ```bash
 [ epicsarchiverap ]$ echo $TOMCAT_HOME
 /opt/local/tomcat/latest
 ```
 
-By default, Tomcat sets up a HTTP listener on port 8080. You can change
-this in the Tomcat `server.xml` to avoid collision with other folks
-running Tomcat. For example, here I have changed this to 17665.
+By default, Tomcat sets up an HTTP listener on port 8080. You can change this
+in the Tomcat `server.xml` to avoid collision with other folks running Tomcat.
+For example, here it is changed to 17665:
 
 ```xml
 <Connector port="17665" protocol="HTTP/1.1"
@@ -25,107 +36,130 @@ running Tomcat. For example, here I have changed this to 17665.
 				redirectPort="8443" />
 ```
 
-To run the unit tests, please make a copy of your Tomcat configuration
-(preferably pristine) into a new folder called `conf_original`. The unit
-tests that use Tomcat copy the `conf_original` folder to generate new
-configurations for each test.
+To run the unit tests, make a copy of your Tomcat configuration (preferably
+pristine) into a new folder called `conf_original`. The unit tests that use
+Tomcat copy the `conf_original` folder to generate new configurations for each
+test. Gradle will do this step for you if you forget.
 
 ```bash
 cd ${TOMCAT_HOME}
 cp -R conf conf_original
 ```
 
-Gradle will do this step for you if you forget.
-
 ## Building
 
-The EPICS archiver appliance is shared on
-[GitHub](https://github.com/archiver-appliance/epicsarchiverap) using Git as
-the source control repository. We use [Gradle](http://gradle.org/) for
-building. The default target builds the install package and the various
-wars and places them into the `build/distributions` folder.
+We use [Gradle](http://gradle.org/) for building. The default target builds
+the install package and the various wars and places them into the
+`build/distributions` folder:
 
 ```bash
-$ ls build/distributions
-archappl_v1.1.0-31-ge02e1f1.dirty.tar.gz
+gradle
 ```
 
-The Gradle build script will build into the default build directory
-`build`. You don't need to install Gradle, instead you can use the
-wrapper as `./gradlew`, or install it and run from the `epicsarchiverap`
-folder:
-
-```bash
-$ gradle
-BUILD SUCCESSFUL in 16s
-12 actionable tasks: 10 executed, 2 up-to-date
-```
-
-The build can then be found in `epicsarchiverap/build/distributions` or
-the war files in `epicsarchiverap/build/libs`.
+You don't need to install Gradle — use the wrapper `./gradlew` instead. The
+build can then be found in `build/distributions`, or the war files in
+`build/libs`. To build a site-specific customised version, set the environment
+variable `ARCHAPPL_SITEID` to a folder name in `src/sitespecific` (there is an
+example custom build in `src/sitespecific/slacdev`).
 
 ## Running Tomcat
 
-Start Tomcat using the `catalina.sh run` or the `catalina.sh start`
-commands. The `catalina.sh` startup script is found in the Tomcat bin
-folder. `catalina.sh run` starts Tomcat and leaves it running in the
-console so that you can Ctrl-C to terminate. `catalina.sh start` starts
-Tomcat in the background and you will need to run `catalina.sh stop` to
-stop the process.
+Start Tomcat using the `catalina.sh run` or `catalina.sh start` commands, found
+in the Tomcat `bin` folder. `catalina.sh run` leaves Tomcat running in the
+console so that you can Ctrl-C to terminate; `catalina.sh start` runs it in the
+background and you stop it with `catalina.sh stop`.
 
-To bring up the management app, bring up
-`http://<YourMachineHere>:17665/mgmt/ui/index.html` in a recent
-version of Firefox/Google Chrome.
+To bring up the management app, open
+`http://<YourMachineHere>:17665/mgmt/ui/index.html` in a recent version of
+Firefox/Google Chrome.
 
-## Running the unit tests
+## Running the tests
 
-Gradle creates temporary directories for all the unit tests. If you wish
-to clean them first you can use `gradle clean`. You then have the
-following options:
+The tests are organised into tags: "slow", "integration", "localEpics",
+"flaky", "unit". Gradle creates temporary directories for all the unit tests;
+run `gradle clean` first if you want to clear them.
 
-```bash
-gradle test # Runs all unit tests except slow tests
-gradle unitTests # Runs all unit tests
-gradle epicsTests # Runs all integration tests that require only an epics installation
-gradle integrationTests # Runs all tests that require a tomcat installation and optionally an epics installation
-gradle flakyTests # Runs all tests that can fail due to system resources
-gradle allTests # Runs all tests (not recommended)
-```
+### Unit tests
 
-Or run individual tests with:
+Unit tests are required for the build to complete:
 
 ```bash
-gradle test -tests PolicyExecutionTest
-gradle integrationTests --tests PvaGetArchivedPVsTest --info
+gradle test        # all unit tests except slow tests
+gradle unitTests   # all unit tests, including flaky and slow
 ```
 
-If you cancel an integrationTest early, or it gets stuck for some reason
-it's possible to kill any tomcats running with
+To run a single test, use the `--tests` argument (this also works with the
+other test tasks below):
+
+```bash
+gradle test --tests "org.epics.archiverappliance.TestName"
+```
+
+### Integration tests
+
+Integration tests require an installation of Tomcat (up to version 11) with
+`TOMCAT_HOME` set. Tests that require a local
+[EPICS](https://epics-controls.org/) installation are run with:
+
+```bash
+gradle epicsTests
+```
+
+You can instead use a docker image containing EPICS:
+
+```bash
+docker compose -f docker/docker-compose.epicsTests.yml run epicsarchiver-test
+```
+
+The other integration tests produce a lot of data on disk, so it is advised
+not to run them all at once. To run a single integration test:
+
+```bash
+gradle integrationTests --tests "org.epics.archiverappliance.retrieval.DataRetrievalServletTest"
+```
+
+If you cancel an integration test early, or it gets stuck, kill any running
+tomcats with:
 
 ```bash
 gradle shutdownAllTomcats
 ```
 
-If you wish to run the current development version locally for testing,
-it's possible to use:
+### Test run
+
+To run the application just as if it were in an integration test — for example
+to manually test a new development — use:
 
 ```bash
 gradle testRun
 ```
 
+Then access the running [appliance0](http://localhost:17665/mgmt) and
+[appliance1](http://localhost:17666/mgmt). To shut down, interrupt the command
+(Ctrl-C) and run `gradle shutdownAllTomcats`. Note this shuts down all tomcats
+running, not just those created by `gradle testRun`.
+
 ## Formatting with Spotless
 
-The gradle build script `build.gradle.kts` includes the [Spotless Plugin](https://github.com/diffplug/spotless)
-which tracks the formatting of the code. To run the formatter run:
+The gradle build script `build.gradle.kts` includes the
+[Spotless Plugin](https://github.com/diffplug/spotless), which tracks the
+formatting of the code (Java, and web code — HTML, CSS, JavaScript). New code
+is checked against `origin/master` (in CI this may differ from your local
+origin remote). To format new code:
 
 ```bash
 gradle spotlessApply
 ```
 
-The build script checks that the changes in the current git branch are
-up-to-date with the `origin/master` branch. So make sure your local
-`origin/master` is up-to-date with the [home repository](https://github.com/archiver-appliance/epicsarchiverap)
-master branch to pass the CI checks.
+Or to check the formatting is correct:
+
+```bash
+gradle spotlessCheck
+```
+
+Make sure your local `origin/master` is up to date with the
+[home repository](https://github.com/archiver-appliance/epicsarchiverap) master
+branch to pass the CI checks.
 
 ## Building the Documentation
 
@@ -141,5 +175,7 @@ Python setup required.
 
 The generated docs are embedded in `mgmt.war` at `ui/help/` for local
 application use. The published version is hosted at
-[ReadTheDocs](https://epicsarchiver.readthedocs.io/) and rebuilt
-automatically on each push to the main branch.
+[ReadTheDocs](https://epicsarchiver.readthedocs.io/) and rebuilt automatically
+on each push to the main branch. See the
+[docs README](https://github.com/archiver-appliance/epicsarchiverap/blob/master/docs/README.md)
+for more details.
