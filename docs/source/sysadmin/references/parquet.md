@@ -13,7 +13,7 @@ The schema used in Parquet files is derived from the Protocol Buffers definition
 
 ## Configuration and Management
 
-For details on how to configure the Parquet backend, including compression settings and data conversion, please see the [Storage Plugins](../../sysadmin/references/storage_plugins.md#apache-parquet-backend) page in the Sysadmin guide.
+For details on how to configure the Parquet backend, including compression settings and data conversion, please see the [Storage Plugins](storage_plugins.md#configuration) page in the Sysadmin guide.
 
 ## Tools for Analyzing Parquet Files
 

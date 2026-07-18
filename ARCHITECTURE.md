@@ -48,7 +48,7 @@ inter-appliance communication that happens as part of normal operation
 is accomplished using JSON/HTTP on the other URLs defined in
 `appliances.xml`. All the JSON/HTTP calls from the mgmt webapp are also
 available to you for use in
-[scripting](https://epicsarchiver.readthedocs.io/en/latest/developer/guides/scripting.html).
+[scripting](https://epicsarchiver.readthedocs.io/en/latest/manager/guides/scripting.html).
 
 The archiving functionality is split across members of the cluster; that
 is, each PV that is being archived is being archived by one appliance in

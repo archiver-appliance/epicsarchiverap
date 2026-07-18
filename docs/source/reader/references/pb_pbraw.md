@@ -7,7 +7,7 @@ The
 in the EPICS archiver appliance uses Google\'s
 [ProtocolBuffers](https://developers.google.com/protocol-buffers) as the
 serialization mechanism. The PB definitions mapping EPICS DBR types to
-PB messages can be found in [EPICSEvent.proto](../../../EPICSEvent.proto). PB
+PB messages can be found in [EPICSEvent.proto](https://github.com/archiver-appliance/epicsarchiverap/blob/master/src/proto/EPICSEvent.proto). PB
 files contain serialized PB messages; one per sample; a sample per line.
 The first line in a PB file is a header (`PayloadInfo` PB message) that
 contains some basic information like the PV name, its DBR type and so
@@ -81,7 +81,7 @@ PB/HTTP protocol, the server also uses [HTTP chunks](http://en.wikipedia.org/wik
 transfer the data across. There is no strict formula on how many chunks
 there will per data retrieval request; the server chunks data based on
 data source/partition/other parameters. Both
-[pbrawclient](https://github.com/slacmshankar/epicsarchiverap_pbrawclient/)
+[pbrawclient](https://github.com/archiver-appliance/epicsarchiverap_pbrawclient/)
 and [carchivetools](https://github.com/epicsdeb/carchivetools) handle
 the multiple chunks in a seamless fashion and present the data to the
 caller as a single event stream.
