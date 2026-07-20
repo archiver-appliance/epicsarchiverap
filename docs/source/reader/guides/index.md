@@ -6,7 +6,7 @@ Archive Viewer, Matlab) and programmatically over the HTTP API.
 ```{toctree}
 :maxdepth: 2
 
-Configuring CS-Studio <cstudio>
+CS-Studio integration <cstudio>
 Retrieving data using the ArchiveViewer <archiveviewer>
 Retrieving data using Matlab <matlab>
 Retrieving data using the web client <fetch-data>
