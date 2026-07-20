@@ -1,4 +1,4 @@
-## Backing up your config databases
+# Backing up your config databases
 
 Each appliance has a config database; typically a MySQL database. This
 config database contains the archiving configuration; that is, how each

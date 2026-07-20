@@ -1,4 +1,4 @@
-## Screenshots
+# Screenshots
 
 Sample screenshots of the EAA management interface.
 

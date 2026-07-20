@@ -1,4 +1,4 @@
-## Timezones
+# Timezones
 
 EPICS IOCs use UTC as their timezone. The EPICS Archiver Appliance
 also uses UTC for data storage and retrieval — data is received, stored

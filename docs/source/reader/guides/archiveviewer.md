@@ -1,11 +1,11 @@
-## Retrieving data using the ArchiveViewer
+# Retrieving data using the ArchiveViewer
 
 The EPICS Archiver Appliance comes with a client plugin for the
 ArchiveViewer that enables the user to retrieve and display data in the
 ArchiveViewer using the [PB/HTTP](../../reader/references/pb_pbraw) protocol. To download a
 version of the Archive Viewer with the client plugin for the EPICS
 Archiver Appliance, please see the
-[Download](https://github.com/archiver-appliance/epicsarchiverap/releases/)\'s
+[Download](https://github.com/archiver-appliance/epicsarchiverap_archiveviewer/releases/)\'s
 section.
 
 To retrieve data, start the Archive Viewer and connect to the EPICS

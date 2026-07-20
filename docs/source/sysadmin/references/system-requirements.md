@@ -1,4 +1,4 @@
-## System requirements
+# System requirements
 
 These are the prerequisites for the EPICS archiver appliance.
 

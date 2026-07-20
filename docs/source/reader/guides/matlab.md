@@ -1,4 +1,4 @@
-## Retrieving data using Matlab
+# Retrieving data using Matlab
 
 The EPICS Archiver Appliance support multiple MIME-types when retrieving
 data and one of the supported MIME-types is the Matlab file format. The

@@ -1,4 +1,4 @@
-## Inspecting the Channel Access ( also PVAccess ) protocol
+# Inspecting the Channel Access ( also PVAccess ) protocol
 
 To troubleshoot certain issues in production, it is often more practical
 to inspect the wire protocol. For example, to see if the archivers are

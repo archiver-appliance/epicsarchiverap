@@ -1,10 +1,8 @@
-## CS Studio Integration
+# CS Studio Integration
 
 [CS-Studio](http://controlsystemstudio.org/) 4.X onwards comes with
 support for the EPICS Archiver Appliance as a data source for the
 databrowser.
-
-### Configuring CS-Studio
 
 CS-Studio communicates with the appliance using the
 [PB/HTTP](../../reader/references/pb_pbraw) protocol. The databrowser can be configured to

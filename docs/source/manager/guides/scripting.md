@@ -1,4 +1,4 @@
-## Scripting
+# Scripting
 
 The archiver appliance comes with a web UI that has support for various
 business processes like adding PV\'s to the archivers etc. The web UI

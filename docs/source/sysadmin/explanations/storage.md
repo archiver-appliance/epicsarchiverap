@@ -1,4 +1,4 @@
-## Storage
+# Storage
 
 Out of the box, the following storage technologies/plugins are
 supported.

@@ -1,7 +1,5 @@
 # The .pb file format and the .pbraw binary protocol
 
-## The `.pb` file format
-
 The
 [PlainStoragePlugin](../_static/javadoc/edu/stanford/slac/archiverappliance/plain/PlainStoragePlugin.html)
 in the EPICS archiver appliance uses Google\'s

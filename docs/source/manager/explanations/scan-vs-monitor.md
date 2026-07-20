@@ -1,4 +1,4 @@
-## SCAN vs MONITOR
+# SCAN vs MONITOR
 
 Both SCAN and MONITOR use CA monitors, but they differ in how samples
 are buffered.

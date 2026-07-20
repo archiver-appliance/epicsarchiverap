@@ -1,4 +1,4 @@
-## Policies
+# Policies
 
 All of the various configurations can get quite tricky for end users to
 navigate. Rather than expose all of this variation to the end users and

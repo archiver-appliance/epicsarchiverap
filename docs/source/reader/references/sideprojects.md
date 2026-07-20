@@ -1,4 +1,4 @@
-## Side projects
+# Side projects
 
 The sources for the [Archive Viewer](../../reader/guides/archiveviewer.md) integration and
 the client library for the [PB/HTTP](./pb_pbraw.md) protocol are in

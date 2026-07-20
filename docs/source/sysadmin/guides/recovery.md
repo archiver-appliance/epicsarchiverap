@@ -1,4 +1,4 @@
-## Recovering from a lost appliance
+# Recovering from a lost appliance
 
 In case you lose an appliance, you can use the backup of the config
 database to restore the appliance configuration onto a new machine.

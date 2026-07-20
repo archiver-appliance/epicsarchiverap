@@ -1,4 +1,4 @@
-## Log file locations
+# Log file locations
 
 Most deployments have four Tomcat containers per appliance — one each
 for the engine, ETL, retrieval and mgmt components. All logs are

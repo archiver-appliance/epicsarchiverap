@@ -1,4 +1,4 @@
-## EPICS aliases
+# EPICS aliases
 
 When adding a PV with an alias to the archiver, the archiver uses the
 `NAME/NAME$` fields of the PV to determine the _real_ name. The PV is

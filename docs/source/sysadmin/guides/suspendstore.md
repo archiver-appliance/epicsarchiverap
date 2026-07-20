@@ -1,4 +1,4 @@
-## Temporarily suspend using a store
+# Temporarily suspend using a store
 
 If one of your data stores uses storage from elsewhere and you expect
 an outage or disruption of connectivity, you can

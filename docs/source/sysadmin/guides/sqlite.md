@@ -1,4 +1,4 @@
-## Using SQLite as a configuration database
+# Using SQLite as a configuration database
 
 For smaller installations with lighter concurrent access, one can
 consider using SQLite as a configuration database.
