@@ -9,5 +9,5 @@ Archive Viewer, Matlab) and programmatically over the HTTP API.
 CS-Studio integration <cstudio>
 Retrieving data using the ArchiveViewer <archiveviewer>
 Retrieving data using Matlab <matlab>
-Retrieving data using the web client <fetch-data>
+Retrieving data using the HTTP API <fetch-data>
 ```

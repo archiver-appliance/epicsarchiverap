@@ -1,4 +1,4 @@
-# Retrieving data using the web api client
+# Retrieving data using the HTTP API
 
 The EPICS Archiver Appliance supports data retrieval in multiple
 formats/MIME types. These are some of the few formats supported today;
