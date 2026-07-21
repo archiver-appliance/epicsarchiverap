@@ -40,5 +40,5 @@ bin/
 docs/EPICSEvent.proto
 docs/LICENSE
 docs/api/
-docs/docs/build
+docs/build
 docs/**/*.egg-info

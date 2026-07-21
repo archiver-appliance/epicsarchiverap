@@ -12,7 +12,7 @@ COPY docs/ .
 COPY --from=javadoc-build /src/docs/api api
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir . && \
-    sphinx-build docs/source docs/build
+    sphinx-build source build
 
 FROM gradle:9.3.0-jdk21 AS build
 
@@ -60,14 +60,14 @@ COPY --from=expand-wars /wars/lib /usr/local/tomcat/lib
 
 FROM copy-webapp AS singletomcat
 COPY --from=expand-wars /wars/mgmt /usr/local/tomcat/webapps/mgmt
-COPY --from=docs-build /docs/docs/build /usr/local/tomcat/webapps/mgmt/ui/help
+COPY --from=docs-build /docs/build /usr/local/tomcat/webapps/mgmt/ui/help
 COPY --from=expand-wars /wars/etl /usr/local/tomcat/webapps/etl
 COPY --from=expand-wars /wars/engine /usr/local/tomcat/webapps/engine
 COPY --from=expand-wars /wars/retrieval /usr/local/tomcat/webapps/retrieval
 
 FROM copy-webapp AS mgmt
 COPY --from=expand-wars /wars/mgmt /usr/local/tomcat/webapps/mgmt
-COPY --from=docs-build /docs/docs/build /usr/local/tomcat/webapps/mgmt/ui/help
+COPY --from=docs-build /docs/build /usr/local/tomcat/webapps/mgmt/ui/help
 
 FROM copy-webapp AS etl
 COPY --from=expand-wars /wars/etl /usr/local/tomcat/webapps/etl

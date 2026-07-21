@@ -338,17 +338,77 @@ tasks.register<Exec>("generateReleaseNotes") {
 	isIgnoreExitValue = true
 }
 
+// Docs Python environment installer. Pass -PdocsInstaller=uv to use uv instead
+// of the default pip; both populate the same docs/.venv so the sphinx tasks are
+// unaffected by the choice.
+val docsInstaller = (project.findProperty("docsInstaller") as String? ?: "pip").lowercase()
+require(docsInstaller == "pip" || docsInstaller == "uv") {
+	"docsInstaller must be 'pip' or 'uv', got '$docsInstaller'"
+}
+val venvDir = layout.projectDirectory.file("docs/.venv").asFile.path
+val venvPython = layout.projectDirectory.file(
+	if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/python.exe" else "docs/.venv/bin/python"
+).asFile.path
+
+val docsVenv = tasks.register<Exec>("docsVenv") {
+	group = "Documentation"
+	description = "Create Python virtual environment for docs. Pass -PdocsInstaller=uv to use uv."
+	if (docsInstaller == "uv") {
+		commandLine("uv", "venv", venvDir)
+	} else {
+		val python = if (Os.isFamily(Os.FAMILY_WINDOWS)) "python" else "python3"
+		commandLine(python, "-m", "venv", venvDir)
+	}
+	// Re-run when the installer choice changes so switching uv<->pip rebuilds the venv.
+	inputs.property("docsInstaller", docsInstaller)
+	outputs.dir("docs/.venv")
+}
+
+val docsInstall = tasks.register<Exec>("docsInstall") {
+	group = "Documentation"
+	description = "Install Sphinx dependencies into docs venv. Pass -PdocsInstaller=uv to use uv."
+	dependsOn(docsVenv)
+	workingDir = project.projectDir.resolve("docs")
+	if (docsInstaller == "uv") {
+		// uv installs into the venv targeted explicitly via --python.
+		commandLine("uv", "pip", "install", "--python", venvPython, "-q", ".[dev]")
+	} else {
+		// Use absolute path for pip so it resolves correctly regardless of workingDir
+		val pip = layout.projectDirectory.file(
+			if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/pip.exe" else "docs/.venv/bin/pip"
+		).asFile.path
+		commandLine(pip, "install", "-q", ".[dev]")
+	}
+	inputs.file("docs/pyproject.toml")
+	inputs.property("docsInstaller", docsInstaller)
+	// Use a stamp file so Gradle re-runs this when pyproject.toml changes
+	outputs.file("docs/.venv/.installed-stamp")
+	doLast {
+		project.projectDir.resolve("docs/.venv/.installed-stamp")
+			.writeText(project.projectDir.resolve("docs/pyproject.toml").lastModified().toString())
+	}
+}
+
 tasks.register<Exec>("sphinx") {
 	group = "Staging"
 	description = "Generate the documentation site."
-	dependsOn(tasks.javadoc)
-	workingDir = project.projectDir.resolve("docs")
+	dependsOn(tasks.javadoc, docsInstall)
+	val sphinxBuild = layout.projectDirectory.file(
+		if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/sphinx-build.exe" else "docs/.venv/bin/sphinx-build"
+	).asFile.path
+	commandLine(sphinxBuild, "docs/source", "docs/build")
+	inputs.dir("docs/source")
 	outputs.dir("docs/build")
-	if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-		commandLine("cmd", "/c", "build_docs.bat")
-	} else {
-		commandLine("./build_docs.sh")
-	}
+}
+
+tasks.register<Exec>("liveviewdocs") {
+	group = "Documentation"
+	description = "Run Sphinx autobuild server with live reload. Does not include Java API reference — run javadoc first if needed."
+	dependsOn(docsInstall)
+	val sphinxAutobuild = layout.projectDirectory.file(
+		if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/sphinx-autobuild.exe" else "docs/.venv/bin/sphinx-autobuild"
+	).asFile.path
+	commandLine(sphinxAutobuild, "docs/source", "docs/build", "--open-browser")
 }
 
 // =================================================================
@@ -386,8 +446,8 @@ tasks.register<War>("mgmtWar") {
 		include("*.sql")
 		into("install")
 	}
-	from(project.projectDir.resolve("docs/docs/build")) { into("ui/help") }
-	from(project.projectDir.resolve("docs/docs/source/samples")) {
+	from(project.projectDir.resolve("docs/build")) { into("ui/help") }
+	from(project.projectDir.resolve("docs/source/samples")) {
 		include("deployMultipleTomcats.py")
 		into("install")
 	}
@@ -510,7 +570,7 @@ tasks.register<Tar>("buildRelease") {
 	from(project.projectDir) {
 		include("LICENSE", "NOTICE", "*License.txt", "RELEASE_NOTES")
 	}
-	val samplesFolder = "docs/docs/source/samples"
+	val samplesFolder = "docs/source/samples"
 	from(samplesFolder) {
 		filePermissions {
 			user {
@@ -742,9 +802,9 @@ if (gitWorks) {
 		}
 		format("styling") {
 			target(
-				"docs/docs/source/**/*.html",
-				"docs/docs/source/**/*.css",
-				"docs/docs/source/**/*.md",
+				"docs/source/**/*.html",
+				"docs/source/**/*.css",
+				"docs/source/**/*.md",
 				"docs/**/docs.js",
 				"src/main/**/*.html",
 				"src/main/**/*.js",
