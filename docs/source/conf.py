@@ -16,6 +16,7 @@ extensions = [
     "myst_parser",
     "sphinx.ext.intersphinx",
     "sphinx_copybutton",
+    "sphinxcontrib.mermaid",
     "sphinxcontrib.openapi",
     "sphinxext.opengraph",
     "sphinxext.rediraffe",
