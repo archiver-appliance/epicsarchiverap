@@ -127,7 +127,7 @@ public class PBRAWResponse implements MimeResponse {
             os.write(headerBytes);
             os.write(LineEscaper.NEWLINE_CHAR);
         } catch (Exception ex) {
-            if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+            if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                 // We check for ClientAbortException etc this way to avoid including tomcat jars in the build path.
                 logger.debug("Exception writing header in the raw response", ex);
             } else {

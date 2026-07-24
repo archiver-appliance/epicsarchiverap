@@ -459,7 +459,7 @@ public class EngineContext {
                         logger.debug("ComputeMetaInfo called for " + pvName);
                         String fieldName = PVNames.getFieldName(pvName);
                         String[] extraFields = configService.getExtraFields();
-                        if (fieldName != null && !fieldName.isEmpty()) {
+                        if (!fieldName.isEmpty()) {
                             logger.debug("We are not asking for extra fields for a field value " + fieldName
                                     + " for pv " + pvName);
                             extraFields = new String[0];
@@ -711,8 +711,7 @@ public class EngineContext {
                                         logger.debug("Appliance " + applianceInfo.getIdentity()
                                                 + " has connected to most of its channels");
                                     } else {
-                                        if (configService.hasClusterFinishedInitialization()
-                                                && applianceTotalPVCount != 0) {
+                                        if (configService.hasClusterFinishedInitialization()) {
                                             logger.info(
                                                     "Appliance " + applianceInfo.getIdentity()
                                                             + " has not connected to most of its channels. Skipping starting of meta channels");

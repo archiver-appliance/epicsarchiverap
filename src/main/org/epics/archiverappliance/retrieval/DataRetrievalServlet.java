@@ -559,7 +559,7 @@ public class DataRetrievalServlet extends HttpServlet {
                             currentlyProcessingPV,
                             requestTimesOb.start(),
                             requestTimesOb.end(),
-                            (eventStream != null) ? sourceDesc : null);
+                            sourceDesc);
                 }
 
                 consolidateEventStream(resp, postProcessor, mergeDedupCountingConsumer, sourceDesc, eventStream);

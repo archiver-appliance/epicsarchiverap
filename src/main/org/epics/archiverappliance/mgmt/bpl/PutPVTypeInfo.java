@@ -130,8 +130,8 @@ public class PutPVTypeInfo implements BPLAction {
         }
 
         if (applianceIdentity == null) {
-            String msg = "Cannot determine appliance when updating typeinfo for PV " + pvName + " with "
-                    + (typeInfo == null ? "new" : "existing") + " typeinfo";
+            String msg = "Cannot determine appliance when updating typeinfo for PV " + pvName + " with " + "new"
+                    + " typeinfo";
             logger.info(msg);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
             return;
