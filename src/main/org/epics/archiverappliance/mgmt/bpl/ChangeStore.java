@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import jakarta.servlet.http.HttpServletRequest;
@@ -161,6 +162,6 @@ public class ChangeStore implements BPLAction {
         }
         typeInfo.setDataStores(newStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
-        logger.info("Updating the typeinfo for " + pvName + " with storage plugins " + typeInfo.getDataStores());
+        logger.info("Updating the typeinfo for " + pvName + " with storage plugins " + Arrays.toString(typeInfo.getDataStores()));
     }
 }
