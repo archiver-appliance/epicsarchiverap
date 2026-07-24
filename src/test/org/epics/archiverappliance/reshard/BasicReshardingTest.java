@@ -127,6 +127,7 @@ public class BasicReshardingTest {
         for (String dataStore : dataStores) {
             logger.info("Data store for pv " + dataStore);
             StoragePlugin plugin = StoragePluginURLParser.parseStoragePlugin(dataStore, configService);
+            Assertions.assertNotNull(plugin);
             String name = plugin.getName();
             if (name.equals("MTS")) {
                 // For the MTS we generate a couple of days worth of data
