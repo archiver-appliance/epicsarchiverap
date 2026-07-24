@@ -728,15 +728,14 @@ public class PvaGetPVData implements PvaAction {
             ArrayList<PVInfoForClusterRetrieval> pvInfos;
             while (!((retrievalURL = retrievalURLs.iterator().next()) != null)) {
                 // Get array list of PVs for appliance
-                pvInfos = applianceToPVs.get(retrievalURL);
+                pvInfos = applianceToPVs.get(null);
                 try {
                     // TODO the http request is needed to process
                     List<List<Future<EventStream>>> resultFromForeignAppliances =
                             retrieveEventStreamFromForeignAppliance(pvInfos, requestTimes);
                     listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
                 } catch (Exception ex) {
-                    logger.error(
-                            "Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
+                    logger.error("Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + null + ".");
                 }
             }
         }

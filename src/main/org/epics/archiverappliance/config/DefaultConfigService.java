@@ -242,7 +242,7 @@ public class DefaultConfigService implements ConfigService {
                 if (myIdentity != null) {
                     logger.info("Obtained my identity from environment variable " + myIdentity);
                 } else {
-                    logger.info("Using the local machine's hostname " + myIdentity + " as my identity");
+                    logger.info("Using the local machine's hostname " + null + " as my identity");
                     myIdentity = InetAddress.getLocalHost().getCanonicalHostName();
                 }
                 if (myIdentity == null) {

@@ -162,6 +162,7 @@ public class ChangeStore implements BPLAction {
         }
         typeInfo.setDataStores(newStores);
         configService.updateTypeInfoForPV(pvName, typeInfo);
-        logger.info("Updating the typeinfo for " + pvName + " with storage plugins " + Arrays.toString(typeInfo.getDataStores()));
+        logger.info("Updating the typeinfo for " + pvName + " with storage plugins "
+                + Arrays.toString(typeInfo.getDataStores()));
     }
 }
