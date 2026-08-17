@@ -5,7 +5,7 @@ run, test, and format the EPICS Archiver Appliance and its documentation.
 
 ## Prerequisites
 
-- Java JDK 21 (or later) — [OpenJDK](https://openjdk.java.net/) or another supplier
+- Java JDK 25 (or later) — [OpenJDK](https://openjdk.java.net/) or another supplier
 - [Gradle](https://gradle.org/) — optional; the `./gradlew` wrapper downloads a matching Gradle for you. To use a system `gradle`, match the major version of the wrapper in [gradle-wrapper.properties](https://github.com/archiver-appliance/epicsarchiverap/blob/master/gradle/wrapper/gradle-wrapper.properties).
 - [EPICS base](https://github.com/epics-base/epics-base) — for the EPICS integration tests
 Other useful tools:

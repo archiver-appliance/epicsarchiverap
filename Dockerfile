@@ -1,4 +1,4 @@
-FROM gradle:9.3.0-jdk21 AS javadoc-build
+FROM gradle:9.3.0-jdk25 AS javadoc-build
 
 USER root
 WORKDIR /src
@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir . && \
     sphinx-build source build
 
-FROM gradle:9.3.0-jdk21 AS build
+FROM gradle:9.3.0-jdk25 AS build
 
 ARG ARCHAPPL_SITEID=default
 ENV ARCHAPPL_SITEID=${ARCHAPPL_SITEID}
@@ -27,7 +27,7 @@ COPY . .
 # images at assembly time (see below), so this stage does not depend on docs-build.
 RUN gradle mgmtWar etlWar engineWar retrievalWar --no-daemon -PprojVersion=${VERSION} -x sphinx -x javadoc
 
-FROM eclipse-temurin:21-jdk AS expand-wars
+FROM eclipse-temurin:25-jdk AS expand-wars
 
 WORKDIR /wars
 COPY --from=build /src/build/libs/mgmt.war /wars/mgmt/
