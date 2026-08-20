@@ -92,6 +92,7 @@ public class AddRemoveAliasTest {
                 mgmtURL + "removeAlias",
                 Map.of("pv", pvNameToArchive, "aliasname", "UnitTestNoNamingConvention:arandomalias"),
                 false);
+        Assertions.assertNotNull(removeAliasStatus);
         logger.debug("Remove alias response " + removeAliasStatus.toJSONString());
 
         Thread.sleep(2 * 1000);

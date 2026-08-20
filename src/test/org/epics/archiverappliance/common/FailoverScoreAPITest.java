@@ -120,6 +120,7 @@ public class FailoverScoreAPITest {
                 strm.add(pojoEvent);
                 genEventCount++;
             }
+            Assertions.assertNotNull(plugin);
             plugin.appendData(context, pvName, strm);
         }
         logger.info("Done generating data for appliance " + applianceName);

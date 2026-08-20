@@ -97,9 +97,9 @@ public class PVPath {
     }
 
     public boolean shouldWeCreateParentFolder() {
-        return (this.scheme == null
+        return this.scheme == null
                 || this.scheme.equals("file")
-                || (this.scheme != null && SCHEME_TO_PACKFILE_EXTENSION.containsKey(this.scheme)));
+                || SCHEME_TO_PACKFILE_EXTENSION.containsKey(this.scheme);
     }
 
     public boolean isRootFolderOnly() {
@@ -250,9 +250,7 @@ public class PVPath {
         String partitionName = null;
         if (isNIO2Path) {
             if (pathStr.contains("!/")) {
-                String restOfPath = isNIO2Path
-                        ? pathStr.substring(pathStr.lastIndexOf("!/") + 2)
-                        : pathStr.substring(pathStr.indexOf(chunkKey) + chunkKey.length());
+                String restOfPath = pathStr.substring(pathStr.lastIndexOf("!/") + 2);
                 extension = restOfPath.contains(".") ? restOfPath.substring(restOfPath.lastIndexOf(".")) : null;
                 partitionName = extension != null ? restOfPath.substring(0, restOfPath.indexOf(extension)) : restOfPath;
             }

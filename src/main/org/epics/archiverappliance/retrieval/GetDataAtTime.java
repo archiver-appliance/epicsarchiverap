@@ -120,8 +120,8 @@ public class GetDataAtTime {
                     "pv",
                     remainingPVs);
             if (resp == null) return null;
-            logger.debug("Done calling remote appliance at " + applianceRetrievalURL + " and got PV count "
-                    + +((resp != null) ? resp.size() : 0));
+            logger.debug(
+                    "Done calling remote appliance at " + applianceRetrievalURL + " and got PV count " + +resp.size());
             return resp;
         } catch (Throwable t) {
             logger.error("Exception getting data from the remote appliance " + applianceRetrievalURL, t);

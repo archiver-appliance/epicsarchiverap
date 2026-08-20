@@ -437,7 +437,6 @@ public class PlainStoragePlugin
                 getExtensionString(),
                 partitionGranularity,
                 pv2key);
-        if (paths == null) return null;
         List<Path> pathList = Arrays.asList(paths);
         if (direction == BiDirectionalIterable.IterationDirection.BACKWARDS) {
             Collections.reverse(pathList);
@@ -558,7 +557,6 @@ public class PlainStoragePlugin
     public void initialize(String configURL, ConfigService configService) throws IOException {
         this.configService = configService;
         this.pv2key = new ChunkKeyKeyMapping(configService);
-        assert (pv2key != null);
 
         try {
             URI srcURI = new URI(configURL);
@@ -1427,7 +1425,7 @@ public class PlainStoragePlugin
             // and the parent.
             if (path != null) {
                 FileSystem fs = path.getFileSystem();
-                if (fs != null && fs instanceof ETLOptimizable) {
+                if (fs instanceof ETLOptimizable) {
                     List<ETLOptimizable> optimizables = new ArrayList<ETLOptimizable>();
                     ETLOptimizable optimizableFS = (ETLOptimizable) fs;
                     optimizables.add(optimizableFS);

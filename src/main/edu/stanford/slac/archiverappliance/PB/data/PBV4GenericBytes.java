@@ -216,7 +216,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         unmarshallEventIfNull();
         HashMap<String, String> ret = new HashMap<String, String>();
         List<EPICSEvent.FieldValue> fieldValues = dbevent.getFieldvaluesList();
-        if (fieldValues != null && !fieldValues.isEmpty()) {
+        if (!fieldValues.isEmpty()) {
             for (EPICSEvent.FieldValue fieldValue : fieldValues) {
                 ret.put(fieldValue.getName(), fieldValue.getVal());
             }
@@ -228,7 +228,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     public String getFieldValue(String fieldName) {
         unmarshallEventIfNull();
         List<EPICSEvent.FieldValue> fieldValues = dbevent.getFieldvaluesList();
-        if (fieldValues != null && !fieldValues.isEmpty()) {
+        if (!fieldValues.isEmpty()) {
             for (EPICSEvent.FieldValue fieldValue : fieldValues) {
                 if (fieldValue.getName().equals(fieldName)) {
                     return fieldValue.getVal();

@@ -97,6 +97,7 @@ public class FailoverRetrievalTest {
                         ArchDBRTypes.DBR_SCALAR_DOUBLE, s, new ScalarValue<Double>((double) s.getEpochSecond()), 0, 0));
                 genEventCount++;
             }
+            Assertions.assertNotNull(plugin);
             plugin.appendData(context, pvName, strm);
         }
         logger.info("Done generating dest data");

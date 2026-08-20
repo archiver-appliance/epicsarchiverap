@@ -154,7 +154,7 @@ public class PBAppendDataStateData extends AppendDataStateData {
                     extension,
                     extensionToCopyFrom,
                     firstEvent.getEventTimeStamp(),
-                    pvPath,
+                    null,
                     getPathResolver());
         }
 

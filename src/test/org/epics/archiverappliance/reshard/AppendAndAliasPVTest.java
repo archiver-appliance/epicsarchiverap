@@ -133,6 +133,7 @@ public class AppendAndAliasPVTest {
                         new ScalarValue<Double>((double) epoch),
                         0,
                         0));
+                Assertions.assertNotNull(plugin);
                 plugin.appendData(context, pvName, strm);
             }
         }

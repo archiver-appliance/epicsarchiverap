@@ -266,7 +266,7 @@ public class MetaInfo {
             updateTypeInfo(pvName, configService);
         } else {
             logger.error("In applyBasicInfo, cannot determine dbr type for "
-                    + (dbr != null ? dbr.getClass().getName() : "Null DBR"));
+                    + dbr.getClass().getName());
         }
     }
 

@@ -70,7 +70,7 @@ public class GetMatchingPVs implements BPLAction {
                     getMatchingPVsInCluster(configService, limit, nameToMatch, includeExternalServers(req));
             if (limit > 0) {
                 Collections.sort(matchingNames);
-                if (limit > 0 && matchingNames.size() >= limit) {
+                if (matchingNames.size() >= limit) {
                     matchingNames = matchingNames.subList(0, limit);
                 }
             }

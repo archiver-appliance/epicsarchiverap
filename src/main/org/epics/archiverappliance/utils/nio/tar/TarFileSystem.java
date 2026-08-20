@@ -70,7 +70,7 @@ public class TarFileSystem extends FileSystem implements ETLOptimizable {
             logger.debug("First: {} Rest: {}", first, String.join(",", more));
             TarEntry entry = null;
             String entryName = combined.toString();
-            if (entryName == null || entryName.isEmpty() || entryName.equals("/")) {
+            if (entryName.isEmpty() || entryName.equals("/")) {
                 logger.debug("Asking for the file system root");
                 return new TarPath(this, new TarEntry("/", null));
             }
