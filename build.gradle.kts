@@ -590,6 +590,21 @@ tasks.register<Tar>("buildRelease") {
 		include("quickstart.sh")
 	}
 	from(samplesFolder) {
+		filePermissions {
+			user {
+				read = true
+				write = true
+				execute = true
+			}
+			group {
+				read = true
+				execute = true
+			}
+			other {
+				read = true
+				execute = true
+			}
+		}
 		include(
 			"sampleStartup.sh",
 			"deployMultipleTomcats.py",
