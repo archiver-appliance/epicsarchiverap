@@ -65,6 +65,9 @@ public class ArchPaths implements Closeable {
         }
 
         if (pvPath.isRootFolderOnly()) {
+            if(pvPath.isPackFile()) {
+                return Paths.get(pvPath.getParentPathForCreation());
+            }
             return Paths.get(pvPath.getFullPath());
         }
 
