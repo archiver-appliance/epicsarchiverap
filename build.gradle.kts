@@ -342,6 +342,7 @@ tasks.register<Exec>("generateReleaseNotes") {
 // of the default pip; both populate the same docs/.venv so the sphinx tasks are
 // unaffected by the choice.
 val docsInstaller = (project.findProperty("docsInstaller") as String? ?: "pip").lowercase()
+val installDocsDependencies = (project.findProperty("installDocsDependencies") as? String)?.toBoolean() ?: true
 require(docsInstaller == "pip" || docsInstaller == "uv") {
 	"docsInstaller must be 'pip' or 'uv', got '$docsInstaller'"
 }
@@ -392,10 +393,13 @@ val docsInstall = tasks.register<Exec>("docsInstall") {
 tasks.register<Exec>("sphinx") {
 	group = "Staging"
 	description = "Generate the documentation site."
-	dependsOn(tasks.javadoc, docsInstall)
-	val sphinxBuild = layout.projectDirectory.file(
-		if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/sphinx-build.exe" else "docs/.venv/bin/sphinx-build"
-	).asFile.path
+	dependsOn(tasks.javadoc)
+	val sphinxBuild = if (installDocsDependencies) {
+		dependsOn(docsInstall)
+		layout.projectDirectory.file(
+			if (Os.isFamily(Os.FAMILY_WINDOWS)) "docs/.venv/Scripts/sphinx-build.exe" else "docs/.venv/bin/sphinx-build"
+		).asFile.path
+	} else "sphinx-build"
 	commandLine(sphinxBuild, "docs/source", "docs/build")
 	inputs.dir("docs/source")
 	outputs.dir("docs/build")
