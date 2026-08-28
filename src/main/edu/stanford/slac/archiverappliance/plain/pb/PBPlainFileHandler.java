@@ -171,7 +171,8 @@ public class PBPlainFileHandler implements PlainFileHandler {
     private static HashMapEvent findByTimeInStream(
             EventStream strm, Instant atTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
         for (Event event : strm) {
-            if (foundEvent(event.getEventTimeStamp(), atTime, direction) && event instanceof DBRTimeEvent dbrTimeEvent) {
+            if (foundEvent(event.getEventTimeStamp(), atTime, direction)
+                    && event instanceof DBRTimeEvent dbrTimeEvent) {
                 return new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
             }
         }

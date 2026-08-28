@@ -36,6 +36,7 @@ import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.engine.ArchiveEngine;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -1070,7 +1071,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             }
             if (!allarchiveFieldsData.isEmpty()) {
                 long nowES = TimeUtils.getCurrentEpochSeconds();
-                if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
+                if ((nowES - archiveFieldsSavedAtEpSec) >= ArchiveChannel.getConfiguredMetaDataPeriodSecs()) {
                     saveMetaDataOnceEveryDay(lastEvent);
                 }
             }

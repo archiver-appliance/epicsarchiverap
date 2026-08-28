@@ -20,6 +20,7 @@ import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.FieldValues;
 import org.epics.archiverappliance.data.ScalarValue;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,7 @@ import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 class FieldValuesGetDataAtTimeTest {
     private static final ArchDBRTypes DBR_TYPE = ArchDBRTypes.DBR_SCALAR_DOUBLE;
@@ -51,6 +53,7 @@ class FieldValuesGetDataAtTimeTest {
 
     @AfterEach
     void tearDown() throws IOException {
+        ArchiveChannel.configureMetaDataPeriod(new Properties());
         FileUtils.deleteDirectory(testFolder);
     }
 
@@ -180,6 +183,51 @@ class FieldValuesGetDataAtTimeTest {
                             "LOLO", "LOLO-updated-after-second-full",
                             "HIGH", "HIGH-full-2",
                             "LOW", "LOW-full-2"));
+        }
+    }
+
+    @ParameterizedTest
+    @EnumSource(
+            value = PlainStorageType.class,
+            names = {"PB", "PARQUET"})
+    void lookupShouldUseDailyReadWindowWhenConfiguredRefreshWindowIsShorter(PlainStorageType plainStorageType)
+            throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty(
+                ArchiveChannel.SAVE_META_DATA_PERIOD_SECS_PROPERTY,
+                Integer.toString(ArchiveChannel.MIN_SAVE_META_DATA_PERIOD_SECS));
+        ArchiveChannel.configureMetaDataPeriod(properties);
+
+        String pvName = "configured-refresh-window-" + plainStorageType.name().toLowerCase();
+        PlainStoragePlugin plugin =
+                createPlugin(plainStorageType, "configured-period", PartitionGranularity.PARTITION_DAY);
+        Instant partitionStart =
+                TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()).plus(210, ChronoUnit.DAYS);
+        Instant fullMetadataTime = partitionStart.plus(1, ChronoUnit.HOURS);
+        Instant sampleTime = fullMetadataTime.plus(13, ChronoUnit.HOURS);
+
+        appendEvents(
+                plugin,
+                pvName,
+                event(
+                        fullMetadataTime,
+                        1.0,
+                        Map.of("HIHI", "HIHI-full", "LOLO", "LOLO-full", "HIGH", "HIGH-full", "LOW", "LOW-full")),
+                event(sampleTime, 2.0, Map.of()));
+
+        try (BasicContext context = new BasicContext()) {
+            Event event = plugin.dataAtTime(
+                    context,
+                    pvName,
+                    sampleTime.plus(1, ChronoUnit.MINUTES),
+                    sampleTime.plus(6, ChronoUnit.MINUTES),
+                    Period.parse("P1D"),
+                    BiDirectionalIterable.IterationDirection.BACKWARDS);
+
+            Assertions.assertNotNull(event, "Expected a sample from the partition");
+            Assertions.assertEquals(sampleTime, event.getEventTimeStamp(), "Expected the selected sample");
+            assertFields(
+                    event, Map.of("HIHI", "HIHI-full", "LOLO", "LOLO-full", "HIGH", "HIGH-full", "LOW", "LOW-full"));
         }
     }
 
