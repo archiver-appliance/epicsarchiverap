@@ -15,6 +15,7 @@ import org.epics.archiverappliance.config.PVNameToKeyMapping;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.FieldValues;
 import org.epics.archiverappliance.data.HashMapEvent;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.etl.ETLDest;
 import org.epics.archiverappliance.etl.common.DefaultETLInfoListProcessor;
 import org.epics.archiverappliance.etl.common.ETLInfoListProcessor;
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -127,9 +129,9 @@ public class PBPlainFileHandler implements PlainFileHandler {
             logger.info("Iterating thru {}", path);
             FileInfo fileInfo = fileInfo(path);
             try (EventStream strm = getStreamForIteration(pvName, path, startAtTime, fileInfo.getType(), direction)) {
-                Event e = findByTimeInStream(strm, atTime, direction);
-                if (e != null) {
-                    return e;
+                HashMapEvent resultEvent = findByTimeInStream(strm, atTime, direction);
+                if (resultEvent != null) {
+                    return addFieldValuesFromSameFile(pvName, path, fileInfo.getType(), resultEvent);
                 }
             }
         }
@@ -159,7 +161,6 @@ public class PBPlainFileHandler implements PlainFileHandler {
 
     /**
      * Find the first event close to atTime in the stream, for the direction given.
-     * Also add the field values from the first event that includes any field values.
      *
      * @param strm Stream of events
      * @param atTime Time to look for
@@ -167,29 +168,29 @@ public class PBPlainFileHandler implements PlainFileHandler {
      * @return Event close to atTime
      * @throws IOException From reading the stream
      */
-    private static Event findByTimeInStream(
+    private static HashMapEvent findByTimeInStream(
             EventStream strm, Instant atTime, BiDirectionalIterable.IterationDirection direction) throws IOException {
-        HashMapEvent resultEvent = null;
-        boolean foundFieldValues = false;
-        boolean passedFoundEvent = false;
-        boolean foundAnyEvent = false;
         for (Event event : strm) {
-            boolean foundEvent = foundEvent(event.getEventTimeStamp(), atTime, direction);
-            if (resultEvent == null && foundEvent && event instanceof DBRTimeEvent dbrTimeEvent) {
-                resultEvent = new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
+            if (foundEvent(event.getEventTimeStamp(), atTime, direction) && event instanceof DBRTimeEvent dbrTimeEvent) {
+                return new HashMapEvent(strm.getDescription().getArchDBRType(), dbrTimeEvent);
             }
-            if (resultEvent != null && event instanceof FieldValues fv && fv.hasFieldValues()) {
-                copyNotSetFieldValues(fv, resultEvent);
-                foundFieldValues = true;
-            }
-            if (foundEvent) {
-                foundAnyEvent = true;
-            }
-            if (!foundEvent && foundAnyEvent) {
-                passedFoundEvent = true;
-            }
-            if (passedFoundEvent && foundFieldValues) {
-                break;
+        }
+        return null;
+    }
+
+    private static Event addFieldValuesFromSameFile(
+            String pvName, Path path, ArchDBRTypes dbrType, HashMapEvent resultEvent) throws IOException {
+        Instant eventTime = resultEvent.getEventTimeStamp();
+        Instant lowerBound = eventTime.minus(ArchiveChannel.SAVE_META_DATA_PERIOD_SECS, ChronoUnit.SECONDS);
+        try (EventStream strm = getStreamForIteration(
+                pvName, path, eventTime, dbrType, BiDirectionalIterable.IterationDirection.BACKWARDS)) {
+            for (Event event : strm) {
+                if (event.getEventTimeStamp().isBefore(lowerBound)) {
+                    break;
+                }
+                if (event instanceof FieldValues fv && fv.hasFieldValues()) {
+                    copyNotSetFieldValues(fv, resultEvent);
+                }
             }
         }
         return resultEvent;
