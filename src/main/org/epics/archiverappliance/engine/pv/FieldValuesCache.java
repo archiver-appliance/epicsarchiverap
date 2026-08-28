@@ -52,7 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Main purpose is to hold a cache of a pvaStructure as a flat map from string
@@ -366,22 +365,14 @@ public class FieldValuesCache {
         return fieldValues;
     }
 
-    /**
-     * Conversion of a flat map of field values to one with v3 names via an input
-     * mapping.
-     *
-     * @param fieldValues input field values
-     * @return converted hashmap
-     */
-    private static HashMap<String, String> v3NamedValues(final Map<String, String> fieldValues) {
+    private static HashMap<String, String> encodeStoredFieldValues(final Map<String, String> fieldValues) {
         final HashMap<String, String> result = new HashMap<>();
         for (final Entry<String, String> e : fieldValues.entrySet()) {
             if (e.getValue() == null) continue;
-            final var v3Name = (FieldValuesCache.v4FieldNames2v3FieldNames).get(e.getKey());
+            result.put(e.getKey(), e.getValue());
+            final var v3Name = FieldValuesCache.v4FieldNames2v3FieldNames.get(e.getKey());
             if (v3Name != null) {
                 result.put(v3Name, e.getValue());
-            } else {
-                result.put(e.getKey(), e.getValue());
             }
         }
         return result;
@@ -430,22 +421,18 @@ public class FieldValuesCache {
      */
     public HashMap<String, String> getUpdatedFieldValues(
             final boolean getEverything, final List<String> metaFieldNames) {
+        Map<String, String> changed;
         if (getEverything) {
-            return (HashMap<String, String>) this.cachedFieldValues;
-        }
-        Map<String, String> changed = new HashMap<>();
-        for (String key : this.lastChangedFields) {
-            if (this.cachedFieldValues.containsKey(key)) {
-                changed.put(key, this.cachedFieldValues.get(key));
+            changed = this.cachedFieldValues;
+        } else {
+            changed = new HashMap<>();
+            for (String key : this.lastChangedFields) {
+                if (this.cachedFieldValues.containsKey(key)) {
+                    changed.put(key, this.cachedFieldValues.get(key));
+                }
             }
         }
-        if (this.excludeV4Changes) {
-            changed = changed.entrySet().stream()
-                    .filter(e -> FieldValuesCache.v4FieldNames2v3FieldNames.containsKey(e.getKey())
-                            || metaFieldNames.contains(e.getKey()))
-                    .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
-        }
-        return v3NamedValues(changed);
+        return encodeStoredFieldValues(changed);
     }
 
     /**
@@ -471,7 +458,7 @@ public class FieldValuesCache {
      * @return flat map of string values
      */
     public HashMap<String, String> getCurrentFieldValues() {
-        return v3NamedValues(cachedFieldValues);
+        return encodeStoredFieldValues(cachedFieldValues);
     }
 
     /**
