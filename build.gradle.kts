@@ -446,7 +446,10 @@ tasks.register<War>("mgmtWar") {
 		include("*.sql")
 		into("install")
 	}
-	from(project.projectDir.resolve("docs/build")) { into("ui/help") }
+	from(project.projectDir.resolve("docs/build")) {
+		exclude("**/.doctrees")
+		into("ui/help")
+	}
 	from(project.projectDir.resolve("docs/source/samples")) {
 		include("deployMultipleTomcats.py")
 		into("install")
