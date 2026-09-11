@@ -41,6 +41,7 @@ analyze-plugin  = "2.0.0"
 protobuf-plugin = "0.9.5"
 stax-api       = "1.0-2"
 slf4j          = "2.0.16"
+prometheus     = "1.8.0"
 
 [libraries]
 guava                    = { module = "com.google.guava:guava", version.ref = "guava" }
@@ -95,6 +96,8 @@ testcontainers           = { module = "org.testcontainers:testcontainers", versi
 testcontainers-junit     = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 stax-api                 = { module = "javax.xml.stream:stax-api", version.ref = "stax-api"}
 slf4j-api                = { module = "org.slf4j:slf4j-api", version.ref = "slf4j"}
+prometheus-model         = { module = "io.prometheus:prometheus-metrics-model", version.ref = "prometheus" }
+prometheus-textformats   = { module = "io.prometheus:prometheus-metrics-exposition-textformats", version.ref = "prometheus" }
 
 [bundles]
 parquet        = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
