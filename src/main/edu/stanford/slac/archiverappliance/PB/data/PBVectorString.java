@@ -288,6 +288,7 @@ public class PBVectorString implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.VectorString.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

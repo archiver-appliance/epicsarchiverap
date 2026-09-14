@@ -289,6 +289,7 @@ public class PBVectorFloat implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.VectorFloat.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();
