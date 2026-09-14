@@ -285,7 +285,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         this.totalMetaInfo.computeRate(dbrtimeevent);
 
         this.fieldValuesCache.updateFieldValues(data, changes);
-        dbrtimeevent.setFieldValues(this.fieldValuesCache.getUpdatedFieldValues(false, this.metaFields), false);
+        dbrtimeevent.setFieldValues(this.fieldValuesCache.getUpdatedFieldValues(false), false);
 
         return dbrtimeevent;
     }
@@ -598,7 +598,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     private void saveAllMetaData(DBRTimeEvent lastEvent) {
         HashMap<String, String> fieldValues = new HashMap<>();
         fieldValues.putAll(metaInfoToStore(totalMetaInfo));
-        fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true, this.metaFields));
+        fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true));
         this.archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
         lastEvent.setFieldValues(fieldValues, false);
     }

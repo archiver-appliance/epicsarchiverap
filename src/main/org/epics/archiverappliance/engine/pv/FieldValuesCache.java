@@ -416,11 +416,9 @@ public class FieldValuesCache {
      *
      * @param getEverything If to retrieve every field value regardless if maps to a
      *                      v3 type or not and keep not mapped
-     * @param metaFieldNames Any fields that should always be archived if they change
      * @return A flat map of String values
      */
-    public HashMap<String, String> getUpdatedFieldValues(
-            final boolean getEverything, final List<String> metaFieldNames) {
+    public HashMap<String, String> getUpdatedFieldValues(final boolean getEverything) {
         Map<String, String> changed;
         if (getEverything) {
             changed = this.cachedFieldValues;
