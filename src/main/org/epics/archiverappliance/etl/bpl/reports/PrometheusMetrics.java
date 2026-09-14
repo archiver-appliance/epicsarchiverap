@@ -23,14 +23,6 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Storage metrics for this appliance's stores in the Prometheus text exposition format.
  *
- * <p>ETL owns the stores, so it serves this rather than the engine. Prometheus scrapes each war
- * directly; nothing here calls out to another component, so an outage elsewhere cannot fail this
- * scrape.
- *
- * <p>Only whole-store space is reported. Per-PV storage is deliberately absent: computing it globs
- * the filesystem for every PV in every store, which is far too expensive to sit behind a scrape.
- * Use getPVsByStorageConsumed when you need that.
- *
  * @epics.BPLAction - Return the storage metrics for this appliance in the Prometheus text exposition format. Intended to be scraped by Prometheus rather than read by a person.
  * @epics.BPLActionEnd
  *
@@ -64,8 +56,6 @@ public class PrometheusMetrics implements BPLAction {
                         "Space still available on the file store backing this stage.",
                         usableSpace,
                         labels);
-                // Derivable from the two above, but exported so alerts can name a threshold directly
-                // and so this matches the percentage the storage report shows.
                 if (totalSpace > 0) {
                     writer.gauge(
                             "store_usable_ratio",

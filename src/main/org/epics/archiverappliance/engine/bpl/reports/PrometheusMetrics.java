@@ -22,14 +22,6 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Engine metrics in the Prometheus text exposition format.
  *
- * <p>Prometheus pulls, so it needs an endpoint per scrape target. Each war is a separate JVM and
- * already knows its own numbers, so each serves its own metrics and Prometheus scrapes it directly.
- * That avoids the cluster-wide fan-out the mgmt reports perform, and it means a war that is down
- * shows up as a down scrape target rather than as a missing field in someone else's report.
- *
- * <p>Unlike the JSON reports, which format every value for display, this writes the underlying
- * numbers. Consumers do not have to parse thousands separators back out of a string.
- *
  * @epics.BPLAction - Return the engine metrics for this appliance in the Prometheus text exposition format. Intended to be scraped by Prometheus rather than read by a person.
  * @epics.BPLActionEnd
  *
@@ -47,7 +39,7 @@ public class PrometheusMetrics implements BPLAction {
 
         PrometheusMetricsWriter writer = new PrometheusMetricsWriter(Map.of("appliance", appliance));
 
-        writer.gauge("pv_count", "PVs assigned to this appliance.", metrics.getPvCount());
+        writer.gauge("pv_count", "PVs this engine is actively archiving.", metrics.getPvCount());
         writer.gauge(
                 "pv_connected", "PVs the engine currently has a live connection to.", metrics.getConnectedPVCount());
         writer.gauge("pv_disconnected", "PVs the engine has lost the connection to.", metrics.getDisconnectedPVCount());
@@ -59,7 +51,6 @@ public class PrometheusMetrics implements BPLAction {
 
         writer.gauge(
                 "event_rate_events_per_second", "Events per second arriving at the engine.", metrics.getEventRate());
-        // Also published by the JSON reports as GB/day, which is what operators plan capacity in.
         writer.gauge(
                 "data_rate_gibibytes_per_day",
                 "Gibibytes per day arriving at the engine.",

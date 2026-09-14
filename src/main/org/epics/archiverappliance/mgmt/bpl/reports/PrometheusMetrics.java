@@ -20,14 +20,7 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Configuration level PV counts in the Prometheus text exposition format.
  *
- * <p>The paused count comes from the PVTypeInfos rather than from live channels, so mgmt is the
- * component that holds it. It matters which war answers: mgmt maintains the counter locally, while
- * the engine is a Hazelcast client and would have to make a cluster wide call to read the same
- * number, turning every scrape into network traffic and coupling the engine's scrape to mgmt being
- * up. Paused PVs are also removed from the engine's channel list, so the engine cannot simply count
- * them.
- *
- * @epics.BPLAction - Return configuration level PV counts for this appliance in the Prometheus text exposition format. Intended to be scraped by Prometheus rather than read by a person.
+ * @epics.BPLAction - Return the mgmt metrics for this appliance in the Prometheus text exposition format. Intended to be scraped by Prometheus rather than read by a person.
  * @epics.BPLActionEnd
  *
  * @author caraxlr
@@ -42,6 +35,7 @@ public class PrometheusMetrics implements BPLAction {
 
         PrometheusMetricsWriter writer = new PrometheusMetricsWriter(Map.of("appliance", appliance));
 
+        // Cached here in mgmt; reporting it from the engine would cost a cluster call per scrape.
         writer.gauge("pv_paused", "PVs whose archiving is paused.", pvCounts.pausedPVCount());
 
         // Prometheus reads the version out of the content type to pick a parser.

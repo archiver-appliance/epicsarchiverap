@@ -20,13 +20,9 @@ import java.util.Map;
 /**
  * Collects appliance metrics and renders them in the Prometheus text exposition format.
  *
- * <p>Escaping, value rendering and the HELP/TYPE lines are the Prometheus client library's job; this
- * class only applies the archiver conventions on top of it — the {@link #PREFIX} on every name and a
- * set of labels common to every sample.
- *
- * <p>Nothing is written until {@link #writeTo}, so metrics may be added in any order. The library
- * sorts families by name and labels within a sample, so the output is canonical rather than
- * insertion ordered.
+ * <p>The client library handles escaping, value rendering and the HELP/TYPE lines; this class adds
+ * the {@link #PREFIX} and the labels common to every sample. Nothing is written until
+ * {@link #writeTo}, which sorts the output by name.
  *
  * @author caraxlr
  */
