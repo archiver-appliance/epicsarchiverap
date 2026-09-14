@@ -51,7 +51,6 @@ public class PrometheusMetrics implements BPLAction {
         writer.gauge(
                 "pv_connected", "PVs the engine currently has a live connection to.", metrics.getConnectedPVCount());
         writer.gauge("pv_disconnected", "PVs the engine has lost the connection to.", metrics.getDisconnectedPVCount());
-        writer.gauge("pv_paused", "PVs whose archiving is paused.", metrics.getPausedPVCount());
         writer.gauge(
                 "pv_pending_meta_info",
                 "PVs whose meta info the engine has not finished computing.",

@@ -91,9 +91,10 @@ public class StorageWithLifetime {
 
 	/**
 	 * Utility method to get all the ETL lookup items as storagemetrics instances if they support it.
+	 * Package private so the Prometheus report can share the same enumeration.
 	 * @return
 	 */
-	private static LinkedList<StorageWithLifetime> getStorageWithLifetimes(ConfigService configService) {
+	static LinkedList<StorageWithLifetime> getStorageWithLifetimes(ConfigService configService) {
 		LinkedHashMap<String, StorageWithLifetime> storages = new LinkedHashMap<String, StorageWithLifetime>();
 		for(String pvName : configService.getPVsForThisAppliance()) { 
 			ETLStages etlStages = configService.getETLLookup().getETLStages(pvName);

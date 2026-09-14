@@ -69,6 +69,40 @@ public class PrometheusMetricsWriterTest {
     }
 
     @Test
+    public void testRepeatedNameIsOneFamily() throws IOException {
+        // How the ETL endpoint writes per store space: one gauge call per store, all under the same
+        // name. The exposition format wants every sample of a family in a single group, so those
+        // calls must collapse into one HELP/TYPE pair with a sample line each rather than repeating
+        // the declaration.
+        String out = render(Map.of("appliance", "appliance0"), w -> {
+            for (String store : new String[] {"STS", "MTS", "LTS"}) {
+                w.gauge("store_total_bytes", "Capacity.", 1024, Map.of("store", store));
+            }
+        });
+        Assertions.assertEquals(
+                1,
+                out.lines()
+                        .filter(l -> l.startsWith("# HELP archappl_store_total_bytes"))
+                        .count(),
+                "Expected exactly one HELP line in " + out);
+        Assertions.assertEquals(
+                1,
+                out.lines()
+                        .filter(l -> l.startsWith("# TYPE archappl_store_total_bytes"))
+                        .count(),
+                "Expected exactly one TYPE line in " + out);
+        Assertions.assertEquals(
+                3,
+                out.lines()
+                        .filter(l -> l.startsWith("archappl_store_total_bytes{"))
+                        .count(),
+                "Expected one sample line per store in " + out);
+        Assertions.assertTrue(
+                out.contains("archappl_store_total_bytes{appliance=\"appliance0\",store=\"MTS\"} 1024.0"),
+                "Expected the MTS sample in " + out);
+    }
+
+    @Test
     public void testMultipleGauges() throws IOException {
         String out = render(Map.of("appliance", "appliance0"), w -> {
             w.gauge("pv_count", "PVs here.", 3);
