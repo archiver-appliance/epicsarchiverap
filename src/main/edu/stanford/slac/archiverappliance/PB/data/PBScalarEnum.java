@@ -280,6 +280,7 @@ public class PBScalarEnum implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.ScalarEnum.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

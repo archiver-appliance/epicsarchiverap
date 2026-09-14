@@ -1,7 +1,5 @@
 package edu.stanford.slac.archiverappliance.PB.data;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.ByteArray;
 import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
@@ -15,98 +13,134 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 
 class FieldValuesTest {
-    private static final Logger logger = LogManager.getLogger(FieldValuesTest.class.getName());
 
     @Test
-    void testFieldValues() throws Exception {
+    void testAddFieldValueAppendsIncrementally() throws Exception {
+        executeForV3Types(event -> {
+            event.addFieldValue("cnxlostepsecs", "12345");
+            event.addFieldValue("cnxregainedepsecs", "12346");
+
+            Assertions.assertTrue(event.hasFieldValues(), "Adding field values should turn on hasFieldValues");
+            Assertions.assertFalse(event.isActualChange(), "addFieldValue defaults to isActualChange = false");
+
+            HashMap<String, String> fields = event.getFields();
+            Assertions.assertEquals(2, fields.size(), "Fields map should contain exactly 2 entries");
+            Assertions.assertEquals("12345", fields.get("cnxlostepsecs"));
+            Assertions.assertEquals("12346", fields.get("cnxregainedepsecs"));
+
+            // Adding a third field incrementally
+            event.addFieldValue("startup", "true");
+            Assertions.assertEquals(3, event.getFields().size(), "Fields map should now contain 3 entries");
+        });
+    }
+
+    @Test
+    void testSetFieldValuesOverwritesExistingFields() throws Exception {
+        executeForV3Types(event -> {
+            HashMap<String, String> initialValues = new HashMap<>();
+            initialValues.put("HIHI", "10.0");
+            initialValues.put("LOLO", "-10.0");
+
+            event.setFieldValues(initialValues, false);
+            Assertions.assertTrue(event.hasFieldValues());
+            Assertions.assertEquals(2, event.getFields().size());
+
+            // setFieldValues represents a complete state update, so it must overwrite
+            HashMap<String, String> newValues = new HashMap<>();
+            newValues.put("DESC", "My PV Description");
+
+            event.setFieldValues(newValues, true);
+            Assertions.assertTrue(
+                    event.isActualChange(), "Setting with markAsActualChange=true should update the flag");
+
+            HashMap<String, String> resultingFields = event.getFields();
+            Assertions.assertEquals(
+                    1, resultingFields.size(), "setFieldValues should overwrite previous fields entirely");
+            Assertions.assertEquals("My PV Description", resultingFields.get("DESC"));
+            Assertions.assertFalse(resultingFields.containsKey("HIHI"));
+        });
+    }
+
+    @Test
+    void testDoubleStoring() throws Exception {
+        executeForV3Types(event -> {
+            HashMap<String, String> values = new HashMap<>();
+            values.put("HOPR", "100.0");
+            values.put("LOPR", "0.0");
+
+            event.setFieldValues(values, false);
+            int sizeAfterFirstSet = event.getRawForm().len;
+
+            // Set the exact same fields again. This should not increase the payload size.
+            event.setFieldValues(values, false);
+            int sizeAfterSecondSet = event.getRawForm().len;
+
+            Assertions.assertEquals(sizeAfterFirstSet, sizeAfterSecondSet);
+        });
+    }
+
+    @Test
+    void testSerializationAndUnmarshalling() throws Exception {
         for (ArchDBRTypes dbrType : ArchDBRTypes.values()) {
             if (!dbrType.isV3Type()) continue;
-            logger.info("Testing setting and getting of field values for DBR_type: " + dbrType.name());
 
             short year = TimeUtils.getCurrentYear();
             BoundaryConditionsSimulationValueGenerator valuegenerator =
                     new BoundaryConditionsSimulationValueGenerator();
-            short currentYear = TimeUtils.getCurrentYear();
+
             try (SimulationEventStream simstream = new SimulationEventStream(
-                    dbrType,
-                    valuegenerator,
-                    TimeUtils.getStartOfYear(currentYear),
-                    TimeUtils.getEndOfYear(currentYear),
-                    1)) {
+                    dbrType, valuegenerator, TimeUtils.getStartOfYear(year), TimeUtils.getEndOfYear(year), 1)) {
+
                 PBTypeSystem pbTypeSystem = new PBTypeSystem();
                 Constructor<? extends DBRTimeEvent> constructorFromDBRTimeEvent =
                         pbTypeSystem.getSerializingConstructor(dbrType);
                 Constructor<? extends DBRTimeEvent> constructorFromBytes =
                         pbTypeSystem.getUnmarshallingFromByteArrayConstructor(dbrType);
-                int fieldCount = 1;
-                for (Event ev : simstream) {
-                    // This should get the PB event
-                    DBRTimeEvent pb0 = constructorFromDBRTimeEvent.newInstance(ev);
-                    String fieldName = "HIHI";
-                    String fieldValue = "0.0";
-                    pb0.addFieldValue(fieldName, fieldValue);
-                    ByteArray raw1 = pb0.getRawForm();
-                    DBRTimeEvent pb1DbrTimeEvent = constructorFromBytes.newInstance(year, raw1);
-                    Assertions.assertTrue(
-                            pb1DbrTimeEvent.hasFieldValues(), "Adding 1 field value does not turn hasFieldValues on ");
-                    Assertions.assertEquals(
-                            pb1DbrTimeEvent.getFieldValue(fieldName),
-                            fieldValue,
-                            "Adding 1 field value yields different results "
-                                    + pb1DbrTimeEvent.getFieldValue(fieldName));
-                    Assertions.assertFalse(
-                            pb1DbrTimeEvent.isActualChange(),
-                            "Adding 1 field value default of isActualChange is true ");
-                    Assertions.assertTrue(
-                            pb1DbrTimeEvent.getFields().containsKey(fieldName),
-                            "Adding 1 field value getFieldNames does not contain field ");
-                    pb1DbrTimeEvent.markAsActualChange();
-                    Assertions.assertTrue(
-                            pb1DbrTimeEvent.isActualChange(),
-                            "Adding 1 field value after marking as actual change isActualChange is false ");
 
-                    // Test adding multiple fields at the same time.
-                    DBRTimeEvent pbm0 = constructorFromDBRTimeEvent.newInstance(ev);
-                    HashMap<String, String> values = new HashMap<>();
-                    values.put("HIHI", "0.0");
-                    values.put("LOLO", "-1.0");
-                    values.put("LOPR", "1000.0");
-                    values.put("HOPR", "-10000.0");
-                    pbm0.setFieldValues(values, false);
-                    Assertions.assertTrue(
-                            pbm0.hasFieldValues(), "Adding multiple field values does not turn hasFieldValues on ");
-                    Assertions.assertFalse(
-                            pbm0.isActualChange(),
-                            "Adding multiple field values after marking as cached isActualChange is true ");
-                    Assertions.assertTrue(
-                            compareMaps(values, pbm0.getFields()),
-                            "Adding multiple field values yields different results ");
+                Event ev = simstream.iterator().next();
+                DBRTimeEvent pbEvent = constructorFromDBRTimeEvent.newInstance(ev);
 
-                    fieldCount++;
-                    if (fieldCount > 10) {
-                        break;
-                    }
-                }
+                HashMap<String, String> values = new HashMap<>();
+                values.put("EGU", "Volts");
+                values.put("PREC", "3");
+                pbEvent.setFieldValues(values, true);
+
+                ByteArray rawBytes = pbEvent.getRawForm();
+                DBRTimeEvent unmarshalledEvent = constructorFromBytes.newInstance(year, rawBytes);
+
+                Assertions.assertTrue(unmarshalledEvent.hasFieldValues());
+                Assertions.assertTrue(unmarshalledEvent.isActualChange());
+                Assertions.assertEquals("Volts", unmarshalledEvent.getFieldValue("EGU"));
+                Assertions.assertEquals("3", unmarshalledEvent.getFieldValue("PREC"));
             }
         }
     }
 
-    private static boolean compareMaps(HashMap<String, String> map1, HashMap<String, String> map2) {
-        if (map1.size() != map2.size()) {
-            logger.error("The sizes are different");
-            return false;
-        }
-        for (String key : map1.keySet()) {
-            if (!map2.containsKey(key)) {
-                logger.error("Map2 does not contain " + key);
-                return false;
-            }
-            if (!map1.get(key).equals(map2.get(key))) {
-                logger.error("Map1 has " + map1.get(key) + " and map2 has " + map2.get(key) + " for key " + key);
-                return false;
-            }
-        }
+    /**
+     * Helper interface to run assertions on a fresh DBRTimeEvent instance.
+     */
+    private interface EventTest {
+        void test(DBRTimeEvent event) throws Exception;
+    }
 
-        return true;
+    private void executeForV3Types(EventTest testLogic) throws Exception {
+        PBTypeSystem pbTypeSystem = new PBTypeSystem();
+        BoundaryConditionsSimulationValueGenerator valuegenerator = new BoundaryConditionsSimulationValueGenerator();
+        short year = TimeUtils.getCurrentYear();
+
+        for (ArchDBRTypes dbrType : ArchDBRTypes.values()) {
+            if (!dbrType.isV3Type()) continue;
+
+            try (SimulationEventStream simstream = new SimulationEventStream(
+                    dbrType, valuegenerator, TimeUtils.getStartOfYear(year), TimeUtils.getEndOfYear(year), 1)) {
+
+                Constructor<? extends DBRTimeEvent> constructorFromDBRTimeEvent =
+                        pbTypeSystem.getSerializingConstructor(dbrType);
+                Event rawEvent = simstream.iterator().next();
+                DBRTimeEvent event = constructorFromDBRTimeEvent.newInstance(rawEvent);
+
+                testLogic.test(event);
+            }
+        }
     }
 }

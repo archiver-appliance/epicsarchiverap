@@ -280,6 +280,7 @@ public class PBScalarShort implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.ScalarShort.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

@@ -281,6 +281,7 @@ public class PBScalarString implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.ScalarString.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();
