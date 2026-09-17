@@ -33,7 +33,6 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ChannelArchiverDataServerPVInfo;
@@ -201,7 +200,7 @@ public class DataRetrievalServlet extends HttpServlet {
             PostProcessor postProcessor,
             MergeDedupConsumer mergeDedupCountingConsumer,
             PVTypeInfo typeInfo,
-            HashMap<String, String> engineMetadata)
+            Map<String, String> metadata)
             throws Exception {
         if (postProcessor instanceof PostProcessorWithConsolidatedEventStream) {
             try (EventStream eventStream =
@@ -211,7 +210,7 @@ public class DataRetrievalServlet extends HttpServlet {
                     logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor "
                             + postProcessor.getExtension());
                 } else {
-                    boolean mergeFailed = mergeTypeInfo(typeInfo, engineMetadata, sourceDesc);
+                    boolean mergeFailed = MetaDataTime.tryMergeMetaData(typeInfo, sourceDesc, metadata);
                     if (mergeFailed) {
                         logger.warn("Failed to merge metadata for consolidated stream of PV " + pvName
                                 + ". Skipping stream.");
@@ -258,14 +257,11 @@ public class DataRetrievalServlet extends HttpServlet {
         return pvName;
     }
 
-    private static boolean isFetchLatestMetadata(HttpServletRequest req) {
-        boolean fetchLatestMetadata = false;
+    private static MetaDataTime metaDataTime(HttpServletRequest req) {
         String fetchLatestMetadataStr = req.getParameter("fetchLatestMetadata");
-        if (fetchLatestMetadataStr != null && fetchLatestMetadataStr.equals("true")) {
-            logger.debug("Adding a call to the engine to fetch the latest metadata");
-            fetchLatestMetadata = true;
-        }
-        return fetchLatestMetadata;
+        String fetchStartMetadataStr = req.getParameter("fetchStartMetadata");
+        String fetchEndMetadataStr = req.getParameter("fetchEndMetadata");
+        return MetaDataTime.fromRequestStrings(fetchStartMetadataStr, fetchEndMetadataStr, fetchLatestMetadataStr);
     }
 
     private static boolean useChunkedEncoding(HttpServletRequest req) {
@@ -359,7 +355,7 @@ public class DataRetrievalServlet extends HttpServlet {
 
         boolean useChunkedEncoding = useChunkedEncoding(req);
 
-        boolean fetchLatestMetadata = isFetchLatestMetadata(req);
+        MetaDataTime metaDataTime = metaDataTime(req);
 
         // For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want
         // to have PVTypeInfo's in the system.
@@ -463,12 +459,14 @@ public class DataRetrievalServlet extends HttpServlet {
                 MergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(resp, extension);
                 RetrievalExecutorResult executorResult = determineExecutorForPostProcessing(
                         pvName, typeInfo, requestTimesOb.requestTimes(), req, postProcessor)) {
-            HashMap<String, String> engineMetadata = null;
-            if (fetchLatestMetadata && typeInfo.getSamplingMethod() != SamplingMethod.DONT_ARCHIVE) {
-                // Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and the
-                // like by checking the sampling method.
-                engineMetadata = fetchLatestMedataFromEngine(pvName, applianceForPV);
-            }
+            Map<String, String> metadata = metaDataTime.getMetadata(
+                    typeInfo,
+                    pvName,
+                    applianceForPV,
+                    requestTimesOb.start(),
+                    requestTimesOb.end(),
+                    MetaDataTime.searchPeriodBetween(requestTimesOb.start(), requestTimesOb.end()),
+                    configService);
 
             LinkedList<Future<RetrievalResult>> retrievalResultFutures = resolveAllDataSources(
                     pvName, typeInfo, postProcessor, applianceForPV, retrievalContext, executorResult, req);
@@ -494,11 +492,11 @@ public class DataRetrievalServlet extends HttpServlet {
                     typeInfo,
                     retrievalContext,
                     mergeDedupCountingConsumer,
-                    engineMetadata,
+                    metadata,
                     currentlyProcessingPV,
                     eventStreamFutures);
 
-            consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer, typeInfo, engineMetadata);
+            consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer, typeInfo, metadata);
 
             // If the postProcessor needs to send final data across, give it a chance now...
             if (postProcessor instanceof AfterAllStreams) {
@@ -537,7 +535,7 @@ public class DataRetrievalServlet extends HttpServlet {
             PVTypeInfo typeInfo,
             BasicContext retrievalContext,
             MergeDedupConsumer mergeDedupCountingConsumer,
-            HashMap<String, String> engineMetadata,
+            Map<String, String> metadata,
             String currentlyProcessingPV,
             List<Future<EventStream>> eventStreamFutures) {
         for (Future<EventStream> future : eventStreamFutures) {
@@ -555,11 +553,7 @@ public class DataRetrievalServlet extends HttpServlet {
                                 ? eventStream.getDescription().getSource()
                                 : " unknown"));
 
-                boolean mergeFailed = mergeTypeInfo(typeInfo, engineMetadata, sourceDesc);
-                if (mergeFailed) {
-                    logger.warn("Failed to merge metadata for stream of PV " + pvName + ". Skipping stream.");
-                    continue;
-                }
+                if (MetaDataTime.tryMergeMetaData(typeInfo, sourceDesc, metadata)) continue;
 
                 if (currentlyProcessingPV == null || !currentlyProcessingPV.equals(pvName)) {
                     logger.debug(
@@ -592,18 +586,6 @@ public class DataRetrievalServlet extends HttpServlet {
                 }
             }
         }
-    }
-
-    private boolean mergeTypeInfo(
-            PVTypeInfo typeInfo, HashMap<String, String> engineMetadata, EventStreamDesc sourceDesc)
-            throws IOException {
-        try {
-            mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
-        } catch (MismatchedDBRTypeException mex) {
-            logger.error(mex.getMessage(), mex);
-            return true;
-        }
-        return false;
     }
 
     private PostProcessor reducePostprocessor(boolean useReduced, PostProcessor postProcessor) {
@@ -775,7 +757,7 @@ public class DataRetrievalServlet extends HttpServlet {
 
         boolean useChunkedEncoding = useChunkedEncoding(req);
 
-        boolean fetchLatestMetadata = isFetchLatestMetadata(req);
+        MetaDataTime metaDataTime = metaDataTime(req);
 
         // For data retrieval we need a PV info. However, in case of PV's that have long since retired, we may not want
         // to have PVTypeInfo's in the system.
@@ -977,16 +959,19 @@ public class DataRetrievalServlet extends HttpServlet {
          * thread service is what retrieves the data, and the BasicContext is the context in which it
          * works.
          */
-        List<HashMap<String, String>> engineMetadatas = new ArrayList<HashMap<String, String>>();
+        List<Map<String, String>> metaDatas = new ArrayList<>();
         try {
             List<BasicContext> retrievalContexts = new ArrayList<BasicContext>(pvNames.size());
             List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvNames.size());
             for (int i = 0; i < pvNames.size(); i++) {
-                if (fetchLatestMetadata && typeInfos.get(i).getSamplingMethod() != SamplingMethod.DONT_ARCHIVE) {
-                    // Make a call to the engine to fetch the latest metadata; skip external servers, template PVs and
-                    // the like by checking the sampling method.
-                    engineMetadatas.add(fetchLatestMedataFromEngine(pvNames.get(i), applianceForPVs.get(i)));
-                }
+                metaDatas.add(metaDataTime.getMetadata(
+                        typeInfos.get(i),
+                        pvNames.get(i),
+                        applianceForPVs.get(i),
+                        requestTimesOb.start(),
+                        requestTimesOb.end(),
+                        MetaDataTime.searchPeriodBetween(requestTimesOb.start(), requestTimesOb.end()),
+                        configService));
                 retrievalContexts.add(new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i)));
                 executorResults.add(determineExecutorForPostProcessing(
                         pvNames.get(i), typeInfos.get(i), requestTimesOb.requestTimes, req, postProcessors.get(i)));
@@ -1036,7 +1021,7 @@ public class DataRetrievalServlet extends HttpServlet {
                     List<Future<EventStream>> eventStreamFutures = listOfEventStreamFuturesLists.get(i);
                     String pvName = pvNames.get(i);
                     PVTypeInfo typeInfo = typeInfos.get(i);
-                    HashMap<String, String> engineMetadata = fetchLatestMetadata ? engineMetadatas.get(i) : null;
+                    Map<String, String> engineMetadata = metaDatas.get(i);
                     PostProcessor postProcessor = postProcessors.get(i);
 
                     configService
@@ -1361,46 +1346,9 @@ public class DataRetrievalServlet extends HttpServlet {
         return null;
     }
 
-    /**
-     * Merges info from pvTypeTnfo that comes from the config database into the remote description that gets sent over the wire.
-     *
-     * @param typeInfo
-     * @param eventDesc
-     * @param engineMetaData - Latest from the engine - could be null
-     * @return
-     * @throws IOException
-     */
-    private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData)
-            throws IOException {
-        if (eventDesc instanceof RemotableEventStreamDesc remoteDesc) {
-            logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source "
-                    + eventDesc.getSource());
-            remoteDesc.mergeFrom(typeInfo, engineMetaData);
-        }
-    }
-
     @Override
     public void init() throws ServletException {
         configService = (ConfigService) this.getServletContext().getAttribute(ConfigService.CONFIG_SERVICE_NAME);
-    }
-
-    /**
-     * Make a call to the engine to fetch the latest metadata and then add it to the mergeConsumer
-     *
-     * @param pvName
-     * @param applianceForPV
-     */
-    @SuppressWarnings("unchecked")
-    private HashMap<String, String> fetchLatestMedataFromEngine(String pvName, ApplianceInfo applianceForPV) {
-        try {
-            String metadataURL = applianceForPV.getEngineURL() + "/getMetadata?pv="
-                    + URLEncoder.encode(pvName, StandardCharsets.UTF_8);
-            logger.debug("Getting metadata from the engine using " + metadataURL);
-            return GetUrlContent.getURLContentAsJSONObject(metadataURL);
-        } catch (Exception ex) {
-            logger.warn("Exception fetching latest metadata for pv " + pvName, ex);
-        }
-        return null;
     }
 
     /**
