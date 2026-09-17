@@ -82,7 +82,7 @@ public class GetDataAtTime {
         return gatherer;
     }
 
-    private static Appliance2PVs getDataFromRetrieval(Appliance2PVs gatherer, Instant atTime, Period searchPeriod) {
+    protected static Appliance2PVs getDataFromRetrieval(Appliance2PVs gatherer, Instant atTime, Period searchPeriod) {
         try {
             HashSet<String> remainingPVs = new HashSet<String>(gatherer.pvsFromAppliance);
             // We only has for PVs that we do not already have the answer for.
