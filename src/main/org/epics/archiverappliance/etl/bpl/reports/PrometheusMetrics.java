@@ -9,16 +9,13 @@ package org.epics.archiverappliance.etl.bpl.reports;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.reports.PrometheusExporter;
 import org.epics.archiverappliance.common.reports.PrometheusMetricsWriter;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.etl.common.ETLMetricsIntoStore;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Map;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Storage metrics for this appliance's stores in the Prometheus text exposition format.
@@ -28,15 +25,11 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author caraxlr
  */
-public class PrometheusMetrics implements BPLAction {
+public class PrometheusMetrics extends PrometheusExporter {
     private static final Logger logger = LogManager.getLogger(PrometheusMetrics.class);
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
-            throws IOException {
-        String appliance = configService.getMyApplianceInfo().getIdentity();
-        PrometheusMetricsWriter writer = new PrometheusMetricsWriter(Map.of("appliance", appliance));
-
+    protected void collect(PrometheusMetricsWriter writer, ConfigService configService) {
         for (StorageWithLifetime store : StorageWithLifetime.getStorageWithLifetimes(configService)) {
             String storeName = store.storageName;
             ETLMetricsIntoStore context =
@@ -67,12 +60,6 @@ public class PrometheusMetrics implements BPLAction {
                 // One unreachable store should not cost us the metrics for the others.
                 logger.warn("Exception retrieving storage metrics from " + storeName, ex);
             }
-        }
-
-        // Prometheus reads the version out of the content type to pick a parser.
-        resp.setContentType(writer.getContentType());
-        try (OutputStream out = resp.getOutputStream()) {
-            writer.writeTo(out);
         }
     }
 }
