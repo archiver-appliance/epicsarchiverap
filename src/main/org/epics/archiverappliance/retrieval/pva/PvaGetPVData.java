@@ -1279,7 +1279,7 @@ public class PvaGetPVData implements PvaAction {
      */
     private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData)
             throws IOException {
-        if (typeInfo != null && eventDesc != null && eventDesc instanceof RemotableEventStreamDesc) {
+        if (eventDesc != null && eventDesc instanceof RemotableEventStreamDesc) {
             logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source "
                     + eventDesc.getSource());
             RemotableEventStreamDesc remoteDesc = (RemotableEventStreamDesc) eventDesc;
