@@ -1359,7 +1359,7 @@ public class DataRetrievalServlet extends HttpServlet {
      */
     private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData)
             throws IOException {
-        if (typeInfo != null && eventDesc instanceof RemotableEventStreamDesc remoteDesc) {
+        if (eventDesc instanceof RemotableEventStreamDesc remoteDesc) {
             logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source "
                     + eventDesc.getSource());
             remoteDesc.mergeFrom(typeInfo, engineMetaData);
