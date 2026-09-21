@@ -7,59 +7,28 @@
  *******************************************************************************/
 package org.epics.archiverappliance.engine.bpl.reports;
 
-import org.epics.archiverappliance.common.BPLAction;
+import org.epics.archiverappliance.common.reports.DetailsMetricsConverter;
+import org.epics.archiverappliance.common.reports.PrometheusExporter;
 import org.epics.archiverappliance.common.reports.PrometheusMetricsWriter;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.engine.epics.EngineMetrics;
-import org.epics.archiverappliance.engine.metadata.MetaGet;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Engine metrics in the Prometheus text exposition format.
+ *
+ * <p>Publishes the numeric entries of {@link EngineMetrics#details}, so an entry added there is
+ * exported without touching this class.
  *
  * @epics.BPLAction - Return the engine metrics for this appliance in the Prometheus text exposition format. Intended to be scraped by Prometheus rather than read by a person.
  * @epics.BPLActionEnd
  *
  * @author caraxlr
  */
-public class PrometheusMetrics implements BPLAction {
-    private static final double BYTES_PER_GB = 1024.0 * 1024.0 * 1024.0;
-    private static final double SECONDS_PER_DAY = 60.0 * 60.0 * 24.0;
+public class PrometheusMetrics extends PrometheusExporter {
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
-            throws IOException {
+    protected void collect(PrometheusMetricsWriter writer, ConfigService configService) {
         EngineMetrics metrics = EngineMetrics.computeEngineMetrics(configService.getEngineContext(), configService);
-        String appliance = configService.getMyApplianceInfo().getIdentity();
-
-        PrometheusMetricsWriter writer = new PrometheusMetricsWriter(Map.of("appliance", appliance));
-
-        writer.gauge("pv_count", "PVs this engine is actively archiving.", metrics.getPvCount());
-        writer.gauge(
-                "pv_connected", "PVs the engine currently has a live connection to.", metrics.getConnectedPVCount());
-        writer.gauge("pv_disconnected", "PVs the engine has lost the connection to.", metrics.getDisconnectedPVCount());
-        writer.gauge(
-                "pv_pending_meta_info",
-                "PVs whose meta info the engine has not finished computing.",
-                MetaGet.getPendingMetaGetsSize());
-        writer.gauge("epics_channels", "EPICS channels open for these PVs.", metrics.getTotalEPICSChannels());
-
-        writer.gauge(
-                "event_rate_events_per_second", "Events per second arriving at the engine.", metrics.getEventRate());
-        writer.gauge(
-                "data_rate_gibibytes_per_day",
-                "Gibibytes per day arriving at the engine.",
-                metrics.getDataRate() * SECONDS_PER_DAY / BYTES_PER_GB);
-
-        // Prometheus reads the version out of the content type to pick a parser.
-        resp.setContentType(writer.getContentType());
-        try (OutputStream out = resp.getOutputStream()) {
-            writer.writeTo(out);
-        }
+        DetailsMetricsConverter.addAll(writer, metrics.details(configService));
     }
 }

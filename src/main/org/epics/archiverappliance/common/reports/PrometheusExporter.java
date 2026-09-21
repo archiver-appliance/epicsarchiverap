@@ -5,10 +5,9 @@
  * EPICS archiver appliance is distributed subject to a Software License Agreement found
  * in file LICENSE that is included with this distribution.
  *******************************************************************************/
-package org.epics.archiverappliance.mgmt.bpl.reports;
+package org.epics.archiverappliance.common.reports;
 
 import org.epics.archiverappliance.common.BPLAction;
-import org.epics.archiverappliance.common.reports.PrometheusMetricsWriter;
 import org.epics.archiverappliance.config.ConfigService;
 
 import java.io.IOException;
@@ -18,25 +17,26 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Configuration level PV counts in the Prometheus text exposition format.
+ * Base for the per component {@code /metrics} endpoints.
  *
- * @epics.BPLAction - Return the mgmt metrics for this appliance in the Prometheus text exposition format. Intended to be scraped by Prometheus rather than read by a person.
- * @epics.BPLActionEnd
+ * <p>Owns the response envelope every component shares: the appliance label, the content type and
+ * writing the collected snapshots out. Subclasses only fill the writer in {@link #collect}, either
+ * from a metrics report through {@link DetailsMetricsConverter} or by adding gauges directly.
+ *
+ * <p>Each war serves its own numbers and Prometheus scrapes it directly, rather than going through
+ * the cluster-wide fan-out the mgmt reports perform.
  *
  * @author caraxlr
  */
-public class PrometheusMetrics implements BPLAction {
+public abstract class PrometheusExporter implements BPLAction {
 
     @Override
-    public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
+    public final void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
-        ConfigService.CachedPVCounts pvCounts = configService.getCachedPVCountsForThisAppliance();
         String appliance = configService.getMyApplianceInfo().getIdentity();
-
         PrometheusMetricsWriter writer = new PrometheusMetricsWriter(Map.of("appliance", appliance));
 
-        // Cached here in mgmt; reporting it from the engine would cost a cluster call per scrape.
-        writer.gauge("pv_paused", "PVs whose archiving is paused.", pvCounts.pausedPVCount());
+        collect(writer, configService);
 
         // Prometheus reads the version out of the content type to pick a parser.
         resp.setContentType(writer.getContentType());
@@ -44,4 +44,13 @@ public class PrometheusMetrics implements BPLAction {
             writer.writeTo(out);
         }
     }
+
+    /**
+     * Add this component's metrics to the writer.
+     *
+     * @param writer Collects the samples; already carries the appliance label.
+     * @param configService The config service handed to the action.
+     * @throws IOException On failure to gather a metric.
+     */
+    protected abstract void collect(PrometheusMetricsWriter writer, ConfigService configService) throws IOException;
 }
