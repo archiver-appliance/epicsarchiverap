@@ -86,7 +86,6 @@ import org.epics.archiverappliance.mgmt.bpl.reports.NeverConnectedPVsForThisAppl
 import org.epics.archiverappliance.mgmt.bpl.reports.PVDetails;
 import org.epics.archiverappliance.mgmt.bpl.reports.PVsByStorageConsumed;
 import org.epics.archiverappliance.mgmt.bpl.reports.PausedPVsReport;
-import org.epics.archiverappliance.mgmt.bpl.reports.PrometheusMetrics;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyAddedPVs;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyAddedPVsforThisInstance;
 import org.epics.archiverappliance.mgmt.bpl.reports.RecentlyChangedPVs;
@@ -194,7 +193,6 @@ public class BPLServlet extends HttpServlet {
         addAction("/getApplianceMetrics", ApplianceMetrics.class);
         addAction("/getApplianceMetricsForAppliance", ApplianceMetricsDetails.class);
         addAction("/getMgmtMetricsForAppliance", MgmtMetrics.class);
-        addAction("/metrics", PrometheusMetrics.class);
         addAction("/getExternalArchiverServers", ChannelArchiverListView.class);
         addAction("/addExternalArchiverServer", AddExternalArchiverServer.class);
         addAction("/addExternalArchiverServerArchives", AddExternalArchiverServerArchives.class);
