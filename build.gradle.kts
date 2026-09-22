@@ -183,7 +183,7 @@ dependencies {
 	testImplementation(libs.commons.cli)
 	testImplementation(libs.jinjava)
 	testImplementation(files("lib/test/BPLTaglets.jar"))
-	testImplementation(":pbrawclient:0.2.2")
+	testImplementation(libs.pbrawclient)
 	testImplementation(libs.tomcat.servlet.api)
 	testImplementation(libs.mockito)
 	testImplementation(libs.tomcat.embed.core)

@@ -42,6 +42,7 @@ protobuf-plugin = "0.9.5"
 stax-api       = "1.0-2"
 slf4j          = "2.0.16"
 prometheus     = "1.8.0"
+pbrawclient    = "0.2.3"
 
 [libraries]
 guava                    = { module = "com.google.guava:guava", version.ref = "guava" }
@@ -98,6 +99,7 @@ stax-api                 = { module = "javax.xml.stream:stax-api", version.ref =
 slf4j-api                = { module = "org.slf4j:slf4j-api", version.ref = "slf4j"}
 prometheus-model         = { module = "io.prometheus:prometheus-metrics-model", version.ref = "prometheus" }
 prometheus-textformats   = { module = "io.prometheus:prometheus-metrics-exposition-textformats", version.ref = "prometheus" }
+pbrawclient              = { module = "org.epics:pbrawclient", version.ref = "pbrawclient" }
 
 [bundles]
 parquet        = ["parquet-protobuf", "parquet-column", "parquet-common", "parquet-hadoop"]
