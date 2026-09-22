@@ -55,6 +55,13 @@ public class CnxLostTest {
             FileUtils.deleteDirectory(persistenceFolder);
         }
         persistenceFolder.mkdirs();
+
+        File mtsFolder = new File(
+                ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "UnitTestNoNamingConvention");
+        if (mtsFolder.exists()) {
+            FileUtils.deleteDirectory(mtsFolder);
+        }
+
         System.getProperties()
                 .put(
                         ConfigService.ARCHAPPL_PERSISTENCE_LAYER,
