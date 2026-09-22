@@ -141,6 +141,10 @@ dependencies {
 	implementation(libs.httpclient)
 	implementation(libs.httpcore)
 
+	// Metrics exposition. textformats keeps the protobuf format, and its shaded protobuf, out of the wars.
+	implementation(libs.prometheus.model)
+	implementation(libs.prometheus.textformats)
+
 	// Data Formats & DB
 	implementation(libs.jdbm) // clojar dependency
 	implementation(libs.json.simple)

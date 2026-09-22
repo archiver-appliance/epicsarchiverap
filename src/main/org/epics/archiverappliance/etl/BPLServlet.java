@@ -23,6 +23,7 @@ import org.epics.archiverappliance.etl.bpl.reports.ApplianceMetricsDetails;
 import org.epics.archiverappliance.etl.bpl.reports.InstanceReportDetails;
 import org.epics.archiverappliance.etl.bpl.reports.PVDetails;
 import org.epics.archiverappliance.etl.bpl.reports.PVsByStorageConsumed;
+import org.epics.archiverappliance.etl.bpl.reports.PrometheusMetrics;
 import org.epics.archiverappliance.etl.bpl.reports.StorageDetailsForAppliance;
 import org.epics.archiverappliance.etl.bpl.reports.StorageMetricsForAppliance;
 
@@ -52,6 +53,7 @@ public class BPLServlet extends HttpServlet {
         getActions.put("/getStorageMetricsForAppliance", StorageMetricsForAppliance.class);
         getActions.put("/getStorageDetailsForAppliance", StorageDetailsForAppliance.class);
         getActions.put("/getPVsByStorageConsumed", PVsByStorageConsumed.class);
+        getActions.put("/metrics", PrometheusMetrics.class);
         getActions.put("/getInstanceMetricsForAppliance", InstanceReportDetails.class);
         getActions.put("/getLastKnownEvent", GetLastKnownEventTimeStamp.class);
         getActions.put("/consolidateDataForPV", ConsolidatePBFilesForOnePV.class);

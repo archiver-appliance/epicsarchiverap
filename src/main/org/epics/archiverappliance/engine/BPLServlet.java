@@ -38,6 +38,7 @@ import org.epics.archiverappliance.engine.bpl.reports.ListAllChannels;
 import org.epics.archiverappliance.engine.bpl.reports.LostConnectionsReport;
 import org.epics.archiverappliance.engine.bpl.reports.MetaGetsForThisApplianceAction;
 import org.epics.archiverappliance.engine.bpl.reports.PVDetails;
+import org.epics.archiverappliance.engine.bpl.reports.PrometheusMetrics;
 import org.epics.archiverappliance.engine.bpl.reports.SilentPVReport;
 import org.epics.archiverappliance.engine.bpl.reports.SlowChangingPVsWithDroppedEvents;
 import org.epics.archiverappliance.engine.bpl.reports.StorageRateReport;
@@ -85,6 +86,7 @@ public class BPLServlet extends HttpServlet {
         getActions.put("/deletePV", DeletePV.class);
         getActions.put("/listAllChannels", ListAllChannels.class);
         getActions.put("/getProcessMetrics", ProcessMetricsReport.class);
+        getActions.put("/metrics", PrometheusMetrics.class);
         getActions.put("/pausePVsonShutdown", PausePVsOnShutdown.class);
         getActions.put("/cleanUpAnyImmortalChannels", CleanUpAnyImmortalChannels.class);
         getActions.put("/getVersion", GetVersion.class);
