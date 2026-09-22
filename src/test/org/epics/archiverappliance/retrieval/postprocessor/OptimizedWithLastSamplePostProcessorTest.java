@@ -33,7 +33,7 @@ public class OptimizedWithLastSamplePostProcessorTest {
     private long reconnectTime = 0;
     private short year = (short) (TimeUtils.getCurrentYear() - 1);
 
-    /*
+    /**
      * Generate test data. This can simulate periods of no data and
      * add the field data required to simulate a disconnection occurring
      * in the data.
@@ -65,24 +65,22 @@ public class OptimizedWithLastSamplePostProcessorTest {
             SimulationEvent ev =
                     new SimulationEvent(secsIntoYear, year, ArchDBRTypes.DBR_SCALAR_INT, new ScalarValue<>(s));
             PBScalarInt pEv = new PBScalarInt(ev);
-            if (simNoData)
-                // Simulate no data for a previod of time, either because the
-                // PV value has not changed or there has been a disconnect
-                if (s > startNoData && s < endNoData) continue;
-            if (simDisconnect)
-                if (s == endNoData) {
-                    // Simulate a reconnection at the end of a period with no data
-                    disconnectTime = yearInSecs + secsIntoYear - (60 * disconnectDurationMin);
-                    reconnectTime = yearInSecs + secsIntoYear;
-                    pEv.addFieldValue("cnxregainedepsecs", String.valueOf(reconnectTime));
-                    pEv.addFieldValue("cnxlostepsecs", String.valueOf(disconnectTime));
-                }
+            // Simulate no data for a period of time, either because the
+            // PV value has not changed or there has been a disconnect
+            if (simNoData && s > startNoData && s < endNoData) continue;
+            if (simDisconnect && s == endNoData) {
+                // Simulate a reconnection at the end of a period with no data
+                disconnectTime = yearInSecs + secsIntoYear - (60 * disconnectDurationMin);
+                reconnectTime = yearInSecs + secsIntoYear;
+                pEv.addFieldValue("cnxregainedepsecs", String.valueOf(reconnectTime));
+                pEv.addFieldValue("cnxlostepsecs", String.valueOf(disconnectTime));
+            }
             testData.add(pEv);
         }
         return testData;
     }
 
-    /*
+    /**
      * Helped method to determine if an Instant representation of a date
      * was after or on certain time
      * @param t1 Instant time to be compared.
@@ -106,8 +104,7 @@ public class OptimizedWithLastSamplePostProcessorTest {
     public void checkConnectionChanges(int numSamples, int expectedSamplesInPeriod, ArrayListEventStream testData)
             throws Exception {
         Instant start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
-        Instant end = start.plusSeconds(
-                numSamples * 60); // TimeUtils.convertFromISO8601String(year + "-06-01T11:40:00.000Z");
+        Instant end = start.plusSeconds(numSamples * 60);
         PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
         pvTypeInfo.setSamplingPeriod(60);
 
