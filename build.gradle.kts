@@ -45,12 +45,16 @@ java {
 	}
 }
 
-val runTestsSequentially: Boolean by extra {
+extra.set(
+	"runTestsSequentially",
 	(findProperty("ARCHAPPL_SEQUENTIAL_TESTS") as? String)?.toBoolean() ?: false
-}
+)
+val runTestsSequentially = extra["runTestsSequentially"] as Boolean
 
-val gitVersion: groovy.lang.Closure<String> by extra
-val versionDetails: groovy.lang.Closure<VersionDetails> by extra
+@Suppress("UNCHECKED_CAST")
+val gitVersion = extra["gitVersion"] as groovy.lang.Closure<String>
+@Suppress("UNCHECKED_CAST")
+val versionDetails = extra["versionDetails"] as groovy.lang.Closure<VersionDetails>
 // Whether git is actually usable: binary installed AND .git present with origin/master.
 // Spotless's ratchetFrom below needs this. Probe git directly rather than inferring it
 // from the version path, so a missing git binary or absent .git both disable Spotless.
@@ -81,6 +85,9 @@ ant.properties["stage"] = stageDir
 ant.properties["archapplsite"] = archapplsite
 ant.properties["sitespecificpath"] = sitespecificpath
 ant.importBuild("build.xml")
+tasks.named("sitespecificbuild") {
+	dependsOn("compileJava")
+}
 
 // =================================================================
 // Repositories & Dependencies
@@ -104,7 +111,7 @@ repositories {
 	}
 }
 
-val viewer: Configuration by configurations.creating
+val viewer = configurations.create("viewer")
 
 dependencies {
 	// Local JARs
@@ -291,11 +298,11 @@ tasks.register<Zip>("stageSvgViewer") {
 	destinationDirectory.set(stageDir.asFile.resolve("org/epics/archiverappliance/retrieval/staticcontent"))
 }
 
+ant.properties["classes"] = sourceSets.main.get().runtimeClasspath.asPath
 tasks.register("sitespecificantscript") {
 	group = "Staging"
 	description = "Do the site specific changes from the ant script."
 	dependsOn("stage")
-	ant.properties["classes"] = sourceSets.main.get().runtimeClasspath.asPath
 	finalizedBy("sitespecificbuild")
 }
 
@@ -827,7 +834,7 @@ if (gitWorks) {
 
 			// Define the steps to apply to those files
 			trimTrailingWhitespace()
-			indentWithTabs()
+			leadingSpacesToTabs()
 			endWithNewline()
 		}
 		format("styling") {
