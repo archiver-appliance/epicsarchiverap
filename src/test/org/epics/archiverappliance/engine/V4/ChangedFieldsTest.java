@@ -27,6 +27,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.ConnectionLossFields;
 import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.pva.data.PVADouble;
 import org.epics.pva.data.PVAInt;
@@ -129,9 +130,11 @@ public class ChangedFieldsTest {
 
         HashMap<Instant, HashMap<String, String>> expectedInstantFieldValues = new HashMap<>();
         HashMap<String, String> initFieldValues = new HashMap<>();
-        initFieldValues.put("cnxlostepsecs", "0");
+        initFieldValues.put(ConnectionLossFields.CNX_LOST_EPSECS.getFieldName(), "0");
         initFieldValues.put("startup", "true");
-        initFieldValues.put("cnxregainedepsecs", Long.toString(firstInstant.getEpochSecond() + 1));
+        initFieldValues.put(
+                ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName(),
+                Long.toString(firstInstant.getEpochSecond() + 1));
         initFieldValues.put("timeStamp.nanoseconds", Integer.toString(firstInstant.getNano()));
         initFieldValues.put("timeStamp.userTag", "0");
         initFieldValues.put("timeStamp.secondsPastEpoch", Long.toString(firstInstant.getEpochSecond()));
@@ -322,7 +325,7 @@ public class ChangedFieldsTest {
         Assertions.assertNotNull(actualMap, "Missing actual field values map");
         Assertions.assertEquals(expectedMap.size(), actualMap.size(), "Unexpected field count");
         for (var v : expectedMap.entrySet()) {
-            if (v.getKey().equals("cnxregainedepsecs")) {
+            if (v.getKey().equals(ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName())) {
                 Assertions.assertTrue(
                         Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey()))) < 10);
             } else {

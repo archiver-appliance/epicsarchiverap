@@ -118,9 +118,17 @@ public class DeadBand implements PostProcessor {
                             }
 
                             boolean currentConnectionChangeStatus = currDBRTimeEvent.hasFieldValues()
-                                    && currDBRTimeEvent.getFields().containsKey("cnxlostepsecs");
+                                    && currDBRTimeEvent
+                                            .getFields()
+                                            .containsKey(org.epics.archiverappliance.engine.ConnectionLossFields
+                                                    .CNX_LOST_EPSECS
+                                                    .getFieldName());
                             boolean previousConnectionChangeStatus = previousDBRTimeEvent.hasFieldValues()
-                                    && previousDBRTimeEvent.getFields().containsKey("cnxlostepsecs");
+                                    && previousDBRTimeEvent
+                                            .getFields()
+                                            .containsKey(org.epics.archiverappliance.engine.ConnectionLossFields
+                                                    .CNX_LOST_EPSECS
+                                                    .getFieldName());
                             if (currentConnectionChangeStatus != previousConnectionChangeStatus) {
                                 // If connection state changes changes, write out current value and update last known
                                 // value

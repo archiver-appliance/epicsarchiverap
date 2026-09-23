@@ -5,6 +5,7 @@ import org.epics.archiverappliance.Event;
 import org.epics.archiverappliance.common.TimeUtils;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.ConnectionLossFields;
 import org.epics.archiverappliance.utils.simulation.SimulationEventStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,16 +18,16 @@ class FieldValuesTest {
     @Test
     void testAddFieldValueAppendsIncrementally() throws Exception {
         executeForV3Types(event -> {
-            event.addFieldValue("cnxlostepsecs", "12345");
-            event.addFieldValue("cnxregainedepsecs", "12346");
+            event.addFieldValue(ConnectionLossFields.CNX_LOST_EPSECS.getFieldName(), "12345");
+            event.addFieldValue(ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName(), "12346");
 
             Assertions.assertTrue(event.hasFieldValues(), "Adding field values should turn on hasFieldValues");
             Assertions.assertFalse(event.isActualChange(), "addFieldValue defaults to isActualChange = false");
 
             HashMap<String, String> fields = event.getFields();
             Assertions.assertEquals(2, fields.size(), "Fields map should contain exactly 2 entries");
-            Assertions.assertEquals("12345", fields.get("cnxlostepsecs"));
-            Assertions.assertEquals("12346", fields.get("cnxregainedepsecs"));
+            Assertions.assertEquals("12345", fields.get(ConnectionLossFields.CNX_LOST_EPSECS.getFieldName()));
+            Assertions.assertEquals("12346", fields.get(ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName()));
 
             // Adding a third field incrementally
             event.addFieldValue("startup", "true");

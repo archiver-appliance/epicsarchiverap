@@ -11,6 +11,7 @@ import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.config.persistence.JDBM2Persistence;
+import org.epics.archiverappliance.engine.ConnectionLossFields;
 import org.epics.archiverappliance.retrieval.client.EpicsMessage;
 import org.epics.archiverappliance.retrieval.client.GenMsgIterator;
 import org.epics.archiverappliance.retrieval.client.RawDataRetrieval;
@@ -106,11 +107,7 @@ public class CnxLostTest {
         }
     }
 
-    @Test
-    public void testConnectionLossHeaders() throws Exception {
-        String pvNameToArchive = "UnitTestNoNamingConvention:inactive1";
-        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-
+    private void setupPV(String pvNameToArchive, String mgmtURL) throws Exception {
         JSONObject srcPVTypeInfoJSON = (JSONObject) JSONValue.parse(new InputStreamReader(new FileInputStream(new File(
                 "src/test/org/epics/archiverappliance/retrieval/postprocessor/data/PVTypeInfoPrototype.json"))));
         PVTypeInfo destPVTypeInfo = new PVTypeInfo();
@@ -132,6 +129,14 @@ public class CnxLostTest {
         GetUrlContent.getURLContentWithQueryParameters(
                 mgmtURL + "resumeArchivingPV", Map.of("pv", pvNameToArchive), false);
         ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Being archived", 10, mgmtURL, 15);
+    }
+
+    @Test
+    public void testStartupHeaders() throws Exception {
+        String pvNameToArchive = "UnitTestNoNamingConvention:inactive1";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+
+        setupPV(pvNameToArchive, mgmtURL);
 
         // UnitTestNoNamingConvention:inactive1 is SCAN passive without autosave so it should have an invalid timestamp.
         // We caput something to generate a valid timestamp..
@@ -144,6 +149,19 @@ public class CnxLostTest {
             new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1),
             new ExpectedEventType(ConnectionLossType.NONE, 1)
         });
+    }
+
+    @Test
+    public void testPauseResumeHeaders() throws Exception {
+        String pvNameToArchive = "UnitTestNoNamingConvention:inactive1";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+
+        setupPV(pvNameToArchive, mgmtURL);
+
+        SIOCSetup.caput(pvNameToArchive, "1.0");
+        Thread.sleep(1 * 1000);
+        SIOCSetup.caput(pvNameToArchive, "2.0");
+        Thread.sleep(1 * 1000);
 
         logger.info("We are now archiving the PV; let's pause and resume");
 
@@ -165,6 +183,19 @@ public class CnxLostTest {
             new ExpectedEventType(ConnectionLossType.NONE, 1),
             new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1)
         });
+    }
+
+    @Test
+    public void testIOCRestartHeaders() throws Exception {
+        String pvNameToArchive = "UnitTestNoNamingConvention:inactive1";
+        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
+
+        setupPV(pvNameToArchive, mgmtURL);
+
+        SIOCSetup.caput(pvNameToArchive, "1.0");
+        Thread.sleep(1 * 1000);
+        SIOCSetup.caput(pvNameToArchive, "2.0");
+        Thread.sleep(1 * 1000);
 
         siocSetup.stopSIOC();
         Thread.sleep(5 * 1000);
@@ -181,7 +212,6 @@ public class CnxLostTest {
         checkRetrieval(pvNameToArchive, new ExpectedEventType[] {
             new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1),
             new ExpectedEventType(ConnectionLossType.NONE, 1),
-            new ExpectedEventType(ConnectionLossType.STARTUP_OR_PAUSE_RESUME, 1),
             new ExpectedEventType(ConnectionLossType.IOC_RESTART, 1),
             new ExpectedEventType(ConnectionLossType.NONE, 1),
         });
@@ -231,13 +261,16 @@ public class CnxLostTest {
     private static ConnectionLossType determineConnectionLossType(EpicsMessage dbrevent) throws IOException {
         ConnectionLossType retVal = ConnectionLossType.NONE;
         Map<String, String> extraFields = dbrevent.getFieldValues();
-        if (!extraFields.keySet().contains("cnxlostepsecs")) {
+        String cnxLostField = ConnectionLossFields.CNX_LOST_EPSECS.getFieldName();
+        String startupField = ConnectionLossFields.STARTUP.getFieldName();
+
+        if (!extraFields.keySet().contains(cnxLostField)) {
             retVal = ConnectionLossType.NONE;
         } else {
-            String connectionLostSecs = extraFields.get("cnxlostepsecs");
+            String connectionLostSecs = extraFields.get(cnxLostField);
             if (Long.parseLong(connectionLostSecs) == 0) {
                 Assertions.assertTrue(
-                        extraFields.keySet().contains("startup"),
+                        extraFields.keySet().contains(startupField),
                         "At least for now, we should have a startup field as well");
                 retVal = ConnectionLossType.STARTUP_OR_PAUSE_RESUME;
             } else {
