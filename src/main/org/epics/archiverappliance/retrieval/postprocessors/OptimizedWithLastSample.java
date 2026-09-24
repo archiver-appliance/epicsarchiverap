@@ -56,6 +56,8 @@ public class OptimizedWithLastSample
     long currentBin = -1;
     int currentMaxSeverity = 0;
     boolean currentConnectionChangedEvents = false;
+    long disconnectionTime = 0;
+    long reconnectionTime = 0;
     SummaryStatsCollector currentBinCollector = null;
     RemotableEventStreamDesc srcDesc = null;
     private boolean inheritValuesFromPreviousBins = true;
@@ -319,8 +321,13 @@ public class OptimizedWithLastSample
                                     currentMaxSeverity = dbrTimeEvent.getSeverity();
                                 }
                                 if (dbrTimeEvent.hasFieldValues()
-                                        && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")) {
+                                        && dbrTimeEvent.getFields().containsKey("cnxregainedepsecs")
+                                        && dbrTimeEvent.getFields().containsKey("cnxlostepsecs")) {
                                     currentConnectionChangedEvents = true;
+                                    disconnectionTime = Long.parseLong(
+                                            dbrTimeEvent.getFields().get("cnxlostepsecs"));
+                                    reconnectionTime = Long.parseLong(
+                                            dbrTimeEvent.getFields().get("cnxregainedepsecs"));
                                 }
                             } else if (binNumber < firstBin) {
                                 // Michael Davidsaver's special case; keep track of the last
@@ -345,6 +352,13 @@ public class OptimizedWithLastSample
                     // no events.
                     if (currentBinCollector != null) {
                         if (currentBinCollector.haveEventsBeenAdded()) {
+                            long nSkip = currentBin - lastBinSaved;
+                            if (nSkip > 1) {
+                                // Bins have been skipped (had no events) so need to populate them
+                                // with the last value from the last bin to have events
+                                populateSkippedBins(nSkip);
+                            }
+
                             SummaryValue summaryValue;
                             summaryValue = new SummaryValue(
                                     ((SummaryStatsVectorCollector) currentBinCollector).getVectorValues(),
@@ -390,6 +404,12 @@ public class OptimizedWithLastSample
         SummaryValue oldValue = consolidatedData.get(lastBinSaved);
         double lastVal = oldValue.values.get(5);
 
+        long disconnectBin = 0;
+        if (disconnectionTime != 0) disconnectBin = disconnectionTime / intervalSecs;
+
+        long reconnectBin = 0;
+        if (reconnectionTime != 0) reconnectBin = reconnectionTime / intervalSecs;
+
         List<Double> list = new ArrayList<>(6);
         list.add(lastVal);
         list.add(0.0);
@@ -397,10 +417,13 @@ public class OptimizedWithLastSample
         list.add(lastVal);
         list.add(0.0);
         list.add(lastVal);
-        SummaryValue lastValSum = new SummaryValue(list, currentMaxSeverity, currentConnectionChangedEvents);
 
         for (int i = 1; i < nBins; i++) {
-            consolidatedData.put(lastBinSaved + i, lastValSum);
+            boolean connectionChangedEvent = false;
+            long bin = lastBinSaved + i;
+            if (disconnectBin != 0 && bin >= disconnectBin && bin < reconnectBin) connectionChangedEvent = true;
+            SummaryValue lastValSum = new SummaryValue(list, currentMaxSeverity, connectionChangedEvent);
+            consolidatedData.put(bin, lastValSum);
         }
     }
 
@@ -408,6 +431,8 @@ public class OptimizedWithLastSample
         currentBin = binNumber;
         currentMaxSeverity = 0;
         currentConnectionChangedEvents = false;
+        disconnectionTime = 0;
+        reconnectionTime = 0;
         currentBinCollector = statisticsPostProcessor.getCollector();
         currentBinCollector.setBinParams(intervalSecs, currentBin);
     }
