@@ -239,6 +239,7 @@ public class GetDataAtTimeForPVFromStoresTest {
         String pvName = pvNameBase + "_" + plainStorageType.name();
         Period searchPeriod = Period.parse("P1D");
         PVWithData pvWithData = getDataAtTimeForPVFromStores(pvName, when, searchPeriod, configService);
+        Assertions.assertNotNull(pvWithData);
         Event pvData = pvWithData.event();
         Assertions.assertNotNull(pvData, "Getting at time " + when + " returns null?");
         logger.info(JSONValue.toJSONString(pvWithData));

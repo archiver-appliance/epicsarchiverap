@@ -487,7 +487,7 @@ public class DataRetrievalServlet extends HttpServlet {
                     retrievalContext,
                     mergeDedupCountingConsumer,
                     engineMetadata,
-                    currentlyProcessingPV,
+                    null,
                     eventStreamFutures);
 
             consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer);
@@ -559,7 +559,7 @@ public class DataRetrievalServlet extends HttpServlet {
                             currentlyProcessingPV,
                             requestTimesOb.start(),
                             requestTimesOb.end(),
-                            (eventStream != null) ? sourceDesc : null);
+                            sourceDesc);
                 }
 
                 consolidateEventStream(resp, postProcessor, mergeDedupCountingConsumer, sourceDesc, eventStream);
@@ -896,14 +896,13 @@ public class DataRetrievalServlet extends HttpServlet {
             ArrayList<PVInfoForClusterRetrieval> pvInfos;
             while ((retrievalURL = retrievalURLs.iterator().next()) == null) {
                 // Get array list of PVs for appliance
-                pvInfos = applianceToPVs.get(retrievalURL);
+                pvInfos = applianceToPVs.get(null);
                 try {
                     List<List<Future<EventStream>>> resultFromForeignAppliances =
                             retrieveEventStreamFromForeignAppliance(req, resp, pvInfos, requestTimesOb.requestTimes);
                     listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
                 } catch (Exception ex) {
-                    logger.error(
-                            "Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
+                    logger.error("Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + null + ".");
                     return;
                 }
             }
@@ -1044,7 +1043,7 @@ public class DataRetrievalServlet extends HttpServlet {
                             retrievalContext,
                             mergeDedupCountingConsumer,
                             engineMetadata,
-                            currentlyProcessingPV,
+                            null,
                             eventStreamFutures);
 
                     consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer);
@@ -1341,7 +1340,7 @@ public class DataRetrievalServlet extends HttpServlet {
                 }
             }
             logger.warn("Unable to determine typeinfo from CA for pv " + pvName);
-            return typeInfo;
+            return null;
         }
 
         logger.debug("Cannot find the PV anywhere " + pvName);

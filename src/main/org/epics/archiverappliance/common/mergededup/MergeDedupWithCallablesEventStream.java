@@ -128,7 +128,7 @@ public class MergeDedupWithCallablesEventStream implements EventStream, Remotabl
                 if (strm1 != null) {
                     description = (RemotableEventStreamDesc) strm1.getDescription();
                     it1 = strm1.iterator();
-                    if (it1 != null && it1.hasNext()) {
+                    if (it1.hasNext()) {
                         s1next = it1.next();
                         evCount1++;
                     }
@@ -160,7 +160,7 @@ public class MergeDedupWithCallablesEventStream implements EventStream, Remotabl
                 }
                 if (strm2 != null) {
                     it2 = strm2.iterator();
-                    if (it2 != null && it2.hasNext()) {
+                    if (it2.hasNext()) {
                         s2next = it2.next();
                         evCount2++;
                     }

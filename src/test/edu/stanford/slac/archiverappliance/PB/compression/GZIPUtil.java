@@ -148,18 +148,15 @@ public class GZIPUtil {
             }
         }
 
-        if (os != null) {
+        try {
 
-            try {
+            os.flush();
 
-                os.flush();
+            os.close();
 
-                os.close();
+        } catch (IOException e) {
 
-            } catch (IOException e) {
-
-                logger.error("Exception", e);
-            }
+            logger.error("Exception", e);
         }
 
         return target;
@@ -218,18 +215,15 @@ public class GZIPUtil {
             }
         }
 
-        if (os != null) {
+        try {
 
-            try {
+            os.flush();
 
-                os.flush();
+            os.close();
 
-                os.close();
+        } catch (IOException e) {
 
-            } catch (IOException e) {
-
-                logger.error("Exception", e);
-            }
+            logger.error("Exception", e);
         }
 
         return target;

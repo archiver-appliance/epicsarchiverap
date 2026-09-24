@@ -50,6 +50,7 @@ public class SingleEventTimeBasedIteratorTest {
                         + rootFolderName + "&partitionGranularity=PARTITION_HOUR",
                 configService);
 
+        Assertions.assertNotNull(storagePlugin);
         File rootFolder = new File(storagePlugin.getRootFolder());
         if (rootFolder.exists()) {
             FileUtils.deleteDirectory(rootFolder);

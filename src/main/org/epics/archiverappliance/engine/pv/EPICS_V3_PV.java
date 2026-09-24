@@ -903,7 +903,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         }
         ad.addKV("Various transient errors", Long.toString(transientErrorCount));
 
-        ad.addKV("Do we have a CA channel?", Boolean.toString(this.theChannel != null && theChannel != null));
+        ad.addKV("Do we have a CA channel?", Boolean.toString(this.theChannel != null));
         ad.addKV("Do we have a subscription?", Boolean.toString(this.subscription != null));
         if (this.theChannel != null && (theChannel instanceof CAJChannel cajChannel)) {
             ad.addKV("CAJ Searches", Integer.toString(cajChannel.getSearchTries()));

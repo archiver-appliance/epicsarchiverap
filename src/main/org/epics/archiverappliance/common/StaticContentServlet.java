@@ -109,11 +109,6 @@ public class StaticContentServlet extends HttpServlet {
         logger.debug("Procesing static content request for " + requestedFile);
 
         // Check if file is actually supplied to the request URL.
-        if (requestedFile == null) {
-            logger.error("Static content request for a null file?");
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            return;
-        }
 
         if (configService.getStartupState() != STARTUP_SEQUENCE.STARTUP_COMPLETE) {
             String msg = "Cannot process static content request for " + requestedFile

@@ -32,12 +32,6 @@ public class WebappReady implements BPLAction {
         }
         configlogger.info("Received webAppReady from " + webApp);
         WAR_FILE warFile = WAR_FILE.valueOf(webApp);
-        if (warFile == null) {
-            resp.sendError(HttpServletResponse.SC_NOT_FOUND);
-            configlogger.error(
-                    "Received a webAppReady with an invalid webapp parameter to identify the webapp - " + webApp);
-            return;
-        }
         if (configService.isStartupComplete()) {
             ApplianceInfo myApplianceInfo = configService.getMyApplianceInfo();
             switch (warFile) {

@@ -112,6 +112,7 @@ public class ETLSourceGetStreamsTest {
         File rootFolder = new File(
                 testFolder.getAbsolutePath() + File.separator + partitionGranularity.toString() + File.separator);
         rootFolder.mkdirs();
+        Assertions.assertNotNull(pbplugin);
         pbplugin.setRootFolder(rootFolder.getAbsolutePath());
         pbplugin.setPartitionGranularity(partitionGranularity);
         String pvName =

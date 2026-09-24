@@ -196,9 +196,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         HashMap<String, String> retVal = new HashMap<>();
         // The totalMetaInfo is updated once every 24hours...
         MetaInfo metaInfo = this.totalMetaInfo;
-        if (metaInfo != null) {
-            metaInfo.addToDict(retVal);
-        }
+        metaInfo.addToDict(retVal);
         if (fieldValuesCache != null) {
             retVal.putAll(fieldValuesCache.getCurrentFieldValues());
         }
