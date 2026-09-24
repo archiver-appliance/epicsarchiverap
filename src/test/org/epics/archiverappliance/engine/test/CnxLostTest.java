@@ -238,6 +238,7 @@ public class CnxLostTest {
                         + dbrevent.getNumberValue().doubleValue() + " at time "
                         + TimeUtils.convertToHumanReadableString(TimeUtils.fromSQLTimeStamp(dbrevent.getTimestamp())));
                 retrievedData.add(dbrevent);
+                logger.info("Event Fields: " + dbrevent.getFieldValues());
                 eventCount++;
             }
             Assertions.assertTrue(eventCount >= 1, "Expecting at least one event. We got " + eventCount);

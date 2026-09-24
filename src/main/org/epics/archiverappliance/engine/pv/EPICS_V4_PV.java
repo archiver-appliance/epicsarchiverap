@@ -597,6 +597,9 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
     private void saveAllMetaData(DBRTimeEvent lastEvent) {
         HashMap<String, String> fieldValues = new HashMap<>();
+        if (lastEvent.hasFieldValues()) {
+            fieldValues.putAll(lastEvent.getFields());
+        }
         fieldValues.putAll(metaInfoToStore(totalMetaInfo));
         fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true));
         this.archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
