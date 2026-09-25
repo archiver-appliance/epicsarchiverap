@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,6 +57,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings("nls")
 public abstract class ArchiveChannel {
     public static final int SAVE_META_DATA_PERIOD_SECS = 86400;
+    public static final int MIN_SAVE_META_DATA_PERIOD_SECS = 12 * 60 * 60;
+    public static final String SAVE_META_DATA_PERIOD_SECS_PROPERTY =
+            "org.epics.archiverappliance.engine.metadata.fullRefreshPeriodSecs";
+    private static volatile int configuredMetaDataPeriodSecs = SAVE_META_DATA_PERIOD_SECS;
 
     private static final Logger logger = LogManager.getLogger(ArchiveChannel.class);
 
@@ -88,6 +93,45 @@ public abstract class ArchiveChannel {
 
     static {
         metaFieldOverrideTypes.put("DESC", ArchDBRTypes.DBR_SCALAR_STRING);
+    }
+
+    public static int getConfiguredMetaDataPeriodSecs() {
+        return configuredMetaDataPeriodSecs;
+    }
+
+    public static int resolveMetaDataPeriodSecs(Properties installationProperties) {
+        String configuredValue = installationProperties == null
+                ? null
+                : installationProperties.getProperty(SAVE_META_DATA_PERIOD_SECS_PROPERTY);
+        if (configuredValue == null || configuredValue.isBlank()) {
+            return SAVE_META_DATA_PERIOD_SECS;
+        }
+
+        int configuredSecs;
+        try {
+            configuredSecs = Integer.parseInt(configuredValue.trim());
+        } catch (NumberFormatException ex) {
+            logger.warn(
+                    "Invalid value {}={} - using default {}",
+                    SAVE_META_DATA_PERIOD_SECS_PROPERTY,
+                    configuredValue,
+                    SAVE_META_DATA_PERIOD_SECS);
+            return SAVE_META_DATA_PERIOD_SECS;
+        }
+
+        if (configuredSecs < MIN_SAVE_META_DATA_PERIOD_SECS) {
+            logger.warn(
+                    "Configured {}={} is below minimum {} - using minimum value",
+                    SAVE_META_DATA_PERIOD_SECS_PROPERTY,
+                    configuredSecs,
+                    MIN_SAVE_META_DATA_PERIOD_SECS);
+            return MIN_SAVE_META_DATA_PERIOD_SECS;
+        }
+        return configuredSecs;
+    }
+
+    public static void configureMetaDataPeriod(Properties installationProperties) {
+        configuredMetaDataPeriodSecs = resolveMetaDataPeriodSecs(installationProperties);
     }
 
     /**

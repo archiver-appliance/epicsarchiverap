@@ -195,11 +195,13 @@ public class DataRetrievalServlet extends HttpServlet {
         return new RetrievalExecutorResult(new CurrentThreadExecutorService(), requestTimes);
     }
 
-    private static void consolidateEventStream(
+    private void consolidateEventStream(
             HttpServletResponse resp,
             String pvName,
             PostProcessor postProcessor,
-            MergeDedupConsumer mergeDedupCountingConsumer)
+            MergeDedupConsumer mergeDedupCountingConsumer,
+            PVTypeInfo typeInfo,
+            HashMap<String, String> engineMetadata)
             throws Exception {
         if (postProcessor instanceof PostProcessorWithConsolidatedEventStream) {
             try (EventStream eventStream =
@@ -209,6 +211,12 @@ public class DataRetrievalServlet extends HttpServlet {
                     logger.error("Skipping event stream without a desc for pv " + pvName + " and post processor "
                             + postProcessor.getExtension());
                 } else {
+                    boolean mergeFailed = mergeTypeInfo(typeInfo, engineMetadata, sourceDesc);
+                    if (mergeFailed) {
+                        logger.warn("Failed to merge metadata for consolidated stream of PV " + pvName
+                                + ". Skipping stream.");
+                        return;
+                    }
                     mergeDedupCountingConsumer.consumeEventStream(eventStream);
                     resp.flushBuffer();
                 }
@@ -490,7 +498,7 @@ public class DataRetrievalServlet extends HttpServlet {
                     currentlyProcessingPV,
                     eventStreamFutures);
 
-            consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer);
+            consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer, typeInfo, engineMetadata);
 
             // If the postProcessor needs to send final data across, give it a chance now...
             if (postProcessor instanceof AfterAllStreams) {
@@ -547,7 +555,11 @@ public class DataRetrievalServlet extends HttpServlet {
                                 ? eventStream.getDescription().getSource()
                                 : " unknown"));
 
-                if (mergeTypeInfo(typeInfo, engineMetadata, sourceDesc)) continue;
+                boolean mergeFailed = mergeTypeInfo(typeInfo, engineMetadata, sourceDesc);
+                if (mergeFailed) {
+                    logger.warn("Failed to merge metadata for stream of PV " + pvName + ". Skipping stream.");
+                    continue;
+                }
 
                 if (currentlyProcessingPV == null || !currentlyProcessingPV.equals(pvName)) {
                     logger.debug(
@@ -1047,7 +1059,8 @@ public class DataRetrievalServlet extends HttpServlet {
                             currentlyProcessingPV,
                             eventStreamFutures);
 
-                    consolidateEventStream(resp, pvName, postProcessor, mergeDedupCountingConsumer);
+                    consolidateEventStream(
+                            resp, pvName, postProcessor, mergeDedupCountingConsumer, typeInfo, engineMetadata);
 
                     // If the postProcessor needs to send final data across, give it a chance now...
                     if (postProcessor instanceof AfterAllStreams) {
@@ -1359,7 +1372,7 @@ public class DataRetrievalServlet extends HttpServlet {
      */
     private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData)
             throws IOException {
-        if (typeInfo != null && eventDesc instanceof RemotableEventStreamDesc remoteDesc) {
+        if (eventDesc instanceof RemotableEventStreamDesc remoteDesc) {
             logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source "
                     + eventDesc.getSource());
             remoteDesc.mergeFrom(typeInfo, engineMetaData);

@@ -7,6 +7,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.pva.client.ClientChannelListener;
 import org.epics.pva.client.ClientChannelState;
 import org.epics.pva.client.MonitorListener;
@@ -235,8 +236,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
     private void setupDBRType(PVAStructure data) {
         logger.debug("Construct the fieldValuesCache for PV " + this.getName());
-        boolean excludeV4Changes = true;
-        this.fieldValuesCache = new FieldValuesCache(data, excludeV4Changes);
+        this.fieldValuesCache = new FieldValuesCache(data, false);
         this.timeStampBits = this.fieldValuesCache.getTimeStampBits();
         if (this.timeStampBits.isEmpty()) {
             logger.error("Cannot determine the timestamp bitset for PV " + this.name
@@ -285,7 +285,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         this.totalMetaInfo.computeRate(dbrtimeevent);
 
         this.fieldValuesCache.updateFieldValues(data, changes);
-        dbrtimeevent.setFieldValues(this.fieldValuesCache.getUpdatedFieldValues(false, this.metaFields), false);
+        dbrtimeevent.setFieldValues(this.fieldValuesCache.getUpdatedFieldValues(false), false);
 
         return dbrtimeevent;
     }
@@ -590,18 +590,18 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
      */
     @Override
     public void aboutToWriteBuffer(DBRTimeEvent lastEvent) {
-        // save all the fields once every period
-        // 24 hours
-        int saveMetaDataPeriodSecs = 86400;
-        if (newMetaDataSavePeriod(this.archiveFieldsSavedAtEpSec, saveMetaDataPeriodSecs)) {
+        if (newMetaDataSavePeriod(this.archiveFieldsSavedAtEpSec, ArchiveChannel.getConfiguredMetaDataPeriodSecs())) {
             saveAllMetaData(lastEvent);
         }
     }
 
     private void saveAllMetaData(DBRTimeEvent lastEvent) {
         HashMap<String, String> fieldValues = new HashMap<>();
+        if (lastEvent.hasFieldValues()) {
+            fieldValues.putAll(lastEvent.getFields());
+        }
         fieldValues.putAll(metaInfoToStore(totalMetaInfo));
-        fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true, this.metaFields));
+        fieldValues.putAll(fieldValuesCache.getUpdatedFieldValues(true));
         this.archiveFieldsSavedAtEpSec = TimeUtils.getCurrentEpochSeconds();
         lastEvent.setFieldValues(fieldValues, false);
     }

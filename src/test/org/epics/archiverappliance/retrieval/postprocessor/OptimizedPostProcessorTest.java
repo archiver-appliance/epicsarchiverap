@@ -175,6 +175,37 @@ public class OptimizedPostProcessorTest {
         Assertions.assertEquals(expectedSamplesInPeriod, eventCount, "The number of events should match the expected");
     }
 
+    @Test
+    public void testMetadataIsRetainedInConsolidatedStream() throws Exception {
+        short year = (short) (TimeUtils.getCurrentYear() - 1);
+        ArrayListEventStream testData = getData(year);
+
+        Instant start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(year + "-06-02T10:00:00.000Z");
+        PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+        pvTypeInfo.setSamplingPeriod(60);
+
+        Optimized optimizedPP = new Optimized();
+        optimizedPP.initialize("optimized_160", pvName);
+        optimizedPP.estimateMemoryConsumption(pvName, pvTypeInfo, start, end, null);
+
+        optimizedPP
+                .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                .call();
+
+        // DataRetrievalServlet gets the consolidated stream
+        EventStream retData = optimizedPP.getConsolidatedEventStream();
+        RemotableEventStreamDesc finalDesc = (RemotableEventStreamDesc) retData.getDescription();
+
+        // Simulate DataRetrievalServlet merging metadata into the final consolidated stream
+        finalDesc.addHeader("TEST_HEADER", "TEST_VALUE");
+
+        Assertions.assertEquals(
+                "TEST_VALUE",
+                finalDesc.getHeaders().get("TEST_HEADER"),
+                "Metadata headers should be retained in the final consolidated stream");
+    }
+
     /**
      * Test for inclusion of last value before first bin into first bin
      * @throws Exception

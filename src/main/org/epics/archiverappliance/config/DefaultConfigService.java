@@ -51,6 +51,7 @@ import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.config.persistence.MySQLPersistence;
 import org.epics.archiverappliance.config.pubsub.PubSubEvent;
 import org.epics.archiverappliance.engine.ArchiveEngine;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtPostStartup;
@@ -309,6 +310,7 @@ public class DefaultConfigService implements ConfigService {
                     archapplproperties.put(apkey, nval);
                 }
             }
+            ArchiveChannel.configureMetaDataPeriod(archapplproperties);
         } catch (ConfigException cex) {
             throw cex;
         } catch (Exception ex) {

@@ -90,7 +90,10 @@ public class GetEngineDataAction implements BPLAction {
                                     archiveChannel.getPVMetrics().getConnectionLastLostEpochSeconds();
                             if (connectionLastLostEpochSeconds != 0) {
                                 logger.debug("Adding a cnxlostepsecs header");
-                                metaFields.put("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
+                                metaFields.put(
+                                        org.epics.archiverappliance.engine.ConnectionLossFields.CNX_LOST_EPSECS
+                                                .getFieldName(),
+                                        Long.toString(connectionLastLostEpochSeconds));
                             }
                         }
                         desc.addHeaders(metaFields);

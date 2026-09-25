@@ -36,6 +36,7 @@ import org.epics.archiverappliance.config.MetaInfo;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.ScalarStringSampleValue;
 import org.epics.archiverappliance.engine.ArchiveEngine;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -1037,7 +1038,11 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
      * save the meta data
      */
     private void saveMetaDataOnceEveryDay(DBRTimeEvent lastEvent) {
-        HashMap<String, String> tempHashMap = new HashMap<String, String>(allarchiveFieldsData);
+        HashMap<String, String> tempHashMap = new HashMap<String, String>();
+        if (lastEvent.hasFieldValues()) {
+            tempHashMap.putAll(lastEvent.getFields());
+        }
+        tempHashMap.putAll(allarchiveFieldsData);
         if (!runTimeFieldsData.isEmpty()) {
             // This should store fields like the description at least once every day.
             tempHashMap.putAll(runTimeFieldsData);
@@ -1063,14 +1068,18 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             // changes//////////////
             if (!changedarchiveFieldsData.isEmpty()) {
                 logger.debug("Adding changed field for pv " + name + " with " + changedarchiveFieldsData.size());
-                HashMap<String, String> tempHashMap = new HashMap<>(changedarchiveFieldsData);
+                HashMap<String, String> tempHashMap = new HashMap<String, String>();
+                if (lastEvent.hasFieldValues()) {
+                    tempHashMap.putAll(lastEvent.getFields());
+                }
+                tempHashMap.putAll(changedarchiveFieldsData);
                 // dbrtimeevent.s
                 lastEvent.setFieldValues(tempHashMap, true);
                 changedarchiveFieldsData.clear();
             }
             if (!allarchiveFieldsData.isEmpty()) {
                 long nowES = TimeUtils.getCurrentEpochSeconds();
-                if ((nowES - archiveFieldsSavedAtEpSec) >= 86400) {
+                if ((nowES - archiveFieldsSavedAtEpSec) >= ArchiveChannel.getConfiguredMetaDataPeriodSecs()) {
                     saveMetaDataOnceEveryDay(lastEvent);
                 }
             }

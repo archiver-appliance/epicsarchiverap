@@ -18,12 +18,16 @@
  */
 package org.epics.archiverappliance.engine.V4;
 
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedEvents;
+import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigServiceForTests;
 import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.archiverappliance.engine.ConnectionLossFields;
 import org.epics.archiverappliance.engine.test.MemBufWriter;
 import org.epics.pva.data.PVADouble;
 import org.epics.pva.data.PVAInt;
@@ -42,9 +46,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.getReceivedEvents;
-import static org.epics.archiverappliance.engine.V4.PVAccessUtil.startArchivingPV;
 
 /**
  * Test to check the metadata stored with the pv as it changes
@@ -129,9 +130,11 @@ public class ChangedFieldsTest {
 
         HashMap<Instant, HashMap<String, String>> expectedInstantFieldValues = new HashMap<>();
         HashMap<String, String> initFieldValues = new HashMap<>();
-        initFieldValues.put("cnxlostepsecs", "0");
+        initFieldValues.put(ConnectionLossFields.CNX_LOST_EPSECS.getFieldName(), "0");
         initFieldValues.put("startup", "true");
-        initFieldValues.put("cnxregainedepsecs", Long.toString(firstInstant.getEpochSecond() + 1));
+        initFieldValues.put(
+                ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName(),
+                Long.toString(firstInstant.getEpochSecond() + 1));
         initFieldValues.put("timeStamp.nanoseconds", Integer.toString(firstInstant.getNano()));
         initFieldValues.put("timeStamp.userTag", "0");
         initFieldValues.put("timeStamp.secondsPastEpoch", Long.toString(firstInstant.getEpochSecond()));
@@ -141,14 +144,26 @@ public class ChangedFieldsTest {
         initFieldValues.put("display.limitHigh", "1.0");
         initFieldValues.put("display.description", "DESC");
         initFieldValues.put("display.units", "kHz");
+        initFieldValues.put("LOPR", "1.0");
+        initFieldValues.put("HOPR", "1.0");
+        initFieldValues.put("DESC", "DESC");
+        initFieldValues.put("EGU", "kHz");
         initFieldValues.put("control.limitLow", "1.0");
         initFieldValues.put("control.limitHigh", "1.0");
         initFieldValues.put("control.minStep", "1.0");
+        initFieldValues.put("DRVL", "1.0");
+        initFieldValues.put("DRVH", "1.0");
+        initFieldValues.put("PREC", "1.0");
         initFieldValues.put("valueAlarm.lowAlarmLimit", "1");
         initFieldValues.put("valueAlarm.lowWarningLimit", "1");
         initFieldValues.put("valueAlarm.highWarningLimit", "1");
         initFieldValues.put("valueAlarm.highAlarmLimit", "1");
         initFieldValues.put("valueAlarm.hysteresis", "1");
+        initFieldValues.put("LOLO", "1");
+        initFieldValues.put("LOW", "1");
+        initFieldValues.put("HIGH", "1");
+        initFieldValues.put("HIHI", "1");
+        initFieldValues.put("HYST", "1");
         initFieldValues.put("extra", "extra value");
         initFieldValues.put("extraArchived", "extra archived value");
 
@@ -203,6 +218,30 @@ public class ChangedFieldsTest {
             Assertions.fail(e.getMessage());
         }
         HashMap<String, String> allFields = new HashMap<>();
+        allFields.put("display.limitLow", "2.0");
+        allFields.put("display.limitHigh", "2.0");
+        allFields.put("display.description", "2.0");
+        allFields.put("display.units", "2.0");
+        allFields.put("LOPR", "2.0");
+        allFields.put("HOPR", "2.0");
+        allFields.put("DESC", "2.0");
+        allFields.put("EGU", "2.0");
+        allFields.put("control.limitLow", "2.0");
+        allFields.put("control.limitHigh", "2.0");
+        allFields.put("control.minStep", "2.0");
+        allFields.put("DRVL", "2.0");
+        allFields.put("DRVH", "2.0");
+        allFields.put("PREC", "2.0");
+        allFields.put("valueAlarm.lowAlarmLimit", "2");
+        allFields.put("valueAlarm.lowWarningLimit", "2");
+        allFields.put("valueAlarm.highWarningLimit", "2");
+        allFields.put("valueAlarm.highAlarmLimit", "2");
+        allFields.put("valueAlarm.hysteresis", "2");
+        allFields.put("LOLO", "2");
+        allFields.put("LOW", "2");
+        allFields.put("HIGH", "2");
+        allFields.put("HIHI", "2");
+        allFields.put("HYST", "2");
         expectedInstantFieldValues.put(instant, allFields);
 
         // Update extra field
@@ -220,6 +259,9 @@ public class ChangedFieldsTest {
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
         }
+        HashMap<String, String> changedExtraFields = new HashMap<>();
+        changedExtraFields.put("extra", "2.0");
+        expectedInstantFieldValues.put(instant, changedExtraFields);
 
         // Update extraArchived field
         Thread.sleep(samplingPeriodMilliSeconds);
@@ -257,6 +299,7 @@ public class ChangedFieldsTest {
             Assertions.fail(e.getMessage());
         }
         HashMap<String, String> oneField = new HashMap<>();
+        oneField.put("display.limitHigh", "3.0");
         oneField.put("HOPR", "3.0");
         expectedInstantFieldValues.put(instant, oneField);
 
@@ -274,14 +317,19 @@ public class ChangedFieldsTest {
         for (Map.Entry<Instant, HashMap<String, String>> e : expectedInstantFieldValues.entrySet()) {
             var actualMap = actualValues.get(e.getKey());
             logger.info("For time " + e.getKey() + " expected " + e.getValue() + " actual " + actualMap);
-            for (var v : e.getValue().entrySet()) {
-                if (v.getKey().equals("cnxregainedepsecs")) {
-                    Assertions.assertTrue(
-                            Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey())))
-                                    < 10);
-                } else {
-                    Assertions.assertEquals(v.getValue(), actualMap.get(v.getKey()));
-                }
+            assertFieldValues(e.getValue(), actualMap);
+        }
+    }
+
+    private static void assertFieldValues(Map<String, String> expectedMap, Map<String, String> actualMap) {
+        Assertions.assertNotNull(actualMap, "Missing actual field values map");
+        Assertions.assertEquals(expectedMap.size(), actualMap.size(), "Unexpected field count");
+        for (var v : expectedMap.entrySet()) {
+            if (v.getKey().equals(ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName())) {
+                Assertions.assertTrue(
+                        Math.abs(Float.parseFloat(v.getValue()) - Float.parseFloat(actualMap.get(v.getKey()))) < 10);
+            } else {
+                Assertions.assertEquals(v.getValue(), actualMap.get(v.getKey()));
             }
         }
     }
