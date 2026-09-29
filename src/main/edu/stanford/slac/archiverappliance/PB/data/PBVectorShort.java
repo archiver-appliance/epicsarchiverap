@@ -294,6 +294,7 @@ public class PBVectorShort implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.VectorShort.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

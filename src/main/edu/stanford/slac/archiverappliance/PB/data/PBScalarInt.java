@@ -280,6 +280,7 @@ public class PBScalarInt implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.ScalarInt.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

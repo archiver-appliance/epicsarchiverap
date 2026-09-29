@@ -276,6 +276,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         }
         dbevent = EPICSEvent.V4GenericBytes.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

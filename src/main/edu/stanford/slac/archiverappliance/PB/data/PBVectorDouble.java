@@ -289,6 +289,7 @@ public class PBVectorDouble implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.VectorDouble.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

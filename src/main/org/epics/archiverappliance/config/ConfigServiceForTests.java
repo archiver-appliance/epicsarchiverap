@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.epics.archiverappliance.config.exception.AlreadyRegisteredException;
 import org.epics.archiverappliance.config.exception.ConfigException;
 import org.epics.archiverappliance.config.persistence.InMemoryPersistence;
+import org.epics.archiverappliance.engine.model.ArchiveChannel;
 import org.epics.archiverappliance.engine.pv.EngineContext;
 import org.epics.archiverappliance.etl.common.PBThreeTierETLPVLookup;
 import org.epics.archiverappliance.mgmt.MgmtRuntimeState;
@@ -219,6 +220,7 @@ public class ConfigServiceForTests extends DefaultConfigService {
                     "org.epics.archiverappliance.engine.epics.commandThreadCount",
                     Integer.toString(jcaCommandThreadCount));
         }
+        ArchiveChannel.configureMetaDataPeriod(archapplproperties);
 
         pvName2KeyConverter = new ConvertPVNameToKey();
         pvName2KeyConverter.initialize(this);

@@ -11,6 +11,7 @@ import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.PVTypeInfo;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.archiverappliance.data.VectorValue;
+import org.epics.archiverappliance.engine.ConnectionLossFields;
 import org.epics.archiverappliance.retrieval.CallableEventStream;
 import org.epics.archiverappliance.retrieval.postprocessors.OptimizedWithLastSample;
 import org.epics.archiverappliance.utils.simulation.SimulationEvent;
@@ -72,8 +73,9 @@ public class OptimizedWithLastSamplePostProcessorTest {
                 // Simulate a reconnection at the end of a period with no data
                 disconnectTime = yearInSecs + secsIntoYear - (60 * disconnectDurationMin);
                 reconnectTime = yearInSecs + secsIntoYear;
-                pEv.addFieldValue("cnxregainedepsecs", String.valueOf(reconnectTime));
-                pEv.addFieldValue("cnxlostepsecs", String.valueOf(disconnectTime));
+                pEv.addFieldValue(
+                        ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName(), String.valueOf(reconnectTime));
+                pEv.addFieldValue(ConnectionLossFields.CNX_LOST_EPSECS.getFieldName(), String.valueOf(disconnectTime));
             }
             testData.add(pEv);
         }

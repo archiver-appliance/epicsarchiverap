@@ -286,6 +286,7 @@ public class PBScalarFloat implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.ScalarFloat.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

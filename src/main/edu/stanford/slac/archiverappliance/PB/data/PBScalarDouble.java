@@ -280,6 +280,7 @@ public class PBScalarDouble implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.ScalarDouble.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();

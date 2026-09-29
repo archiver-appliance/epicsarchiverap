@@ -669,9 +669,15 @@ public class PVMetrics {
                 logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after startup for pv " + pvName + " at "
                         + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
             }
-            event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
-            event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
-            event.addFieldValue("startup", Boolean.TRUE.toString());
+            event.addFieldValue(
+                    org.epics.archiverappliance.engine.ConnectionLossFields.CNX_LOST_EPSECS.getFieldName(),
+                    Long.toString(connectionLastLostEpochSeconds));
+            event.addFieldValue(
+                    org.epics.archiverappliance.engine.ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName(),
+                    Long.toString(cnxregainedsecs));
+            event.addFieldValue(
+                    org.epics.archiverappliance.engine.ConnectionLossFields.STARTUP.getFieldName(),
+                    Boolean.TRUE.toString());
             connectionLastLostEpochSeconds = 0;
             firstDataAfterStartUp = false;
             isFirstDataAfterConnection = false;
@@ -683,8 +689,12 @@ public class PVMetrics {
                         logger.debug("Adding cnxlostepsecs and cnxregainedepsecs after regaining connection for pv "
                                 + pvName + " at " + cnxregainedsecs + " onto event @ " + event.getEpochSeconds());
                     }
-                    event.addFieldValue("cnxlostepsecs", Long.toString(connectionLastLostEpochSeconds));
-                    event.addFieldValue("cnxregainedepsecs", Long.toString(cnxregainedsecs));
+                    event.addFieldValue(
+                            org.epics.archiverappliance.engine.ConnectionLossFields.CNX_LOST_EPSECS.getFieldName(),
+                            Long.toString(connectionLastLostEpochSeconds));
+                    event.addFieldValue(
+                            org.epics.archiverappliance.engine.ConnectionLossFields.CNX_REGAINED_EPSECS.getFieldName(),
+                            Long.toString(cnxregainedsecs));
                     connectionLastLostEpochSeconds = 0;
                 } else {
                     logger.debug(

@@ -70,26 +70,29 @@ public class RemotableEventStreamDesc extends EventStreamDesc {
     }
 
     public void mergeFrom(PVTypeInfo info, Map<String, String> engineMetadata) throws IOException {
-        if (!PVNames.channelNamePVName(this.pvName).equals(PVNames.channelNamePVName(info.getPvName())))
-            throw new IOException("Mismatch in pv info's. Src is for " + this.pvName + ". Info from config db is for "
-                    + info.getPvName());
-        this.elementCount = info.getElementCount();
-        if (!this.headers.containsKey("EGU")) {
-            this.headers.put("EGU", info.getUnits());
-        }
-        if (!this.headers.containsKey("PREC")) {
-            this.headers.put("PREC", Integer.toString(info.getPrecision().intValue()));
-        }
+        if (info != null) {
+            if (!PVNames.channelNamePVName(this.pvName).equals(PVNames.channelNamePVName(info.getPvName())))
+                throw new IOException("Mismatch in pv info's. Src is for " + this.pvName
+                        + ". Info from config db is for " + info.getPvName());
+            this.elementCount = info.getElementCount();
+            if (!this.headers.containsKey("EGU")) {
+                this.headers.put("EGU", info.getUnits());
+            }
+            if (!this.headers.containsKey("PREC")) {
+                this.headers.put("PREC", Integer.toString(info.getPrecision().intValue()));
+            }
 
-        // There are cases when we use operators where the DBR type of the PVTypeInfo is not the same as the DBR type of
-        // the event stream
-        // So instead of throwing an exception; for now, I am just logging a warning.
-        // Will revisit if lets thru event streams of difference kinds.
-        // if(!this.archDBRType.equals(info.getDBRType())) throw new MismatchedDBRTypeException(info.getPvName(),
-        // info.getDBRType(), this.source, this.archDBRType);
+            // There are cases when we use operators where the DBR type of the PVTypeInfo is not the same as the DBR
+            // type of
+            // the event stream
+            // So instead of throwing an exception; for now, I am just logging a warning.
+            // Will revisit if lets thru event streams of difference kinds.
+            // if(!this.archDBRType.equals(info.getDBRType())) throw new MismatchedDBRTypeException(info.getPvName(),
+            // info.getDBRType(), this.source, this.archDBRType);
 
-        if (!this.archDBRType.equals(info.getDBRType())) {
-            logger.warn("For pv " + this.pvName + " dbr types do not match for stream " + this.source);
+            if (!this.archDBRType.equals(info.getDBRType())) {
+                logger.warn("For pv " + this.pvName + " dbr types do not match for stream " + this.source);
+            }
         }
 
         if (engineMetadata != null) {

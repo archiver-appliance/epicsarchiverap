@@ -295,6 +295,7 @@ public class PBVectorEnum implements DBRTimeEvent {
         }
         dbevent = EPICSEvent.VectorEnum.newBuilder()
                 .mergeFrom(dbevent)
+                .clearFieldvalues()
                 .addAllFieldvalues(fieldValuesList)
                 .setFieldactualchange(markAsActualChange)
                 .build();
