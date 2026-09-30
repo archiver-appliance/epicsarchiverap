@@ -360,7 +360,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
      * Try to connect to the PV. OK to call more than once.
      */
     private void connect() throws Exception {
-        logger.debug("pv of" + this.name + " connectting");
+        logLifecycle("connect");
         PVContext.scheduleCommand(
                 this.configservice, this.name, this.jcaCommandThreadId, this.theChannel, "connect", new Runnable() {
                     @Override
@@ -416,6 +416,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         } catch (final Throwable e) {
             logger.error("exception when disconnecting pv " + name, e);
         }
+        logLifecycle("disconnect");
         fireDisconnected();
     }
 
@@ -453,6 +454,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                 final DBRType type = DBR_Helper.getTimeType(plain, theChannel.getFieldType());
                 state = PVConnectionState.Subscribing;
                 totalMetaInfo.setStartTime(System.currentTimeMillis());
+                logLifecycle("subscribe");
                 // isnotTimestampDBR
                 if (this.name.endsWith(".RTYP")) {
                     subscription = theChannel.addMonitor(MonitorMask.ARCHIVE.getMask(), this);
@@ -475,6 +477,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                     subscription = theChannel.addMonitor(
                             type, theChannel.getElementCount(), MonitorMask.ARCHIVE.getMask(), this);
                 }
+                logLifecycle("subscribed");
             } catch (final Exception ex) {
                 logger.error("exception when subscribing pv " + name, ex);
             }
@@ -494,6 +497,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         }
         try {
             sub_copy.clear();
+            logLifecycle("unsubscribed");
         } catch (IllegalStateException ile) {
             logger.warn("Illegal state exception when unsubscribing pv " + name, ile);
         } catch (final Exception ex) {
@@ -535,6 +539,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
     @Override
     public void stop() {
         running = false;
+        logLifecycle("stop");
         PVContext.scheduleCommand(
                 this.configservice, this.name, this.jcaCommandThreadId, this.theChannel, "stop", () -> {
                     logger.debug("Stopping channel " + EPICS_V3_PV.this.name);
@@ -546,7 +551,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
     /** ConnectionListener interface. */
     @Override
     public void connectionChanged(final ConnectionEvent ev) {
-        logger.debug("Connection changed for pv " + this.name);
+        logLifecycle(ev.isConnected() ? "connectionChanged:connected" : "connectionChanged:disconnected");
         // This runs in a CA thread
         if (ev.isConnected()) { // Transfer to JCACommandThread to avoid
             // deadlocks
@@ -588,6 +593,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
                                 connected = false;
                                 subscription = null;
                             }
+                            logLifecycle("disconnected");
                             if (sub_copy != null) {
                                 try {
                                     sub_copy.clear();
@@ -625,6 +631,7 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
             return;
         }
         state = PVConnectionState.Connected;
+        logLifecycle("connected");
         hostName = channel.getHostName();
         totalMetaInfo.setHostName(hostName);
         for (final PVListener listener : listeners) {
@@ -931,6 +938,10 @@ public class EPICS_V3_PV implements PV, ControllingPV, ConnectionListener, Monit
         ad.addKV("Hostname of PV from CA", this.hostName);
 
         return;
+    }
+
+    private void logLifecycle(String event) {
+        logger.info("pv={} protocol=CA thread={} event={}", name, jcaCommandThreadId, event);
     }
 
     @Override
