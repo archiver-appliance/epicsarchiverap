@@ -2,10 +2,12 @@ package org.epics.archiverappliance.engine.pv;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
 import org.epics.archiverappliance.config.MetaInfo;
+import org.epics.pva.data.PVAStructure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -13,6 +15,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -116,6 +121,19 @@ public class EPICS_V4_PVTest {
         assertEquals(
                 ArchDBRTypes.DBR_V4_GENERIC_BYTES,
                 EPICS_V4_PV.determineDBRType("some_struct", "unknown_type", "unknown_type value"));
+    }
+
+    @Test
+    public void initialReadTimesOutInsteadOfBlockingIndefinitely() {
+        CompletableFuture<PVAStructure> neverCompletes = new CompletableFuture<>();
+        long start = System.nanoTime();
+
+        assertThrows(
+                TimeoutException.class, () -> EPICS_V4_PV.awaitInitialRead(neverCompletes, 50, TimeUnit.MILLISECONDS));
+
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        assertTrue(elapsedMillis < 2_000, "Read should fail within a bounded time");
+        assertTrue(neverCompletes.isCancelled());
     }
 
     @Test

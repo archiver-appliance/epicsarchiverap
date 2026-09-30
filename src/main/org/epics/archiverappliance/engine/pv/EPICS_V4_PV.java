@@ -22,7 +22,10 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
@@ -34,7 +37,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     /**the meta info for this pv*/
     private final MetaInfo totalMetaInfo = new MetaInfo();
 
-    private PVConnectionState state = PVConnectionState.Idle;
+    private volatile PVConnectionState state = PVConnectionState.Idle;
 
     private PVAChannel pvaChannel;
 
@@ -105,6 +108,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     private final AtomicLong disconnectCallbackCount = new AtomicLong();
     private final AtomicLong transientErrorCount = new AtomicLong();
     private volatile String lastReadError = "";
+    private final PVAConfiguration pvaConfiguration;
 
     EPICS_V4_PV(
             final String name,
@@ -123,6 +127,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         this.name = name;
         this.configservice = configservice;
         this.jcaCommandThreadId = jcaCommandThreadId;
+        this.pvaConfiguration = new PVAConfiguration(configservice);
     }
 
     @Override
@@ -394,10 +399,13 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
                     state = PVConnectionState.Connecting;
                     synchronized (this) {
                         if (pvaChannel == null) {
-                            pvaChannel = configservice
-                                    .getEngineContext()
-                                    .getPVAClient()
-                                    .getChannel(name, EPICS_V4_PV.this);
+                            var pvaClient = configservice.getEngineContext().getPVAClient();
+                            if (pvaClient == null) {
+                                logger.warn("PVA client is unavailable while connecting PV {}", name);
+                                transientErrorCount.incrementAndGet();
+                                return;
+                            }
+                            pvaChannel = pvaClient.getChannel(name, EPICS_V4_PV.this);
                         }
 
                         if (pvaChannel == null) {
@@ -492,11 +500,22 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
             }
 
             try {
-                var pvaStructure = pvaChannel.read("").get();
+                CompletableFuture<PVAStructure> readFuture = pvaChannel.read("");
+                var pvaStructure =
+                        awaitInitialRead(readFuture, pvaConfiguration.pvaReadTimeoutSecs(), TimeUnit.SECONDS);
                 this.setupDBRType(pvaStructure);
                 DBRTimeEvent dbrTimeEvent = fromStructure(pvaStructure, null);
                 saveAllMetaData(dbrTimeEvent);
                 fireValueUpdate(dbrTimeEvent);
+                lastReadError = "";
+            } catch (TimeoutException e) {
+                transientErrorCount.incrementAndGet();
+                lastReadError = "TimeoutException after " + pvaConfiguration.pvaReadTimeoutSecs() + " seconds";
+                logger.warn(
+                        "Timed out after {} seconds reading initial PVA value for PV {} on command thread {}; continuing to subscribe",
+                        pvaConfiguration.pvaReadTimeoutSecs(),
+                        name,
+                        jcaCommandThreadId);
             } catch (Exception e) {
                 transientErrorCount.incrementAndGet();
                 lastReadError = e.getClass().getSimpleName() + ": " + e.getMessage();
@@ -547,6 +566,16 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         } catch (final Exception ex) {
             transientErrorCount.incrementAndGet();
             logger.error("exception when unsubscribing pv {}", name, ex);
+        }
+    }
+
+    static PVAStructure awaitInitialRead(CompletableFuture<PVAStructure> readFuture, long timeout, TimeUnit unit)
+            throws Exception {
+        try {
+            return readFuture.get(timeout, unit);
+        } catch (TimeoutException ex) {
+            readFuture.cancel(true);
+            throw ex;
         }
     }
 

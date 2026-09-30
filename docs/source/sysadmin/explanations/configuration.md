@@ -123,6 +123,21 @@ configuration decisions that are made during the initial scoping of your
 archiving project; so, please do look at these configuration elements
 and make choices appropriate to your installation.
 
+### Engine connection diagnostics
+
+The engine uses `JCACommandThread`s to process Channel Access and pvAccess
+connection work. A command that blocks can delay every PV assigned to that
+thread. The following optional properties help diagnose this condition:
+
+| Property                                                      | Default | Description                                                                                                          |
+| ------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| `org.epics.archiverappliance.engine.epics.pvaReadTimeoutSecs` | `10`    | Maximum time the engine waits for its initial pvAccess read before continuing to establish the monitor subscription. |
+
+The `getCommandThreadDetails` report includes the running command, its
+elapsed time, the oldest queued command's age, and the last command completion
+time. Per-PV details include the pvAccess channel state, remote address,
+subscription status, last monitor time, and monitor/callback counts.
+
 ## Key Mapping
 
 The archiver appliance stores data in chunks that have a well defined
