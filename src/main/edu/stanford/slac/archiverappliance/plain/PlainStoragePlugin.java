@@ -422,12 +422,24 @@ public class PlainStoragePlugin
             Period searchPeriod,
             BiDirectionalIterable.IterationDirection direction)
             throws IOException {
-        Instant sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
+        Instant sTime;
+        Instant eTime;
+
+        if (searchPeriod != null) {
+            sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
                 ? startAtTime
                 : startAtTime.minus(searchPeriod);
-        Instant eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
+            eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
                 ? startAtTime.plus(searchPeriod)
                 : startAtTime;
+        } else {
+            sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
+                ? startAtTime
+                : Instant.EPOCH;
+            eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
+                ? Instant.MAX
+                : startAtTime;
+        }
         Path[] paths = PathNameUtility.getPathsWithData(
                 context.getPaths(),
                 rootFolder,
