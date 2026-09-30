@@ -23,6 +23,9 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *
@@ -50,9 +53,13 @@ public class JCACommandThread extends Thread {
      * <p>
      * SYNC on access
      */
-    private final LinkedList<Runnable> command_queue = new LinkedList<Runnable>();
+    private final LinkedList<Command> commandQueue = new LinkedList<>();
 
-    /** Maximum size that command_queue reached at runtime */
+    private final AtomicReference<Command> currentCommand = new AtomicReference<>();
+    private volatile long lastCommandCompletedAtMillis;
+    private final AtomicLong commandsExecuted = new AtomicLong(0);
+
+    /** Maximum size that commandQueue reached at runtime */
     private int max_size_reached = 0;
 
     /** Flag to tell thread to run or quit */
@@ -119,7 +126,7 @@ public class JCACommandThread extends Thread {
         destoryContext();
 
         for (int m = 0; m < 30; m++) {
-            if (command_queue.isEmpty()) break;
+            if (commandQueue.isEmpty()) break;
             Thread.sleep(100);
         }
         run = false;
@@ -162,6 +169,21 @@ public class JCACommandThread extends Thread {
         return ret;
     }
 
+    private static class Command {
+        private final String label;
+        private final String pvName;
+        private final Runnable runnable;
+        private final long queuedAtMillis;
+        private volatile long startedAtNanos;
+
+        private Command(String label, String pvName, Runnable runnable, long queuedAtMillis) {
+            this.label = label;
+            this.pvName = pvName;
+            this.runnable = runnable;
+            this.queuedAtMillis = queuedAtMillis;
+        }
+    }
+
     public int getTotalChannelCount() {
         return this.jca_context.getChannels().length;
     }
@@ -182,17 +204,22 @@ public class JCACommandThread extends Thread {
      * @param command Runnable
      */
     public void addCommand(final Runnable command) {
-        synchronized (command_queue) {
+        addCommand("unlabelled", null, command);
+    }
+
+    public void addCommand(String label, String pvName, final Runnable command) {
+        Command queuedCommand = new Command(label, pvName, command, System.currentTimeMillis());
+        synchronized (commandQueue) {
             // New maximum queue length (+1 for the one about to get added)
-            if (command_queue.size() >= max_size_reached) max_size_reached = command_queue.size() + 1;
-            command_queue.addLast(command);
+            if (commandQueue.size() >= max_size_reached) max_size_reached = commandQueue.size() + 1;
+            commandQueue.addLast(queuedCommand);
         }
     }
 
     /** @return Oldest queued command or <code>null</code> */
-    private Runnable getCommand() {
-        synchronized (command_queue) {
-            if (!command_queue.isEmpty()) return command_queue.removeFirst();
+    private Command getCommand() {
+        synchronized (commandQueue) {
+            if (!commandQueue.isEmpty()) return commandQueue.removeFirst();
         }
         return null;
     }
@@ -201,12 +228,23 @@ public class JCACommandThread extends Thread {
     public void run() {
         while (run) {
             // Execute all the commands currently queued...
-            Runnable command = getCommand();
+            Command command = getCommand();
             while (command != null) { // Execute one command
+                command.startedAtNanos = System.nanoTime();
+                currentCommand.set(command);
                 try {
-                    command.run();
+                    command.runnable.run();
                 } catch (Throwable ex) {
-                    logger.error("exception when command runs  in JCACommandThread", ex);
+                    logger.error(
+                            "Exception running command '{}' for PV '{}' on JCA command thread {}",
+                            command.label,
+                            command.pvName,
+                            commandThreadId,
+                            ex);
+                } finally {
+                    commandsExecuted.incrementAndGet();
+                    lastCommandCompletedAtMillis = System.currentTimeMillis();
+                    currentCommand.set(null);
                 }
                 // Get next command
                 command = getCommand();
@@ -231,7 +269,7 @@ public class JCACommandThread extends Thread {
     }
 
     void destoryContext() {
-        addCommand(() -> {
+        addCommand("destroyContext", null, () -> {
             try {
                 if (jca_context != null) {
                     jca_context.destroy();
@@ -253,22 +291,45 @@ public class JCACommandThread extends Thread {
             ret.add(obj);
         }
 
-        {
-            Map<String, String> obj = new LinkedHashMap<String, String>();
-            obj.put("name", "Current command queue size");
-            obj.put("value", Integer.toString(this.command_queue.size()));
-            obj.put("source", "engine");
-            ret.add(obj);
+        int queueSize;
+        int maximumQueueSize;
+        long oldestQueuedCommandAge;
+        synchronized (commandQueue) {
+            queueSize = commandQueue.size();
+            maximumQueueSize = max_size_reached;
+            oldestQueuedCommandAge = commandQueue.isEmpty()
+                    ? 0
+                    : Math.max(0, System.currentTimeMillis() - commandQueue.getFirst().queuedAtMillis);
         }
+        addDetail(ret, "Current command queue size", Integer.toString(queueSize));
+        addDetail(ret, "Max command queue size", Integer.toString(maximumQueueSize));
 
-        {
-            Map<String, String> obj = new LinkedHashMap<String, String>();
-            obj.put("name", "Max command queue size");
-            obj.put("value", Integer.toString(this.max_size_reached));
-            obj.put("source", "engine");
-            ret.add(obj);
-        }
+        Command runningCommand = currentCommand.get();
+        addDetail(ret, "Current command label", runningCommand == null ? "" : runningCommand.label);
+        addDetail(ret, "Current command PV", runningCommand == null ? "" : valueOrEmpty(runningCommand.pvName));
+        addDetail(
+                ret,
+                "Current command running for (ms)",
+                runningCommand == null || runningCommand.startedAtNanos == 0
+                        ? "0"
+                        : Long.toString(
+                                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - runningCommand.startedAtNanos)));
+        addDetail(ret, "Last command completed at (epoch ms)", Long.toString(lastCommandCompletedAtMillis));
+        addDetail(ret, "Commands executed", Long.toString(commandsExecuted.get()));
+        addDetail(ret, "Oldest queued command age (ms)", Long.toString(oldestQueuedCommandAge));
 
         return ret;
+    }
+
+    private static String valueOrEmpty(String value) {
+        return value == null ? "" : value;
+    }
+
+    private void addDetail(List<Map<String, String>> details, String name, String value) {
+        Map<String, String> obj = new LinkedHashMap<>();
+        obj.put("name", name);
+        obj.put("value", value);
+        obj.put("source", "engine");
+        details.add(obj);
     }
 }

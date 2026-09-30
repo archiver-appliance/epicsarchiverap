@@ -163,7 +163,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     @Override
     public void stop() {
         running = false;
-        this.scheduleCommand(() -> {
+        this.scheduleCommand("stop", () -> {
             unsubscribe();
             disconnect();
         });
@@ -228,9 +228,9 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
         logger.info(channel.getName() + " channelStateChanged:" + clientChannelState);
         if (clientChannelState == ClientChannelState.CONNECTED) {
-            this.scheduleCommand(this::handleConnected);
+            this.scheduleCommand("handleConnected", this::handleConnected);
         } else if (connected) {
-            this.scheduleCommand(this::handleDisconnected);
+            this.scheduleCommand("handleDisconnected", this::handleDisconnected);
         }
     }
 
@@ -295,7 +295,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         logger.debug("handleMonitor: {}", data);
         if (data == null) {
             logger.warn("Server ends subscription for " + this.name);
-            this.scheduleCommand(this::handleDisconnected);
+            this.scheduleCommand("monitorEnded", this::handleDisconnected);
             return;
         }
 
@@ -338,13 +338,13 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         }
     }
 
-    private void scheduleCommand(final Runnable command) {
-        configservice.getEngineContext().getJCACommandThread(jcaCommandThreadId).addCommand(command);
+    private void scheduleCommand(final String label, final Runnable command) {
+        configservice.getEngineContext().getJCACommandThread(jcaCommandThreadId).addCommand(label, name, command);
     }
 
     private void connect() {
         logger.debug("Connecting to PV " + this.name);
-        this.scheduleCommand(new Runnable() {
+        this.scheduleCommand("connect", new Runnable() {
             @Override
             public void run() {
                 try {
