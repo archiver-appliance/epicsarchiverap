@@ -27,6 +27,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     private static final Logger logger = LogManager.getLogger(EPICS_V4_PV.class.getName());
@@ -39,7 +40,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
     private volatile PVConnectionState state = PVConnectionState.Idle;
 
-    private PVAChannel pvaChannel;
+    private final AtomicReference<PVAChannel> pvaChannelReference = new AtomicReference<>();
 
     /**configservice used by this pv*/
     private final ConfigService configservice;
@@ -98,7 +99,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
      */
     private String hostName;
 
-    private AutoCloseable subscriptionCloseable = null;
+    private volatile AutoCloseable subscriptionCloseable = null;
 
     /** Low Level Details */
     private final AtomicLong lastMonitorSecs = new AtomicLong();
@@ -235,15 +236,19 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
     @Override
     public void getLowLevelChannelInfo(List<Map<String, String>> statuses) {
+        PVAChannel channelSnapshot = pvaChannelReference.get();
+        AutoCloseable subscription = subscriptionCloseable;
         addLowLevelDetail(statuses, "PV connection state machine state", state.toString());
-        addLowLevelDetail(statuses, "Do we have a PVA channel?", Boolean.toString(pvaChannel != null));
+        addLowLevelDetail(statuses, "Do we have a PVA channel?", Boolean.toString(channelSnapshot != null));
         addLowLevelDetail(
                 statuses,
                 "PVA channel state",
-                pvaChannel == null ? "N/A" : pvaChannel.getState().toString());
-        addLowLevelDetail(statuses, "PVA remote address", pvaChannel == null ? "N/A" : pvaChannel.getRemoteAddress());
-        addLowLevelDetail(statuses, "PVA TLS enabled?", Boolean.toString(pvaChannel != null && pvaChannel.isTLS()));
-        addLowLevelDetail(statuses, "Do we have a subscription?", Boolean.toString(subscriptionCloseable != null));
+                channelSnapshot == null ? "N/A" : channelSnapshot.getState().toString());
+        addLowLevelDetail(
+                statuses, "PVA remote address", channelSnapshot == null ? "N/A" : channelSnapshot.getRemoteAddress());
+        addLowLevelDetail(
+                statuses, "PVA TLS enabled?", Boolean.toString(channelSnapshot != null && channelSnapshot.isTLS()));
+        addLowLevelDetail(statuses, "Do we have a subscription?", Boolean.toString(subscription != null));
         addLowLevelDetail(
                 statuses, "Last monitor received at", TimeUtils.convertToHumanReadableString(lastMonitorSecs.get()));
         addLowLevelDetail(statuses, "PVA monitor event count", Long.toString(monitorEventCount.get()));
@@ -264,10 +269,16 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         logLifecycle("channelStateChanged:" + clientChannelState);
         if (clientChannelState == ClientChannelState.CONNECTED) {
             connectCallbackCount.incrementAndGet();
-            this.scheduleCommand("handleConnected", this::handleConnected);
-        } else if (shouldHandleDisconnectedCallback(connected, state)) {
+            scheduleCommand("handleConnected", () -> {
+                if (pvaChannelReference.get() == channel) handleConnected();
+            });
+        } else {
             disconnectCallbackCount.incrementAndGet();
-            this.scheduleCommand("handleDisconnected", this::handleDisconnected);
+            scheduleCommand("handleDisconnected", () -> {
+                if (pvaChannelReference.get() == channel && shouldHandleDisconnectedCallback(connected, state)) {
+                    handleDisconnected();
+                }
+            });
         }
     }
 
@@ -336,11 +347,14 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
     @Override
     public void handleMonitor(PVAChannel channel, BitSet changes, BitSet overruns, PVAStructure data) {
+        if (channel != pvaChannelReference.get() || !running) return;
         logger.debug("handleMonitor: {}", data);
         if (data == null) {
             logger.warn("Server ends subscription for " + this.name);
             transientErrorCount.incrementAndGet();
-            this.scheduleCommand("monitorEnded", this::handleDisconnected);
+            this.scheduleCommand("monitorEnded", () -> {
+                if (pvaChannelReference.get() == channel) handleDisconnected();
+            });
             return;
         }
 
@@ -397,23 +411,25 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
             public void run() {
                 try {
                     state = PVConnectionState.Connecting;
-                    synchronized (this) {
-                        if (pvaChannel == null) {
+                    synchronized (EPICS_V4_PV.this) {
+                        PVAChannel channel = pvaChannelReference.get();
+                        if (channel == null) {
                             var pvaClient = configservice.getEngineContext().getPVAClient();
                             if (pvaClient == null) {
                                 logger.warn("PVA client is unavailable while connecting PV {}", name);
                                 transientErrorCount.incrementAndGet();
                                 return;
                             }
-                            pvaChannel = pvaClient.getChannel(name, EPICS_V4_PV.this);
+                            channel = pvaClient.getChannel(name, EPICS_V4_PV.this);
+                            pvaChannelReference.set(channel);
                         }
 
-                        if (pvaChannel == null) {
+                        if (channel == null) {
                             logger.error("No pvaChannel when trying to connect to pv " + name);
                             return;
                         }
 
-                        if (pvaChannel.isConnected()) {
+                        if (channel.isConnected()) {
                             handleConnected();
                         }
                     }
@@ -429,11 +445,14 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
      * PV is connected. Get meta info, or subscribe right away.
      */
     private void handleConnected() {
-        if (state == PVConnectionState.Connected) return;
+        if (state == PVConnectionState.Connected
+                || (subscriptionCloseable != null
+                        && (state == PVConnectionState.Subscribing || state == PVConnectionState.GotMonitor))) return;
 
         state = PVConnectionState.Connected;
-        if (pvaChannel != null) {
-            hostName = pvaChannel.getRemoteAddress();
+        PVAChannel channel = pvaChannelReference.get();
+        if (channel != null) {
+            hostName = channel.getRemoteAddress();
         }
 
         logLifecycle("connected");
@@ -454,10 +473,11 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     private void disconnect() {
         PVAChannel channelCopy;
         synchronized (this) {
-            if (pvaChannel == null) return;
-            channelCopy = pvaChannel;
+            channelCopy = pvaChannelReference.get();
+            if (channelCopy == null) return;
             connected = false;
-            pvaChannel = null;
+            pvaChannelReference.set(null);
+            state = PVConnectionState.Disconnected;
         }
 
         try {
@@ -494,8 +514,14 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
             }
 
             // Late callback, channel already closed?
-            if (pvaChannel == null) {
+            if (pvaChannelReference.get() == null) {
                 logger.error("When trying to establish a subscription, channel already closed " + this.name);
+                return;
+            }
+            PVAChannel pvaChannel = this.pvaChannelReference.get();
+
+            if (pvaChannel.getState() != ClientChannelState.CONNECTED) {
+                logger.debug("Skipping initial PVA read for disconnected PV {}", name);
                 return;
             }
 
