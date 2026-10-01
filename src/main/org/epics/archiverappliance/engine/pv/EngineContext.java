@@ -42,6 +42,7 @@ import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -963,5 +964,32 @@ public class EngineContext {
             ret.addAll(th.getCommandThreadDetails());
         }
         return ret;
+    }
+
+    @Override
+    public String toString() {
+        return "EngineContext{" + "writer="
+                + writer + ", isWriteThreadStarted="
+                + isWriteThreadStarted + ", scheduler="
+                + scheduler + ", write_period="
+                + write_period + ", channelList="
+                + channelList + ", command_threads="
+                + Arrays.toString(command_threads) + ", pvaClient="
+                + pvaClient + ", totalTimeConsumedByWriter="
+                + totalTimeConsumedByWriter + ", totalChannelIOTimeConsumedByWriter="
+                + totalChannelIOTimeConsumedByWriter + ", totalChannelsWritten="
+                + totalChannelsWritten + ", countOfWrittingByWriter="
+                + countOfWrittingByWriter + ", skippedWriteCycles="
+                + skippedWriteCycles + ", controlingPVList="
+                + controlingPVList + ", configService="
+                + configService + ", myIdentity='"
+                + myIdentity + '\'' + ", scanScheduler="
+                + scanScheduler + ", miscTasksScheduler="
+                + miscTasksScheduler + ", disconnectCheckTimeoutInSeconds="
+                + disconnectCheckTimeoutInSeconds + ", disconnectCheckerPeriodInSeconds="
+                + disconnectCheckerPeriodInSeconds + ", disconnectFuture="
+                + disconnectFuture + ", sampleBufferCapacityAdjustment="
+                + sampleBufferCapacityAdjustment + ", writeThreadCount="
+                + writeThreadCount + '}';
     }
 }
