@@ -128,8 +128,9 @@ public class MergeDataFromExternalStoreTest {
         long rtvlEventCount = 0;
         try (EventStream stream = rawDataRetrieval.getDataForPVS(
                 new String[] {pvName},
-                TimeUtils.minusDays(TimeUtils.now(), 90),
-                TimeUtils.plusDays(TimeUtils.now(), 31),
+                TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
+                        .plusSeconds(1),
+                TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH),
                 null)) {
             long lastEvEpoch = 0;
             if (stream != null) {
@@ -176,14 +177,15 @@ public class MergeDataFromExternalStoreTest {
         logger.info("Merged data for " + pvName + " into the dest tomcat");
     }
 
-    private void testMergedRetrieval() throws Exception {
+    private void testMergedRetrieval(Instant lastMonth) throws Exception {
         RawDataRetrievalAsEventStream rawDataRetrieval =
                 new RawDataRetrievalAsEventStream("http://localhost:17665/retrieval/data/getData.raw");
         long rtvlEventCount = 0;
         try (EventStream stream = rawDataRetrieval.getDataForPVS(
                 new String[] {pvName},
-                TimeUtils.minusDays(TimeUtils.now(), 90),
-                TimeUtils.plusDays(TimeUtils.now(), 31),
+                TimeUtils.getPreviousPartitionLastSecond(lastMonth, PartitionGranularity.PARTITION_MONTH)
+                        .plusSeconds(1),
+                TimeUtils.getNextPartitionFirstSecond(lastMonth, PartitionGranularity.PARTITION_MONTH),
                 null)) {
             long lastEvEpoch = 0;
             if (stream != null) {
@@ -224,6 +226,6 @@ public class MergeDataFromExternalStoreTest {
         tCount = dCount + oCount;
 
         mergeInDataFromRemoteServer();
-        testMergedRetrieval();
+        testMergedRetrieval(lastMonth);
     }
 }
