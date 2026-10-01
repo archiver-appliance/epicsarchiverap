@@ -163,6 +163,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     @Override
     public void stop() {
         running = false;
+        logLifecycle("stop");
         this.scheduleCommand("stop", () -> {
             unsubscribe();
             disconnect();
@@ -226,7 +227,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     @Override
     public void channelStateChanged(PVAChannel channel, ClientChannelState clientChannelState) {
 
-        logger.info(channel.getName() + " channelStateChanged:" + clientChannelState);
+        logLifecycle("channelStateChanged:" + clientChannelState);
         if (clientChannelState == ClientChannelState.CONNECTED) {
             this.scheduleCommand("handleConnected", this::handleConnected);
         } else if (connected) {
@@ -344,6 +345,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
     private void connect() {
         logger.debug("Connecting to PV " + this.name);
+        logLifecycle("connect");
         this.scheduleCommand("connect", new Runnable() {
             @Override
             public void run() {
@@ -380,6 +382,8 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         if (state == PVConnectionState.Connected) return;
 
         state = PVConnectionState.Connected;
+
+        logLifecycle("connected");
 
         fireConnected();
 
@@ -420,6 +424,8 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         }
 
         unsubscribe();
+
+        logLifecycle("disconnected");
         fireDisconnected();
     }
 
@@ -455,6 +461,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
                 }
                 state = PVConnectionState.Subscribing;
                 totalMetaInfo.setStartTime(System.currentTimeMillis());
+                logLifecycle("subscribe");
                 int pipeline = 0;
                 subscriptionCloseable = pvaChannel.subscribe(
                         "",
@@ -463,6 +470,7 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
                                 .pipeline(pipeline)
                                 .build(),
                         this);
+                logLifecycle("subscribed");
             } catch (final Exception ex) {
                 logger.error("exception when subscribing pv", ex);
             }
@@ -485,9 +493,14 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
 
         try {
             subCopy.close();
+            logLifecycle("unsubscribed");
         } catch (final Exception ex) {
             logger.error("exception when unsubscribing pv", ex);
         }
+    }
+
+    private void logLifecycle(String event) {
+        logger.info("pv={} protocol=PVA thread={} event={}", name, jcaCommandThreadId, event);
     }
 
     static HashMap<String, String> metaInfoToStore(MetaInfo totalMetaInfo) {
