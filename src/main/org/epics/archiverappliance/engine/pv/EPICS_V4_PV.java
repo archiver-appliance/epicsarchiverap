@@ -406,37 +406,34 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
     private void connect() {
         logger.debug("Connecting to PV " + this.name);
         logLifecycle("connect");
-        this.scheduleCommand("connect", new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    state = PVConnectionState.Connecting;
-                    synchronized (EPICS_V4_PV.this) {
-                        PVAChannel channel = pvaChannelReference.get();
-                        if (channel == null) {
-                            var pvaClient = configservice.getEngineContext().getPVAClient();
-                            if (pvaClient == null) {
-                                logger.warn("PVA client is unavailable while connecting PV {}", name);
-                                transientErrorCount.incrementAndGet();
-                                return;
-                            }
-                            channel = pvaClient.getChannel(name, EPICS_V4_PV.this);
-                            pvaChannelReference.set(channel);
-                        }
-
-                        if (channel == null) {
-                            logger.error("No pvaChannel when trying to connect to pv " + name);
+        this.scheduleCommand("connect", () -> {
+            try {
+                state = PVConnectionState.Connecting;
+                synchronized (EPICS_V4_PV.this) {
+                    PVAChannel channel = pvaChannelReference.get();
+                    if (channel == null) {
+                        var pvaClient = configservice.getEngineContext().getPVAClient();
+                        if (pvaClient == null) {
+                            logger.warn("PVA client is unavailable while connecting PV {}", name);
+                            transientErrorCount.incrementAndGet();
                             return;
                         }
-
-                        if (channel.isConnected()) {
-                            handleConnected();
-                        }
+                        channel = pvaClient.getChannel(name, EPICS_V4_PV.this);
+                        pvaChannelReference.set(channel);
                     }
-                } catch (Exception e) {
-                    transientErrorCount.incrementAndGet();
-                    logger.error("Exception when connecting pv {}", name, e);
+
+                    if (channel == null) {
+                        logger.error("No pvaChannel when trying to connect to pv " + name);
+                        return;
+                    }
+
+                    if (channel.isConnected()) {
+                        handleConnected();
+                    }
                 }
+            } catch (Exception e) {
+                transientErrorCount.incrementAndGet();
+                logger.error("Exception when connecting pv {}", name, e);
             }
         });
     }
