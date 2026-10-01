@@ -11,7 +11,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Unit tests for the static helpers of {@link EPICS_V4_PV}.
@@ -114,6 +116,21 @@ public class EPICS_V4_PVTest {
         assertEquals(
                 ArchDBRTypes.DBR_V4_GENERIC_BYTES,
                 EPICS_V4_PV.determineDBRType("some_struct", "unknown_type", "unknown_type value"));
+    }
+
+    @Test
+    public void lowLevelChannelInfoExposesPvaDiagnostics() {
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", null, 4);
+        List<Map<String, String>> statuses = new java.util.ArrayList<>();
+
+        pv.getLowLevelChannelInfo(statuses);
+
+        Map<String, String> details =
+                statuses.stream().collect(Collectors.toMap(d -> d.get("name"), d -> d.get("value")));
+        assertEquals("N/A", details.get("PVA channel state"));
+        assertEquals("false", details.get("Do we have a subscription?"));
+        assertEquals("4", details.get("Command thread id"));
+        assertEquals("0", details.get("PVA monitor event count"));
     }
 
     @Test
