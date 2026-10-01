@@ -134,6 +134,17 @@ public class EPICS_V4_PVTest {
     }
 
     @Test
+    public void disconnectCallbacksAreHandledBeforeFirstMonitorArrives() {
+        assertFalse(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Idle));
+        assertFalse(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Connecting));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(true, PVConnectionState.GettingMetadata));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(true, PVConnectionState.Disconnected));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Connected));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Subscribing));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.GotMonitor));
+    }
+
+    @Test
     public void determineDBRTypeInspectsStructureFormats() {
         // An enum is a structure whose format starts with enum.
         assertEquals(

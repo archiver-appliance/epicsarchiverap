@@ -260,10 +260,17 @@ public class EPICS_V4_PV implements PV, ClientChannelListener, MonitorListener {
         if (clientChannelState == ClientChannelState.CONNECTED) {
             connectCallbackCount.incrementAndGet();
             this.scheduleCommand("handleConnected", this::handleConnected);
-        } else if (connected) {
+        } else if (shouldHandleDisconnectedCallback(connected, state)) {
             disconnectCallbackCount.incrementAndGet();
             this.scheduleCommand("handleDisconnected", this::handleDisconnected);
         }
+    }
+
+    static boolean shouldHandleDisconnectedCallback(boolean connected, PVConnectionState state) {
+        return connected
+                || state == PVConnectionState.Connected
+                || state == PVConnectionState.Subscribing
+                || state == PVConnectionState.GotMonitor;
     }
 
     private void setupDBRType(PVAStructure data) {
