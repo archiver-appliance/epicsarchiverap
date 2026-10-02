@@ -40,12 +40,6 @@ public class ImportCSV {
         String fileName = args[0];
         String pvName = args[1];
         ArchDBRTypes type = ArchDBRTypes.valueOf(args[2]);
-        if (type == null) {
-            System.err.println("Unable to determine the DBR type. Supported types are as follows ");
-            for (ArchDBRTypes supptype : ArchDBRTypes.values()) {
-                System.err.println(supptype.ordinal() + "\t:" + supptype.toString());
-            }
-        }
         String rootFolder = args[3];
 
         PlainStoragePlugin pbplugin = new PlainStoragePlugin(PlainStorageType.PB);

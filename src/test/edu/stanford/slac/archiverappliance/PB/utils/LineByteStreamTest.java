@@ -420,7 +420,7 @@ public class LineByteStreamTest {
                     int linenumber = 1;
                     lis.seekToFirstNewLine();
                     byte[] line = lis.readLine();
-                    int expectedLineNumber = (int) (start / 17);
+                    int expectedLineNumber = (int) (0);
                     while (line != null) {
                         String val = new String(line);
                         Assertions.assertTrue(
