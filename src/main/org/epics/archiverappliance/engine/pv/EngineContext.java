@@ -263,7 +263,10 @@ public class EngineContext {
                 controlingPVList.clear();
 
                 if (pvaClient != null) {
+                    int pvaClientIdentity = System.identityHashCode(pvaClient);
                     pvaClient.close();
+                    logger.info("Closed shared PVA client {}", pvaClientIdentity);
+                    pvaClient = null;
                 }
 
                 scheduler = null;
@@ -874,9 +877,10 @@ public class EngineContext {
 
     private void iniV4ChannelProvidert() {
         if (pvaClient == null) {
-            logger.info("Registered the pvAccess client factory.");
+            logger.info("Creating shared PVA client for engine context");
             try {
                 pvaClient = new PVAClient();
+                logger.info("Created shared PVA client {}", System.identityHashCode(pvaClient));
             } catch (Exception e) {
                 logger.error("Exception when initializing PVA Client", e);
             }
