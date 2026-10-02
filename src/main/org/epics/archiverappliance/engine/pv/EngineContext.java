@@ -42,6 +42,7 @@ import org.json.simple.JSONValue;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -517,35 +518,51 @@ public class EngineContext {
         }
     }
 
+    private static void handlePauseDeleteTypeInfoEvent(
+            String pvName, ConfigService configService, PVTypeInfoEvent.ChangeType changeType) {
+        try {
+            logger.debug("Stopping CA/PVA channels for {} based on {}", pvName, changeType);
+            ArchiveEngine.pauseArchivingPV(pvName, configService);
+        } catch (Exception ex) {
+            logger.error("Exception pausing PV {}", pvName, ex);
+        }
+    }
+
+    private static void handleResumeTypeInfoEvent(String pvName, ConfigService configService) {
+        try {
+            logger.debug("Resuming CA/PVA channels for {} based on PVTypeInfo change", pvName);
+            ArchiveEngine.resumeArchivingPV(pvName, configService);
+        } catch (Exception ex) {
+            logger.error("Exception resuming PV {}", pvName, ex);
+        }
+    }
+
     @Subscribe
     public void pvTypeInfoChanged(PVTypeInfoEvent event) {
         String pvName = event.pvName();
+        if (event.changeType() == ChangeType.TYPEINFO_DELETED) {
+            handlePauseDeleteTypeInfoEvent(pvName, configService, event.changeType());
+            return;
+        }
+
         PVTypeInfo typeInfo = configService.getTypeInfoForPV(pvName);
+        if (typeInfo == null) {
+            logger.error("Received PVTypeInfo change without type information for {}", pvName);
+            return;
+        }
         logger.debug(
                 "Received PVTypeInfo changed event for {} ChangeType: {} Paused: {} Appliance: {}",
                 pvName,
                 event.changeType(),
                 typeInfo.isPaused(),
                 typeInfo.getApplianceIdentity());
-        if (event.changeType() == ChangeType.TYPEINFO_DELETED
-                || typeInfo.isPaused()
-                || !typeInfo.getApplianceIdentity()
-                        .equals(configService.getMyApplianceInfo().getIdentity())) {
-            try {
-                logger.debug("Stopping CA/PVA channels for {} based on PVTypeInfo change", pvName);
-                ArchiveEngine.pauseArchivingPV(pvName, configService);
-            } catch (Exception ex) {
-                logger.error("Exception pausing PV " + pvName, ex);
-            }
-        } else if (!typeInfo.isPaused()
-                && typeInfo.getApplianceIdentity()
-                        .equals(configService.getMyApplianceInfo().getIdentity())) {
-            try {
-                logger.debug("Resuming CA/PVA channels for {} based on PVTypeInfo change", pvName);
-                ArchiveEngine.resumeArchivingPV(pvName, configService);
-            } catch (Exception ex) {
-                logger.error("Exception resuming PV " + pvName, ex);
-            }
+        boolean isPaused = typeInfo.isPaused();
+        boolean isConfigIdentity = typeInfo.getApplianceIdentity()
+                .equals(configService.getMyApplianceInfo().getIdentity());
+        if (isPaused || !isConfigIdentity) {
+            handlePauseDeleteTypeInfoEvent(pvName, configService, event.changeType());
+        } else if (isConfigIdentity) {
+            handleResumeTypeInfoEvent(pvName, configService);
         }
     }
 
@@ -947,5 +964,32 @@ public class EngineContext {
             ret.addAll(th.getCommandThreadDetails());
         }
         return ret;
+    }
+
+    @Override
+    public String toString() {
+        return "EngineContext{" + "writer="
+                + writer + ", isWriteThreadStarted="
+                + isWriteThreadStarted + ", scheduler="
+                + scheduler + ", write_period="
+                + write_period + ", channelList="
+                + channelList + ", command_threads="
+                + Arrays.toString(command_threads) + ", pvaClient="
+                + pvaClient + ", totalTimeConsumedByWriter="
+                + totalTimeConsumedByWriter + ", totalChannelIOTimeConsumedByWriter="
+                + totalChannelIOTimeConsumedByWriter + ", totalChannelsWritten="
+                + totalChannelsWritten + ", countOfWrittingByWriter="
+                + countOfWrittingByWriter + ", skippedWriteCycles="
+                + skippedWriteCycles + ", controlingPVList="
+                + controlingPVList + ", configService="
+                + configService + ", myIdentity='"
+                + myIdentity + '\'' + ", scanScheduler="
+                + scanScheduler + ", miscTasksScheduler="
+                + miscTasksScheduler + ", disconnectCheckTimeoutInSeconds="
+                + disconnectCheckTimeoutInSeconds + ", disconnectCheckerPeriodInSeconds="
+                + disconnectCheckerPeriodInSeconds + ", disconnectFuture="
+                + disconnectFuture + ", sampleBufferCapacityAdjustment="
+                + sampleBufferCapacityAdjustment + ", writeThreadCount="
+                + writeThreadCount + '}';
     }
 }
