@@ -57,22 +57,27 @@ public class CleanUpAnyImmortalChannels implements BPLAction {
         List<CommandThreadChannel> immortalChannelsForPV =
                 configService.getEngineContext().getAllChannelsForPV(pvName);
         for (final CommandThreadChannel immortalCommandThreadChannel : immortalChannelsForPV) {
-            immortalCommandThreadChannel.getCommandThread().addCommand(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Channel immortalChannel = immortalCommandThreadChannel.getChannel();
-                        logger.error("Forcibly closing channel for " + immortalChannel.getName());
-                        if (immortalChannel instanceof CAJChannel) {
-                            ((CAJChannel) immortalChannel).destroy(true);
-                        } else {
-                            immortalChannel.destroy();
-                        }
-                    } catch (Throwable t) {
-                        logger.error("Exception forcibly closing channel", t);
-                    }
-                }
-            });
+            immortalCommandThreadChannel
+                    .getCommandThread()
+                    .addCommand(
+                            "cleanupImmortalChannel",
+                            immortalCommandThreadChannel.getChannel().getName(),
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        Channel immortalChannel = immortalCommandThreadChannel.getChannel();
+                                        logger.error("Forcibly closing channel for " + immortalChannel.getName());
+                                        if (immortalChannel instanceof CAJChannel) {
+                                            ((CAJChannel) immortalChannel).destroy(true);
+                                        } else {
+                                            immortalChannel.destroy();
+                                        }
+                                    } catch (Throwable t) {
+                                        logger.error("Exception forcibly closing channel", t);
+                                    }
+                                }
+                            });
         }
 
         HashMap<String, Object> infoValues = new HashMap<String, Object>();

@@ -1,17 +1,38 @@
 package org.epics.archiverappliance.engine.pv;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.epics.archiverappliance.config.ArchDBRTypes;
+import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.MetaInfo;
+import org.epics.archiverappliance.data.DBRTimeEvent;
+import org.epics.pva.client.ClientChannelState;
+import org.epics.pva.client.PVAChannel;
+import org.epics.pva.data.PVAStructure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 /**
  * Unit tests for the static helpers of {@link EPICS_V4_PV}.
@@ -114,6 +135,200 @@ public class EPICS_V4_PVTest {
         assertEquals(
                 ArchDBRTypes.DBR_V4_GENERIC_BYTES,
                 EPICS_V4_PV.determineDBRType("some_struct", "unknown_type", "unknown_type value"));
+    }
+
+    @Test
+    public void initialReadTimesOutInsteadOfBlockingIndefinitely() {
+        CompletableFuture<PVAStructure> neverCompletes = new CompletableFuture<>();
+        long start = System.nanoTime();
+
+        assertThrows(
+                TimeoutException.class, () -> EPICS_V4_PV.awaitInitialRead(neverCompletes, 50, TimeUnit.MILLISECONDS));
+
+        long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+        assertTrue(elapsedMillis < 2_000, "Read should fail within a bounded time");
+        assertTrue(neverCompletes.isCancelled());
+    }
+
+    @Test
+    public void lowLevelChannelInfoExposesPvaDiagnostics() {
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", null, 4);
+        List<Map<String, String>> statuses = new java.util.ArrayList<>();
+
+        pv.getLowLevelChannelInfo(statuses);
+
+        Map<String, String> details =
+                statuses.stream().collect(Collectors.toMap(d -> d.get("name"), d -> d.get("value")));
+        assertEquals("N/A", details.get("PVA channel state"));
+        assertEquals("false", details.get("Do we have a subscription?"));
+        assertEquals("4", details.get("Command thread id"));
+        assertEquals("0", details.get("PVA monitor event count"));
+    }
+
+    @Test
+    public void disconnectBeforeConnectionIsANoOp() throws Exception {
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", null, 4);
+        var disconnect = EPICS_V4_PV.class.getDeclaredMethod("disconnect");
+        disconnect.setAccessible(true);
+
+        assertDoesNotThrow(() -> disconnect.invoke(pv));
+        assertEquals(PVConnectionState.Idle, pv.connectionState());
+    }
+
+    @Test
+    public void disconnectCallbacksAreHandledBeforeFirstMonitorArrives() {
+        assertFalse(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Idle));
+        assertFalse(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Connecting));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(true, PVConnectionState.GettingMetadata));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(true, PVConnectionState.Disconnected));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Connected));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.Subscribing));
+        assertTrue(EPICS_V4_PV.shouldHandleDisconnectedCallback(false, PVConnectionState.GotMonitor));
+    }
+
+    @Test
+    public void queuedConnectThenDisconnectNotifiesInOrderAndCanReconnect() throws Exception {
+        JCACommandThread thread = new JCACommandThread(4);
+        ConfigService config = mock(ConfigService.class);
+        EngineContext context = mock(EngineContext.class);
+        when(config.getEngineContext()).thenReturn(context);
+        when(context.getJCACommandThread(4)).thenReturn(thread);
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", config, 4);
+        PVAChannel channel = mock(PVAChannel.class);
+        AtomicReference<PVAChannel> channelReference = new AtomicReference<>(channel);
+        when(channel.getRemoteAddress()).thenReturn("test-host");
+        setField(pv, "pvaChannelReference", channelReference);
+        setField(pv, "state", PVConnectionState.Connecting);
+        List<String> events = new ArrayList<>();
+        pv.addListener(new PVListener() {
+            @Override
+            public void pvConnected(PV source) {
+                events.add("connected");
+            }
+
+            @Override
+            public void pvDisconnected(PV source) {
+                events.add("disconnected");
+            }
+
+            @Override
+            public void pvValueUpdate(PV source, DBRTimeEvent event) {
+                // Not relevant for this test
+            }
+
+            @Override
+            public void pvConnectionRequestMade(PV source) {
+                // Not relevant for this test
+            }
+
+            @Override
+            public void sampleDroppedTypeChange(PV source, ArchDBRTypes type) {
+                // Not relevant for this test
+            }
+        });
+
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        try {
+            thread.start();
+            thread.addCommand("block", null, () -> {
+                started.countDown();
+                try {
+                    release.await();
+                } catch (InterruptedException _) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            assertTrue(started.await(5, TimeUnit.SECONDS));
+            pv.channelStateChanged(channel, ClientChannelState.INIT);
+            pv.channelStateChanged(channel, ClientChannelState.CONNECTED);
+            pv.channelStateChanged(channel, ClientChannelState.INIT);
+            CountDownLatch completed = new CountDownLatch(1);
+            thread.addCommand("barrier", null, completed::countDown);
+            release.countDown();
+            assertTrue(completed.await(5, TimeUnit.SECONDS));
+            assertEquals(List.of("connected", "disconnected"), events);
+            assertFalse(pv.isConnected());
+            assertEquals(PVConnectionState.Disconnected, pv.connectionState());
+
+            pv.channelStateChanged(channel, ClientChannelState.CONNECTED);
+            CountDownLatch reconnected = new CountDownLatch(1);
+            thread.addCommand("barrier", null, reconnected::countDown);
+            assertTrue(reconnected.await(5, TimeUnit.SECONDS));
+            assertEquals(List.of("connected", "disconnected", "connected"), events);
+            assertTrue(pv.isConnected());
+
+            PVAChannel replaced = mock(PVAChannel.class);
+            setField(pv, "pvaChannelReference", new AtomicReference<>(replaced));
+            pv.channelStateChanged(channel, ClientChannelState.INIT);
+            CountDownLatch stale = new CountDownLatch(1);
+            thread.addCommand("barrier", null, stale::countDown);
+            assertTrue(stale.await(5, TimeUnit.SECONDS));
+            assertEquals(List.of("connected", "disconnected", "connected"), events);
+        } finally {
+            release.countDown();
+            thread.shutdown();
+        }
+    }
+
+    @Test
+    public void lowLevelDetailsUseTheSameChannelWhenItIsRemovedDuringReporting() throws Exception {
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", null, 4);
+        PVAChannel channel = mock(PVAChannel.class);
+        when(channel.getState()).thenAnswer(invocation -> {
+            setField(pv, "pvaChannelReference", new AtomicReference<>(null));
+            return ClientChannelState.CONNECTED;
+        });
+        when(channel.getRemoteAddress()).thenReturn("test-host");
+        setField(pv, "pvaChannelReference", new AtomicReference<>(channel));
+
+        List<Map<String, String>> statuses = new ArrayList<>();
+        pv.getLowLevelChannelInfo(statuses);
+
+        Map<String, String> details =
+                statuses.stream().collect(java.util.stream.Collectors.toMap(d -> d.get("name"), d -> d.get("value")));
+        assertEquals("CONNECTED", details.get("PVA channel state"));
+        assertEquals("test-host", details.get("PVA remote address"));
+        assertEquals("true", details.get("Do we have a PVA channel?"));
+    }
+
+    @Test
+    public void lateMonitorFromReplacedChannelDoesNotChangeCurrentConnection() throws Exception {
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", null, 4);
+        PVAChannel oldChannel = mock(PVAChannel.class);
+        setField(pv, "pvaChannelReference", new AtomicReference<>(mock(PVAChannel.class)));
+        setField(pv, "running", true);
+        setField(pv, "state", PVConnectionState.Connected);
+
+        pv.handleMonitor(oldChannel, new BitSet(), new BitSet(), null);
+
+        assertEquals(PVConnectionState.Connected, pv.connectionState());
+    }
+
+    @Test
+    public void oldChannelCallbackCannotJoinNextConnectionAttempt() throws Exception {
+        ConfigService config = mock(ConfigService.class);
+        EngineContext context = mock(EngineContext.class);
+        JCACommandThread thread = mock(JCACommandThread.class);
+        when(config.getEngineContext()).thenReturn(context);
+        when(context.getJCACommandThread(4)).thenReturn(thread);
+        EPICS_V4_PV pv = new EPICS_V4_PV("test:pva", config, 4);
+        PVAChannel oldChannel = mock(PVAChannel.class);
+        setField(pv, "state", PVConnectionState.Connecting);
+
+        pv.channelStateChanged(oldChannel, ClientChannelState.CONNECTED);
+
+        ArgumentCaptor<Runnable> captor = ArgumentCaptor.forClass(Runnable.class);
+        verify(thread).addCommand(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), captor.capture());
+        captor.getValue().run();
+
+        assertEquals(PVConnectionState.Connecting, pv.connectionState());
+    }
+
+    private static void setField(EPICS_V4_PV pv, String name, Object value) throws Exception {
+        Field field = EPICS_V4_PV.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(pv, value);
     }
 
     @Test

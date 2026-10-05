@@ -156,6 +156,6 @@ public class PVContext {
         } catch (Throwable t) {
             logger.error("Exception scheduling command for pv " + pvName, t);
         }
-        configservice.getEngineContext().getJCACommandThread(jcaCommandThreadId).addCommand(command);
+        configservice.getEngineContext().getJCACommandThread(jcaCommandThreadId).addCommand(msg, pvName, command);
     }
 }

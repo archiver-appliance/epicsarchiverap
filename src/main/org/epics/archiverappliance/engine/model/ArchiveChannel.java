@@ -814,15 +814,17 @@ public abstract class ArchiveChannel {
      */
     public void updateMetadataOnceADay(EngineContext context) {
         if (this.pv != null) {
-            context.getJCACommandThread(ArchiveChannel.this.JCACommandThreadID).addCommand(() -> {
-                try {
-                    ArchiveChannel.this.pv.updateTotalMetaInfo();
-                } catch (Throwable t) {
-                    logger.error(
-                            "Exception issuing request to update total meta Info for pv " + ArchiveChannel.this.name,
-                            t);
-                }
-            });
+            context.getJCACommandThread(ArchiveChannel.this.JCACommandThreadID)
+                    .addCommand("updateMetadata", name, () -> {
+                        try {
+                            ArchiveChannel.this.pv.updateTotalMetaInfo();
+                        } catch (Throwable t) {
+                            logger.error(
+                                    "Exception issuing request to update total meta Info for pv "
+                                            + ArchiveChannel.this.name,
+                                    t);
+                        }
+                    });
         }
     }
 
