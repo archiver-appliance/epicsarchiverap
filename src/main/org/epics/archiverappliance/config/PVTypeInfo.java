@@ -626,4 +626,43 @@ public class PVTypeInfo implements Serializable {
     public void setUseDBEProperties(boolean useDBEProperties) {
         this.useDBEProperties = useDBEProperties;
     }
+
+    @Override
+    public String toString() {
+        return "PVTypeInfo{" + "pvName='"
+                + pvName + '\'' + ", DBRType="
+                + DBRType + ", isScalar="
+                + isScalar + ", elementCount="
+                + elementCount + ", applianceIdentity='"
+                + applianceIdentity + '\'' + ", chunkKey='"
+                + chunkKey + '\'' + ", hostName='"
+                + hostName + '\'' + ", lowerAlarmLimit="
+                + lowerAlarmLimit + ", lowerCtrlLimit="
+                + lowerCtrlLimit + ", lowerDisplayLimit="
+                + lowerDisplayLimit + ", lowerWarningLimit="
+                + lowerWarningLimit + ", upperAlarmLimit="
+                + upperAlarmLimit + ", upperCtrlLimit="
+                + upperCtrlLimit + ", upperDisplayLimit="
+                + upperDisplayLimit + ", upperWarningLimit="
+                + upperWarningLimit + ", precision="
+                + precision + ", units='"
+                + units + '\'' + ", hasReducedDataSet="
+                + hasReducedDataSet + ", computedEventRate="
+                + computedEventRate + ", computedStorageRate="
+                + computedStorageRate + ", computedBytesPerEvent="
+                + computedBytesPerEvent + ", userSpecifiedEventRate="
+                + userSpecifiedEventRate + ", creationTime="
+                + creationTime + ", modificationTime="
+                + modificationTime + ", paused="
+                + paused + ", samplingMethod="
+                + samplingMethod + ", samplingPeriod="
+                + samplingPeriod + ", policyName='"
+                + policyName + '\'' + ", dataStores="
+                + Arrays.toString(dataStores) + ", extraFields="
+                + extraFields + ", controllingPV='"
+                + controllingPV + '\'' + ", archiveFields="
+                + Arrays.toString(archiveFields) + ", usePVAccess="
+                + usePVAccess + ", useDBEProperties="
+                + useDBEProperties + '}';
+    }
 }
