@@ -89,6 +89,7 @@ public class GetExtraFieldsTest {
                     }
                     stream.add(event);
                 }
+                Assertions.assertNotNull(pbplugin);
                 pbplugin.appendData(context, pvName, stream);
             }
         }

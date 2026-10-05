@@ -108,7 +108,7 @@ public class MergeDedupStoragePlugin
         List<ETLInfo> infos = ((ETLSource) dest).getETLStreams(pv, currentTime, context);
         if (infos == null) {
             logger.error("No ETL streams from " + dest.getDescription());
-            return infos;
+            return null;
         }
         for (ETLInfo info : infos) {
             Instant startTime = TimeUtils.getPreviousPartitionLastSecond(
@@ -125,7 +125,7 @@ public class MergeDedupStoragePlugin
         List<ETLInfo> infos = ((ETLSource) dest).getAllStreams(pv, context);
         if (infos == null) {
             logger.error("No ETL streams from " + dest.getDescription());
-            return infos;
+            return null;
         }
         for (ETLInfo info : infos) {
             Instant startTime = TimeUtils.getPreviousPartitionLastSecond(

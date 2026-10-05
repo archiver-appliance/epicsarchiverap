@@ -186,12 +186,12 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
             if (lastName.equals("meta")) {
                 // <member><name>meta starts the meta section
                 inMeta = true;
-                return continueProcessing;
+                return true;
             } else if (lastName.equals("values")) {
                 // <member><name>values starts the values section
                 inMeta = false;
                 inValues = true;
-                return continueProcessing;
+                return true;
             }
         }
 
@@ -210,7 +210,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
                 // meta is a struct of name/value pairs. If we encounter a end-struct in meta, we can assume that we are
                 // done with meta processing.
                 inMeta = false;
-                return continueProcessing;
+                return true;
             }
 
             if (lastTwoNodes.equals("value.i4")
@@ -269,7 +269,7 @@ public class ArchiverValuesHandler implements XMLRPCStaxProcessor, EventStream, 
                                 + TimeUtils.convertToHumanReadableString(previousEventEpochSeconds));
                         currentEvent = null;
                         workingCopyOfEvent = null;
-                        return continueProcessing;
+                        return true;
                     }
 
                     previousEventEpochSeconds = currentEventEpochSeconds;

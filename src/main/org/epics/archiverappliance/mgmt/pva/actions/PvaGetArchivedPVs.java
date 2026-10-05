@@ -98,13 +98,11 @@ public class PvaGetArchivedPVs implements PvaAction {
             }
             logger.debug("Check for fields");
             String fieldName = PVNames.getFieldName(pvName);
-            if (fieldName != null) {
-                typeInfo = configService.getTypeInfoForPV(PVNames.channelNamePVName(pvName));
-                if (typeInfo != null) {
-                    if (Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
-                        map.put(pvName, "Archived");
-                        continue;
-                    }
+            typeInfo = configService.getTypeInfoForPV(PVNames.channelNamePVName(pvName));
+            if (typeInfo != null) {
+                if (Arrays.asList(typeInfo.getArchiveFields()).contains(fieldName)) {
+                    map.put(pvName, "Archived");
+                    continue;
                 }
             }
             map.put(pvName, "Not Archived");

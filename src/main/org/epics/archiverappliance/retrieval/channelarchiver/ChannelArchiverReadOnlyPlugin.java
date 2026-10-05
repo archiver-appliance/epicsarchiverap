@@ -69,11 +69,8 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
     public ChannelArchiverReadOnlyPlugin(String serverURL, String index) {
         this.serverURL = serverURL;
         this.archiveKey = Integer.parseInt(index);
-        this.setDescription(
-                "ChannelArchiverReadOnlyPlugin plugin with serverURL " + serverURL + " and archiveKey " + archiveKey
-                        + ((reducedArchiveKey != -1)
-                                ? (" and a reducedArchiveKey of " + reducedArchiveKey)
-                                : (" and no reducedArchiveKey")));
+        this.setDescription("ChannelArchiverReadOnlyPlugin plugin with serverURL " + serverURL + " and archiveKey "
+                + archiveKey + " and no reducedArchiveKey");
     }
 
     public ChannelArchiverReadOnlyPlugin(String serverURL, String index, int valuesRequested, String howStr) {
@@ -81,11 +78,8 @@ public class ChannelArchiverReadOnlyPlugin implements StoragePlugin {
         this.archiveKey = Integer.parseInt(index);
         this.valuesRequested = valuesRequested;
         this.howStr = howStr;
-        this.setDescription(
-                "ChannelArchiverReadOnlyPlugin plugin with serverURL " + serverURL + " and archiveKey " + archiveKey
-                        + ((reducedArchiveKey != -1)
-                                ? (" and a reducedArchiveKey of " + reducedArchiveKey)
-                                : (" and no reducedArchiveKey")));
+        this.setDescription("ChannelArchiverReadOnlyPlugin plugin with serverURL " + serverURL + " and archiveKey "
+                + archiveKey + " and no reducedArchiveKey");
     }
 
     @Override

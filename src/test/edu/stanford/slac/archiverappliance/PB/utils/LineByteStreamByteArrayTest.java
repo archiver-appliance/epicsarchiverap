@@ -380,7 +380,7 @@ public class LineByteStreamByteArrayTest {
                     int linenumber = 1;
                     lis.seekToFirstNewLine();
                     lis.readLine(bar);
-                    int expectedLineNumber = (int) (start / 17);
+                    int expectedLineNumber = (int) (0);
                     while (!bar.isEmpty()) {
                         String val = new String(bar.toBytes());
                         Assertions.assertTrue(
