@@ -61,6 +61,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.Period;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -427,18 +428,14 @@ public class PlainStoragePlugin
 
         if (searchPeriod != null) {
             sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
-                ? startAtTime
-                : startAtTime.minus(searchPeriod);
+                    ? startAtTime
+                    : startAtTime.atZone(ZoneOffset.UTC).minus(searchPeriod).toInstant();
             eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
-                ? startAtTime.plus(searchPeriod)
-                : startAtTime;
+                    ? startAtTime.atZone(ZoneOffset.UTC).plus(searchPeriod).toInstant()
+                    : startAtTime;
         } else {
-            sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
-                ? startAtTime
-                : Instant.EPOCH;
-            eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS)
-                ? Instant.MAX
-                : startAtTime;
+            sTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS) ? startAtTime : Instant.EPOCH;
+            eTime = (direction == BiDirectionalIterable.IterationDirection.FORWARDS) ? Instant.MAX : startAtTime;
         }
         Path[] paths = PathNameUtility.getPathsWithData(
                 context.getPaths(),
