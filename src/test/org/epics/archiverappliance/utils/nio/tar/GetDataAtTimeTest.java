@@ -7,6 +7,9 @@
  *******************************************************************************/
 package org.epics.archiverappliance.utils.nio.tar;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +33,7 @@ import org.epics.archiverappliance.utils.nio.ArchPaths;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -40,13 +44,16 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Random;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Test GetDataAtTime using its internal method getDataAtTimeForPVFromStores
  * We generate PVTypeInfo's for a few PVs; generate gztar data and test retrieval
  * We generate one data point per hour 11 seconds past the hour
+ *
  * @author mshankar
  *
  */
@@ -120,9 +127,39 @@ public class GetDataAtTimeTest {
         }
     }
 
+    /**
+     * Test static property helpers on GetDataAtTime directly.
+     */
+    @Test
+    public void testConfigPropertyParsing() throws Exception {
+        ConfigServiceForTests localConfigService = new ConfigServiceForTests(1);
+
+        // Default setup: enable = true, searchPeriod = null
+        Assertions.assertTrue(GetDataAtTime.isGetDataAtTimeDefaultEnabled(localConfigService));
+        Assertions.assertNull(GetDataAtTime.getGetDataAtTimeDefaultSearchPeriod(localConfigService));
+
+        // Disable defaults
+        localConfigService
+                .getInstallationProperties()
+                .setProperty("org.epics.archiverappliance.retrieval.getDataAtTime.default.enable", "false");
+        Assertions.assertFalse(GetDataAtTime.isGetDataAtTimeDefaultEnabled(localConfigService));
+
+        // Enable custom searchPeriod
+        localConfigService
+                .getInstallationProperties()
+                .setProperty("org.epics.archiverappliance.retrieval.getDataAtTime.default.enable", "true");
+        localConfigService
+                .getInstallationProperties()
+                .setProperty("org.epics.archiverappliance.retrieval.getDataAtTime.default.searchPeriod", "P1Y");
+
+        Assertions.assertTrue(GetDataAtTime.isGetDataAtTimeDefaultEnabled(localConfigService));
+        Assertions.assertEquals(
+                Period.parse("P1Y"), GetDataAtTime.getGetDataAtTimeDefaultSearchPeriod(localConfigService));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"pb", "parquet"})
-    public void testGetDataAtTime(String plugin) throws Exception {
+    public void testGetDataAtTimeExplicitPeriod(String plugin) throws Exception {
         createTestData(plugin);
 
         Period searchPeriod = Period.parse("P1D");
@@ -161,6 +198,98 @@ public class GetDataAtTimeTest {
                                             event.getSampleValue().getValue().doubleValue()));
                 }
             }
+        }
+    }
+
+    /**
+     * Scenario: enable = false => data is NOT null.
+     * When default searchPeriod capping is disabled (searchPeriod = null), queries past bounded ranges
+     * still traverse history infinitely and return valid data.
+     */
+    @Test
+    public void testIntegrationDefaultDisabled_ReturnsDataNotNull() throws Exception {
+        createTestData("parquet");
+
+        ConfigServiceForTests localConfig = new ConfigServiceForTests(1);
+        localConfig
+                .getInstallationProperties()
+                .setProperty("org.epics.archiverappliance.retrieval.getDataAtTime.default.enable", "false");
+
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        when(req.getParameter("searchPeriod")).thenReturn(null);
+
+        // Request time is 60 days after stored data ends
+        Instant farFutureTime = TimeUtils.convertFromYearSecondTimestamp(
+                        new YearSecondTimestamp(year, (364 * 24 * 60 * 60) + 1200, 0))
+                .plus(60, ChronoUnit.DAYS);
+
+        for (String pvName : pvNames.keySet()) {
+            PVWithData result = GetDataAtTime.getDataAtTimeForPVFromStores(pvName, farFutureTime, null, configService);
+            Assertions.assertNotNull(result, "enable=false without searchPeriod should return non-null PVWithData");
+            Assertions.assertNotNull(
+                    result.event(), "enable=false without searchPeriod should return non-null event for " + pvName);
+        }
+    }
+
+    /**
+     * Scenario: enable = true => data is NOT null.
+     * When default searchPeriod is enabled (P1D) and the sample falls within 1 day of query time.
+     */
+    @Test
+    public void testIntegrationDefaultEnabled_DataWithinRange_ReturnsDataNotNull() throws Exception {
+        createTestData("parquet");
+
+        ConfigServiceForTests localConfig = new ConfigServiceForTests(1);
+        localConfig
+                .getInstallationProperties()
+                .setProperty("org.epics.archiverappliance.retrieval.getDataAtTime.default.enable", "true");
+
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        when(req.getParameter("searchPeriod")).thenReturn(null);
+
+        Period effectivePeriod = Period.parse("P1D");
+
+        // Target day 100 at 12:00 UTC
+        Instant targetTime =
+                TimeUtils.convertFromYearSecondTimestamp(new YearSecondTimestamp(year, 100 * 24 * 60 * 60 + 1200, 0));
+
+        for (String pvName : pvNames.keySet()) {
+            PVWithData result =
+                    GetDataAtTime.getDataAtTimeForPVFromStores(pvName, targetTime, effectivePeriod, configService);
+            Assertions.assertNotNull(result, "enable=true with data in range should return non-null PVWithData");
+            Assertions.assertNotNull(
+                    result.event(), "enable=true with data in range should return non-null event for " + pvName);
+        }
+    }
+
+    /**
+     * Scenario: enable = true => data IS null.
+     * Happens when querying a time where no data exists within the effective searchPeriod window (P1D).
+     */
+    @Test
+    public void testIntegrationDefaultEnabled_DataOutOfRange_ReturnsDataNull() throws Exception {
+        createTestData("parquet");
+
+        ConfigServiceForTests localConfig = new ConfigServiceForTests(1);
+        localConfig
+                .getInstallationProperties()
+                .setProperty("org.epics.archiverappliance.retrieval.getDataAtTime.default.enable", "true");
+
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        when(req.getParameter("searchPeriod")).thenReturn(null);
+
+        Period effectivePeriod = Period.parse("P1D");
+
+        // Query time is 60 days after the last data sample (outside the 1-day searchPeriod window)
+        Instant farFutureTime = TimeUtils.convertFromYearSecondTimestamp(
+                        new YearSecondTimestamp(year, (364 * 24 * 60 * 60) + 1200, 0))
+                .plus(60, ChronoUnit.DAYS);
+
+        for (String pvName : pvNames.keySet()) {
+            PVWithData result =
+                    GetDataAtTime.getDataAtTimeForPVFromStores(pvName, farFutureTime, effectivePeriod, configService);
+            Assertions.assertNull(
+                    result, "enable=true with NO data within searchPeriod should return null for " + pvName);
         }
     }
 }
