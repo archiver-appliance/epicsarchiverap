@@ -14,6 +14,21 @@ following optional parameters are accepted by the `getData` endpoint.
 retrieval to get the latest values of the various fields
 _(DESC, HIHI etc)_.
 
+`fetchStartMetadata`
+: If `true`, include metadata fields from the sample at or before the start
+of the requested interval. When combined with another metadata option,
+these fields are prefixed with `start_`.
+
+`fetchEndMetadata`
+: If `true`, include metadata fields from the sample at or before the end of
+the requested interval. When combined with another metadata option,
+these fields are prefixed with `end_`.
+
+For start/end metadata lookups, the search period is derived from the
+requested `from` and `to` interval, so long retrieval intervals can locate
+metadata from sparse PVs. A one-day fallback is used when no valid interval
+is supplied.
+
 `retiredPVTemplate`
 : If specified, the archiving information (PVTypeInfo) for the PV
 specified in this parameter is used as a template for PVs that do not

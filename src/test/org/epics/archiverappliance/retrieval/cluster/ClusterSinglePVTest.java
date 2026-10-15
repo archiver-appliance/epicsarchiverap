@@ -150,6 +150,23 @@ public class ClusterSinglePVTest {
         logger.info("Opening this URL: " + obj);
         JSONArray finalResult = getURLContentAsJSONArray(obj.toString(), true);
 
+        // Also hit with metadata flags to ensure integration works without exception
+        URL objFirstMeta = new URL(obj + "&fetchStartMetadata=true");
+        JSONArray finalResultFirstMeta = getURLContentAsJSONArray(objFirstMeta.toString(), true);
+        assert finalResultFirstMeta != null;
+
+        URL objBothMeta = new URL(obj + "&fetchStartMetadata=true&fetchLatestMetadata=true");
+        JSONArray finalResultBothMeta = getURLContentAsJSONArray(objBothMeta.toString(), true);
+        assert finalResultBothMeta != null;
+
+        URL objEndMeta = new URL(obj + "&fetchEndMetadata=true");
+        JSONArray finalResultEndMeta = getURLContentAsJSONArray(objEndMeta.toString(), true);
+        assert finalResultEndMeta != null;
+
+        URL objAllMeta = new URL(obj + "&fetchStartMetadata=true&fetchEndMetadata=true&fetchLatestMetadata=true");
+        JSONArray finalResultAllMeta = getURLContentAsJSONArray(objAllMeta.toString(), true);
+        assert finalResultAllMeta != null;
+
         Map<String, List<JSONObject>> pvToData = new HashMap<>();
         assert finalResult != null;
         int sizeOfResponse = finalResult.size();
