@@ -53,10 +53,6 @@ public class ChangeTypeForPV implements BPLAction {
             return;
         }
         ArchDBRTypes newDBRType = ArchDBRTypes.valueOf(newTypeStr);
-        if (newDBRType == null) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
 
         // String pvNameFromRequest = pvName;
         String realName = configService.getRealNameForAlias(pvName);

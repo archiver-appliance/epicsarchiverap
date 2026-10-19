@@ -41,9 +41,6 @@ public class GetETLReadyFiles {
         String pvName = args[0];
         File folder = new File(args[1]);
         PartitionGranularity granularity = PartitionGranularity.valueOf(args[2]);
-        if (granularity == null) {
-            throw new Exception("Unable to determine granularity for " + args[2]);
-        }
 
         Instant now = TimeUtils.now();
         Path[] paths = PathNameUtility.getPathsBeforeCurrentPartition(
@@ -55,7 +52,7 @@ public class GetETLReadyFiles {
                 granularity,
                 PathResolver.BASE_PATH_RESOLVER,
                 configService.getPVNameToKeyConverter());
-        if (paths == null || paths.length == 0) {
+        if (paths.length == 0) {
             System.out.println("No files for pv " + pvName + " before current partition using time "
                     + TimeUtils.convertToHumanReadableString(now));
         }
