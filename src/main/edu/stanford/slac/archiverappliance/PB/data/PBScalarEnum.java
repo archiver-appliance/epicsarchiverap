@@ -58,6 +58,7 @@ public class PBScalarEnum implements DBRTimeEvent {
         Builder builder = EPICSEvent.ScalarEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(ev.getUserTag())
                 .setVal(ev.getSampleValue().getValue().intValue());
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -93,7 +94,9 @@ public class PBScalarEnum implements DBRTimeEvent {
     }
 
     public PBScalarEnum(PVAStructure v4Data) {
-        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+        PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
+        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         int value = ((PVAInt) ((PVAStructure) v4Data.get("value")).get("index")).get();
@@ -102,6 +105,7 @@ public class PBScalarEnum implements DBRTimeEvent {
         Builder builder = EPICSEvent.ScalarEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(userTag)
                 .setVal(value);
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
         if (alarm.status != 0) builder.setStatus(alarm.status);
@@ -148,6 +152,12 @@ public class PBScalarEnum implements DBRTimeEvent {
     public int getSeverity() {
         unmarshallEventIfNull();
         return dbevent.getSeverity();
+    }
+
+    @Override
+    public int getUserTag() {
+        unmarshallEventIfNull();
+        return dbevent.getUserTag();
     }
 
     @Override

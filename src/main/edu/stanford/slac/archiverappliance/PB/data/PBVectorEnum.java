@@ -64,6 +64,7 @@ public class PBVectorEnum implements DBRTimeEvent {
         Builder builder = EPICSEvent.VectorEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(ev.getUserTag())
                 .addAllVal(vals);
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -101,7 +102,9 @@ public class PBVectorEnum implements DBRTimeEvent {
     }
 
     public PBVectorEnum(PVAStructure v4Data) {
-        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+        PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
+        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         PVAStructureArray pvArray = v4Data.get("value");
@@ -115,6 +118,7 @@ public class PBVectorEnum implements DBRTimeEvent {
         Builder builder = EPICSEvent.VectorEnum.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(userTag)
                 .addAllVal(vals);
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
         if (alarm.status != 0) builder.setStatus(alarm.status);
@@ -163,6 +167,12 @@ public class PBVectorEnum implements DBRTimeEvent {
     public int getSeverity() {
         unmarshallEventIfNull();
         return dbevent.getSeverity();
+    }
+
+    @Override
+    public int getUserTag() {
+        unmarshallEventIfNull();
+        return dbevent.getUserTag();
     }
 
     @Override

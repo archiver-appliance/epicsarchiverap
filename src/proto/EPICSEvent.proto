@@ -18,6 +18,8 @@ message ScalarString {
   optional uint32 repeatcount = 6;
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message ScalarByte {
@@ -29,6 +31,8 @@ message ScalarByte {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message ScalarShort {
@@ -40,6 +44,8 @@ message ScalarShort {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message ScalarInt {
@@ -51,6 +57,8 @@ message ScalarInt {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message ScalarEnum {
@@ -62,6 +70,8 @@ message ScalarEnum {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message ScalarFloat {
@@ -73,6 +83,8 @@ message ScalarFloat {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 
@@ -85,6 +97,8 @@ message ScalarDouble {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message VectorString {
@@ -97,6 +111,8 @@ message VectorString {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 // VectorChar is the same as ScalarChar as we use ByteString for both
@@ -109,6 +125,8 @@ message VectorChar {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message VectorShort {
@@ -120,6 +138,8 @@ message VectorShort {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message VectorInt {
@@ -131,6 +151,8 @@ message VectorInt {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message VectorEnum {
@@ -142,6 +164,8 @@ message VectorEnum {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 message VectorFloat {
@@ -153,6 +177,8 @@ message VectorFloat {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 
@@ -165,6 +191,8 @@ message VectorDouble {
   optional uint32 repeatcount = 6; 
   repeated FieldValue fieldvalues = 7;
   optional bool fieldactualchange = 8;
+  // EPICS V4 user tag
+  optional uint32 userTag = 9;
 }
 
 // A generic v4 container; we simply store the bytes as obtained from EPICS v4 as the val.

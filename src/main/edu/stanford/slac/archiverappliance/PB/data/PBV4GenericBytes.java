@@ -55,6 +55,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         EPICSEvent.V4GenericBytes.Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(ev.getUserTag())
                 .setVal(byteString);
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -144,6 +145,12 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     public int getSeverity() {
         unmarshallEventIfNull();
         return dbevent.getSeverity();
+    }
+
+    @Override
+    public int getUserTag() {
+        unmarshallEventIfNull();
+        return dbevent.getUserTag();
     }
 
     @Override
