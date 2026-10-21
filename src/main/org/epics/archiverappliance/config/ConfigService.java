@@ -334,6 +334,20 @@ public interface ConfigService {
         this.registerPVToAppliance(pvName, applianceInfo, PVRegistrationType.ARCHIVNG);
     }
 
+    /*
+     * Check the cluster and the databases cluster-wide to ensure that the given PV is not already registered.
+     * @param pvName The name of PV.
+     * @throws AlreadyRegisteredException  &emsp; if the PV is already registered in the cluster or in any database in the cluster.
+     */
+    public void ensurePVNotRegistered(String pvName) throws AlreadyRegisteredException;
+
+    /**
+     * Check if the given PV has a PVTypeInfo entry in the persistence layer for this appliance ( regardless of the appliance it is assigned to)
+     * @param pvName The name of PV.
+     * @return boolean  &emsp; true if the PV has a PVTypeInfo entry, false otherwise.
+     */
+    public boolean doesPVHaveATypeInfo(String pvName);
+
     /**
      * Gets information about a PV's type, i.e its DBR type, graphic limits etc.
      * This information is assumed to be somewhat static and is expected to come from a cache if possible as it is used in data retrieval.

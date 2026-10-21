@@ -1276,6 +1276,43 @@ public class DefaultConfigService implements ConfigService {
     }
 
     @Override
+    public boolean doesPVHaveATypeInfo(String pvName) {
+        try {
+            logger.debug("Checking if PV {} has a PVTypeInfo", pvName);
+            boolean hasTypeInfo = this.persistanceLayer.getTypeInfo(pvName) != null;
+            logger.debug("PV {} has type info in persistence layer: {}", pvName, hasTypeInfo);
+            return hasTypeInfo;
+        } catch (IOException ex) {
+            logger.error("Error checking if PV has a PVTypeInfo: " + pvName, ex);
+            return true;
+        }
+    }
+
+    static class IsPVRegistered implements EAABulkOperation<Boolean> {
+        private String pvName;
+
+        public IsPVRegistered(String pvName) {
+            this.pvName = pvName;
+        }
+
+        @Override
+        public Boolean call(ConfigService configService) {
+            return configService.doesPVHaveATypeInfo(this.pvName);
+        }
+    }
+
+    @Override
+    public void ensurePVNotRegistered(String pvName) throws AlreadyRegisteredException {
+        Map<String, Boolean> pvRegisteredByAppliance = this.executeClusterWide(new IsPVRegistered(pvName));
+        boolean isRegistered = pvRegisteredByAppliance.values().stream()
+                .collect(Collectors.reducing(Boolean.FALSE, Boolean::logicalOr));
+        logger.warn("PV {} already has type info: {}", pvName, isRegistered);
+        if (isRegistered) {
+            throw new AlreadyRegisteredException(this.getMyApplianceInfo());
+        }
+    }
+
+    @Override
     public PVTypeInfo getTypeInfoForPV(String pvName) {
         if (typeInfos.containsKey(pvName)) {
             logger.debug(() -> "Retrieving typeinfo from cache for pv " + pvName);
