@@ -29,14 +29,13 @@ public class CurrentlyDisconnectedPVsAction implements BPLAction {
                 + configService.getMyApplianceInfo().getIdentity());
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         LinkedList<HashMap<String, String>> result = new LinkedList<HashMap<String, String>>();
-        Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
         try (PrintWriter out = resp.getWriter()) {
             for (ArchiveChannel channel :
                     configService.getEngineContext().getChannelList().values()) {
                 PVMetrics pvMetrics = channel.getPVMetrics();
                 if (!pvMetrics.isConnected()) {
                     String pvName = pvMetrics.getPvName();
-                    if (pausedPVs.contains(pvName)) {
+                    if (channel.isPaused()) {
                         logger.debug("Skipping a paused PV " + pvName);
                         continue;
                     }
