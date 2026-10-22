@@ -36,7 +36,8 @@ public class CurrentlyDisconnectedPVs implements BPLAction {
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         LinkedList<String> neverConnUrls = new LinkedList<String>();
         for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-            neverConnUrls.add(info.getEngineURL() + "/getCurrentlyDisconnectedPVsForThisAppliance" + (limit == null ? "" : ("?limit=" + limit)));
+            neverConnUrls.add(info.getEngineURL() + "/getCurrentlyDisconnectedPVsForThisAppliance"
+                    + (limit == null ? "" : ("?limit=" + limit)));
         }
 
         try (PrintWriter out = resp.getWriter()) {
