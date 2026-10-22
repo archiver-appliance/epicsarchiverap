@@ -24,12 +24,16 @@ public class CurrentlyDisconnectedPVsAction implements BPLAction {
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
+        String limit = req.getParameter("limit");
+        boolean hasLimit = limit != null;
+        int limitInt = limit != null ? Integer.parseInt(limit) : -1;
         String identity = configService.getMyApplianceInfo().getIdentity();
         logger.info("Currently disconnected PVs for appliance "
                 + configService.getMyApplianceInfo().getIdentity());
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         LinkedList<HashMap<String, String>> result = new LinkedList<HashMap<String, String>>();
         try (PrintWriter out = resp.getWriter()) {
+            int count = 0;
             for (ArchiveChannel channel :
                     configService.getEngineContext().getChannelList().values()) {
                 PVMetrics pvMetrics = channel.getPVMetrics();
@@ -62,6 +66,10 @@ public class CurrentlyDisconnectedPVsAction implements BPLAction {
                     String hostName = channel.getHostName();
                     pvStatus.put("hostName", hostName != null ? hostName : "N/A");
                     pvStatus.put("commandThreadID", Integer.toString(channel.getJCACommandThreadID()));
+                }
+                count++;
+                if (hasLimit && count >= limitInt) {
+                    break;
                 }
             }
             out.println(JSONValue.toJSONString(result));
