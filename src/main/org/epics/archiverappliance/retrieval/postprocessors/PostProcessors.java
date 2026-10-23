@@ -80,6 +80,7 @@ public class PostProcessors {
 		registerPostProcessor(new CAPlotBinning().getIdentity(), CAPlotBinning.class);
 		registerPostProcessor(new DeadBand().getIdentity(), DeadBand.class);
 		registerPostProcessor(new ErrorBars().getIdentity(), ErrorBars.class);
+		registerPostProcessor(new LTTB().getIdentity(), LTTB.class);
     
 
 	}
