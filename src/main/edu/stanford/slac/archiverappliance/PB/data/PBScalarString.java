@@ -23,7 +23,7 @@ import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarStringSampleValue;
-import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVANumber;
 import org.epics.pva.data.PVAString;
 import org.epics.pva.data.PVAStructure;
 
@@ -59,10 +59,10 @@ public class PBScalarString implements DBRTimeEvent {
         Builder builder = EPICSEvent.ScalarString.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
-                .setUserTag(ev.getUserTag())
                 .setVal(ev.getSampleValue().toString());
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
+        if (ev.getUserTag() != 0L) builder.setUserTag(ev.getUserTag());
         if (ev.hasFieldValues()) {
             HashMap<String, String> fields = ev.getFields();
             for (String fieldName : fields.keySet()) {
@@ -98,7 +98,8 @@ public class PBScalarString implements DBRTimeEvent {
     public PBScalarString(PVAStructure v4Data) {
         PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
         YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
-        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
+        long userTag =
+                ((PVANumber) timeStampPVStructure.get("userTag")).getNumber().longValue();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         String value = ((PVAString) v4Data.get("value")).get();
@@ -107,10 +108,10 @@ public class PBScalarString implements DBRTimeEvent {
         Builder builder = EPICSEvent.ScalarString.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
-                .setUserTag(userTag)
                 .setVal(value);
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
         if (alarm.status != 0) builder.setStatus(alarm.status);
+        if (userTag != 0L) builder.setUserTag(userTag);
         dbevent = builder.build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
     }
@@ -157,7 +158,7 @@ public class PBScalarString implements DBRTimeEvent {
     }
 
     @Override
-    public int getUserTag() {
+    public long getUserTag() {
         unmarshallEventIfNull();
         return dbevent.getUserTag();
     }

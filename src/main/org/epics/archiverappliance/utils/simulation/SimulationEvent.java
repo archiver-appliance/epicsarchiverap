@@ -106,7 +106,7 @@ public class SimulationEvent implements DBRTimeEvent {
     }
 
     @Override
-    public int getUserTag() {
+    public long getUserTag() {
         return 0;
     }
 

@@ -100,8 +100,8 @@ public class HashMapEvent implements DBRTimeEvent {
     }
 
     @Override
-    public int getUserTag() {
-        return Integer.parseInt((String) values.getOrDefault(USER_TAG_FIELD_NAME, "0"));
+    public long getUserTag() {
+        return Long.parseLong((String) values.getOrDefault(USER_TAG_FIELD_NAME, "0"));
     }
 
     @Override

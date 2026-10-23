@@ -34,7 +34,7 @@ public class TextResponse implements MimeResponse, ExceptionCommunicator {
                 + "\t" + (((DBRTimeEvent) e).getSeverity())
                 + "\t" + (((DBRTimeEvent) e).getStatus())
                 + "\t" + (((DBRTimeEvent) e).getEventTimeStamp().getNano())
-                + "\t" + (((DBRTimeEvent) e).getUserTag()));
+                + "\t" + Long.toUnsignedString(((DBRTimeEvent) e).getUserTag()));
     }
 
     @Override

@@ -47,7 +47,7 @@ public class JSONResponse implements MimeResponse {
                 + ", \"nanos\": " + Integer.toString(evnt.getEventTimeStamp().getNano())
                 + ", \"severity\":" + Integer.toString(evnt.getSeverity())
                 + ", \"status\":" + Integer.toString(evnt.getStatus())
-                + ", \"userTag\": " + Integer.toString(evnt.getUserTag())
+                + ", \"userTag\": " + Long.toUnsignedString(evnt.getUserTag())
                 + consumeMetadata(evnt)
                 + " }");
     }

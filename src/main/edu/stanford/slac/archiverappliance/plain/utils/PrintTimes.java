@@ -38,7 +38,9 @@ public class PrintTimes {
                             + "\t" + TimeUtils.convertToHumanReadableString((((DBRTimeEvent) ev).getEventTimeStamp()))
                             + "\t" + ev.getSampleValue().toString()
                             + "\t" + (((DBRTimeEvent) ev).getSeverity())
-                            + "\t" + (((DBRTimeEvent) ev).getStatus()));
+                            + "\t" + (((DBRTimeEvent) ev).getStatus())
+                            + "\t" + (((DBRTimeEvent) ev).getUserTag())
+                        );
                 }
             }
         }

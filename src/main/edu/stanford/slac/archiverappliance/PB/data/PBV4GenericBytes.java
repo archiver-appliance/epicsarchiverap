@@ -15,7 +15,7 @@ import org.epics.archiverappliance.data.ByteBufSampleValue;
 import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
-import org.epics.pva.data.PVAInt;
+import org.epics.pva.data.PVANumber;
 import org.epics.pva.data.PVAStructure;
 
 import java.io.IOException;
@@ -55,10 +55,10 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         EPICSEvent.V4GenericBytes.Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
-                .setUserTag(ev.getUserTag())
                 .setVal(byteString);
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
+        if (ev.getUserTag() != 0L) builder.setUserTag(ev.getUserTag());
         if (ev.hasFieldValues()) {
             HashMap<String, String> fields = ev.getFields();
             for (String fieldName : fields.keySet()) {
@@ -77,7 +77,8 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     public PBV4GenericBytes(PVAStructure v4Data) throws IOException {
         PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
         YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
-        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
+        long userTag =
+                ((PVANumber) timeStampPVStructure.get("userTag")).getNumber().longValue();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         var buffer = ByteBuffer.allocate(4 * 1024 * 1024);
@@ -95,12 +96,11 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
         EPICSEvent.V4GenericBytes.Builder builder = EPICSEvent.V4GenericBytes.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
-                .setUserTag(userTag)
                 .setVal(byteString);
 
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
-
         if (alarm.status != 0) builder.setStatus(alarm.status);
+        if (userTag != 0L) builder.setUserTag(userTag);
 
         dbevent = builder.build();
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
@@ -148,7 +148,7 @@ public class PBV4GenericBytes implements DBRTimeEvent, PartionedTime {
     }
 
     @Override
-    public int getUserTag() {
+    public long getUserTag() {
         unmarshallEventIfNull();
         return dbevent.getUserTag();
     }
