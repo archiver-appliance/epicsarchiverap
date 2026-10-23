@@ -73,13 +73,13 @@ public class ArchivePVWhenClusterIsBeingBuiltTest {
     @Test
     public void testRequestForArchivingThatAlreadyExistsOnInactiveMember() throws Exception {
         // Make sure the PV is not being archived initially.
-        checkPVStatus(pvNameToArchive, "Not being archived");
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Not being archived", 10, "http://localhost:17665/mgmt/bpl/", 15);
         logger.info("PV " + pvNameToArchive + " is initially not being archived.");
 
         // Let's first ask the archiver to archive the PV.
         archivePV(pvNameToArchive);
         logger.info("Asked to archive PV " + pvNameToArchive);
-        checkPVStatus(pvNameToArchive, "Initial sampling");
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Initial sampling", 10, "http://localhost:17665/mgmt/bpl/", 15);
         logger.info("PV " + pvNameToArchive + " is now in initial sampling.");
 
         // We then sneakily add the PV into the database behind the archiver's back.
@@ -89,14 +89,8 @@ public class ArchivePVWhenClusterIsBeingBuiltTest {
         }
 
         // The archive request should have aborted and we should get a "Not being archived" status.
-        checkPVStatus(pvNameToArchive, "Not being archived");
+        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, "Not being archived", 10, "http://localhost:17665/mgmt/bpl/", 15);
         logger.info("PV " + pvNameToArchive + " is no longer being archived.");
-    }
-
-    private void checkPVStatus(String pvName, String expectedPVStatus) throws Exception {
-        String pvNameToArchive = pvName;
-        String mgmtURL = "http://localhost:17665/mgmt/bpl/";
-        ArchiveTestUtils.waitForStatusChange(pvNameToArchive, expectedPVStatus, 10, mgmtURL, 15);
     }
 
     private void archivePV(String pvName) throws Exception {
