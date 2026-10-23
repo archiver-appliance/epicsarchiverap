@@ -1288,13 +1288,7 @@ public class DefaultConfigService implements ConfigService {
         }
     }
 
-    static class IsPVRegistered implements EAABulkOperation<Boolean> {
-        private String pvName;
-
-        public IsPVRegistered(String pvName) {
-            this.pvName = pvName;
-        }
-
+    static record IsPVRegistered(String pvName) implements EAABulkOperation<Boolean> {
         @Override
         public Boolean call(ConfigService configService) {
             return configService.doesPVHaveATypeInfo(this.pvName);
