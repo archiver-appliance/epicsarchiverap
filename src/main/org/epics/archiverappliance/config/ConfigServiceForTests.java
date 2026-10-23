@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -405,5 +406,17 @@ public class ConfigServiceForTests extends DefaultConfigService {
     public int getInitialDelayBeforeStartingArchiveRequestWorkflow() {
         // Of course, for testing, we kick off the archive PV workflow right away.
         return 10;
+    }
+
+    @Override
+    public <T> Map<String, T> executeClusterWide(EAABulkOperation<T> theOperation) {
+        if (this.webInfClassesFolder != null) {
+            logger.info("Simulating cluster-wide operation for appliance " + this.myApplianceInfo.getIdentity()
+                    + " as the web inf folder is set");
+            T ret = theOperation.call(this);
+            return Map.of(this.myApplianceInfo.getIdentity(), ret);
+        } else {
+            return super.executeClusterWide(theOperation);
+        }
     }
 }

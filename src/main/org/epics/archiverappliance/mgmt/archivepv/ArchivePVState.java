@@ -246,6 +246,7 @@ public class ArchivePVState {
 
                     try {
                         typeInfo.setApplianceIdentity(applianceIdentityAfterCapacityPlanning);
+                        configService.ensurePVNotRegistered(pvName);
                         configService.updateTypeInfoForPV(pvName, typeInfo);
                         configService.registerPVToAppliance(pvName, applianceInfoForPV);
                         currentState = ArchivePVStateMachine.POLICY_COMPUTED;
