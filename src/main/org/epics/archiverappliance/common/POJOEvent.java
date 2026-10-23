@@ -27,6 +27,7 @@ public class POJOEvent implements DBRTimeEvent {
     private SampleValue sampleValue;
     private int status;
     private int severity;
+    private int userTag;
 
     public POJOEvent(
             ArchDBRTypes dbrType, Instant recordProcessingTime, SampleValue sampleValue, int status, int severity) {
@@ -36,6 +37,23 @@ public class POJOEvent implements DBRTimeEvent {
         this.sampleValue = sampleValue;
         this.status = status;
         this.severity = severity;
+        this.userTag = 0;
+    }
+
+    public POJOEvent(
+            ArchDBRTypes dbrType,
+            Instant recordProcessingTime,
+            SampleValue sampleValue,
+            int status,
+            int severity,
+            int userTag) {
+        super();
+        this.dbrType = dbrType;
+        this.recordProcessingTime = recordProcessingTime;
+        this.sampleValue = sampleValue;
+        this.status = status;
+        this.severity = severity;
+        this.userTag = userTag;
     }
 
     public POJOEvent(
@@ -78,6 +96,11 @@ public class POJOEvent implements DBRTimeEvent {
     @Override
     public int getSeverity() {
         return severity;
+    }
+
+    @Override
+    public int getUserTag() {
+        return userTag;
     }
 
     @Override

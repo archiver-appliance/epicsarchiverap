@@ -23,6 +23,7 @@ import org.epics.archiverappliance.data.DBRAlarm;
 import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.VectorStringSampleValue;
+import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAStringArray;
 import org.epics.pva.data.PVAStructure;
 
@@ -61,6 +62,7 @@ public class PBVectorString implements DBRTimeEvent {
         Builder builder = EPICSEvent.VectorString.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(ev.getUserTag())
                 .addAllVal(ev.getSampleValue().getValues());
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -98,7 +100,9 @@ public class PBVectorString implements DBRTimeEvent {
     }
 
     public PBVectorString(PVAStructure v4Data) {
-        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+        PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
+        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         PVAStringArray pvArray = v4Data.get("value");
@@ -110,6 +114,7 @@ public class PBVectorString implements DBRTimeEvent {
         Builder builder = EPICSEvent.VectorString.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(userTag)
                 .addAllVal(vals);
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
         if (alarm.status != 0) builder.setStatus(alarm.status);
@@ -156,6 +161,12 @@ public class PBVectorString implements DBRTimeEvent {
     public int getSeverity() {
         unmarshallEventIfNull();
         return dbevent.getSeverity();
+    }
+
+    @Override
+    public int getUserTag() {
+        unmarshallEventIfNull();
+        return dbevent.getUserTag();
     }
 
     @Override

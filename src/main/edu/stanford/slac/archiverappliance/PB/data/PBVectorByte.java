@@ -25,6 +25,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.VectorValue;
 import org.epics.pva.data.PVAByteArray;
+import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAStructure;
 
 import java.time.Instant;
@@ -67,6 +68,7 @@ public class PBVectorByte implements DBRTimeEvent {
         Builder builder = EPICSEvent.VectorChar.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(ev.getUserTag())
                 .setVal(ByteString.copyFrom(vals));
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -107,7 +109,9 @@ public class PBVectorByte implements DBRTimeEvent {
     }
 
     public PBVectorByte(PVAStructure v4Data) {
-        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+        PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
+        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         PVAByteArray pvArray = (PVAByteArray) v4Data.get("value");
@@ -117,6 +121,7 @@ public class PBVectorByte implements DBRTimeEvent {
         Builder builder = EPICSEvent.VectorChar.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(userTag)
                 .setVal(ByteString.copyFrom(data));
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
         if (alarm.status != 0) builder.setStatus(alarm.status);
@@ -204,6 +209,12 @@ public class PBVectorByte implements DBRTimeEvent {
         }
         bar = new ByteArray(LineEscaper.escapeNewLines(dbevent.toByteArray()));
         return;
+    }
+
+    @Override
+    public int getUserTag() {
+        unmarshallEventIfNull();
+        return dbevent.getUserTag();
     }
 
     @Override

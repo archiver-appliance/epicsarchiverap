@@ -24,6 +24,7 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 import org.epics.archiverappliance.data.SampleValue;
 import org.epics.archiverappliance.data.ScalarValue;
 import org.epics.pva.data.PVAFloat;
+import org.epics.pva.data.PVAInt;
 import org.epics.pva.data.PVAStructure;
 
 import java.time.Instant;
@@ -58,6 +59,7 @@ public class PBScalarFloat implements DBRTimeEvent {
         Builder builder = EPICSEvent.ScalarFloat.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(ev.getUserTag())
                 .setVal(ev.getSampleValue().getValue().floatValue());
         if (ev.getSeverity() != 0) builder.setSeverity(ev.getSeverity());
         if (ev.getStatus() != 0) builder.setStatus(ev.getStatus());
@@ -93,7 +95,9 @@ public class PBScalarFloat implements DBRTimeEvent {
     }
 
     public PBScalarFloat(PVAStructure v4Data) {
-        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(v4Data.get("timeStamp"));
+        PVAStructure timeStampPVStructure = v4Data.get("timeStamp");
+        YearSecondTimestamp yst = TimeUtils.convertFromPVTimeStamp(timeStampPVStructure);
+        int userTag = ((PVAInt) timeStampPVStructure.get("userTag")).get();
         DBRAlarm alarm = DBRAlarm.convertPVAlarm(v4Data.get("alarm"));
 
         float value = ((PVAFloat) v4Data.get("value")).get();
@@ -102,6 +106,7 @@ public class PBScalarFloat implements DBRTimeEvent {
         Builder builder = EPICSEvent.ScalarFloat.newBuilder()
                 .setSecondsintoyear(yst.getSecondsintoyear())
                 .setNano(yst.getNano())
+                .setUserTag(userTag)
                 .setVal(value);
         if (alarm.severity != 0) builder.setSeverity(alarm.severity);
         if (alarm.status != 0) builder.setStatus(alarm.status);
@@ -154,6 +159,12 @@ public class PBScalarFloat implements DBRTimeEvent {
     public int getSeverity() {
         unmarshallEventIfNull();
         return dbevent.getSeverity();
+    }
+
+    @Override
+    public int getUserTag() {
+        unmarshallEventIfNull();
+        return dbevent.getUserTag();
     }
 
     @Override
