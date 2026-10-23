@@ -31,11 +31,13 @@ public class CurrentlyDisconnectedPVs implements BPLAction {
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
+        String limit = req.getParameter("limit");
         logger.info("Getting the list of pvs that are currently disconnected.");
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         LinkedList<String> neverConnUrls = new LinkedList<String>();
         for (ApplianceInfo info : configService.getAppliancesInCluster()) {
-            neverConnUrls.add(info.getEngineURL() + "/getCurrentlyDisconnectedPVsForThisAppliance");
+            neverConnUrls.add(info.getEngineURL() + "/getCurrentlyDisconnectedPVsForThisAppliance"
+                    + (limit == null ? "" : ("?limit=" + limit)));
         }
 
         try (PrintWriter out = resp.getWriter()) {

@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -24,19 +23,22 @@ public class CurrentlyDisconnectedPVsAction implements BPLAction {
     @Override
     public void execute(HttpServletRequest req, HttpServletResponse resp, ConfigService configService)
             throws IOException {
+        String limit = req.getParameter("limit");
+        boolean hasLimit = limit != null;
+        int limitInt = limit != null ? Integer.parseInt(limit) : -1;
         String identity = configService.getMyApplianceInfo().getIdentity();
         logger.info("Currently disconnected PVs for appliance "
                 + configService.getMyApplianceInfo().getIdentity());
         resp.setContentType(MimeTypeConstants.APPLICATION_JSON);
         LinkedList<HashMap<String, String>> result = new LinkedList<HashMap<String, String>>();
-        Set<String> pausedPVs = configService.getPausedPVsInThisAppliance();
         try (PrintWriter out = resp.getWriter()) {
+            int count = 0;
             for (ArchiveChannel channel :
                     configService.getEngineContext().getChannelList().values()) {
                 PVMetrics pvMetrics = channel.getPVMetrics();
                 if (!pvMetrics.isConnected()) {
                     String pvName = pvMetrics.getPvName();
-                    if (pausedPVs.contains(pvName)) {
+                    if (channel.isPaused()) {
                         logger.debug("Skipping a paused PV " + pvName);
                         continue;
                     }
@@ -63,6 +65,10 @@ public class CurrentlyDisconnectedPVsAction implements BPLAction {
                     String hostName = channel.getHostName();
                     pvStatus.put("hostName", hostName != null ? hostName : "N/A");
                     pvStatus.put("commandThreadID", Integer.toString(channel.getJCACommandThreadID()));
+                }
+                count++;
+                if (hasLimit && count >= limitInt) {
+                    break;
                 }
             }
             out.println(JSONValue.toJSONString(result));
