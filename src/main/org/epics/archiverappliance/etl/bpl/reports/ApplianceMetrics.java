@@ -25,12 +25,6 @@ public class ApplianceMetrics implements Metrics {
     public Map<String, String> metrics(ConfigService configService) {
         HashMap<String, String> metrics = new HashMap<String, String>();
         ETLMetrics metricsForLifetime = configService.getETLLookup().getApplianceMetrics();
-        if (metricsForLifetime == null) {
-            metrics.put("Startup", "In Progress");
-        } else {
-            return metricsForLifetime.metrics();
-        }
-
-        return metrics;
+        return metricsForLifetime.metrics();
     }
 }

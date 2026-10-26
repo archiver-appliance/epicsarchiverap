@@ -169,7 +169,7 @@ public class ArchivePVState {
                         }
 
                         // Copy over any archive fields from the user spec
-                        if (userSpec != null && userSpec.wereAnyFieldsSpecified()) {
+                        if (userSpec.wereAnyFieldsSpecified()) {
                             for (String fieldName : userSpec.getArchiveFields()) {
                                 if (fieldsArchivedAsPartOfStream != null
                                         && fieldsArchivedAsPartOfStream.contains(fieldName)) {

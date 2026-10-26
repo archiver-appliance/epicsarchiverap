@@ -95,7 +95,6 @@ public class ByteBufSampleValue implements SampleValue {
         }
         if (type == PVAStructure.class) {
             PVAStructure childStruct = (PVAStructure) pvaData;
-            assert (childStruct != null);
             Map<String, Object> childMap = new TreeMap<>();
             pvStructure2JSON(childStruct, childMap);
             return childMap;
