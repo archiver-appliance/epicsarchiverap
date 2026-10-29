@@ -14,7 +14,6 @@ import org.epics.archiverappliance.data.DBRTimeEvent;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.Callable;
 import jakarta.servlet.http.HttpServletRequest;
@@ -204,7 +203,7 @@ public class LTTB implements PostProcessor, PostProcessorWithConsolidatedEventSt
         }
         previousLTTBBin = currentLTTBBin;
         currentBin = binNumber;
-        currentLTTBBin = new LTTBBin();
+        currentLTTBBin = new LTTBBin(pvName);
     }
 
     /**
@@ -213,78 +212,13 @@ public class LTTB implements PostProcessor, PostProcessorWithConsolidatedEventSt
      * of the range are reserved and are never picked here.
      */
     private void selectPoint(LTTBBin bin, LTTBBin next) {
-        Event picked = bin.select(anchor == null ? firstSample : anchor, next == null ? bin : next);
+        // Mid stream lastSample belongs to a later bin than the one resolved here, so it excludes nothing.
+        Event picked =
+                bin.select(anchor == null ? firstSample : anchor, next == null ? bin : next, firstSample, lastSample);
         if (picked != null) {
             selectedEvents.add(picked);
             anchor = picked;
         }
-    }
-
-    class LTTBBin {
-        ArrayList<Event> samples = new ArrayList<Event>();
-        double sumX = 0.0;
-        double sumY = 0.0;
-        int numValues = 0;
-
-        void addEvent(Event e) {
-            samples.add(e);
-            double val = value(e);
-            if (!Double.isNaN(val)) {
-                sumX += seconds(e);
-                sumY += val;
-                numValues++;
-            } else if (logger.isDebugEnabled()) {
-                // A mostly NaN pv would flood the log, so this is not a warning.
-                logger.debug("Skipping NAN for pv " + pvName);
-            }
-        }
-
-        /** The mean of the bin, as the third vertex of the triangle. */
-        double meanX() {
-            return numValues > 0 ? sumX / numValues : seconds(samples.get(0));
-        }
-
-        double meanY() {
-            return numValues > 0 ? sumY / numValues : 0.0;
-        }
-
-        Event select(Event anchorSample, LTTBBin next) {
-            double ax = seconds(anchorSample);
-            double ay = value(anchorSample);
-            if (Double.isNaN(ay)) {
-                // A NaN anchor makes every area NaN, so nothing is ever picked and the anchor never moves on.
-                ay = meanY();
-            }
-            double avgX = next.meanX();
-            double avgY = next.numValues > 0 ? next.meanY() : ay;
-            double largestArea = -1;
-            Event picked = null;
-            for (Event e : samples) {
-                if (e == firstSample || e == lastSample) {
-                    continue;
-                }
-                double by = value(e);
-                if (Double.isNaN(by)) {
-                    continue;
-                }
-                double area = Math.abs((seconds(e) - ax) * (avgY - ay) - (avgX - ax) * (by - ay));
-                if (area >= largestArea) {
-                    // Prefer the later sample in case of a tie
-                    largestArea = area;
-                    picked = e;
-                }
-            }
-            return picked;
-        }
-    }
-
-    /** Seconds since the epoch, with the sub second part, so that irregular sampling is handled correctly. */
-    private static double seconds(Event e) {
-        return e.getEpochSeconds() + e.getEventTimeStamp().getNano() / 1.0e9;
-    }
-
-    private static double value(Event e) {
-        return e.getSampleValue().getValue().doubleValue();
     }
 
     /**
