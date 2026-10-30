@@ -34,6 +34,7 @@ public class HashMapEvent implements DBRTimeEvent {
     private static final Logger logger = LogManager.getLogger(HashMapEvent.class);
     public static final String SECS_FIELD_NAME = "secs";
     public static final String NANO_FIELD_NAME = "nano";
+    public static final String USER_TAG_FIELD_NAME = "userTag";
     public static final String VALUE_FIELD_NAME = "value";
     public static final String RAW_VALUE_FIELD_NAME = "raw_value";
     public static final String STAT_FIELD_NAME = "stat";
@@ -96,6 +97,11 @@ public class HashMapEvent implements DBRTimeEvent {
     @Override
     public int getSeverity() {
         return Integer.parseInt((String) values.get(SEVR_FIELD_NAME));
+    }
+
+    @Override
+    public long getUserTag() {
+        return Long.parseLong((String) values.getOrDefault(USER_TAG_FIELD_NAME, "0"));
     }
 
     @Override
