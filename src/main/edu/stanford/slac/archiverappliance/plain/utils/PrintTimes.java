@@ -39,8 +39,7 @@ public class PrintTimes {
                             + "\t" + ev.getSampleValue().toString()
                             + "\t" + (((DBRTimeEvent) ev).getSeverity())
                             + "\t" + (((DBRTimeEvent) ev).getStatus())
-                            + "\t" + (((DBRTimeEvent) ev).getUserTag())
-                        );
+                            + "\t" + (((DBRTimeEvent) ev).getUserTag()));
                 }
             }
         }
