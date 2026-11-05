@@ -130,7 +130,8 @@ public class OptimizedWithLastSample
     public long estimateMemoryConsumption(
             String pvName, PVTypeInfo typeInfo, Instant start, Instant end, HttpServletRequest req) {
 
-        intervalSecs = (int) ((end.toEpochMilli() - start.toEpochMilli()) / (1000 * numberOfPoints));
+        long intervalSecsLong = ((end.getEpochSecond() - start.getEpochSecond()) / ((long) numberOfPoints));
+        intervalSecs = intervalSecsLong > Integer.MAX_VALUE ? Integer.MAX_VALUE : Math.max(1, (int) intervalSecsLong);
 
         firstBin = TimeUtils.convertToEpochSeconds(start) / intervalSecs;
         lastBin = TimeUtils.convertToEpochSeconds(end) / intervalSecs;

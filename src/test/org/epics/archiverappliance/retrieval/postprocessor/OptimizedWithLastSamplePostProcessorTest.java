@@ -205,4 +205,33 @@ public class OptimizedWithLastSamplePostProcessorTest {
         ArrayListEventStream testData = getData(numSamples, true, 50, 100, true, 52);
         checkConnectionChanges(numSamples, expectedSamplesInPeriod, testData);
     }
+
+    @Test
+    public void testFewEventsInShortTimePeriod() throws Exception {
+        int expectedSamplesInPeriod = 60;
+        ArrayListEventStream testData = getData(expectedSamplesInPeriod, false, 0, 0, false, 0);
+
+        Instant start = TimeUtils.convertFromISO8601String(year + "-06-01T10:00:00.000Z");
+        Instant end = TimeUtils.convertFromISO8601String(year + "-06-01T11:00:00.000Z");
+
+        PVTypeInfo pvTypeInfo = new PVTypeInfo(pvName, ArchDBRTypes.DBR_SCALAR_DOUBLE, true, 1);
+        pvTypeInfo.setSamplingPeriod(60);
+
+        OptimizedWithLastSample optimizedPP = new OptimizedWithLastSample();
+        optimizedPP.initialize("optimLastSample_10000", pvName);
+        Assertions.assertDoesNotThrow(
+                () -> optimizedPP.estimateMemoryConsumption(pvName, pvTypeInfo, start, end, null));
+        optimizedPP
+                .wrap(CallableEventStream.makeOneStreamCallable(testData, null, false))
+                .call();
+        EventStream retData = optimizedPP.getConsolidatedEventStream();
+        int eventCount = 0;
+        for (Event e : retData) {
+            eventCount++;
+        }
+        Assertions.assertEquals(
+                expectedSamplesInPeriod,
+                eventCount,
+                "The number of events should be the total number of events in time range");
+    }
 }
