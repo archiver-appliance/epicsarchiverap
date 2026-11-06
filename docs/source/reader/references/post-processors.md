@@ -105,6 +105,14 @@ optimLastSample
 repeating the last bin with samples, the bin uses the last value of the last recorded sample instead
 (as mean, min and max; stddev is zero and number of samples is also zero).
 
+lttb
+: Expects one parameter at initialization, which is the number of requested points, as `optimized` does.
+The range is split into that many bins, and each bin returns the one original sample forming the largest
+triangle with the sample returned for the previous bin and the mean of the next bin (the
+Largest-Triangle-Three-Buckets algorithm). The first and last samples are always returned, and if there are
+fewer samples than requested, all of them are returned. Nothing is synthesized, so unlike `mean` and
+`optimized` this preserves single sample spikes; it is intended for plotting. Waveforms are returned unchanged.
+
 caplotbinning
 : Approx implementation of ChannelArchiver plotbinning
 
