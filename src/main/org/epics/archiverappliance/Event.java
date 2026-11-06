@@ -39,6 +39,13 @@ public interface Event {
     public Instant getEventTimeStamp();
 
     /**
+     * Get the PVAccess user tag associated with this event.
+     * The user tag is a INT64 value that can be used to store additional information about the event.
+     * @return The user tag of this event.
+     */
+    public long getUserTag();
+
+    /**
      * Return a serialized form of this event in the internal currency of the archiver appliance. For now, this is Google's Protocol Buffers
      * Note that the raw form is always escaped according to the archiver specification.
      * This is to have a minimum of conversion overhead when streaming data out to servers.
