@@ -135,8 +135,9 @@ public class BulkPauseResumeUtils {
                     || retValMap.get(realName).containsKey("status")) {
                 // We got some status
             } else {
+                logger.warn("No status found for PV {}", pvName);
                 retValMap
-                        .get(pvName)
+                        .getOrDefault(pvName, new HashMap<String, String>())
                         .put(
                                 "validation",
                                 "Trying to pause PV " + pvName
