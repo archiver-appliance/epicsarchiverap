@@ -106,6 +106,11 @@ public class SimulationEvent implements DBRTimeEvent {
     }
 
     @Override
+    public long getUserTag() {
+        return 0;
+    }
+
+    @Override
     public void setSeverity(int severity) {
         throw new UnsupportedOperationException("Not supported. Convert to a PB form if you want to use this.");
     }

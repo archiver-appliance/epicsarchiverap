@@ -197,6 +197,11 @@ public class CSVEvent implements DBRTimeEvent {
     }
 
     @Override
+    public long getUserTag() {
+        return 0;
+    }
+
+    @Override
     public int getRepeatCount() {
         return 0;
     }

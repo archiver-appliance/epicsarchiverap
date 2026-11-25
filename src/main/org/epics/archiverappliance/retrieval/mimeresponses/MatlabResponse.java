@@ -35,6 +35,7 @@ import java.util.LinkedList;
  * <li><code>epochSeconds</code> - contains Java epoch seconds as a 1x1 uint64 array. The times are in UTC; so any conversion to local time needs to happen at the client.</li>
  * <li><code>values</code> - contains the values for the samples. All scalars come as a 1x1 double array. Waveforms come as a 1x<i>elementcount</i> double array where <i>elementcount</i> is the EPICS element count of the waveform.</li>
  * <li><code>nanos</code> - contains the nano second value of the EPICS record processing timestamp as a 1x1 uint64 array. Some installations embed the beam code/pulse id into this field; however, this is done at the IOC  side and as far as this code are concerned, this is the nanoseconds.</li>
+ * <li><code>userTag</code> - contains the user tag of the EPICS record as a 1x1 uint64 array.</li>
  * <li><code>isDST</code> - contains booleans that indicate if the time indicated by <code>epochSeconds</code> was in daylight savings time in the timezone of the server. This is an attempt to get around the deficiencies in Matlab w.r.t timezones.</li>
  * </ol>
  *
@@ -99,6 +100,7 @@ public class MatlabResponse implements MimeResponse {
             dataStruct.setField("epochSeconds", new GenTimeArray().generateColumn(dest));
             dataStruct.setField("values", new GenValueArray().generateColumn(dest));
             dataStruct.setField("nanos", new GenNanosArray().generateColumn(dest));
+            dataStruct.setField("userTag", new GenUserTagArray().generateColumn(dest));
             dataStruct.setField("isDST", new GenisDSTArray().generateColumn(dest));
             LinkedList<MLArray> dataList = new LinkedList<MLArray>();
             dataList.add(headerStruct);
@@ -177,6 +179,17 @@ public class MatlabResponse implements MimeResponse {
             int i = 0;
             for (Event e : dest) {
                 ret.set((long) e.getEventTimeStamp().getNano(), i++);
+            }
+            return ret;
+        }
+    }
+
+    private class GenUserTagArray implements GenMLArray {
+        public MLArray generateColumn(ArrayListEventStream dest) {
+            MLUInt64 ret = new MLUInt64("userTag", new int[] {dest.size(), 1});
+            int i = 0;
+            for (Event e : dest) {
+                ret.set((long) e.getUserTag(), i++);
             }
             return ret;
         }

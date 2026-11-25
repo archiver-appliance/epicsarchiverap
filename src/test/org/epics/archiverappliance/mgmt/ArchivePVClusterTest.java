@@ -31,8 +31,8 @@ import java.util.Map;
 @Tag("localEpics")
 public class ArchivePVClusterTest {
     private static Logger logger = LogManager.getLogger(ArchivePVClusterTest.class.getName());
-    File persistenceFolder = new File(
-            ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "InactiveClusterMemberArchivePVTest");
+    File persistenceFolder =
+            new File(ConfigServiceForTests.getDefaultPBTestFolder() + File.separator + "ArchivePVClusterTest");
     TomcatSetup tomcatSetup = new TomcatSetup();
     SIOCSetup siocSetup = new SIOCSetup();
 
