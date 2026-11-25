@@ -11,7 +11,6 @@ import org.epics.archiverappliance.common.BasicContext;
 import org.epics.archiverappliance.common.PoorMansProfiler;
 import org.epics.archiverappliance.common.TimeSpan;
 import org.epics.archiverappliance.common.TimeUtils;
-import org.epics.archiverappliance.common.remotable.RemotableEventStreamDesc;
 import org.epics.archiverappliance.config.ApplianceInfo;
 import org.epics.archiverappliance.config.ConfigService;
 import org.epics.archiverappliance.config.ConfigService.STARTUP_SEQUENCE;
@@ -23,6 +22,7 @@ import org.epics.archiverappliance.mgmt.policy.PolicyConfig.SamplingMethod;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaAction;
 import org.epics.archiverappliance.mgmt.pva.actions.PvaActionException;
 import org.epics.archiverappliance.retrieval.DataSourceResolution;
+import org.epics.archiverappliance.retrieval.MetaDataTime;
 import org.epics.archiverappliance.retrieval.MismatchedDBRTypeException;
 import org.epics.archiverappliance.retrieval.RetrievalResult;
 import org.epics.archiverappliance.retrieval.UnitOfRetrieval;
@@ -102,6 +102,13 @@ public class PvaGetPVData implements PvaAction {
         return uri.getQuery();
     }
 
+    private static MetaDataTime metaDataTime(Map<String, String> req) {
+        String fetchLatestMetadataStr = req.get("fetchLatestMetadata");
+        String fetchStartMetadataStr = req.get("fetchStartMetadata");
+        String fetchEndMetadataStr = req.get("fetchEndMetadata");
+        return MetaDataTime.fromRequestStrings(fetchStartMetadataStr, fetchEndMetadataStr, fetchLatestMetadataStr);
+    }
+
     private PVAStructure doGetSinglePV(Map<String, String> reqParameters, ConfigService configService)
             throws ServletException, IOException, PvaActionException {
 
@@ -133,12 +140,7 @@ public class PvaGetPVData implements PvaAction {
             logger.info("Turning off HTTP chunked encoding");
         }
 
-        boolean fetchLatestMetadata = false;
-        String fetchLatestMetadataStr = reqParameters.get("fetchLatestMetadata");
-        if (fetchLatestMetadataStr != null && fetchLatestMetadataStr.equals("true")) {
-            logger.info("Adding a call to the engine to fetch the latest metadata");
-            fetchLatestMetadata = true;
-        }
+        MetaDataTime metaDataTime = metaDataTime(reqParameters);
 
         // For data retrieval we need a PV info. However, in case of PV's that have long
         // since retired, we may not want to have PVTypeInfo's in the system.
@@ -316,11 +318,14 @@ public class PvaGetPVData implements PvaAction {
                 PvaMergeDedupConsumer mergeDedupCountingConsumer = createMergeDedupConsumer(result);
                 RetrievalExecutorResult executorResult =
                         determineExecutorForPostProcessing(pvName, typeInfo, requestTimes, postProcessor)) {
-            HashMap<String, String> engineMetadata = null;
-            if (fetchLatestMetadata) {
-                // Make a call to the engine to fetch the latest metadata.
-                engineMetadata = fetchLatestMedataFromEngine(pvName, applianceForPV);
-            }
+            Map<String, String> metadata = metaDataTime.getMetadata(
+                    typeInfo,
+                    pvName,
+                    applianceForPV,
+                    start,
+                    end,
+                    MetaDataTime.searchPeriodBetween(start, end),
+                    configService);
 
             LinkedList<Future<RetrievalResult>> retrievalResultFutures = resolveAllDataSources(
                     pvName, typeInfo, postProcessor, applianceForPV, retrievalContext, executorResult);
@@ -352,7 +357,7 @@ public class PvaGetPVData implements PvaAction {
                                     : " unknown"));
 
                     try {
-                        mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
+                        MetaDataTime.mergeMetaData(typeInfo, sourceDesc, metadata);
                     } catch (MismatchedDBRTypeException mex) {
                         logger.error(mex.getMessage(), mex);
                         continue;
@@ -500,12 +505,7 @@ public class PvaGetPVData implements PvaAction {
             useChunkedEncoding = false;
         }
 
-        boolean fetchLatestMetadata = false;
-        String fetchLatestMetadataStr = reqParameters.get("fetchLatestMetadata");
-        if (fetchLatestMetadataStr != null && fetchLatestMetadataStr.equals("true")) {
-            logger.info("Adding a call to the engine to fetch the latest metadata");
-            fetchLatestMetadata = true;
-        }
+        MetaDataTime metaDataTime = metaDataTime(reqParameters);
 
         // For data retrieval we need a PV info. However, in case of PV's that have long
         // since retired, we may not want to have PVTypeInfo's in the system.
@@ -806,15 +806,20 @@ public class PvaGetPVData implements PvaAction {
          * the BasicContext is the context in which it works.
          */
 
-        List<HashMap<String, String>> engineMetadatas = new ArrayList<HashMap<String, String>>();
+        List<Map<String, String>> metadatas = new ArrayList<Map<String, String>>();
         try {
             List<BasicContext> retrievalContexts = new ArrayList<BasicContext>(pvNames.size());
             List<RetrievalExecutorResult> executorResults = new ArrayList<RetrievalExecutorResult>(pvNames.size());
             for (int i = 0; i < pvNames.size(); i++) {
-                if (fetchLatestMetadata) {
-                    // Make a call to the engine to fetch the latest metadata.
-                    engineMetadatas.add(fetchLatestMedataFromEngine(pvNames.get(i), applianceForPVs.get(i)));
-                }
+                metadatas.add(metaDataTime.getMetadata(
+                        typeInfos.get(i),
+                        pvNames.get(i),
+                        applianceForPVs.get(i),
+                        start,
+                        end,
+                        MetaDataTime.searchPeriodBetween(start, end),
+                        configService));
+
                 retrievalContexts.add(new BasicContext(typeInfos.get(i).getDBRType(), pvNamesFromRequests.get(i)));
                 executorResults.add(determineExecutorForPostProcessing(
                         pvNames.get(i), typeInfos.get(i), requestTimes, postProcessors.get(i)));
@@ -871,7 +876,7 @@ public class PvaGetPVData implements PvaAction {
                     List<Future<EventStream>> eventStreamFutures = listOfEventStreamFuturesLists.get(i);
                     String pvName = pvNames.get(i);
                     PVTypeInfo typeInfo = typeInfos.get(i);
-                    HashMap<String, String> engineMetadata = fetchLatestMetadata ? engineMetadatas.get(i) : null;
+                    Map<String, String> metadata = metadatas.get(i);
                     PostProcessor postProcessor = postProcessors.get(i);
 
                     logger.debug("Done with the RetrievalResults; moving onto the individual event stream "
@@ -895,7 +900,7 @@ public class PvaGetPVData implements PvaAction {
                                             : " unknown"));
 
                             try {
-                                mergeTypeInfo(typeInfo, sourceDesc, engineMetadata);
+                                MetaDataTime.mergeMetaData(typeInfo, sourceDesc, metadata);
                             } catch (MismatchedDBRTypeException mex) {
                                 logger.error(mex.getMessage(), mex);
                                 continue;
@@ -1264,27 +1269,6 @@ public class PvaGetPVData implements PvaAction {
             }
         }
         return eventStreamFutures;
-    }
-
-    /**
-     * Merges info from pvTypeTnfo that comes from the config database into the
-     * remote description that gets sent over the wire.
-     *
-     * @param typeInfo
-     * @param eventDesc
-     * @param engineMetaData
-     *            - Latest from the engine - could be null
-     * @return
-     * @throws IOException
-     */
-    private void mergeTypeInfo(PVTypeInfo typeInfo, EventStreamDesc eventDesc, HashMap<String, String> engineMetaData)
-            throws IOException {
-        if (eventDesc != null && eventDesc instanceof RemotableEventStreamDesc) {
-            logger.debug("Merging typeinfo into remote desc for pv " + eventDesc.getPvName() + " into source "
-                    + eventDesc.getSource());
-            RemotableEventStreamDesc remoteDesc = (RemotableEventStreamDesc) eventDesc;
-            remoteDesc.mergeFrom(typeInfo, engineMetaData);
-        }
     }
 
     /**
