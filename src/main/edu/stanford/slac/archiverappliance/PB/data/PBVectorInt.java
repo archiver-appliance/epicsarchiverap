@@ -229,7 +229,7 @@ public class PBVectorInt implements DBRTimeEvent {
         unmarshallEventIfNull();
         HashMap<String, String> ret = new HashMap<String, String>();
         List<FieldValue> fieldValues = dbevent.getFieldvaluesList();
-        if (fieldValues != null && !fieldValues.isEmpty()) {
+        if (!fieldValues.isEmpty()) {
             for (FieldValue fieldValue : fieldValues) {
                 ret.put(fieldValue.getName(), fieldValue.getVal());
             }
@@ -241,7 +241,7 @@ public class PBVectorInt implements DBRTimeEvent {
     public String getFieldValue(String fieldName) {
         unmarshallEventIfNull();
         List<FieldValue> fieldValues = dbevent.getFieldvaluesList();
-        if (fieldValues != null && !fieldValues.isEmpty()) {
+        if (!fieldValues.isEmpty()) {
             for (FieldValue fieldValue : fieldValues) {
                 if (fieldValue.getName().equals(fieldName)) {
                     return fieldValue.getVal();

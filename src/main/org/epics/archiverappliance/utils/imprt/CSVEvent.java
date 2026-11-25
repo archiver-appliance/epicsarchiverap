@@ -170,7 +170,6 @@ public class CSVEvent implements DBRTimeEvent {
             default:
                 throw new Exception("Unsupported DBR type in swicth statement " + type.toString());
         }
-        assert (sampleValue != null);
     }
 
     public CSVEvent(CSVEvent src) {

@@ -28,7 +28,7 @@ public class RetrievalError {
         if (ex != null) {
             logger.error(msg);
         } else {
-            logger.warn(msg, ex);
+            logger.warn(msg, (Throwable) null);
         }
         resp.sendError(sc, msg);
     }

@@ -120,10 +120,8 @@ public class ZipETLTest {
                                 pvName,
                                 TimeUtils.getStartOfYear(TimeUtils.getCurrentYear()),
                                 TimeUtils.getEndOfYear(TimeUtils.getCurrentYear())))) {
-            if (strm != null) {
-                for (@SuppressWarnings("unused") Event ev : strm) {
-                    eventCount++;
-                }
+            for (@SuppressWarnings("unused") Event ev : strm) {
+                eventCount++;
             }
         }
         try (BasicContext context = new BasicContext();

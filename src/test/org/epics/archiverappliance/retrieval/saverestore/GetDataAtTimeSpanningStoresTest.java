@@ -193,6 +193,7 @@ public class GetDataAtTimeSpanningStoresTest {
                         0,
                         0));
             }
+            Assertions.assertNotNull(storagePlugin);
             storagePlugin.appendData(context, pvName, strm);
         }
     }

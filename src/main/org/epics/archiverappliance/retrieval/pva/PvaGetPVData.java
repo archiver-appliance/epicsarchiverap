@@ -283,7 +283,6 @@ public class PvaGetPVData implements PvaAction {
         ApplianceInfo applianceForPV = configService.getApplianceForPV(pvName);
         if (applianceForPV == null) {
             // TypeInfo cannot be null here...
-            assert (typeInfo != null);
             applianceForPV = configService.getAppliance(typeInfo.getApplianceIdentity());
         }
 
@@ -292,7 +291,7 @@ public class PvaGetPVData implements PvaAction {
         String pvNameFromRequest = pvName;
 
         String fieldName = PVNames.getFieldName(pvName);
-        if (fieldName != null && !fieldName.equals("") && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
+        if (!fieldName.equals("") && typeInfo.checkIfFieldAlreadySepcified(fieldName)) {
             logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName()
                     + " as that determines the name of the stream. Also using ExtraFieldsPostProcessor");
             pvName = typeInfo.getPvName();
@@ -364,11 +363,7 @@ public class PvaGetPVData implements PvaAction {
                                         + " In some mime responses we insert special headers at the beginning of the response. Calling the hook for that");
                         currentlyProcessingPV = pvName;
                         mergeDedupCountingConsumer.processingPV(
-                                retrievalContext,
-                                currentlyProcessingPV,
-                                start,
-                                end,
-                                (eventStream != null) ? sourceDesc : null);
+                                retrievalContext, currentlyProcessingPV, start, end, sourceDesc);
                     }
 
                     try {
@@ -380,7 +375,7 @@ public class PvaGetPVData implements PvaAction {
                             // resp.flushBuffer();
                         }
                     } catch (Exception ex) {
-                        if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+                        if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                             // We check for ClientAbortException etc this way to avoid including tomcat jars
                             // in the build path.
                             logger.info(
@@ -395,7 +390,7 @@ public class PvaGetPVData implements PvaAction {
                     pmansProfiler.mark(
                             "After event stream " + eventStream.getDescription().getSource());
                 } catch (Exception ex) {
-                    if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+                    if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                         // We check for ClientAbortException etc this way to avoid including tomcat jars
                         // in the build path.
                         logger.info(
@@ -443,7 +438,7 @@ public class PvaGetPVData implements PvaAction {
                     + " events" + " deduping involved " + mergeDedupCountingConsumer.comparedEventsForAllPVs
                     + " compares.");
         } catch (Exception ex) {
-            if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+            if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                 // We check for ClientAbortException etc this way to avoid including tomcat jars
                 // in the build path.
                 logger.debug("Exception when retrieving data ", ex);
@@ -728,15 +723,14 @@ public class PvaGetPVData implements PvaAction {
             ArrayList<PVInfoForClusterRetrieval> pvInfos;
             while (!((retrievalURL = retrievalURLs.iterator().next()) != null)) {
                 // Get array list of PVs for appliance
-                pvInfos = applianceToPVs.get(retrievalURL);
+                pvInfos = applianceToPVs.get(null);
                 try {
                     // TODO the http request is needed to process
                     List<List<Future<EventStream>>> resultFromForeignAppliances =
                             retrieveEventStreamFromForeignAppliance(pvInfos, requestTimes);
                     listOfEventStreamFuturesLists.addAll(resultFromForeignAppliances);
                 } catch (Exception ex) {
-                    logger.error(
-                            "Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + retrievalURL + ".");
+                    logger.error("Failed to retrieve " + StringUtils.join(pvNames, ", ") + " from " + null + ".");
                 }
             }
         }
@@ -755,7 +749,7 @@ public class PvaGetPVData implements PvaAction {
             // If a field is specified in a PV name, it will create a post processor for
             // that
             String fieldName = PVNames.getFieldName(pvName);
-            if (fieldName != null && !fieldName.equals("") && !pvName.equals(typeInfo.getPvName())) {
+            if (!fieldName.equals("") && !pvName.equals(typeInfo.getPvName())) {
                 logger.debug("We reset the pvName " + pvName + " to one from the typeinfo " + typeInfo.getPvName()
                         + " as that determines the name of the stream. " + "Also using ExtraFieldsPostProcessor.");
                 pvNames.set(i, typeInfo.getPvName());
@@ -845,7 +839,7 @@ public class PvaGetPVData implements PvaAction {
             }
 
         } catch (Exception ex) {
-            if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+            if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                 // We check for ClientAbortException etc this way to avoid including tomcat jars
                 // in the build path.
                 logger.debug("Exception when retrieving data ", ex);
@@ -913,11 +907,7 @@ public class PvaGetPVData implements PvaAction {
                                  * regardless of whether it is divided up or not.
                                  */
                                 mergeDedupCountingConsumer.processingPV(
-                                        retrievalContext,
-                                        currentlyProcessingPV,
-                                        start,
-                                        end,
-                                        (eventStream != null) ? sourceDesc : null);
+                                        retrievalContext, currentlyProcessingPV, start, end, sourceDesc);
                             }
 
                             try {
@@ -933,9 +923,7 @@ public class PvaGetPVData implements PvaAction {
                                     // TODO
                                 }
                             } catch (Exception ex) {
-                                if (ex != null
-                                        && ex.toString() != null
-                                        && ex.toString().contains("ClientAbortException")) {
+                                if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                                     // We check for ClientAbortException etc this way to avoid including tomcat jars
                                     // in the build path.
                                     logger.debug(
@@ -951,9 +939,7 @@ public class PvaGetPVData implements PvaAction {
                             pmansProfiler.mark("After event stream "
                                     + eventStream.getDescription().getSource());
                         } catch (Exception ex) {
-                            if (ex != null
-                                    && ex.toString() != null
-                                    && ex.toString().contains("ClientAbortException")) {
+                            if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                                 // We check for ClientAbortException etc this way to avoid including tomcat jars
                                 // in the build path.
                                 logger.debug(
@@ -998,7 +984,7 @@ public class PvaGetPVData implements PvaAction {
                 }
             }
         } catch (Exception ex) {
-            if (ex != null && ex.toString() != null && ex.toString().contains("ClientAbortException")) {
+            if (ex.toString() != null && ex.toString().contains("ClientAbortException")) {
                 // We check for ClientAbortException etc this way to avoid including tomcat jars
                 // in the build path.
                 logger.debug("Exception when retrieving data ", ex);

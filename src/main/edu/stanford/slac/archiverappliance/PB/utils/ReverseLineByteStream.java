@@ -176,7 +176,7 @@ public class ReverseLineByteStream implements Closeable {
                 // currentBufferPos, chReadUntil, currentLineWritePos);
                 currentLineReadPos = currentLineWritePos - 1;
                 lineBuffered = true;
-                return lineBuffered;
+                return true;
             } else {
                 if (currentLineWritePos == MAX_LINE_SIZE) {
                     throw new IOException("file has a line exceeding " + MAX_LINE_SIZE + " bytes");

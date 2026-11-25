@@ -101,7 +101,7 @@ public abstract class AppendDataStateData {
 
                 if (writer == null) {
                     preparePartition(
-                            pvName, stream, context, extension, extensionToCopyFrom, ts, pvPath, getPathResolver());
+                            pvName, stream, context, extension, extensionToCopyFrom, ts, null, getPathResolver());
                 }
 
                 // We check for monotonicity in timestamps again as we had some fresh data from an existing file.

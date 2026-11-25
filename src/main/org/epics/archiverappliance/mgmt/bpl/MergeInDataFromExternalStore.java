@@ -133,13 +133,9 @@ public class MergeInDataFromExternalStore implements BPLAction {
                             + "&skipExternalServers=true";
                     logger.info("Getting data from URL " + serverURL);
                     InputStream is = GetUrlContent.getURLContentAsStream(serverURL);
-                    if (is != null) {
-                        InputStreamBackedEventStream eis =
-                                new InputStreamBackedEventStream(new BufferedInputStream(is), streamStartTime);
-                        return new MergeDedupEventStream(srcEventStream, eis);
-                    } else {
-                        logger.error("Other stream is null for " + srcEventStream.getDescription());
-                    }
+                    InputStreamBackedEventStream eis =
+                            new InputStreamBackedEventStream(new BufferedInputStream(is), streamStartTime);
+                    return new MergeDedupEventStream(srcEventStream, eis);
                 }
                 logger.error("Skipping merging in event stream " + srcEventStream.getDescription());
                 return srcEventStream;
@@ -157,19 +153,14 @@ public class MergeInDataFromExternalStore implements BPLAction {
                             + "&skipExternalServers=true";
                     logger.info("Getting data from URL " + serverURL);
                     InputStream is = GetUrlContent.getURLContentAsStream(serverURL);
-                    if (is != null) {
-                        try (InputStreamBackedEventStream eis =
-                                new InputStreamBackedEventStream(new BufferedInputStream(is), streamStartTime)) {
-                            for (Event e : eis) {
-                                if (e.getSampleValue().getValue().intValue() > 0) {
-                                    logger.debug("Remote has values for " + srcEventStream.getDescription());
-                                    return true;
-                                }
+                    try (InputStreamBackedEventStream eis =
+                            new InputStreamBackedEventStream(new BufferedInputStream(is), streamStartTime)) {
+                        for (Event e : eis) {
+                            if (e.getSampleValue().getValue().intValue() > 0) {
+                                logger.debug("Remote has values for " + srcEventStream.getDescription());
+                                return true;
                             }
                         }
-
-                    } else {
-                        logger.error("Other stream is null for " + srcEventStream.getDescription());
                     }
                 }
                 logger.debug("Remote has no data for " + srcEventStream.getDescription());

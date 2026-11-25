@@ -36,7 +36,7 @@ public class MergeDedupEventStream implements EventStream, RemotableOverRaw {
         Event s2next = null;
 
         MGIterator() {
-            if (it1 != null && it1.hasNext()) {
+            if (it1.hasNext()) {
                 s1next = it1.next();
             }
             if (it2 != null && it2.hasNext()) {

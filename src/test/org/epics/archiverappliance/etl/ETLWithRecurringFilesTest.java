@@ -127,6 +127,7 @@ public class ETLWithRecurringFilesTest {
         }
 
         // Generate ratio times the granularity
+        Assertions.assertNotNull(granularity.getNextLargerGranularity());
         int eventsPerShot = (granularity.getNextLargerGranularity().getApproxSecondsPerChunk()
                         / granularity.getApproxSecondsPerChunk())
                 * ratio;

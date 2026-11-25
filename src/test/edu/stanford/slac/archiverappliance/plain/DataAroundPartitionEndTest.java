@@ -144,6 +144,7 @@ public class DataAroundPartitionEndTest {
             Instant rend = rstart.plus(1, ChronoUnit.MINUTES);
             while (rend.isBefore(generatedEndDate.plus(14, ChronoUnit.DAYS))) {
                 int totalEvents = 0;
+                Assertions.assertNotNull(storagePlugin);
                 List<Callable<EventStream>> cstrms = storagePlugin.getDataForPV(context, pvName, rstart, rend);
                 for (Callable<EventStream> cstrm : cstrms) {
                     EventStream st = cstrm.call();

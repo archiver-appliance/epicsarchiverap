@@ -248,7 +248,7 @@ public class ArchivePVAction implements BPLAction {
         String fieldName = PVNames.getFieldName(pvName);
         boolean isStandardFieldName = false;
 
-        if (fieldName != null && !fieldName.isEmpty()) {
+        if (!fieldName.isEmpty()) {
             if (fieldName.equals("VAL")) {
                 logger.debug("Treating .VAL as pv Name alone for " + pvName);
                 fieldName = null;
@@ -340,7 +340,7 @@ public class ArchivePVAction implements BPLAction {
                 logger.debug("Overriding policy params with sampling method " + overriddenSamplingMethod
                         + " and sampling period " + overRiddenSamplingPeriod);
                 UserSpecifiedSamplingParams userSpecifiedSamplingParams = new UserSpecifiedSamplingParams(
-                        overridePolicyParams ? overriddenSamplingMethod : SamplingMethod.MONITOR,
+                        overriddenSamplingMethod,
                         overRiddenSamplingPeriod,
                         controllingPV,
                         policyName,
@@ -350,7 +350,7 @@ public class ArchivePVAction implements BPLAction {
                     userSpecifiedSamplingParams.addArchiveField(fieldName);
                 }
                 if (usePVAccess) {
-                    userSpecifiedSamplingParams.setUsePVAccess(usePVAccess);
+                    userSpecifiedSamplingParams.setUsePVAccess(true);
                 }
 
                 if (alias != null) {
@@ -365,10 +365,10 @@ public class ArchivePVAction implements BPLAction {
                     userSpecifiedSamplingParams.addArchiveField(fieldName);
                 }
                 if (usePVAccess) {
-                    userSpecifiedSamplingParams.setUsePVAccess(usePVAccess);
+                    userSpecifiedSamplingParams.setUsePVAccess(true);
                 }
                 if (skipCapacityPlanning) {
-                    userSpecifiedSamplingParams.setSkipCapacityPlanning(skipCapacityPlanning);
+                    userSpecifiedSamplingParams.setSkipCapacityPlanning(true);
                 }
 
                 if (alias != null) {
